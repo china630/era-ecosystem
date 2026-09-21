@@ -7,38 +7,33 @@ export function inferServiceCatalogKind(
 ): ServiceCatalogKind {
   const c = code.trim().toUpperCase();
   if (!c) return "OTHER";
-  if (c.startsWith("SVC-")) return "PROCEDURE";
-  if (department && department.trim()) return "PROCEDURE";
+  // Code prefixes beat department: Chingiz tariff fills şöbə on LAB/USG/CARDIO rows.
+  if (c.startsWith("VISIT-") || c === "CONSULT") return "VISIT";
   if (c.startsWith("LAB-") || c.startsWith("LAB_")) return "LAB";
+  if (c.startsWith("SVC-")) return "PROCEDURE";
   if (
     c.startsWith("CT-") ||
     c.startsWith("MR-") ||
+    c.startsWith("MRI-") ||
     c.startsWith("XR-") ||
     c.startsWith("US-") ||
     c.startsWith("USG") ||
+    c.startsWith("CARDIO-") ||
+    c.startsWith("FUNC-") ||
+    c.startsWith("ENDO-") ||
+    c.startsWith("DENSITOMETRY-") ||
+    c.startsWith("MAMMO") ||
     c.startsWith("ECG") ||
     c.startsWith("ECHO") ||
     c.startsWith("DXA") ||
-    c.startsWith("ABPM") ||
-    c.startsWith("AUDIO") ||
-    c.startsWith("BRONCHO") ||
-    c.startsWith("COLONO") ||
-    c.startsWith("COLPO") ||
-    c.startsWith("CORO") ||
-    c.startsWith("CYSTO") ||
-    c.startsWith("DERM") ||
-    c.startsWith("ENDO") ||
-    c.startsWith("EEG") ||
-    c.startsWith("EMG") ||
     c.startsWith("HOLTER") ||
-    c.startsWith("MAMMO") ||
+    c.startsWith("ABPM") ||
     c.startsWith("PET") ||
-    c.startsWith("SPIRO") ||
     c.startsWith("UROFLOW")
   ) {
     return "DIAGNOSTIC";
   }
-  if (c.startsWith("VISIT-") || c === "CONSULT") return "VISIT";
+  if (department && department.trim()) return "PROCEDURE";
   return "OTHER";
 }
 

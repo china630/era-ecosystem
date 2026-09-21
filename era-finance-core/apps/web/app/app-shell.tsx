@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../lib/auth-context";
 import { useOrgPermissions } from "../lib/use-org-permissions";
+import { CP_PERMISSION } from "../lib/role-utils";
 import { useSubscription } from "../lib/subscription-context";
 import { apiFetch } from "../lib/api-client";
 import { TrialBanner } from "../components/trial-banner";
@@ -202,6 +203,7 @@ function QuickActionsMobileFab({
 
 function LedgerToggle() {
   const { t, i18n } = useTranslation();
+  const perms = useOrgPermissions();
   const {
     ready,
     books,
@@ -216,6 +218,11 @@ function LedgerToggle() {
       <span className="text-xs text-gray-400 tabular-nums">…</span>
     );
   }
+
+  const canSeeMgmt = perms.can(CP_PERMISSION.API_BOOK_MGMT);
+  const visibleBooks = canSeeMgmt
+    ? books
+    : books.filter((b) => String(b.gaapKind).toUpperCase() !== "MANAGEMENT");
 
   const lang = (i18n.language || "en").slice(0, 2);
   const bookLabel = (book: {
@@ -234,7 +241,7 @@ function LedgerToggle() {
   };
 
   // Fallback when books API empty: keep NAS|IFRS alias buttons.
-  if (books.length === 0) {
+  if (visibleBooks.length === 0) {
     return (
       <div className="inline-flex items-center gap-2">
         <span className="text-xs font-medium text-gray-600">
@@ -266,16 +273,16 @@ function LedgerToggle() {
 
   const q = filter.trim().toLowerCase();
   const filtered = q
-    ? books.filter((book) => bookLabel(book).toLowerCase().includes(q))
-    : books;
-  const options = filtered.length > 0 ? filtered : books;
+    ? visibleBooks.filter((book) => bookLabel(book).toLowerCase().includes(q))
+    : visibleBooks;
+  const options = filtered.length > 0 ? filtered : visibleBooks;
 
   return (
     <div className="inline-flex items-center gap-2 min-w-0">
       <span className="text-xs font-medium text-gray-600 shrink-0">
         {t("ledger.bookLabel")}
       </span>
-      {books.length > 5 ? (
+      {visibleBooks.length > 5 ? (
         <>
           <label className="sr-only" htmlFor="era-accounting-book-filter">
             {t("ledger.searchBooks")}
@@ -306,9 +313,9 @@ function LedgerToggle() {
           </option>
         ))}
       </select>
-      {books.length > 5 ? (
+      {visibleBooks.length > 5 ? (
         <span className="hidden sm:inline text-[10px] text-amber-700 max-w-[9rem] leading-tight">
-          {t("ledger.softWarnManyBooks", { count: books.length })}
+          {t("ledger.softWarnManyBooks", { count: visibleBooks.length })}
         </span>
       ) : null}
     </div>

@@ -18,9 +18,9 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubscription } from "../../../lib/subscription-context";
 import { workspacePricingHref } from "../../../lib/workspace-access";
 import {
+  ensureFreshOrchAccessToken,
   fetchSatelliteLaunchUrl,
   fetchSatelliteSsoTicket,
-  getOrchAccessToken,
 } from "../../../lib/open-finance";
 
 export default function IndustryVerticalPage() {
@@ -46,11 +46,15 @@ export default function IndustryVerticalPage() {
 
   function openSatellite() {
     if (!user?.email || !user.organizationId) return;
-    const token = getOrchAccessToken();
-    if (!token) return;
     const organizationId = user.organizationId;
     const popup = window.open("", "_blank");
     void (async () => {
+      const token = await ensureFreshOrchAccessToken();
+      if (!token) {
+        popup?.close();
+        router.push("/login?reason=session_expired");
+        return;
+      }
       const fromRegistry = await fetchSatelliteLaunchUrl(token, industry.slug);
       const base = fromRegistry?.baseUrl ?? satelliteUrlForItem(industry);
       if (!base) {
@@ -60,6 +64,7 @@ export default function IndustryVerticalPage() {
       const ticket = await fetchSatelliteSsoTicket(token, organizationId);
       if (!ticket) {
         popup?.close();
+        window.alert("SSO ticket failed. Try again or re-login.");
         return;
       }
       const url = buildSatelliteSsoLaunchUrlFromTicket(base, ticket);

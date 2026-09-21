@@ -4,12 +4,13 @@ import { QuotaGuard } from "../common/guards/quota.guard";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
 import { QuotaController } from "./quota.controller";
+import { CapacityInternalController } from "./capacity-internal.controller";
 import { QuotaService } from "./quota.service";
 
 @Global()
 @Module({
   imports: [PrismaModule, SystemConfigModule, forwardRef(() => BillingModule)],
-  controllers: [QuotaController],
+  controllers: [QuotaController, CapacityInternalController],
   providers: [QuotaService, QuotaGuard],
   exports: [QuotaService, QuotaGuard],
 })

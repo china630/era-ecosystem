@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../../lib/api-client";
-import { useAuth } from "../../../../lib/auth-context";
+import { useOrgPermissions } from "../../../../lib/use-org-permissions";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
@@ -36,8 +36,8 @@ type AdminAuditRow = {
 export default function AdminSecurityAuditLogPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
-  const isOwner = user?.role === "OWNER";
+  const perms = useOrgPermissions();
+  const isOwner = perms.isOwner;
 
   const [rows, setRows] = useState<AdminAuditRow[]>([]);
   const [total, setTotal] = useState(0);

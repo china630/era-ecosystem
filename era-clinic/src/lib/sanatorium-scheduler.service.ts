@@ -4,7 +4,6 @@ import {
   buildEntitlementSnapshot,
   findCurrentProgramTemplate,
   programTemplateInclude,
-  type ProgramTemplateFull,
 } from "@/domain/sanatorium/program-template-admin";
 
 export async function instantiateProgramFromTemplate(input: {
@@ -34,7 +33,12 @@ export async function instantiateProgramFromTemplate(input: {
 
   const endsOn = checkOut;
 
-  const balanceRows = template.procedures.map((p) => {
+  const balanceRows = template.procedures.map(
+    (p: {
+      quotaTotal: number;
+      procedureCode: string;
+      quotaBasis?: string | null;
+    }) => {
     let quotaTotal = p.quotaTotal;
     if (template.quotaKnots.length > 0) {
       quotaTotal = quotaFor({
@@ -43,6 +47,7 @@ export async function instantiateProgramFromTemplate(input: {
         procedureCode: p.procedureCode,
         minNights: template.minNights,
         maxNights: template.maxNights,
+        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
     }
     return {
@@ -79,7 +84,8 @@ export async function instantiateProgramFromTemplate(input: {
   });
   if (balanceRows.length > 0) {
     await prisma.programProcedureBalance.createMany({
-      data: balanceRows.map((row) => ({
+      data: balanceRows.map(
+        (row: { procedureCode: string; quotaTotal: number; quotaUsed: number }) => ({
         instanceId: created.id,
         procedureCode: row.procedureCode,
         quotaTotal: row.quotaTotal,
@@ -92,9 +98,15 @@ export async function instantiateProgramFromTemplate(input: {
     include: { procedureLines: true },
   });
 
+  // A package arrived, so a prior "guest has no package" confirmation is stale —
+  // clearing it puts entitlement pricing back in charge of this episode.
   await prisma.clinicalEpisode.update({
     where: { id: input.episodeId },
-    data: { programCode: template.code },
+    data: {
+      programCode: template.code,
+      noPackageConfirmedAt: null,
+      noPackageConfirmedByUserId: null,
+    },
   });
 
   // CLI-57: balances only — doctor assigns via package modal (no buildProposedPlan pre-expand).
@@ -128,12 +140,12 @@ export async function recalcProgramQuotas(
   const code = opts.programCode ?? instance.programCode;
   const packageCodeChanged = Boolean(opts.programCode && opts.programCode !== instance.programCode);
 
-  let template: ProgramTemplateFull | null = packageCodeChanged
+  let template = packageCodeChanged
     ? await findCurrentProgramTemplate(code)
-    : ((await prisma.programTemplate.findUnique({
+    : await prisma.programTemplate.findUnique({
         where: { id: instance.templateId },
         include: programTemplateInclude,
-      })) as ProgramTemplateFull | null);
+      });
 
   if (!template) throw new Error(`Program template ${code} not found`);
 
@@ -146,10 +158,14 @@ export async function recalcProgramQuotas(
     members: template.blockMembers,
   });
 
-  const newCodes = new Set(template.procedures.map((p) => p.procedureCode));
+  const newCodes = new Set(
+    template.procedures.map((p: { procedureCode: string }) => p.procedureCode),
+  );
   const existingByCode = new Map(
     instance.procedureLines.map((l) => [l.procedureCode, l]),
   );
+
+  const addedCodes: string[] = [];
 
   for (const p of template.procedures) {
     let newTotal = p.quotaTotal;
@@ -160,6 +176,7 @@ export async function recalcProgramQuotas(
         procedureCode: p.procedureCode,
         minNights: template.minNights,
         maxNights: template.maxNights,
+        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
     }
     const existing = existingByCode.get(p.procedureCode);
@@ -178,6 +195,7 @@ export async function recalcProgramQuotas(
           quotaUsed: 0,
         },
       });
+      addedCodes.push(p.procedureCode);
     }
   }
 
@@ -225,6 +243,34 @@ export async function recalcProgramQuotas(
     await cancelFutureScheduledPastEnd(instanceId, opts.endsOn);
   }
 
+  if (packageCodeChanged) {
+    await prisma.clinicalEpisode.update({
+      where: { id: instance.episodeId },
+      data: {
+        programCode: code,
+        noPackageConfirmedAt: null,
+        noPackageConfirmedByUserId: null,
+      },
+    });
+  }
+
+  // Rows added by this recalc start at quotaUsed 0 while stamped fulfillments may
+  // already exist for those codes (package switch, nights growth). Re-derive only
+  // the new rows: a blanket resync would zero legacy instances whose historical
+  // fulfillments are not stamped yet — that is the backfill script's job.
+  if (addedCodes.length > 0) {
+    const { syncEntitlementUsage } = await import(
+      "@/domain/sanatorium/entitlement-usage.service"
+    );
+    for (const quotaCode of addedCodes) {
+      await syncEntitlementUsage({
+        instanceId,
+        episodeId: instance.episodeId,
+        quotaCode,
+      });
+    }
+  }
+
   return prisma.programInstance.findUnique({
     where: { id: instanceId },
     include: { procedureLines: true },
@@ -241,25 +287,20 @@ export async function scheduleProgramProcedures(
   return 0;
 }
 
+/**
+ * @deprecated Prefer `isOverEntitlementQuota` from entitlement-usage.service.
+ * Read-only over-quota check — does NOT increment quotaUsed (CLI-57 single COUNT SoT).
+ */
 export async function useProcedureQuota(input: {
   instanceId: string;
   procedureCode: string;
 }): Promise<{ allowed: boolean; overQuota: boolean }> {
-  const line = await prisma.programProcedureBalance.findUnique({
-    where: {
-      instanceId_procedureCode: {
-        instanceId: input.instanceId,
-        procedureCode: input.procedureCode,
-      },
-    },
+  const { isOverEntitlementQuota } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  const r = await isOverEntitlementQuota({
+    instanceId: input.instanceId,
+    quotaCode: input.procedureCode,
   });
-  if (!line) return { allowed: true, overQuota: false };
-  if (line.quotaUsed >= line.quotaTotal) {
-    return { allowed: true, overQuota: true };
-  }
-  await prisma.programProcedureBalance.update({
-    where: { id: line.id },
-    data: { quotaUsed: { increment: 1 } },
-  });
-  return { allowed: true, overQuota: false };
+  return { allowed: true, overQuota: r.overQuota };
 }

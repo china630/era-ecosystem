@@ -10,6 +10,7 @@
     "start": "next start -H 0.0.0.0"
   },
   "dependencies": {
+    "@era/contracts": "file:../../../packages/era-contracts",
     "@era/i18n-common": "file:../../../packages/i18n-common",
     "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@erafinance/api-contracts": "*",

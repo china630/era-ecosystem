@@ -104,6 +104,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [x] `POST /api/auth/sso/exchange` — Financial_Auditor (cross-system, no seat quota)
 - [x] UI: `/login`, `/bookings/new`, `/folio/[reservationId]`, `/admin/users`
 - [x] Chessboard: AppNav, permission-gated actions, folio link
+- [x] Variant A: `Role.isSystem` / clone, `/settings/access`, DB-authoritative guards (`Hotel_Admin` no bypass) — ADR `docs/adr/hotel-domain-permissions-and-rbac.md`
 
 **Demo logins (after seed):** `admin` / `admin123` (Hotel_Admin), `reception` / `reception123` (Receptionist).
 

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../../../components/empty-state";
 import { apiFetch } from "../../../../lib/api-client";
 import { useAuth } from "../../../../lib/auth-context";
+import { useOrgPermissions } from "../../../../lib/use-org-permissions";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -32,12 +33,12 @@ type HealthProviderRow = {
 
 export default function IntegrationsHealthPage() {
   const { t } = useTranslation();
-  const { ready, token, user } = useAuth();
+  const { ready, token } = useAuth();
+  const perms = useOrgPermissions();
+  const isOwner = perms.canAccessBilling;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [rows, setRows] = useState<HealthProviderRow[]>([]);
-
-  const isOwner = user?.role === "OWNER";
 
   useEffect(() => {
     if (!ready || !token || !isOwner) return;
@@ -77,7 +78,7 @@ export default function IntegrationsHealthPage() {
     return (
       <EmptyState
         title="Owner only"
-        description="Integration health dashboard is available only for OWNER role."
+        description="Integration health dashboard is available only for organization owners."
       />
     );
   }

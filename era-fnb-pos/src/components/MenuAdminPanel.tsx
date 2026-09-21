@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  CatalogField,
+  CatalogFieldKind,
   Field,
   FieldRow,
   ModalFooter,
@@ -79,6 +81,7 @@ export default function MenuAdminPanel() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTitle, setHistoryTitle] = useState("");
   const [priceHistory, setPriceHistory] = useState<PriceRow[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<{ value: string; label: string }[]>([]);
 
   const recipesHref = financeRecipesUrl();
 
@@ -253,6 +256,9 @@ export default function MenuAdminPanel() {
           <Link href="/admin/tables" className={SECONDARY_BUTTON_CLASS}>
             {t("manageTables")}
           </Link>
+          <a href="/api/menu/export" className={SECONDARY_BUTTON_CLASS}>
+            Excel
+          </a>
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateCategory}>
             {t("addCategory")}
           </button>
@@ -448,11 +454,27 @@ export default function MenuAdminPanel() {
               }
             />
           </FieldRow>
-          <Field
+          <CatalogField
+            kind={"SEARCHABLE" as CatalogFieldKind}
             label={t("name")}
-            preset="shortText"
             value={itemForm.name}
-            onChange={(e) => setItemForm((f) => ({ ...f, name: e.target.value }))}
+            options={nameSuggestions}
+            serverSearch
+            onQueryChange={(q) => {
+              setItemForm((f) => ({ ...f, name: q }));
+              void fetch(`/api/menu/suggest?q=${encodeURIComponent(q)}`)
+                .then((r) => r.json())
+                .then((d) => {
+                  const list = Array.isArray(d.suggestions) ? d.suggestions : [];
+                  setNameSuggestions(
+                    list.map((s: { name: string }) => ({ value: s.name, label: s.name })),
+                  );
+                })
+                .catch(() => setNameSuggestions([]));
+            }}
+            onChange={(next) =>
+              setItemForm((f) => ({ ...f, name: Array.isArray(next) ? next[0] ?? "" : next }))
+            }
           />
           <Field
             label={t("recipeSku")}

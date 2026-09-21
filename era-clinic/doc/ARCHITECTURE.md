@@ -64,7 +64,7 @@ Nav gating: `ClinicOpsShell` + middleware cookie `era_clinic_presets` (Phase 1).
 |---------|------|
 | `@era/contracts` | Event types |
 | `@era/satellite-kit` | SSO, MDM client, UI shell, middleware |
-| `@era/fiscal` | Cashier mock / NBC (future) |
+| `@era/fiscal` | Cashier mock / NBC / Omnitech (device catalog on org — [ADR era-fiscal-kkm-kit](../../docs/adr/era-fiscal-kkm-kit.md)); settle via `fiscalizeForSatellite` |
 | `packages/clinic-domain` | **Future** — extract when inpatient ADT API stable |
 
 ## Finance boundary

@@ -306,29 +306,32 @@
 
 ### Система ролей (RBAC)
 
+Control-plane JWT (Wave 4+): `permissions[]` are canonical `api:*` / `screen:*` / `admin:*` from orchestrator `OrganizationRole`. **Wave 5:** Finance enforces those keys via `PermissionsGuard` / policy helpers / web `can()` (ADR [finance-domain-permissions-and-rbac](../docs/adr/finance-domain-permissions-and-rbac.md)). Donor `UserRole` remains the package code in JWT; **doors are permission keys**, not `@Roles`. Matrix UI stays Orchestrator `/settings/access` — no local Finance access matrix.
+
 | Роль | Права |
 |------|--------|
-| **OWNER** | Полный доступ, управление подпиской |
-| **ADMIN** | Управление пользователями и настройками |
-| **ACCOUNTANT** | Доступ к финансам и отчётам |
+| **OWNER** | Полный доступ, управление подпиской (`isOwner` bypass) |
+| **ADMIN** | Управление пользователями и настройками (matrix grants apply) |
+| **ACCOUNTANT** | Финансы и отчёты; seed includes `api:ledger.post` (Post/Approve) |
 | **DIRECTOR** | Директор юрлица: чтение ключевой финотчётности (P&L, ДДС, баланс, дебиторка) в рамках одной организации; участие в согласованиях по политике; без владения подпиской |
-| **USER** | Ограниченный доступ (только свои документы) |
-| **PROCUREMENT** | Создание закупочных документов, операции склада, создание черновиков оплат (KXO/Bank Draft) **без права Post/Approve** |
-| **AUDITOR** | Глобальный Read-Only: просмотр Ledger, Payroll, AuditLog и отчётов без права создавать/изменять данные |
+| **USER** | Ограниченный доступ (только свои документы); no `api:ledger.post` |
+| **PROCUREMENT** | Создание закупочных документов, операции склада, создание черновиков оплат (KXO/Bank Draft) **без** `api:ledger.post` |
+| **AUDITOR** | Глобальный Read-Only + `AuditorMutationGuard` belt; просмотр Ledger, Payroll, AuditLog и отчётов без мутаций |
 | **WAREHOUSE_KEEPER** | Доступ только к M9 (Inventory) и M9.1 (Manufacturing); без доступа к финансам и зарплатам |
-| **HR_OFFICER** | Доступ к карточкам сотрудников и табелю; без доступа к главной книге (Ledger) и финансовым проводкам |
-| **HR_MANAGER** | Кадровый контур (сотрудники, absences, timesheet) без доступа к денежным payroll-endpoints, реестрам выплат и tax financial data |
+| **HR_OFFICER** | Карточки сотрудников и табель; **без** `api:payroll.money` / ledger post |
+| **HR_MANAGER** | Кадровый контур без `api:payroll.money` (денежные payroll-endpoints, реестры выплат) |
 | **DEPARTMENT_HEAD** | Row-level доступ к absences/timesheet только по сотрудникам своего департамента; approve табеля в рамках department scope |
 
 **Разграничение PROCUREMENT vs ACCOUNTANT (Post/Approve policy):**
 
-- `PROCUREMENT` может подготавливать первичные документы и черновики оплат, но не имеет права `Post/Approve` финансовые операции.
-- `ACCOUNTANT` сохраняет исключительное право на `Post/Approve` и фиксацию проводок в Ledger.
+- Post/Approve (journal, cash/bank post, ledger fix) = catalog key **`api:ledger.post`** (not role name alone).
+- `PROCUREMENT` may prepare primary docs and payment drafts but seed omits `api:ledger.post`.
+- `ACCOUNTANT` seed includes `api:ledger.post`; stripping that key in CP → Finance **403** on post.
 
 ### 2.0. RBAC enforcement updates (Bridge Sprint P1/P2)
 
-- **Inventory reconciliation:** любые мутации (`POST`, `PATCH`) по **`/api/inventory/reconciliations/*`** и **`/api/inventory/audits/*`** разрешены только **`OWNER`**, **`ADMIN`**, **`ACCOUNTANT`**; роль **`PROCUREMENT`** и ниже получают **`403`**. Чтение списка и карточки (`GET`) — у любого авторизованного пользователя организации (отдельный `RolesGuard` на эти маршруты не навешан).
-- **AUDITOR Read-Only:** роль `AUDITOR` имеет доступ к чтению (включая `AuditLog`), но любые HTTP-мутации (`POST`, `PATCH`, `PUT`, `DELETE`) глобально блокируются через `AuditorMutationGuard` с ответом `403`.
+- **Inventory reconciliation:** любые мутации (`POST`, `PATCH`) по **`/api/inventory/reconciliations/*`** и **`/api/inventory/audits/*`** требуют **`api:inventory.approve`** (`PermissionsGuard`); JWT `permissions[]` empty fail-closed. Donor `PROCUREMENT` seed omits that key → **`403`**. Чтение списка и карточки (`GET`) — у любого авторизованного пользователя организации (отдельный `PermissionsGuard` на GET не навешан).
+- **AUDITOR Read-Only:** роль `AUDITOR` имеет доступ к чтению (включая `AuditLog`), но любые HTTP-мутации (`POST`, `PATCH`, `PUT`, `DELETE`) глобально блокируются через `AuditorMutationGuard` с ответом `403` (locked belt — Wave 5 keeps this even when doors are permission keys).
 
 ### Безопасность
 
@@ -340,9 +343,9 @@
 
 - Глобальный `ValidationPipe` в `main.ts`: `whitelist: true`, **`forbidNonWhitelisted: true`**, `transform: true` (см. **§17** — та же формулировка для RC). Поля тела запроса, не описанные в DTO (`class-validator`), приводят к ответу **400 Bad Request** (а не молчаливому отбрасыванию).
 
-### Policy Guard (v5.8, CASL-like)
+### Policy Guard (v5.8, CASL-like) + Wave 5 keys
 
-- Для детализации ролей **Accountant** и **User** в финансовых документах используются явные проверки политик (например модуль `auth/policies`): мутации инвойсов в статусе **PAID** и ручные проводки журнала недоступны роли **User**, где это зафиксировано в [PRD.md](./PRD.md) §7.9; критичные эндпоинты дополнительно защищаются **RolesGuard** / `@Roles(...)`.
+- Для детализации ролей **Accountant** и **User** в финансовых документах используются явные проверки политик (например модуль `auth/policies`): мутации инвойсов в статусе **PAID** и ручные проводки журнала недоступны без **`api:ledger.post`** (и связанным invoice keys), где это зафиксировано в [PRD.md](./PRD.md) §3.2.1 / §7.9; критичные эндпоинты защищаются **`PermissionsGuard`** / `@Permissions(...)` (каталог `@era/contracts`), не `@Roles`.
 
 ### Сырой SQL и изоляция тенанта
 
@@ -575,7 +578,7 @@
 
 - Глобальный префикс Nest: **`/api`** (итоговые пути: `/api/treasury/...`, `/api/banking/...`).
 - Аутентификация: **Bearer JWT**; контекст организации — из токена (декоратор `@OrganizationId()`).
-- **Treasury** — отдельный контроллер **без** `SubscriptionGuard` (доступ при валидном членстве в организации); мутации защищены **`RolesGuard`**.
+- **Treasury** — отдельный контроллер **без** `SubscriptionGuard` (доступ при валидном членстве в организации); мутации защищены **`PermissionsGuard`** + **`api:ledger.post`**.
 - **Банк** — контроллер `banking` с **`SubscriptionGuard`** и **`@RequiresModule(BANKING_PRO)`** (см. `ModuleEntitlement`).
 - **Касса** — контроллер `banking/cash` с **`SubscriptionGuard`** и **`@RequiresModule(KASSA_PRO)`**.
 

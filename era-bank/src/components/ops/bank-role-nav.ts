@@ -1,7 +1,15 @@
 /**
- * Ops sidebar visibility by local OpsRole.code.
+ * Ops sidebar visibility by screen grants (Variant A).
  * Entitlement modules still apply on top via useBankEntitlements.
+ * @deprecated ROLE_NAV_ALLOW — role name no longer grants nav; use screen:* grants.
  */
+import { screenPermissionForNavHref } from "@/lib/auth/page-route-permissions";
+import {
+  sessionHasBankPermission,
+  type BankPermissionSession,
+} from "@/lib/auth/permission-check";
+import type { Permission } from "@/lib/auth/permissions";
+
 export type BankOpsRoleCode =
   | "TELLER"
   | "BRANCH_MANAGER"
@@ -12,66 +20,28 @@ export type BankOpsRoleCode =
   | "PLATFORM_MEMBER"
   | "SATELLITE_OPERATOR";
 
-/** Prefixes (or "*") each role may see in the ops shell. */
-export const ROLE_NAV_ALLOW: Record<string, "*" | readonly string[]> = {
-  TELLER: [
-    "/dashboard",
-    "/cif",
-    "/accounts",
-    "/postings",
-    "/payments",
-    "/cash",
-    "/fees",
-    "/deposits",
-    "/loans",
-    "/gl",
-  ],
-  BRANCH_MANAGER: "*",
-  AML_OFFICER: [
-    "/dashboard",
-    "/cif",
-    "/aml",
-    "/reports",
-    "/admin/audit",
-  ],
-  CARDS_OFFICER: [
-    "/dashboard",
-    "/cif",
-    "/accounts",
-    "/cards",
-    "/card-txns",
-  ],
-  TREASURY_OFFICER: ["/dashboard", "/treasury", "/reports", "/gl"],
-  BUSINESS_OWNER: "*",
-  PLATFORM_MEMBER: "*",
-  SATELLITE_OPERATOR: [
-    "/dashboard",
-    "/cif",
-    "/accounts",
-    "/postings",
-    "/payments",
-    "/cash",
-    "/fees",
-    "/collections",
-    "/trade",
-    "/islamic",
-    "/wealth",
-    "/deposits",
-    "/loans",
-    "/reports",
-    "/gl",
-  ],
-};
+export function isNavAllowedForSession(
+  href: string,
+  session: BankPermissionSession | null | undefined,
+): boolean {
+  if (!session) return false;
+  const required = screenPermissionForNavHref(href);
+  if (!required) return false;
+  return sessionHasBankPermission(session, required);
+}
 
+/** @deprecated Prefer isNavAllowedForSession with permissions[]. */
 export function isNavAllowedForRole(
   href: string,
   role: string | null | undefined,
+  permissions?: Permission[] | string[],
+  isOwner?: boolean,
 ): boolean {
-  if (!role) return true;
-  const allow = ROLE_NAV_ALLOW[role];
-  if (!allow) return true;
-  if (allow === "*") return true;
-  return allow.some(
-    (prefix) => href === prefix || href.startsWith(`${prefix}/`),
-  );
+  if (!role && !permissions?.length) return false;
+  return isNavAllowedForSession(href, {
+    login: "",
+    role: role ?? "",
+    permissions: permissions?.map(String),
+    isOwner,
+  });
 }

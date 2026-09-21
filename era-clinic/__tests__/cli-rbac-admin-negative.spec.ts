@@ -128,7 +128,6 @@ describe("Clinic RBAC admin matrix (Wave 2)", () => {
     );
     const nav = buildClinicNav(
       {
-        role: CLINIC_ROLE.CLINIC_ADMIN,
         permissions: perms,
         presetEnabled: () => true,
       },

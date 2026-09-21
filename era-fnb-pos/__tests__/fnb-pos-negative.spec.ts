@@ -61,6 +61,20 @@ describe("F&B POS negative paths (AC-FNB-POS)", () => {
       const body = await res.json();
       expect(body.error).toMatch(/industry_fnb_pos/);
     });
+
+    it("handleRouteError maps FnbWaiterNoPayError to 403", async () => {
+      const { handleRouteError } = await import("@/lib/api-utils");
+      const { FnbWaiterNoPayError } = await import("@/lib/fnb-roles");
+      const res = handleRouteError(new FnbWaiterNoPayError());
+      expect(res.status).toBe(403);
+    });
+
+    it("handleRouteError maps FnbHotelModeError to 403", async () => {
+      const { handleRouteError } = await import("@/lib/api-utils");
+      const { FnbHotelModeError } = await import("@/lib/fnb-module-gate");
+      const res = handleRouteError(new FnbHotelModeError("banquets"));
+      expect(res.status).toBe(403);
+    });
   });
 
   describe("domain deny", () => {

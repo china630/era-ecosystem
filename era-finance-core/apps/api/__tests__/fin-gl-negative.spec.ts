@@ -122,10 +122,8 @@ describe("Finance GL manual adjustment negatives (AC-FIN-GL)", () => {
     }) as unknown as PrismaService;
     const posting = { resolveAccountCode: jest.fn() } as unknown as PostingAccountResolver;
     return new ManualAdjustmentService(prisma, accounting, posting, {
-      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
-        id: bookId ?? "book-nas",
-        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
-      })),
+      resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
+      resolveByIdOrLedgerAlias: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
     } as never);
   }
 

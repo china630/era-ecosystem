@@ -1,4 +1,3 @@
-import { CLINIC_ROLE, sessionHasClinicRole } from "@/lib/clinic-roles";
 import { isPlatformSuperAdminEdge } from "@/lib/auth/platform-super-admin-edge";
 
 /** Minimal session shape for admin gates (edge-safe — no @era/satellite-kit barrel). */
@@ -25,14 +24,9 @@ export function hasClinicPermissionBypass(session: ClinicAdminSession): boolean 
 }
 
 /**
- * Historical SatAdmin actor check (role code / owner / super-admin).
- * Prefer permission keys for enforcement; use this for documentation / OrgOwner detection only.
+ * @deprecated Prefer permission keys + hasClinicPermissionBypass.
+ * Kept for OrgOwner / legacy detection only — do not use to gate screens/APIs.
  */
 export function hasClinicAdminAccess(session: ClinicAdminSession): boolean {
-  if (hasClinicPermissionBypass(session)) return true;
-  if (sessionHasClinicRole(session.role, [CLINIC_ROLE.CLINIC_ADMIN])) return true;
-  if (session.roles?.includes(CLINIC_ROLE.CLINIC_ADMIN)) return true;
-  /** Legacy bootstrap role before CLINIC_ADMIN rename. */
-  if (session.role === "ADMIN") return true;
-  return false;
+  return hasClinicPermissionBypass(session);
 }

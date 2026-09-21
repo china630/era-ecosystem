@@ -40,6 +40,27 @@ export function isEffectiveShare(r: {
   return normalizeShareGender(r.shareGender) !== null;
 }
 
+/**
+ * Nafta closed pair: two share-eligible singles of opposite gender on one door.
+ * Open same-gender pool stays forbidden for mixed genders. Not auto-share onto exclusive family.
+ */
+export function canFormClosedSharePair(input: {
+  requestedShare: boolean;
+  candidateAdults: number;
+  candidateGender: ShareGender;
+  neighbors: Array<{ shareEligible: boolean; shareGender: string | null; adults: number }>;
+  maxBed: number;
+}): boolean {
+  if (!input.requestedShare) return false;
+  if (input.candidateAdults !== 1) return false;
+  if (input.maxBed < 2) return false;
+  if (input.neighbors.length !== 1) return false;
+  const n = input.neighbors[0]!;
+  if (!isEffectiveShare(n)) return false;
+  const nGender = normalizeShareGender(n.shareGender);
+  return nGender != null && nGender !== input.candidateGender;
+}
+
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
   const cur = new Date(from);
@@ -264,6 +285,7 @@ export async function resolveDoorAssignment(input: {
   });
 
   let shareEligible = input.candidate.shareEligible;
+  const requestedShare = input.candidate.shareEligible;
   let shareGender =
     normalizeShareGender(input.candidate.shareGender) ??
     normalizeShareGender(input.candidate.guestGender);
@@ -328,13 +350,31 @@ export async function resolveDoorAssignment(input: {
 
   const candGender = shareGender!;
   const pullableNeighborIds: string[] = [];
+  let closedPair = false;
   for (const n of neighbors) {
     if (isEffectiveShare(n)) {
       const poolGender = normalizeShareGender(n.shareGender);
       if (poolGender !== candGender) {
+        if (
+          canFormClosedSharePair({
+            requestedShare,
+            candidateAdults: input.candidate.adults,
+            candidateGender: candGender,
+            neighbors,
+            maxBed,
+          })
+        ) {
+          closedPair = true;
+          continue;
+        }
         throw new Error('Opposite gender cannot share this room');
       }
       continue;
+    }
+    if (closedPair) {
+      throw new Error(
+        `Room conflict: overlapping stay cannot join share pool (${n.checkInDate.toISOString().slice(0, 10)} – ${n.checkOutDate.toISOString().slice(0, 10)})`,
+      );
     }
     const nGate = gateRowForShare(n);
     if (!nGate.ok || nGate.gender !== candGender) {
@@ -361,8 +401,10 @@ export async function resolveDoorAssignment(input: {
     maxBed,
   };
 
-  const pulledNeighborIds = [...shareNeighbors.map((n) => n.id), ...pullableNeighborIds];
-  if (pullableNeighborIds.length > 0) {
+  const pulledNeighborIds = closedPair
+    ? [...shareNeighbors.map((n) => n.id)]
+    : [...shareNeighbors.map((n) => n.id), ...pullableNeighborIds];
+  if (!closedPair && pullableNeighborIds.length > 0) {
     const pulled = await openSharePoolForDoor({
       roomId: input.roomId,
       checkIn: input.checkIn,

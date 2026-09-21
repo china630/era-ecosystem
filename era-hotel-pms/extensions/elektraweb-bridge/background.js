@@ -1,6 +1,15 @@
 import { LAMP_PATHS, NO_EW_TOKEN_ERROR, lampTitle, resolveBridgeLamp } from './lamp.js';
 
-const MAX_QUEUE = 40;
+/**
+ * Guest Cards = ~100 rows/page → 1 queue envelope per page.
+ * Old MAX_QUEUE=40 dropped oldest pages while hotel waited on serial MDM resolve
+ * (~100 HTTP/page). Cap high; never shift() under load. Soft warn only.
+ */
+const MAX_QUEUE = 2000;
+const FLUSH_BATCH = 3;
+
+let flushInFlight = false;
+let flushAgain = false;
 
 async function getSettings() {
   const data = await chrome.storage.local.get([
@@ -18,6 +27,8 @@ async function getSettings() {
     'lastError',
     'lastResult',
     'ewLoginToken',
+    'queueDepth',
+    'queueDropped',
   ]);
   const sessionStore = chrome.storage.session
     ? await chrome.storage.session.get(['ewLoginToken'])
@@ -38,6 +49,8 @@ async function getSettings() {
     lastError: data.lastError || null,
     lastResult: data.lastResult || null,
     ewLoginToken: sessionStore.ewLoginToken || data.ewLoginToken || '',
+    queueDepth: Number(data.queueDepth) || 0,
+    queueDropped: Number(data.queueDropped) || 0,
   };
 }
 
@@ -57,10 +70,35 @@ async function setPartial(patch) {
 }
 
 async function enqueue(payload) {
-  const { queue = [] } = await chrome.storage.local.get('queue');
+  const { queue = [], queueDropped = 0 } = await chrome.storage.local.get([
+    'queue',
+    'queueDropped',
+  ]);
   queue.push(payload);
-  while (queue.length > MAX_QUEUE) queue.shift();
-  await chrome.storage.local.set({ queue });
+  let dropped = Number(queueDropped) || 0;
+  // Prefer dropping non-guest traffic if hard-capped (FOCP floods).
+  while (queue.length > MAX_QUEUE) {
+    const dropIdx = queue.findIndex((item) => {
+      const hint = String(item?.entityHint || item?.entity || '').toLowerCase();
+      return hint !== 'guest';
+    });
+    if (dropIdx >= 0) {
+      queue.splice(dropIdx, 1);
+    } else {
+      queue.shift();
+    }
+    dropped += 1;
+  }
+  await chrome.storage.local.set({
+    queue,
+    queueDepth: queue.length,
+    queueDropped: dropped,
+    ...(dropped > (Number(queueDropped) || 0)
+      ? {
+          lastError: `Queue overflow: dropped ${dropped} envelope(s). Slow scroll; wait Queue=0.`,
+        }
+      : {}),
+  });
 }
 
 async function getEwWriteSession() {
@@ -124,15 +162,19 @@ async function drainOutbox() {
   }
 }
 
-async function flushQueue() {
+/** One small batch — guest pages are large; keep concurrency low. */
+async function flushOneBatch() {
   const settings = await getSettings();
-  if (!settings.enabled || !settings.hotelBaseUrl || !settings.token) return;
+  if (!settings.enabled || !settings.hotelBaseUrl || !settings.token) return false;
 
   const { queue = [] } = await chrome.storage.local.get('queue');
-  if (!queue.length) return;
+  if (!queue.length) {
+    await setPartial({ queueDepth: 0 });
+    return false;
+  }
 
-  const batch = queue.splice(0, 10);
-  await chrome.storage.local.set({ queue });
+  const batch = queue.splice(0, FLUSH_BATCH);
+  await chrome.storage.local.set({ queue, queueDepth: queue.length });
 
   try {
     const res = await fetch(`${settings.hotelBaseUrl}/api/integrations/elektraweb-bridge`, {
@@ -152,10 +194,13 @@ async function flushQueue() {
     }
     if (!res.ok) {
       await setPartial({ lastError: json.error || `HTTP ${res.status}` });
-      // re-queue failed batch (best effort)
       const { queue: q2 = [] } = await chrome.storage.local.get('queue');
-      await chrome.storage.local.set({ queue: [...batch, ...q2].slice(0, MAX_QUEUE) });
-      return;
+      const restored = [...batch, ...q2];
+      await chrome.storage.local.set({
+        queue: restored.slice(0, MAX_QUEUE),
+        queueDepth: Math.min(restored.length, MAX_QUEUE),
+      });
+      return false;
     }
     await setPartial({
       lastSyncAt: new Date().toISOString(),
@@ -164,10 +209,38 @@ async function flushQueue() {
       organizationId: json.organizationId || settings.organizationId,
       elektrawebHotelId: json.elektrawebHotelId || settings.elektrawebHotelId,
     });
+    return true;
   } catch (e) {
     await setPartial({ lastError: e instanceof Error ? e.message : String(e) });
     const { queue: q2 = [] } = await chrome.storage.local.get('queue');
-    await chrome.storage.local.set({ queue: [...batch, ...q2].slice(0, MAX_QUEUE) });
+    const restored = [...batch, ...q2];
+    await chrome.storage.local.set({
+      queue: restored.slice(0, MAX_QUEUE),
+      queueDepth: Math.min(restored.length, MAX_QUEUE),
+    });
+    return false;
+  }
+}
+
+async function flushQueue() {
+  if (flushInFlight) {
+    flushAgain = true;
+    return;
+  }
+  flushInFlight = true;
+  try {
+    do {
+      flushAgain = false;
+      // Drain until empty or a hard failure (HTTP error leaves items re-queued).
+      for (;;) {
+        const ok = await flushOneBatch();
+        const { queue = [] } = await chrome.storage.local.get('queue');
+        if (!queue.length) break;
+        if (!ok) break;
+      }
+    } while (flushAgain);
+  } finally {
+    flushInFlight = false;
   }
 }
 
@@ -180,10 +253,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         return;
       }
       await enqueue(msg.payload);
-      await flushQueue();
-      await drainOutbox();
-      await refreshToolbarLamp();
-      sendResponse({ ok: true });
+      // Kick drain; do not block the EW page on full queue empty.
+      void flushQueue()
+        .then(() => drainOutbox())
+        .then(() => refreshToolbarLamp());
+      const { queue = [] } = await chrome.storage.local.get('queue');
+      sendResponse({ ok: true, queueDepth: queue.length });
     })();
     return true;
   }
@@ -202,7 +277,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   if (msg?.type === 'get-status') {
-    getSettings().then((s) => sendResponse(s));
+    getSettings().then(async (s) => {
+      const { queue = [] } = await chrome.storage.local.get('queue');
+      sendResponse({ ...s, queueDepth: queue.length });
+    });
     return true;
   }
   if (msg?.type === 'flush') {
@@ -259,11 +337,6 @@ async function injectIntoFrame(tabId, frameId) {
       files: ['content.js'],
       world: 'ISOLATED',
       injectImmediately: true,
-    });
-    await chrome.scripting.executeScript({
-      target,
-      files: ['overlay-boot.js'],
-      world: 'ISOLATED',
     });
   } catch {
     /* chrome://, discarded tab, or host not permitted */

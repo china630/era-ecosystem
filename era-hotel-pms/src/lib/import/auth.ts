@@ -2,28 +2,30 @@ import { assertHotelModuleActive } from '@era/satellite-kit';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
+import { sessionHasHotelPermission } from '@/lib/auth/permission-check';
+import { PERMISSIONS } from '@/lib/auth/permissions';
+import { permissionsForUser } from '@/lib/auth/hotel-permission.service';
 import { prisma } from '@/lib/prisma';
-
-const OWNER_IMPORT_ROLES = new Set([
-  'Hotel_Admin',
-  'DIRECTOR',
-  'OWNER',
-  'MANAGER',
-]);
 
 export type HotelImportAccess = {
   userId: string;
-  via: 'platform_super_admin' | 'owner_entitlement';
+  via: 'platform_super_admin' | 'grant_and_sku';
 };
 
-/** Elektraweb bulk import — platform super-admin or entitled hotel owner/admin. */
+/** Elektraweb bulk import — grant api:import.elektraweb ∩ hotel_migration_pro (SA bypass). */
 export async function assertHotelImportAccess(): Promise<HotelImportAccess> {
   const session = await getSessionFromHeaders();
   if (!session) throw new Error('Unauthorized');
 
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
-    select: { id: true, email: true, login: true, status: true, role: { select: { code: true } } },
+    select: {
+      id: true,
+      email: true,
+      login: true,
+      status: true,
+      role: { select: { code: true } },
+    },
   });
   if (!user || user.status !== 'ACTIVE') {
     throw new Error('Unauthorized');
@@ -33,28 +35,30 @@ export async function assertHotelImportAccess(): Promise<HotelImportAccess> {
     return { userId: user.id, via: 'platform_super_admin' };
   }
 
-  const roleCode = user.role.code;
-  if (!OWNER_IMPORT_ROLES.has(roleCode)) {
-    throw new Error('Forbidden: import requires platform super-admin or hotel admin');
+  const perms = await permissionsForUser(session.sub);
+
+  if (
+    !sessionHasHotelPermission(
+      {
+        login: user.login,
+        email: user.email ?? undefined,
+        role: user.role.code,
+        permissions: perms,
+        isOwner: session.isOwner,
+      },
+      PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+    )
+  ) {
+    throw new Error('Forbidden: import requires api:import.elektraweb');
   }
 
-  let organizationId: string | undefined;
-  try {
-    organizationId = requestOrganizationId();
-  } catch {
-    organizationId = undefined;
-  }
-  if (!organizationId || organizationId === "demo-org") {
-    organizationId = (
-      await prisma.hotelProfile.findFirst({ select: { organizationId: true } })
-    )?.organizationId?.trim();
-  }
+  const organizationId = await resolveImportOrganizationId();
   if (!organizationId) {
-    throw new Error("Forbidden: organization not configured");
+    throw new Error('Forbidden: organization not configured');
   }
 
   await assertHotelModuleActive(organizationId, 'hotel_migration_pro');
-  return { userId: user.id, via: 'owner_entitlement' };
+  return { userId: user.id, via: 'grant_and_sku' };
 }
 
 /** @deprecated Use {@link assertHotelImportAccess} */
@@ -67,21 +71,46 @@ export async function canRunHotelImport(user: {
   login: string;
   status: string;
   roleCode: string;
+  permissions?: string[];
+  isOwner?: boolean;
 }): Promise<boolean> {
   if (user.status !== 'ACTIVE') return false;
   if (isPlatformSuperAdminUser({ email: user.email, login: user.login })) return true;
-  if (!OWNER_IMPORT_ROLES.has(user.roleCode)) return false;
-  let organizationId: string | undefined;
-  try {
-    organizationId = requestOrganizationId();
-  } catch {
-    return true;
+  if (
+    !sessionHasHotelPermission(
+      {
+        login: user.login,
+        email: user.email ?? undefined,
+        role: user.roleCode,
+        permissions: user.permissions,
+        isOwner: user.isOwner,
+      },
+      PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+    )
+  ) {
+    return false;
   }
-  if (!organizationId || organizationId === "demo-org") return true;
+  const organizationId = await resolveImportOrganizationId();
+  if (!organizationId) return false;
   try {
-    await assertHotelModuleActive(organizationId, "hotel_migration_pro");
+    await assertHotelModuleActive(organizationId, 'hotel_migration_pro');
     return true;
   } catch {
     return false;
   }
+}
+
+async function resolveImportOrganizationId(): Promise<string | undefined> {
+  let organizationId: string | undefined;
+  try {
+    organizationId = requestOrganizationId();
+  } catch {
+    organizationId = undefined;
+  }
+  if (!organizationId || organizationId === 'demo-org') {
+    organizationId = (
+      await prisma.hotelProfile.findFirst({ select: { organizationId: true } })
+    )?.organizationId?.trim();
+  }
+  return organizationId;
 }

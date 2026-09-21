@@ -13,6 +13,8 @@ Do not clone Opera (folio windows, upgrade offers, share split). Copy Opera **la
 - Physical door type may differ from charged type (`givenRoomTypeId` / complimentary relocate).
 - Manual Price is **stay-level** (nightly or stay total spread). Stay % is mutually exclusive. Per-night lock only.
 
+Occupancy drop when a companion **departs** mid-stay (adults/children from an effective date, stay remains `IN_HOUSE`) is the same pricing law — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4. It is not unused-nights refund of the whole stay.
+
 Three FO actions:
 
 1. **Door move** (rack DnD) — same charged type or **comp** other type. Not a paid upgrade.

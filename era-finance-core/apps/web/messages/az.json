@@ -1,0 +1,29 @@
+{
+  "buyer": {
+    "title": "Alıcı kabineti",
+    "subtitle": "Ticarət krediti qalığı, açıq debitor borc və grant sorğusu",
+    "loading": "Yüklənir…",
+    "loadErr": "Məlumat yüklənmədi",
+    "requestGrant": "Göndərmə üçün grant istə",
+    "grantAmount": "Məbləğ (AZN)",
+    "submitGrant": "Kod burax",
+    "submitting": "Göndərilir…",
+    "grantErr": "Grant buraxılmadı",
+    "grantIssued": "Kod {{code}}, {{amount}} AZN ({{expiresAt}} qədər). Anbara göstərin.",
+    "openInvoices": "Açıq hesablar (ödəniş qrafiki)",
+    "noInvoices": "Açıq hesab yoxdur",
+    "colNumber": "Nömrə",
+    "colDue": "Müddət",
+    "colRemaining": "Qalıq"
+  },
+  "tradeCredit": {
+    "residualTitle": "Ticarət krediti",
+    "creditLimit": "Limit",
+    "openAr": "Açıq debitor",
+    "unusedGrants": "İstifadə olunmamış grantlar",
+    "available": "Mövcud qalıq",
+    "inviteTitle": "Alıcı kabinetinə dəvət",
+    "inviteOk": "Dəvət göndərildi",
+    "inviteErr": "Dəvət alınmadı (kontragent VÖEN lazımdır)"
+  }
+}

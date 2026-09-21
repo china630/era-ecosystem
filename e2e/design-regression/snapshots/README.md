@@ -9,7 +9,7 @@ cd packages/satellite-kit && npm run build && cd ../..
 npm run test:design-regression:update
 ```
 
-**Credentials (clinic):** `chingiz@era.com` / `12345678` (see `e2e/design-regression/auth/helpers.ts`).
+**Credentials (clinic):** `shirinov.chingiz@gmail.com` / `12345678` (see `e2e/design-regression/auth/helpers.ts`).
 
 **CI:** GitHub Actions `Design regression` runs smoke specs only (login + modal structure). Pixel compare is local — Linux CI fonts/Chrome differ from Windows goldens.
 

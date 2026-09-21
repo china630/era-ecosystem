@@ -70,6 +70,8 @@ export default function OrdersPanel() {
   const [guestSearching, setGuestSearching] = useState(false);
   const [entitlements, setEntitlements] = useState<GuestEntitlements | null>(null);
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
+  const [hotelMode, setHotelMode] = useState(true);
+  const [hasKds, setHasKds] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,6 +86,19 @@ export default function OrdersPanel() {
   }, [load]);
 
   useEffect(() => {
+    void fetch("/api/edition")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        const kafe = d.edition === "kafe" || d.hotelMode === false;
+        setHotelMode(!kafe);
+        setHasKds(
+          !kafe ||
+            (Array.isArray(d.activeModules) &&
+              d.activeModules.includes("fnb_kitchen_kds")),
+        );
+      })
+      .catch(() => undefined);
     void fetch("/api/billing/context")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -104,7 +119,7 @@ export default function OrdersPanel() {
 
   useEffect(() => {
     const resId = selected?.roomChargeReservationId?.trim();
-    if (!resId) {
+    if (!hotelMode || !resId) {
       setEntitlements(null);
       return;
     }
@@ -120,7 +135,7 @@ export default function OrdersPanel() {
     return () => {
       cancelled = true;
     };
-  }, [selected?.roomChargeReservationId]);
+  }, [hotelMode, selected?.roomChargeReservationId]);
 
   async function fireTicket() {
     if (!selected) return;
@@ -142,7 +157,16 @@ export default function OrdersPanel() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ method }),
-    });
+    }).catch(() => null);
+    if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
+      window.dispatchEvent(
+        new CustomEvent("era-fnb-offline", {
+          detail: { kind: "pay", ticketId: selected.id, payload: { method } },
+        }),
+      );
+      setMessage(t("queuedOffline"));
+      return;
+    }
     const data = await res.json();
     if (!res.ok) {
       setMessage(data.error ?? "Payment failed");
@@ -405,6 +429,7 @@ export default function OrdersPanel() {
                 {t("splitSelected")}
               </button>
             </div>
+            {hotelMode ? (
             <div className="mb-3 rounded border border-[#ECF0F1] bg-[#FAFBFC] p-3">
               <p className="mb-2 text-xs font-medium text-[#7F8C8D]">{t("inHouseGuest")}</p>
               {selected.roomChargeReservationId ? (
@@ -486,6 +511,7 @@ export default function OrdersPanel() {
                 </>
               )}
             </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -494,7 +520,7 @@ export default function OrdersPanel() {
               >
                 {t("fireKitchen")}
               </button>
-              {inHouse || selected.roomChargeReservationId ? (
+              {hotelMode && (inHouse || selected.roomChargeReservationId) ? (
                 <button
                   type="button"
                   className="rounded bg-[#8E44AD] px-3 py-1.5 text-sm text-white"
@@ -502,7 +528,7 @@ export default function OrdersPanel() {
                 >
                   {t("roomCharge")}
                 </button>
-              ) : deferWalkInToHub ? (
+              ) : hotelMode && deferWalkInToHub ? (
                 <button
                   type="button"
                   className="rounded bg-[#D35400] px-3 py-1.5 text-sm text-white"
@@ -535,17 +561,19 @@ export default function OrdersPanel() {
                   </button>
                 </>
               )}
+              {hasKds ? (
               <Link
                 href="/kds"
                 className="rounded border px-3 py-1.5 text-sm text-[#2980B9]"
               >
                 {t("openKds")}
               </Link>
+              ) : null}
             </div>
           </>
         )}
         {message && <p className="mt-3 text-sm">{message}</p>}
-        {selected && inHouse && (
+        {selected && hotelMode && inHouse && (
           <p className="mt-2 text-xs text-[#8E44AD]">{t("inHouseHint")}</p>
         )}
         <p className="mt-3 text-xs text-[#7F8C8D]">{t("roleHint")}</p>

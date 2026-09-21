@@ -43,10 +43,12 @@ export async function POST(req: Request) {
           code: item.code,
           description: item.description,
           amount: item.amount,
+          listAmount: item.amount > 0 ? item.amount : null,
         },
         update: {
           description: item.description,
           amount: item.amount,
+          listAmount: item.amount > 0 ? item.amount : null,
           syncedAt: new Date(),
         },
       });

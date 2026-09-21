@@ -9,7 +9,11 @@ import {
   SYSTEM_ATTENDANCE_ACTOR,
   type AttendanceActor,
 } from "@/domain/procedure/procedure-attendance.service";
-import { resolveProcedureCharge, logProcedureCharge } from "@/domain/procedure/procedure-charge.service";
+import {
+  AWAITING_PACKAGE_REASON,
+  resolveProcedureCharge,
+  logProcedureCharge,
+} from "@/domain/procedure/procedure-charge.service";
 import { resolveProcedureConsumableLines } from "@/domain/master-data/master-data.service";
 import { isClinicElektrawebDualRun } from "@/domain/procedure/extra-ticket";
 
@@ -149,6 +153,7 @@ export async function completeProcedureOrder(
     overQuota: charge.overQuota,
     channel: logChannel,
     externalTicketId: shouldChargeFolio ? ticketId : null,
+    forceLog: charge.reason === AWAITING_PACKAGE_REASON,
   });
 
   // Retail HTTP stock-write-off retired (CLI-47): Finance owns TTK via event bus.

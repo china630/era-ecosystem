@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
 
 const voidSchema = z.object({
@@ -16,7 +18,7 @@ export async function POST(
 ) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_VOID);
   if (denied) return denied;
 
   const { id, lineId } = await params;

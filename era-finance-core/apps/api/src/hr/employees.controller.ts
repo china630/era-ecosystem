@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -14,10 +17,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { isDepartmentHeadRole } from "../auth/policies/hr-payroll.policy";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
@@ -29,6 +30,7 @@ import { RequiresModule } from "../subscription/requires-module.decorator";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { BulkPrefillEmployeesDto } from "./dto/bulk-prefill-employees.dto";
+import { BulkContractSalaryDto } from "./dto/bulk-contract-salary.dto";
 import { BulkSyncResultEmployeesDto } from "./dto/bulk-sync-result-employees.dto";
 import { ConvertEmployeeToFinDto, CreateEmployeeDto } from "./dto/create-employee.dto";
 import { ResolveEmployeePersonDto } from "./dto/resolve-employee-person.dto";
@@ -46,14 +48,8 @@ export class EmployeesController {
   ) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary:
       "Список сотрудников (пагинация; departmentId — фильтр; DEPARTMENT_HEAD — только свой отдел)",
@@ -64,6 +60,7 @@ export class EmployeesController {
     @Query("page") page?: string,
     @Query("pageSize") pageSize?: string,
     @Query("departmentId") departmentId?: string,
+    @Query("cpEmploymentId") cpEmploymentId?: string,
   ) {
     const role = requireOrgRole(user);
     let dept = departmentId;
@@ -84,6 +81,8 @@ export class EmployeesController {
       page: p,
       pageSize: ps,
       departmentId: dept,
+      cpEmploymentId: cpEmploymentId?.trim() || undefined,
+      actingUserRole: role,
     });
   }
 
@@ -110,9 +109,9 @@ export class EmployeesController {
   }
 
   @Post("bulk-prefill")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.HR_FULL)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Bulk DTO list for extension ƏMAS prefill" })
   getBulkPrefill(
     @OrganizationId() organizationId: string,
@@ -122,9 +121,9 @@ export class EmployeesController {
   }
 
   @Post("bulk-sync-result")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.HR_FULL)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Persist bulk sync results for employees (ƏMAS)" })
   saveBulkSyncResult(
     @OrganizationId() organizationId: string,
@@ -134,15 +133,39 @@ export class EmployeesController {
     return this.employees.saveBulkSyncResult(organizationId, dto, user.userId);
   }
 
+  @Post("bulk-contract-salary")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.HR_FULL)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
+  @ApiOperation({
+    summary:
+      "Bulk set contract salary (tariff=salary, supplement=0) after CP hire-mirror",
+  })
+  bulkContractSalary(
+    @OrganizationId() organizationId: string,
+    @Body() dto: BulkContractSalaryDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.employees.bulkContractSalary(
+      organizationId,
+      dto.items,
+      requireOrgRole(user),
+    );
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Сотрудник по id" })
-  getOne(@OrganizationId() organizationId: string, @Param("id") id: string) {
-    return this.employees.getOne(organizationId, id);
+  getOne(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.employees.getOne(organizationId, id, requireOrgRole(user));
   }
 
   @Post("resolve-person")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Resolve MDM person for payroll hire (FIN lookup, no local PII persist)" })
   resolvePerson(
     @OrganizationId() organizationId: string,
@@ -152,20 +175,21 @@ export class EmployeesController {
   }
 
   @Post()
-  @UseGuards(QuotaGuard, RolesGuard)
+  @UseGuards(QuotaGuard)
   @CheckQuota(QuotaResource.USERS)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Создать сотрудника" })
   create(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateEmployeeDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.employees.create(organizationId, dto);
+    return this.employees.create(organizationId, dto, requireOrgRole(user));
   }
 
   @Post(":id/convert-to-fin")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Convert foreign employee to citizen FIN (MDM merge)" })
   convertToFin(
     @OrganizationId() organizationId: string,
@@ -176,20 +200,26 @@ export class EmployeesController {
   }
 
   @Patch(":id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Обновить сотрудника" })
   update(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @Body() dto: UpdateEmployeeDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.employees.update(organizationId, id, dto);
+    return this.employees.update(
+      organizationId,
+      id,
+      dto,
+      requireOrgRole(user),
+    );
   }
 
   @Delete(":id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Удалить сотрудника" })
   remove(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.employees.remove(organizationId, id);

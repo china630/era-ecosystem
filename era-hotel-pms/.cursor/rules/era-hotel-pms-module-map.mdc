@@ -38,6 +38,9 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | /fo/rack | rack | Door tiles; From–To stay overlap; filter pane and grid scroll separately |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
 | Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes`; date amend via `PATCH` reservation-full → `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` (checkIn/checkOut) for clinic quota recalc (CLI-51) | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
+| Depart guest | `POST /api/reservations/:id/pax/:paxId/depart` → `SATELLITE_HOTEL_GUEST_DEPARTED` | Exclusive party only; stay IN_HOUSE; ADR `hotel-reservation-card-and-party-ops.md` D4 |
+| Move guest | `POST /api/reservations/:id/pax/:paxId/move` → `SATELLITE_HOTEL_GUEST_MOVED` | Sibling `ReservationGroup` only; stable paxKey |
+| Swap rooms | `POST /api/reservations/:id/swap-room` | Sibling group; transactional door swap |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -48,7 +51,8 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | `/distribution/travel-agencies` | `GET/POST /api/admin/travel-agencies` | Travel agent master (commission + settlementMode) |
 | `/distribution/companies` | `GET/POST /api/admin/companies` | Corporate master (settlementMode, no commission) |
 | `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
-| `/distribution/channel` | `GET/POST/DELETE /api/channel/*`, `GET /api/channel/health`, `POST /api/channel/ota-cancel`, sync push/pull | Local CM (HOT-CH-01); live OTA STUB (HOT-CH-02) |
+| `/distribution/channel` | `GET/PUT /api/channel/binding`, `GET/POST /api/channel/*`, health, ota-cancel, sync push/pull; `POST /api/integrations/channex/webhook`; cron `channel-ari-drain` | Local CM (HOT-CH-01); Channex binding + ARI queue (HOT-CH-02 STUB until live UAT) |
+| `/b2c` | `GET /api/public/v1/availability`, `POST /api/public/v1/holds`, `POST /api/public/v1/bookings` | Direct IBE (HOT-IBE-01); legacy `/api/public/booking/rates` → 410 |
 | Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
 | Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
@@ -202,12 +206,26 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
 | `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
 
+## Settings / RBAC (HOT-RBAC-01)
+
+| Route | API | Notes |
+|-------|-----|-------|
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
+| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`admin:users`); role select includes custom clones |
+| `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
+| Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |
+| Role clone / matrix Save | `POST /api/admin/roles`, `PATCH …/permissions` | Stamp `permissionCatalogVersion` so ensure does not restore stripped Wave-1 keys |
+| Staff `/login` / SSO | JWT `permissions[]`; ensure system roles + `permissionCatalogVersion`=3 (`screen:*` + `api:*`) | Hotel_Admin does **not** bypass matrix; page middleware fail-closed inventory |
+
+**Page map:** `src/lib/auth/page-route-permissions.ts` — every staff `app/**/page.tsx` must map (test: `hotel-page-route-inventory.spec.ts`).
+
 ## Related docs
 
 - `doc/nafta/B2B-GATE.md` — Nafta P4 gate defaults
 - `docs/adr/hotel-b2b-sales-contracts.md` — contract + allotment ADR
 - `docs/adr/hotel-city-ledger-and-fo-money.md` — FO money + CL ops vs Finance AR
 - `docs/adr/hotel-bar-accounting-vs-package-sell.md` — BAR vs package sell
+- `docs/adr/hotel-domain-permissions-and-rbac.md` — Variant A RBAC
 - `doc/BACKLOG-PRODUCTION.md` § P5
-- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money)
+- `doc/UAT-SMOKE.md` §15 (BEO), §18 (B2B contracts), §27 (P5 FO money), §45 (RBAC)
 - `doc/MANAGEMENT-REPORTS-CATALOG.md` — EW Management Reports catalog + Nafta nightly ZIP

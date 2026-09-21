@@ -101,12 +101,12 @@ export default function NursePage() {
   const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
-    if (mineDefaultApplied || !auth?.role) return;
-    if (auth.role === "NURSE" && !auth.isPlatformSuperAdmin) {
+    if (mineDefaultApplied || !auth) return;
+    if (auth.staffKind === "NURSE" && !auth.isPlatformSuperAdmin) {
       setMineOn(true);
     }
     setMineDefaultApplied(true);
-  }, [auth?.role, auth?.isPlatformSuperAdmin, mineDefaultApplied]);
+  }, [auth, auth?.staffKind, auth?.isPlatformSuperAdmin, mineDefaultApplied]);
 
   useEffect(() => {
     if (!isDemoStaffFilter) return;
@@ -415,7 +415,7 @@ export default function NursePage() {
 
   function resetFilters() {
     const today = todayBakuYmd();
-    const defaultMine = auth?.role === "NURSE" && !auth?.isPlatformSuperAdmin;
+    const defaultMine = auth?.staffKind === "NURSE" && !auth?.isPlatformSuperAdmin;
     setDate(today);
     setStatus("ALL");
     setPatient("");

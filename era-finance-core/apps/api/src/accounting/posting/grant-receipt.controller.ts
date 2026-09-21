@@ -1,9 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../../common/decorators/permissions.decorator";
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../../auth/guards/roles.guard";
-import { Roles } from "../../auth/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
 import { RecordGrantReceiptDto } from "./dto/record-grant-receipt.dto";
 import { GrantReceiptService } from "./grant-receipt.service";
@@ -11,12 +11,12 @@ import { GrantReceiptService } from "./grant-receipt.service";
 @ApiTags("accounting-grants")
 @ApiBearerAuth("bearer")
 @Controller("accounting/grant-receipts")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class GrantReceiptController {
   constructor(private readonly grants: GrantReceiptService) {}
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Record NGO grant / targeted funding (NGO_GRANT_INCOME schema)",
   })

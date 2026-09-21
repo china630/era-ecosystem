@@ -62,6 +62,8 @@ import {
   Handshake,
 } from "lucide-react";
 import type { AuthUser } from "../../lib/auth-context";
+import { useOrgPermissions } from "../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../lib/role-utils";
 import { EraAppSidebar } from "@era/satellite-kit/ui";
 
 type SidebarLayout = {
@@ -466,13 +468,17 @@ export function MainSidebar({
 }) {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const perms = useOrgPermissions();
   const canSeeAuditHubNav =
-    user?.role === "OWNER" ||
-    user?.role === "ADMIN" ||
-    user?.role === "ACCOUNTANT" ||
-    user?.role === "AUDITOR";
+    perms.can(CP_PERMISSION.API_LEDGER_READ) ||
+    perms.can(CP_PERMISSION.API_REPORTS_NAS) ||
+    perms.isOwner;
+  const canSeeCompareBooks = perms.can(CP_PERMISSION.API_BOOK_MGMT);
+  const canSeeMgmtLaborDelta = canSeeCompareBooks;
   const canSeeComplianceNav =
-    canSeeAuditHubNav || user?.role === "DIRECTOR";
+    canSeeAuditHubNav || perms.can(CP_PERMISSION.API_BOOK_MGMT);
+  const canSeePayrollMoney = perms.canAccessPayrollMoney;
+  const canManageOrgSettings = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);
   const showAuditNavSection = Boolean(token) || canSeeAuditHubNav;
   const [layoutWide, setLayoutWide] = useState(false);
   const [openFlyoutKey, setOpenFlyoutKey] = useState<string | null>(null);
@@ -626,6 +632,18 @@ export function MainSidebar({
             nested
             onNavClick={onNavClick}
           />
+          {user &&
+          (canPostAccounting ||
+            perms.can(CP_PERMISSION.API_LEDGER_READ) ||
+            perms.can(CP_PERMISSION.API_INVOICES_UPDATE)) ? (
+            <SideNavSubItem
+              href="/crm/trade-credit"
+              label={t("nav.tradeCredit", { defaultValue: "Trade credit" })}
+              isActive={pathname.startsWith("/crm/trade-credit")}
+              icon={CreditCard}
+              onNavClick={onNavClick}
+            />
+          ) : null}
           <SideNavSubItem
             href="/catalog/products"
             label={t("nav.products")}
@@ -853,6 +871,24 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
+            href="/hr/emas-queue"
+            label={t("nav.emasQueue", "ƏMAS queue")}
+            isActive={pathname.startsWith("/hr/emas-queue")}
+            icon={Users2}
+            nested
+            onNavClick={onNavClick}
+          />
+          {canSeeMgmtLaborDelta ? (
+            <SideNavItem
+              href="/hr/mgmt-labor-delta"
+              label={t("nav.mgmtLaborDelta", "MGMT labor delta")}
+              isActive={pathname.startsWith("/hr/mgmt-labor-delta")}
+              icon={Coins}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
+          <SideNavItem
             href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/positions`}
             label={t("nav.hrStaffingUnits")}
             isActive={false}
@@ -883,14 +919,16 @@ export function MainSidebar({
             icon={Clock}
             onNavClick={onNavClick}
           />
-          <SideNavItem
-            href="/payroll"
-            label={t("nav.payroll")}
-            isActive={pathname.startsWith("/payroll")}
-            icon={Banknote}
-            nested
-            onNavClick={onNavClick}
-          />
+          {canSeePayrollMoney ? (
+            <SideNavItem
+              href="/payroll"
+              label={t("nav.payroll")}
+              isActive={pathname.startsWith("/payroll")}
+              icon={Banknote}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
           <SideNavItem
             href="/hr/analytics"
             label={t("nav.hrInfographics")}
@@ -922,6 +960,15 @@ export function MainSidebar({
             icon={ScrollText}
             onNavClick={onNavClick}
           />
+          {canSeeCompareBooks ? (
+            <SideNavSubItem
+              href="/reporting/compare-books"
+              label={t("nav.compareBooks")}
+              isActive={pathname.startsWith("/reporting/compare-books")}
+              icon={Scale}
+              onNavClick={onNavClick}
+            />
+          ) : null}
           <SideNavSubItem
             href="/reporting/compare-books"
             label={t("nav.compareBooks")}
@@ -1161,7 +1208,7 @@ export function MainSidebar({
                   nested
                   onNavClick={onNavClick}
                 />
-                {user?.role === "OWNER" ? (
+                {perms.canAccessBilling ? (
                   <SideNavItem
                     href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`}
                     label={t("nav.settingsSubscription")}
@@ -1180,12 +1227,12 @@ export function MainSidebar({
                   onNavClick={onNavClick}
                 />
             </>
-            {user && user.role != null && user.role !== "USER" ? (
+            {user && (canPostAccounting || canManageOrgSettings || perms.can(CP_PERMISSION.API_ORG_MEMBERS_READ)) ? (
               <>
-                {(user.role === "OWNER" || user.role === "ADMIN") && (
+                {canManageOrgSettings && (
                   <>
                     <SideNavItem
-                      href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/team`}
+                      href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/access`}
                       label={t("nav.team")}
                       isActive={false}
                       icon={UserPlus}
@@ -1196,6 +1243,22 @@ export function MainSidebar({
                       href="/settings/organization"
                       label={t("nav.orgCompany")}
                       isActive={pathname.startsWith("/settings/organization")}
+                      icon={Briefcase}
+                      nested
+                      onNavClick={onNavClick}
+                    />
+                    <SideNavItem
+                      href="/settings/extra-fields"
+                      label={t("nav.extraFields")}
+                      isActive={pathname.startsWith("/settings/extra-fields")}
+                      icon={Briefcase}
+                      nested
+                      onNavClick={onNavClick}
+                    />
+                    <SideNavItem
+                      href="/settings/print-placeholders"
+                      label={t("nav.printPlaceholders")}
+                      isActive={pathname.startsWith("/settings/print-placeholders")}
                       icon={Briefcase}
                       nested
                       onNavClick={onNavClick}
@@ -1218,7 +1281,7 @@ export function MainSidebar({
                     />
                   </>
                 )}
-                {user.role === "OWNER" ? (
+                {perms.canAccessBilling ? (
                   <>
                     <SideNavItem
                       href="/admin/audit-log"

@@ -201,6 +201,7 @@ export class AuthController {
       user.organizationId,
       user.role,
       authorization,
+      user,
     );
   }
 

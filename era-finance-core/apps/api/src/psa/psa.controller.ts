@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,9 +19,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { CheckQuota } from "../common/decorators/check-quota.decorator";
 import { QuotaGuard } from "../common/guards/quota.guard";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -34,18 +35,12 @@ import { PsaService } from "./psa.service";
 @ApiTags("psa")
 @ApiBearerAuth("bearer")
 @Controller("psa")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class PsaController {
   constructor(private readonly psa: PsaService) {}
 
   @Get("projects")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DIRECTOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "List PSA projects" })
   listProjects(
     @OrganizationId() organizationId: string,
@@ -56,7 +51,7 @@ export class PsaController {
   }
 
   @Post("projects")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Create PSA project" })
   createProject(
     @OrganizationId() organizationId: string,
@@ -66,13 +61,7 @@ export class PsaController {
   }
 
   @Get("projects/:id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DIRECTOR,
-  )
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Get PSA project" })
   getProject(
     @OrganizationId() organizationId: string,
@@ -82,7 +71,7 @@ export class PsaController {
   }
 
   @Patch("projects/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Update PSA project" })
   updateProject(
     @OrganizationId() organizationId: string,
@@ -93,13 +82,7 @@ export class PsaController {
   }
 
   @Get("projects/:id/tasks")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DIRECTOR,
-  )
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "List project tasks" })
   listTasks(
     @OrganizationId() organizationId: string,
@@ -109,7 +92,7 @@ export class PsaController {
   }
 
   @Post("projects/:id/tasks")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Create project task" })
   createTask(
     @OrganizationId() organizationId: string,
@@ -120,13 +103,7 @@ export class PsaController {
   }
 
   @Get("projects/:id/time-entries")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DIRECTOR,
-  )
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "List time entries" })
   listTimeEntries(
     @OrganizationId() organizationId: string,
@@ -136,13 +113,7 @@ export class PsaController {
   }
 
   @Post("projects/:id/time-entries")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.HR_OFFICER,
-  )
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Create time entry (DRAFT)" })
   createTimeEntry(
     @OrganizationId() organizationId: string,
@@ -153,7 +124,7 @@ export class PsaController {
   }
 
   @Patch("projects/:projectId/time-entries/:entryId")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Update time entry (e.g. approve)" })
   patchTimeEntry(
     @OrganizationId() organizationId: string,
@@ -165,8 +136,8 @@ export class PsaController {
   }
 
   @Post("projects/:id/generate-invoice")
-  @UseGuards(QuotaGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(QuotaGuard)
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @CheckQuota(QuotaResource.INVOICES_PER_MONTH)
   @ApiOperation({ summary: "Create draft invoice from approved time entries" })
   generateInvoice(
@@ -178,13 +149,7 @@ export class PsaController {
   }
 
   @Get("projects/:id/profitability")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DIRECTOR,
-  )
+  @Permissions(CP_PERMISSION.API_PSA_MANAGE)
   @ApiOperation({ summary: "Project profitability snapshot" })
   profitability(
     @OrganizationId() organizationId: string,

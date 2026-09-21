@@ -15,7 +15,7 @@ import {
   toPhysioOrderPayload,
 } from "@/domain/physio/physio-order-sites.service";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
-import { bakuDateTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeLabel, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -173,6 +173,7 @@ export async function getPatientCardSummary(
 ) {
   const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const now = new Date();
+  const todayBounds = bakuDayBounds(todayBakuYmd(now));
 
   const activeEpisode = opts?.episodeId
     ? await prisma.clinicalEpisode.findFirst({
@@ -245,12 +246,11 @@ export async function getPatientCardSummary(
       where: {
         patientRefId,
         ...episodeFilter,
-        scheduledAt: { gte: now },
-        status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
+        scheduledAt: { gte: todayBounds.start, lt: todayBounds.end },
+        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
-      take: settings.patientCardPlanPreview,
     }),
     prisma.procedureOrder.findMany({
       where: {

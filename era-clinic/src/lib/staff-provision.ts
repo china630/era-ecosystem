@@ -6,9 +6,11 @@ import {
 } from "@era/contracts";
 import { hashPassword, splitFullNameToParts } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { CLINIC_ROLE } from "@/lib/clinic-roles";
-import { permissionsJsonForRole } from "@/lib/auth/clinic-permissions";
-import { staffKindFromSatelliteRole } from "@/domain/staff/staff-kind";
+import {
+  parseClinicRoleStaffKind,
+  resolveSystemRoleAlias,
+} from "@/lib/clinic-roles";
+import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 function latinize(value: string): string {
@@ -78,23 +80,21 @@ function namesLikelySame(imported: string, provisioned: string): boolean {
   );
 }
 
-const ROLE_CODES: Record<string, string> = {
-  DOCTOR: CLINIC_ROLE.DOCTOR,
-  NURSE: CLINIC_ROLE.NURSE,
-  FLOOR: CLINIC_ROLE.FLOOR,
-  LAB_TECH: CLINIC_ROLE.LAB_TECH,
-  LAB: CLINIC_ROLE.LAB_TECH,
-  CLINIC_ADMIN: CLINIC_ROLE.CLINIC_ADMIN,
-  RECEPTION: CLINIC_ROLE.RECEPTION,
-  ADMIN: CLINIC_ROLE.CLINIC_ADMIN,
-  STAFF: CLINIC_ROLE.RECEPTION,
-};
-
 export class SatelliteLoginTakenError extends Error {
   readonly code = "LOGIN_TAKEN" as const;
   constructor(login: string) {
     super(`Login already taken: ${login}`);
     this.name = "SatelliteLoginTakenError";
+  }
+}
+
+export class UnknownSatelliteRoleError extends Error {
+  readonly code = "UNKNOWN_SATELLITE_ROLE" as const;
+  constructor(satelliteRole: string) {
+    super(
+      `Unknown satellite role "${satelliteRole}" — create the role in /admin/access (or use a system role code)`,
+    );
+    this.name = "UnknownSatelliteRoleError";
   }
 }
 
@@ -120,19 +120,33 @@ async function resolveUserForLogin(args: {
   return { existing: null, mode: "create" as const };
 }
 
-async function ensureRole(roleCode: string) {
-  let role = await prisma.role.findFirst({ where: { code: roleCode } });
+/**
+ * System aliases (ADMIN→CLINIC_ADMIN, …) then lookup Role in org.
+ * Unknown custom codes fail — do not silently map to RECEPTION.
+ */
+async function resolveProvisionRole(
+  organizationId: string,
+  satelliteRole: string,
+) {
+  await ensureSystemClinicRoles(prisma, organizationId);
+  const code = resolveSystemRoleAlias(satelliteRole);
+  const role = await prisma.role.findFirst({
+    where: { organizationId, code },
+  });
   if (!role) {
-    role = await prisma.role.create({
-      data: {
-        code: roleCode,
-        name: roleCode.replace(/_/g, " "),
-        permissionsJson: permissionsJsonForRole(roleCode),
-      },
-    });
+    throw new UnknownSatelliteRoleError(satelliteRole);
   }
-  if (!role) throw new Error(`Failed to ensure role: ${roleCode}`);
   return role;
+}
+
+function practitionerStaffKindFromRole(
+  staffKind: string | null | undefined,
+): "DOCTOR" | "NURSE" | "LAB" {
+  const kind = parseClinicRoleStaffKind(staffKind);
+  if (kind === "NURSE") return "NURSE";
+  if (kind === "LAB") return "LAB";
+  // DOCTOR or NONE → DOCTOR pool for clinical matching (reception rarely gets Practitioner).
+  return "DOCTOR";
 }
 
 async function findExistingPractitioner(input: {
@@ -166,8 +180,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
     const organizationId = requestOrganizationId();
-    const roleCode = ROLE_CODES[p.satelliteRole] ?? CLINIC_ROLE.RECEPTION;
-    const role = await ensureRole(roleCode);
+    const role = await resolveProvisionRole(organizationId, p.satelliteRole);
 
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const passwordHash = await hashPassword(p.pin ?? "0000");
@@ -212,7 +225,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
       userId = user.id;
     }
 
-    const staffKind = staffKindFromSatelliteRole(p.satelliteRole);
+    const staffKind = practitionerStaffKindFromRole(role.staffKind);
     const existingPractitioner = await findExistingPractitioner({
       cpEmploymentId,
       globalPersonId,

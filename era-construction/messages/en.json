@@ -1,9 +1,9 @@
 {
   "auth": {
     "loginFailed": "Login failed",
-    "organizationIdLabel": "Organization ID (construction)",
-    "organizationIdPlaceholder": "UUID — required on shared construction pool",
-    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",

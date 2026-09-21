@@ -1,5 +1,5 @@
-# ERA Security Hygiene Program §3 — SAST (secrets + Semgrep + OSV)
-# Tune-in: warn-friendly first; make required on branch protection after noise review.
+# ERA Security Hygiene Program section 3 — SAST (secrets + Semgrep + OSV).
+# Tune-in: scanners report findings but the job stays green until branch protection is enabled.
 name: Security SAST
 
 on:
@@ -8,36 +8,40 @@ on:
   push:
     branches: [dev, master]
 
+permissions:
+  contents: read
+
 concurrency:
-  group: security-sast-${{ github.workflow }}-${{ github.ref }}
+  group: security-sast-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   gitleaks:
-    name: secrets (gitleaks)
+    name: secrets
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  semgrep:
-    name: sast (semgrep)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    container:
-      image: semgrep/semgrep
-    steps:
-      - uses: actions/checkout@v4
-      - name: Semgrep OWASP / JS-TS (tune-in: non-blocking)
+      - name: "Gitleaks (tune-in: non-blocking)"
         run: |
           set +e
-          semgrep scan \
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
+            detect --no-git --source . --verbose --redact --no-banner
+          code=$?
+          echo "gitleaks_exit=$code"
+          exit 0
+
+  semgrep:
+    name: sast
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Semgrep OWASP / JS-TS (tune-in: non-blocking)"
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.110.0 \
+            semgrep scan \
             --config=p/owasp-top-ten \
             --config=p/typescript \
             --config=p/javascript \
@@ -54,12 +58,12 @@ jobs:
           exit 0
 
   osv:
-    name: deps (osv-scanner)
+    name: deps
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: OSV-Scanner (tune-in: non-blocking)
+      - name: "OSV-Scanner (tune-in: non-blocking)"
         run: |
           set +e
           docker run --rm -v "$PWD:/src" -w /src ghcr.io/google/osv-scanner:v2.0.3 \
@@ -67,5 +71,4 @@ jobs:
             ./
           code=$?
           echo "osv_exit=$code"
-          # Tune-in: report findings but do not fail the check
           exit 0

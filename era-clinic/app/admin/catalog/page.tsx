@@ -26,6 +26,7 @@ type CatalogRow = {
   descriptionRu?: string | null;
   descriptionEn?: string | null;
   amount: string;
+  listAmount?: string | null;
   packageIncluded: boolean;
   department: string | null;
   syncedAt: string;
@@ -35,6 +36,7 @@ type CatalogRow = {
 
 type PackageFilter = "" | "paid" | "package";
 type KindFilter = "" | "PROCEDURE" | "DIAGNOSTIC" | "LAB" | "VISIT" | "OTHER";
+type MissingListFilter = "" | "1";
 
 function isStale(syncedAt: string): boolean {
   const ageMs = Date.now() - new Date(syncedAt).getTime();
@@ -54,6 +56,7 @@ export default function CatalogAdminPage() {
     packageIncluded: "" as PackageFilter,
     department: "",
     kind: "" as KindFilter,
+    missingListPrice: "" as MissingListFilter,
   });
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
@@ -62,6 +65,14 @@ export default function CatalogAdminPage() {
     const d = new Date(row.syncedAt);
     return !max || d > max ? d : max;
   }, null);
+
+  const missingListPriceCount = useMemo(() => {
+    return rows.filter((row) => {
+      const list = row.listAmount != null ? Number(row.listAmount) : 0;
+      const amount = Number(row.amount);
+      return (row.packageIncluded || amount === 0) && !(list > 0);
+    }).length;
+  }, [rows]);
 
   const departments = useMemo(() => {
     const set = new Set<string>();
@@ -74,7 +85,9 @@ export default function CatalogAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/catalog");
+      const qs =
+        filters.missingListPrice === "1" ? "?missingListPrice=1" : "";
+      const res = await fetch(`/api/admin/catalog${qs}`);
       if (res.ok) {
         const d = await res.json();
         const raw = (d.data ?? d) as CatalogRow[];
@@ -88,7 +101,7 @@ export default function CatalogAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [locale]);
+  }, [locale, filters.missingListPrice]);
 
   useEffect(() => {
     void load();
@@ -130,12 +143,18 @@ export default function CatalogAdminPage() {
       {
         key: "amount",
         header: t("amount"),
-        render: (row) =>
-          row.packageIncluded ? (
-            <span className={TEXT_MUTED_CLASS}>{t("packageLabel")}</span>
-          ) : (
-            `${row.amount} AZN`
-          ),
+        render: (row) => {
+          const list = row.listAmount != null ? Number(row.listAmount) : 0;
+          if (row.packageIncluded) {
+            return (
+              <span className={TEXT_MUTED_CLASS}>
+                {t("packageLabel")}
+                {list > 0 ? ` · list ${list} AZN` : ""}
+              </span>
+            );
+          }
+          return `${row.amount} AZN`;
+        },
       },
       {
         key: "department",
@@ -187,7 +206,12 @@ export default function CatalogAdminPage() {
 
   function resetFilters() {
     setQ("");
-    setFilters({ packageIncluded: "" as PackageFilter, department: "", kind: "" as KindFilter });
+    setFilters({
+      packageIncluded: "" as PackageFilter,
+      department: "",
+      kind: "" as KindFilter,
+      missingListPrice: "" as MissingListFilter,
+    });
   }
 
   return (
@@ -207,6 +231,11 @@ export default function CatalogAdminPage() {
         }
       />
       {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
+      {missingListPriceCount > 0 ? (
+        <p className="mb-3 text-[13px] text-amber-700">
+          {t("missingListPriceNote", { count: missingListPriceCount })}
+        </p>
+      ) : null}
       {latestSync ? (
         <p
           className={`mb-3 text-[13px] ${isStale(latestSync.toISOString()) ? "text-amber-700" : TEXT_MUTED_CLASS}`}
@@ -254,6 +283,20 @@ export default function CatalogAdminPage() {
           <option value="">{t("filterPackageAll")}</option>
           <option value="paid">{t("filterPackagePaid")}</option>
           <option value="package">{t("filterPackageIncluded")}</option>
+        </FieldSelect>
+        <FieldSelect
+          label={t("filterMissingListPrice")}
+          preset="select"
+          value={filters.missingListPrice}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              missingListPrice: e.target.value as MissingListFilter,
+            })
+          }
+        >
+          <option value="">{t("filterMissingListPriceAll")}</option>
+          <option value="1">{t("filterMissingListPriceOnly")}</option>
         </FieldSelect>
         <FieldSelect
           label={t("department")}

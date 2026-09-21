@@ -5,5 +5,6 @@ docker-data
 **/node_modules
 **/.next
 **/dist
+**/*.tsbuildinfo
 *.md
 !era-finance-core/packages/database/prisma/**/*.md

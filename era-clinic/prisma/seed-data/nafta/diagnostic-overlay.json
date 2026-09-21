@@ -15,9 +15,9 @@
         "az": "İlkin diaqnostik prosedurlar (Check-up)"
       },
       "includes": [
-        "SANATORIUM-INTAKE",
+        "VISIT-SANATORIUM-INTAKE",
         "GYN-OR-URO",
-        "ECG-12",
+        "CARDIO-ECG",
         "USG-ABD"
       ]
     }
@@ -28,7 +28,7 @@
       "title": {
         "en": "Abdominal + pelvic ultrasound (Nafta)",
         "ru": "УЗИ живота и малого таза (Nafta)",
-        "az": "Qarın boşluğu və kiçik çanaq USM"
+        "az": "USM Qarın boşluğu və kiçik çanaq"
       },
       "fields": [
         {

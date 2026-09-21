@@ -1,67 +1,43 @@
-# 06. RBAC и операции
+# 06. RBAC and operations
 
-## Роли
+**Canon:** [docs/adr/fnb-domain-permissions-and-rbac.md](../../docs/adr/fnb-domain-permissions-and-rbac.md)  
+**SSOT keys:** `era-fnb-pos/src/lib/auth/permissions.ts`
 
-| Роль | Код | Права |
-|------|-----|-------|
-| Waiter | `FB_WAITER` | Open ticket, order, precheck, fire kitchen |
-| Cashier | `FB_CASHIER` | + payments (not room without flag) |
-| Head waiter | `FB_HEAD` | + transfer, split, room charge |
-| Manager | `FB_MANAGER` | + void, discount, Z, reopen, settings |
+## Model (Variant A)
+
+| Layer | Rule |
+|-------|------|
+| Role | Package of grants (`Role.permissionsJson`). Name grants nothing. |
+| Door | `api:*` / `screen:*` / `admin:*` via `denyUnlessPermission` / page middleware |
+| Bypass | Platform super-admin + OrgOwner only — **never** PIN sessions; **FB_MANAGER does not bypass** |
+| PIN | `StaffRoster.pinRole` → same FB_* package; requires bound `outletId` |
+| Kafe | Waiter template omits `api:tickets.pay` |
+
+## System roles
+
+| Role | Code | Notes |
+|------|------|-------|
+| Waiter | `FB_WAITER` | Floor/orders; hotel may pay; kafe cannot |
+| Cashier | `FB_CASHIER` | Till + pay |
 | Kitchen | `FB_KITCHEN` | KDS only |
-| Viewer | `FB_VIEWER` | Read-only reports |
+| Manager | `FB_MANAGER` | Ops + admin + matrix |
 
-Cross-system: **Financial_Auditor** из ERA Core — read-only reports (SSO как в PMS).
+Custom roles: clone on `/admin/access` (e.g. head waiter). Doc-era `FB_HEAD` / `FB_VIEWER` are not seeded.
 
----
+## Audit
 
-## Матрица разрешений (сокращённо)
-
-| Permission | Waiter | Cashier | Manager |
-|------------|--------|---------|---------|
-| ticket.open | ✓ | ✓ | ✓ |
-| ticket.order | ✓ | ✓ | ✓ |
-| ticket.precheck | ✓ | ✓ | ✓ |
-| payment.cash_card | — | ✓ | ✓ |
-| payment.room_charge | — | ✓* | ✓ |
-| ticket.void | — | — | ✓ |
-| discount.apply | — | — | ✓ |
-| shift.z_close | — | — | ✓ |
-| menu.manage | — | — | ✓ |
-| kds.bump | kitchen | kitchen | ✓ |
-
-\* room charge для cashier — настройка outlet.
-
----
-
-## Аудит
-
-| Событие | Лог |
-|---------|-----|
+| Event | Log |
+|-------|-----|
 | Void line/ticket | user, reason, before/after |
 | Discount | user, %, amount |
 | Z-close | snapshot totals |
-| Room charge fail/success | correlation id, PMS response |
+| Role permissions PATCH | `ROLE_PERMISSIONS_PATCH` satellite audit |
 
----
+## Operational day
 
-## Операционный день
-
-| Время | Действие |
-|-------|----------|
-| Утро | Open POS shift |
-| День | Tickets |
-| Вечер | Z-close всех outlet |
-| Ночь | PMS night audit (блок если POS shift open) |
-
----
-
-## Offline / degraded (фаза 2)
-
-| Режим | Поведение |
-|-------|-----------|
-| PMS недоступен | Room charge disabled; cash/card OK |
-| ERP недоступен | Queue E3/E7/E8; local allow sale |
-| KKM error | Payment blocked for fiscal methods |
-
-Nafta v1 — online-only.
+| Time | Action |
+|------|--------|
+| Morning | Open POS shift (`api:shifts.open`) |
+| Day | Tickets |
+| Evening | Z-close (`api:shifts.close`) |
+| Night | PMS night audit (block if POS shift open) |

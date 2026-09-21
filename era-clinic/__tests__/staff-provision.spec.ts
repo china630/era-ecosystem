@@ -1,13 +1,19 @@
 import {
   handleStaffProvisionEvent,
   SatelliteLoginTakenError,
+  UnknownSatelliteRoleError,
 } from "@/lib/staff-provision";
+
+jest.mock("@/lib/auth/ensure-system-clinic-roles", () => ({
+  ensureSystemClinicRoles: jest.fn().mockResolvedValue(undefined),
+}));
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     role: {
       findFirst: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
@@ -59,7 +65,11 @@ describe("clinic staff-provision", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const { prisma } = jest.requireMock("@/lib/prisma");
-    prisma.role.findFirst.mockResolvedValue({ id: "role-1", code: "DOCTOR" });
+    prisma.role.findFirst.mockResolvedValue({
+      id: "role-1",
+      code: "DOCTOR",
+      staffKind: "DOCTOR",
+    });
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: "user-1" });
@@ -167,6 +177,42 @@ describe("clinic staff-provision", () => {
       SatelliteLoginTakenError,
     );
     expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("throws UnknownSatelliteRoleError for custom role missing in DB", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.role.findFirst.mockResolvedValue(null);
+    await expect(
+      handleStaffProvisionEvent({
+        ...provisionEvent,
+        payload: {
+          ...provisionEvent.payload,
+          satelliteRole: "CHIEF_DOCTOR",
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnknownSatelliteRoleError);
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("maps ADMIN alias to CLINIC_ADMIN without silent RECEPTION fallback", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.role.findFirst.mockResolvedValue({
+      id: "role-admin",
+      code: "CLINIC_ADMIN",
+      staffKind: "NONE",
+    });
+    await handleStaffProvisionEvent({
+      ...provisionEvent,
+      payload: {
+        ...provisionEvent.payload,
+        satelliteRole: "ADMIN",
+      },
+    });
+    expect(prisma.role.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ code: "CLINIC_ADMIN" }),
+      }),
+    );
   });
 
   it("deactivates only satelliteUserId on STAFF_DEACTIVATED", async () => {

@@ -27,10 +27,45 @@ export const WORKFORCE_HUB_KEYS = [
 export const CATALOG_MUTEX_GROUPS: readonly (readonly string[])[] = [
   DATA_HUB_XOR,
   WORKFORCE_XOR,
+  ["platform_domain", "platform_domain_org"],
   ["platform_loyalty", "retail_promotions"],
   ["platform_delivery", "fnb_delivery_hub"],
+  ["fnb_qr_menu", "platform_portal"],
   ["hotel_medical_sanatorium", "clinic_sanatorium_clinical"],
 ];
+
+/** One-shot SKUs — billed at toggle, never on the monthly Foundation run. */
+export const ONE_SHOT_CATALOG_KEYS = ["platform_onsite_visit"] as const;
+
+export function isOneShotCatalogKey(key: string): boolean {
+  return (ONE_SHOT_CATALOG_KEYS as readonly string[]).includes(key);
+}
+
+export function isKafeEdition(org: {
+  subscriptionPlan?: string | null;
+  settings?: unknown;
+}): boolean {
+  const plan = (org.subscriptionPlan ?? "").trim().toLowerCase();
+  if (plan === "kafe") return true;
+  const s = org.settings;
+  if (s && typeof s === "object" && !Array.isArray(s)) {
+    const rec = s as Record<string, unknown>;
+    const edition = String(rec.edition ?? rec.signupSource ?? "").toLowerCase();
+    if (edition === "kafe") return true;
+  }
+  return false;
+}
+
+/** Street Kafe: waive ERA Foundation until NAS / finance satellite is on. */
+export function shouldWaiveEraFoundation(org: {
+  subscriptionPlan?: string | null;
+  settings?: unknown;
+  activeModules?: readonly string[] | null;
+}): boolean {
+  if (!isKafeEdition(org)) return false;
+  const mods = org.activeModules ?? [];
+  return !mods.some((m) => m === "nas" || m === "industry_finance");
+}
 
 /** Child feature keys granted when a commercial parent SKU is on (price 0). */
 export const CLINIC_COMMERCIAL_GRANTS: Readonly<Record<string, readonly string[]>> = {

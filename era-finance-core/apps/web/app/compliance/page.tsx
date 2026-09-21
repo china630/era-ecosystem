@@ -16,7 +16,8 @@ import {
   ListPaginationFooter,
 } from "../../components/list-pagination-footer";
 import { PageHeader } from "../../components/layout/page-header";
-import { useAuth } from "../../lib/auth-context";
+import { useOrgPermissions } from "../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../lib/role-utils";
 import { useSubscription } from "../../lib/subscription-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { TaxLimitWidget } from "./components/tax-limit-widget";
@@ -48,8 +49,8 @@ type RiskSummary = {
 export default function ComplianceDashboardPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
   const { ready: subReady, effectiveSnapshot: snapshot } = useSubscription();
+  const perms = useOrgPermissions();
 
   const tier = snapshot?.tier ? String(snapshot.tier).toUpperCase() : "";
   const moduleLocked =
@@ -59,7 +60,7 @@ export default function ComplianceDashboardPage() {
     !snapshot.modules.compliancePro;
 
   const canPatch =
-    user?.role === "OWNER" || user?.role === "ADMIN" || user?.isSuperAdmin;
+    perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS) || perms.isSuperAdmin;
 
   const [summary, setSummary] = useState<RiskSummary | null>(null);
   const [list, setList] = useState<ListResponse | null>(null);

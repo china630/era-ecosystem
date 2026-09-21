@@ -38,14 +38,23 @@ export async function POST(
 
     let fiscalNumber: string | null = null;
     if (isFiscalPaymentMethod(method)) {
+      const orgId = requestOrganizationId();
       const outcome = await fiscalizeForSatellite(
         {
           documentRef: refreshed.id,
           amount: amountAzn,
           paymentMethod: method,
           registerRef: refreshed.code,
+          organizationId: orgId,
+          lines: [
+            {
+              name: `Work order ${refreshed.code}`,
+              qty: 1,
+              unitPrice: amountAzn,
+            },
+          ],
         },
-        requestOrganizationId(),
+        orgId,
       );
       if (!isFiscalSkipped(outcome)) {
         fiscalNumber = outcome.receiptId;

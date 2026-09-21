@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -15,10 +18,9 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -33,7 +35,7 @@ import { SubscriptionGuard } from "../subscription/subscription.guard";
 @ApiTags("inventory-reconciliations")
 @ApiBearerAuth("bearer")
 @Controller("inventory/reconciliations")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule("inventory")
 export class InventoryReconciliationController {
   constructor(private readonly audits: InventoryAuditService) {}
@@ -55,8 +57,8 @@ export class InventoryReconciliationController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Create DRAFT reconciliation (no stock snapshot yet)" })
   createDraft(
     @OrganizationId() organizationId: string,
@@ -68,20 +70,20 @@ export class InventoryReconciliationController {
   }
 
   @Post(":id/start")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Start COUNTING: snapshot lines + lock warehouse" })
   startCounting(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.audits.startCounting(organizationId, id, requireOrgRole(user));
+    return this.audits.startCounting(organizationId, id, requireOrgPolicySubject(user));
   }
 
   @Patch(":id/lines/:lineId")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Update fact qty / cost in COUNTING" })
   setLineFact(
     @OrganizationId() organizationId: string,
@@ -89,24 +91,24 @@ export class InventoryReconciliationController {
     @Body() dto: SetReconciliationLineFactDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.audits.setLineFact(organizationId, lineId, dto, requireOrgRole(user));
+    return this.audits.setLineFact(organizationId, lineId, dto, requireOrgPolicySubject(user));
   }
 
   @Post(":id/submit")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "COUNTING → REVIEW" })
   submitForReview(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.audits.submitForReview(organizationId, id, requireOrgRole(user));
+    return this.audits.submitForReview(organizationId, id, requireOrgPolicySubject(user));
   }
 
   @Patch(":id/lines/:lineId/classification")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Classify discrepancy in REVIEW" })
   classifyLine(
     @OrganizationId() organizationId: string,
@@ -114,12 +116,12 @@ export class InventoryReconciliationController {
     @Body() dto: ClassifyReconciliationLineDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.audits.classifyLine(organizationId, lineId, dto, requireOrgRole(user));
+    return this.audits.classifyLine(organizationId, lineId, dto, requireOrgPolicySubject(user));
   }
 
   @Post(":id/complete")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "REVIEW → COMPLETED: stock + GL in one transaction" })
   complete(
     @OrganizationId() organizationId: string,
@@ -135,8 +137,8 @@ export class InventoryReconciliationController {
   }
 
   @Post(":id/cancel")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({ summary: "Cancel DRAFT / COUNTING / REVIEW" })
   cancel(
     @OrganizationId() organizationId: string,

@@ -62,7 +62,7 @@ Single modal; **no nested second modal**.
 ```
 
 1. **Left:** package lines from `ProgramProcedureBalance` (and template names): procedure name, remaining count, `+`. Not an expanded session list.
-2. **Right:** aggregations by assign batch / code — name, quantity, delete (when allowed). **COMPLETED** (consumed) rows are **grey, locked**, qty = consumed; no delete; quota does not return.
+2. **Right:** one card per SKU + quota + lock (not per assign batch). Title is `Name ×qty (draft)`; physio params each on their own line. **COMPLETED** (consumed) rows are **grey, locked**, qty = consumed; no delete; quota does not return. Card actions are compact icons (+ / − / replace / delete).
 3. **`+` or edit:** form **overlays the right column** (drawer/panel inside the same modal) — type-gated physio fields, sites, note, **quantity**. [Done] on the form only updates **draft** on the right.
 4. **Save (modal):** single commit — create/adjust orders, run placement, refresh balances and card schedule. **Cancel:** discard draft; DB unchanged.
 5. **Reopen:** right side shows last committed state. Doctor may increase qty on an active right row, or use **All** (fill remaining for that line / selection), then Save → planner **incrementally** places only the delta (does not move fixed history).
@@ -71,7 +71,7 @@ Single modal; **no nested second modal**.
 
 - Quantity **≠** one schedule card: `qty = N` means **N sessions**, planner spreads them (see D5).
 - Right column shows **aggregates** (`Ozone ×7`); schedule zone on the card shows **per-slot cards**.
-- One assign batch shares one field template (sites / physioFields / note). Same settings → edit qty on the right. Different clinical settings → new `+` from the left (second batch).
+- Qty edits (+/−) and leftover drafts merge onto the same SKU card. Distinct physio params still appear as stacked lines on that card rather than splitting cards.
 - Placement times are **automatic** (FIFO / incremental engine). No slot picker in the doctor form in this slice.
 
 ### D4 — Lazy assign replaces package pre-expand (amends CLI-31 UX)
@@ -87,7 +87,7 @@ For **in-package** treatment lines:
 
 **Day-1 auto (replaces “confirm 2–3 from a long PROPOSED list” as the happy path):**
 
-- A dedicated control (button/trigger), not silent on every open: schedule up to **3 distinct procedure codes** from the package in **standard** field defaults, then place.
+- A dedicated control (button/trigger), not silent on every open: schedule up to **N distinct procedure codes** from the package in **standard** field defaults, then place. **N** = `Tenant.dailyPackageProcedureCap` (default 3; `/admin/settings`).
 - Soft-warn spirit of CLI-52 remains; do not hard-block larger manual batches without product revisit.
 - Exam/intake sorting rules stay relevant only where intake still produces proposed/scheduled clinical exams — not mixed into this package menu (out of scope).
 
@@ -95,7 +95,8 @@ For **in-package** treatment lines:
 
 Planner constraint for package (and default for extras unless overridden later):
 
-- **At most one session per procedure code (category) per calendar day** for the episode.
+- **At most one session per procedure code (category) per calendar day** (Asia/Baku) for the episode.
+- **Daily in-package cap:** at most **N distinct in-package procedure codes** on a Baku day (`Tenant.dailyPackageProcedureCap`, default **3**, clinic `/admin/settings`, clamp 1–12). Paid extras (`inPackage: false`) do **not** count toward N and may still land today. Remainder of a large package Save starts on the **next work morning**, not from the last historical slot (avoids weekend “day after tomorrow” cursor). Same-code collision jumps the **whole next work day**, not +5 minutes.
 
 Consequences:
 
@@ -180,11 +181,30 @@ Below assign/summary:
 - Presentation: **cards stacked vertically** (datetime, title, status, optional access code / resource).
 - Pending extras stay in the Additional assign block, not in this schedule list.
 
-### D10 — Non-goals (this ADR)
+### D10 — Package pool codes (`PHYSIO_POOL` / `PARAFFIN_POOL`)
+
+Nafta PDF lines **Fizioprosedurlar*** / **Parafin*** map to entitlement buckets (`*_POOL`), not `ProcedureType` rows.
+
+| Rule | Detail |
+|------|--------|
+| Never assign pool as SKU | `ProcedureOrder.procedureCode` is always a real catalog code |
+| Burn column | `ProcedureOrder.packageQuotaCode` = pool code (or same as `procedureCode` for dedicated lines) |
+| Modal `+` / All on pool | **Visible with SKU picker** — FO picks a real ProcedureType; Save burns pool via `packageQuotaCode` / `burnPoolCode`. |
+| `PARAFFIN_POOL` eligibility | Types whose code/name match `/parafin|paraffin/i` |
+| `PHYSIO_POOL` eligibility | Active treatment types (`needsSite` or physio-ish `SVC-*`), excluding paraffin and excluding codes that already have their own non-pool balance line (Naftalan, ECG, labs stay on dedicated quotas) |
+| Day-1 auto | Skips pool + quota-alias rows that need a SKU picker |
+| Reject codes | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE`, `ALIAS_SKU_REQUIRED`, `ALIAS_SKU_NOT_ELIGIBLE` |
+| Assign menu scope | Treatment lines: pools (`PHYSIO_POOL` / `PARAFFIN_POOL`), `NAFTALAN_BATH` alias, `WO-TR-*` / `SVC-*`. Intake labs/exams filtered out. |
+| `NAFTALAN_BATH` resolve | Prefer `SVC-NAFTALAN-VANNASI-KISI/QADIN` by patient sex; **fallback** `WO-TR-72` / `WO-TR-68` when SVC seed missing. Sex `UNKNOWN`/empty + both genders → modal SKU picker (do not auto-pick). |
+
+Named package lines (e.g. Naftalan) do **not** burn `PHYSIO_POOL` — they keep separate `ProgramProcedureBalance` rows.
+
+### D11 — Non-goals (this ADR)
 
 - Redesign of intake diagnostic / lab ordering UX.
 - Final extras catalog control (category tree vs flat searchable) — searchable is v1.
 - Changing knot math itself (CLI-51 `quotaFor`) except stay-shorten cancel of future slots and lazy-assign UX.
+- Merging Naftalan (or other dedicated lines) into `PHYSIO_POOL`.
 - Claiming SHIPPED / Pilot / edition `ga` — delivery wave + UAT required.
 
 ---
@@ -265,5 +285,16 @@ Exact enum names are implementation choice; semantics required:
 | Print extras | Field noise: **3× `window.open`** per procedure (`sheets=1&copy=1..3`); single open without `sheets=1` still prints 3 page-breaks |
 | Legacy | `buildProposedPlan` no-op; hidden proposed checkbox UI removed |
 | RBAC D7 | Reception may assign (`api:procedures.confirm`); FO manager permission for Replace out-of-package |
+
+## Amendment 2026-09-07 — package pools (SCREEN)
+
+| Decision | Detail |
+|----------|--------|
+| Pool codes | `PHYSIO_POOL` / `PARAFFIN_POOL` are entitlement only (D10); never `ProcedureOrder.procedureCode` |
+| `packageQuotaCode` | Orders store which balance line was burned; `syncQuotaUsed` counts by this field |
+| Modal | **Pool rows hidden** from left menu (named SKUs only). Legacy pool burn helpers remain server-side |
+| Errors | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE` |
+| Day-1 | Skips `isPool` balance rows |
+| Assign menu filter | Pools + labs / doctor exams excluded via `isPackageAssignTreatmentLine` |
 
 Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).

@@ -130,6 +130,7 @@ Cross-cutting quick wins from Nafta TZ mapping ([`.cursor/plans/nafta_tz_gap_bac
 | W0-4 | Clinic lab publish + appointment SMS notify | **Done** |
 | OTA-D1 | ADR [hotel-ota-adapter-strategy.md](./adr/hotel-ota-adapter-strategy.md) | **Done** |
 | OTA-D2/D3 | `ChannelAdapter` registry + webhook ingest + availability push | **Done** |
+| OTA-D4 | ADR [hotel-channel-manager-pack.md](./adr/hotel-channel-manager-pack.md) — Channex + IBE + SKU 39 / City | **Done** (W0–W8 implemented; HOT-CH-02 live cert pending) |
 
 ## Nafta gap closure — W1–W3 (2026-06-13)
 
@@ -186,10 +187,34 @@ Headless **era-bank-core** (P0–P7) + ops **era-bank** + customer **era-bank-db
 | **Wave C** | Arbitrary pairs + compare + multi-target mirror MVP + Audit Hub ops vs non-ops | **Done (eng)** |
 | **Thin edges** | bookId on aging/holdings/main reports; slots N; default-ops; selector warn | **Done (eng)** |
 | **Structural tails** | FY-by-book, holdings `bookCode`, account uniqueness per book, niche export callers | **Done (eng)** |
+| **Wave D — NAS vs MGMT** | Ops forever NAS; tax/pay guards; internal rate + MGMT labor delta | **Doc** — [evrostar-workforce-pilot.md](./adr/evrostar-workforce-pilot.md) |
 
 **SSOT residuals:** [ADR finance-accounting-book § Residuals](./adr/finance-accounting-book.md#residuals-inventory--2026-09-08-updated-lab-rt-deferred).  
 Ignore older agent chat summaries that still list multi-target / aging / Audit Hub / FY / uniqueness as open — superseded by ADR.  
 **Not combat-ready claims:** no SHIPPED / Pilot `[x]` / edition `ga` until Lab RT.
+
+---
+
+## Field workforce (Evrostar / Evrostar Group) — planned
+
+**ADR:** [evrostar-workforce-pilot.md](./adr/evrostar-workforce-pilot.md) (Accepted 2026-09-17, **implementation by wave**).
+
+Two `STANDALONE` + holding; CP labor roster (not HK/nurse); order templates; audit holes; official payroll day one; FaceID/ƏMAS last. Do not claim Pilot/`ga` from the ADR.
+
+---
+
+## Finance — Trade credit control (Phase 0–1 eng)
+
+**ADR:** [finance-trade-credit-control.md](./adr/finance-trade-credit-control.md) (Accepted; Phase 0 + Phase 1 eng landed).  
+**SKU:** `trade_credit_control` @ **99 AZN/mo** unlock + billed-buyer meter (~1 AZN / managed buyer; **50 included**; soft overage).
+
+| Phase | Scope | Status |
+|-------|--------|--------|
+| **0 — lock** | Manual limit, web `/buyer` cabinet + Orch SSO, pickup grant, Wholesale on-account guard, staff UI, soft meter | **Eng complete** (not Pilot / not SHIPPED) |
+| **1 — policy** | Internal A–D (А–Г) in Finance UI; auto-block D; optional auto-raise A; leak tests | **Eng complete** (not Pilot / not SHIPPED) |
+| **2** | Mobile PWA, bureau, acquiring/factoring | **Optional / other SKUs** |
+
+Do not merge with AccountingBook Lab RT. Do not claim Pilot/`ga` from eng alone.
 
 ---
 

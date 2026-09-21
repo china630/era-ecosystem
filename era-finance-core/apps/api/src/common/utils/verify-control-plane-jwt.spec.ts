@@ -18,6 +18,7 @@ const claims = {
   organizationId: "org-1",
   role: "OWNER",
   isSuperAdmin: true,
+  permissions: ["api:ledger.post", "api:reports.nas"],
 };
 
 describe("verifyControlPlaneAccessToken", () => {
@@ -42,6 +43,32 @@ describe("verifyControlPlaneAccessToken", () => {
     );
     expect(payload?.email).toBe("admin@example.com");
     expect(payload?.isSuperAdmin).toBe(true);
+    expect(payload?.permissions).toEqual([
+      "api:ledger.post",
+      "api:reports.nas",
+    ]);
+  });
+
+  it("round-trips empty permissions[] SoT", async () => {
+    const token = sign(
+      { ...claims, role: "ACCOUNTANT", permissions: [], isSuperAdmin: false },
+      "shared-secret",
+      {
+        algorithm: "HS256",
+        issuer: "era-orchestrator",
+        audience: "era-finance-core",
+        expiresIn: "5m",
+      },
+    );
+    const payload = await verifyControlPlaneAccessToken(
+      token,
+      config({
+        ERA_JWT_SECRET: "shared-secret",
+        ERA_JWT_VERIFY_MODE: "hs256",
+        ERA_JWT_JWKS_URL: "",
+      }),
+    );
+    expect(payload?.permissions).toEqual([]);
   });
 
   it("rejects tokens when secret/audience do not match", async () => {

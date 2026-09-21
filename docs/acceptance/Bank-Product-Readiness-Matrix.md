@@ -72,6 +72,7 @@ Same columns as the line. Use **this** table when asking readiness of a module �
 | Islamic / wealth | `/islamic`, `/wealth` | ✅ lab |
 | AML cases / card disputes / 3DS ops | `/aml/cases`, `/cards/disputes`, `/cards/3ds` | ✅ lab |
 | Loans deep | `/loans/applications`, `/loans/credit-lines` | ✅ lab |
+| Access matrix | `/admin/access` | 🟡 SCREEN (BANK-RBAC-01; not SHOW) |
 
 **Having routes ≠ field-ready.** Sell/show: mvp Full CBS program until PARTIAL→IN + Pilot field (YC-E7).
 

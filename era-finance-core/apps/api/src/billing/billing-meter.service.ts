@@ -29,7 +29,9 @@ export type MeterBillableKind =
   | "STORAGE_GB_MONTHLY"
   | "WHATSAPP_ALERT"
   | "INVOICE_CREATED"
-  | "OCR_PAGE";
+  | "OCR_PAGE"
+  | "TRADE_CREDIT_BUYER"
+  | "TRADE_CREDIT_ENRICH";
 
 const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   USER_MONTHLY: "USER_MONTHLY",
@@ -37,6 +39,8 @@ const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   WHATSAPP_ALERT: "WHATSAPP_ALERT",
   INVOICE_CREATED: "INVOICE_CREATED",
   OCR_PAGE: "OCR_PAGE",
+  TRADE_CREDIT_BUYER: "TRADE_CREDIT_BUYER",
+  TRADE_CREDIT_ENRICH: "TRADE_CREDIT_ENRICH",
 };
 
 @Injectable()
@@ -181,6 +185,10 @@ export class BillingMeterService {
     );
 
     if (spendReachedTierCeiling(spentAzn, ceiling)) {
+      // Soft overage for trade-credit buyers: never hard-block shipment/billing on this meter alone.
+      if (kind === "TRADE_CREDIT_BUYER" || kind === "TRADE_CREDIT_ENRICH") {
+        return { spentAzn, addedAzn: added };
+      }
       await this.ensureIntradayTierInvoice(orgId, tier, ceiling, spentAzn);
       await this.prisma.organization.update({
         where: { id: orgId },
@@ -196,6 +204,71 @@ export class BillingMeterService {
     return { spentAzn, addedAzn: added };
   }
 
+  /**
+   * Soft meter for managed trade-credit buyer overage (above included quota).
+   * Never blocks grants/shipments — see ADR finance-trade-credit-control §8.
+   */
+  async recordTradeCreditBuyerOverage(
+    organizationId: string,
+    overageCount: number,
+  ): Promise<{ spentAzn: number; addedAzn: number }> {
+    const qty = Math.max(0, Math.floor(overageCount));
+    if (qty <= 0) return { spentAzn: 0, addedAzn: 0 };
+    return this.recordUsage(organizationId, "TRADE_CREDIT_BUYER", qty);
+  }
+
+  /**
+   * Soft meter for trade-credit registry enrichment checks (Phase 2b).
+   * Failures / quota soft — do not block shipment; UI disables deep-check + upsell.
+   */
+  async recordTradeCreditEnrichUsage(
+    organizationId: string,
+    units = 1,
+  ): Promise<{ spentAzn: number; addedAzn: number; softBlocked: boolean }> {
+    const qty = Math.max(0, Math.floor(units));
+    if (qty <= 0) return { spentAzn: 0, addedAzn: 0, softBlocked: false };
+    const preview = await this.getTradeCreditEnrichMeterState(organizationId);
+    if (preview.softBlocked) {
+      return {
+        spentAzn: preview.spentAzn,
+        addedAzn: 0,
+        softBlocked: true,
+      };
+    }
+    const recorded = await this.recordUsage(
+      organizationId,
+      "TRADE_CREDIT_ENRICH",
+      qty,
+    );
+    return { ...recorded, softBlocked: false };
+  }
+
+  /** Preview whether another enrich check would hit the soft spend ceiling. */
+  async getTradeCreditEnrichMeterState(organizationId: string): Promise<{
+    softBlocked: boolean;
+    spentAzn: number;
+    ceiling: number;
+    unitPriceAzn: number;
+  }> {
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (!orgId) {
+      return { softBlocked: false, spentAzn: 0, ceiling: 0, unitPriceAzn: 2 };
+    }
+    const sub = await this.controlPlane.organizationSubscription.findUnique({
+      where: { organizationId: orgId },
+      select: { currentTier: true },
+    });
+    const tier = sub?.currentTier ?? TariffTier.TIER_0;
+    const ceiling = await this.getTierSpendCeiling(tier);
+    const spentAzn = await this.getMonthlySpendAzn(orgId);
+    const unit = await this.systemConfig.getMeterUnitPricing();
+    const unitPriceAzn = this.unitPriceFor("TRADE_CREDIT_ENRICH", unit);
+    // Soft: already at/over ceiling → disable further paid deep-checks (upsell), never hard-block shipment.
+    const softBlocked =
+      ceiling > 0 && spendReachedTierCeiling(spentAzn, ceiling);
+    return { softBlocked, spentAzn, ceiling, unitPriceAzn };
+  }
+
   unitPriceFor(kind: MeterBillableKind, unit: MeterUnitPricing): number {
     switch (kind) {
       case "USER_MONTHLY":
@@ -208,6 +281,10 @@ export class BillingMeterService {
         return unit.pricePerInvoiceAzn;
       case "OCR_PAGE":
         return unit.pricePerOcrPageAzn;
+      case "TRADE_CREDIT_BUYER":
+        return unit.pricePerTradeCreditBuyerAzn ?? 1;
+      case "TRADE_CREDIT_ENRICH":
+        return unit.pricePerTradeCreditEnrichAzn ?? 2;
       default:
         return 0;
     }

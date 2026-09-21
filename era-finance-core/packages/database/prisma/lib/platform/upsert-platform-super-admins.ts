@@ -1,11 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
-const DEFAULT_EMAILS = [
-  "inaram84@gmail.com",
-  "shirinov.chingiz@gmail.com",
-  "chingiz@era.com",
-] as const;
+const DEFAULT_EMAILS = ["shirinov.chingiz@gmail.com"] as const;
 
 const DEFAULT_PASSWORD = "12345678";
 const BCRYPT_ROUNDS = 10;

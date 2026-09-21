@@ -14,7 +14,10 @@
     "integration": "Integration",
     "import": "Cutover import",
     "calendar": "Reservations",
-    "brand": "ERA F&B POS"
+    "brand": "ERA F&B POS",
+    "brandKafe": "ERA Kafe",
+    "logout": "Logout",
+    "access": "Access"
   },
   "home": {
     "title": "F&B POS",
@@ -46,7 +49,12 @@
     "tapOpen": "Tap to open ticket",
     "occupiedHint": "Occupied",
     "ticketOpened": "Ticket opened on {table} — {total} AZN",
-    "menuStrip": "Menu (tap floor to open ticket)"
+    "menuStrip": "Tap dish to add; bitdi / var for stop-list",
+    "stopListTitle": "Stop-list",
+    "stopListHint": "Open a table, tap dishes to add. bitdi hides the dish.",
+    "openTableFirst": "Open a table or walk-in first",
+    "soldOut": "Bitdi — dish is off the ticket",
+    "dishAdded": "Added {name}"
   },
   "kds": {
     "title": "Kitchen display"
@@ -161,6 +169,7 @@
     "selectTicket": "Select a ticket",
     "fireKitchen": "Fire kitchen",
     "payCash": "Pay cash",
+    "queuedOffline": "Saved offline — will send when the network returns",
     "payCard": "Pay card",
     "payTransfer": "Pay transfer",
     "sendToReception": "Send to reception",
@@ -205,7 +214,10 @@
     "openFailed": "Failed to open shift",
     "closeFailed": "Failed to close shift",
     "managerRequired": "Manager role required for Z-close",
-    "openTicketsBlock": "Cannot Z-close: {count} open ticket(s)"
+    "openTicketsBlock": "Cannot Z-close: {count} open ticket(s)",
+    "fiscalDevice": "Cash register (KKM)",
+    "bankTerminal": "Bank POS",
+    "autoDefault": "Default / auto"
   },
   "calendar": {
     "title": "Table reservations",
@@ -242,13 +254,15 @@
     "failed": "Failed",
     "error": "Error",
     "loadingFailed": "Load failed",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "loadError": "Load failed",
+    "saveError": "Save failed"
   },
   "auth": {
     "loginFailed": "Login failed",
-    "organizationIdLabel": "Organization ID (F&B)",
-    "organizationIdPlaceholder": "UUID — required on shared F&B pool",
-    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -335,5 +349,29 @@
     "nextPhase": "Next phase",
     "prevPhase": "Previous phase",
     "phaseProgress": "Phase {current} of {total}"
+  },
+  "settingsAccess": {
+    "title": "Role access",
+    "subtitle": "Configure which permissions each F&B role has. FB_MANAGER follows the matrix (no bypass).",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset defaults",
+    "delete": "Delete role",
+    "deleteInUse": "Reassign users before deleting",
+    "newCode": "Code",
+    "newName": "Display name",
+    "cloneFrom": "Clone from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "sessionRefreshed": "Session permissions refreshed",
+    "groupScreens": "Screens",
+    "groupTill": "Till / tickets",
+    "groupHotel": "Hotel bridge",
+    "groupKds": "Kitchen",
+    "groupAdmin": "Admin"
   }
 }

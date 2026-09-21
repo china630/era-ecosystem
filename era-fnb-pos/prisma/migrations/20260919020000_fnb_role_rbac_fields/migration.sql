@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "roles" ADD COLUMN IF NOT EXISTS "is_system" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "roles" ADD COLUMN IF NOT EXISTS "clone_from_code" TEXT;
+ALTER TABLE "roles" ADD COLUMN IF NOT EXISTS "permission_catalog_version" INTEGER NOT NULL DEFAULT 0;

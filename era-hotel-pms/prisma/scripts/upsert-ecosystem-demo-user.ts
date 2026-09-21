@@ -16,13 +16,11 @@ const {
   platformSuperAdminEmails,
   platformSuperAdminBootstrapPassword,
 } = require("@era/satellite-kit") as typeof import("@era/satellite-kit");
+const { satelliteOrganizationId } = require("@era/satellite-kit/orchestrator-gateway") as typeof import("@era/satellite-kit/orchestrator-gateway");
 const { createSatelliteTenantExtension } = require("@era/satellite-kit/tenancy") as typeof import("@era/satellite-kit/tenancy");
 
-const {
-  ROLE_CODES,
-  ROLE_PERMISSIONS,
-  serializePermissions,
-} = require("./src/lib/auth/permissions") as typeof import("../../src/lib/auth/permissions");
+const { ROLE_CODES } = require("./src/lib/auth/permissions") as typeof import("../../src/lib/auth/permissions");
+const { ensureHotelAdminRole } = require("./src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
 
 const password =
   process.env.ECOSYSTEM_DEMO_PASSWORD?.trim() ||
@@ -46,32 +44,19 @@ const prisma = new PrismaClient().$extends(
 
 async function main() {
   const hash = await hashPassword(password);
-  const perms =
-    ROLE_PERMISSIONS[adminRoleCode as keyof typeof ROLE_PERMISSIONS] ??
-    ROLE_PERMISSIONS[ROLE_CODES.HOTEL_ADMIN];
-  const permissionsJson = serializePermissions(perms);
-
-  let role = await prisma.role.findUnique({ where: { code: adminRoleCode } });
-  if (!role) {
-    role = await prisma.role.create({
-      data: {
-        code: adminRoleCode,
-        name: adminRoleCode.replace(/_/g, " "),
-        permissionsJson,
-      },
-    });
-    console.info(`[demo-user] created role ${adminRoleCode}`);
-  } else if (
-    !role.permissionsJson ||
-    role.permissionsJson === "[]" ||
-    role.permissionsJson.trim() === "[]"
-  ) {
-    role = await prisma.role.update({
-      where: { id: role.id },
-      data: { permissionsJson },
-    });
-    console.info(`[demo-user] repaired empty permissionsJson on ${adminRoleCode}`);
-  }
+  const organizationId = satelliteOrganizationId();
+  const adminRole =
+    adminRoleCode === ROLE_CODES.HOTEL_ADMIN
+      ? await ensureHotelAdminRole(prisma, organizationId)
+      : await (async () => {
+          const { ensureSystemHotelRoles } = require("./src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
+          await ensureSystemHotelRoles(prisma, organizationId);
+          const role = await prisma.role.findFirst({
+            where: { organizationId, code: adminRoleCode },
+          });
+          if (!role) throw new Error(`Role ${adminRoleCode} missing after ensure`);
+          return role;
+        })();
 
   for (const login of resolveLogins()) {
     await prisma.user.upsert({
@@ -81,7 +66,7 @@ async function main() {
         email: login,
         fullName,
         passwordHash: hash,
-        roleId: role.id,
+        roleId: adminRole.id,
         status: "ACTIVE",
         isCrossSystem: true,
       },
@@ -89,7 +74,7 @@ async function main() {
         email: login,
         fullName,
         passwordHash: hash,
-        roleId: role.id,
+        roleId: adminRole.id,
         status: "ACTIVE",
         isCrossSystem: true,
       },

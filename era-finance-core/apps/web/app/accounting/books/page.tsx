@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { Field, FieldSelect } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
-import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../../lib/role-utils";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -36,19 +37,19 @@ type Slots = {
 };
 
 const INITIAL_FORM = {
-  code: "",
+  code: "MGMT",
   nameAz: "",
   nameRu: "",
   nameEn: "",
   gaapKind: "MANAGEMENT",
-  coaStrategy: "TEMPLATE",
+  /** Wave 5: NAS_CLONE so MGMT labor delta can post 721/533. */
+  coaStrategy: "NAS_CLONE",
   translateFromStatutory: false,
 };
 
 export default function AccountingBooksPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { user } = useAuth();
   const { refreshBooks } = useLedger();
   const [books, setBooks] = useState<Book[]>([]);
   const [slots, setSlots] = useState<Slots | null>(null);
@@ -57,10 +58,8 @@ export default function AccountingBooksPage() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
-  const canCreate =
-    user?.role === "OWNER" ||
-    user?.role === "ADMIN" ||
-    user?.role === "ACCOUNTANT";
+  const perms = useOrgPermissions();
+  const canCreate = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -247,7 +246,7 @@ export default function AccountingBooksPage() {
                       gaapKind: event.target.value,
                       coaStrategy:
                         event.target.value === "MANAGEMENT"
-                          ? "TEMPLATE"
+                          ? "NAS_CLONE"
                           : "EMPTY",
                     })
                   }

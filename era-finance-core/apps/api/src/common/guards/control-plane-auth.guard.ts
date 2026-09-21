@@ -53,7 +53,10 @@ export class ControlPlaneAuthGuard implements CanActivate {
       organizationId: payload.organizationId ?? null,
       role: payload.role ?? null,
       roles: payload.roles ?? (payload.role ? [payload.role] : []),
-      permissions: payload.permissions ?? [],
+      /** Present array (incl. []) is SoT; missing claim = empty (fail-closed). */
+      permissions: Array.isArray(payload.permissions)
+        ? payload.permissions
+        : [],
       isOwner: Boolean(payload.isOwner),
       isSuperAdmin: Boolean(payload.isSuperAdmin),
     };

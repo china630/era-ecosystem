@@ -108,7 +108,7 @@ export const landingEcosystemRu: LandingEcosystemCopy = {
           tasks: [
             "Gate: приложение + 5 номеров, далее 4 AZN/номер",
             "Core FO / HK / channel — отдельные SKU",
-            "Resort-пакет: 188.70 AZN / мес",
+            "Resort-пакет: 197.20 AZN / мес",
           ],
         },
         {
@@ -305,7 +305,7 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
           tasks: [
             "Gate: tətbiq + 5 otaq, sonra 4 AZN/otaq",
             "Core FO / HK / channel — ayrıca SKU",
-            "Resort paket: 188.70 AZN / ay",
+            "Resort paket: 197.20 AZN / ay",
           ],
         },
         {

@@ -31,10 +31,12 @@
 | AC-BNK-WEALTH | Custody safekeeping thin | ✅ | [ ] | banking_wealth; FOP receive; no FO | Ops `/wealth`; Derivatives FO OUT |
 | AC-BNK-AML-RTF | AML case + fraud score lab | ✅ | [ ] | aml cases + `/aml/fraud/score` | Ops `/aml/cases`; live feed BLOCKED |
 | AC-BNK-DBO-H2H | DBO H2H + OB consent API | ✅ | [ ] | dbo-ops | ASAN live YC-E3 |
-| AC-BANK-TENANT | `organizationId` + kit Prisma filter on bank / dbo / core rows | 🟡 | [ ] | CP-TENANT-01; B7 schema+migration+mergeWhere tests; fail-closed unbound | **Excluded from Scaffold BE rollup.** Same remaining work as hotel/clinic TENANT (live pool + field UAT). Not a bank-only ban. Bind HTTP + runtime-config + Sync `industry_banking` landed (CP-BIND-01 / CP-CFG-01) — not a pool |
+| AC-BNK-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `bank-rbac` + page inventory + role-name grep; ADR bank-domain-permissions-and-rbac; `/admin/access` clone | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-BANK-TENANT | `organizationId` + kit Prisma filter on bank / dbo / core rows | 🟡 | [ ] | CP-TENANT-01; B7 schema+migration+mergeWhere tests; fail-closed unbound | **Excluded from Scaffold BE rollup.** Ops `orgNo` login + engine `X-Organization-Id` ALS landed (code). Remaining = live SHARED pool + field isolation UAT (same as hotel/clinic TENANT). Not a bank-only ban. |
 
-**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-BANK-TENANT).  
+**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-BANK-TENANT and AC-BNK-RBAC).  
 AC-BANK-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT — **same bar as AC-HOT-TENANT / AC-CLI-TENANT**.  
+AC-BNK-RBAC is 🟡 (Variant A shipped; field UAT open) and stays **out of Scaffold BE rollup**.  
 Do not call this table «product readiness».  
 Do not treat in-scope AC ✅ as coverage of Capability Inventory **OUT** rows (ATM scheme, derivatives FO, certified Basel, PEN/PSA, enterprise MIS/BPM/DMS, …).  
 BE tracker: [Bank-BE-Roadmap.md](./Bank-BE-Roadmap.md).
@@ -43,7 +45,8 @@ BE tracker: [Bank-BE-Roadmap.md](./Bank-BE-Roadmap.md).
 
 | AC | Residual | Severity | Status |
 |----|----------|----------|--------|
-| AC-BANK-TENANT | Live SHARED bank pool + field isolation UAT | Out of BE rollup | Schema+filter only; same as hotel/clinic TENANT |
+| AC-BANK-TENANT | Live SHARED bank pool + field isolation UAT | Out of BE rollup | Schema+filter + ops `orgNo` login in code; same remaining field bar as hotel/clinic TENANT |
+| AC-BNK-RBAC | Field UAT / SHOW | Out of BE rollup | SCREEN until signoff |
 | (Capability Inventory — not AC) | Live payment rails / AKB / ASAN / SWIFT / bureau | External ⏸ | Inventory DECLARED/STUB — not an AC row; does not flip AC Scaffold |
 | (in-scope AC ✅ rows) | Field Pilot / certification tracks | Out of BE plan | Owned by Pilot / YC-E* |
 
@@ -52,4 +55,7 @@ BE tracker: [Bank-BE-Roadmap.md](./Bank-BE-Roadmap.md).
 | Suite | AC |
 |-------|----|
 | existing engine / ops SoD + UAT negatives (see Proof column) | AC-BNK-* in-scope ✅ |
+| `era-bank/__tests__/bank-rbac.spec.ts` | AC-BNK-RBAC |
+| `era-bank/__tests__/bank-page-route-inventory.spec.ts` | AC-BNK-RBAC |
+| `era-bank/__tests__/bank-rbac-holes.spec.ts` | AC-BNK-RBAC |
 | pending SHARED-pool field UAT | AC-BANK-TENANT |

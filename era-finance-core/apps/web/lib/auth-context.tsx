@@ -46,17 +46,22 @@ export type AuthUser = {
   locale?: "AZ" | "RU";
   /** Глобальный супер-админ платформы. */
   isSuperAdmin?: boolean;
+  /** Control-plane org owner bypass. */
+  isOwner?: boolean;
 };
 
 /** Сводные флаги доступа (сервер: GET /auth/me). */
 export type SessionAccessFlags = {
   canPostAccounting: boolean;
   canViewHoldingReports: boolean;
+  /** CP catalog keys from JWT / role template. */
+  permissions?: string[];
 };
 
 const DEFAULT_ACCESS_FLAGS: SessionAccessFlags = {
   canPostAccounting: false,
   canViewHoldingReports: false,
+  permissions: [],
 };
 
 type AuthContextValue = {

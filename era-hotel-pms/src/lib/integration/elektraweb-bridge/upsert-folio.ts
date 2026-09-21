@@ -57,7 +57,7 @@ export async function upsertFolioFromElektrawebRow(
     include: { folios: true },
   });
   if (!reservation) {
-    return { action: 'skipped', key: externalRef };
+    return { action: 'skipped', key: externalRef, mdmLinked: false };
   }
 
   const revenueCodeId = await resolveRevenueCodeId(row);
@@ -105,5 +105,5 @@ export async function upsertFolioFromElektrawebRow(
     },
   });
 
-  return { action: existing ? 'updated' : 'created', key: externalRef };
+  return { action: existing ? 'updated' : 'created', key: externalRef, mdmLinked: false };
 }

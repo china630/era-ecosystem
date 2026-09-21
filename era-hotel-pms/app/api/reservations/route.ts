@@ -9,6 +9,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 const createSchema = z.object({
   roomTypeId: z.string().uuid(),
+  givenRoomTypeId: z.string().uuid().optional(),
   guestId: z.string().uuid(),
   ratePlanId: z.string().uuid(),
   mealPlanId: z.string().uuid().optional(),

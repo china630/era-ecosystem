@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Controller,
   Get,
@@ -12,19 +14,17 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import type { Prisma } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "./audit.service";
 
 @ApiTags("audit")
 @ApiBearerAuth("bearer")
 @Controller("audit")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class AuditController {
   constructor(
     private readonly prisma: PrismaService,
@@ -32,7 +32,7 @@ export class AuditController {
   ) {}
 
   @Get("recent")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Последние записи AuditLog (совместимость)",
   })
@@ -64,7 +64,7 @@ export class AuditController {
   }
 
   @Get("logs")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Журнал аудита с фильтрами (пагинация: page, pageSize; иначе take)",
   })
@@ -146,7 +146,7 @@ export class AuditController {
   }
 
   @Get("logs/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Одна запись аудита" })
   async logOne(
     @OrganizationId() organizationId: string,
@@ -172,7 +172,7 @@ export class AuditController {
   }
 
   @Post("integrity-check")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Проверка целостности хешей audit_logs для организации",
   })
@@ -181,7 +181,7 @@ export class AuditController {
   }
 
   @Post("verify-chain")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Проверка hash-chain audit_logs; возвращает список скомпрометированных записей",

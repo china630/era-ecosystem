@@ -2,13 +2,14 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { UserRole } from "@erafinance/database";
+import { CP_PERMISSION } from "@era/contracts";
 import request from "supertest";
 import type { NextFunction, Request, Response } from "express";
 import { OpeningBalancesController } from "../../src/migration/opening-balances.controller";
 import { OpeningBalancesService } from "../../src/migration/opening-balances.service";
-import { RolesGuard } from "../../src/auth/guards/roles.guard";
+import { PermissionsGuard } from "../../src/common/guards/permissions.guard";
 
-describe("OpeningBalancesController /finance (HTTP e2e)", () => {
+describe("OpeningBalancesController /finance (HTTP e2e, PermissionsGuard)", () => {
   jest.setTimeout(60_000);
   let app: INestApplication;
   const service = {
@@ -22,7 +23,7 @@ describe("OpeningBalancesController /finance (HTTP e2e)", () => {
       controllers: [OpeningBalancesController],
       providers: [
         { provide: OpeningBalancesService, useValue: service },
-        RolesGuard,
+        PermissionsGuard,
         Reflector,
       ],
     }).compile();
@@ -40,8 +41,17 @@ describe("OpeningBalancesController /finance (HTTP e2e)", () => {
       const organizationId = String(
         req.headers["x-org"] ?? "00000000-0000-0000-0000-000000000001",
       );
+      const rawPerms = req.headers["x-permissions"];
+      const permissions =
+        rawPerms === undefined
+          ? undefined
+          : String(rawPerms)
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+      const isOwner = String(req.headers["x-owner"] ?? "") === "1";
       req.user = role
-        ? { userId: "u-1", organizationId, role }
+        ? { userId: "u-1", organizationId, role, permissions, isOwner }
         : undefined;
       req.params = { ...(req.params ?? {}), organizationId };
       req.headers["x-organization-id"] = organizationId;
@@ -58,65 +68,81 @@ describe("OpeningBalancesController /finance (HTTP e2e)", () => {
     jest.clearAllMocks();
   });
 
-  it("allows OWNER and returns success for valid payload", async () => {
+  const validBody = [
+    {
+      accountCode: "101",
+      amount: 10000,
+      currency: "AZN",
+      date: "2026-04-27",
+      description: "Opening cash",
+    },
+  ];
+
+  it("allows ACCOUNTANT when JWT includes api:ledger.post", async () => {
     service.importFinance.mockResolvedValue({
       created: 1,
       transactionIds: ["tx-1"],
     });
     const res = await request(app.getHttpServer())
       .post("/migration/opening-balances/finance")
-      .set("x-role", UserRole.OWNER)
+      .set("x-role", UserRole.ACCOUNTANT)
+      .set("x-permissions", CP_PERMISSION.API_LEDGER_POST)
       .set("x-org", "00000000-0000-0000-0000-000000000001")
-      .send([
-        {
-          accountCode: "101",
-          amount: 10000,
-          currency: "AZN",
-          date: "2026-04-27",
-          description: "Opening cash",
-        },
-      ]);
+      .send(validBody);
 
     expect(res.status).toBe(201);
     expect(service.importFinance).toHaveBeenCalledTimes(1);
   });
 
-  it("returns 403 for USER role", async () => {
+  it("allows isOwner even with empty permissions[]", async () => {
+    service.importFinance.mockResolvedValue({
+      created: 1,
+      transactionIds: ["tx-1"],
+    });
     const res = await request(app.getHttpServer())
       .post("/migration/opening-balances/finance")
       .set("x-role", UserRole.USER)
-      .send([
-        {
-          accountCode: "101",
-          amount: 10000,
-          currency: "AZN",
-          date: "2026-04-27",
-        },
-      ]);
+      .set("x-permissions", "")
+      .set("x-owner", "1")
+      .send(validBody);
+    expect(res.status).toBe(201);
+  });
+
+  it("returns 403 when ACCOUNTANT grants are stripped (empty permissions[])", async () => {
+    const res = await request(app.getHttpServer())
+      .post("/migration/opening-balances/finance")
+      .set("x-role", UserRole.ACCOUNTANT)
+      .set("x-permissions", "")
+      .send(validBody);
     expect(res.status).toBe(403);
     expect(service.importFinance).not.toHaveBeenCalled();
   });
 
-  it("returns 403 for PROCUREMENT role", async () => {
+  it("returns 403 when USER only has invoices.create", async () => {
+    const res = await request(app.getHttpServer())
+      .post("/migration/opening-balances/finance")
+      .set("x-role", UserRole.USER)
+      .set("x-permissions", CP_PERMISSION.API_INVOICES_CREATE)
+      .send(validBody);
+    expect(res.status).toBe(403);
+    expect(service.importFinance).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for PROCUREMENT purchases.manage without ledger.post", async () => {
     const res = await request(app.getHttpServer())
       .post("/migration/opening-balances/finance")
       .set("x-role", UserRole.PROCUREMENT)
-      .send([
-        {
-          accountCode: "101",
-          amount: 10000,
-          currency: "AZN",
-          date: "2026-04-27",
-        },
-      ]);
+      .set("x-permissions", CP_PERMISSION.API_PURCHASES_MANAGE)
+      .send(validBody);
     expect(res.status).toBe(403);
     expect(service.importFinance).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for invalid DTO type", async () => {
+  it("returns 400 for invalid DTO type when grant is present", async () => {
     const res = await request(app.getHttpServer())
       .post("/migration/opening-balances/finance")
-      .set("x-role", UserRole.OWNER)
+      .set("x-role", UserRole.ACCOUNTANT)
+      .set("x-permissions", CP_PERMISSION.API_LEDGER_POST)
       .send([
         {
           accountCode: "101",

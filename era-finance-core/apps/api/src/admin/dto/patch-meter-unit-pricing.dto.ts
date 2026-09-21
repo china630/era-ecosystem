@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsNumber, Min } from "class-validator";
+import { IsNumber, IsOptional, Min } from "class-validator";
 
 export class PatchMeterUnitPricingDto {
   @ApiProperty({ description: "AZN per active user / month" })
@@ -32,4 +32,18 @@ export class PatchMeterUnitPricingDto {
   @IsNumber()
   @Min(0)
   pricePerOcrPageAzn!: number;
+
+  @ApiPropertyOptional({ description: "AZN per trade credit buyer overage" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  pricePerTradeCreditBuyerAzn?: number;
+
+  @ApiPropertyOptional({ description: "AZN per trade credit enrichment deep-check" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  pricePerTradeCreditEnrichAzn?: number;
 }

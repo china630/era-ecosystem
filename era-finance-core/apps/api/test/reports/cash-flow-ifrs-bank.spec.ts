@@ -2,6 +2,7 @@ import {
   LedgerMappingSetStatus,
   LedgerType,
 } from "@erafinance/database";
+import { createMockAccountingBooks } from "../helpers/mock-posting-resolver";
 import { CashFlowService } from "../../src/reports/cash-flow.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import type { ReportsCacheService } from "../../src/reports/reports-cache.service";
@@ -35,12 +36,7 @@ describe("CashFlowService IFRS bank include (P1 hardening)", () => {
       setJson: jest.fn().mockResolvedValue(undefined),
     } as unknown as ReportsCacheService;
 
-    const svc = new CashFlowService(prisma, cache, {
-      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
-        id: bookId ?? "book-nas",
-        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
-      })),
-    } as never);
+    const svc = new CashFlowService(prisma, cache, createMockAccountingBooks());
     return { svc, ledgerMappingSet, bankStatementLine, cashOrder };
   }
 

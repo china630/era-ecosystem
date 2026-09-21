@@ -31,18 +31,18 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 
 | Check | Mechanism |
 |-------|-----------|
-| Which ERA org | Bridge/staff JWT claim `organizationId` (login sends org UUID). Appliance may omit org on login → process bind only for that user lookup |
+| Which ERA org | Bridge/staff JWT claim `organizationId` (login sends `orgNo` → resolved UUID). Appliance may omit org on login → process bind only for that user lookup |
 | Which Elektraweb property | Super-Admin / Sync `ElektrawebBridgePolicy.elektrawebHotelId` for **that** org |
-| Extension session | Options: ERA Hotel URL + **organizationId** + staff login → JWT embeds org + policy hotel id |
+| Extension session | Options: ERA Hotel URL + **orgNo** (ERA ID) + staff login → JWT embeds org + policy hotel id |
 | Every row | `HOTELID` in payload must equal **that org’s** policy hotel id or ingest returns **409** |
 
 Process kill switch only: `ELEKTRAWEB_BRIDGE_ENABLED`. No property ids in env.
 
 ### Extension login form
 
-Yes — Options page: ERA Hotel URL + **ERA organizationId (UUID)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).
+Yes — Options page: ERA Hotel URL + **ERA ID (orgNo, six digits)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).
 
-**Workforce grant (Nafta desk):** Orchestrator Workforce → employments **⋯ → Login & access** (login + **organizationId**) or Security → Grants. After fan-out, local login is `emp-{staffCode}` / PIN `0000` (staffCode = first 8 hex of employment id). On the **SHARED** cloud pool (`hotel-pms.era-365.online/login`) you must also send **organizationId** (UUID of the hotel org) — the login form field, `?organizationId=…`, or extension Settings. CP `RECEPTION` maps to hotel role `Receptionist` (bridge-allowed). Do not hire a second employment for someone already in cadre.
+**Workforce grant (Nafta desk):** Orchestrator Workforce → employments **⋯ → Login & access** (login + **org code**) or Security → Grants. After fan-out, local login is `emp-{staffCode}` / PIN `0000` (staffCode = first 8 hex of employment id). On the **SHARED** cloud pool (`hotel-pms.era-365.online/login`) you must also send **orgNo** — the login form, `?org=104221`, or extension Settings. CP `RECEPTION` maps to hotel role `Receptionist` (bridge-allowed). Do not hire a second employment for someone already in cadre.
 
 Docs: [extensions/elektraweb-bridge/README.md](../extensions/elektraweb-bridge/README.md)
 
@@ -293,7 +293,7 @@ UI: `/app/grid/guest-card-simple` (config also references `guest-cards`).
 | `PASSPORTNO` | ~95% | MDM / identity |
 | `NATIONALIDNO` (FIN) | often empty on list | use when present; card/doc child may help |
 | `PHONE` | ~50% | ops |
-| `BIRTHDATE` | ~94% | ops (fill-not-clear on re-ingest) |
+| `BIRTHDATE` | ~94% **on guest-card objects**; FOCP reservation list usually empty | ops (fill-not-clear on re-ingest) |
 | `GENDER` / `GENDERID` (`0`/`1`) | when EW sends it | `Guest.sex` M/F; sparse FOCP must not wipe |
 | `COUNTRYCODE` / nationality | yes | nationality |
 
@@ -387,11 +387,10 @@ Do **not** treat these ids as product defaults. Config / inbound name match on o
 
 ```text
 era-hotel-pms/extensions/elektraweb-bridge/
-  manifest.json          # MV3 v0.3.10; overlay login when JWT missing/expired; QA_EASYPMS_NOTES allowlist
-  background.js          # service worker: inbound queue + POST ingest + lamp + executeScript
+  manifest.json          # MV3 v0.3.13; no on-page overlay; QA_EASYPMS_NOTES allowlist
+  background.js          # service worker: inbound queue + POST ingest + toolbar lamp + executeScript
   injected.js / content.js
-  overlay-boot.js + overlay.js + overlay-frame.html  # in-page lamp (iframe UI, EW CSS isolated)
-  lamp.js                # gray/yellow/green/red status
+  lamp.js                # gray/yellow/green/red toolbar status
   options.html + settings.css + i18n.js + options.js
   popup.html / popup.js
   icons/lamp-*.png
@@ -402,7 +401,7 @@ era-hotel-pms/extensions/elektraweb-bridge/
 
 Full-tab **Options** (toolbar → Open settings). Locale EN / RU / AZ.
 
-Toolbar **lamp** (the action icon is a circle; hover tooltip) **and an on-page circle** on Elektraweb for Chrome **Open as window / installed app** (no extension toolbar). v0.3.10: overlay shows ERA login + password when there is no token or JWT `exp` has passed (URL/org UUID stay in Settings). Panel UI is `overlay-frame.html`. Click overlay → Capture / Write / settings. Drag the circle if it covers SPA buttons. After Load unpacked / update: **Reload** the extension on `chrome://extensions` from `era-hotel-pms/extensions/elektraweb-bridge` (not a stale copy).
+Toolbar **lamp** only (action icon circle; hover tooltip). **No floating circle on the Elektraweb page** (v0.3.13 — blocked FO). Capture / Write / Flush / login via toolbar **popup** or Settings. Prefer a normal Chrome tab for FO. After Load unpacked / update: **Reload** on `chrome://extensions` from `era-hotel-pms/extensions/elektraweb-bridge` (not a stale copy).
 
 | Color | Meaning |
 |-------|---------|
@@ -425,7 +424,8 @@ Popup shows the same toggles plus a matching lamp.
 1. `chrome://extensions` → Developer mode → Load unpacked.
 2. Settings: ERA Hotel URL + staff login → **Log in & save**. Pick **This desk**.
 3. Hotel FO: open Elektraweb grids (§2). Sanatorium: keep SPA open (guest folio + Tibbi Ambulator).
-4. **Capture & sync** ON. Health: toolbar lamp **or the on-page circle** green; last sync / queue / last error on Settings, popup, and overlay.
+4. **Capture & sync** ON (toolbar popup or Settings). Health: toolbar lamp green; last sync / queue / last error on Settings and popup.
+5. **Guest Cards bulk (extension ≥0.3.12, hotel-pms with parallel MDM):** scroll slowly; each page (~100 guests) waits on MDM. Hotel ingest runs **8 concurrent** MDM resolves per page (was serial — minutes/page). Watch popup/Settings **Queue → 0** and last error (MDM token / orch URL). Older extension builds dropped pages (`MAX_QUEUE=40` → ~200 MDM persons). **Clinic** does **not** get Guest Cards — patients appear only after hotel **check-in** + MDM soft-fill. Order: Guest Cards → FOCP → Notes → Folio. Extension **0.3.13**: no on-page lamp.
 
 ### Security
 

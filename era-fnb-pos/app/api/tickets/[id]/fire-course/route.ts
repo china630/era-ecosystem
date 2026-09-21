@@ -2,7 +2,9 @@ import { assertFnbEntitled } from "@/lib/api-utils";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const bodySchema = z.object({
   courseNumber: z.number().int().positive(),
@@ -15,7 +17,7 @@ export async function POST(
 ) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_FIRE);
   if (denied) return denied;
 
   const { id } = await params;

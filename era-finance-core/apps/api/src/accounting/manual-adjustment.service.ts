@@ -22,6 +22,10 @@ import {
   deriveInvoicePaymentState,
 } from "../invoices/invoice-payment-state.util";
 import { AccountingService } from "./accounting.service";
+import { AccountingBookService } from "./accounting-book.service";
+import { assertCanPostToMgmtBook } from "./ops-book.guard";
+import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import type { CreateManualAdjustmentDto } from "./dto/create-manual-adjustment.dto";
 import type { ReverseManualAdjustmentDto } from "./dto/reverse-manual-adjustment.dto";
 import {
@@ -38,7 +42,6 @@ import {
   monthKeyUtc,
 } from "../reporting/reporting-period.util";
 import { LEDGER_MAPPING_CODE_NAS_TO_IFRS } from "./ledger-mapping.constants";
-import { AccountingBookService } from "./accounting-book.service";
 
 const Decimal = Prisma.Decimal;
 
@@ -54,13 +57,9 @@ export class ManualAdjustmentService {
   async create(
     organizationId: string,
     dto: CreateManualAdjustmentDto,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ): Promise<{ transactionId: string; reference: string }> {
-    if (actingUserRole === UserRole.USER) {
-      throw new ForbiddenException(
-        "Роль USER не может проводить ручные операции в журнале",
-      );
-    }
+    assertMayPostManualJournal(actingUserRole);
     const reason = dto.reason.trim();
     if (reason.length < MANUAL_ADJUSTMENT_REASON_MIN) {
       throw new BadRequestException(
@@ -107,6 +106,7 @@ export class ManualAdjustmentService {
       dto.accountingBookId,
       dto.ledgerType,
     );
+    assertCanPostToMgmtBook(actingUserRole, book);
     const ledgerType =
       book.gaapKind === "IFRS"
         ? LedgerType.IFRS
@@ -123,7 +123,14 @@ export class ManualAdjustmentService {
       kind: TransactionKind.MANUAL_ADJUSTMENT,
       manualTemplate: template,
       isFinal: true,
-      actingUserRole,
+      actingUser:
+        typeof actingUserRole === "object"
+          ? actingUserRole
+          : { role: actingUserRole },
+      actingUserRole:
+        typeof actingUserRole === "string"
+          ? actingUserRole
+          : (actingUserRole.role as UserRole | undefined),
       counterpartyId: dto.counterpartyId ?? null,
       departmentId: dto.departmentId ?? null,
       basisInvoiceId: dto.basisInvoiceId ?? null,
@@ -143,6 +150,7 @@ export class ManualAdjustmentService {
   async preview(
     organizationId: string,
     dto: CreateManualAdjustmentDto,
+    actingUserRole?: UserRole | PolicySubject,
   ): Promise<{
     lines: Array<{ accountCode: string; debit: string; credit: string }>;
     periodClosed: boolean;
@@ -183,6 +191,9 @@ export class ManualAdjustmentService {
       dto.accountingBookId,
       dto.ledgerType,
     );
+    if (actingUserRole) {
+      assertCanPostToMgmtBook(actingUserRole, book);
+    }
     const closed = getClosedPeriodKeys(
       org?.settings,
       book.gaapKind,
@@ -275,13 +286,9 @@ export class ManualAdjustmentService {
     organizationId: string,
     id: string,
     dto: ReverseManualAdjustmentDto,
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ): Promise<{ transactionId: string; reference: string }> {
-    if (actingUserRole === UserRole.USER) {
-      throw new ForbiddenException(
-        "Роль USER не может проводить ручные операции в журнале",
-      );
-    }
+    assertMayPostManualJournal(actingUserRole);
     const reason = dto.reason.trim();
     if (reason.length < MANUAL_ADJUSTMENT_REASON_MIN) {
       throw new BadRequestException(
@@ -471,6 +478,7 @@ export class ManualAdjustmentService {
       pageSize?: number;
       ledgerType?: LedgerType;
       accountingBookId?: string;
+      actingUserRole?: UserRole | PolicySubject;
     },
   ): Promise<{
     items: Array<{
@@ -504,10 +512,18 @@ export class ManualAdjustmentService {
         query.accountingBookId,
         query.ledgerType,
       );
+      if (query.actingUserRole) {
+        assertCanPostToMgmtBook(query.actingUserRole, book);
+      }
       where.journalEntries = {
         some: { organizationId, accountingBookId: book.id },
       };
     } else if (query.ledgerType) {
+      if (query.actingUserRole && query.ledgerType === LedgerType.MANAGEMENT) {
+        assertCanPostToMgmtBook(query.actingUserRole, {
+          gaapKind: "MANAGEMENT",
+        });
+      }
       where.journalEntries = {
         some: { organizationId, ledgerType: query.ledgerType },
       };

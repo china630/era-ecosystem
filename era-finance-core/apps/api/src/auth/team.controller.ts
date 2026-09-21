@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,11 +19,9 @@ import {
 import { UserRole } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { CurrentUser } from "./decorators/current-user.decorator";
-import { Roles } from "./decorators/roles.decorator";
 import { ApproveAccessDto } from "./dto/approve-access.dto";
 import { CreateInviteDto } from "./dto/create-invite.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RolesGuard } from "./guards/roles.guard";
 import { requireOrgRole } from "./require-org-role";
 import type { AuthUser } from "./types/auth-user";
 import { AuthService } from "./auth.service";
@@ -43,8 +44,8 @@ export class TeamController {
   }
 
   @Delete("members/:userId")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   @ApiOperation({ summary: "Исключить участника (не OWNER)" })
   removeMember(
     @CurrentUser() user: AuthUser,
@@ -60,8 +61,8 @@ export class TeamController {
   }
 
   @Get("access-requests")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Ожидающие запросы на вступление по VÖEN" })
   accessRequests(
     @OrganizationId() organizationId: string,
@@ -78,8 +79,8 @@ export class TeamController {
   }
 
   @Post("access-requests/:id/approve")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   @ApiOperation({ summary: "Принять запрос на доступ" })
   approveAccess(
     @CurrentUser() user: AuthUser,
@@ -107,8 +108,8 @@ export class TeamController {
   }
 
   @Post("access-requests/:id/decline")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   @ApiOperation({ summary: "Отклонить запрос на доступ" })
   declineAccess(
     @CurrentUser() user: AuthUser,
@@ -134,8 +135,8 @@ export class TeamController {
   }
 
   @Post("invites")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   @ApiOperation({ summary: "Пригласить пользователя по email" })
   createInvite(
     @CurrentUser() user: AuthUser,
@@ -151,16 +152,16 @@ export class TeamController {
   }
 
   @Get("invites")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Список активных приглашений организации" })
   invites(@OrganizationId() organizationId: string) {
     return this.auth.listOrganizationInvites(organizationId);
   }
 
   @Post("invites/:id/revoke")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   @ApiOperation({ summary: "Отозвать приглашение" })
   revokeInvite(
     @CurrentUser() user: AuthUser,

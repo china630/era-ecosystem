@@ -162,10 +162,10 @@ export function ImportModal({
       {step === 'pick' && (
         <div className="space-y-3">
           <input
+            className={MODAL_INPUT_CLASS}
             ref={inputRef}
             type="file"
             accept=".xlsx,.xls"
-            className={MODAL_INPUT_CLASS}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
           <p className="text-sm text-gray-500">

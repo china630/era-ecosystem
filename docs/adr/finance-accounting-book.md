@@ -75,6 +75,21 @@ UI home: **Settings → Accounting books** (or Chart → Books). Familiar to 1C 
 - Soft/strict + provenance stay as in integrity ADR.  
 - MANAGEMENT / CUSTOM books: **no auto-mirror by default** (Wave B); optional mapping in Wave C.
 
+### 5a. Statutory vs management freeze (Evrostar pilot)
+
+Pilot story is **NAS + MANAGEMENT**, not NAS+IFRS unless purchased. See [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).
+
+| Rule | Meaning |
+|------|---------|
+| `isDefaultOps` | **Always** the included NAS book. Never retarget ops to MGMT so that “live cash” matches internal cost. |
+| Official money | Cash, bank, stock, official payroll, salary XML, e-taxes / DSMF / statforms → default-ops only (no book picker). |
+| MGMT | Internal labor cost (contract vs internal rate **delta** journals after timesheet approve), site margin. **No** disbursement, **no** tax export. |
+| Shape | MGMT = NAS + deltas (optional CoA clone / periodic copy), not a second ERP and not per-line dual valuation. |
+| ACL | State accountant: NAS + payments. Owner / management role: MGMT + compare-books. Same SaaS tenant — RBAC, not a hidden ledger. |
+| Holdings | Compare like `bookCode` (NAS↔NAS, MGMT↔MGMT). Two legal entities ⇒ two NAS + two MGMT books. |
+
+Do not implement off-register pay from MGMT (cash/bank/payroll XML).
+
 ### 6. Anti-goals (not a 1C clone)
 
 - No per-line «вид учёта» on every document line for cashiers.  
@@ -91,7 +106,7 @@ Allowed. UX = searchable book selector (CatalogField), not a row of toggles. Sof
 - Header toggle NAS|IFRS becomes **active AccountingBook selector** (same chrome).  
 - Reports / close / adjustments / CF take `accountingBookId` (Wave A accepts legacy `ledgerType` as alias).  
 - Upsell: «Used 2 of 3 book slots» + CTA to buy `accounting_book_extra`.  
-- COVERAGE / matrices stay PARTIAL until waves ship + UAT; first commercial story remains NAS+IFRS after FIN-GAAP UAT.
+- COVERAGE / matrices stay PARTIAL until waves ship + UAT; first commercial story remains NAS+IFRS after FIN-GAAP UAT. Field-workforce pilot adds NAS+MGMT (statutory vs internal) without changing that honesty — [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).
 
 ## Implementation note — 2026-09-08
 
@@ -118,6 +133,7 @@ Human Lab UAT / Pilot / edition `ga` are **out of eng scope for now** (deferred)
 | FIN-BOOK-SETTINGS-LOCK | P2 | **done eng** | byBookId + byLedger |
 | FIN-BOOK-MAPPING-UX | P2 | **done eng** | arbitrary from/to create UI |
 | FIN-BOOK-STOREFRONT-QTY | P2 | **done eng** | workspace modal quantity |
+| FIN-BOOK-MGMT-OPS-FREEZE | P1 | **eng** | Evrostar Wave 5: NAS forever `isDefaultOps`; tax/cash/payroll/stock reject MGMT; `internalRate` + `MgmtLaborDelta` after timesheet APPROVED. Tests `wave5-ops-mgmt` / `wave5-mgmt-delta`. Runbook [evrostar-wave-5.md](../runbooks/evrostar-wave-5.md). COVERAGE FIN-BOOK-MGMT-01 = API (not SHIPPED). |
 
 **Suggested sequencing (product):** Lab RT when ready. Eng structural tails (FY-by-book, holdings `bookCode`, account-code uniqueness, niche export callers) closed 2026-09-08.
 
@@ -152,6 +168,13 @@ Human Lab UAT / Pilot / edition `ga` are **out of eng scope for now** (deferred)
 2. Report compare: book A vs book B (TB / P&L side-by-side or diff).  
 3. Soft/strict mirror for any mapped pair; Audit Hub presence by book.  
 **Exit:** N-book story complete for enterprise demos; update COVERAGE FIN-GAAP / new FIN-BOOK-* rows; Product-Readiness as warranted.
+
+### Wave D — Statutory vs management (field-workforce pilot)
+
+1. Guard: tax export, DSMF, salary XML, cash/bank disbursement always `isDefaultOps` (NAS); no book selector on those surfaces.  
+2. Employee **contract salary** vs **internal rate**; after CP timesheet approve, MGMT-only labor delta journal.  
+3. RBAC: MGMT reports + compare-books for owner/management; state accountant stays on NAS.  
+**Exit:** Lab RT on NAS+MGMT for the Evrostar shape; still not `ga`. ADR: [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).
 
 ## References
 

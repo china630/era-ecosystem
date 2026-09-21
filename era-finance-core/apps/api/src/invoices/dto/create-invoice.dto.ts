@@ -8,6 +8,7 @@ import {
   IsIn,
   IsNumber,
   IsOptional,
+  IsObject,
   IsString,
   MaxLength,
   IsUUID,
@@ -154,4 +155,12 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsUUID()
   bankAccountId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Tenant extra attributes (registry keys only). Does not affect GL posting.",
+  })
+  @IsOptional()
+  @IsObject()
+  extraAttributes?: Record<string, unknown>;
 }

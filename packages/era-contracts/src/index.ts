@@ -43,3 +43,4 @@ export * from "./reference-data";
 export * from "./mdm";
 export * from "./workforce";
 export * from "./tender";
+export * from "./access";

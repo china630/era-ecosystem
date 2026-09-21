@@ -6,6 +6,10 @@ export type MeterCanonInput = {
   pricePerWhatsappAlertAzn: number;
   pricePerInvoiceAzn: number;
   pricePerOcrPageAzn: number;
+  /** Soft overage for managed trade-credit buyers (~1 AZN). */
+  pricePerTradeCreditBuyerAzn?: number;
+  /** Soft meter for registry deep-check (~2 AZN). */
+  pricePerTradeCreditEnrichAzn?: number;
 };
 
 export type QuotaCanonInput = {
@@ -15,8 +19,26 @@ export type QuotaCanonInput = {
   pricePerDocumentPackAzn: number;
 };
 
-export function canonMeterUnitPricing(m: MeterCanonInput): MeterCanonInput {
-  return { ...m, pricePerInvoiceAzn: 0 };
+export function canonMeterUnitPricing(
+  m: MeterCanonInput,
+): MeterCanonInput & {
+  pricePerTradeCreditBuyerAzn: number;
+  pricePerTradeCreditEnrichAzn: number;
+} {
+  return {
+    ...m,
+    pricePerInvoiceAzn: 0,
+    pricePerTradeCreditBuyerAzn:
+      typeof m.pricePerTradeCreditBuyerAzn === "number" &&
+      Number.isFinite(m.pricePerTradeCreditBuyerAzn)
+        ? m.pricePerTradeCreditBuyerAzn
+        : 1,
+    pricePerTradeCreditEnrichAzn:
+      typeof m.pricePerTradeCreditEnrichAzn === "number" &&
+      Number.isFinite(m.pricePerTradeCreditEnrichAzn)
+        ? m.pricePerTradeCreditEnrichAzn
+        : 2,
+  };
 }
 
 export function canonQuotaUnitPricing(q: QuotaCanonInput): QuotaCanonInput {

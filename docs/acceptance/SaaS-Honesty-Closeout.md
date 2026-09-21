@@ -11,6 +11,7 @@ This page freezes **what may and may not be claimed** after the SaaS runtime-pre
 | Claim | Status |
 |-------|-------------------------|
 | Request tenant on industry Next (login/JWT/ALS/stamps) | **Landed** |
+| Bank ops `orgNo` login + engine `X-Organization-Id` ALS (DBO Host/bind, no customer ERA ID) | **Landed** (code; TENANT Scaffold still 🟡) |
 | Hotel ops stamps via `requestOrganizationId` (not process bind) | **Landed** (isolation eng) |
 | SHARED Sync skips process `applyOrganizationBind` | **Landed** (isolation eng) |
 | Orch pool members SoR for cron | **Landed** (isolation eng) |

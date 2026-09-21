@@ -1,12 +1,13 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { SignatureService } from "../signature/signature.service";
 import { InitiateSignatureDto } from "./dto/initiate-signature.dto";
@@ -22,8 +23,8 @@ export class InvoiceSignatureController {
   ) {}
 
   @Post(":id/signature/initiate")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "Запуск ЭЦП: ASAN İmza (мобильное подтверждение) или SİMA (биометрия; в ответе simQrPayload для QR). SIGNATURE_GATEWAY_MOCK=1 — авто-завершение ~2 с при опросе. SIMA_QR_PAYLOAD_URL — URL от шлюза вместо mock JSON.",

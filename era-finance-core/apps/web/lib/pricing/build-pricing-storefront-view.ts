@@ -107,6 +107,8 @@ const DEFAULT_METER: MeterUnitPricing = {
   pricePerWhatsappAlertAzn: 0.05,
   pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
+  pricePerTradeCreditBuyerAzn: 1,
+  pricePerTradeCreditEnrichAzn: 2,
 };
 
 export function buildPricingStorefrontView(

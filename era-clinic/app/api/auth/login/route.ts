@@ -1,8 +1,11 @@
 import {
+  ORG_NO_RE,
   authCookieName,
   enterSatelliteTenant,
   findUserByCredential,
-  isSatelliteUserLoginAllowed,
+  jsonLoginHostBinding,
+  readStaffLoginJson,
+  resolveStaffLoginTenant,
   satelliteRuntimeConfig,
   signSatelliteSession,
   verifySatelliteUserPassword,
@@ -21,29 +24,36 @@ const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
   /** SHARED pool: required. Appliance: omit → process bind only. */
-  organizationId: z.string().uuid().optional(),
+  orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
-    if (
-      satelliteRuntimeConfig().deploymentTopology === "SHARED" &&
-      !body.organizationId?.trim()
-    ) {
-      return jsonError("organizationId is required on SHARED pool", 400);
+    const rawBody = await readStaffLoginJson(request);
+    if (!rawBody.ok) {
+      return jsonError(rawBody.error, rawBody.status);
     }
-    const user = await findUserByCredential(prisma, body.login, body.organizationId);
-    if (!user || !isSatelliteUserLoginAllowed(user)) {
-      return jsonError("Invalid credentials", 401);
+    const body = schema.parse(rawBody.raw);
+    const tenant = await resolveStaffLoginTenant({
+      orgNo: body.orgNo,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+      request,
+    });
+    if (!tenant.ok) {
+      return jsonError(tenant.error, tenant.status);
     }
-    const valid = await verifySatelliteUserPassword(body.password, user);
-    if (!valid) {
+    const user = await findUserByCredential(prisma, body.login, tenant.organizationId);
+    if (!(await verifySatelliteUserPassword(body.password, user)) || !user) {
       return jsonError("Invalid credentials", 401);
     }
 
     const organizationId = user.organizationId;
     enterSatelliteTenant({ organizationId });
+
+    const { ensureSystemClinicRoles } = await import(
+      "@/lib/auth/ensure-system-clinic-roles"
+    );
+    await ensureSystemClinicRoles(prisma, organizationId);
 
     const permissions = await permissionsForUser(user.id);
     const token = await signSatelliteSession({
@@ -71,7 +81,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 4,
+      maxAge: 60 * 60 * 12,
     });
     res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {
       httpOnly: false,
@@ -83,4 +93,8 @@ export async function POST(request: Request) {
   } catch (err) {
     return handleRouteError(err);
   }
+}
+
+export async function GET(request: Request) {
+  return jsonLoginHostBinding(request);
 }

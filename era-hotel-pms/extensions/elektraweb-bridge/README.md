@@ -2,20 +2,18 @@
 
 Temporary dual-run extension: Elektraweb session on the desk PC ↔ this hotel-pms deployment.
 
-**Settings UI:** toolbar **lamp** (gray / yellow / green / red) **and the same circle on the Elektraweb page** (lower-right, left of EW chat; drag to move). Panel is a 320px card (not clipped to the 44px lamp). Chrome **Open as window / installed app** has no toolbar — the circle is injected into the page (and into iframes). After Load unpacked: **Reload** the extension, then reopen or leave the EW app window open (inject also hits already-open windows). Click the on-page circle for Capture / Write / settings. Locale EN / RU / AZ.
+**Settings UI (v0.3.13+):** Chrome **toolbar** icon only (gray / yellow / green / red circle). Click the icon → popup: Capture / Write / Flush / Open settings. **No floating lamp on the Elektraweb page** (it blocked FO grids). Prefer a normal Chrome tab for FO so the toolbar is visible; if you use “Open as window”, open Settings from `chrome://extensions` → Details → Extension options.
 
-**Toolbar / on-page lamp**
+**Toolbar lamp**
 
 | Color | Meaning | Operator action |
 |-------|---------|-----------------|
-| Gray | No ERA login | Overlay: login + password (URL/org already in Settings) |
+| Gray | No ERA login | Popup or Settings → login |
 | Yellow | Logged in but Capture off, or sanatorium write waiting for Elektraweb SPA session | Turn **Capture & sync** ON; on SPA desk open Elektraweb SPA |
 | Green | ERA session live, capture on, no sync error | None |
-| Red | JWT expired (~12h) or last ingest/outbox error | Overlay login fields return; or Settings if URL/org never saved |
+| Red | JWT expired (~12h) or last ingest/outbox error | Login again; check last error in popup/Settings |
 
-Tooltip on the toolbar icon repeats the same text (EN / RU / AZ). Popup, Settings, and the on-page overlay show a matching dot.
-
-Chrome **Install as app / Open as window:** the toolbar lamp is hidden. Use the floating circle on the Elektraweb page (v0.3.10: overlay login/password when JWT missing or expired; UI in an extension iframe). First-time Hotel URL + org UUID still uses Settings (opens a normal Chrome tab). After updating the extension, click **Reload** on `chrome://extensions` so Chrome grants `scripting` / `tabs` / `webNavigation`.
+Tooltip on the toolbar icon repeats the same text (EN / RU / AZ).
 
 **Login:** Options asks for ERA Hotel PMS URL + staff login/password. Server returns a **bridge JWT** that embeds:
 
@@ -48,12 +46,14 @@ Write must **not** run on FO: extras need the three-copy SPA ticket on the sanat
    AUTH_JWT_SECRET=<same as hotel>
    POS_BRIDGE_SECRET=<same as clinic>
    ```
-2. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → this folder. On update to **0.3.10+**: **Reload** the card. Overlay injects into already-open Elektraweb **app windows** — no need to use a normal tab for the lamp.
+2. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → this folder. On update to **0.3.13+**: **Reload** the card (on-page floating lamp is removed — use toolbar popup).
 3. Extension **Settings** → URL + **ERA organization ID (hotel UUID)** + ERA reception login (`emp-…` / `0000` after Workforce grant, or seed `reception` / `reception123`) → **Log in & save**.
 4. Pick **This desk**. Hotel FO: open Elektraweb grids (reservations / in-house / checkout / guests / folio). Sanatorium: keep SPA open (guest folio and Tibbi Ambulator).
-5. Popup or Settings → **Capture & sync** ON. Toolbar lamp should turn **green** (yellow if capture is still off; red if login expired). Sanatorium: **Write** ON and keep SPA open so `LoginToken` exists.
+5. Toolbar icon → popup → **Capture & sync** ON. Lamp should turn **green**. Sanatorium: **Write** ON and keep SPA open so `LoginToken` exists.
 
 **Operator order (inbound):** Guest Cards first, then FOCP / in-house. Extra Req is **not** on the FOCP list — open CRM → Reservations → **Reservation Notes** (`/app/grid/allresnotes`). Hotel API must be on a build that ingests `QA_EASYPMS_NOTES` and name-matches FOCP guests (no first-guest fallback).
+
+**Guest Cards bulk (v0.3.12+):** each grid page (~100 guests) is one queue envelope and waits on MDM resolve per row. Do **not** race-scroll: after each page wait until Settings / popup **Queue** is near 0. Older builds (`MAX_QUEUE=40`) silently dropped earlier pages. Reload unpacked extension after update (**0.3.13**: no on-page lamp).
 
 Clinic dual-run: Super-Admin `ClinicCutoverPolicy` (Sync) + `HOTEL_PMS_URL` + same `POS_BRIDGE_SECRET`. Reception: `/reception/extra-tickets`.
 

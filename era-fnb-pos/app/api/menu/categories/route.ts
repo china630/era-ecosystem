@@ -2,11 +2,17 @@ import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { TILL_READ_MENU } from "@/lib/auth/read-permission-sets";
 
-export async function GET() {
+export async function GET(request: Request) {
   await assertFnbEntitled();
   try {
+    const session = await getSessionFromRequest(request);
+    const denied = denyUnlessAnyPermission(session, TILL_READ_MENU);
+    if (denied) return denied;
     const categories = await prisma.menuCategory.findMany({
       orderBy: { sortOrder: "asc" },
       include: {
@@ -29,7 +35,7 @@ export async function POST(request: Request) {
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());

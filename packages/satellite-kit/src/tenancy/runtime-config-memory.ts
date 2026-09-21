@@ -1,3 +1,5 @@
+import { rewriteComposeHostnameForHost } from "./compose-hostname";
+
 export type SatelliteRuntimeConfig = {
   organizationId?: string;
   orchestratorEventUrl?: string;
@@ -36,8 +38,9 @@ export function applyEnvSideEffects(cfg: SatelliteRuntimeConfig): void {
     process.env.ERA_SATELLITE_ORGANIZATION_ID = cfg.organizationId.trim();
   }
   if (cfg.orchestratorEventUrl?.trim()) {
-    process.env.ORCHESTRATOR_EVENT_URL = cfg.orchestratorEventUrl.trim();
-    process.env.ORCHESTRATOR_URL = cfg.orchestratorEventUrl.trim();
+    const orch = rewriteComposeHostnameForHost(cfg.orchestratorEventUrl.trim());
+    process.env.ORCHESTRATOR_EVENT_URL = orch;
+    process.env.ORCHESTRATOR_URL = orch;
   }
   if (cfg.publicBaseUrl?.trim()) {
     process.env.ERA_PUBLIC_BASE_URL = cfg.publicBaseUrl.trim();

@@ -33,6 +33,7 @@ const patchSchema = z.object({
   defaultProcedureGapMinutes: z.number().int().min(0).max(240).optional(),
   peakModeEnabled: z.boolean().optional(),
   peakDayEndHour: z.number().int().min(1).max(24).optional(),
+  dailyPackageProcedureCap: z.number().int().min(1).max(12).optional(),
   checkInRequiresQr: z.boolean().optional(),
   procedureCheckInMode: z.enum(["QR", "CODE", "MANUAL"]).optional(),
   autoNoShowAfterMin: z.number().int().min(1).max(1440).nullable().optional(),

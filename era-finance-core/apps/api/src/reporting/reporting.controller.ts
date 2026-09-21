@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Body,
@@ -24,10 +27,8 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { LedgerType, UserRole } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { VoenIntegrityGuard } from "../auth/guards/voen-integrity.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
@@ -86,6 +87,8 @@ export class ReportingController {
   ) {}
 
   @Get("compare-books")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "Compare trial-balance totals for two accounting books" })
   compareBooks(
     @OrganizationId() organizationId: string,
@@ -105,13 +108,20 @@ export class ReportingController {
 
   @Get("trial-balance")
   @ApiOperation({ summary: "Оборотно-сальдовая ведомость за период" })
-  trialBalance(
+  async trialBalance(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("accountingBookId") accountingBookId?: string,
   ) {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     return this.reporting.trialBalance(
       organizationId,
       dateFrom,
@@ -125,12 +135,19 @@ export class ReportingController {
   @ApiOperation({ summary: "Export Trial Balance to PDF/XLSX" })
   async trialBalanceExport(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("format") format: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("accountingBookId") accountingBookId?: string,
   ): Promise<StreamableFile> {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     const data = await this.reporting.trialBalance(
       organizationId,
       dateFrom,
@@ -526,18 +543,10 @@ export class ReportingController {
   }
 
   @Get("pl")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "P&L по проводкам (начисление)" })
-  profitAndLoss(
+  async profitAndLoss(
     @OrganizationId() organizationId: string,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
@@ -548,6 +557,14 @@ export class ReportingController {
   ) {
     const requestedDepartment = departmentId?.trim();
     const role = user ? requireOrgRole(user) : null;
+    if (role) {
+      await this.reporting.assertReportBookAccess(
+        organizationId,
+        role,
+        accountingBookId,
+        parseLedgerTypeQuery(ledgerType),
+      );
+    }
     if (
       requestedDepartment &&
       role !== UserRole.OWNER &&
@@ -570,16 +587,8 @@ export class ReportingController {
   }
 
   @Get("pl/export")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Export Profit&Loss to PDF/XLSX" })
   async profitAndLossExport(
     @OrganizationId() organizationId: string,
@@ -593,6 +602,14 @@ export class ReportingController {
   ): Promise<StreamableFile> {
     const requestedDepartment = departmentId?.trim();
     const role = user ? requireOrgRole(user) : null;
+    if (role) {
+      await this.reporting.assertReportBookAccess(
+        organizationId,
+        role,
+        accountingBookId,
+        parseLedgerTypeQuery(ledgerType),
+      );
+    }
     if (
       requestedDepartment &&
       role !== UserRole.OWNER &&
@@ -634,13 +651,21 @@ export class ReportingController {
   })
   dashboard(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("ledgerType") ledgerType?: string,
     @Query("accountingBookId") accountingBookId?: string,
   ) {
-    return this.reporting.dashboard(
+    return this.reporting.assertReportBookAccess(
       organizationId,
-      parseLedgerTypeQuery(ledgerType),
+      requireOrgRole(user),
       accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    ).then(() =>
+      this.reporting.dashboard(
+        organizationId,
+        parseLedgerTypeQuery(ledgerType),
+        accountingBookId,
+      ),
     );
   }
 
@@ -695,16 +720,8 @@ export class ReportingController {
   }
 
   @Get("receivables")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.AUDITOR,
-    UserRole.WAREHOUSE_KEEPER,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Дебиторка (счёт 211): долг контрагентов с начисленной выручкой без оплаты",
   })
@@ -743,8 +760,8 @@ export class ReportingController {
   }
 
   @Post("netting")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Взаимозачёт (FinanceService.executeNetting): Дт 531 — Кт 211",
   })
@@ -885,14 +902,8 @@ export class ReportingController {
   }
 
   @Get("ap-aging")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "AP Aging: supplier payables 531 aged 0-30 / 31-60 / 61-90 / 90+, optional asOf",
@@ -912,14 +923,8 @@ export class ReportingController {
   }
 
   @Get("creditor-payment-plan")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Creditor payment plan: outstanding 531 obligations + suggestedPayDate",
@@ -939,8 +944,8 @@ export class ReportingController {
   }
 
   @Get("eqf-registry")
-  @UseGuards(VoenIntegrityGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @UseGuards(VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "EQF / e-Qaimə registry by debtor (eqaime* + dvxSync* on sales invoices)",
@@ -957,9 +962,9 @@ export class ReportingController {
   }
 
   @Get("property-tax/preview")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Preview annual property tax (Əmlak vergisi) on ACTIVE fixed-asset net book",
@@ -1031,9 +1036,9 @@ export class ReportingController {
   }
 
   @Post("etaxes-vat-declaration/submit")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "ƏDV paketini vergi şlüzünə göndər (E_TAXES_VAT_SUBMIT_URL)",
   })
@@ -1054,9 +1059,9 @@ export class ReportingController {
   }
 
   @Get("tax-declarations")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "List e-Taxes declaration exports with workflow statuses",
   })
@@ -1065,9 +1070,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/generate")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Generate declaration file for e-taxes (status: GENERATED)",
   })
@@ -1079,9 +1084,9 @@ export class ReportingController {
   }
 
   @Get("tax-declarations/:id/download")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Download generated declaration file and mark as UPLOADED",
   })
@@ -1097,9 +1102,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/:id/submit")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Submit generated declaration to e-taxes gateway (VAT / PROFIT_TAX / PAYROLL_WITHHOLDING via HSM/HTTP seam)",
@@ -1112,9 +1117,9 @@ export class ReportingController {
   }
 
   @Get("payroll-withholding/preview")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary: "Preview payroll withholding aggregate for YYYY-MM (POSTED payroll run)",
   })
@@ -1129,9 +1134,9 @@ export class ReportingController {
   }
 
   @Post("tax-declarations/:id/receipt")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
@@ -1153,9 +1158,9 @@ export class ReportingController {
   }
 
   @Get("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({ summary: "List profit tax book-to-tax adjustments for a year" })
   listProfitTaxAdjustments(
     @OrganizationId() organizationId: string,
@@ -1169,9 +1174,9 @@ export class ReportingController {
   }
 
   @Post("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Create manual profit tax adjustment line" })
   createProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1181,9 +1186,9 @@ export class ReportingController {
   }
 
   @Patch("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Update manual profit tax adjustment line" })
   updateProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1194,9 +1199,9 @@ export class ReportingController {
   }
 
   @Delete("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Soft-delete manual profit tax adjustment line" })
   deleteProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
@@ -1206,9 +1211,9 @@ export class ReportingController {
   }
 
   @Get("profit-tax/preview")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Preview profit tax aggregate (accounting result + adjustments + tax)",
   })
@@ -1224,8 +1229,8 @@ export class ReportingController {
   }
 
   @Post("close-period")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({
     summary:
       "Close a month for one ledger (NAS or IFRS): isLocked + closedPeriodsByLedger",
@@ -1244,8 +1249,8 @@ export class ReportingController {
   }
 
   @Post("reopen-period")
-  @UseGuards(RolesGuard, VoenIntegrityGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard, VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({
     summary:
       "Reopen a closed month for one ledger (clears closedPeriodsByLedger + unlocks book-scoped txs)",
@@ -1264,24 +1269,25 @@ export class ReportingController {
   }
 
   @Get("income-statement")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Full income statement (all REVENUE/EXPENSE accounts)",
   })
-  incomeStatement(
+  async incomeStatement(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom: string,
     @Query("dateTo") dateTo: string,
     @Query("ledgerType") ledgerType?: string,
     @Query("accountingBookId") accountingBookId?: string,
   ) {
+    await this.reporting.assertReportBookAccess(
+      organizationId,
+      requireOrgRole(user),
+      accountingBookId,
+      parseLedgerTypeQuery(ledgerType),
+    );
     return this.reporting.fullIncomeStatement(
       organizationId,
       dateFrom,
@@ -1292,8 +1298,8 @@ export class ReportingController {
   }
 
   @Post("close-fiscal-year")
-  @UseGuards(RolesGuard, VoenIntegrityGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards( VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Close fiscal year: roll P&L to 801 then retained earnings 802",
   })
@@ -1312,8 +1318,8 @@ export class ReportingController {
   }
 
   @Get("fiscal-year-close/:year")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({ summary: "Fiscal year close protocol (reformation report)" })
   fiscalYearClose(
     @OrganizationId() organizationId: string,
@@ -1334,8 +1340,8 @@ export class ReportingController {
   }
 
   @Post("reopen-fiscal-year")
-  @UseGuards(RolesGuard, VoenIntegrityGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards( VoenIntegrityGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Reopen fiscal year: reverse close journal and remove from closedYears",
   })

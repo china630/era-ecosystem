@@ -31,6 +31,8 @@ sequenceDiagram
 
 Without Finance: rows remain in CP + F1 CSV export.
 
+Labor **shift plan** (places, cycles) is a separate CP module that **materializes into** these cells — [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md). It does not replace month approve as payroll SoR.
+
 ## Events
 
 | Event | Direction |

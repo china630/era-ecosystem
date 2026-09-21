@@ -45,6 +45,15 @@ export const ModuleEntitlement = {
   RECOVERY_PRO: "recovery_pro",
   /** Auditor workplace: timeline, sampling, bulk export, backdating reports (paid add-on). */
   AUDIT_HUB: "audit_hub",
+  /**
+   * Trade credit lock: facility limit, pickup grants, buyer cabinet (ADR finance-trade-credit-control).
+   * Included managed-buyer quota: 50; overage metered ~1 AZN/buyer (soft).
+   */
+  TRADE_CREDIT_CONTROL: "trade_credit_control",
+  /**
+   * Phase 2c factoring referral lead SKU (partner quote / 99 AZN). No GL disbursement.
+   */
+  TRADE_CREDIT_FACTOR_LEAD: "trade_credit_factor_lead",
   /** Risk & Compliance (ERM): automated signals and dashboard. */
   COMPLIANCE_PRO: "compliance_pro",
   /** Commercial contract registry and limit gateway. */

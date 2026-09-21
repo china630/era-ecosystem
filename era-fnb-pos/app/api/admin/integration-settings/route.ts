@@ -1,18 +1,16 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { resolveSatelliteOrganizationId, SATELLITE_ROLE } from "@era/satellite-kit";
+import { resolveSatelliteOrganizationId } from "@era/satellite-kit";
 import { getSubscriptionMe } from "@/integration/control-plane-platform.client";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [
-    FB_ROLES.MANAGER,
-    SATELLITE_ROLE.BUSINESS_OWNER,
-    SATELLITE_ROLE.PLATFORM_MEMBER,
-  ]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_INTEGRATION);
   if (denied) return denied;
   if (!session?.financeRole?.trim()) {
     return NextResponse.json(
@@ -25,6 +23,8 @@ export async function GET(request: Request) {
   }
 
   const { organizationId, source } = resolveSatelliteOrganizationId({ allowFallback: true });
+  const { listDevicesForSatellite } = await import("@era/satellite-kit");
+  const devices = listDevicesForSatellite({ organizationId });
   let platformSubscription: unknown = null;
   if (source !== "fallback") {
     try {
@@ -38,8 +38,13 @@ export async function GET(request: Request) {
     organizationId: organizationId || null,
     controlPlaneUrl: process.env.CONTROL_PLANE_URL ?? null,
     platformSubscription,
+    kkmSource: devices.length > 0 ? "org-catalog" : "env-fallback-deprecated",
     kkmDriver:
-      process.env.ERA_FISCAL_PROVIDER ?? process.env.KKM_DRIVER ?? "mock",
+      devices.find((d) => d.kind === "FISCAL_KKM")?.providerId ??
+      process.env.ERA_FISCAL_PROVIDER ??
+      process.env.KKM_DRIVER ??
+      "mock",
+    fiscalDeviceCount: devices.length,
     stockConsumptionEnabled: process.env.STOCK_CONSUMPTION_ENABLED === "true",
   });
 }
@@ -47,7 +52,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_INTEGRATION);
   if (denied) return denied;
 
   z.object({ stockConsumptionEnabled: z.boolean().optional() }).parse(

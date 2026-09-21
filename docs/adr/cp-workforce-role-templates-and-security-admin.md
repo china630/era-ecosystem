@@ -20,7 +20,9 @@ CP publishes **`STAFF_PROVISIONED` / `STAFF_DEACTIVATED`** with **`cpEmploymentI
 
 - `POST /platform/v1/workforce/employments/hire` — employment + seat + bindings + provision
 - `POST .../terminate`, `PATCH .../reprovision`
-- `GET .../employments` and `GET .../employments/:id` include **active** `roleBindings` so workspace Employments ⋯ overflow (Reprovision) and the satellite filter work
+- `PATCH .../reprovision` with `satelliteKeys` (including `[]`) **replaces** that employment’s satellite set: revoke missing keys (`REVOKED` + `STAFF_DEACTIVATED`), upsert new (`HIRE_DEFAULT` + `STAFF_PROVISIONED`, role from the position template). Omitted `satelliteKeys` = classic fan-out of current bindings only.
+- Workspace **Login & access** (Employments ⋯) is the per-person editor: Hotel / Clinic / F&B checkboxes, not a read-only list. Open for any non-terminated employment (no prior binding required). Save sends `satelliteKeys`.
+- `GET .../employments` and `GET .../employments/:id` include **active** `roleBindings` (`satelliteKey`, `satelliteRole`, `provisionState`, `lastProvisionError`) so workspace overflow (Reprovision, Login & access) and the satellite filter work
 - `WorkforceSeatAllocation` — 1 seat per `globalPersonId` per scope
 - `WorkforceAssignment` registry keyed by `cpEmploymentId`
 
@@ -37,6 +39,8 @@ Employee create no longer sets `provisionedSatellite*` or emits staff events.
 ## Security Admin UI
 
 `/workspace/workforce/security` — seats, bindings, audit tail; role matrix via `/role-templates`.
+
+The **role matrix** is position × satellite **default role**, not the current person. Per-person add/revoke is Login & access (or a manual grant). **Bindings** is a read-only journal: person column from MDM; org-unit filter parses `GET org-units` `{ items, scope }` (not a raw array).
 
 ## Consequences
 

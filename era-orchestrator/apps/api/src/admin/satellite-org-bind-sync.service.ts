@@ -1,11 +1,17 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+  PlatformCustomDomainKind,
+  PlatformCustomDomainStatus,
+} from "@era365/database";
+import {
   FINANCE_CORE_SATELLITE_KEY,
   INDUSTRY_SATELLITE_KEYS,
 } from "../subscription/satellite-keys.constants";
 import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteEndpointRegistryService } from "../satellite-events/satellite-endpoint-registry.service";
+import { resolveDomainEntitlements } from "../platform/domains/domain-pack-limits";
+import { decryptText } from "../security/pii-crypto.util";
 
 const BIND_PATH = "/api/internal/v1/organization/bind";
 const RUNTIME_CONFIG_PATH = "/api/internal/v1/runtime-config";
@@ -184,18 +190,27 @@ export class SatelliteOrgBindSyncService {
       select: {
         deploymentTopology: true,
         subscriptionPlan: true,
+        publicOrgNumber: true,
+        deletedAt: true,
       },
     });
     if (org?.deploymentTopology) {
       body.deploymentTopology = org.deploymentTopology;
+    }
+    if (org?.deletedAt) {
+      body.revokePublicOrgNumber = true;
+      body.loginHostnames = [];
+    } else if (org?.publicOrgNumber != null) {
+      body.publicOrgNumber = org.publicOrgNumber;
     }
 
     const sub = await this.prisma.organizationSubscription.findUnique({
       where: { organizationId },
       select: { activeModules: true, customConfig: true, currentTier: true },
     });
+    let modules: string[] = [];
     if (sub) {
-      const modules = Array.isArray(sub.activeModules)
+      modules = Array.isArray(sub.activeModules)
         ? sub.activeModules.filter((m): m is string => typeof m === "string")
         : [];
       body.activeModules = modules;
@@ -208,10 +223,47 @@ export class SatelliteOrgBindSyncService {
       }
     }
 
+    const domainEntitlements = resolveDomainEntitlements(modules);
+    if (domainEntitlements.hasBasic || domainEntitlements.hasOrgPack) {
+      const loginHosts = await this.prisma.platformCustomDomain.findMany({
+        where: {
+          organizationId,
+          kind: PlatformCustomDomainKind.satellite_login,
+          status: PlatformCustomDomainStatus.ACTIVE,
+        },
+        select: {
+          hostname: true,
+          organizationId: true,
+          satelliteKey: true,
+          kind: true,
+          status: true,
+        },
+      });
+      if (loginHosts.length > 0) {
+        body.loginHostnames = loginHosts;
+      } else {
+        body.loginHostnames = [];
+      }
+    }
+
     const edition =
       org?.subscriptionPlan?.trim() ||
       (sub?.currentTier ? String(sub.currentTier) : "");
     if (edition) body.edition = edition;
+
+    const orgSettings = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const settings =
+      orgSettings?.settings &&
+      typeof orgSettings.settings === "object" &&
+      !Array.isArray(orgSettings.settings)
+        ? (orgSettings.settings as Record<string, unknown>)
+        : {};
+    if (settings.edition === "kafe" || settings.signupSource === "kafe") {
+      body.edition = "kafe";
+    }
 
     // Per-org vendor policies — satellite upserts the row for this organizationId.
     const bridge = await this.prisma.elektrawebBridgePolicy.findUnique({
@@ -237,6 +289,36 @@ export class SatelliteOrgBindSyncService {
         elektrawebDualRun: cutover.elektrawebDualRun,
         hotelOrganizationId: cutover.hotelOrganizationId,
       };
+    }
+
+    const fiscalDevices = await this.prisma.fiscalHardwareDevice.findMany({
+      where: { organizationId, status: "active" },
+    });
+    if (fiscalDevices.length > 0) {
+      body.fiscalDevices = fiscalDevices.map((r) => ({
+        id: r.id,
+        organizationId: r.organizationId,
+        kind: r.kind,
+        providerId: r.providerId,
+        label: r.label,
+        outletCode: r.outletCode,
+        registerCode: r.registerCode,
+        serial: r.serial,
+        externalIds:
+          r.externalIdsJson &&
+          typeof r.externalIdsJson === "object" &&
+          !Array.isArray(r.externalIdsJson)
+            ? (r.externalIdsJson as Record<string, string>)
+            : null,
+        endpoint: r.endpoint,
+        secrets: decryptFiscalSecrets(r.secretsCipher),
+        status: r.status,
+        isOrgDefault: r.isOrgDefault,
+        isOutletDefault: r.isOutletDefault,
+        isRegisterDefault: r.isRegisterDefault,
+      }));
+    } else {
+      body.fiscalDevices = [];
     }
 
     return body;
@@ -335,5 +417,18 @@ export class SatelliteOrgBindSyncService {
         error: message,
       };
     }
+  }
+}
+
+function decryptFiscalSecrets(
+  cipher: string | null,
+): Record<string, string> | null {
+  if (!cipher?.trim()) return null;
+  try {
+    const payload = decryptText(cipher);
+    if (!payload) return null;
+    return JSON.parse(payload) as Record<string, string>;
+  } catch {
+    return null;
   }
 }

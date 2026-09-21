@@ -18,6 +18,7 @@ describe("pricing-hospitality.catalog", () => {
       "hotel_core",
       "hotel_housekeeping",
       "hotel_migration_pro",
+      "hotel_distribution",
     ]);
     expect(city?.matchModuleKeys).not.toContain("hotel_front_office");
   });

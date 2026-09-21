@@ -6,6 +6,13 @@ import {
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
+import { listEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
+
+/** Print Doctor column = episode care team, never cabin/roster STAFF. */
+export function episodeCareTeamPrintName(names: string[]): string {
+  const cleaned = names.map((n) => n.trim()).filter(Boolean);
+  return cleaned.length ? cleaned.join(", ") : "—";
+}
 
 export type PrintProcedureRow = {
   no: number;
@@ -64,8 +71,6 @@ export async function buildProceduresPrint(
     },
     include: {
       resource: { include: { room: true } },
-      allocations: { include: { practitioner: true } },
-      resourceBooking: { include: { practitioner: true } },
       sites: { orderBy: { sortOrder: "asc" }, include: { site: true } },
     },
     orderBy: { scheduledAt: "asc" },
@@ -84,14 +89,17 @@ export async function buildProceduresPrint(
     : [];
   const listById = new Map(listItems.map((r) => [r.id, r]));
   const printLang = lang === "ru" || lang === "az" ? lang : "en";
+  const careTeam = episode
+    ? await listEpisodeCareDoctors(episode.id)
+    : [];
+  const doctor = episodeCareTeamPrintName(
+    careTeam.map((r) => r.practitioner.fullName),
+  );
 
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
   for (const o of orders) {
     const date = bakuDate(o.scheduledAt);
-    const staff = o.allocations.find((a) => a.practitioner)?.practitioner;
-    const bookingDoc = o.resourceBooking?.practitioner;
-    const doctor = staff?.fullName ?? bookingDoc?.fullName ?? "—";
     const room =
       o.resource?.room?.name ??
       o.resource?.name ??

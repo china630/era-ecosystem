@@ -25,6 +25,7 @@ import {
   dispatchGuestCheckedOut,
   dispatchRoomChanged,
   dispatchSanatoriumBookingCreated,
+  lifecycleDemographicsFromPax,
 } from '@/lib/integration/guest-lifecycle-events';
 import {
   isClinicHttpBridgeEnabled,
@@ -267,6 +268,7 @@ export async function upsertReservationFromElektrawebRow(
         checkInDate: checkInDate.toISOString(),
         checkOutDate: checkOutDate.toISOString(),
         paxKey,
+        ...lifecycleDemographicsFromPax(pax),
       });
       if (isClinicHttpBridgeEnabled()) {
         await notifyClinicCheckIn({
@@ -276,6 +278,7 @@ export async function upsertReservationFromElektrawebRow(
           programCode: pax.medicalPackageCode ?? programCode,
           roomNumber: newRoom ?? null,
           paxKey,
+          ...lifecycleDemographicsFromPax(pax),
         }).catch((e) => console.error('clinic bridge', e));
       }
     }
@@ -321,5 +324,6 @@ export async function upsertReservationFromElektrawebRow(
     action: existing ? 'updated' : 'created',
     key: externalRef,
     events,
+    mdmLinked: false,
   };
 }

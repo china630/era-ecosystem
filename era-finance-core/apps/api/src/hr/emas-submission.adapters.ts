@@ -217,6 +217,13 @@ export class EmasSubmissionAdapterFactory {
     return raw === "1" || raw?.toLowerCase() === "true";
   }
 
+  isGatewayConfigured(): boolean {
+    return (
+      this.isEnabled() &&
+      Boolean(this.config.get<string>("EMAS_SUBMIT_URL")?.trim())
+    );
+  }
+
   /** Throws 503 when S2S flag is off — callers should direct users to RPA/Excel. */
   assertEnabled(): void {
     if (!this.isEnabled()) {

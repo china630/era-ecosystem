@@ -100,6 +100,10 @@ export async function onSatelliteBoot(opts: {
 }): Promise<{ organizationId: string | null; source: OrganizationBindSource | "none" }> {
   await onSatelliteRuntimeBoot({ prisma: opts.prisma ?? null });
 
+  // A4: restore mergeable orgNo → UUID map before first login.
+  const { hydrateLoginOrgNoMapFromDisk } = await import("./login-org-no-persist");
+  hydrateLoginOrgNoMapFromDisk();
+
   if (opts.prisma) {
     const id = await hydrateOrganizationBindFromDb(opts.prisma);
     if (id) {

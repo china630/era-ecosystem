@@ -65,7 +65,7 @@ http:
       service: data-hub
 
     hotel-pms:
-      rule: Host(`hotel-pms.era-365.online`)
+      rule: Host(`hotel-pms.era-365.online`) || HostRegexp(`^[0-9]{6}\\.hotel-pms\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -73,7 +73,7 @@ http:
       service: hotel-pms
 
     fnb-pos:
-      rule: Host(`fnb-pos.era-365.online`)
+      rule: Host(`fnb-pos.era-365.online`) || HostRegexp(`^[0-9]{6}\\.fnb-pos\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -81,7 +81,7 @@ http:
       service: fnb-pos
 
     retail-pos:
-      rule: Host(`retail-pos.era-365.online`)
+      rule: Host(`retail-pos.era-365.online`) || HostRegexp(`^[0-9]{6}\\.retail-pos\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -89,7 +89,7 @@ http:
       service: retail-pos
 
     logistics:
-      rule: Host(`logistics.era-365.online`)
+      rule: Host(`logistics.era-365.online`) || HostRegexp(`^[0-9]{6}\\.logistics\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -97,7 +97,7 @@ http:
       service: logistics
 
     construction:
-      rule: Host(`construction.era-365.online`)
+      rule: Host(`construction.era-365.online`) || HostRegexp(`^[0-9]{6}\\.construction\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -105,7 +105,7 @@ http:
       service: construction
 
     crm:
-      rule: Host(`crm.era-365.online`)
+      rule: Host(`crm.era-365.online`) || HostRegexp(`^[0-9]{6}\\.crm\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -113,7 +113,7 @@ http:
       service: crm
 
     auto-service:
-      rule: Host(`auto-service.era-365.online`)
+      rule: Host(`auto-service.era-365.online`) || HostRegexp(`^[0-9]{6}\\.auto-service\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -121,7 +121,7 @@ http:
       service: auto-service
 
     wholesale:
-      rule: Host(`wholesale.era-365.online`)
+      rule: Host(`wholesale.era-365.online`) || HostRegexp(`^[0-9]{6}\\.wholesale\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
@@ -129,12 +129,28 @@ http:
       service: wholesale
 
     clinic:
-      rule: Host(`clinic.era-365.online`)
+      rule: Host(`clinic.era-365.online`) || HostRegexp(`^[0-9]{6}\\.clinic\\.era-365\\.online$`)
       entryPoints:
         - websecure
       tls:
         certResolver: letsencrypt
       service: clinic
+
+    bank:
+      rule: Host(`bank.era-365.online`) || HostRegexp(`^[0-9]{6}\\.bank\\.era-365\\.online$`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: bank
+
+    dbo:
+      rule: Host(`dbo.era-365.online`) || HostRegexp(`^[0-9]{6}\\.dbo\\.era-365\\.online$`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: dbo
 
   middlewares:
     redirect-to-https:
@@ -224,3 +240,13 @@ http:
       loadBalancer:
         servers:
           - url: "http://clinic:3203"
+
+    bank:
+      loadBalancer:
+        servers:
+          - url: "http://bank:3210"
+
+    dbo:
+      loadBalancer:
+        servers:
+          - url: "http://bank-dbo:3211"

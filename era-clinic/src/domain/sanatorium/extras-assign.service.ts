@@ -56,12 +56,23 @@ async function loadEpisode(episodeId: string) {
   return episode;
 }
 
+/**
+ * Extras are always commercial, so price them through the entitlement charge on the
+ * paid lane (`listAmount` first) instead of the commercial `amount`, which is 0 for
+ * package-included SKUs.
+ */
 async function listPriceForCode(procedureCode: string): Promise<number> {
-  const catalog = await prisma.serviceCatalogCache.findFirst({
-    where: { code: procedureCode },
-  });
-  const n = catalog ? Number(catalog.amount) : 0;
-  return n > 0 ? n : 25;
+  const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const charge = applyPriceMissingFallback(
+    await resolveEntitlementCharge({
+      patientOrigin: "WALK_IN",
+      serviceCode: procedureCode,
+    }),
+    { serviceCode: procedureCode, where: "extras" },
+  );
+  return charge.amountNet;
 }
 
 /** Doctor prescribe: PENDING_PAY only (not on schedule). */
@@ -141,12 +152,14 @@ export async function listPendingExtras(episodeId: string) {
 /** List prices for extras catalog UI (code → AZN). */
 export async function listExtraUnitPrices(): Promise<Record<string, number>> {
   const rows = await prisma.serviceCatalogCache.findMany({
-    select: { code: true, amount: true },
+    select: { code: true, amount: true, listAmount: true },
     take: 5000,
   });
   const out: Record<string, number> = {};
   for (const r of rows) {
-    const n = Number(r.amount);
+    // listAmount is the retail price; amount stays 0 for package-included SKUs.
+    const list = r.listAmount != null ? Number(r.listAmount) : NaN;
+    const n = Number.isFinite(list) && list > 0 ? list : Number(r.amount);
     if (r.code && n > 0) out[r.code] = n;
   }
   return out;

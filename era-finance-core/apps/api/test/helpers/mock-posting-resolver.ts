@@ -3,6 +3,7 @@ import type { PostingAccountResolver } from "../../src/accounting/posting/postin
 import { getPostingSchema } from "../../src/accounting/posting/posting-schema-registry";
 import type { PostingJournalBuilder } from "../../src/accounting/posting/posting-journal-builder.service";
 import type { AccountingService } from "../../src/accounting/accounting.service";
+import type { AccountingBookService } from "../../src/accounting/accounting-book.service";
 import { InventoryService } from "../../src/inventory/inventory.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import type { StockService } from "../../src/stock/stock.service";
@@ -115,6 +116,31 @@ export function createMockPostingJournalBuilder(
 export const mockContractsService = {} as Record<string, never>;
 export const mockGovBudgetService = { checkLimit: jest.fn() } as Record<string, jest.Mock>;
 
+export function createMockAccountingBooks(): AccountingBookService {
+  return {
+    resolveByIdOrLedgerAlias: jest.fn(
+      async (_organizationId: string, bookId?: string, alias?: string) => {
+        if (alias === "IFRS") {
+          return { id: bookId ?? "ifrs-book", code: "IFRS", gaapKind: "IFRS" };
+        }
+        if (alias === "MANAGEMENT") {
+          return { id: bookId ?? "mgmt-book", code: "MGMT", gaapKind: "MANAGEMENT" };
+        }
+        return { id: bookId ?? "nas-book", code: "NAS", gaapKind: "NAS" };
+      },
+    ),
+    resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({
+      id: "nas-book",
+      code: "NAS",
+      gaapKind: "NAS",
+    }),
+    ensureSystemBooks: jest.fn().mockResolvedValue({
+      nas: { id: "nas-book", code: "NAS", gaapKind: "NAS" },
+      ifrs: { id: "ifrs-book", code: "IFRS", gaapKind: "IFRS" },
+    }),
+  } as unknown as AccountingBookService;
+}
+
 export function createTestInventoryService(
   prisma: PrismaService,
   accounting: AccountingService,
@@ -122,9 +148,13 @@ export function createTestInventoryService(
   access: AccessControlService,
 ): InventoryService {
   const posting = createMockPostingResolver();
+  const accountingBooks = {
+    resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book" }),
+  } as unknown as AccountingBookService;
   return new InventoryService(
     prisma,
     accounting,
+    accountingBooks,
     stock,
     access,
     mockContractsService as never,

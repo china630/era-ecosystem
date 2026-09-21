@@ -10,7 +10,8 @@ import {
 } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
-import { useOpsMe } from "@/components/ops/useOpsMe";
+import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 import { OpsError, OpsResult, StatusBadge } from "@/components/ops-ui";
 import { PostingLegsTable } from "@/components/PostingLegsTable";
 import {
@@ -349,7 +350,10 @@ export function PostingDetailModal({
     onUpdated?.();
   }
 
-  const canApprove = me?.canApprove === true;
+  const canApprove = meCan(me, PERMISSIONS.POSTINGS_APPROVE);
+  const isMaker = Boolean(
+    data?.makerUserId && me?.id && data.makerUserId === me.id,
+  );
 
   return (
     <OpsModalShell
@@ -378,7 +382,7 @@ export function PostingDetailModal({
             <PostingLegsTable legs={data.entries ?? []} />
           </div>
           <div className="flex flex-wrap gap-2">
-            {data.status === "PENDING" && canApprove ? (
+            {data.status === "PENDING" && canApprove && !isMaker ? (
               <>
                 <button
                   type="button"

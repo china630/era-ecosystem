@@ -114,7 +114,7 @@ export function expandPackageCodes(
         const childItem = byCode.get(child);
         // Skip visit templates / pseudo-slots (e.g. GYN-OR-URO) — not LabOrder rows.
         if (childItem && !orderable.has(childItem.kind)) continue;
-        if (!childItem && (child.includes("VISIT") || child === "GYN-OR-URO" || child === "SANATORIUM-INTAKE")) {
+        if (!childItem && (child.includes("VISIT") || child === "GYN-OR-URO" || child === "VISIT-SANATORIUM-INTAKE")) {
           continue;
         }
         if (!out.includes(child)) out.push(child);

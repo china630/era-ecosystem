@@ -4,10 +4,10 @@
 
 const PKG_NAFTA_INTAKE = "PKG-NAFTA-INTAKE";
 
-const NAFTA_INTAKE_SLOT_CODES = ["SANATORIUM-INTAKE", "GYN-OR-URO", "ECG-12", "USG-ABD"];
+const NAFTA_INTAKE_SLOT_CODES = ["VISIT-SANATORIUM-INTAKE", "GYN-OR-URO", "CARDIO-ECG", "USG-ABD"];
 
 const TITLES = {
-  "SANATORIUM-INTAKE": {
+  "VISIT-SANATORIUM-INTAKE": {
     en: "Doctor intake",
     ru: "Приём врача",
     az: "Həkim qəbulu",
@@ -17,7 +17,7 @@ const TITLES = {
     ru: "Осмотр гинеколога / уролога",
     az: "Ginekoloq/Uroloq müayinəsi",
   },
-  "ECG-12": {
+  "CARDIO-ECG": {
     en: "ECG and cardiologist exam",
     ru: "ЭКГ и осмотр кардиолога",
     az: "EKQ və kardioloqun müayinəsi",
@@ -52,10 +52,10 @@ function mapWoIntakeProcedureName(procedureName) {
   const n = fold(procedureName);
   if (!n.trim()) return null;
   if (/bas\s*hekim|hekim\s*qebul|hekim\s*qabul/.test(n) && !/ginek|uroloq|nevropatol|kardioloq/.test(n)) {
-    return "SANATORIUM-INTAKE";
+    return "VISIT-SANATORIUM-INTAKE";
   }
   if (/ginek|uroloq/.test(n)) return "GYN-OR-URO";
-  if (/ekq|ecg|kardioloq/.test(n)) return "ECG-12";
+  if (/ekq|ecg|kardioloq/.test(n)) return "CARDIO-ECG";
   if (/usm|usg|ultrason|qarin\s*bosl|ki[cç]ik\s*[cç]anaq/.test(n)) return "USG-ABD";
   return null;
 }

@@ -9,12 +9,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   UpsertRoleTemplateDto,
@@ -25,12 +26,12 @@ import { WorkforceRoleTemplateService } from "./workforce-role-template.service"
 @ApiTags("platform-workforce-role-templates")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/role-templates")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceRoleTemplatesController {
   constructor(private readonly templates: WorkforceRoleTemplateService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROLE_TEMPLATES)
   @ApiOperation({ summary: "List satellite role templates" })
   list(
     @OrganizationId() organizationId: string,
@@ -40,7 +41,7 @@ export class WorkforceRoleTemplatesController {
   }
 
   @Put()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROLE_TEMPLATES)
   @ApiOperation({ summary: "Upsert role template row" })
   upsert(
     @OrganizationId() organizationId: string,
@@ -51,7 +52,7 @@ export class WorkforceRoleTemplatesController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROLE_TEMPLATES)
   @ApiOperation({ summary: "Remove role template" })
   remove(
     @OrganizationId() organizationId: string,

@@ -8,15 +8,19 @@ import {
   resolveTicketSettlement,
 } from "@/lib/billing-router";
 import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   await assertFnbEntitled();
+  await assertHotelFnbFeature("defer-to-hub");
   const session = await getSessionFromRequest(_request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.DEFER_HUB);
   if (denied) return denied;
 
   const { id } = await params;

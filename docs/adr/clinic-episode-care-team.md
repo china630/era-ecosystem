@@ -63,7 +63,7 @@ On OPEN courses, DELETE of the last care doctor returns `LAST_CARE_DOCTOR` (409)
 
 When OPEN episode has **anamnesis AND ≥1 complaint** (both required; ICD optional; labs not required):
 
-1. `SANATORIUM-INTAKE` checklist → DONE.
+1. `VISIT-SANATORIUM-INTAKE` checklist → DONE.
 2. If `programCode` is set and no `ProgramInstance` yet → **auto-instantiate** package as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) and stamp `checkupCompletedAt` (= therapist stage closed, not “full checkup with labs”).
 3. Doctor confirms first 2–3 on the card (CLI-52). Patient must not wait for ECG/USG results to start package procedures.
 
@@ -83,9 +83,11 @@ After ≥1 doctor: existing CLI-55 blocks (anamnesis → CI → complaints/ICD �
 
 CLOSED episode: care team read-only.
 
-### D5 — Intake visits
+### D5 — Intake visits / package auto-apply
 
 `instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits (labs may still open per existing rules) until a doctor is assigned.
+
+**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. Hard-coded `instantiateIntakePackage` remains only as fallback when there is no `ProgramInstance`.
 
 ### D6 — Appointments (deferred design)
 

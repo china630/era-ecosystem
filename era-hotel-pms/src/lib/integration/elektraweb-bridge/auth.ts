@@ -5,9 +5,14 @@ import {
   isElektrawebBridgeEnabled,
   isPolicyInboundEnabled,
   requirePolicyHotelId,
-  roleMayUseBridge,
 } from "@/lib/integration/elektraweb-bridge/config";
+import {
+  isElektrawebBridgeS2SRole,
+  sessionMayUseBridge,
+} from "@/lib/integration/elektraweb-bridge/grants";
 import { verifyToken as verifySessionToken, type SessionPayload } from "@/lib/auth/jwt";
+import { prisma } from "@/lib/prisma";
+import { effectiveRolePermissions } from "@/lib/auth/permissions";
 
 const PURPOSE = "elektraweb-bridge";
 
@@ -82,8 +87,13 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
         );
       }
       const role = String(payload.role ?? "");
-      if (!roleMayUseBridge(role) && role !== "bridge") {
-        throw new Error("Forbidden: insufficient role for Elektraweb bridge");
+      const userId = typeof payload.sub === "string" ? payload.sub : undefined;
+      // S2S: role===bridge skips matrix. Staff tokens re-check DB grants (revoke-safe).
+      if (!isElektrawebBridgeS2SRole(role)) {
+        await assertStaffBridgeGrantFromDb({
+          userId,
+          fallbackLogin: String(payload.login ?? ""),
+        });
       }
       enterBridgeTenant(organizationId);
       return {
@@ -97,6 +107,7 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
     }
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("Forbidden")) throw err;
+    if (err instanceof Error && err.message === "Unauthorized") throw err;
     if (err instanceof Error && err.message.includes("not configured")) throw err;
     if (err instanceof Error && err.message.includes("inbound is off")) throw err;
     // fall through to session JWT
@@ -108,9 +119,11 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
   } catch {
     throw new Error("Unauthorized");
   }
-  if (!roleMayUseBridge(session.role)) {
-    throw new Error("Forbidden: insufficient role for Elektraweb bridge");
-  }
+  await assertStaffBridgeGrantFromDb({
+    userId: session.sub,
+    fallbackLogin: session.login,
+    isOwner: session.isOwner,
+  });
   const organizationId = session.organizationId;
   if (!organizationId) {
     throw new Error("Forbidden: session missing organizationId — re-login with org");
@@ -128,4 +141,41 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
     userId: session.sub,
     via: "session_jwt",
   };
+}
+
+async function assertStaffBridgeGrantFromDb(input: {
+  userId?: string;
+  fallbackLogin: string;
+  isOwner?: boolean;
+}): Promise<void> {
+  if (!input.userId?.trim()) {
+    throw new Error("Forbidden: insufficient grant for Elektraweb bridge");
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: {
+      status: true,
+      login: true,
+      email: true,
+      role: { select: { code: true, permissionsJson: true } },
+    },
+  });
+  if (!user || user.status !== "ACTIVE") {
+    throw new Error("Unauthorized");
+  }
+  const permissions = effectiveRolePermissions(
+    user.role.code,
+    user.role.permissionsJson,
+  );
+  if (
+    !sessionMayUseBridge({
+      login: user.login || input.fallbackLogin,
+      email: user.email ?? undefined,
+      role: user.role.code,
+      permissions,
+      isOwner: input.isOwner === true || user.role.code === "BUSINESS_OWNER",
+    })
+  ) {
+    throw new Error("Forbidden: insufficient grant for Elektraweb bridge");
+  }
 }

@@ -10,6 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import { InvoiceStatus, InvoicePaymentKind, Prisma, TradeContext, TransactionKind, isNasBankLedgerCode, isNasCashDeskCode, type UserRole } from "@erafinance/database";
 import { InvoicePrefillSchema, type InvoicePrefill } from "@erafinance/api-contracts";
 import { assertUserMayMutateInvoiceInPaidStatus } from "../auth/policies/invoice-finance.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
@@ -56,6 +57,13 @@ import {
   splitCreditAdjustmentVat,
 } from "./invoice-vat-split.util";
 import { PriceListsService } from "../products/price-lists.service";
+import { TradeCreditPolicyService } from "../trade-credit/trade-credit-policy.service";
+import { ExtraFieldsService } from "../extra-fields/extra-fields.service";
+import { EXTRA_ENTITY_FINANCE_INVOICE } from "@era/satellite-kit";
+import {
+  buildInvoicePrintSnapshot,
+  renderFinanceInvoiceCommercialHtml,
+} from "./invoice-print-snapshot.build";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -95,7 +103,34 @@ export class InvoicesService {
     private readonly syncRuns: IntegrationSyncRunService,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
     @Optional() private readonly networkDocs?: NetworkDocumentService,
+    @Optional() private readonly tradeCreditPolicy?: TradeCreditPolicyService,
+    @Optional() private readonly extraFields?: ExtraFieldsService,
   ) {}
+
+  /** Fire-and-forget A–D reclassify when SKU + facility exist. */
+  private scheduleTradeCreditReclassify(
+    organizationId: string,
+    counterpartyId: string | null | undefined,
+  ): void {
+    if (!counterpartyId || !this.tradeCreditPolicy) return;
+    this.tradeCreditPolicy.scheduleReclassify(organizationId, counterpartyId);
+  }
+
+  /** Bank match / external callers: reclassify by invoice id. */
+  notifyTradeCreditReclassifyForInvoice(
+    organizationId: string,
+    invoiceId: string,
+  ): void {
+    void this.prisma.invoice
+      .findFirst({
+        where: { id: invoiceId, organizationId },
+        select: { counterpartyId: true },
+      })
+      .then((inv) => {
+        this.scheduleTradeCreditReclassify(organizationId, inv?.counterpartyId);
+      })
+      .catch(() => undefined);
+  }
 
   /** Fire-and-forget network document emit after revenue recognition (3_core). */
   notifyRevenueRecognizedForNetwork(organizationId: string, invoiceId: string): void {
@@ -164,23 +199,107 @@ export class InvoicesService {
 
   async list(
     organizationId: string,
-    opts?: { page?: number; pageSize?: number; counterpartyId?: string },
+    opts?: {
+      page?: number;
+      pageSize?: number;
+      counterpartyId?: string;
+      status?: string;
+      dueFrom?: string;
+      dueTo?: string;
+      sortKey?: string;
+      sortDir?: string;
+    },
   ) {
     const page = Math.max(1, opts?.page ?? 1);
-    const pageSize = Math.min(200, Math.max(1, opts?.pageSize ?? 25));
-    const skip = (page - 1) * pageSize;
+    const rawPageSize = opts?.pageSize ?? 25;
+    // Snap to 25/50/100 (list standard); unknown sizes → 25
+    const snappedPageSize =
+      rawPageSize === 50 || rawPageSize === 100 || rawPageSize === 25
+        ? rawPageSize
+        : 25;
+    const skip = (page - 1) * snappedPageSize;
 
-    const where = {
+    const allowedSort = new Set([
+      "createdAt",
+      "dueDate",
+      "number",
+      "totalAmount",
+      "status",
+    ]);
+    const sortKey = opts?.sortKey?.trim() || "createdAt";
+    if (!allowedSort.has(sortKey)) {
+      throw new BadRequestException({
+        code: "SAVED_VIEW_UNKNOWN_KEY",
+        keys: [sortKey],
+        message: `Unknown sort key: ${sortKey}`,
+      });
+    }
+    const sortDir = opts?.sortDir === "asc" ? "asc" : "desc";
+
+    const allowedStatus = new Set([
+      "DRAFT",
+      "SENT",
+      "PAID",
+      "CANCELLED",
+      "PARTIALLY_PAID",
+      "LOCKED_BY_SIGNATURE",
+    ]);
+    const status = opts?.status?.trim();
+    if (status && !allowedStatus.has(status)) {
+      throw new BadRequestException({
+        code: "SAVED_VIEW_UNKNOWN_KEY",
+        keys: [status],
+        message: `Unknown invoice status filter: ${status}`,
+      });
+    }
+
+    const counterpartyId = opts?.counterpartyId?.trim();
+    if (
+      counterpartyId &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        counterpartyId,
+      )
+    ) {
+      throw new BadRequestException("counterpartyId must be a UUID");
+    }
+
+    const dueFrom = opts?.dueFrom?.trim();
+    const dueTo = opts?.dueTo?.trim();
+    if (dueFrom && !/^\d{4}-\d{2}-\d{2}$/.test(dueFrom)) {
+      throw new BadRequestException("dueFrom must be YYYY-MM-DD");
+    }
+    if (dueTo && !/^\d{4}-\d{2}-\d{2}$/.test(dueTo)) {
+      throw new BadRequestException("dueTo must be YYYY-MM-DD");
+    }
+    if (dueFrom && dueTo && dueFrom > dueTo) {
+      throw new BadRequestException("dueFrom must be on or before dueTo");
+    }
+
+    const where: Prisma.InvoiceWhereInput = {
       organizationId,
-      ...(opts?.counterpartyId ? { counterpartyId: opts.counterpartyId } : {}),
+      deletedAt: null,
+      ...(counterpartyId ? { counterpartyId } : {}),
+      ...(status ? { status: status as InvoiceStatus } : {}),
+      ...((dueFrom || dueTo)
+        ? {
+            dueDate: {
+              ...(dueFrom ? { gte: new Date(dueFrom) } : {}),
+              ...(dueTo ? { lte: new Date(dueTo) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const orderBy: Prisma.InvoiceOrderByWithRelationInput = {
+      [sortKey]: sortDir,
     };
 
     const [rows, total] = await Promise.all([
       this.prisma.invoice.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip,
-        take: pageSize,
+        take: snappedPageSize,
         include: {
           counterparty: { select: { id: true, nameCipher: true, taxIdCipher: true } },
           _count: { select: { items: true } },
@@ -217,7 +336,7 @@ export class InvoicesService {
       }),
       total,
       page,
-      pageSize,
+      pageSize: snappedPageSize,
     };
   }
 
@@ -244,6 +363,36 @@ export class InvoicesService {
       remaining: remaining.toFixed(4),
       signatureLogs,
     };
+  }
+
+  /** W3: flat print snapshot for staff commercial invoice (live, not persisted). */
+  async getPrintSnapshot(
+    organizationId: string,
+    invoiceId: string,
+    lang?: string | null,
+  ) {
+    const snap = await buildInvoicePrintSnapshot(
+      this.prisma,
+      organizationId,
+      invoiceId,
+      lang,
+    );
+    if (!snap) throw new NotFoundException("Invoice not found");
+    return snap;
+  }
+
+  /** W3: vendor HTML from snapshot (same auth as invoice read). */
+  async getPrintHtml(
+    organizationId: string,
+    invoiceId: string,
+    lang?: string | null,
+  ): Promise<string> {
+    const snap = await this.getPrintSnapshot(organizationId, invoiceId, lang);
+    const rendered = renderFinanceInvoiceCommercialHtml(snap);
+    if (!rendered.ok) {
+      throw new BadRequestException(rendered.issue);
+    }
+    return rendered.html;
   }
 
   async getExtensionPrefill(
@@ -465,6 +614,17 @@ export class InvoicesService {
     const fxOverride =
       dto.fxRateToAzn != null && dto.currency !== "AZN" ? dto.fxRateToAzn : undefined;
 
+    const extraAttributes = this.extraFields
+      ? await this.extraFields.normalizeForEntity(
+          organizationId,
+          EXTRA_ENTITY_FINANCE_INVOICE,
+          dto.extraAttributes ?? {},
+        )
+      : {};
+    if (!this.extraFields && dto.extraAttributes && Object.keys(dto.extraAttributes).length > 0) {
+      throw new BadRequestException("Extra fields are unavailable");
+    }
+
     const invoice = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const inv = await tx.invoice.create({
         data: {
@@ -483,6 +643,7 @@ export class InvoicesService {
           countryOfDestination: trade.countryOfDestination,
           warehouseId: warehouseId ?? null,
           projectId: dto.projectId ?? null,
+          extraAttributes: extraAttributes as Prisma.InputJsonValue,
         },
       });
       for (const row of builtItems) {
@@ -528,7 +689,7 @@ export class InvoicesService {
     organizationId: string,
     id: string,
     status: InvoiceStatus,
-    role: UserRole,
+    role: UserRole | PolicySubject,
   ) {
     if (status === InvoiceStatus.PARTIALLY_PAID) {
       throw new BadRequestException(
@@ -659,13 +820,17 @@ export class InvoicesService {
 
     const recognized = await this.prisma.invoice.findFirst({
       where: { id, organizationId },
-      select: { revenueRecognized: true },
+      select: { revenueRecognized: true, counterpartyId: true },
     });
     if (
       recognized?.revenueRecognized &&
       (status === InvoiceStatus.SENT || status === InvoiceStatus.PAID)
     ) {
       this.scheduleNetworkEmitFromInvoice(organizationId, id);
+      this.scheduleTradeCreditReclassify(
+        organizationId,
+        recognized.counterpartyId,
+      );
     }
 
     return this.getOne(organizationId, id);
@@ -682,7 +847,7 @@ export class InvoicesService {
       paymentDate?: string;
       debitAccountCode?: string;
     },
-    role: UserRole,
+    role: UserRole | PolicySubject,
   ) {
     const amount = new Decimal(params.amount);
     if (amount.lte(0)) {
@@ -810,6 +975,7 @@ export class InvoicesService {
         currency: existing.currency,
         totalAmount: Number(existing.totalAmount),
         number: existing.number,
+        counterpartyId: existing.counterpartyId,
       };
     });
 
@@ -828,6 +994,11 @@ export class InvoicesService {
       });
     }
 
+    this.scheduleTradeCreditReclassify(
+      organizationId,
+      councilTrigger.counterpartyId,
+    );
+
     return this.getOne(organizationId, invoiceId);
   }
 
@@ -839,7 +1010,7 @@ export class InvoicesService {
     organizationId: string,
     invoiceId: string,
     dto: CreateInvoiceCreditAdjustmentDto,
-    role: UserRole,
+    role: UserRole | PolicySubject,
   ) {
     const reason = dto.reason.trim();
     if (reason.length < MANUAL_ADJUSTMENT_REASON_MIN) {
@@ -867,7 +1038,7 @@ export class InvoicesService {
     if (!head) throw new NotFoundException("Invoice not found");
     assertUserMayMutateInvoiceInPaidStatus(role, head.status);
 
-    await this.prisma.$transaction(async (tx) => {
+    const creditAdj = await this.prisma.$transaction(async (tx) => {
       const locked = await lockOrgRowForUpdate(tx, "invoices", invoiceId, organizationId);
       if (!locked) throw new NotFoundException("Invoice not found");
 
@@ -1004,7 +1175,14 @@ export class InvoicesService {
         where: { id: existing.id },
         data: { status: nextStatus, paymentReceived },
       });
+
+      return { counterpartyId: existing.counterpartyId };
     });
+
+    this.scheduleTradeCreditReclassify(
+      organizationId,
+      creditAdj.counterpartyId,
+    );
 
     return this.getOne(organizationId, invoiceId);
   }
@@ -1015,7 +1193,7 @@ export class InvoicesService {
   async allocatePaymentAcrossInvoices(
     organizationId: string,
     dto: AllocatePaymentDto,
-    role: UserRole,
+    role: UserRole | PolicySubject,
   ) {
     const amount = new Decimal(dto.amount);
     if (amount.lte(0)) {
@@ -1237,6 +1415,8 @@ export class InvoicesService {
         );
       }
     }
+
+    this.scheduleTradeCreditReclassify(organizationId, dto.counterpartyId);
 
     return result;
   }
@@ -1517,7 +1697,11 @@ export class InvoicesService {
     return { transactionId };
   }
 
-  async sendInvoiceEmail(organizationId: string, id: string, role: UserRole) {
+  async sendInvoiceEmail(
+    organizationId: string,
+    id: string,
+    roleOrSubject: UserRole | PolicySubject,
+  ) {
     const inv = await this.prisma.invoice.findFirst({
       where: { id, organizationId },
       include: {
@@ -1526,7 +1710,7 @@ export class InvoicesService {
       },
     });
     if (!inv) throw new NotFoundException("Invoice not found");
-    assertUserMayMutateInvoiceInPaidStatus(role, inv.status);
+    assertUserMayMutateInvoiceInPaidStatus(roleOrSubject, inv.status);
 
     const email = inv.counterparty.email?.trim();
     if (!email) {

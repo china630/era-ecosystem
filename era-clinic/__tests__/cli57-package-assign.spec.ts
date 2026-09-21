@@ -2,8 +2,13 @@ import {
   bakuDayKey,
   PackageAssignError,
   paramsLabelFromOrder,
+  paramsLinesFromOrder,
+  mergeParamLines,
+  assignedAggGroupKey,
   isPackagePoolCode,
+  isEntitlementBucket,
   eligibleSkusForPool,
+  eligibleSkusForQuotaAlias,
   isPackageAssignTreatmentLine,
   resolvePackageQuotaSku,
 } from "@/domain/sanatorium/package-assign.service";
@@ -31,20 +36,9 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackagePoolCode("NAFTALAN")).toBe(false);
   });
 
-  it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex", () => {
-    const types = ["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"];
-    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", types)).toBe(
-      "SVC-NAFTALAN-VANNASI-KISI",
-    );
-    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", types)).toBe(
-      "SVC-NAFTALAN-VANNASI-QADIN",
-    );
-    expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", types)).toBe(null);
-  });
-
-  it("isPackageAssignTreatmentLine keeps WO/SVC/naftalan, drops pools labs exams", () => {
-    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(false);
-    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(false);
+  it("isPackageAssignTreatmentLine keeps pools WO/SVC/naftalan, drops labs exams", () => {
+    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(true);
+    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(true);
     expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
     expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
     expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
@@ -58,6 +52,60 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackageAssignTreatmentLine("LAB-CBC", "Qan umumi analiz")).toBe(false);
     expect(isPackageAssignTreatmentLine("LAB-URINE", "Sidik")).toBe(false);
     expect(isPackageAssignTreatmentLine("THERAPIST", "Hekim muayinesi")).toBe(false);
+  });
+
+  it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex and WO-TR fallbacks", () => {
+    const svc = ["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"];
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", svc)).toBe(
+      "SVC-NAFTALAN-VANNASI-KISI",
+    );
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", svc)).toBe(
+      "SVC-NAFTALAN-VANNASI-QADIN",
+    );
+    expect(resolvePackageQuotaSku("SVC-OZONE", "MALE", svc)).toBe(null);
+
+    const woMeta = [
+      { code: "WO-TR-68", name: "Naftalan vannası (Qadın)" },
+      { code: "WO-TR-72", name: "Naftalan vannası (Kişi)" },
+    ];
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "FEMALE", [], woMeta)).toBe("WO-TR-68");
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "MALE", [], woMeta)).toBe("WO-TR-72");
+    // UNKNOWN + both genders → picker (null)
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", "UNKNOWN", [], woMeta)).toBe(null);
+    expect(resolvePackageQuotaSku("NAFTALAN_BATH", null, [], woMeta)).toBe(null);
+  });
+
+  it("eligibleSkusForQuotaAlias returns both gender baths from WO-TR catalog", () => {
+    const list = eligibleSkusForQuotaAlias("NAFTALAN_BATH", [
+      { code: "WO-TR-68", name: "Naftalan vannası (Qadın)" },
+      { code: "WO-TR-72", name: "Naftalan vannası (Kişi)" },
+      { code: "SVC-OZONE", name: "Ozone" },
+    ]);
+    expect(list.map((x) => x.code).sort()).toEqual(["WO-TR-68", "WO-TR-72"]);
+  });
+
+  it("eligibleSkusForQuotaAlias filters by patient sex", () => {
+    const types = [
+      { code: "SVC-NAFTALAN-VANNASI-KISI", name: "Naftalan vannası (Kişi)" },
+      { code: "SVC-NAFTALAN-VANNASI-QADIN", name: "Naftalan vannası (Qadın)" },
+    ];
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "FEMALE").map((x) => x.code),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-QADIN"]);
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "MALE").map((x) => x.code),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-KISI"]);
+    expect(
+      eligibleSkusForQuotaAlias("NAFTALAN_BATH", types, "UNKNOWN")
+        .map((x) => x.code)
+        .sort(),
+    ).toEqual(["SVC-NAFTALAN-VANNASI-KISI", "SVC-NAFTALAN-VANNASI-QADIN"]);
+  });
+
+  it("PackageAssignError PLACE_FAILED uses 409", () => {
+    const err = new PackageAssignError("no slot", "PLACE_FAILED", 409);
+    expect(err.code).toBe("PLACE_FAILED");
+    expect(err.status).toBe(409);
   });
 
   it("eligibleSkusForPool paraffin vs physio and excludes dedicated balances", () => {
@@ -82,6 +130,44 @@ describe("CLI-57 package assign helpers", () => {
     expect(codes).not.toContain("SVC-LAB-CBC");
   });
 
+  it("eligibleSkusForPool drops WO-TR cutover rows when SVC seed SKUs exist", () => {
+    const types = [
+      {
+        code: "SVC-PARAFINOTERAPIYA-ASAGI-ETRAF",
+        name: "Parafinoterapiya (aşağı ətraf)",
+        needsSite: true,
+        active: true,
+      },
+      {
+        code: "WO-TR-10",
+        name: "Парафинотерапия (нижние конечности)",
+        needsSite: true,
+        active: true,
+      },
+    ];
+    const paraffin = eligibleSkusForPool("PARAFFIN_POOL", ["PARAFFIN_POOL"], types);
+    expect(paraffin.map((s) => s.code)).toEqual(["SVC-PARAFINOTERAPIYA-ASAGI-ETRAF"]);
+  });
+
+  it("eligibleSkusForPool uses configured membership whitelist when present", () => {
+    const types = [
+      { code: "SVC-LASER", name: "Laser", needsSite: true, active: true },
+      { code: "SVC-OZONE", name: "Ozone", needsSite: true, active: true },
+      { code: "SVC-MAGNET", name: "Magnet", needsSite: true, active: true },
+    ];
+    const list = eligibleSkusForPool("PHYSIO_POOL", ["PHYSIO_POOL"], types, [
+      "SVC-LASER",
+      "SVC-MAGNET",
+    ]);
+    expect(list.map((s) => s.code).sort()).toEqual(["SVC-LASER", "SVC-MAGNET"]);
+  });
+
+  it("isEntitlementBucket is true for configured members or *_POOL", () => {
+    expect(isEntitlementBucket("PHYSIO_POOL")).toBe(true);
+    expect(isEntitlementBucket("CUSTOM_BLOCK", ["SVC-A"])).toBe(true);
+    expect(isEntitlementBucket("SVC-OZONE", [])).toBe(false);
+  });
+
   it("applyQuotaRecalc never shrinks below used (stay shorten over-consume)", () => {
     const r = applyQuotaRecalc(10, 7);
     expect(r.quotaTotal).toBe(10);
@@ -99,6 +185,30 @@ describe("CLI-57 package assign helpers", () => {
     expect(label).toContain("TURN");
     expect(label).toContain("intensity: MEDIUM");
     expect(label).toContain("soft");
+    expect(paramsLinesFromOrder({
+      physioFields: { naftalanFill: "TAM", dayBlock: 2 },
+    })).toEqual(["naftalanFill: TAM", "dayBlock: 2"]);
+  });
+
+  it("assignedAggGroupKey merges batches and param fingerprints for the same SKU", () => {
+    const a = assignedAggGroupKey({
+      procedureCode: "SVC-AMP",
+      packageQuotaCode: "PHYSIO_POOL",
+      locked: false,
+      consumed: false,
+    });
+    const b = assignedAggGroupKey({
+      procedureCode: "SVC-AMP",
+      packageQuotaCode: "PHYSIO_POOL",
+      locked: false,
+      consumed: false,
+    });
+    expect(a).toBe(b);
+    expect(mergeParamLines(["naftalanFill: TAM · dayBlock: 2", "naftalanFill: TAM · bathSequence: SITZ_THEN_FULL"])).toEqual([
+      "naftalanFill: TAM",
+      "dayBlock: 2",
+      "bathSequence: SITZ_THEN_FULL",
+    ]);
   });
 
   it("extraNeedsPaperTicket prefers inPackage over amountNet", () => {

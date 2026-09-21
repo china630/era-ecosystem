@@ -22,7 +22,7 @@
 | AC-DBO-SO | Standing orders / DD list+create+pause | ✅ | [ ] | dbo/standing-orders; CIF scope; unauth 401 | Corp large SO paused pending dual-control |
 | AC-DBO-LOAN-APP | Loan application draft→submit | ✅ | [ ] | dbo/loans/applications; no book | Book stays ops SoD |
 | AC-DBO-3DS | Card 3DS challenge complete | ✅ | [ ] | dbo/cards/3ds/challenges; card ownership | Ops creates challenge |
-| AC-BANK-TENANT | DBO channel `organizationId` + kit tenant filter | 🟡 | [ ] | CP-TENANT-01; era-bank-dbo migration + mergeWhere | **Out of BE rollup.** Same remaining TENANT work as hotel (live pool + field UAT), not a bank-only ban. Bind + runtime-config HTTP landed (CP-BIND-01 / CP-CFG-01) |
+| AC-BANK-TENANT | DBO channel `organizationId` + kit tenant filter | 🟡 | [ ] | CP-TENANT-01; era-bank-dbo migration + mergeWhere | **Out of BE rollup.** Host/bind tenant resolve (customers do not type ERA ID). Same remaining TENANT work as hotel (live pool + field UAT). |
 
 **Edition / wave rollup (BE only)** = worst(AUTH, ACC, PAY, CORP, OPEN, SO, LOAN-APP, 3DS) → **🟡** (OPEN).  
 AC-DBO-OPEN is **in Scaffold BE rollup** (owner 2026-08-18). Code residual, not Hotel INT. TENANT stays **out**.  

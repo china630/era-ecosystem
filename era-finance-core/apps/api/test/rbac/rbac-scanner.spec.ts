@@ -8,7 +8,7 @@ import {
   PATH_METADATA,
 } from "@nestjs/common/constants";
 import { IS_PUBLIC_KEY } from "../../src/auth/constants";
-import { ROLES_KEY } from "../../src/auth/decorators/roles.decorator";
+import { PERMISSIONS_KEY } from "../../src/common/decorators/permissions.decorator";
 
 type ControllerClass = new (...args: unknown[]) => unknown;
 
@@ -52,8 +52,15 @@ function isMutation(value: RequestMethod | undefined): boolean {
   );
 }
 
+/**
+ * Allowlist: public, auth logout, S2S, Auditor comment, documented exceptions.
+ * Mutations must carry PERMISSIONS_KEY (Wave 5) and/or UseGuards metadata.
+ */
+const ALLOWLIST_ROUTE_RE =
+  /(^|\/)(auth\/(login|register|logout|refresh)|health|internal\/|s2s\/)/i;
+
 describe("RBAC Mutation Auto-Scanner", () => {
-  it("ensures non-public mutation endpoints have guard metadata", async () => {
+  it("ensures non-public mutation endpoints have PermissionsGuard metadata", async () => {
     const srcRoot = join(__dirname, "../../src");
     const files = walk(srcRoot);
     const rows: CoverageRow[] = [];
@@ -75,7 +82,7 @@ describe("RBAC Mutation Auto-Scanner", () => {
         if (classPath === undefined) continue;
 
         const classGuards = Reflect.getMetadata(GUARDS_METADATA, klass);
-        const classRoles = Reflect.getMetadata(ROLES_KEY, klass);
+        const classPerms = Reflect.getMetadata(PERMISSIONS_KEY, klass);
         const classIsPublic = Reflect.getMetadata(IS_PUBLIC_KEY, klass) === true;
         const proto = klass.prototype;
         for (const name of Object.getOwnPropertyNames(proto)) {
@@ -90,32 +97,41 @@ describe("RBAC Mutation Auto-Scanner", () => {
 
           const routePath = Reflect.getMetadata(PATH_METADATA, handler) ?? "";
           const methodGuards = Reflect.getMetadata(GUARDS_METADATA, handler);
-          const methodRoles = Reflect.getMetadata(ROLES_KEY, handler);
-          const methodIsPublic = Reflect.getMetadata(IS_PUBLIC_KEY, handler) === true;
+          const methodPerms = Reflect.getMetadata(PERMISSIONS_KEY, handler);
+          const methodIsPublic =
+            Reflect.getMetadata(IS_PUBLIC_KEY, handler) === true;
           const isPublic = classIsPublic || methodIsPublic;
+          const route =
+            `${String(classPath)}/${String(routePath)}`.replace(/\/+/g, "/");
+          const allowlisted = ALLOWLIST_ROUTE_RE.test(route);
+          const hasPermissionMetadata = Boolean(
+            classPerms?.length || methodPerms?.length,
+          );
           const hasGuardMetadata = Boolean(
-            classGuards || classRoles || methodGuards || methodRoles,
+            classGuards || methodGuards || hasPermissionMetadata,
           );
 
           const coverage = isPublic
             ? "public-skip"
-            : methodGuards || classGuards
-              ? "useGuards"
-              : methodRoles || classRoles
-                ? "roles"
-                : "missing";
+            : allowlisted
+              ? "allowlist"
+              : hasPermissionMetadata
+                ? "permissions"
+                : methodGuards || classGuards
+                  ? "useGuards"
+                  : "missing";
 
           rows.push({
             controller: relative(srcRoot, file).replace(/\\/g, "/"),
             method: name,
             http: methodName(methodMeta),
-            route: `${String(classPath)}/${String(routePath)}`.replace(/\/+/g, "/"),
+            route,
             guardCoverage: coverage,
           });
 
-          if (!isPublic && !hasGuardMetadata) {
+          if (!isPublic && !allowlisted && !hasGuardMetadata) {
             violations.push(
-              `${relative(srcRoot, file)} :: ${methodName(methodMeta)} ${String(classPath)}/${String(routePath)} (${name})`,
+              `${relative(srcRoot, file)} :: ${methodName(methodMeta)} ${route} (${name})`,
             );
           }
         }
@@ -123,11 +139,10 @@ describe("RBAC Mutation Auto-Scanner", () => {
     }
 
     if (violations.length > 0) {
-      // Prefer a plain multi-line message (console.table is noisy in CI logs).
       // eslint-disable-next-line no-console
       console.error("RBAC scanner violations:\n" + violations.join("\n"));
       throw new Error(
-        `RBAC mutation endpoints missing guard metadata (${violations.length}): ${violations.slice(0, 20).join(" | ")}`,
+        `RBAC mutation endpoints missing permission/guard metadata (${violations.length}): ${violations.slice(0, 20).join(" | ")}`,
       );
     }
     expect(violations).toEqual([]);

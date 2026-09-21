@@ -5,14 +5,11 @@ import {
   satelliteOrganizationId,
 } from "@era/satellite-kit";
 import type { ElektrawebBridgeSyncPayload } from "@era/satellite-kit";
-import { ROLE_CODES, type RoleCode } from "@/lib/auth/permissions";
 
-const BRIDGE_ROLES = new Set<string>([
-  ROLE_CODES.HOTEL_ADMIN,
-  ROLE_CODES.MANAGER,
-  ROLE_CODES.RECEPTIONIST,
-  ROLE_CODES.NIGHT_AUDITOR,
-]);
+export {
+  isElektrawebBridgeS2SRole,
+  sessionMayUseBridge,
+} from "@/lib/integration/elektraweb-bridge/grants";
 
 export type ElektrawebBridgePolicyRow = {
   organizationId: string;
@@ -28,10 +25,6 @@ export type ElektrawebBridgePolicyRow = {
 /** Pool-wide kill switch — not a per-org Nafta id. */
 export function isElektrawebBridgeEnabled(): boolean {
   return process.env.ELEKTRAWEB_BRIDGE_ENABLED === "1";
-}
-
-export function roleMayUseBridge(role: string): boolean {
-  return BRIDGE_ROLES.has(role as RoleCode) || role === "DIRECTOR" || role === "OWNER";
 }
 
 export async function getElektrawebBridgePolicy(

@@ -19,4 +19,11 @@ function createClient(): AppPrisma {
 
 export const prisma = globalForPrisma.prisma ?? createClient();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+/** Unscoped client — public QR slug lookup only, then enterRequestTenant. */
+export const prismaBare =
+  (globalForPrisma as { prismaBare?: PrismaClient }).prismaBare ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+  (globalForPrisma as { prismaBare?: PrismaClient }).prismaBare = prismaBare;
+}

@@ -7,26 +7,25 @@ import {
 import { hashPassword } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import {
-  ROLE_CODES,
-  permissionsForRole,
-  serializePermissions,
-} from "@/lib/auth/permissions";
+import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
+import { resolveSystemRoleAlias } from "@/lib/hotel-roles";
 
-const ROLE_CODES_FROM_CP: Record<string, string> = {
-  RECEPTION: ROLE_CODES.RECEPTIONIST,
-  HOUSEKEEPING: ROLE_CODES.HOUSEKEEPER,
-  MANAGER: ROLE_CODES.MANAGER,
-  STAFF: ROLE_CODES.RECEPTIONIST,
-};
-
-/** Same pattern as clinic staff-provision + hotel SSO: never fail closed on missing Role row. */
 export class SatelliteLoginTakenError extends Error {
   readonly code = "LOGIN_TAKEN" as const;
 
   constructor(login: string) {
     super(`Login already taken: ${login}`);
     this.name = "SatelliteLoginTakenError";
+  }
+}
+
+export class UnknownSatelliteRoleError extends Error {
+  readonly code = "UNKNOWN_SATELLITE_ROLE" as const;
+  constructor(satelliteRole: string) {
+    super(
+      `Unknown satellite role "${satelliteRole}" — create the role in /settings/access (or use a system role code)`,
+    );
+    this.name = "UnknownSatelliteRoleError";
   }
 }
 
@@ -53,16 +52,23 @@ async function resolveUserForLogin(args: {
   return { existing: null, mode: "create" as const };
 }
 
-async function ensureRole(code: string) {
-  const existing = await prisma.role.findFirst({ where: { code } });
-  if (existing) return existing;
-  return prisma.role.create({
-    data: {
-      code,
-      name: code.replace(/_/g, " "),
-      permissionsJson: serializePermissions(permissionsForRole(code)),
-    },
+/**
+ * System aliases (RECEPTION→Receptionist, …) then lookup Role in org.
+ * Unknown custom codes fail — do not silently map to Receptionist.
+ */
+async function resolveProvisionRole(
+  organizationId: string,
+  satelliteRole: string,
+) {
+  await ensureSystemHotelRoles(prisma, organizationId);
+  const code = resolveSystemRoleAlias(satelliteRole);
+  const role = await prisma.role.findFirst({
+    where: { organizationId, code },
   });
+  if (!role) {
+    throw new UnknownSatelliteRoleError(satelliteRole);
+  }
+  return role;
 }
 
 export async function handleStaffProvisionEvent(event: unknown) {
@@ -70,8 +76,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
     const organizationId = requestOrganizationId();
-    const roleCode = ROLE_CODES_FROM_CP[p.satelliteRole] ?? ROLE_CODES.RECEPTIONIST;
-    const role = await ensureRole(roleCode);
+    const role = await resolveProvisionRole(organizationId, p.satelliteRole);
 
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const passwordHash = await hashPassword(p.pin ?? "0000");

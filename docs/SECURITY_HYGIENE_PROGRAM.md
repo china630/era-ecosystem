@@ -217,7 +217,7 @@ Fill **Control** / **Gap** during Phase 2; open Appendix A rows when Gap ≠ non
 
 - Rulesets: OWASP + JavaScript/TypeScript
 - Grow custom rules from repeat Phase-2 patterns (e.g. `$queryRaw` without org bind heuristic; `dangerouslySetInnerHTML`; open redirect)
-- Workflow file (planned): `.github/workflows/security-sast.yml`
+- Workflow: [`.github/workflows/security-sast.yml`](../.github/workflows/security-sast.yml) — `actions/checkout` + Docker images (`gitleaks`, `semgrep`, `osv-scanner`). Marketplace `gitleaks-action` / Semgrep `container:` jobs made GitHub register the file as invalid (run name = path, 0s, 0 jobs).
 - Do **not** bloat [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on day one
 - Become **required** for merge to `dev` after one week of noise tuning
 

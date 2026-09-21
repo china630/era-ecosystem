@@ -18,6 +18,7 @@ import {
   isWorkforceHubKey,
 } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { assertDomainPackDowngradeAllowed } from "../platform/domains/domain-pack-limits";
 import { PricingService } from "../admin/pricing.service";
 import { type ModuleEntitlementKey } from "./subscription.constants";
 
@@ -68,6 +69,10 @@ export type OrganizationModuleEntitlements = {
   tradePro: boolean;
   /** Paid Audit Hub (timeline, sampling, bulk export, backdating). */
   auditHub: boolean;
+  /** Trade credit control (facility + pickup grants). */
+  tradeCreditControl: boolean;
+  /** Phase 2c factoring referral lead unlock. */
+  tradeCreditFactorLead: boolean;
   /** Risk & Compliance (ERM): automated risk alerts and dashboard. */
   compliancePro: boolean;
   /** Commercial contract registry (PRD §4.15). */
@@ -129,6 +134,8 @@ function entitlementsFromConstructorModules(
     taxPro: has("tax_pro"),
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
+    tradeCreditControl: has("trade_credit_control"),
+    tradeCreditFactorLead: has("trade_credit_factor_lead"),
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
@@ -195,6 +202,8 @@ function emptyOrganizationSnapshot(): {
       taxPro: false,
       tradePro: false,
       auditHub: false,
+      tradeCreditControl: false,
+      tradeCreditFactorLead: false,
       compliancePro: false,
       contractManagementPro: false,
       govBudgetPro: false,
@@ -237,6 +246,8 @@ function computeEntitlementsLegacy(sub: {
     taxPro: has("tax_pro"),
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
+    tradeCreditControl: has("trade_credit_control"),
+    tradeCreditFactorLead: has("trade_credit_factor_lead"),
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
@@ -275,6 +286,8 @@ function computeEntitlements(sub: {
       taxPro: true,
       tradePro: true,
       auditHub: true,
+      tradeCreditControl: true,
+      tradeCreditFactorLead: true,
       compliancePro: true,
       contractManagementPro: true,
       govBudgetPro: true,
@@ -326,6 +339,10 @@ function isAllowedByConstructorModules(
       return has("trade_pro");
     case "audit_hub":
       return has("audit_hub");
+    case "trade_credit_control":
+      return has("trade_credit_control");
+    case "trade_credit_factor_lead":
+      return has("trade_credit_factor_lead");
     case "compliance_pro":
       return has("compliance_pro");
     case "industry_retail":
@@ -530,6 +547,12 @@ export class SubscriptionAccessService {
       case "audit_hub":
         allowed = ent.auditHub;
         break;
+      case "trade_credit_control":
+        allowed = ent.tradeCreditControl;
+        break;
+      case "trade_credit_factor_lead":
+        allowed = ent.tradeCreditFactorLead;
+        break;
       case "recovery_pro":
         allowed = new Set(normalizeActiveModules(sub.activeModules)).has(
           "recovery_pro",
@@ -674,6 +697,7 @@ export class SubscriptionAccessService {
       tax_pro?: boolean;
       trade_pro?: boolean;
       audit_hub?: boolean;
+      trade_credit_control?: boolean;
       compliance_pro?: boolean;
       contract_management_pro?: boolean;
       gov_budget_pro?: boolean;
@@ -725,6 +749,7 @@ export class SubscriptionAccessService {
     apply("tax_pro", patch.tax_pro);
     apply("trade_pro", patch.trade_pro);
     apply("audit_hub", patch.audit_hub);
+    apply("trade_credit_control", patch.trade_credit_control);
     apply("compliance_pro", patch.compliance_pro);
     apply("contract_management_pro", patch.contract_management_pro);
     apply("gov_budget_pro", patch.gov_budget_pro);
@@ -766,6 +791,12 @@ export class SubscriptionAccessService {
       normalizeCashBankActiveModules(Array.from(set)),
       preferEnabled,
     );
+
+    const hadOrgPack = sub.activeModules.includes("platform_domain_org");
+    const willHaveOrgPack = activeModules.includes("platform_domain_org");
+    if (hadOrgPack && !willHaveOrgPack) {
+      await assertDomainPackDowngradeAllowed(db, organizationId);
+    }
 
     const customList = parseCustomModules(sub.customConfig);
     let customConfigData: Prisma.InputJsonValue | undefined;

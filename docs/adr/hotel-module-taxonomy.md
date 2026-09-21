@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — 2026-05 (revised 2026-05-31: 9-key consolidation)
+Accepted — 2026-05 (revised 2026-05-31: 9-key consolidation; 2026-09-20: Channel Manager pack name + City includes `hotel_distribution`)
 
 ## Context
 
@@ -16,7 +16,7 @@ ERA CP commercial layers: satellite gate → modules → tiers → platform add-
 2. **`hotel_*` keys** in `pricing_modules` — billable functional modules inside the satellite (see table; includes optional Agency Portal SKU).
 3. **Legacy key aliases** — dual-read for migration (`hotel_front_office` → `hotel_core`, etc.).
 4. **`platform_*`** — word **add-on** in UI/docs only for cross-product services.
-5. **Bundles:** City / Resort / Sanatorium use consolidated keys — **`hotel_agency_portal` is not included by default** (sold separately).
+5. **Bundles:** City / Resort / Sanatorium use consolidated keys — **`hotel_distribution` is in all three** (Channel Manager pack). **`hotel_agency_portal` is not included by default** (sold separately). See [hotel-channel-manager-pack.md](./hotel-channel-manager-pack.md).
 
 ## Hotel module keys (canonical)
 
@@ -28,7 +28,7 @@ ERA CP commercial layers: satellite gate → modules → tiers → platform add-
 | `hotel_migration_pro` | Migration PRO (migration authority submissions) | alias `migration_pro` |
 | `hotel_transfers` | Transfers | — |
 | `hotel_spa_scheduling` | SPA & Scheduling | — |
-| `hotel_distribution` | Distribution (Channel Manager & Contracts) | `hotel_channel_ota`, `hotel_contracts_yield` |
+| `hotel_distribution` | Channel Manager (OTA & Direct) | `hotel_channel_ota`, `hotel_contracts_yield` |
 | `hotel_agency_portal` | Agency Portal (B2B extranet) | — |
 | `hotel_guest_experience` | Guest Profiles & Tasks | — |
 | `hotel_banquets` | Banquets & BEO | — |
@@ -44,3 +44,4 @@ See [hotel-agency-portal.md](./hotel-agency-portal.md).
 - Nav sections in `HotelOpsShell` use section `id` = module key.
 - Source of truth: `era-orchestrator/packages/database/prisma/lib/core/hotel-module-keys.ts` (mirrored in `@era/satellite-kit`).
 - Guest group tours (`/tours`, HOT-TOUR-01) share **`hotel_transfers`** — do not add a SKU. Spec: [hotel-guest-tours.md](./hotel-guest-tours.md).
+- Channel Manager pack (OTA hub, direct IBE, contracts): [hotel-channel-manager-pack.md](./hotel-channel-manager-pack.md).

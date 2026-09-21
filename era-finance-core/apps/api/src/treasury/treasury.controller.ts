@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -12,9 +15,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreateCashDeskDto } from "./dto/create-cash-desk.dto";
 import { CreateCashFlowItemDto } from "./dto/create-cash-flow-item.dto";
@@ -33,8 +34,8 @@ export class TreasuryController {
   }
 
   @Post("cash-flow-items")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Добавить статью ДДС" })
   createCashFlowItem(
     @OrganizationId() organizationId: string,
@@ -63,8 +64,8 @@ export class TreasuryController {
   }
 
   @Post("cash-desks")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Создать физическую кассу" })
   createCashDesk(
     @OrganizationId() organizationId: string,

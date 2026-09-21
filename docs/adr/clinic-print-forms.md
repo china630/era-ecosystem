@@ -4,6 +4,8 @@
 
 Accepted — 2026-07-22
 
+**Related:** [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md) (platform print: branding vs customer templates vs statutory lock)
+
 ## Context
 
 Nafta sanatorium needs printable clinical forms (lab CBC/UA/biochemistry, USM narrative, check-up specialist list, procedure schedule) in az/ru/en, with language chosen at print time (independent of UI locale). Branding (logo, clinic name, phone, address, signatures) must be configurable per tenant.

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -10,9 +13,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { AccountsService } from "./accounts.service";
 import { CreateIfrsMappingRuleDto } from "./dto/create-ifrs-mapping-rule.dto";
@@ -21,8 +22,8 @@ import { legacyMappingGone } from "../accounting/ledger-mapping.controller";
 
 @ApiTags("ifrs-mapping-rules")
 @ApiBearerAuth("bearer")
-@UseGuards(RolesGuard)
-@Roles(UserRole.OWNER, UserRole.ADMIN)
+@UseGuards(PermissionsGuard)
+@Permissions(CP_PERMISSION.API_LEDGER_READ)
 @Controller("ifrs-mapping-rules")
 export class IfrsMappingRulesController {
   constructor(private readonly accounts: AccountsService) {}

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -14,10 +17,9 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -31,7 +33,7 @@ import { PayrollPayoutDto } from "./dto/payroll-payout.dto";
 @ApiTags("hr-payroll")
 @ApiBearerAuth("bearer")
 @Controller("hr/payroll")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class PayrollController {
   constructor(
     private readonly payroll: PayrollService,
@@ -40,28 +42,28 @@ export class PayrollController {
   ) {}
 
   @Get("runs")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Список расчётных периодов" })
   listRuns(@OrganizationId() organizationId: string) {
     return this.payroll.listRuns(organizationId);
   }
 
   @Get("bank-accounts")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Organization bank accounts for payroll payout selector" })
   listPayoutBankAccounts(@OrganizationId() organizationId: string) {
     return this.payroll.listPayoutBankAccounts(organizationId);
   }
 
   @Get("runs/:id")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Расчёт с листовками" })
   getRun(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.payroll.getRun(organizationId, id);
   }
 
   @Get("runs/:id/xlsx")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({
     summary: "Excel export: payroll run slips (e-taxes.gov.az template)",
   })
@@ -80,7 +82,7 @@ export class PayrollController {
   }
 
   @Post("runs")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Создать черновик зарплаты за месяц" })
   createRun(
     @OrganizationId() organizationId: string,
@@ -90,7 +92,7 @@ export class PayrollController {
   }
 
   @Post("runs/:id/post")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({
     summary:
       "Утвердить payroll run (POSTED). Финальные проводки выполняются при SalaryRegistry -> PAID",
@@ -100,14 +102,14 @@ export class PayrollController {
   }
 
   @Post("runs/:id/email")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Email payslip PDFs for all slips in the run" })
   emailRun(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.payroll.emailRun(organizationId, id);
   }
 
   @Post("slips/:id/email")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Email a single payslip PDF" })
   emailSlip(
     @OrganizationId() organizationId: string,
@@ -118,7 +120,7 @@ export class PayrollController {
   }
 
   @Post("runs/:id/pay")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({
     summary:
       "Create salary registry and prepare payout via selected organization bank account",
@@ -138,7 +140,7 @@ export class PayrollController {
   }
 
   @Get("runs/:id/registries")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Salary registries for payroll run" })
   runRegistries(
     @OrganizationId() organizationId: string,
@@ -148,7 +150,7 @@ export class PayrollController {
   }
 
   @Post("registries/:id/mark-paid")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Manual reconciliation: mark salary registry as PAID" })
   markRegistryPaid(
     @OrganizationId() organizationId: string,
@@ -161,7 +163,7 @@ export class PayrollController {
   }
 
   @Get("registries/:id/export-link")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Get temporary export link (TTL) for salary registry file" })
   exportLink(
     @OrganizationId() organizationId: string,
@@ -171,7 +173,7 @@ export class PayrollController {
   }
 
   @Get("registries/:id/export")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Download salary registry export by temporary signature" })
   async exportFile(
     @OrganizationId() organizationId: string,
@@ -193,7 +195,7 @@ export class PayrollController {
   }
 
   @Get("jobs/:jobId")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({
     summary: "Статус фоновой задачи зарплаты (BullMQ)",
   })

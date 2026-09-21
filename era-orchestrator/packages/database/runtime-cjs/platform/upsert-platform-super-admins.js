@@ -8,11 +8,7 @@ exports.platformSuperAdminEmails = platformSuperAdminEmails;
 exports.platformSuperAdminBootstrapPassword = platformSuperAdminBootstrapPassword;
 exports.upsertPlatformSuperAdmins = upsertPlatformSuperAdmins;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const DEFAULT_EMAILS = [
-    "inaram84@gmail.com",
-    "shirinov.chingiz@gmail.com",
-    "chingiz@era.com",
-];
+const DEFAULT_EMAILS = ["shirinov.chingiz@gmail.com"];
 const DEFAULT_PASSWORD = "12345678";
 const BCRYPT_ROUNDS = 10;
 /** Parse `PLATFORM_SUPER_ADMIN_EMAILS` (comma/semicolon/space separated). */

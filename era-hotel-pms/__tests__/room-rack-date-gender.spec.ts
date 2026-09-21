@@ -1,6 +1,7 @@
 import { hotelDateKey, stayTouchesHotelDate } from '@/lib/hotel-calendar';
 import {
   computeRackDisplayState,
+  deriveSharePoolForDate,
   formatSharePoolBadge,
   pickRackStayForDate,
 } from '@/lib/room-rack-display';
@@ -61,5 +62,34 @@ describe('share gender on rack', () => {
 
   it('hotelDateKey keeps YYYY-MM-DD keys', () => {
     expect(hotelDateKey('2026-09-05')).toBe('2026-09-05');
+  });
+
+  it('hides pool badge for mixed closed pair', () => {
+    expect(
+      deriveSharePoolForDate(
+        {
+          maxBed: 2,
+          reservations: [
+            {
+              status: 'IN_HOUSE',
+              checkInDate: '2026-09-01',
+              checkOutDate: '2026-09-12',
+              shareEligible: true,
+              shareGender: 'M',
+              adults: 1,
+            },
+            {
+              status: 'IN_HOUSE',
+              checkInDate: '2026-09-01',
+              checkOutDate: '2026-09-12',
+              shareEligible: true,
+              shareGender: 'F',
+              adults: 1,
+            },
+          ],
+        },
+        '2026-09-05',
+      ),
+    ).toBeNull();
   });
 });

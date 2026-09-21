@@ -131,4 +131,20 @@ export class PatchOrganizationSettingsDto {
   @IsOptional()
   @IsIn(["soft", "strict"])
   ledgerMirrorMode?: "soft" | "strict";
+
+  /**
+   * ƏMAS policy (PRD §13.2 / Evrostar wave 7). Stored at Organization.settings.hr.emasMode.
+   * OFF = no manual queue; SELECTIVE = emasEligible only; FULL = all hires/terminates.
+   */
+  @IsOptional()
+  @IsIn(["OFF", "SELECTIVE", "FULL"])
+  emasMode?: "OFF" | "SELECTIVE" | "FULL";
+
+  /**
+   * When true, HR_MANAGER may see grey FOT (internalRate) on MGMT book.
+   * ACCOUNTANT never sees it. Stored at Organization.settings.hr.internalRateVisibleToHrManager.
+   */
+  @IsOptional()
+  @IsBoolean()
+  internalRateVisibleToHrManager?: boolean;
 }

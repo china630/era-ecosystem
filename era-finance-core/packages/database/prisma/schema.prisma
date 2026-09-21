@@ -122,6 +122,14 @@ model Organization {
   cashOrderSubtypes               CashOrderSubtype[]
   counterparties                  Counterparty[]
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
+  tradeCreditFacilities           TradeCreditFacility[]
+  tradeCreditGrants               TradeCreditGrant[]
+  tradeCreditBuyerMeterSnapshots  TradeCreditBuyerMeterSnapshot[]
+  tradeCreditEnrichmentRuns       TradeCreditEnrichmentRun[]
+  tradeCreditBuyerPrefs           TradeCreditBuyerPref[]
+  tradeCreditFactorLeads          TradeCreditFactorLead[]
+  tradeCreditPolicy               TradeCreditPolicy?
+  tradeCreditLimitDecisions       TradeCreditLimitDecision[]
   departments                     Department[]
   bankAccountsOrg                 OrganizationBankAccount[]
   digitalSignatureLogs            DigitalSignatureLog[]
@@ -147,6 +155,8 @@ model Organization {
   paymentAllocations              PaymentAllocation[]
   invoicePayments                 InvoicePayment[]
   invoices                        Invoice[]
+  extraFieldDefinitions           ExtraFieldDefinition[]
+  savedListViews                  SavedListView[]
   journalEntries                  JournalEntry[]
   invites                         OrganizationInvite[]
   memberships                     OrganizationMembership[]
@@ -175,6 +185,7 @@ model Organization {
   transactions                    Transaction[]
   warehouses                      Warehouse[]
   warehouseBins                   WarehouseBin[]
+  mgmtLaborDeltas                 MgmtLaborDelta[]
   notifications                   Notification[]
   referral                        Referral?
   ownershipDisputes               OwnershipDispute[]
@@ -1317,6 +1328,8 @@ model Employee {
   salary                         Decimal                  @map("salary") @db.Decimal(19, 4)
   tariffSalary                   Decimal                  @default(0) @map("tariff_salary") @db.Decimal(19, 4)
   supplementSalary               Decimal                  @default(0) @map("supplement_salary") @db.Decimal(19, 4)
+  /// Wave 5: management internal rate (AZN); payroll calc ignores this.
+  internalRate                   Decimal?                 @map("internal_rate") @db.Decimal(19, 4)
   workScheduleId                 String?                  @map("work_schedule_id") @db.Uuid
   createdAt                      DateTime                 @default(now()) @map("created_at")
   updatedAt                      DateTime                 @updatedAt @map("updated_at")
@@ -1370,6 +1383,7 @@ model Employee {
   jobPosition                    JobPosition              @relation(fields: [positionId], references: [id])
   payrollSlips                   PayrollSlip[]
   timesheetEntries               TimesheetEntry[]
+  mgmtLaborDeltas                MgmtLaborDelta[]
   inventoryAuditsResponsible     InventoryAudit[]         @relation("InventoryAuditResponsible")
   inventoryAuditLinesAccountable InventoryAuditLine[]     @relation("InventoryAuditLineAccountable")
   psaTimeEntries                 PsaTimeEntry[]
@@ -1385,6 +1399,31 @@ model Employee {
   @@index([organizationId, deletedAt], map: "employees_org_deleted_at_idx")
   @@index([userId])
   @@map("employees")
+}
+
+
+/// Wave 5: idempotent management labor cost delta (org×month×employee). Posts only to MGMT book.
+model MgmtLaborDelta {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  year             Int
+  month            Int
+  employeeId       String       @map("employee_id") @db.Uuid
+  workHours        Decimal      @map("work_hours") @db.Decimal(19, 4)
+  monthNormHours   Decimal      @map("month_norm_hours") @db.Decimal(19, 4)
+  mgmtGross        Decimal      @map("mgmt_gross") @db.Decimal(19, 4)
+  statGross        Decimal      @map("stat_gross") @db.Decimal(19, 4)
+  delta            Decimal      @db.Decimal(19, 4)
+  accountingBookId String       @map("accounting_book_id") @db.Uuid
+  transactionId    String?      @map("transaction_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee         Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, year, month, employeeId], map: "mgmt_labor_deltas_org_ym_emp_uidx")
+  @@index([organizationId, year, month])
+  @@map("mgmt_labor_deltas")
 }
 
 model PayrollRun {
@@ -1764,6 +1803,7 @@ model User {
   employeeDocumentsUploaded      EmployeeDocument[]         @relation("EmployeeDocumentUploader")
   supplierRatingsGiven           SupplierRating[]           @relation("SupplierRatingAuthor")
   publishedLedgerMappingSets     LedgerMappingSet[]         @relation("LedgerMappingSetPublisher")
+  savedListViews                 SavedListView[]
 
   @@index([defaultWarehouseId])
   @@map("users")
@@ -3042,6 +3082,12 @@ model Counterparty {
   customsDeclarationsAsSender   CustomsDeclaration[]       @relation("CustomsDeclarationSender")
   customsDeclarationsAsReceiver CustomsDeclaration[]       @relation("CustomsDeclarationReceiver")
   agencyCityLedgerSnapshots     AgencyCityLedgerSnapshot[]
+  tradeCreditFacilities         TradeCreditFacility[]
+  tradeCreditGrants             TradeCreditGrant[]
+  tradeCreditEnrichmentRuns     TradeCreditEnrichmentRun[]
+  tradeCreditBuyerPrefs         TradeCreditBuyerPref[]
+  tradeCreditFactorLeads        TradeCreditFactorLead[]
+  tradeCreditLimitDecisions     TradeCreditLimitDecision[]
   discountRules                 DiscountRule[]
   deletedAt                     DateTime?                  @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId               String?                    @map("deleted_by_user_id") @db.Uuid
@@ -3054,6 +3100,235 @@ model Counterparty {
   @@index([globalId])
   @@index([organizationId, deletedAt], map: "counterparties_org_deleted_at_idx")
   @@map("counterparties")
+}
+
+enum TradeCreditFacilityStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum TradeCreditGrantStatus {
+  ISSUED
+  CONSUMED
+  EXPIRED
+  VOID
+}
+
+/// Internal A–D policy group (UI А–Г). Finance-only; never buyer/sales.
+enum TradeCreditPolicyGroup {
+  A
+  B
+  C
+  D
+}
+
+/// Phase 3 proposed limit kind (finance-only; never buyer).
+enum TradeCreditProposedKind {
+  WORKING_CAPITAL
+  TRIAL
+  RESTORE
+  ENRICH_HAIRCUT
+  A_RAISE
+}
+
+/// Trade credit lock: per-buyer facility limit + stop-list (ADR finance-trade-credit-control).
+model TradeCreditFacility {
+  id                 String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String                     @map("organization_id") @db.Uuid
+  counterpartyId     String                     @map("counterparty_id") @db.Uuid
+  creditLimit        Decimal                    @map("credit_limit") @db.Decimal(19, 4)
+  stopList           Boolean                    @default(false) @map("stop_list")
+  status             TradeCreditFacilityStatus  @default(ACTIVE)
+  /// Computed A–D (null = thin history / not yet classified).
+  policyGroup        TradeCreditPolicyGroup?    @map("policy_group")
+  /// Accountant pin; wins over computed until cleared.
+  policyGroupManual  TradeCreditPolicyGroup?    @map("policy_group_manual")
+  policyComputedAt   DateTime?                  @map("policy_computed_at") @db.Timestamptz(6)
+  policyReasonsJson  Json?                      @map("policy_reasons_json")
+  /// Per-CP mute for auto-raise (org flag still required).
+  autoRaiseMuted     Boolean                    @default(false) @map("auto_raise_muted")
+  proposedLimit      Decimal?                   @map("proposed_limit") @db.Decimal(19, 4)
+  proposedAt         DateTime?                  @map("proposed_at") @db.Timestamptz(6)
+  /// Phase 3: why proposedLimit was written.
+  proposedKind       TradeCreditProposedKind?   @map("proposed_kind")
+  /// Phase 3: last computed working-capital suggestion (staff UI).
+  suggestedLimit     Decimal?                   @map("suggested_limit") @db.Decimal(19, 4)
+  /// Snapshot of creditLimit when auto-D fires (restore via explicit action).
+  limitBeforeBlock   Decimal?                   @map("limit_before_block") @db.Decimal(19, 4)
+  createdAt          DateTime                   @default(now()) @map("created_at")
+  updatedAt          DateTime                   @updatedAt @map("updated_at")
+  organization       Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty       Counterparty               @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+  grants             TradeCreditGrant[]
+  limitDecisions     TradeCreditLimitDecision[]
+
+  @@unique([organizationId, counterpartyId])
+  @@index([organizationId, status])
+  @@index([organizationId, policyGroup])
+  @@map("trade_credit_facilities")
+}
+
+/// Org-level trade credit policy thresholds (1:1 org).
+model TradeCreditPolicy {
+  id                    String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String       @unique @map("organization_id") @db.Uuid
+  autoRaiseEnabled      Boolean      @default(false) @map("auto_raise_enabled")
+  autoDMaxDpd           Int          @default(90) @map("auto_d_max_dpd")
+  autoRaisePct          Decimal      @default(20) @map("auto_raise_pct") @db.Decimal(8, 4)
+  /// Required when autoRaiseEnabled; no unbounded raise.
+  autoRaiseCapAzn       Decimal?     @map("auto_raise_cap_azn") @db.Decimal(19, 4)
+  grantTtlHoursA        Int          @default(24) @map("grant_ttl_hours_a")
+  grantTtlHoursB        Int          @default(24) @map("grant_ttl_hours_b")
+  grantTtlHoursC        Int          @default(8) @map("grant_ttl_hours_c")
+  /// When true, group C issues require finance override/confirm (else shorter TTL).
+  groupCRequireConfirm  Boolean      @default(false) @map("group_c_require_confirm")
+  minPaidInvoices       Int          @default(3) @map("min_paid_invoices")
+  /// Phase 2b: optional bureau-driven auto-D (default informational only).
+  enrichRiskyForcesD         Boolean @default(false) @map("enrich_risky_forces_d")
+  enrichVoenInactiveForcesD  Boolean @default(false) @map("enrich_voen_inactive_forces_d")
+  /// Phase 3 working-capital knobs.
+  limitK                     Decimal @default(1) @map("limit_k") @db.Decimal(8, 4)
+  trialLimitAzn              Decimal @default(500) @map("trial_limit_azn") @db.Decimal(19, 4)
+  suggestedCapAzn            Decimal? @map("suggested_cap_azn") @db.Decimal(19, 4)
+  groupMultB                 Decimal @default(0.5) @map("group_mult_b") @db.Decimal(8, 4)
+  groupMultC                 Decimal @default(0.3) @map("group_mult_c") @db.Decimal(8, 4)
+  partialPayHaircut          Decimal @default(0.8) @map("partial_pay_haircut") @db.Decimal(8, 4)
+  partialPayThreshold        Decimal @default(0.3) @map("partial_pay_threshold") @db.Decimal(8, 4)
+  concentrationHaircut       Decimal @default(0.7) @map("concentration_haircut") @db.Decimal(8, 4)
+  concentrationThreshold     Decimal @default(0.8) @map("concentration_threshold") @db.Decimal(8, 4)
+  enrichTtlDays              Int     @default(90) @map("enrich_ttl_days")
+  enrichHaircut              Decimal @default(0.5) @map("enrich_haircut") @db.Decimal(8, 4)
+  restoreProposalEnabled     Boolean @default(true) @map("restore_proposal_enabled")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("trade_credit_policies")
+}
+
+/// Short-lived pickup grant (code/QR) bound to org + counterparty + amount.
+model TradeCreditGrant {
+  id              String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String                 @map("organization_id") @db.Uuid
+  counterpartyId  String                 @map("counterparty_id") @db.Uuid
+  facilityId      String                 @map("facility_id") @db.Uuid
+  amount          Decimal                @db.Decimal(19, 4)
+  codeHash        String                 @map("code_hash")
+  expiresAt       DateTime               @map("expires_at") @db.Timestamptz(6)
+  status          TradeCreditGrantStatus @default(ISSUED)
+  issuedByUserId  String?                @map("issued_by_user_id") @db.Uuid
+  issuedByBuyer   Boolean                @default(false) @map("issued_by_buyer")
+  consumedAt      DateTime?              @map("consumed_at") @db.Timestamptz(6)
+  consumedRefType String?                @map("consumed_ref_type")
+  consumedRefId   String?                @map("consumed_ref_id")
+  overrideReason  String?                @map("override_reason")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty    Counterparty           @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+  facility        TradeCreditFacility    @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, codeHash])
+  @@index([organizationId, counterpartyId, status])
+  @@map("trade_credit_grants")
+}
+
+/// Monthly billed-buyer meter snapshot (Baku YYYY-MM). Soft overage; does not block grants.
+model TradeCreditBuyerMeterSnapshot {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  periodKey        String       @map("period_key")
+  billedBuyerCount Int          @map("billed_buyer_count")
+  includedQuota    Int          @map("included_quota")
+  overageCount     Int          @map("overage_count")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodKey])
+  @@map("trade_credit_buyer_meter_snapshots")
+}
+
+/// Phase 2b: finance-only registry/bureau enrichment run (metered).
+model TradeCreditEnrichmentRun {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  counterpartyId  String       @map("counterparty_id") @db.Uuid
+  facilityId      String?      @map("facility_id") @db.Uuid
+  provider        String
+  paidMeterUnits  Int          @default(1) @map("paid_meter_units")
+  billed          Boolean      @default(false)
+  consentPurpose  String       @default("trade_credit_underwriting") @map("consent_purpose")
+  payloadJson     Json?        @map("payload_json")
+  riskyTaxpayer   Boolean?     @map("risky_taxpayer")
+  voenInactive    Boolean?     @map("voen_inactive")
+  voenName        String?      @map("voen_name")
+  errorMessage    String?      @map("error_message")
+  createdByUserId String?      @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty    Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, counterpartyId])
+  @@index([organizationId, createdAt])
+  @@map("trade_credit_enrichment_runs")
+}
+
+/// Phase 2a: buyer cabinet notify opt-in (no А–Г in messages).
+model TradeCreditBuyerPref {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  counterpartyId String       @map("counterparty_id") @db.Uuid
+  notifyOptIn    Boolean      @default(false) @map("notify_opt_in")
+  notifyChannel  String?      @map("notify_channel")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, counterpartyId])
+  @@map("trade_credit_buyer_prefs")
+}
+
+/// Phase 2c: factoring referral lead (no GL). Partner contract outside NAS list.
+model TradeCreditFactorLead {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  counterpartyId  String       @map("counterparty_id") @db.Uuid
+  invoiceId       String?      @map("invoice_id") @db.Uuid
+  partnerKey      String       @default("default") @map("partner_key")
+  status          String       @default("SUBMITTED")
+  note            String?
+  hashedStatsJson Json?        @map("hashed_stats_json")
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty    Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("trade_credit_factor_leads")
+}
+
+/// Phase 3: Accept/Reject of suggested limit + 30d DPD follow-up (no ML).
+model TradeCreditLimitDecision {
+  id               String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                   @map("organization_id") @db.Uuid
+  counterpartyId   String                   @map("counterparty_id") @db.Uuid
+  facilityId       String                   @map("facility_id") @db.Uuid
+  kind             TradeCreditProposedKind
+  oldLimit         Decimal                  @map("old_limit") @db.Decimal(19, 4)
+  newLimit         Decimal                  @map("new_limit") @db.Decimal(19, 4)
+  accepted         Boolean
+  reasonsJson      Json?                    @map("reasons_json")
+  featuresJson     Json?                    @map("features_json")
+  decidedAt        DateTime                 @default(now()) @map("decided_at") @db.Timestamptz(6)
+  followupMaxDpd30 Int?                     @map("followup_max_dpd30")
+  followupAt       DateTime?                @map("followup_at") @db.Timestamptz(6)
+  organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty     Counterparty             @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+  facility         TradeCreditFacility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, decidedAt])
+  @@index([organizationId, counterpartyId])
+  @@map("trade_credit_limit_decisions")
 }
 
 /// Hotel agency city-ledger snapshot ingested from `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT`.
@@ -3538,7 +3813,9 @@ enum EmasContractEventType {
 
 enum EmasContractEventStatus {
   PENDING
+  PENDING_MANUAL
   SUBMITTED
+  SUBMITTED_MANUAL
   ACCEPTED
   REJECTED
   FAILED
@@ -3557,6 +3834,7 @@ model EmasContractEvent {
   mappingVersion Int                     @default(1) @map("mapping_version")
   errorMessage   String?                 @map("error_message")
   submittedAt    DateTime?               @map("submitted_at") @db.Timestamptz(6)
+  submittedByUserId String?                @map("submitted_by_user_id") @db.Uuid
   createdAt      DateTime                @default(now()) @map("created_at")
   updatedAt      DateTime                @updatedAt @map("updated_at")
   organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -3751,6 +4029,7 @@ model Invoice {
   deletedAt                  DateTime?             @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId            String?               @map("deleted_by_user_id") @db.Uuid
   deletedReason              String?               @map("deleted_reason")
+  extraAttributes            Json                  @default("{}") @map("extra_attributes")
 
   @@unique([organizationId, number])
   @@unique([organizationId, sourceFolioId], map: "invoice_source_folio_id_org_uidx")
@@ -3759,6 +4038,51 @@ model Invoice {
   @@index([organizationId, counterpartyId])
   @@index([organizationId, deletedAt], map: "invoices_org_deleted_at_idx")
   @@map("invoices")
+}
+
+/// Tenant extra fields on operational documents (not GL). ADR extensibility-forms-print-reports W1.
+model ExtraFieldDefinition {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  entityType       String       @map("entity_type")
+  key              String
+  valueKind        String       @map("value_kind")
+  catalogFieldKind String       @map("catalog_field_kind")
+  labelAz          String       @map("label_az")
+  labelEn          String       @map("label_en")
+  labelRu          String       @map("label_ru")
+  required         Boolean      @default(false)
+  sortOrder        Int          @default(0) @map("sort_order")
+  active           Boolean      @default(true)
+  optionsJson      Json?        @map("options_json")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, entityType, key])
+  @@index([organizationId, entityType, active])
+  @@map("extra_field_definitions")
+}
+
+/// Named list-view presets (columns/filters/sort). ADR extensibility W2 — not SQL.
+model SavedListView {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  gridKey        String       @map("grid_key")
+  name           String
+  isShared       Boolean      @default(false) @map("is_shared")
+  isDefault      Boolean      @default(false) @map("is_default")
+  configJson     Json         @map("config_json")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId, gridKey, name])
+  @@index([organizationId, gridKey, isShared])
+  @@index([organizationId, userId, gridKey, isDefault])
+  @@map("saved_list_views")
 }
 
 model IntegrationSyncRun {

@@ -95,6 +95,10 @@ export default function PosCheckoutPage() {
   } | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fiscalDeviceId, setFiscalDeviceId] = useState("");
+  const [bankTerminalId, setBankTerminalId] = useState("");
+  const [kkms, setKkms] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
+  const [banks, setBanks] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
   const [zSummary, setZSummary] = useState<{
     totalSales: number;
     receiptCount: number;
@@ -133,6 +137,28 @@ export default function PosCheckoutPage() {
         if (data.config) setPresetConfig(data.config);
       })
       .catch(() => setMessage("Failed to load preset config"));
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/fiscal/devices")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const devices = (data?.devices ?? []) as {
+          id: string;
+          label: string;
+          kind: string;
+          providerId: string;
+        }[];
+        setKkms(devices.filter((d) => d.kind === "FISCAL_KKM"));
+        setBanks(devices.filter((d) => d.kind === "BANK_POS"));
+        if (data?.defaults?.fiscalDeviceId) {
+          setFiscalDeviceId(String(data.defaults.fiscalDeviceId));
+        }
+        if (data?.defaults?.bankTerminalId) {
+          setBankTerminalId(String(data.defaults.bankTerminalId));
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   const activeLineFields = useMemo(() => {
@@ -183,6 +209,8 @@ export default function PosCheckoutPage() {
           outletCode: "MAIN",
           registerCode: "R1",
           preset,
+          ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
+          ...(bankTerminalId ? { bankTerminalId } : {}),
         }),
       });
       const data = await res.json();
@@ -477,6 +505,40 @@ export default function PosCheckoutPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {kkms.length > 0 ? (
+            <label className="text-xs text-[#7F8C8D]">
+              KKM
+              <select
+                className="ml-1 rounded border px-2 py-1 text-sm"
+                value={fiscalDeviceId}
+                onChange={(e) => setFiscalDeviceId(e.target.value)}
+              >
+                <option value="">Auto</option>
+                {kkms.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {banks.length > 0 ? (
+            <label className="text-xs text-[#7F8C8D]">
+              Bank POS
+              <select
+                className="ml-1 rounded border px-2 py-1 text-sm"
+                value={bankTerminalId}
+                onChange={(e) => setBankTerminalId(e.target.value)}
+              >
+                <option value="">Auto</option>
+                {banks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}

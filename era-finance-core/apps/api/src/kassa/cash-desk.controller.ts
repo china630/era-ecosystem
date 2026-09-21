@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -15,10 +18,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { AdvanceReportStatus, UserRole } from "@erafinance/database";
+import { AdvanceReportStatus } from "@erafinance/database";
 import { Response } from "express";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { CashOrderService } from "./cash-order.service";
@@ -84,8 +85,8 @@ export class CashDeskController {
   }
 
   @Post("orders/kmo")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Создать черновик KMO (приход, CashOrderKind.KMO)" })
   createKmo(
     @OrganizationId() organizationId: string,
@@ -95,8 +96,8 @@ export class CashDeskController {
   }
 
   @Post("orders/kxo")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Создать черновик KXO (расход, CashOrderKind.KXO)" })
   createKxo(
     @OrganizationId() organizationId: string,
@@ -107,8 +108,8 @@ export class CashDeskController {
 
   /** Backward-compatible aliases (will be removed later). */
   @Post("orders/mko")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "[DEPRECATED] Alias for /orders/kmo" })
   createMkoAlias(
     @OrganizationId() organizationId: string,
@@ -119,8 +120,8 @@ export class CashDeskController {
 
   /** Backward-compatible aliases (will be removed later). */
   @Post("orders/mxo")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "[DEPRECATED] Alias for /orders/kxo" })
   createMxoAlias(
     @OrganizationId() organizationId: string,
@@ -131,8 +132,8 @@ export class CashDeskController {
 
   /** Backward-compatible aliases (will be removed later). */
   @Post("orders/pko")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "[DEPRECATED] Alias for /orders/kmo" })
   createPkoAlias(
     @OrganizationId() organizationId: string,
@@ -143,8 +144,8 @@ export class CashDeskController {
 
   /** Backward-compatible aliases (will be removed later). */
   @Post("orders/rko")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "[DEPRECATED] Alias for /orders/kxo" })
   createRkoAlias(
     @OrganizationId() organizationId: string,
@@ -154,8 +155,8 @@ export class CashDeskController {
   }
 
   @Post("orders/:id/post")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Провести черновик ордера" })
   postOrder(
     @OrganizationId() organizationId: string,
@@ -233,8 +234,8 @@ export class CashDeskController {
   }
 
   @Post("advance-reports")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create draft advance report" })
   createAdvance(
     @OrganizationId() organizationId: string,
@@ -244,8 +245,8 @@ export class CashDeskController {
   }
 
   @Patch("advance-reports/:id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Update draft advance report" })
   updateAdvance(
     @OrganizationId() organizationId: string,
@@ -256,8 +257,8 @@ export class CashDeskController {
   }
 
   @Post("advance-reports/:id/post")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Post advance report to GL (Dr expense / Cr 244)" })
   postAdvance(
     @OrganizationId() organizationId: string,

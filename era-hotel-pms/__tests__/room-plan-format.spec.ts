@@ -25,6 +25,7 @@ describe('room-plan format helpers', () => {
       'Anita Molotkova / Petr Molotkov',
     );
     expect(formatPlanBarNames('A A', ['A A', 'B B'])).toBe('A A / B B');
+    expect(formatPlanBarNames('Maral Aliyeva', ['Aliyeva Maral'])).toBe('Maral Aliyeva');
   });
 
   it('shows guest folio debt on the nose when balance is due', () => {

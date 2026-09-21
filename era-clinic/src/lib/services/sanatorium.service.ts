@@ -4,6 +4,8 @@ import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.servi
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { splitFullNameToParts } from '@era/satellite-kit';
+import { applyPackageAutoBlocks } from '@/domain/sanatorium/package-auto-apply.service';
+/** @deprecated Prefer applyPackageAutoBlocks — kept as fallback when no ProgramInstance. */
 import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 import {
   assertLabOrderCanCreate,
@@ -11,7 +13,10 @@ import {
 } from '@/domain/lab/lab-order-conflict.service';
 import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
 import { composeFullName } from '@/domain/patient/patient-ref-code';
-import { applyMdmDemographicsCache } from '@/domain/patient/mdm-demographics-cache';
+import {
+  applyMdmDemographicsCache,
+  applyStayDemographicsCache,
+} from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 
 function refCodeFromPassport(passport: string): string {
@@ -102,9 +107,13 @@ async function findOpenEpisodeForStay(
 
 async function safeInstantiateIntake(episodeId: string) {
   try {
-    await instantiateIntakePackage(episodeId);
+    const auto = await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
+    if (auto && "skipped" in auto && auto.skipped === "NO_PROGRAM") {
+      // @deprecated — hard-coded PKG-NAFTA-INTAKE path when episode has no ProgramInstance yet
+      await instantiateIntakePackage(episodeId);
+    }
   } catch (err) {
-    console.error("[sanatorium] instantiateIntakePackage failed", episodeId, err);
+    console.error("[sanatorium] package auto-apply / intake failed", episodeId, err);
   }
 }
 
@@ -124,6 +133,8 @@ export async function openEpisodeFromStay(input: {
   roomNumber?: string | null;
   /** Wave E — stable pax key when no MDM (defaults to passport/reservation). */
   paxKey?: string | null;
+  sex?: string | null;
+  birthDate?: string | Date | null;
 }) {
   const hotelStayId = resolveHotelStayId(input);
   const legacyRef = resolveHotelPatientRefCode({
@@ -180,14 +191,18 @@ export async function openEpisodeFromStay(input: {
     paxKey: input.paxKey,
   };
 
+  const fillPatientDemographics = async (patientId: string | null | undefined) => {
+    if (!patientId) return;
+    await applyStayDemographicsCache(patientId, {
+      sex: input.sex,
+      birthDate: input.birthDate,
+    });
+    await applyMdmDemographicsCache(patientId, gpid);
+  };
+
   const existingFast = await findOpenEpisodeForStay(prisma, stayLookup);
   if (existingFast) {
-    if (existingFast.patientRefId) {
-      await applyMdmDemographicsCache(
-        existingFast.patientRefId,
-        gpid ?? existingFast.globalPersonId,
-      );
-    }
+    await fillPatientDemographics(existingFast.patientRefId);
     return patchOpenEpisode(existingFast);
   }
 
@@ -269,23 +284,13 @@ export async function openEpisodeFromStay(input: {
     // Concurrent check-in: loser retries as read of the winner's episode.
     const raced = await findOpenEpisodeForStay(prisma, stayLookup);
     if (raced) {
-      if (raced.patientRefId) {
-        await applyMdmDemographicsCache(
-          raced.patientRefId,
-          gpid ?? raced.globalPersonId,
-        );
-      }
+      await fillPatientDemographics(raced.patientRefId);
       return patchOpenEpisode(raced);
     }
     throw err;
   }
 
-  if (created.patientRefId) {
-    await applyMdmDemographicsCache(
-      created.patientRefId,
-      gpid ?? created.globalPersonId,
-    );
-  }
+  await fillPatientDemographics(created.patientRefId);
   await safeInstantiateIntake(created.id);
   return created;
 }
@@ -614,12 +619,39 @@ export async function listOpenEpisodes(input?: {
     };
   }
 
+  /** Ops package signal for list badges / filters. */
+  function packageSignal(e: {
+    programCode: string | null;
+    noPackageConfirmedAt?: Date | null;
+    programInstance?: { id: string } | null;
+  }): "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED" {
+    if (e.noPackageConfirmedAt) return "NO_PACKAGE_CONFIRMED";
+    if (e.programInstance) return "OK";
+    if (e.programCode?.trim()) return "NO_PROGRAM";
+    return "NO_PROGRAM_CODE";
+  }
+
+  function withPackageSignal<
+    T extends {
+      programCode: string | null;
+      noPackageConfirmedAt?: Date | null;
+      programInstance?: { id: string } | null;
+      careDoctors?: { id: string }[];
+    },
+  >(e: T) {
+    const flagged = withCareTeamFlag(e);
+    return {
+      ...flagged,
+      packageSignal: packageSignal(e),
+    };
+  }
+
   const walkInIds = episodes
     .filter((e) => e.patientOrigin === "WALK_IN")
     .map((e) => e.id);
   if (walkInIds.length === 0) {
     const data = episodes.map((e) => ({
-      ...withCareTeamFlag(e),
+      ...withPackageSignal(e),
       canCloseWalkIn: false as boolean,
     }));
     return {
@@ -662,7 +694,7 @@ export async function listOpenEpisodes(input?: {
   );
 
   const data = episodes.map((e) => {
-    const base = withCareTeamFlag(e);
+    const base = withPackageSignal(e);
     if (e.patientOrigin !== "WALK_IN") {
       return { ...base, canCloseWalkIn: false };
     }

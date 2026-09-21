@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ERA 365 × Evrostar — Workforce təklifi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <style>
+    @page { size: A4; margin: 11mm 12mm 14mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #fff;
+      color: #1E2A35;
+      font-family: "Noto Sans", Manrope, sans-serif;
+    }
+    body { font-size: 10pt; line-height: 1.4; }
+    .page {
+      max-width: 186mm;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid #2980B9;
+    }
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(145deg, #1F6A9A, #2980B9 50%, #1F8A70);
+      color: #fff; font: 800 13px/36px Manrope, sans-serif;
+      text-align: center; letter-spacing: -.04em;
+    }
+    h1 {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      font-size: 22pt;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.05;
+      color: #243442;
+    }
+    .kicker {
+      margin: 0 0 2px;
+      font: 700 8.5pt/1 Manrope, sans-serif;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: #1B6FA3;
+    }
+    .meta {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #536472;
+      line-height: 1.45;
+    }
+    .lead {
+      margin: 12px 0 14px;
+      color: #34495E;
+      font-size: 10.5pt;
+      max-width: 78ch;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .card {
+      border: 1px solid #C5CED6;
+      border-radius: 12px;
+      background: #F7FAFC;
+      padding: 12px 13px 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .card.popular {
+      border: 2px solid #C9A227;
+      background: linear-gradient(180deg, #FFF9E8, #F7FAFC 42%);
+      position: relative;
+    }
+    .badge {
+      position: absolute;
+      top: -9px; left: 12px;
+      background: #C9A227;
+      color: #fff;
+      font: 700 7.5pt/1 Manrope, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .card h2 {
+      margin: 4px 0 0;
+      font: 800 11pt/1.15 Manrope, sans-serif;
+      color: #243442;
+      letter-spacing: -.02em;
+    }
+    .price {
+      margin: 8px 0 2px;
+      font: 800 22pt/1 Manrope, sans-serif;
+      color: #1E2A35;
+      letter-spacing: -.04em;
+    }
+    .price small {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #536472;
+      letter-spacing: 0;
+    }
+    .per { margin: 0 0 8px; font-size: 8pt; color: #6E7C86; }
+    .totals {
+      margin: 0 0 10px;
+      padding: 7px 8px;
+      background: #EEF3F7;
+      border-radius: 8px;
+      font-size: 8.5pt;
+      color: #34495E;
+    }
+    .totals strong { color: #1E2A35; }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+      flex: 1;
+    }
+    li {
+      position: relative;
+      padding-left: 16px;
+      font-size: 8.7pt;
+      color: #1E2A35;
+      line-height: 1.35;
+    }
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: .42em;
+      width: 7px; height: 7px;
+      border-radius: 2px;
+      background: #1F8A70;
+    }
+    .plus {
+      margin: 0 0 6px;
+      font: 700 8pt/1.3 Manrope, sans-serif;
+      color: #1F8A70;
+    }
+    h3 {
+      margin: 16px 0 8px;
+      font: 800 12pt/1.2 Manrope, sans-serif;
+      color: #243442;
+      letter-spacing: -.02em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+    th, td {
+      border: 1px solid #C5CED6;
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #1F6A9A;
+      color: #fff;
+      font: 700 8pt/1.2 Manrope, sans-serif;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    td.num { font-weight: 700; white-space: nowrap; }
+    tr:nth-child(even) td { background: #F4F7FA; }
+    .note {
+      margin: 10px 0 0;
+      padding: 8px 10px;
+      border-left: 4px solid #2980B9;
+      background: rgba(41,128,185,.08);
+      font-size: 9pt;
+      color: #34495E;
+    }
+    .cols {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .box {
+      border: 1px solid #C5CED6;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #F7FAFC;
+    }
+    .box h3 { margin-top: 0; }
+    .box ul { margin-top: 6px; }
+    footer {
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid #C5CED6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 9pt;
+      color: #536472;
+    }
+    footer a {
+      color: #1B6FA3;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .vat { font-size: 8pt; color: #6E7C86; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <div class="brand">
+          <div class="mark">E</div>
+          <div>
+            <p class="kicker">ERA 365 × Evrostar</p>
+            <h1>ERA Workforce</h1>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        Evrostar Təmizlik Şirkəti üçün kadr sistemi<br/>
+        200–250 işçi · sentyabr 2026
+      </div>
+    </header>
+
+    <p class="lead">
+      Bu təklif <strong>Evrostar</strong> üçün hazırlanıb. ERA Workforce əməkdaşların uçotu, məzuniyyət, davamiyyət və növbə cədvəli üçündür.
+      Qiymət <strong>bir aktiv işçi / ay</strong> üzrədir. Əməkhaqqı, mühasibatlıq və anbar tarifə daxil deyil — ayrıca qoşulur.
+    </p>
+
+    <div class="cards">
+      <article class="card">
+        <h2>Essential HR</h2>
+        <div class="price">2 AZN <small>/ işçi</small></div>
+        <p class="per">ayda · ƏDV daxil deyil</p>
+        <div class="totals">200 işçi — <strong>400 AZN</strong><br/>250 işçi — <strong>500 AZN</strong></div>
+        <ul>
+          <li>İşçi bazası</li>
+          <li>Qəbul və işdən çıxarma</li>
+          <li>İşçi sənədləri</li>
+          <li>Məzuniyyət və işə gəlməmə uçotu</li>
+          <li>Kadr hesabatları</li>
+        </ul>
+      </article>
+
+      <article class="card popular">
+        <div class="badge">Ən populyar</div>
+        <h2>Professional</h2>
+        <div class="price">3 AZN <small>/ işçi</small></div>
+        <p class="per">ayda · ƏDV daxil deyil</p>
+        <div class="totals">200 işçi — <strong>600 AZN</strong><br/>250 işçi — <strong>750 AZN</strong></div>
+        <p class="plus">Essential HR +</p>
+        <ul>
+          <li>Davamiyyət uçotu</li>
+          <li>Tabel</li>
+          <li>Obyektlər üzrə növbə və briqada cədvəli</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Premium</h2>
+        <div class="price">4 AZN <small>/ işçi</small></div>
+        <p class="per">ayda · ƏDV daxil deyil</p>
+        <div class="totals">200 işçi — <strong>800 AZN</strong><br/>250 işçi — <strong>1 000 AZN</strong></div>
+        <p class="plus">Professional +</p>
+        <ul>
+          <li>Kadr razılaşdırılması və kompensasiya konturu</li>
+          <li>Ştat, davamiyyət və axıcılıq analitikası</li>
+          <li>Rollar və dəyişiklik jurnali</li>
+        </ul>
+      </article>
+    </div>
+    <p class="vat">Evrostar üçün tövsiyə: Professional. Premium-dakı kompensasiya konturu əməkhaqqı hesabı deyil.</p>
+
+    <h3>Əlavə modullar — təşkilat üzrə, ayda</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Modul</th>
+          <th>Qiymət</th>
+          <th>Nə verir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mühasibatlıq (baş kitab)</td>
+          <td class="num">29 AZN</td>
+          <td>Qaimə, akt, kontragent, uçot</td>
+        </tr>
+        <tr>
+          <td>Əməkhaqqı</td>
+          <td class="num">29 AZN</td>
+          <td>Tabeldən əməkhaqqı hesablanması</td>
+        </tr>
+        <tr>
+          <td>Anbar</td>
+          <td class="num">19 AZN</td>
+          <td>Kimyəvi maddə, inventar, spezodejda, obyektlərə köçürmə</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">
+      Ofis paketi (mühasibat + əməkhaqqı + anbar): <strong>77 AZN / ay</strong>.
+      Evrostar nümunəsi: Professional, 250 işçi + ofis paketi → <strong>827 AZN / ay</strong>.
+    </p>
+
+    <div class="cols">
+      <div class="box">
+        <h3>Tarifə daxil deyil</h3>
+        <ul>
+          <li>Əməkhaqqının mühasibat hesabı (ayrıca modul)</li>
+          <li>Anbar və mal-material uçotu (ayrıca modul)</li>
+          <li>Müştəriyə qaimə / müqavilə uçotu</li>
+          <li>Mobil tətbiq, marşrut, keyfiyyət yoxlama vərəqəsi</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Növbəti addım</h3>
+        <ul>
+          <li>Evrostar üçün Professional, 200 və ya 250 işçi</li>
+          <li>Lazımdırsa — ofis paketi</li>
+          <li>Tətbiq qrafiki ayrıca razılaşdırılır</li>
+        </ul>
+      </div>
+    </div>
+
+    <footer>
+      <span>ERA 365 → Evrostar · konfidensial təklif · 2026</span>
+      <a href="https://app.era-365.online/">https://app.era-365.online/</a>
+    </footer>
+  </div>
+</body>
+</html>

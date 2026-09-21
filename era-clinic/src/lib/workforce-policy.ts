@@ -1,6 +1,7 @@
 import { fetchWorkforcePolicy, isCpWorkforceHireMode } from "@era/satellite-kit";
+import { CLINIC_SATELLITE_KEY } from "@/lib/clinic-satellite-key";
 
-export const CLINIC_SATELLITE_KEY = "industry_clinic";
+export { CLINIC_SATELLITE_KEY };
 
 export async function getClinicWorkforcePolicy() {
   return fetchWorkforcePolicy(CLINIC_SATELLITE_KEY);

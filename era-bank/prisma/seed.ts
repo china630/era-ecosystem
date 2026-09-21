@@ -1,5 +1,11 @@
 import { createSatelliteTenantExtension, hashPassword } from "@era/satellite-kit";
 import { Prisma, PrismaClient } from "@prisma/client";
+import {
+  permissionsForRole,
+  sanitizeLimitsJson,
+  serializePermissions,
+} from "../src/lib/auth/permissions";
+import { BANK_PERMISSION_CATALOG_VERSION } from "../src/lib/auth/ensure-system-bank-roles";
 
 const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
@@ -16,31 +22,27 @@ const roles = [
   {
     code: "TELLER",
     name: "Teller",
-    limitsJson: { maxDebitMinor: 500000, dailyPostingLimitAzn: 5000, canApprove: false },
+    limitsJson: { maxDebitMinor: 500000, dailyPostingLimitAzn: 5000 },
   },
   {
     code: "BRANCH_MANAGER",
     name: "Branch manager",
-    limitsJson: {
-      maxDebitMinor: 5000000,
-      dailyPostingLimitAzn: 50000,
-      canApprove: true,
-    },
+    limitsJson: { maxDebitMinor: 5000000, dailyPostingLimitAzn: 50000 },
   },
   {
     code: "AML_OFFICER",
     name: "Compliance / AML",
-    limitsJson: { canScreen: true, canFileFmn: true },
+    limitsJson: {},
   },
   {
     code: "CARDS_OFFICER",
     name: "Cards officer",
-    limitsJson: { canIssueCards: true },
+    limitsJson: {},
   },
   {
     code: "TREASURY_OFFICER",
     name: "Treasury officer",
-    limitsJson: { canTradeFx: true },
+    limitsJson: {},
   },
 ] as const;
 
@@ -76,19 +78,47 @@ async function main() {
   const passwordHash = await hashPassword(DEMO_PASSWORD);
 
   for (const role of roles) {
-    await prisma.opsRole.upsert({
+    const existing = await prisma.opsRole.findUnique({
       where: {
         organizationId_code: { organizationId: ORG_ID, code: role.code },
       },
-      update: {
+    });
+    const templateJson = serializePermissions(permissionsForRole(role.code));
+    const limits = sanitizeLimitsJson(role.limitsJson);
+
+    if (!existing) {
+      await prisma.opsRole.create({
+        data: {
+          organizationId: ORG_ID,
+          code: role.code,
+          name: role.name,
+          limitsJson: limits,
+          permissionsJson: templateJson,
+          isSystem: true,
+          permissionCatalogVersion: BANK_PERMISSION_CATALOG_VERSION,
+        },
+      });
+      continue;
+    }
+
+    // Do not clobber a valid permissionsJson array (including intentional []).
+    let permissionsJson = existing.permissionsJson;
+    try {
+      if (!Array.isArray(JSON.parse(permissionsJson))) {
+        permissionsJson = templateJson;
+      }
+    } catch {
+      permissionsJson = templateJson;
+    }
+
+    await prisma.opsRole.update({
+      where: { id: existing.id },
+      data: {
         name: role.name,
-        limitsJson: role.limitsJson,
-      },
-      create: {
-        organizationId: ORG_ID,
-        code: role.code,
-        name: role.name,
-        limitsJson: role.limitsJson,
+        limitsJson: limits,
+        permissionsJson,
+        isSystem: true,
+        permissionCatalogVersion: BANK_PERMISSION_CATALOG_VERSION,
       },
     });
   }
@@ -125,15 +155,12 @@ async function main() {
     });
   }
 
-  console.log(`Seeded era-bank ops users org=${ORG_ID} (password: demo1234):`);
-  for (const user of users) {
-    console.log(`  - ${user.username} (${user.roleCode})`);
-  }
+  console.log(`Seeded bank ops roles/users for org ${ORG_ID}`);
 }
 
 main()
-  .catch((err) => {
-    console.error(err);
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

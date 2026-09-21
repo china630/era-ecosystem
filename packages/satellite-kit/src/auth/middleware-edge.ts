@@ -4,6 +4,7 @@
  */
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { resolveHostBoundLoginOrganizationId } from "../tenancy/login-hostname-memory";
 
 export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/auth/login",
@@ -126,6 +127,10 @@ export type EdgeSessionPayload = {
   isOwner?: boolean;
   /** Domain permission codes (industry satellite RBAC; optional). */
   permissions?: string[];
+  /** F&B PIN sessions — never OrgOwner bypass. */
+  pin?: boolean;
+  /** Bound outlet for PIN / device sessions. */
+  outletId?: string;
 };
 
 /** JWT verify for Next.js Edge middleware (jose only — no Node crypto). */
@@ -154,7 +159,29 @@ export async function verifySatelliteSession(
     roles,
     isOwner: payload.isOwner === true,
     permissions,
+    pin: payload.pin === true,
+    outletId: payload.outletId != null ? String(payload.outletId) : undefined,
   };
+}
+
+export { resolveHostBoundLoginOrganizationId };
+
+/** Stamp x-era-organization-id on public /login (and /pin) when Host is bound. */
+export function nextWithOptionalHostBoundOrg(
+  reqHeaders: Headers,
+  hostHeader: string | null | undefined,
+  satelliteKey?: string | null,
+): NextResponse {
+  const hostOrg = resolveHostBoundLoginOrganizationId(
+    hostHeader,
+    satelliteKey,
+  );
+  if (hostOrg) {
+    const headers = new Headers(reqHeaders);
+    headers.set("x-era-organization-id", hostOrg);
+    return NextResponse.next({ request: { headers } });
+  }
+  return NextResponse.next({ request: { headers: reqHeaders } });
 }
 
 export function redirectNoStore(url: URL | string): NextResponse {

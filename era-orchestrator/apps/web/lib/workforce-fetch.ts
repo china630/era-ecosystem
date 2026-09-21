@@ -68,6 +68,20 @@ export function workforceFetch(path: string, init: RequestInit = {}) {
   );
 }
 
+type OrgUnitListPayload = { items?: Array<{ id: string; name: string; status?: string }> };
+
+/** `GET org-units` returns `{ items, scope }`, not a raw array. */
+export function parseOrgUnitItems<T extends { id: string; name: string }>(
+  json: unknown,
+): T[] {
+  if (Array.isArray(json)) return json as T[];
+  if (json && typeof json === "object") {
+    const items = (json as OrgUnitListPayload).items;
+    if (Array.isArray(items)) return items as T[];
+  }
+  return [];
+}
+
 /** Fetch the MDM workforce (person identity) API through the web proxy. */
 export function mdmWorkforceFetch(path: string, init: RequestInit = {}) {
   return fetch(

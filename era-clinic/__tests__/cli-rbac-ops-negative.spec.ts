@@ -132,6 +132,9 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     expect(opsApiRoutePermission("/api/cashier/queue")).toBe(
       CLINIC_PERMISSION.API_CASHIER,
     );
+    expect(opsApiRoutePermission("/api/fiscal/devices")).toBe(
+      CLINIC_PERMISSION.API_CASHIER,
+    );
     expect(opsApiRoutePermission("/api/procedures/confirm")).toBe(
       CLINIC_PERMISSION.API_PROCEDURES_CONFIRM,
     );
@@ -152,7 +155,6 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     );
     const nav = buildClinicNav(
       {
-        role: CLINIC_ROLE.RECEPTION,
         permissions: perms,
         presetEnabled: () => true,
       },

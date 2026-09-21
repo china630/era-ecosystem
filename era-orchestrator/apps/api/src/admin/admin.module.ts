@@ -17,6 +17,8 @@ import { AdminOrganizationsController } from "./admin-organizations.controller";
 import { AdminOrganizationsService } from "./admin-organizations.service";
 import { ElektrawebBridgePolicyController } from "./elektraweb-bridge-policy.controller";
 import { ElektrawebBridgePolicyService } from "./elektraweb-bridge-policy.service";
+import { FiscalHardwareDeviceController } from "./fiscal-hardware-device.controller";
+import { FiscalHardwareDeviceService } from "./fiscal-hardware-device.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 
 @Module({
@@ -30,6 +32,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgDepartmentsController,
     AdminOrganizationsController,
     ElektrawebBridgePolicyController,
+    FiscalHardwareDeviceController,
   ],
   providers: [
     AdminBillingService,
@@ -39,6 +42,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgDepartmentsService,
     AdminOrganizationsService,
     ElektrawebBridgePolicyService,
+    FiscalHardwareDeviceService,
     PermissionsGuard,
   ],
   exports: [
@@ -49,6 +53,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     OrgDepartmentsService,
     AdminOrganizationsService,
     ElektrawebBridgePolicyService,
+    FiscalHardwareDeviceService,
   ],
 })
 export class AdminModule {}

@@ -17,7 +17,13 @@ import { Public } from "../auth/decorators/public.decorator";
 import { PaymentWebhookDto } from "./dto/payment-webhook.dto";
 import { PaymentProviderService } from "./payment-provider.service";
 
-const SUPPORTED_PROVIDERS = new Set(["mock", "pasha", "pasha_bank", "stripe"]);
+const SUPPORTED_PROVIDERS = new Set([
+  "mock",
+  "pasha",
+  "pasha_bank",
+  "stripe",
+  "cib_pay",
+]);
 
 @ApiTags("billing-public")
 @Public()
@@ -78,5 +84,27 @@ export class BillingPublicController {
       throw new BadRequestException("Unknown payment provider");
     }
     return this.payment.handleWebhook(body);
+  }
+
+  @Post("cib-pay/intent")
+  @HttpCode(200)
+  @ApiOperation({
+    summary:
+      "Cib Pay collection hook (contract pending). Does not charge a live bank.",
+  })
+  cibPayIntent(
+    @Body() body: { orderId?: string; amountAzn?: number; organizationId?: string },
+  ) {
+    return {
+      status: "hook",
+      provider: "cib_pay",
+      requiresContract: true,
+      live: false,
+      orderId: body.orderId ?? null,
+      amountAzn: body.amountAzn ?? null,
+      organizationId: body.organizationId ?? null,
+      message:
+        "Cib Pay is a reserved rail. Complete the merchant contract, then wire the live intent.",
+    };
   }
 }

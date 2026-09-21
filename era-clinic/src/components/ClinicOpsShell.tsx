@@ -40,7 +40,6 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
   const locale = useLocale() as Locale;
   const { auth } = useClinicAuth();
   const canAdmin = auth?.canViewClinicAdmin === true;
-  const role = auth?.role ?? "";
   const permissions = auth?.permissions ?? [];
   const enabledPresets = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
   const canMasterData =
@@ -48,8 +47,8 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
 
   const { topItems, sections } = useMemo(() => {
     const presetEnabled = (code: ClinicPresetCode) => enabledPresets.includes(code);
-    return buildClinicNav({ role, permissions, presetEnabled }, (key) => t(key as "home"));
-  }, [role, permissions, enabledPresets, t]);
+    return buildClinicNav({ permissions, presetEnabled }, (key) => t(key as "home"));
+  }, [permissions, enabledPresets, t]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });

@@ -28,6 +28,7 @@ export type SubscriptionSnapshot = {
     taxPro: boolean;
     tradePro: boolean;
     auditHub: boolean;
+    tradeCreditControl?: boolean;
     compliancePro: boolean;
     industryRetailEcom?: boolean;
     industryLogisticsCustoms?: boolean;
@@ -127,6 +128,7 @@ function enterpriseBypassSnapshot(): SubscriptionSnapshot {
       taxPro: true,
       tradePro: true,
       auditHub: true,
+      tradeCreditControl: false,
       compliancePro: true,
     },
     quotas: {

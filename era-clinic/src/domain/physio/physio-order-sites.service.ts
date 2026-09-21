@@ -19,6 +19,7 @@ import {
   type PhysioOrderFields,
 } from "./physio-order-fields";
 import { inferPhysioTypeGate } from "./physio-type-gate";
+import { BATH_FILL } from "./physio-allowed-sites";
 
 export const PROCEDURE_PHYSIO_INCLUDE = {
   sites: {
@@ -55,6 +56,7 @@ export type PhysioOrderPayload = {
   physioOrderFields: string[];
   allowedSiteCodes: string[];
   forceSiteTogether: boolean;
+  hideSitePicker: boolean;
   sitesHintKey: "hydro_jet_safety" | null;
   siteIds: string[];
   siteApplyMode: ProcedureSiteApplyModeCode | null;
@@ -87,6 +89,7 @@ export function toPhysioOrderPayload(order: {
     physioOrderFields: order.procedureType?.physioOrderFields ?? [],
     allowedSiteCodes: order.procedureType?.allowedSiteCodes ?? [],
     forceSiteTogether: gate.forceSiteTogether,
+    hideSitePicker: gate.hideSitePicker,
     sitesHintKey: gate.sitesHintKey,
     siteIds: order.sites.map((s) => s.siteId),
     siteApplyMode: order.siteApplyMode,
@@ -163,11 +166,17 @@ export async function patchProcedureOrderPhysio(
     const byId = new Map(rows.map((r) => [r.id, r]));
     const ordered = siteIds.map((id) => byId.get(id)!);
     const allowedCodes = existing.procedureType?.allowedSiteCodes ?? [];
+    const gateForSites = inferPhysioTypeGate(
+      existing.procedureType?.code ?? "",
+      existing.procedureType?.name ?? "",
+    );
     for (const site of ordered) {
       if (!site.active) {
         throw new PhysioCatalogError(`Physio site is inactive: ${site.code}`, 409);
       }
-      if (allowedCodes.length > 0 && !allowedCodes.includes(site.code)) {
+      const fillChipOk =
+        gateForSites.hideSitePicker && (BATH_FILL as readonly string[]).includes(site.code);
+      if (allowedCodes.length > 0 && !allowedCodes.includes(site.code) && !fillChipOk) {
         throw new PhysioCatalogError(
           `Physio site not allowed for this procedure type: ${site.code}`,
           400,
@@ -185,10 +194,7 @@ export async function patchProcedureOrderPhysio(
       mergedLaterality,
     );
     const bodyPart = deriveCoarseBodyPart(ordered);
-    const gate = inferPhysioTypeGate(
-      existing.procedureType?.code ?? "",
-      existing.procedureType?.name ?? "",
-    );
+    const gate = gateForSites;
     const siteApplyMode = gate.forceSiteTogether
       ? ("TOGETHER" as const)
       : resolveSiteApplyMode(ordered.length, input.siteApplyMode ?? existing.siteApplyMode);

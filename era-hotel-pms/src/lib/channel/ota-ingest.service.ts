@@ -6,7 +6,7 @@ import type { OtaReservationPayload } from '@/lib/channel/adapters/types';
 
 async function resolveRoomTypeId(channelCode: string, otaRoomCode: string) {
   const channel = await prisma.channel.findFirst({
-    where: { code: channelCode, active: true },
+    where: { code: channelCode.toUpperCase() === 'CHANNEX' ? 'CHANNEX' : channelCode, active: true },
     include: { roomMappings: true },
   });
   if (channel) {
@@ -14,24 +14,32 @@ async function resolveRoomTypeId(channelCode: string, otaRoomCode: string) {
     if (mapped) return mapped.roomTypeId;
   }
 
+  const failClosed = channelCode.toUpperCase() === 'CHANNEX';
+  if (failClosed) {
+    throw new Error(`Unmapped Channex room_type_id ${otaRoomCode}`);
+  }
+
   const fallback = await prisma.roomType.findFirst({
     where: { code: otaRoomCode, active: true },
   });
   if (fallback) return fallback.id;
 
-  const any = await prisma.roomType.findFirst({ where: { active: true }, orderBy: { code: 'asc' } });
-  if (!any) throw new Error('No active room types configured');
-  return any.id;
+  throw new Error(`Unmapped OTA room code ${otaRoomCode} for channel ${channelCode}`);
 }
 
 async function resolveRatePlanId(channelCode: string, otaRateCode?: string) {
   const channel = await prisma.channel.findFirst({
-    where: { code: channelCode },
+    where: { code: channelCode.toUpperCase() === 'CHANNEX' ? 'CHANNEX' : channelCode },
     include: { rateMappings: true },
   });
   if (channel && otaRateCode) {
     const mapped = channel.rateMappings.find((m) => m.otaRateCode === otaRateCode);
     if (mapped) return mapped.ratePlanId;
+  }
+
+  const failClosed = channelCode.toUpperCase() === 'CHANNEX';
+  if (failClosed) {
+    throw new Error(`Unmapped Channex rate_plan_id ${otaRateCode ?? '(missing)'}`);
   }
 
   const bar = await prisma.ratePlan.findFirst({
@@ -40,9 +48,7 @@ async function resolveRatePlanId(channelCode: string, otaRateCode?: string) {
   });
   if (bar) return bar.id;
 
-  const any = await prisma.ratePlan.findFirst({ where: { active: true }, orderBy: { code: 'asc' } });
-  if (!any) throw new Error('No active rate plans configured');
-  return any.id;
+  throw new Error(`Unmapped OTA rate code for channel ${channelCode}`);
 }
 
 async function resolveSourceId(channelCode: string) {
@@ -126,6 +132,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
         checkInDate,
         checkOutDate,
         adults: payload.adults ?? existing.adults,
+        children11_6: payload.children ?? existing.children11_6,
         totalAmount: toDecimal(totalAmount || decimalToNumber(existing.totalAmount)),
         shareEligible: false,
         shareGender: null,
@@ -147,6 +154,7 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
       checkInDate,
       checkOutDate,
       adults: payload.adults ?? 1,
+      children11_6: payload.children ?? 0,
       paymentMethod: payload.paymentMethod ?? 'COMPANY_ACCOUNT',
       totalAmount: toDecimal(totalAmount),
       shareEligible: false,

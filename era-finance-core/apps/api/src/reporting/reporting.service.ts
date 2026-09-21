@@ -42,6 +42,7 @@ import {
 import { renderReconciliationPdfAz } from "./reconciliation-pdf.render";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { AccountingBookService } from "../accounting/accounting-book.service";
+import { assertCanAccessMgmtBook } from "../accounting/ops-book.guard";
 
 /**
  * Cash/Bank balances for dashboards — prefixes derived from posting roles
@@ -113,6 +114,28 @@ export class ReportingService {
             ? LedgerType.MANAGEMENT
             : LedgerType.NAS,
     };
+  }
+
+  /**
+   * Wave 5 ACL: ACCOUNTANT may not read MANAGEMENT book reports.
+   */
+  async assertReportBookAccess(
+    organizationId: string,
+    role: string,
+    accountingBookId?: string,
+    ledgerType?: LedgerType,
+  ) {
+    if (accountingBookId?.trim()) {
+      const book = await this.accountingBooks.getBook(
+        organizationId,
+        accountingBookId.trim(),
+      );
+      assertCanAccessMgmtBook(role, book);
+      return;
+    }
+    if (ledgerType === LedgerType.MANAGEMENT) {
+      assertCanAccessMgmtBook(role, { gaapKind: "MANAGEMENT" });
+    }
   }
 
   /** Account code prefixes for cash desks + bank from posting roles (FEAT-FC-COA-001). */

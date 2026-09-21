@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
 import { BankCommonModule } from "./common/bank-common.module";
+import { BankRequestTenantInterceptor } from "./common/bank-request-tenant.interceptor";
 import { HealthController } from "./common/health.controller";
 import { IntegrationModule } from "./integration/integration.module";
 import { ControlPlaneModule } from "./control-plane/control-plane.module";
@@ -64,5 +66,8 @@ import { PrismaModule } from "./prisma/prisma.module";
     PlatformExtrasModule,
   ],
   controllers: [HealthController],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: BankRequestTenantInterceptor },
+  ],
 })
 export class AppModule {}

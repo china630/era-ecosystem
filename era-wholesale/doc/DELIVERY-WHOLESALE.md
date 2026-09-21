@@ -13,7 +13,8 @@ PRD: [../PRD.md](../PRD.md)
 ## Pick & credit (v1.0)
 
 - [x] Pick list API — `GET/POST /api/pick-lists`, `/pick-lists` UI + line confirm
-- [x] Credit limit — `GET /api/credit-limit?counterpartyId=` (Finance API with env stub fallback)
+- [x] Credit limit — `GET /api/credit-limit?counterpartyId=` (Finance trade-credit facility when SKU on; legacy/stub fallback when off)
+- [x] On-account confirm consumes Finance pickup grant when `trade_credit_control` SKU on (`grantCode` required; fail-closed)
 
 ## Platform add-ons (v1.0)
 

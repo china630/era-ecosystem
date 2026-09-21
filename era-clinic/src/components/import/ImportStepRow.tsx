@@ -243,10 +243,10 @@ export function ImportStepRow({
             {(phase === 'idle' || phase === 'preview') && !fileless && (
               <div className="space-y-2">
                 <input
+                  className={MODAL_INPUT_CLASS}
                   type="file"
                   accept=".xlsx,.xls"
                   multiple={allowMultiple}
-                  className={MODAL_INPUT_CLASS}
                   onChange={(e) => {
                     const picked = Array.from(e.target.files ?? []);
                     setFiles(picked);

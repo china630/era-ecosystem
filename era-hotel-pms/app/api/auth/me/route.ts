@@ -2,15 +2,30 @@ import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 import { userPermissions } from '@/lib/services/user.service';
-import { permissionsForRole } from '@/lib/auth/permissions';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { canRunHotelImport } from '@/lib/import/auth';
 import { fetchControlPlaneOrganizationName } from '@era/satellite-kit';
+import { ALL_PERMISSIONS } from '@/lib/auth/permissions';
+import { hasHotelPermissionBypass } from '@/lib/auth/permission-check';
+import { ensureSystemHotelRoles } from '@/lib/auth/ensure-system-hotel-roles';
 
 export async function GET() {
   try {
     const session = await getSessionFromHeaders();
     if (!session) return jsonError('Unauthorized', 401);
+
+    const organizationId =
+      session.organizationId?.trim() ||
+      (
+        await prisma.user.findUnique({
+          where: { id: session.sub },
+          select: { organizationId: true },
+        })
+      )?.organizationId;
+    if (organizationId) {
+      // Wave 2: remap leftover legacy keys for active sessions (idempotent at v2).
+      await ensureSystemHotelRoles(prisma, organizationId);
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.sub },
@@ -30,11 +45,23 @@ export async function GET() {
       ? await fetchControlPlaneOrganizationName(profile.organizationId)
       : null;
 
+    const bypass = hasHotelPermissionBypass({
+      login: user.login,
+      email: user.email ?? undefined,
+      role: user.role.code,
+      isOwner: session.isOwner,
+    });
+    const permissions = bypass
+      ? [...ALL_PERMISSIONS]
+      : userPermissions(user);
+
     const canRunElektrawebImport = await canRunHotelImport({
       email: user.email,
       login: user.login,
       status: user.status,
       roleCode: user.role.code,
+      permissions,
+      isOwner: session.isOwner === true || user.role.code === 'BUSINESS_OWNER',
     });
 
     return jsonOk({
@@ -43,11 +70,11 @@ export async function GET() {
       fullName: user.fullName,
       role: user.role.code,
       department: user.department,
-      permissions: userPermissions(user),
-      rolePermissions: permissionsForRole(user.role.code),
+      permissions,
       organizationName: controlPlaneName ?? profile?.name ?? null,
       organizationId: profile?.organizationId ?? null,
       isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
+      isOwner: session.isOwner === true || user.role.code === 'BUSINESS_OWNER',
       canRunElektrawebImport,
     });
   } catch (err) {

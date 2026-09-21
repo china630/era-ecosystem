@@ -54,6 +54,7 @@ type SchedulingDefaults = {
   procedureCheckInMode: "QR" | "CODE" | "MANUAL";
   peakModeEnabled: boolean;
   peakDayEndHour: number;
+  dailyPackageProcedureCap: number;
   programSchedulingMode: "AFTER_CHECKUP" | "ON_CHECKIN";
   doctorBonusPercentInHouse: number;
   doctorBonusPercentWalkIn: number;
@@ -80,6 +81,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   procedureCheckInMode: "QR",
   peakModeEnabled: false,
   peakDayEndHour: 22,
+  dailyPackageProcedureCap: 3,
   programSchedulingMode: "AFTER_CHECKUP",
   doctorBonusPercentInHouse: 0,
   doctorBonusPercentWalkIn: 0,
@@ -151,6 +153,8 @@ export default function ClinicAdminSettingsPage() {
             (row.checkInRequiresQr === false ? "MANUAL" : "QR"),
           peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
           peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
+          dailyPackageProcedureCap:
+            row.dailyPackageProcedureCap ?? SCHED_DEFAULTS.dailyPackageProcedureCap,
           programSchedulingMode:
             row.programSchedulingMode === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
           doctorBonusPercentInHouse: Number(row.doctorBonusPercentInHouse ?? 0),
@@ -221,6 +225,8 @@ export default function ClinicAdminSettingsPage() {
           row.procedureCheckInMode ?? draftSched.procedureCheckInMode,
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
+        dailyPackageProcedureCap:
+          row.dailyPackageProcedureCap ?? draftSched.dailyPackageProcedureCap,
         programSchedulingMode:
           row.programSchedulingMode === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
         doctorBonusPercentInHouse: Number(
@@ -341,6 +347,10 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("peakDayEndHour")}</td>
             <td className="p-3">{schedDefaults.peakDayEndHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("dailyPackageProcedureCap")}</td>
+            <td className="p-3">{schedDefaults.dailyPackageProcedureCap}</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
@@ -520,6 +530,21 @@ export default function ClinicAdminSettingsPage() {
               setDraftSched((prev) => ({
                 ...prev,
                 peakDayEndHour: Number(e.target.value) || prev.peakDayEndHour,
+              }))
+            }
+          />
+          <Field
+            label={t("dailyPackageProcedureCap")}
+            hint={t("dailyPackageProcedureCapHint")}
+            preset="count"
+            type="number"
+            min={1}
+            max={12}
+            value={draftSched.dailyPackageProcedureCap}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                dailyPackageProcedureCap: Number(e.target.value) || prev.dailyPackageProcedureCap,
               }))
             }
           />

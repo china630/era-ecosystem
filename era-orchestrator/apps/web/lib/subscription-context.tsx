@@ -14,6 +14,7 @@ import { orchFetch } from "./orch-api";
 import { useAuth } from "./auth-context";
 
 export type SubscriptionSnapshot = SubscriptionModulesSnapshot & {
+  publicOrgNumber?: number | null;
   tier?: string;
   readOnly?: boolean;
   isTrial?: boolean;

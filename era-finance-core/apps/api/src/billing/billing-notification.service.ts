@@ -70,6 +70,31 @@ export class BillingNotificationService {
     });
   }
 
+  /** Soft overage notice for managed trade-credit buyers (once per Baku period). */
+  async notifyTradeCreditBuyerOverage(
+    organizationId: string,
+    params: {
+      periodKey: string;
+      billedBuyerCount: number;
+      includedQuota: number;
+      overageCount: number;
+    },
+    now = new Date(),
+  ): Promise<void> {
+    if (params.overageCount <= 0) return;
+    const action = "BILLING_TRADE_CREDIT_BUYER_OVERAGE";
+    const entityId = `${organizationId}:${params.periodKey}:tcc-buyer`;
+    await this.writeBillingNotification({
+      organizationId,
+      entityId,
+      action,
+      title: "Trade credit buyer overage",
+      message: `Managed trade-credit buyers ${params.billedBuyerCount} exceed included quota ${params.includedQuota} by ${params.overageCount}. Soft overage will appear on the next invoice; shipments are not blocked.`,
+      severity: NotificationSeverity.WARNING,
+      now,
+    });
+  }
+
   private async writeBillingNotification(input: {
     organizationId: string;
     entityId: string;

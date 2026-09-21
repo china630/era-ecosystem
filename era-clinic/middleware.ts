@@ -6,10 +6,16 @@ import {
   getBearerOrCookieToken,
   isPublicApiPath,
   redirectNoStore,
+  nextWithOptionalHostBoundOrg,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
-import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
-import { routePermission } from "@/lib/auth/clinic-permissions";
+import { CLINIC_SATELLITE_KEY } from "@/lib/clinic-satellite-key";
+import { sessionHasAnyClinicPermission } from "@/lib/auth/clinic-permission-check";
+import {
+  isAuthOnlyStaffPage,
+  isPublicStaffPage,
+  routePermissions,
+} from "@/lib/auth/clinic-permissions";
 import { sessionMayPrintVisitExam } from "@/lib/auth/visit-exam-print-access";
 import {
   parsePresetsCookie,
@@ -84,15 +90,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (
-    pathname === "/login" ||
-    pathname === "/sso/callback" ||
-    pathname === "/help" ||
-    pathname.startsWith("/help/") ||
-    pathname === "/portal" ||
-    pathname.startsWith("/booking") ||
-    pathname.startsWith("/images/")
-  ) {
+  if (isPublicStaffPage(pathname)) {
+    if (pathname === "/login") {
+      return nextWithOptionalHostBoundOrg(
+        reqHeaders,
+        request.headers.get("x-forwarded-host") || request.headers.get("host"),
+        CLINIC_SATELLITE_KEY,
+      );
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
   const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
@@ -118,20 +123,23 @@ export async function middleware(request: NextRequest) {
       }
       return NextResponse.next({ request: { headers: reqHeaders } });
     }
-    const required = routePermission(pathname);
+    // Auth-only: any logged-in staff (own password change).
+    if (isAuthOnlyStaffPage(pathname)) {
+      return NextResponse.next({ request: { headers: reqHeaders } });
+    }
+    const required = routePermissions(pathname);
+    const sessionView = {
+      role: session.role,
+      roles: session.roles,
+      permissions: session.permissions,
+      login: session.login,
+      email: session.email,
+      isOwner: session.isOwner,
+    };
+    // Fail-closed: every staff page must map to a permission (see page inventory test).
     if (
-      required &&
-      !sessionHasClinicPermission(
-        {
-          role: session.role,
-          roles: session.roles,
-          permissions: session.permissions,
-          login: session.login,
-          email: session.email,
-          isOwner: session.isOwner,
-        },
-        required,
-      )
+      !required?.length ||
+      !sessionHasAnyClinicPermission(sessionView, required)
     ) {
       return roleGuardResponse(request, reqHeaders);
     }

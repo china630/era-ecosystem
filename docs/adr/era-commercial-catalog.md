@@ -21,12 +21,13 @@ Industry SKUs, finance add-ons, and platform meters used ad-hoc AZN prices (8, 1
 
 - `syncPricingModuleCatalog` overwrites `pricing_modules` prices/names from seed on API bootstrap.
 - `syncMeterCatalogCanon` (same boot) writes `billing.meter_unit_pricing_v1` / `billing.quota_unit_pricing_v1`: leftover `pricePerInvoiceAzn` 0.10 → **0**; leftover headcount **10 × 15** → **1 × 2**; document pack below 100 → **1000 / 5 AZN**. Super-admin cannot re-enable a per-invoice meter.
-- Hotel Resort bundle list: 222 AZN × 15% = **188.70 AZN** (see `pricing-catalog-canon.spec.ts`).
-- Capacity overage (rooms, cabinets, POS) is catalog policy (`CAPACITY_DRIVERS`); metering those units in QuotaGuard is a follow-up (not this ADR).
+- Hotel Resort bundle list: 232 AZN × 15% = **197.20 AZN** (`hotel_distribution` = 39 AZN, Channel Manager pack — [hotel-channel-manager-pack.md](./hotel-channel-manager-pack.md); see `pricing-catalog-canon.spec.ts`). City = **113.40 AZN**; Sanatorium = **238.48 AZN**.
+- Capacity overage (rooms, cabinets, POS) is catalog policy (`CAPACITY_DRIVERS`); metering those units in QuotaGuard is a follow-up (not this ADR). ERA **station** `pos` / `register` ≠ KKM device count — [era-fiscal-kkm-kit.md](./era-fiscal-kkm-kit.md) §7. The `@era/fiscal` kit is not a billed SKU. **F6 scaffolding:** `QuotaService.assertPosStationOverage` + `POST /v1/internal/capacity/pos-stations` (meter `POS_STATION_MONTHLY`, default 19 AZN); F&B open-shift reports distinct outlets with a till.
 - Existing orgs pick up new list prices at next catalog sync; entitlements are not rewritten except mutex on the next module toggle.
+- **White-label login (accepted, not in seed yet):** `platform_domain` **19** = one custom hostname → one satellite login; **29** = all entitled satellite logins for that org (mutex). ERA `{orgNo}` subdomains are not this SKU. [org-public-number-and-login-host.md](./org-public-number-and-login-host.md).
 
 ## References
 
 Canon: `era-orchestrator/packages/database/prisma/lib/core/pricing-catalog-canon.ts`  
 Seed: `pricing-module-seed.ts`  
-Related: [orchestrator-satellite-vs-module.md](./orchestrator-satellite-vs-module.md), [PLATFORM_ADDONS.md](../PLATFORM_ADDONS.md)
+Related: [orchestrator-satellite-vs-module.md](./orchestrator-satellite-vs-module.md), [PLATFORM_ADDONS.md](../PLATFORM_ADDONS.md), [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md) (placement planes ≠ this SKU palette; do not seed ONPREM multipliers here)

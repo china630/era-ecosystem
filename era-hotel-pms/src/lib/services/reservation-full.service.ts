@@ -13,7 +13,7 @@ const fullInclude = {
     include: {
       documents: {
         select: { docType: true, docNumber: true, isPrimary: true },
-        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        orderBy: [{ isPrimary: 'desc' as const }, { createdAt: 'asc' as const }],
         take: 8,
       },
     },

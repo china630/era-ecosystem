@@ -22,6 +22,13 @@ export function parseElektrawebDate(value: unknown): Date | null {
   if (value == null || value === '') return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
   const s = String(value).trim();
+  const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if (dmy) {
+    const dd = dmy[1].padStart(2, '0');
+    const mm = dmy[2].padStart(2, '0');
+    const d = new Date(`${dmy[3]}-${mm}-${dd}T00:00:00.000Z`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
   // "2026-07-15 14:00:00.000" — treat naive local wall time as Asia/Baku.
   const m = s.match(
     /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/,
@@ -29,6 +36,11 @@ export function parseElektrawebDate(value: unknown): Date | null {
   if (m) {
     const [, ymd, hh, mm, ss = '00'] = m;
     const d = new Date(`${ymd}T${hh}:${mm}:${ss}.000+04:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const isoDay = s.match(/^(\d{4}-\d{2}-\d{2})$/);
+  if (isoDay) {
+    const d = new Date(`${isoDay[1]}T00:00:00.000Z`);
     return Number.isNaN(d.getTime()) ? null : d;
   }
   const normalized = s.includes('T') ? s : s.replace(' ', 'T');

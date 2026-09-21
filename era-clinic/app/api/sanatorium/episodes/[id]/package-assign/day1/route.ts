@@ -11,6 +11,7 @@ import {
   PackageAssignError,
   day1AutoAssign,
 } from "@/domain/sanatorium/package-assign.service";
+import { applyPackageAutoBlocks } from "@/domain/sanatorium/package-auto-apply.service";
 
 export async function POST(
   _req: Request,
@@ -27,10 +28,13 @@ export async function POST(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
+    const auto = await applyPackageAutoBlocks(id, { trigger: "DAY1" }).catch(
+      () => null,
+    );
     const result = await day1AutoAssign(id, {
       confirmedByUserId: session.sub,
     });
-    return jsonOk(result);
+    return jsonOk({ ...result, autoApply: auto });
   } catch (err) {
     if (err instanceof PackageAssignError) {
       return jsonError(err.message, err.status, { code: err.code });

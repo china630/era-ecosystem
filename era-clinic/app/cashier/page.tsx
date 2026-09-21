@@ -33,6 +33,14 @@ type ShiftInfo = {
   code: string;
   status: string;
   openedAt: string;
+  fiscalDeviceId?: string | null;
+};
+
+type FiscalDevice = {
+  id: string;
+  kind: string;
+  label: string;
+  providerId: string;
 };
 
 type ShiftReport = {
@@ -107,6 +115,10 @@ export default function CashierPage() {
   const [tab, setTab] = useState<Tab>("queue");
   const [shift, setShift] = useState<ShiftInfo | null>(null);
   const [report, setReport] = useState<ShiftReport | null>(null);
+  const [kkms, setKkms] = useState<FiscalDevice[]>([]);
+  const [banks, setBanks] = useState<FiscalDevice[]>([]);
+  const [fiscalDeviceId, setFiscalDeviceId] = useState("");
+  const [bankTerminalId, setBankTerminalId] = useState("");
   const [hubActive, setHubActive] = useState(false);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [page, setPage] = useState(1);
@@ -200,6 +212,23 @@ export default function CashierPage() {
   }, [loadShift, loadPatients]);
 
   useEffect(() => {
+    void fetch("/api/fiscal/devices")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const devices = (data?.devices ?? []) as FiscalDevice[];
+        setKkms(devices.filter((d) => d.kind === "FISCAL_KKM"));
+        setBanks(devices.filter((d) => d.kind === "BANK_POS"));
+        if (data?.defaults?.fiscalDeviceId) {
+          setFiscalDeviceId(String(data.defaults.fiscalDeviceId));
+        }
+        if (data?.defaults?.bankTerminalId) {
+          setBankTerminalId(String(data.defaults.bankTerminalId));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     void loadTab();
   }, [loadTab]);
 
@@ -208,7 +237,14 @@ export default function CashierPage() {
   }, [deepVisit]);
 
   async function openShift() {
-    const res = await fetch("/api/cashier/shifts/current", { method: "POST" });
+    const res = await fetch("/api/cashier/shifts/current", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
+        ...(bankTerminalId ? { bankTerminalId } : {}),
+      }),
+    });
     const d = await res.json();
     const payload = d.data ?? d;
     setShift(payload.shift ?? null);
@@ -297,9 +333,41 @@ export default function CashierPage() {
               </button>
             </>
           ) : (
+            <>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openShift()}>
               {t("openShift")}
             </button>
+            {kkms.length > 0 ? (
+              <FieldSelect
+                label={t("fiscalDevice")}
+                preset="select"
+                value={fiscalDeviceId}
+                onChange={(e) => setFiscalDeviceId(e.target.value)}
+              >
+                <option value="">{t("autoDefault")}</option>
+                {kkms.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label} ({d.providerId})
+                  </option>
+                ))}
+              </FieldSelect>
+            ) : null}
+            {banks.length > 0 ? (
+              <FieldSelect
+                label={t("bankTerminal")}
+                preset="select"
+                value={bankTerminalId}
+                onChange={(e) => setBankTerminalId(e.target.value)}
+              >
+                <option value="">{t("autoDefault")}</option>
+                {banks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label} ({d.providerId})
+                  </option>
+                ))}
+              </FieldSelect>
+            ) : null}
+            </>
           )}
         </div>
         {zSnapshot && (

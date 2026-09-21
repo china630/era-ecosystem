@@ -57,6 +57,7 @@ import { DrakarisModule } from "../integrations/payment-providers/drakaris/draka
     BillingPremiumActivationService,
     BillingMeterService,
     BillingSettlementService,
+    BillingNotificationService,
   ],
 })
 export class BillingModule {}

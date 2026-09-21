@@ -97,7 +97,11 @@ export async function POST(request: Request) {
 }
 `;
 
-const loginRoute = `import { NextResponse } from "next/server";
+const loginRoute = `/**
+ * Generated scaffold — live satellites use orgNo + readStaffLoginJson (not UUID).
+ * Do not re-run this generator over production login routes.
+ */
+import { NextResponse } from "next/server";
 import { authCookieName, signSatelliteSession } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";

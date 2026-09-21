@@ -59,6 +59,8 @@ model B2BOrder {
   fiscalNumber        String?
   paidAt              DateTime?
   confirmedAt         DateTime?
+  /** Finance TradeCreditGrant.id when on-account confirm consumed a pickup grant. */
+  tradeCreditGrantId  String?
   ttnNumber           String?
   ttnIssuedAt         DateTime?
   pickList            PickList?

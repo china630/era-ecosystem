@@ -34,18 +34,24 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 
 ## Reservation card (near-fullscreen modal)
 
+- **Canon:** [docs/adr/hotel-reservation-card-and-party-ops.md](../../../docs/adr/hotel-reservation-card-and-party-ops.md) (Depart / Move / Swap landed as engineering API/SCREEN).
 - **One source** for create and edit: `ReservationCardEditor` via `ReservationCardModal` (`reservationId` null = create). Same panels/tabs always; post-save actions disabled with `availableAfterSave` tooltip.
-- One chrome only: `ModalShell` title + `subtitle` (guest · status · id). Do **not** nest a second title/Close toolbar.
-- Secondary actions (Menu / Print / Attach / Lightning) → `headerActions`; Save / Check-in → `footer` via `ReservationCardActions`.
-- Max width: `MODAL_FULL_CLASS` (~98vw / 1600px). Layout: **50/50** `lg:grid-cols-2` — left form · right collection tabs.
+- One chrome only: `ModalShell` **title = guest name** (or new-reservation), **subtitle = status · short id**. Do **not** repeat identity above money strip.
+- **Header snapshot**: Total / Deposit / Balance only; occupancy chip only for share / multi-room booking.
+- Secondary actions → **icon** `headerActions` (Attach / Lightning / History / ⋮ Menu with Print+Lock). Save / Check-in → text `footer`. No duplicate Print button.
+- Max width: `MODAL_FULL_CLASS` (~99vw / 1920px). Layout: **`lg:grid-cols-[3fr_7fr]`** (~30% left / 70% right).
 - FO header actions: **Room booking** (single stay card) + **Group booking** (multi-stay wizard). Screen chain (RTA / list / rack / plan) stays in the sidebar, not as header chips.
-- Left rail: Stay · Product (room type + Package/rate + meal) · Pax · Classification · Commercial · Assignment (CONFIRMED+) · Additional. No `roomCount` on single card (1 stay = 1 room).
-- Right (~60%): tabs Guests · Pricing · Folio · Notes.
-- Guests tab = primary/companions grid + party billing PRIMARY/EQUAL. Pricing / Folio / Notes stay as collection tabs.
-- Create = edit same chrome; Assignment block hidden on create / pre-arrival OPTION.
+- Left rail: Stay window (**row 1** date+time in + nights; **row 2** date+time out + one plane: red landing on CI day, red takeoff on CO day, yellow takeoff = IN_HOUSE early stay checkout) · Room (**Room type** = charge; **Given room type** = physical door list; **Room no.** filters by Given else Room type; stable Lock/Search/HK/Assign) · Pax & board (heads + meal) · Rate & source (Source path + matching contract + rate) · Billing · Additional. No `roomCount` on single card.
+- Right (~70%): tabs Guests · Pricing · Folio · Notes.
+  - Guests: compact party grid only — **no** PRIMARY/EQUAL billing chrome; icon add/search/camera; VIP / trip reason on the specials strip.
+  - Pricing: daily Rate Grid + quote preview + optional packageCompose summary.
+  - Folio: All/Guest/Agency/Company; when party >1, **named guest sections** (not Opera windows).
+  - Notes: NOTE_TYPE feed + FO/HK/Billing filters + add-type picker; open-card alert for CIN/EXTRA_REQ/allergens.
+- StaysBar: **compact GRP strip** for 1 room; full family navigator only when sibling stays > 1.
+- Create = edit same chrome; door assign / share block gated CONFIRMED+; **times always visible**.
 - Tabs: kit `TAB_STRIP_CLASS` / `TAB_ITEM_*`; folio subtabs: `CHIP_*`.
 - Stay dates: kit `DatePicker` + `common.datePlaceholder` (never native `type="date"` alone).
-- Folio grid: `HotelDataGrid`. No raw hex buttons — `SUCCESS_BUTTON_CLASS` / `DANGER_BUTTON_CLASS` / `SECONDARY_BUTTON_CLASS`.
+- Folio grid: `HotelDataGrid`. No raw hex buttons — `SUCCESS_BUTTON_CLASS` / `DANGER_BUTTON_CLASS` / `SECONDARY_BUTTON_CLASS` / `GHOST_BUTTON_CLASS` for icon headers.
 
 ## Guest card (same FO chrome)
 
@@ -65,5 +71,5 @@ Priority: **Room type availability** `/availability` → reservation list → ra
 
 ## Room plan
 
-- Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits).
-- Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = blunt `arrow` (fixed `CHEVRON_PX`, not % of bar width) whenever checkout is in-window; `flat` only when clipped past the window. Left edge = matching EW butt notch for any in-window multi-night start; clipped start stays flat. Geometry is precomputed in `computePlacedBars`; `barSvgPath(flags, widthPx)` builds pixel user-space. Exclusive doors = single lane; share doors = N lanes via `share-lanes.ts` (never paint overlapping stays on the same `top`). Fill = day-state (`plan-bar-theme.ts`); **occupancy** = left badge (♂ blue / ♀ pink for share; exclusive has no badge). Stroke follows day-state. No HK squares on the plan — OOO/OOS/repair rooms omitted. Two names on the bar when party or overlapping share roommate; guest folio debt badge on the arrow nose. Date header = large day + weekday (EW).
+- Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits). **Bar click / unassigned chip → reservation card** (not +1/+2 intercept modal). Drag-resize still extends checkout.
+- Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = blunt `arrow` (fixed `CHEVRON_PX`, not % of bar width) whenever checkout is in-window; `flat` only when clipped past the window. Left edge = matching EW butt notch for any in-window multi-night start; clipped start stays flat. Geometry is precomputed in `computePlacedBars`; `barSvgPath(flags, widthPx)` builds pixel user-space. Exclusive doors = single lane; share doors = N lanes via `share-lanes.ts` (never paint overlapping stays on the same `top`). Fill = day-state (`plan-bar-theme.ts`); **occupancy** = left badge (♂ blue / ♀ pink for **open** share pool; exclusive and **closed pair** have no badge). Stroke follows day-state. No HK squares on the plan — OOO/OOS/repair rooms omitted. Party companion names on the bar (primary omitted from `partyNames`); open-pool roommate names concatenated; closed pair = own name only. Guest folio debt badge on the arrow nose. Date header = large day + weekday (EW).

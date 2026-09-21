@@ -7,6 +7,7 @@ import { auditHubFetch } from "../../lib/audit-hub-api";
 import { useAuditEngagementSession } from "../../lib/audit-engagement-session";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "../../lib/design-system";
 import { useAuth } from "../../lib/auth-context";
+import { isAuditorDonorRole } from "../../lib/role-utils";
 import { useSubscription } from "../../lib/subscription-context";
 
 type TimelineItem =
@@ -49,7 +50,7 @@ export function ActivityPanel({ entityType, entityId, canComment = true }: Props
   const showAuditHubActivityChrome =
     auditHubOn ||
     (engagement.phase === "active" && engagement.permissions.auditHubRead !== false);
-  const isAuditor = user?.role === "AUDITOR";
+  const isAuditor = isAuditorDonorRole(user?.role);
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");

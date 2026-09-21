@@ -5,7 +5,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const splitSchema = z.object({
   lineIds: z.array(z.string()).min(1),
@@ -17,7 +19,7 @@ export async function POST(
 ) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_SPLIT);
   if (denied) return denied;
 
   const { id } = await params;

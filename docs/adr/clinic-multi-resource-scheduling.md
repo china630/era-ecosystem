@@ -45,7 +45,7 @@ Practitioner is the **primary** scarce calendar. Optional `Appointment.resourceI
 
 ## Consequences
 
-- Master data: SatAdmin maintains skills and procedure requirements.
+- Master data: SatAdmin maintains skills and procedure requirements. **Cabinet pool:** several LOCATION/EQUIPMENT `resourceCode` rows on one type; `/admin/master-data` MULTI picker; FIFO uses the first free cabin (`listPhysicalRequirementResources`).
 - FIFO planner, available-slots, and reschedule must assign STAFF allocations.
 - **Location board UX shipped** — `/sanatorium/resources` sticky matrix with merged bars, status colors, DnD; calendar slots carry `endsAt` / `status` / `procedureCode`; nurse `GET /api/procedures?mine=1` filters STAFF allocations.
 - **Tenant working hours** — `Tenant.dayStartHour` … `closedWeekdays` drive FIFO planner, resource calendar, and matrix slot grid; SatAdmin edits via `/admin/settings`.

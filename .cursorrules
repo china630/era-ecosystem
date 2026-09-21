@@ -15,7 +15,7 @@
 | `era-git-ship.mdc` | **полный коммит** / **шип + пуш** / per-core PR → `.cursor/skills/era-git-ship/` (local `ship:prepush` before git push) |
 | `era-legal-entities-backup.mdc` | Companies master + e-taxes cache → `D:\ERA-BACKUP\` (never stash-wipe) |
 
-**Skills:** `.cursor/skills/` — `era-readiness-matrix` (engineering API/DELIVERY), `acceptance-closeout`, `quality-gates`, `era-git-ship`.
+**Skills:** `.cursor/skills/` — `era-readiness-matrix` (engineering API/DELIVERY), `acceptance-closeout`, `quality-gates`, `era-git-ship`, `era-hot-reload` (**релод / reload \<satellite\>** — host `npm run dev`, not Docker rebuild).
 
 **Per-app rules:** each project under `era-*/.cursor/rules/` (local-dev, module-map, ui). Finance: `era-finance-core/.cursor/rules/`. Shared libs: `packages/.cursor/rules/shared-packages.mdc`.
 

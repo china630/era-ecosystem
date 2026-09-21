@@ -132,7 +132,7 @@ export class StaffScheduleRevisionsService {
       throw new BadRequestException("Only DRAFT/REJECTED can be submitted");
     }
     const snapshot = await this.buildLiveSnapshot(row.workforceScopeId);
-    return this.prisma.staffScheduleRevision.update({
+    const updated = await this.prisma.staffScheduleRevision.update({
       where: { id },
       data: {
         status: StaffScheduleRevisionStatus.SUBMITTED,
@@ -141,6 +141,16 @@ export class StaffScheduleRevisionsService {
         submittedAt: new Date(),
       },
     });
+    await this.audit.log({
+      organizationId,
+      workforceScopeId: row.workforceScopeId,
+      actorUserId,
+      action: "STAFF_SCHEDULE_SUBMITTED",
+      entityType: "StaffScheduleRevision",
+      entityId: id,
+      payload: { title: updated.title, positions: snapshot.length },
+    });
+    return updated;
   }
 
   async approve(organizationId: string, id: string, actorUserId: string) {

@@ -7,9 +7,9 @@ import {
 
 describe("nafta-intake-map", () => {
   it("maps the canonical 4 WO procedure names", () => {
-    expect(mapWoIntakeProcedureName("Həkim qəbulu")).toBe("SANATORIUM-INTAKE");
+    expect(mapWoIntakeProcedureName("Həkim qəbulu")).toBe("VISIT-SANATORIUM-INTAKE");
     expect(mapWoIntakeProcedureName("Ginekoloq/Uroloq müayinəsi")).toBe("GYN-OR-URO");
-    expect(mapWoIntakeProcedureName("EKQ və kardioloqun müayinəsi")).toBe("ECG-12");
+    expect(mapWoIntakeProcedureName("EKQ və kardioloqun müayinəsi")).toBe("CARDIO-ECG");
     expect(mapWoIntakeProcedureName("Qarın boşluğu və kiçik çanaq tam USM")).toBe("USG-ABD");
   });
 
@@ -19,11 +19,11 @@ describe("nafta-intake-map", () => {
   });
 
   it("resolves GYN vs URO by sex", () => {
-    expect(resolveNaftaIntakeCode("GYN-OR-URO", "FEMALE")).toBe("GYN-VISIT");
-    expect(resolveNaftaIntakeCode("GYN-OR-URO", "MALE")).toBe("URO-VISIT");
+    expect(resolveNaftaIntakeCode("GYN-OR-URO", "FEMALE")).toBe("VISIT-GYN");
+    expect(resolveNaftaIntakeCode("GYN-OR-URO", "MALE")).toBe("VISIT-URO");
     expect(resolveNaftaIntakeCode("GYN-OR-URO", "UNKNOWN")).toBe("GYN-OR-URO");
-    expect(naftaIntakeVisitCodes("FEMALE")).toEqual(["SANATORIUM-INTAKE", "GYN-VISIT"]);
-    expect(naftaIntakeVisitCodes("MALE")).toEqual(["SANATORIUM-INTAKE", "URO-VISIT"]);
-    expect(naftaIntakeVisitCodes("UNKNOWN")).toEqual(["SANATORIUM-INTAKE"]);
+    expect(naftaIntakeVisitCodes("FEMALE")).toEqual(["VISIT-SANATORIUM-INTAKE", "VISIT-GYN"]);
+    expect(naftaIntakeVisitCodes("MALE")).toEqual(["VISIT-SANATORIUM-INTAKE", "VISIT-URO"]);
+    expect(naftaIntakeVisitCodes("UNKNOWN")).toEqual(["VISIT-SANATORIUM-INTAKE"]);
   });
 });

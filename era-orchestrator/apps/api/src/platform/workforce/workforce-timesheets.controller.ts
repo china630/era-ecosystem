@@ -8,14 +8,16 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
+import { WorkforceRosterService } from "./workforce-roster.service";
 import {
   ApproveTimesheetEntriesDto,
   ListWorkforceTimesheetQueryDto,
@@ -25,12 +27,15 @@ import {
 @ApiTags("platform-workforce-timesheets")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/timesheets")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceTimesheetsController {
-  constructor(private readonly timesheets: WorkforceTimesheetsService) {}
+  constructor(
+    private readonly timesheets: WorkforceTimesheetsService,
+    private readonly roster: WorkforceRosterService,
+  ) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Month timesheet (get or create draft)" })
   getMonth(
     @OrganizationId() organizationId: string,
@@ -40,18 +45,19 @@ export class WorkforceTimesheetsController {
       organizationId,
       query.year,
       query.month,
+      { page: query.page, pageSize: query.pageSize },
     );
   }
 
   @Get("draft")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "List draft CP timesheet rows (legacy)" })
   listDraft(@OrganizationId() organizationId: string) {
     return this.timesheets.listDraft(organizationId);
   }
 
   @Post("approve")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({
     summary:
       "Deprecated: cherry-pick approve (410 — use POST :id/approve for the month)",
@@ -70,38 +76,73 @@ export class WorkforceTimesheetsController {
   }
 
   @Post(":id/autofill")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
-  @ApiOperation({ summary: "Fill WORK on weekdays, OFF on Sat/Sun" })
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  @ApiOperation({ summary: "Fill WORK on weekdays, OFF on Sat/Sun (chunked)" })
   autofill(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
   ) {
-    return this.timesheets.autofill(organizationId, id);
+    return this.timesheets.autofill(organizationId, id, user.sub);
   }
 
   @Post(":id/sync-absences")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Lock cells from approved absences" })
   syncAbsences(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
   ) {
-    return this.timesheets.syncAbsences(organizationId, id);
+    return this.timesheets.syncAbsences(organizationId, id, user.sub);
+  }
+
+  @Post(":id/materialize-roster")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_TIMESHEET)
+  @ApiOperation({
+    summary:
+      "Fill DRAFT cells from shift assignments (source=roster_plan). Skips APPROVED and lockedFromAbsence. ?preserveManual=true keeps ops_grid cells. Then syncs approved absences (locks beat overrides).",
+  })
+  async materializeRoster(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Query("preserveManual") preserveManualRaw?: string,
+  ) {
+    const preserveManual =
+      preserveManualRaw === "1" ||
+      preserveManualRaw === "true" ||
+      preserveManualRaw === "TRUE";
+    const summary = await this.roster.materializeMonth(
+      organizationId,
+      id,
+      user.sub,
+      { preserveManual },
+    );
+    // Absence locks beat day overrides / cycle plan (plan § materialize).
+    await this.timesheets.syncAbsences(organizationId, id, user.sub);
+    return summary;
   }
 
   @Patch(":id/entries/batch")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Batch update day range for an employment" })
   batch(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
     @Body() dto: WorkforceTimesheetBatchUpdateDto,
   ) {
-    return this.timesheets.batchUpdate(organizationId, id, dto.batches);
+    return this.timesheets.batchUpdate(
+      organizationId,
+      id,
+      dto.batches,
+      user.sub,
+    );
   }
 
   @Post(":id/approve")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Approve the month timesheet and emit payroll event" })
   approveMonth(
     @OrganizationId() organizationId: string,

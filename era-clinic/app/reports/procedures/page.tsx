@@ -83,7 +83,8 @@ export default function ProceduresReportPage() {
   const tc = useTranslations("nav");
   const locale = useLocale();
   const { auth } = useClinicAuth();
-  const canSelectNurse = auth?.role === "DOCTOR" || auth?.role === "CLINIC_ADMIN";
+  const canSelectNurse =
+    auth?.staffKind === "DOCTOR" || auth?.canViewClinicAdmin === true;
 
   const [view, setView] = useState<"doctor-lines" | "doctor-bonus" | "by-procedure" | "nurse-work">(
     "doctor-lines",

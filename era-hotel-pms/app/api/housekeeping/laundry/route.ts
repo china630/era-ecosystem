@@ -105,8 +105,19 @@ export async function POST(request: Request) {
     if (body.deliverTicketId) {
       assertAnyPermission(session, [...laundryReadWritePerms()]);
       const data = deliverBody.parse(body);
-      const { hasPermission } = await import('@/lib/auth/permissions');
-      const hk = session && hasPermission(session.role, PERMISSIONS.HOUSEKEEPING_MANAGE);
+      const { sessionHasHotelPermission } = await import('@/lib/auth/permission-check');
+      const hk =
+        session &&
+        sessionHasHotelPermission(
+          {
+            login: session.login,
+            email: session.email,
+            role: session.role,
+            permissions: session.permissions,
+            isOwner: session.isOwner,
+          },
+          PERMISSIONS.HOUSEKEEPING_MANAGE,
+        );
       const role: 'HK' | 'FO' = data.actorRole ?? (hk ? 'HK' : 'FO');
       return jsonOk(
         serialize(

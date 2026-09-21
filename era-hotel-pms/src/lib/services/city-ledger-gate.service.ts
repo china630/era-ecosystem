@@ -89,9 +89,21 @@ export async function assertCanTransferToCityLedger(
     });
     hasContract = list.length > 0;
   }
+  if (!hasContract && reservation.companyId) {
+    const list = await prisma.salesContract.findMany({
+      where: {
+        companyId: reservation.companyId,
+        status: 'ACTIVE',
+        validFrom: { lte: checkIn },
+        OR: [{ validTo: null }, { validTo: { gte: checkIn } }],
+      },
+      take: 1,
+    });
+    hasContract = list.length > 0;
+  }
   if (!hasContract) {
     throw new Error(
-      'City Ledger transfer requires an ACTIVE sales contract for this stay or agency',
+      'City Ledger transfer requires an ACTIVE sales contract for this stay, agency, or company',
     );
   }
 

@@ -1,5 +1,6 @@
 /**
  * Wave B — PDF quota knots: clamp + linear interpolate between adjacent night columns.
+ * W2: optional `quotaBasis` — PER_STAY picks a single knot qty (no interpolation).
  */
 
 export type QuotaKnot = {
@@ -8,12 +9,16 @@ export type QuotaKnot = {
   qty: number;
 };
 
+export type QuotaBasis = "PER_NIGHTS" | "PER_STAY";
+
 export type QuotaForInput = {
   knots: QuotaKnot[];
   nights: number;
   procedureCode: string;
   minNights?: number | null;
   maxNights?: number | null;
+  /** Default PER_NIGHTS (interpolate). PER_STAY = single knot qty, no interpolate. */
+  quotaBasis?: QuotaBasis;
 };
 
 export class QuotaBelowMinError extends Error {
@@ -39,12 +44,7 @@ function nightColumns(
     .sort((a, b) => a.nights - b.nights);
 }
 
-/**
- * `quotaFor` — PDF knot grid with linear interpolation; clamp nights to max;
- * refuse below min (throws QuotaBelowMinError).
- */
-export function quotaFor(input: QuotaForInput): number {
-  const { knots, procedureCode } = input;
+function clampNights(input: QuotaForInput): number {
   let nights = Math.max(0, Math.round(input.nights));
   const minN = input.minNights ?? null;
   const maxN = input.maxNights ?? null;
@@ -54,9 +54,34 @@ export function quotaFor(input: QuotaForInput): number {
   if (maxN != null && nights > maxN) {
     nights = maxN;
   }
+  return nights;
+}
 
+/**
+ * PER_STAY: use qty from any single knot (prefer nights matching duration / first knot).
+ * No interpolation between columns.
+ */
+export function quotaForWithBasis(input: QuotaForInput): number {
+  return quotaFor(input);
+}
+
+/**
+ * `quotaFor` — PDF knot grid with linear interpolation (PER_NIGHTS default);
+ * PER_STAY picks one knot qty without interpolation.
+ * Clamp nights to max; refuse below min (throws QuotaBelowMinError).
+ */
+export function quotaFor(input: QuotaForInput): number {
+  const { knots, procedureCode } = input;
+  const nights = clampNights(input);
   const cols = nightColumns(knots, procedureCode);
   if (cols.length === 0) return 0;
+
+  if (input.quotaBasis === "PER_STAY") {
+    const exact = cols.find((c) => c.nights === nights);
+    if (exact) return exact.qty;
+    return cols[0].qty;
+  }
+
   if (cols.length === 1) return cols[0].qty;
 
   if (nights <= cols[0].nights) return cols[0].qty;

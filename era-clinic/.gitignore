@@ -3,3 +3,5 @@ node_modules/
 .env
 .env.local
 *.log
+prisma/seed-data/nafta/*.xlsx
+prisma/seed-data/nafta/_restore-*.tsv

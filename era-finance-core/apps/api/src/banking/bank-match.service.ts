@@ -206,6 +206,12 @@ export class BankMatchService {
       if (result.firstRevenueRecognition) {
         this.invoices.notifyRevenueRecognizedForNetwork(organizationId, invoiceId);
       }
+      if (result.ledgerPosted || result.firstRevenueRecognition) {
+        this.invoices.notifyTradeCreditReclassifyForInvoice(
+          organizationId,
+          invoiceId,
+        );
+      }
       return result;
     });
   }

@@ -10,6 +10,7 @@ export type ClinicAuthState = {
   email?: string | null;
   organizationName?: string | null;
   role?: string;
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "NONE";
   permissions: string[];
   canViewClinicAdmin: boolean;
   isPlatformSuperAdmin: boolean;
@@ -23,6 +24,7 @@ type AuthMePayload = {
   login?: string | null;
   email?: string | null;
   role?: string;
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "NONE" | null;
   permissions?: string[];
   organizationName?: string | null;
   canViewClinicAdmin?: boolean;
@@ -43,6 +45,13 @@ function stateFromMe(raw: AuthMePayload): ClinicAuthState | null {
     email: data.email ?? null,
     organizationName: data.organizationName ?? null,
     role: data.role,
+    staffKind:
+      data.staffKind === "DOCTOR" ||
+      data.staffKind === "NURSE" ||
+      data.staffKind === "LAB" ||
+      data.staffKind === "NONE"
+        ? data.staffKind
+        : "NONE",
     permissions: Array.isArray(data.permissions) ? data.permissions : [],
     canViewClinicAdmin: data.canViewClinicAdmin === true,
     isPlatformSuperAdmin: data.isPlatformSuperAdmin === true,

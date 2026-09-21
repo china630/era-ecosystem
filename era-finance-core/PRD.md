@@ -121,7 +121,11 @@
 | Access request (join by VÖEN) | [x] migrate | Proxy `/auth/join-org`, `/team/access-requests/*` → orchestrator |
 | Ownership dispute / arbitration | [x] migrate | Orchestrator `DisputeModule`; Finance freeze guard on legacy paths |
 | Billing / subscription SoT | [x] migrate | Orchestrator API/DB; Finance **web** proxies `/api/billing/*`, `/api/subscription/*` → CP (`resolveApiUrl`); Finance API keeps **quota assert** + ERP `BillingAccessGuard` on ledger mutations |
-| Domain finance policy (Post/Approve, payroll money) | — | Finance guards по `roles[]` из JWT |
+| Domain finance policy (Post/Approve, payroll money) | Matrix UI `/settings/access` | Finance **Wave 5:** `PermissionsGuard` / `can()` on `api:ledger.post`, `api:payroll.money`, … (ADR `finance-domain-permissions-and-rbac`) |
+
+**Wave 4 (2026-09-18):** orchestrator JWT `permissions[]` uses fleet canon `api:` / `screen:` / `admin:` from org-scoped `OrganizationRole.permissionsJson` (ADR `cp-domain-permissions-and-rbac`).
+
+**Wave 5 (2026-09-18):** Finance enforces CP grants — Post/Approve = **`api:ledger.post`**; payroll money = **`api:payroll.money`**. Door = permission keys, not `@Roles`. No local matrix UI in Finance (edit grants in Orchestrator `/settings/access`). `AuditorMutationGuard` remains the locked belt on donor `AUDITOR`. Legacy bare codes dual-read one release. AC-FIN-RBAC 🟡 / FIN-RBAC-01 SCREEN — not SHOW/GA.
 
 **Инвариант:** роль **OWNER** = владелец бизнеса и аккаунта SaaS (биллинг, карта, transfer ownership). В спутниках отображается как **`BUSINESS_OWNER`** (маппинг `OWNER` / `DIRECTOR`) — см. [SATELLITE_DOCUMENTATION.md](../docs/SATELLITE_DOCUMENTATION.md).
 
@@ -239,6 +243,15 @@
 | **Ссылка для менеджера** | В карточке счёта (JWT) — действие **«Поделиться ссылкой»**: копирование в буфер URL вида `{origin}/portal/invoice/{token}` (прод: канонический домен, напр. `https://erp.example.com/...`). |
 | **Локализация** | Язык интерфейса портала: поле **`portal_locale`** у контрагента (`az` / `ru` / `en`), иначе — язык браузера (**Accept-Language**). |
 | **Безопасность** | См. **TZ.md §14.0** — неугадываемый токен + rate limit на публичные GET. |
+
+#### 4.4.1b. Trade credit control (limit, pickup grant, internal A–D) — PARTIAL
+
+**Status:** [~] **PARTIAL** — Phase 0–2 eng + **Phase 3 eng** (working-capital suggested limit / proposals / decision log; A–D remains lock). Not Pilot/SHIPPED. [finance-trade-credit-control.md](../docs/adr/finance-trade-credit-control.md).
+
+- Finance owns credit limit / facility, AR exposure, short-lived **pickup grant** (code/QR). Wholesale on-account shipment consumes the grant. Sales cannot issue grants.
+- Buyer **cabinet** (authenticated, SKU `trade_credit_control`) is distinct from the guest invoice link above: residual + schedule + grant — never internal group А–Г.
+- Groups **А–Г** (code A–D) are **finance-only** (not sales, not buyer). Phase 0 = lock; Phase 1 policy = **PARTIAL** eng (auto-block Г, optional auto-raise А proposal + staff accept).
+- Billing: unlock SKU 99 AZN/mo + quota on **managed trade-credit counterparties** (not the whole CRM list). Pay-per-invoice is forbidden.
 
 #### 4.4.1a. Price lists and discount rules (Wave 5 E7)
 
@@ -868,7 +881,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 |-------|-----------------------------|-------------------|
 | **Wave 1** | §5.E.2 Activity Stream, §5.E.3 Approval Workflow, §5.E.4 Director | По плану: см. чеклисты в подразделах |
 | **Wave 2** | §5.E.1 Virtual stock, §5.E.5 Prepaid (РБП), §5.E.6 Cost allocation, §5.E.7 PSA mini | E6–E7: см. чеклисты §5.E.6–§5.E.7 |
-| **Wave 3** | CRM Pipeline/Deals, user-defined Custom Fields, Disassembly, Resource Calendar, Mobile WMS scan | **Только roadmap** (без кода в этом цикле) |
+| **Wave 3** | CRM Pipeline/Deals, user-defined Custom Fields, Disassembly, Resource Calendar, Mobile WMS scan | **PARTIAL** — invoice extra fields W1 (`FIN-EXT-01`) is the first UDF slice (not full Wave 3) |
 
 #### 5.E.1. Virtual stock (доступный выпуск по BOM)
 

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -16,11 +19,9 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { IsArray, IsNumber, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -97,8 +98,8 @@ export class LedgerMappingController {
   }
 
   @Post("draft")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Ensure/create DRAFT set (clone from published if empty)" })
   createDraft(
     @OrganizationId() organizationId: string,
@@ -113,8 +114,8 @@ export class LedgerMappingController {
   }
 
   @Get("failed-mirrors")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Transactions with mirrorStatus=FAILED" })
   failed(
     @OrganizationId() organizationId: string,
@@ -128,8 +129,8 @@ export class LedgerMappingController {
   }
 
   @Post("mirror/retry/:transactionId")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Retry soft FAILED IFRS mirror" })
   retry(
     @OrganizationId() organizationId: string,
@@ -152,8 +153,8 @@ export class LedgerMappingController {
   }
 
   @Patch(":id/lines")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Replace all lines on a DRAFT set" })
   replaceLines(
     @OrganizationId() organizationId: string,
@@ -164,8 +165,8 @@ export class LedgerMappingController {
   }
 
   @Post(":id/publish")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Publish DRAFT set (archives previous PUBLISHED)" })
   publish(
     @OrganizationId() organizationId: string,

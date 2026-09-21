@@ -1,4 +1,4 @@
-import { fiscalize } from "@era/fiscal";
+import { saleForSatelliteRouted, isFiscalSkipped, voidForSatelliteRouted } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { postHotelRoomCharge } from "@/lib/billing-router";
 import { settleDenied } from "@/lib/cashier-settle-gates";
@@ -9,6 +9,7 @@ import {
 } from "@/domain/cashier/cashier-bill.service";
 import { getCurrentShift, openShift } from "@/domain/cashier/cashier-shift.service";
 import type { ClinicReceiptChannel } from "@prisma/client";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 export type PaymentSplit = { method: string; amount: number };
 
@@ -180,24 +181,42 @@ export async function settleVisitBill(input: SettleInput) {
     include: { lines: true },
   });
 
-  const fiscal = await fiscalize({
-    documentRef: receipt.id,
-    amount: amountNet,
-    paymentMethod: payments[0]?.method ?? "CASH",
-  });
+  const fiscalOutcome = await saleForSatelliteRouted({
+      documentRef: receipt.id,
+      organizationId: requestOrganizationId(),
+      fiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+      bankTerminalId: shift.bankTerminalId ?? undefined,
+      shiftFiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+      shiftBankTerminalId: shift.bankTerminalId ?? undefined,
+      lines: bill.lines.map((l) => ({
+        sku: l.serviceCode,
+        name: l.description,
+        qty: 1,
+        unitPrice: l.amount,
+        discount: l.discountAmount,
+      })),
+      tenders: payments.map((p) => ({ method: p.method, amount: p.amount })),
+    });
+  const fiscal = isFiscalSkipped(fiscalOutcome)
+    ? { receiptId: "", qrPayload: null as string | null, driver: "none" }
+    : {
+        receiptId: fiscalOutcome.receiptId,
+        qrPayload: fiscalOutcome.qrPayload,
+        driver: fiscalOutcome.driver,
+      };
 
   const paid = await prisma.clinicReceipt.update({
     where: { id: receipt.id },
     data: {
       status: "PAID",
-      fiscalReceiptId: fiscal.receiptId,
+      fiscalReceiptId: fiscal.receiptId || null,
       fiscalQrPayload: fiscal.qrPayload,
       paidAt: new Date(),
       payments: {
         create: payments.map((p) => ({
           method: p.method,
           amount: p.amount,
-          fiscalReceiptId: fiscal.receiptId,
+          fiscalReceiptId: fiscal.receiptId || null,
         })),
       },
     },
@@ -236,6 +255,15 @@ export async function voidReceipt(input: {
   if (receipt.status !== "PAID") throw new Error("Only PAID receipts can be voided");
   if (receipt.channel === "HOTEL_FOLIO" || receipt.channel === "SETTLEMENT_HUB") {
     throw new Error("Void hub/folio receipts at hotel front desk");
+  }
+
+  if (receipt.fiscalReceiptId) {
+    await voidForSatelliteRouted({
+      documentRef: receipt.id,
+      receiptId: receipt.fiscalReceiptId,
+      organizationId: requestOrganizationId(),
+      reason: input.reason,
+    });
   }
 
   const updated = await prisma.clinicReceipt.update({
@@ -362,24 +390,43 @@ export async function settleChargeLogLocally(input: {
     },
   });
 
-  const fiscal = await fiscalize({
-    documentRef: receipt.id,
-    amount: amountNet,
-    paymentMethod: payments[0]?.method ?? "CASH",
-  });
+  const fiscalOutcomeOver = await saleForSatelliteRouted({
+      documentRef: receipt.id,
+      organizationId: requestOrganizationId(),
+      fiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+      bankTerminalId: shift.bankTerminalId ?? undefined,
+      shiftFiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+      shiftBankTerminalId: shift.bankTerminalId ?? undefined,
+      lines: [
+        {
+          sku: log.procedureCode,
+          name: `${log.procedureName} (over-quota)`,
+          qty: 1,
+          unitPrice: amountNet,
+        },
+      ],
+      tenders: payments.map((p) => ({ method: p.method, amount: p.amount })),
+    });
+  const fiscal = isFiscalSkipped(fiscalOutcomeOver)
+    ? { receiptId: "", qrPayload: null as string | null, driver: "none" }
+    : {
+        receiptId: fiscalOutcomeOver.receiptId,
+        qrPayload: fiscalOutcomeOver.qrPayload,
+        driver: fiscalOutcomeOver.driver,
+      };
 
   const paid = await prisma.clinicReceipt.update({
     where: { id: receipt.id },
     data: {
       status: "PAID",
-      fiscalReceiptId: fiscal.receiptId,
+      fiscalReceiptId: fiscal.receiptId || null,
       fiscalQrPayload: fiscal.qrPayload,
       paidAt: new Date(),
       payments: {
         create: payments.map((p) => ({
           method: p.method,
           amount: p.amount,
-          fiscalReceiptId: fiscal.receiptId,
+          fiscalReceiptId: fiscal.receiptId || null,
         })),
       },
     },

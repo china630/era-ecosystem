@@ -12,8 +12,8 @@ import {
   type CounterpartyLegalForm,
 } from "../../../lib/counterparty-legal-form";
 import { notifyListRefresh } from "../../../lib/list-refresh-bus";
-import { useAuth } from "../../../lib/auth-context";
 import { isRestrictedUserRole } from "../../../lib/role-utils";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { ActivityPanel } from "../../activity/ActivityPanel";
 import {
   MODAL_CHECKBOX_CLASS,
@@ -24,6 +24,7 @@ import {
 import { Button } from "../../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../ui/select";
 import { SalesModalFooter, SalesModalShell } from "./modal-shell";
+import { TradeCreditFacilitySection } from "./TradeCreditFacilitySection";
 
 const lbl = MODAL_FIELD_LABEL_CLASS;
 
@@ -58,8 +59,8 @@ export function EditCounterpartyModal({
   onSaved?: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
-  const mayCommentActivity = !isRestrictedUserRole(user?.role ?? undefined);
+  const { subject } = useOrgPermissions();
+  const mayCommentActivity = !isRestrictedUserRole(subject);
   const [name, setName] = useState("");
   const [taxId, setTaxId] = useState("");
   const [role, setRole] = useState<"CUSTOMER" | "SUPPLIER" | "BOTH" | "OTHER">("CUSTOMER");
@@ -491,6 +492,12 @@ export function EditCounterpartyModal({
           />
         </div>
         </form>
+        {!loadBusy && counterpartyId ? (
+          <TradeCreditFacilitySection
+            counterpartyId={counterpartyId}
+            defaultInviteEmail={email}
+          />
+        ) : null}
         {!loadBusy && counterpartyId ? (
           <div className="border-t border-[#E5E7EB] pt-4">
             <h4 className="mb-2 text-[13px] font-semibold text-[#34495E]">

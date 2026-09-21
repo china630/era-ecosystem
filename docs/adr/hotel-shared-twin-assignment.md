@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-20  
-**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing); 2026-09-01 (door+overlap auto-pair before EW `S`; assign auto-share; ops backfill); 2026-09-02 (orphan clear on live bridge; FO clear-share without autoShare; CHECKED_OUT must not reopen live pool)
+**Updated:** 2026-08-20 (ops-closeout: gender law, N beds, break share, HK); 2026-08-20 (Elektraweb cutover Excel/bridge pairing); 2026-09-01 (door+overlap auto-pair before EW `S`; assign auto-share; ops backfill); 2026-09-02 (orphan clear on live bridge; FO clear-share without autoShare; CHECKED_OUT must not reopen live pool); 2026-09-10 (closed pair M+F two-contract hold)
 **Scope:** `era-hotel-pms` — union/Nafta FO assignment, inventory, room plan
 
 ## Context
@@ -11,7 +11,8 @@ Union can fill the hotel to 100% **by doors** while ~80% of guests are **singles
 
 This is **not**:
 
-- **Party billing** on one reservation (`ReservationGuest`, `partyBillingMode` PRIMARY/EQUAL) — one card, one check-in.
+- **Household / couple in one room** — exclusive party on one RoomStay; early departure of one person is **Depart guest**, never Break share — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md).
+- **Party billing** on one reservation (`ReservationGuest`, `partyBillingMode` PRIMARY/EQUAL) — one card, one room check-in.
 - **`shareNo`** — Elektraweb display label only; not an engine field.
 - **Tenancy `SHARED` topology** — schema placement, not shared room.
 
@@ -29,10 +30,11 @@ Block → Booking (ReservationGroup) → RoomStay (Reservation, one person/vouch
 ### Share is a door mode
 
 - Opens when FO assigns the **first** share-eligible single to a door (explicit checkbox; default on for agency/union singles with M/F gender only), **or automatically** when a second schedulable single with real date overlap lands on the same door and passes M/F + `adults=1` + not-OTA gates (assign, relocate, schedule+room, import/bridge pairing).
-- Pool gender = first guest gender; locked until the pool ends.
+- Pool gender = first guest gender for an **open** same-gender pool; locked until the pool ends.
+- **Closed pair (exception):** exactly two live share-eligible singles on one door with **opposite** gender (independent contracts). Capacity 2 while both live — no third guest. Each stay keeps its own `shareGender`. After one stay checkout, the survivor is an open pool of that gender. FO creates this by assigning a second **share-eligible** single onto a door that already has a share stay — not by auto-sharing onto an exclusive family/`adults>1` stay. EW `applyElektrawebSharePair` maps mixed two-person door overlap the same way.
 - Survives `n/maxBed` while a live roommate (or EW second signal) remains.
 - Clears when the **last live** share stay on that door leaves **or** FO Break share / explicit `shareEligible=false` — live bridge must not resurrect without a fresh EW second or a new live second guest.
-- Capacity: `Room.maxBed` / `RoomType.adultCapacity` (twin = 2, triple = 3, …). Same gender only on one door.
+- Capacity: `Room.maxBed` / `RoomType.adultCapacity` (twin = 2, triple = 3, …). **Open pool:** same gender only on one door. **Closed pair:** opposite gender allowed for exactly two live stays.
 
 ### Gender law (hard)
 
@@ -48,7 +50,7 @@ Ungendered `shareEligible` does not consume inventory and must be refused on con
 |------|-------------|
 | Share only `adults=1` | Reject share when adults > 1 |
 | Gender M/F required at OPTION/CONFIRMED | `shareGender` from `Guest.gender`; else exclusive only |
-| Same gender only | Opposite gender rejected on same door / pool |
+| Same gender (open pool) | Opposite gender rejected unless **closed pair** (exactly two share-eligible singles) |
 | OTA exclusive | `isOtaAgency` / channel ingest force `shareEligible=false` |
 | Inventory at confirm | FIFO by booking time, not arrival; OPTION share consumes doors like CONFIRMED |
 | Occupancy 2nd adult | Never applied across two independent share RoomStays |
@@ -87,8 +89,8 @@ Occupancy reports: **doors %** = doors sold / quota; **guest nights** counted se
 ### UI
 
 - Reservation card: checkbox **«Подселение (share)»** on Stay/Assignment (not next to guest count); **Break share** when no overlapping roommate (else relocate first).
-- Room plan: **N lanes** per door (`maxBed`); own arrow bars without date overlay (greedy paint lanes prefer `shareBedIndex`); room-number badge `♂ n/N` / `♀ n/N` (gender color on badge; bar color = day-state / EW palette).
-- Rack / chessboard: same badge; OCCUPIED door assignable for same-gender share when `occupied < maxBed`.
+- Room plan: **N lanes** per door (`maxBed`); own arrow bars without date overlay (greedy paint lanes prefer `shareBedIndex`); room-number badge `♂ n/N` / `♀ n/N` **for open pool only** (closed mixed pair: no gender badge, each bar **own name only**). Bar color = day-state / EW palette. Click a bar → reservation card (extend nights via drag-resize, not a leftover +1/+2 modal).
+- Rack / chessboard: same badge (hidden for mixed closed pair); OCCUPIED door assignable for same-gender share when `occupied < maxBed`, and for a **closed pair** when a singleton share door is picked by an opposite share-eligible single.
 
 ### Checkout / cancel / HK
 
@@ -107,7 +109,7 @@ Elektraweb has **no share status on the primary guest**. Second guest only: Reco
 | EW | ERA |
 |----|-----|
 | `707` + `707S` (or both cards on `707`) | One `Room` `707`; two `Reservation` rows |
-| Second: SHARE / RC=0 / `…S` | `shareEligible` + bed index; **pull** overlapping NORMAL neighbor into the same pool |
+| Second: SHARE / RC=0 / `…S` | `shareEligible` + bed index; **pull** overlapping NORMAL neighbor into the same pool; mixed M+F two singles → **closed pair** (each keeps `shareGender`) |
 | Two NORMAL rows, same door, overlapping nights, no EW `S` yet | **Heuristic pair** on re-import / bridge (`applyElektrawebSharePair` overlapEligible) — same as assign auto-share |
 | Primary always NORMAL | Never treat NORMAL as “clear share” |
 | After first checkout, FO flips remaining SHARE→NORMAL | Bridge/import **clears orphan** live `shareEligible` when alone and not EW second; FO Break share sticks. Excel cutover may pass `includeHistory` to pair CHECKED_OUT for occupancy only |
@@ -122,6 +124,7 @@ Code: `src/lib/integration/elektraweb-share-map.ts` (shared by Excel adapter + l
 ## References
 
 - [hotel-booking-hierarchy.md](./hotel-booking-hierarchy.md)
+- [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) — do not reuse this pool for spouse/family
 - [hotel-fo-screen-chain.md](./hotel-fo-screen-chain.md)
 - [hotel-elektraweb-import.md](./hotel-elektraweb-import.md) · [hotel-elektraweb-live-bridge.md](./hotel-elektraweb-live-bridge.md)
 - Coverage: `HOT-FO-03` (API until UAT-SMOKE §30 UI signoff)

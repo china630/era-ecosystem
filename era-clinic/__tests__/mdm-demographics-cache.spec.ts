@@ -77,4 +77,13 @@ describe("patient MDM demographics fill (list holes)", () => {
     );
     expect(fromNullSex?.sex).toBe("MALE");
   });
+
+  it("maps hotel M/F onto clinic MALE/FEMALE", () => {
+    const patch = buildPatientDemographicsFillPatch(base, {
+      sex: "F",
+      birthDate: "1953-03-13",
+    });
+    expect(patch?.sex).toBe("FEMALE");
+    expect(patch?.birthDate?.toISOString().slice(0, 10)).toBe("1953-03-13");
+  });
 });

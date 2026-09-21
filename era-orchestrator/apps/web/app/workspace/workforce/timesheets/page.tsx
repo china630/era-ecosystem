@@ -46,6 +46,7 @@ type TsEntry = {
   hours: string;
   lockedFromAbsence: boolean;
   status?: "DRAFT" | "APPROVED";
+  source?: string;
 };
 
 type Person = {
@@ -454,6 +455,15 @@ export default function TimesheetsPage() {
                       const locked = e?.lockedFromAbsence;
                       const approved = e?.status === "APPROVED";
                       const typ = e?.type ?? null;
+                      const src = e?.source ?? "ops_grid";
+                      const srcBadge =
+                        src === "faceid"
+                          ? t("sourceFaceid")
+                          : src === "roster_plan"
+                            ? t("sourceRoster")
+                            : src === "ops_grid" || !e
+                              ? null
+                              : t("sourceOps");
                       const cellKey = `${emp.id}|${dayIso}`;
                       const cellBusy = cellBusyKey === cellKey;
                       const disabled =
@@ -470,7 +480,7 @@ export default function TimesheetsPage() {
                                 ? t("absenceLocked")
                                 : approved
                                   ? t("cellApproved")
-                                  : cellCode(typ)
+                                  : [cellCode(typ), srcBadge].filter(Boolean).join(" · ")
                             }
                             disabled={disabled}
                             onClick={() => cycleCell(emp.id, d, e)}
@@ -482,7 +492,16 @@ export default function TimesheetsPage() {
                                   : "cursor-default"
                             }`}
                           >
-                            {cellCode(typ)}
+                            <span className="block">{cellCode(typ)}</span>
+                            {src === "faceid" ? (
+                              <span className="block text-[9px] font-semibold uppercase tracking-wide text-[#0B6E99]">
+                                {t("sourceFaceid")}
+                              </span>
+                            ) : src === "roster_plan" ? (
+                              <span className="block text-[9px] font-medium text-[#64748B]">
+                                {t("sourceRoster")}
+                              </span>
+                            ) : null}
                           </button>
                         </td>
                       );

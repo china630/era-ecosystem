@@ -1,4 +1,4 @@
-import { resolvePersonIdentity } from '@era/satellite-kit';
+import { normalizePersonSex, resolvePersonIdentity } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { assertHotelIdMatches, bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
@@ -11,7 +11,12 @@ import {
   splitGivenAndPatronymic,
 } from '@/lib/person-documents';
 
-export type UpsertResult = { action: 'created' | 'updated' | 'skipped'; key: string };
+export type UpsertResult = {
+  action: 'created' | 'updated' | 'skipped';
+  key: string;
+  mdmLinked: boolean;
+  mdmError?: string;
+};
 
 /** EW list/card may use several gender keys; 0 must survive (not treated as empty). */
 export function genderRawFromElektrawebGuestRow(row: Record<string, unknown>): string | null {
@@ -22,9 +27,25 @@ export function genderRawFromElektrawebGuestRow(row: Record<string, unknown>): s
     row.GENDERID ??
     row.SEXID ??
     row.SEXCODE ??
-    row.GENDER_CODE;
+    row.GENDER_CODE ??
+    row.GENDERID_GENDER ??
+    row.GENDERID_GENDERCODE ??
+    row.GENDERID_GENDERNAME ??
+    row.ID_GENDER ??
+    row.ID_SEX;
   if (raw == null || raw === '') return null;
   return String(raw).trim() || null;
+}
+
+export function birthDateFromElektrawebGuestRow(row: Record<string, unknown>): Date | null {
+  return (
+    parseElektrawebDate(row.BIRTHDATE) ??
+    parseElektrawebDate(row.BIRTH_DATE) ??
+    parseElektrawebDate(row.DATEOFBIRTH) ??
+    parseElektrawebDate(row.DOB) ??
+    parseElektrawebDate(row.BDATE) ??
+    parseElektrawebDate(row.ID_BIRTHDATE)
+  );
 }
 
 function pickFilled<T>(incoming: T | null | undefined, existing: T | null | undefined): T | undefined {
@@ -71,16 +92,20 @@ export async function upsertGuestFromElektrawebRow(
   );
   const phone = str(row.PHONE) ?? str(row.CONTACTPHONE) ?? str(row.PHONE_CALCULATED);
   const email = str(row.EMAIL);
-  const birthDate = parseElektrawebDate(row.BIRTHDATE) ?? parseElektrawebDate(row.BIRTH_DATE);
+  const birthDate = birthDateFromElektrawebGuestRow(row);
   const genderRaw = genderRawFromElektrawebGuestRow(row);
-  // EW Guest Cards: 0=Male, 1=Female — never persist raw codes.
-  const sex = genderFromElektrawebGuest({
+  // EW Guest Cards: 0=Male, 1=Female — store M/F on hotel; MDM wants MALE/FEMALE.
+  const sexMf = genderFromElektrawebGuest({
     gender: genderRaw,
     title: str(row.TITLE) ?? str(row.ID_TITLE),
   });
+  const sexMdm = normalizePersonSex(sexMf ?? genderRaw);
+  const sexForMdm =
+    sexMdm === 'MALE' || sexMdm === 'FEMALE' ? sexMdm : undefined;
 
   const existing = await prisma.guest.findFirst({ where: { externalRef } });
   let globalPersonId: string | null = existing?.globalPersonId ?? null;
+  let mdmError: string | undefined;
   try {
     const resolved = await resolvePersonIdentity({
       fin: docs.fin,
@@ -93,24 +118,31 @@ export async function upsertGuestFromElektrawebRow(
       phone: phone ?? undefined,
       nationality: iso,
       globalPersonId: globalPersonId || undefined,
-      sex: sex ?? undefined,
+      sex: sexForMdm,
+      gender: sexMf ?? genderRaw ?? undefined,
       birthDate: birthDate ?? undefined,
       organizationId: bridgeRequestOrganizationId(),
     });
     globalPersonId = resolved.globalPersonId ?? globalPersonId;
+    if (!resolved.globalPersonId) {
+      mdmError = 'MDM resolve returned no person';
+      console.warn('elektraweb-bridge MDM resolve failed', externalRef);
+    }
   } catch (e) {
-    console.warn('elektraweb-bridge MDM resolve failed', externalRef, e);
+    mdmError = e instanceof Error ? e.message : String(e);
+    console.warn('elektraweb-bridge MDM resolve threw', externalRef, e);
   }
 
   // Fill-not-clear: sparse FOCP / list rows must not wipe sex, DOB, phone from Guest Cards.
   const data = {
+    organizationId: bridgeRequestOrganizationId(),
     externalRef,
     globalPersonId: globalPersonId ?? existing?.globalPersonId ?? undefined,
     fullName: fullName || existing?.fullName || 'Unknown Guest',
     firstName: pickFilled(firstName, existing?.firstName),
     lastName: pickFilled(lastName, existing?.lastName),
     middleName: pickFilled(middleName, existing?.middleName),
-    sex: pickFilled(sex, existing?.sex),
+    sex: pickFilled(sexMf, existing?.sex),
     birthDate: pickFilled(birthDate, existing?.birthDate),
     nationality: pickFilled(iso, existing?.nationality),
     phone: pickFilled(phone, existing?.phone),
@@ -143,5 +175,10 @@ export async function upsertGuestFromElektrawebRow(
     });
   }
 
-  return { action: existing ? 'updated' : 'created', key: externalRef };
+  return {
+    action: existing ? 'updated' : 'created',
+    key: externalRef,
+    mdmLinked: Boolean(globalPersonId ?? saved?.globalPersonId),
+    mdmError,
+  };
 }

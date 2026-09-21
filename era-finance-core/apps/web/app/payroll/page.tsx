@@ -429,7 +429,24 @@ function PayrollPageInner() {
     });
     const raw = await res.text();
     if (!res.ok) {
-      alert(raw);
+      try {
+        const err = JSON.parse(raw) as {
+          code?: string;
+          message?: string;
+          employeeCount?: number;
+        };
+        if (err.code === "CONTRACT_SALARY_REQUIRED") {
+          alert(
+            t("payroll.contractSalaryRequired", {
+              count: err.employeeCount ?? "?",
+            }),
+          );
+        } else {
+          alert(err.message ?? raw);
+        }
+      } catch {
+        alert(raw);
+      }
       setCreateRunLoading(false);
       return;
     }

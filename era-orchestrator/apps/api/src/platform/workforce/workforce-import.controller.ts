@@ -5,12 +5,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import { ImportCsvDto } from "./dto/workforce-import.dto";
 import { WorkforceImportService } from "./workforce-import.service";
@@ -19,12 +20,12 @@ import { csvFromWorkforceImportBody } from "./workforce-xlsx";
 @ApiTags("platform-workforce-import")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/import")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceImportController {
   constructor(private readonly importService: WorkforceImportService) {}
 
   @Post("roster")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_IMPORT)
   @ApiOperation({
     summary:
       "Import roster from CSV/xlsx (dryRun supported). New hires need fin+fullName; empty satellites = headcount (no seat); ADDITIONAL workplace = second job without a seat.",
@@ -44,7 +45,7 @@ export class WorkforceImportController {
   }
 
   @Post("absences")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_IMPORT)
   @ApiOperation({ summary: "Import absences from CSV (dryRun supported)" })
   async absences(
     @OrganizationId() organizationId: string,
@@ -61,7 +62,7 @@ export class WorkforceImportController {
   }
 
   @Post("org-structure")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_IMPORT)
   @ApiOperation({
     summary:
       "Import org units + positions from CSV/xlsx (dryRun supported). Idempotent upsert by name; does not delete extra rows.",

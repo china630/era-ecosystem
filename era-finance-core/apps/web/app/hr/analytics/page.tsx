@@ -9,6 +9,7 @@ import { parseHrEmployeesResponse } from "../../../lib/hr-employees-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { useAuth } from "../../../lib/auth-context";
+import { isDepartmentHeadRole } from "../../../lib/role-utils";
 import {
   BORDER_MUTED_CLASS,
   CARD_CONTAINER_CLASS,
@@ -93,7 +94,7 @@ export default function HrAnalyticsPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { user } = useAuth();
-  const isDeptHead = user?.role === "DEPARTMENT_HEAD";
+  const isDeptHead = isDepartmentHeadRole(user?.role);
 
   const [departments, setDepartments] = useState<Dept[]>([]);
   const [employees, setEmployees] = useState<EmpRow[]>([]);

@@ -1,5 +1,10 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { CustomsDeclarationStatus, Prisma } from "@erafinance/database";
+import { ModuleRef } from "@nestjs/core";
+import {
+  CustomsDeclarationStatus,
+  EmasContractEventStatus,
+  Prisma,
+} from "@erafinance/database";
 import ExcelJS from "exceljs";
 import {
   CustomsDeclarationPrefillSchema,
@@ -14,6 +19,7 @@ export class ExcelBulkService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly syncRuns: IntegrationSyncRunService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async exportInvoices(organizationId: string, invoiceIds: string[]): Promise<Buffer> {
@@ -102,7 +108,15 @@ export class ExcelBulkService {
     return { ok: true };
   }
 
-  async importEmployeeResults(organizationId: string, file: Buffer): Promise<{ ok: true }> {
+  async importEmployeeResults(
+    organizationId: string,
+    file: Buffer,
+    actorUserId?: string,
+  ): Promise<{
+    matched: number;
+    unmatched: number;
+    errors: Array<{ employeeId: string; error: string }>;
+  }> {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(file as unknown as any);
     const ws = wb.worksheets[0];
@@ -111,13 +125,34 @@ export class ExcelBulkService {
     if (String(header.getCell(1).value) !== "employeeId") {
       throw new BadRequestException("Invalid employee result sheet format");
     }
+    let matched = 0;
+    let unmatched = 0;
+    const errors: Array<{ employeeId: string; error: string }> = [];
+
+    let emas: {
+      markSubmittedManual: (
+        organizationId: string,
+        eventId: string,
+        actorUserId: string,
+        note?: string,
+      ) => Promise<unknown>;
+    } | null = null;
+    try {
+      const { EmasContractService } = await import(
+        "../hr/emas-contract.service"
+      );
+      emas = this.moduleRef.get(EmasContractService, { strict: false });
+    } catch {
+      emas = null;
+    }
+
     for (let i = 2; i <= ws.rowCount; i += 1) {
       const row = ws.getRow(i);
       const employeeId = String(row.getCell(1).value ?? "").trim();
       if (!employeeId) continue;
       const status = String(row.getCell(2).value ?? "ERROR").trim();
       const error = String(row.getCell(3).value ?? "").trim();
-      await this.prisma.employee.updateMany({
+      const updated = await this.prisma.employee.updateMany({
         where: { organizationId, id: employeeId },
         data: {
           emasSyncStatus: status === "SYNCED" ? "SYNCED" : "ERROR",
@@ -125,8 +160,57 @@ export class ExcelBulkService {
           emasSyncError: error || null,
         } as never,
       });
+      if (updated.count === 0) {
+        unmatched += 1;
+        errors.push({ employeeId, error: error || "employee_not_found" });
+        continue;
+      }
+      matched += 1;
+
+      const pending = await this.prisma.emasContractEvent.findFirst({
+        where: {
+          organizationId,
+          employeeId,
+          status: {
+            in: [
+              EmasContractEventStatus.PENDING_MANUAL,
+              EmasContractEventStatus.FAILED,
+            ],
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!pending) continue;
+
+      if (status === "SYNCED" && emas && actorUserId) {
+        try {
+          await emas.markSubmittedManual(
+            organizationId,
+            pending.id,
+            actorUserId,
+            "excel_import_synced",
+          );
+        } catch (err) {
+          errors.push({
+            employeeId,
+            error:
+              err instanceof Error
+                ? err.message
+                : "mark_submitted_failed",
+          });
+        }
+      } else if (status !== "SYNCED") {
+        await this.prisma.emasContractEvent.update({
+          where: { id: pending.id },
+          data: {
+            status: EmasContractEventStatus.FAILED,
+            errorMessage: error || "portal_import_error",
+          },
+        });
+        errors.push({ employeeId, error: error || "portal_import_error" });
+      }
     }
-    return { ok: true };
+    return { matched, unmatched, errors };
   }
 
   async exportCustoms(organizationId: string, ids: string[]): Promise<Buffer> {

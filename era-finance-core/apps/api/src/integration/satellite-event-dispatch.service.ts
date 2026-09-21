@@ -28,6 +28,7 @@ import {
   isSatelliteWorkforceAbsenceUpdated,
   isSatelliteWorkforceEmploymentTransferred,
   isSatelliteWorkforceEmploymentHired,
+  isSatelliteWorkforceEmploymentTerminated,
   isSatelliteWorkforceOrgUnitArchived,
   isSatelliteWorkforceOrgUnitUpserted,
   isSatelliteWorkforcePositionUpserted,
@@ -139,6 +140,9 @@ export class SatelliteEventDispatchService {
     }
     if (isSatelliteWorkforceEmploymentHired(data)) {
       return this.workforceEmploymentSync.handleHired(organizationId, data);
+    }
+    if (isSatelliteWorkforceEmploymentTerminated(data)) {
+      return this.workforceEmploymentSync.handleTerminated(organizationId, data);
     }
     if (isSatelliteWorkforceTimesheetApproved(data)) {
       return this.workforceTimesheetSync.handleApproved(organizationId, data);

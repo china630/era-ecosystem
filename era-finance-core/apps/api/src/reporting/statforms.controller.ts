@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Controller,
   Get,
@@ -12,10 +14,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -25,8 +25,8 @@ import { StatformsService } from "./statforms.service";
 @ApiTags("reporting-statforms")
 @ApiBearerAuth("bearer")
 @Controller("reporting/statforms")
-@UseGuards(SubscriptionGuard, RolesGuard)
-@Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+@UseGuards(SubscriptionGuard)
+@Permissions(CP_PERMISSION.API_REPORTS_NAS)
 export class StatformsController {
   constructor(private readonly statforms: StatformsService) {}
 

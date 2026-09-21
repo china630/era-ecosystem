@@ -47,6 +47,8 @@ export default function PickListsPage() {
   const [qtyOrdered, setQtyOrdered] = useState("");
   const [counterpartyId, setCounterpartyId] = useState("");
   const [creditLimit, setCreditLimit] = useState<number | null>(null);
+  const [creditAvailable, setCreditAvailable] = useState<number | null>(null);
+  const [creditStopList, setCreditStopList] = useState(false);
   const [creditSource, setCreditSource] = useState("");
   const [message, setMessage] = useState("");
   const [pickModalOpen, setPickModalOpen] = useState(false);
@@ -124,6 +126,10 @@ export default function PickListsPage() {
     }
     setCreditLimit(data.creditLimit);
     setCreditSource(data.source);
+    setCreditAvailable(
+      data.available != null ? Number(data.available) : Number(data.creditLimit),
+    );
+    setCreditStopList(Boolean(data.stopList));
     setCreditModalOpen(false);
   }
 
@@ -150,7 +156,10 @@ export default function PickListsPage() {
         {message && <p className="text-[13px]">{message}</p>}
         {creditLimit != null && (
           <p className="text-[13px]">
-            {t("limit")}: {creditLimit} AZN ({creditSource})
+            {t("limit")}: {creditLimit} AZN
+            {creditAvailable != null ? ` · ${t("available")}: ${creditAvailable} AZN` : ""}
+            {creditStopList ? ` · ${t("stopList")}` : ""}
+            {" "}({creditSource})
           </p>
         )}
 

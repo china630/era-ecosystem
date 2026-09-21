@@ -5,6 +5,7 @@ import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
 import type { AvailabilityPushRow } from '@/lib/channel/adapters/types';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 async function recordChannelSyncEvent(
   eventType: 'channel.push' | 'channel.pull',
@@ -15,6 +16,7 @@ async function recordChannelSyncEvent(
   try {
     await prisma.outboundEventLog.create({
       data: {
+        organizationId: requestOrganizationId(),
         eventType,
         payloadJson: JSON.stringify(payload),
         status: ok ? 'SENT' : 'FAILED',
@@ -33,7 +35,7 @@ async function recordChannelSyncEvent(
 export async function pushChannelAvailability(from: Date, to: Date) {
   const matrix = await getChannelAvailability(from, to);
   const channels = await prisma.channel.findMany({
-    where: { active: true },
+    where: { active: true, code: 'CHANNEX' },
     include: {
       roomMappings: true,
       rateMappings: { include: { ratePlan: true } },
@@ -45,22 +47,17 @@ export async function pushChannelAvailability(from: Date, to: Date) {
   for (const ch of channels) {
     for (const rt of matrix) {
       const roomMapping = ch.roomMappings.find((m) => m.roomTypeId === rt.roomTypeId);
-      const otaRoomCode = roomMapping?.otaRoomCode ?? rt.roomTypeCode;
+      if (!roomMapping?.otaRoomCode) continue;
+      const otaRoomCode = roomMapping.otaRoomCode;
 
-      const rateTargets =
-        ch.rateMappings.length > 0
-          ? ch.rateMappings.map((m) => ({
-              ratePlanId: m.ratePlanId,
-              ratePlanCode: m.ratePlan.code,
-              otaRateCode: m.otaRateCode,
-            }))
-          : [
-              {
-                ratePlanId: null as string | null,
-                ratePlanCode: 'BAR',
-                otaRateCode: undefined as string | undefined,
-              },
-            ];
+      const rateTargets = ch.rateMappings
+        .filter((m) => m.otaRateCode)
+        .map((m) => ({
+          ratePlanId: m.ratePlanId,
+          ratePlanCode: m.ratePlan.code,
+          otaRateCode: m.otaRateCode,
+        }));
+      if (rateTargets.length === 0) continue;
 
       for (const day of rt.days) {
         for (const rate of rateTargets) {
@@ -97,7 +94,7 @@ export async function pushChannelAvailability(from: Date, to: Date) {
     }
   }
 
-  const adapter = resolveChannelAdapter();
+  const adapter = await resolveChannelAdapter();
   const result = await adapter.pushAvailability(rows);
 
   await recordChannelSyncEvent(

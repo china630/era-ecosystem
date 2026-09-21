@@ -12,7 +12,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
-import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
 type FinanceLine = {
@@ -235,7 +235,7 @@ async function downloadStepTemplate(stepId: StepDef["id"], filename: string) {
 export default function MigrationSettingsPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
+  const perms = useOrgPermissions();
   const [activeStep, setActiveStep] = useState(0);
   const [isParsing, setIsParsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,7 +244,7 @@ export default function MigrationSettingsPage() {
   const [hrRows, setHrRows] = useState<HrLine[]>([]);
   const [inventoryRows, setInventoryRows] = useState<InventoryLine[]>([]);
 
-  const canImport = user?.role === "OWNER" || user?.role === "ACCOUNTANT";
+  const canImport = perms.canPostAccounting;
   const step = STEPS[activeStep];
 
   const previewRows = useMemo(() => {

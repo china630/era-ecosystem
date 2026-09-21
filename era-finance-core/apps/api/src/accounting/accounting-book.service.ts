@@ -13,9 +13,15 @@ import {
   LedgerMappingSetStatus,
   LedgerType,
   Prisma,
+  UserRole,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
+import {
+  assertMoneyPathBookNotManagement,
+  assertOpsBookIsNas,
+  filterBooksForRole,
+} from "./ops-book.guard";
 
 export type AccountingBookDb = PrismaService | Prisma.TransactionClient;
 
@@ -251,6 +257,73 @@ export class AccountingBookService {
     if (!book) {
       throw new NotFoundException("Active default operations accounting book not found");
     }
+    // Wave 5: ops forever NAS — refuse a corrupted MANAGEMENT default.
+    assertOpsBookIsNas(book);
+    return book;
+  }
+
+  /**
+   * Wave 5: set default ops book. Only NAS gaapKind is allowed (OPS_BOOK_MUST_BE_NAS).
+   */
+  async setDefaultOps(organizationId: string, bookId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const book = await this.getBook(organizationId, bookId, tx);
+      assertOpsBookIsNas(book);
+      await tx.accountingBook.updateMany({
+        where: { organizationId, isDefaultOps: true },
+        data: { isDefaultOps: false },
+      });
+      return tx.accountingBook.update({
+        where: { id: book.id },
+        data: { isDefaultOps: true },
+      });
+    });
+  }
+
+  /**
+   * Resolve book for a money path (cash/payroll/tax/stock). Rejects MANAGEMENT.
+   */
+  async resolveOpsBookForMoneyPath(
+    organizationId: string,
+    accountingBookId?: string | null,
+    db: AccountingBookDb = this.prisma,
+  ) {
+    if (accountingBookId?.trim()) {
+      const book = await this.getBook(organizationId, accountingBookId.trim(), db);
+      assertMoneyPathBookNotManagement(book);
+      assertOpsBookIsNas(book);
+      return book;
+    }
+    return this.resolveDefaultOpsBook(organizationId, db);
+  }
+
+  listBooksForRole(organizationId: string, role?: UserRole | string | null) {
+    return this.listBooks(organizationId).then((books) =>
+      filterBooksForRole(books, role),
+    );
+  }
+
+  async resolveManagementBook(
+    organizationId: string,
+    db: AccountingBookDb = this.prisma,
+  ) {
+    const book = await db.accountingBook.findFirst({
+      where: {
+        organizationId,
+        status: AccountingBookStatus.ACTIVE,
+        OR: [
+          { code: "MGMT" },
+          { gaapKind: AccountingBookGaapKind.MANAGEMENT },
+        ],
+      },
+      orderBy: [{ code: "asc" }],
+    });
+    if (!book) {
+      throw new NotFoundException({
+        code: "MGMT_BOOK_MISSING",
+        message: "Active MANAGEMENT accounting book not found (create code=MGMT)",
+      });
+    }
     return book;
   }
 
@@ -279,7 +352,7 @@ export class AccountingBookService {
       input.coaStrategy ??
       (input.gaapKind === AccountingBookGaapKind.MANAGEMENT &&
       input.seedCoa !== false
-        ? "TEMPLATE"
+        ? "NAS_CLONE"
         : "EMPTY");
     if (
       coaStrategy === "TEMPLATE" &&

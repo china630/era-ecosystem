@@ -1,3 +1,10 @@
+import {
+  ORG_NO_RE,
+  burnPasswordVerifyCost,
+  readStaffLoginJson,
+  resolveStaffLoginTenant,
+  satelliteRuntimeConfig,
+} from "@era/satellite-kit";
 import { z } from "zod";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { verifyPassword } from "@/lib/auth/password";
@@ -9,15 +16,15 @@ import {
   isElektrawebBridgeEnabled,
   isPolicyInboundEnabled,
   requirePolicyHotelId,
-  roleMayUseBridge,
 } from "@/lib/integration/elektraweb-bridge/config";
-import { satelliteRuntimeConfig } from "@era/satellite-kit";
+import { sessionMayUseBridge } from "@/lib/integration/elektraweb-bridge/grants";
+import { effectiveRolePermissions } from "@/lib/auth/permissions";
 
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
   /** Required on SHARED pool; appliance may omit (process bind). */
-  organizationId: z.string().uuid().optional(),
+  orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
 /**
@@ -29,23 +36,42 @@ export async function POST(request: Request) {
       return jsonError("Elektraweb bridge is disabled", 503);
     }
 
-    const body = schema.parse(await request.json());
-    if (
-      satelliteRuntimeConfig().deploymentTopology === "SHARED" &&
-      !body.organizationId?.trim()
-    ) {
-      return jsonError("organizationId is required on SHARED pool", 400);
+    const rawBody = await readStaffLoginJson(request);
+    if (!rawBody.ok) {
+      return jsonError(rawBody.error, rawBody.status);
     }
-    const user = await getUserByLogin(body.login, body.organizationId);
+    const body = schema.parse(rawBody.raw);
+    const tenant = await resolveStaffLoginTenant({
+      orgNo: body.orgNo,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+      request,
+    });
+    if (!tenant.ok) {
+      return jsonError(tenant.error, tenant.status);
+    }
+    const user = await getUserByLogin(body.login, tenant.organizationId);
     if (!user || user.status !== "ACTIVE") {
+      await burnPasswordVerifyCost(body.password);
       return jsonError("Invalid credentials", 401);
     }
     const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) return jsonError("Invalid credentials", 401);
 
     const role = user.role.code;
-    if (!roleMayUseBridge(role)) {
-      return jsonError("Forbidden: role cannot use Elektraweb bridge", 403);
+    const permissions = effectiveRolePermissions(
+      role,
+      user.role.permissionsJson,
+    );
+    if (
+      !sessionMayUseBridge({
+        login: user.login,
+        email: user.email ?? undefined,
+        role,
+        permissions,
+        isOwner: role === "BUSINESS_OWNER",
+      })
+    ) {
+      return jsonError("Forbidden: missing api:integration.elektraweb_bridge", 403);
     }
 
     const organizationId = user.organizationId;

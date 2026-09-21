@@ -6,6 +6,7 @@ import {
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
 import { SANATORIUM_DEFAULT_SETTINGS } from "@/domain/settings/scheduling-settings";
+import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import type {
   ProcedureOverQuotaPolicy,
   ProgramSchedulingMode,
@@ -68,6 +69,7 @@ export async function getClinicSettings() {
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
+    dailyPackageProcedureCap: clampDailyPackageProcedureCap(tenant.dailyPackageProcedureCap),
     checkInRequiresQr: tenant.checkInRequiresQr ?? true,
     procedureCheckInMode:
       tenant.procedureCheckInMode ??
@@ -128,6 +130,7 @@ export async function updateClinicSettings(input: {
   defaultProcedureGapMinutes?: number;
   peakModeEnabled?: boolean;
   peakDayEndHour?: number;
+  dailyPackageProcedureCap?: number;
   checkInRequiresQr?: boolean;
   autoNoShowAfterMin?: number | null;
   patientCardResultsPreview?: number;
@@ -207,6 +210,13 @@ export async function updateClinicSettings(input: {
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
       ...(planPage != null ? { patientCardPlanPageSize: planPage } : {}),
+      ...(input.dailyPackageProcedureCap != null
+        ? {
+            dailyPackageProcedureCap: clampDailyPackageProcedureCap(
+              input.dailyPackageProcedureCap,
+            ),
+          }
+        : {}),
     },
     update: {
       ...(input.clinicName ? { name: input.clinicName } : {}),
@@ -257,6 +267,13 @@ export async function updateClinicSettings(input: {
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
       ...(planPage != null ? { patientCardPlanPageSize: planPage } : {}),
+      ...(input.dailyPackageProcedureCap != null
+        ? {
+            dailyPackageProcedureCap: clampDailyPackageProcedureCap(
+              input.dailyPackageProcedureCap,
+            ),
+          }
+        : {}),
       ...(input.printLogoDataUrl !== undefined ? { printLogoDataUrl: input.printLogoDataUrl } : {}),
       ...(input.printClinicNameEn !== undefined ? { printClinicNameEn: input.printClinicNameEn } : {}),
       ...(input.printClinicNameRu !== undefined ? { printClinicNameRu: input.printClinicNameRu } : {}),

@@ -17,9 +17,10 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-CP-AUTH | Auth / SSO / hybrid RBAC | ✅ | [ ] | `cp-auth-negative.spec.ts`; UAT-SMOKE-RBAC § Deny | Negative: missing/invalid Bearer 401; spoofed SSO signature 401. Launch URL (CP-LAUNCH-01) still API / no UAT SHIPPED |
+| AC-CP-RBAC | Org-scoped Variant A permission matrix (CP doors) | 🟡 | [ ] | `cp-rbac-wave4.spec.ts`; UAT-SMOKE-RBAC §4; ADR cp-domain-permissions | **Out of BE rollup** (like HOT/CLI-RBAC). SCREEN until field UAT. Do not flip AC-CP-AUTH. |
 | AC-CP-BILL | Billing / entitlements / subscription | ✅ | [ ] | `cp-bill-negative.spec.ts`; `pricing-catalog-canon.spec.ts`; CP-BILLING | Negative: SUBSCRIPTION_MISSING 403; foreign invoice 403; non-owner billing 403. Catalog XOR 2026-09 |
 | AC-CP-MDM | MDM natural person identity | ✅ | [ ] | `cp-mdm-negative.spec.ts`; ORCH-MDM-* | Negative: missing/wrong internal service token → 401 |
-| AC-CP-WF | Workforce hub (hire, absence, seats, security) | ✅ | [ ] | `cp-wf-negative.spec.ts`; `workforce-timesheets.month.spec.ts`; CP-WF-* | Negative: hire role deny 403; PLATFORM_WORKFORCE_REQUIRED 403. Month grid landed — still not Pilot (no UAT-SMOKE) |
+| AC-CP-WF | Workforce hub (hire, absence, seats, security) | ✅ | [ ] | `cp-wf-negative.spec.ts`; `workforce-timesheets.month.spec.ts`; `workforce-provision.reprovision.spec.ts`; `roster-cycle.util.spec.ts`; `workforce-roster.materialize.spec.ts`; `workforce-holding.spec.ts`; `workforce-personnel-orders.wave4.spec.ts`; `workforce-attendance.wave6.spec.ts`; CP-WF-* | Negative: hire role deny 403; PLATFORM_WORKFORCE_REQUIRED 403. **Evrostar wave 3** federated HR (`CP-WF-GROUP-01` = API); **wave 4** order templates (`CP-WF-ORD-02` = API); **wave 6** attendance FaceID ingest (`CP-WF-ATT-01` = API, not SHIPPED) — [evrostar-wave-6.md](../runbooks/evrostar-wave-6.md) |
 | AC-CP-SA | Super-admin platform ops | ✅ | [ ] | `cp-sa-negative.spec.ts`; UAT-SMOKE-PLATFORM § Deny | Negative: non-super-admin → 403 |
 | AC-CP-INT | Integration audit boundaries (MDM/hub/events) | ✅ | [ ] | `cp-int-negative.spec.ts` + `npm run audit:integration:strict` | Negative: catalog gateway wrong/missing token 401; CI audit gate |
 | AC-CP-BIND | Satellite org UUID bind + sync endpoints | ✅ | [ ] | `cp-bind-negative.spec.ts`; ADR satellite-organization-bind | Negative: POST organization/bind bad/missing Bearer → 401 |
@@ -28,6 +29,7 @@
 
 **Edition / wave rollup (BE only)** = worst(AUTH, BILL, MDM, WF, SA, INT, BIND, CFG, TOPO) → **🟡** (TOPO).  
 AC-CP-TOPO is **in Scaffold BE rollup** (owner 2026-08-18). Do **not** mark TOPO Scaffold ✅ from API scaffold alone. TOPO ✅ (later) still ≠ SaaS pool sellable.  
+**AC-CP-RBAC is out of BE rollup** (matrix SCREEN / field UAT open) — does not darken Scaffold BE.  
 Do not call this table «product readiness».
 
 ### Residual register
@@ -35,6 +37,7 @@ Do not call this table «product readiness».
 | AC | Residual | Severity | Status |
 |----|----------|----------|--------|
 | AC-CP-AUTH | UAT RBAC lab signoff + launch-url SHIPPED | Code | Out of Scaffold ✅ (Pilot) |
+| AC-CP-RBAC | Field UAT matrix (Finance Wave 5 grant consume landed — AC-FIN-RBAC) | Code | Out of BE rollup (🟡 SCREEN) |
 | AC-CP-BILL | Field / owner billing UAT signoff | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-MDM | UAT MDM depth / companies UI | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-WF | UAT-SMOKE workforce screens | Code | Out of Scaffold ✅ (Pilot) |

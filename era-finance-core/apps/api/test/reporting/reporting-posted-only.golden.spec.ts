@@ -1,7 +1,7 @@
 import { Prisma } from "@erafinance/database";
 import { LedgerType } from "@erafinance/database";
 import { ReportingService } from "../../src/reporting/reporting.service";
-import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
+import { createMockAccountingBooks, createMockPostingResolver } from "../helpers/mock-posting-resolver";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 
 describe("ReportingService golden: posted-only trial balance", () => {
@@ -61,12 +61,7 @@ describe("ReportingService golden: posted-only trial balance", () => {
       { get: jest.fn() } as never,
       createMockPostingResolver(),
       {} as never,
-      {
-        resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
-          id: bookId ?? "book-nas",
-          gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
-        })),
-      } as never,
+      createMockAccountingBooks(),
     );
 
     const out = await svc.trialBalance(

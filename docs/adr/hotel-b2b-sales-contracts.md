@@ -48,4 +48,5 @@ Documented in [era-hotel-pms/doc/nafta/B2B-GATE.md](../era-hotel-pms/doc/nafta/B
 ## References
 
 - [hotel-module-taxonomy.md](./hotel-module-taxonomy.md) — `hotel_distribution`, `hotel_banquets`
+- [hotel-channel-manager-pack.md](./hotel-channel-manager-pack.md) — same SKU also covers live OTA (Channex) and direct IBE; contracts stay in this key
 - [INTEGRATION_SSO_EVENTS.md](../INTEGRATION_SSO_EVENTS.md) — optional future `SATELLITE_HOTEL_CONTRACT_ACTIVATED`

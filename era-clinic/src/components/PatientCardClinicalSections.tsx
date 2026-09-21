@@ -8,7 +8,6 @@ import {
   CARD_CONTAINER_CLASS,
   FieldSelect,
   LINK_ACCENT_CLASS,
-  MODAL_CHECKBOX_CLASS,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -20,14 +19,7 @@ import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { bakuDateTimeLabel } from "@/lib/baku-day";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
-import {
-  PhysioSiteChips,
-  type PhysioCatalogListItem,
-  type PhysioCatalogSite,
-  type PhysioChipsLabels,
-  type PhysioChipsValue,
-} from "@/components/physio/PhysioSiteChips";
-import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
+import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
   EpisodeAssignBlocks,
   EpisodeScheduleCards,
@@ -129,24 +121,6 @@ type CardSummary = {
   }>;
 };
 
-const EMPTY_PHYSIO: PhysioChipsValue = {
-  needsSite: true,
-  physioOrderFields: [],
-  allowedSiteCodes: [],
-  forceSiteTogether: false,
-  sitesHintKey: null,
-  siteIds: [],
-  siteApplyMode: null,
-  siteLaterality: {},
-  physioFields: {},
-  note: null,
-};
-
-function orderIdFromEvent(ev: TimelineEvent): string | null {
-  if (!ev.id.startsWith("procedure:")) return null;
-  return ev.id.slice("procedure:".length) || null;
-}
-
 function eventTitle(ev: TimelineEvent, locale: string): string {
   if (ev.titleL10n) return pickL10n(ev.titleL10n, locale);
   return ev.title;
@@ -219,62 +193,10 @@ export function PatientCardClinicalSections({
   const [planOffset, setPlanOffset] = useState(0);
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
-  const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
-  const [physioCatalog, setPhysioCatalog] = useState<PhysioCatalogSite[]>([]);
-  const [physioPrograms, setPhysioPrograms] = useState<PhysioCatalogListItem[]>([]);
-  const [physioSubstances, setPhysioSubstances] = useState<PhysioCatalogListItem[]>([]);
-  const [physioById, setPhysioById] = useState<Record<string, PhysioChipsValue>>({});
-  const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
   const [extrasModalOpen, setExtrasModalOpen] = useState(false);
   const [day1Busy, setDay1Busy] = useState(false);
-
-  const physioLabels: PhysioChipsLabels = useMemo(
-    () => buildPhysioChipsLabels(t),
-    [t],
-  );
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/physio-catalog");
-        const data = await res.json();
-        const sites = (data.sites ?? data.data?.sites ?? []) as PhysioCatalogSite[];
-        const programs = (data.programs ?? data.data?.programs ?? []) as PhysioCatalogListItem[];
-        const substances = (data.substances ?? data.data?.substances ?? []) as PhysioCatalogListItem[];
-        setPhysioCatalog(Array.isArray(sites) ? sites : []);
-        setPhysioPrograms(Array.isArray(programs) ? programs : []);
-        setPhysioSubstances(Array.isArray(substances) ? substances : []);
-      } catch {
-        /* chips stay empty until catalog loads */
-      }
-    })();
-  }, []);
-
-  const mergePhysioFromEvents = useCallback((events: TimelineEvent[]) => {
-    setPhysioById((prev) => {
-      const next = { ...prev };
-      for (const ev of events) {
-        const oid = orderIdFromEvent(ev);
-        if (!oid || !ev.physio) continue;
-        next[oid] = {
-          needsSite: ev.physio.needsSite,
-          physioOrderFields: ev.physio.physioOrderFields ?? [],
-          allowedSiteCodes: ev.physio.allowedSiteCodes ?? [],
-          forceSiteTogether: ev.physio.forceSiteTogether === true,
-          sitesHintKey: ev.physio.sitesHintKey ?? null,
-          siteIds: ev.physio.siteIds,
-          siteApplyMode:
-            ev.physio.forceSiteTogether === true ? "TOGETHER" : ev.physio.siteApplyMode,
-          siteLaterality: ev.physio.siteLaterality ?? {},
-          physioFields: ev.physio.physioFields ?? {},
-          note: ev.physio.note,
-        };
-      }
-      return next;
-    });
-  }, []);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -283,81 +205,8 @@ export function PatientCardClinicalSections({
     const data = await res.json();
     const row = (data.data ?? data) as CardSummary;
     setSummary(row);
-    mergePhysioFromEvents([...(row.proposedPreview ?? []), ...(row.planPreview ?? [])]);
     setLoading(false);
-  }, [patientRefId, episodeId, mergePhysioFromEvents, refreshKey]);
-
-  async function patchPhysio(
-    orderId: string,
-    patch: {
-      siteIds?: string[];
-      siteApplyMode?: "TOGETHER" | "TURN";
-      note?: string | null;
-      siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
-      physioFields?: PhysioChipsValue["physioFields"];
-    },
-  ) {
-    setPhysioById((prev) => {
-      const cur = prev[orderId] ?? EMPTY_PHYSIO;
-      return {
-        ...prev,
-        [orderId]: {
-          ...cur,
-          ...(patch.siteIds !== undefined ? { siteIds: patch.siteIds } : {}),
-          ...(patch.siteApplyMode ? { siteApplyMode: patch.siteApplyMode } : {}),
-          ...(patch.note !== undefined ? { note: patch.note } : {}),
-          ...(patch.siteLaterality
-            ? { siteLaterality: { ...cur.siteLaterality, ...patch.siteLaterality } }
-            : {}),
-          ...(patch.physioFields !== undefined ? { physioFields: patch.physioFields } : {}),
-        },
-      };
-    });
-    await fetch(`/api/procedures/${orderId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-  }
-
-  async function confirmOrders(orderIds: string[]) {
-    if (orderIds.length === 0) return;
-    setConfirmBusy(true);
-    setConfirmMsg(null);
-    const res = await fetch("/api/procedures/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderIds }),
-    });
-    setConfirmBusy(false);
-    if (!res.ok) {
-      setConfirmMsg(t("confirmFailed", { defaultValue: "Confirm failed" }));
-      return;
-    }
-    const data = (await res.json().catch(() => ({}))) as {
-      softWarn?: string;
-    };
-    setSelectedProposed(new Set());
-    setConfirmMsg(
-      data.softWarn
-        ? t("day1SoftWarn", {
-            defaultValue:
-              "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
-          })
-        : t("confirmOk", { defaultValue: "Plan confirmed" }),
-    );
-    await loadSummary();
-    if (planOpen) await loadPlan(true);
-  }
-
-  function toggleProposed(orderId: string) {
-    setSelectedProposed((prev) => {
-      const next = new Set(prev);
-      if (next.has(orderId)) next.delete(orderId);
-      else next.add(orderId);
-      return next;
-    });
-  }
+  }, [patientRefId, episodeId, refreshKey]);
 
   useEffect(() => {
     void loadSummary();
@@ -412,12 +261,11 @@ export function PatientCardClinicalSections({
       const row = data.data ?? data;
       const days = (row.days ?? []) as TimelineDay[];
       setPlanDays((prev) => (reset ? days : mergeDays(prev, days)));
-      mergePhysioFromEvents(days.flatMap((d) => d.events));
       setPlanOffset(row.nextOffset ?? offset);
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
     },
-    [patientRefId, episodeId, planOffset, mergePhysioFromEvents],
+    [patientRefId, episodeId, planOffset],
   );
 
   useEffect(() => {
@@ -449,12 +297,8 @@ export function PatientCardClinicalSections({
   }
 
   const { resultsPreview, planPreview } = summary;
-  const proposedPreview = summary.proposedPreview ?? [];
   const pendingExtras = summary.pendingExtras ?? [];
   const intakeChecklist = summary.intakeChecklist;
-  const allProposedIds = proposedPreview
-    .map(orderIdFromEvent)
-    .filter((id): id is string => Boolean(id));
 
   return (
     <div className="space-y-6">
@@ -679,6 +523,11 @@ export function PatientCardClinicalSections({
         <EpisodeScheduleCards
           title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
           emptyLabel={t("scheduleCardsEmpty", { defaultValue: "No scheduled procedures yet." })}
+          actions={
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlanOpen(true)}>
+              {t("openPlan")}
+            </button>
+          }
           items={planPreview.map((ev) => ({
             id: ev.id,
             title: eventTitle(ev, locale),
@@ -687,23 +536,6 @@ export function PatientCardClinicalSections({
             atLabel: ev.at ? bakuDateTimeLabel(ev.at) : undefined,
           }))}
         />
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlanOpen(true)}>
-            {t("openPlan")}
-          </button>
-          <button
-            type="button"
-            className={TABLE_ROW_ICON_BTN_CLASS}
-            aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
-            onClick={() =>
-              openPrint(
-                `/print/procedures/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
-              )
-            }
-          >
-            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
-          </button>
-        </div>
       </section>
 
       {episodeId ? (
@@ -835,6 +667,21 @@ export function PatientCardClinicalSections({
         title={t("planModalTitle")}
         onClose={() => setPlanOpen(false)}
         closeLabel={tc("close")}
+        maxWidthClass="max-w-4xl"
+        headerActions={
+          <button
+            type="button"
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
+            onClick={() =>
+              openPrint(
+                `/print/procedures/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
+              )
+            }
+          >
+            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+          </button>
+        }
       >
         {episodeId ? (
           <p className="mb-3 text-[13px]">
@@ -846,68 +693,17 @@ export function PatientCardClinicalSections({
             </Link>
           </p>
         ) : null}
-        {(() => {
-          const modalProposed = planDays
-            .flatMap((d) => d.events)
-            .filter((ev) => ev.status === "PROPOSED")
-            .map(orderIdFromEvent)
-            .filter((id): id is string => Boolean(id));
-          if (modalProposed.length === 0) return null;
-          return (
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={
-                  confirmBusy ||
-                  selectedProposed.size === 0 ||
-                  !anamnesisOk ||
-                  readOnly
-                }
-                onClick={() => void confirmOrders([...selectedProposed])}
-              >
-                {t("confirmSelected", { defaultValue: "Confirm selected" })}
-              </button>
-              {!anamnesisOk ? (
-                <p className={`text-[12px] text-amber-700`}>
-                  {t("anamnesisRequiredForConfirm", {
-                    defaultValue: "Fill anamnesis for this course before confirming procedures.",
-                  })}
-                </p>
-              ) : (
-              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                {t("firstDayConfirmHint", {
-                  defaultValue: "First day: confirm 2–3 procedures (FIFO prefix).",
-                })}
-              </p>
-              )}
-            </div>
-          );
-        })()}
-        <DayTimeline
-          days={planDays}
-          locale={dayLocale}
-          uiLocale={locale}
-          todayWord={t("today")}
-          empty={t("planEmpty")}
-          loading={planLoading}
-          loadingLabel={tc("loading")}
-          selectableProposed
-          selectedProposed={selectedProposed}
-          onToggleProposed={toggleProposed}
-          physioById={physioById}
-          physioCatalog={physioCatalog}
-          physioPrograms={physioPrograms}
-          physioSubstances={physioSubstances}
-          physioLabels={physioLabels}
-          onPhysioSitesChange={(id, siteIds) => void patchPhysio(id, { siteIds })}
-          onPhysioModeChange={(id, siteApplyMode) => void patchPhysio(id, { siteApplyMode })}
-          onPhysioNoteBlur={(id, note) => void patchPhysio(id, { note })}
-          onPhysioLateralityChange={(id, siteId, laterality) =>
-            void patchPhysio(id, { siteLaterality: { [siteId]: laterality } })
-          }
-          onPhysioFieldsChange={(id, physioFields) => void patchPhysio(id, { physioFields })}
-          proposedLabel={t("statusProposed", { defaultValue: "PROPOSED" })}
+        <EpisodeScheduleCards
+          emptyLabel={planLoading ? tc("loading") : t("planEmpty")}
+          items={planDays.flatMap((d) =>
+            d.events.map((ev) => ({
+              id: ev.id,
+              title: eventTitle(ev, locale),
+              subtitle: ev.subtitle,
+              status: ev.status,
+              atLabel: ev.at ? bakuDateTimeLabel(ev.at) : undefined,
+            })),
+          )}
         />
         {planHasMore ? (
           <button
@@ -919,6 +715,7 @@ export function PatientCardClinicalSections({
             {t("loadMore")}
           </button>
         ) : null}
+        <p className={`mt-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("tzHint")}</p>
       </ModalShell>
       <PrintLanguageDialog
         open={printOpen}
@@ -1007,143 +804,6 @@ function HistoryCards({
                       <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
                     </button>
                   ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function DayTimeline({
-  days,
-  locale,
-  uiLocale,
-  todayWord,
-  empty,
-  loading,
-  loadingLabel,
-  selectableProposed,
-  selectedProposed,
-  onToggleProposed,
-  physioById,
-  physioCatalog,
-  physioPrograms,
-  physioSubstances,
-  physioLabels,
-  onPhysioSitesChange,
-  onPhysioModeChange,
-  onPhysioNoteBlur,
-  onPhysioLateralityChange,
-  onPhysioFieldsChange,
-  proposedLabel,
-}: {
-  days: TimelineDay[];
-  locale: string;
-  uiLocale: string;
-  todayWord: string;
-  empty: string;
-  loading: boolean;
-  loadingLabel: string;
-  selectableProposed?: boolean;
-  selectedProposed?: Set<string>;
-  onToggleProposed?: (orderId: string) => void;
-  physioById?: Record<string, PhysioChipsValue>;
-  physioCatalog?: PhysioCatalogSite[];
-  physioPrograms?: PhysioCatalogListItem[];
-  physioSubstances?: PhysioCatalogListItem[];
-  physioLabels?: PhysioChipsLabels;
-  onPhysioSitesChange?: (orderId: string, siteIds: string[]) => void;
-  onPhysioModeChange?: (orderId: string, mode: "TOGETHER" | "TURN") => void;
-  onPhysioNoteBlur?: (orderId: string, note: string) => void;
-  onPhysioLateralityChange?: (
-    orderId: string,
-    siteId: string,
-    laterality: "LEFT" | "RIGHT" | "BOTH" | null,
-  ) => void;
-  onPhysioFieldsChange?: (orderId: string, fields: PhysioChipsValue["physioFields"]) => void;
-  proposedLabel?: string;
-}) {
-  if (loading && days.length === 0) {
-    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{loadingLabel}</p>;
-  }
-  if (days.length === 0) {
-    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{empty}</p>;
-  }
-  return (
-    <ol className="max-h-[60vh] space-y-6 overflow-y-auto border-l-2 border-slate-200 pl-4">
-      {days.map((day) => (
-        <li key={day.date}>
-          <h3 className="mb-2 text-[13px] font-semibold">
-            {formatDay(day.date, locale, todayWord, day.labelHint === "today")}
-          </h3>
-          <ul className="space-y-2">
-            {day.events.map((ev) => {
-              const oid = orderIdFromEvent(ev);
-              const isProposed = ev.status === "PROPOSED";
-              return (
-                <li
-                  key={ev.id}
-                  className={`rounded border p-2 text-[13px] ${
-                    isProposed
-                      ? "border-amber-200 bg-amber-50/50"
-                      : "border-emerald-100 bg-emerald-50/30"
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {selectableProposed && isProposed && oid ? (
-                      <input
-                        type="checkbox"
-                        className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
-                        checked={selectedProposed?.has(oid) ?? false}
-                        onChange={() => onToggleProposed?.(oid)}
-                      />
-                    ) : (
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${typeDot(ev.type)}`} />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      {ev.href ? (
-                        <Link href={ev.href} className={`font-medium ${LINK_ACCENT_CLASS}`}>
-                          {eventTitle(ev, uiLocale)}
-                        </Link>
-                      ) : (
-                        <span className="font-medium">{eventTitle(ev, uiLocale)}</span>
-                      )}
-                      <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {ev.subtitle} · {isProposed ? proposedLabel ?? ev.status : ev.status}
-                      </p>
-                      {oid && physioLabels && (isProposed || ev.status === "SCHEDULED") ? (
-                        <PhysioSiteChips
-                          value={physioById?.[oid] ?? ev.physio ?? EMPTY_PHYSIO}
-                          catalog={physioCatalog ?? []}
-                          programs={physioPrograms ?? []}
-                          substances={physioSubstances ?? []}
-                          locale={uiLocale}
-                          editable={isProposed || ev.status === "SCHEDULED"}
-                          labels={physioLabels}
-                          onSitesChange={(siteIds) => onPhysioSitesChange?.(oid, siteIds)}
-                          onModeChange={(mode) => onPhysioModeChange?.(oid, mode)}
-                          onNoteBlur={(note) => onPhysioNoteBlur?.(oid, note)}
-                          onLateralityChange={(siteId, laterality) =>
-                            onPhysioLateralityChange?.(oid, siteId, laterality)
-                          }
-                          onFieldsChange={(fields) => onPhysioFieldsChange?.(oid, fields)}
-                        />
-                      ) : null}
-                      {ev.resultSummary && ev.resultSummary.length > 0 ? (
-                        <dl className="mt-1 grid grid-cols-2 gap-1 text-[11px] sm:grid-cols-3">
-                          {ev.resultSummary.map((line) => (
-                            <div key={`${ev.id}-${line.code}`}>
-                              <span className="text-slate-500">{line.code}: </span>
-                              <span className="font-medium">{line.value}</span>
-                            </div>
-                          ))}
-                        </dl>
-                      ) : null}
-                    </div>
-                  </div>
                 </li>
               );
             })}

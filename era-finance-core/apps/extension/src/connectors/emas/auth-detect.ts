@@ -17,9 +17,13 @@ export function detectEmasAuthState(doc: Document): AuthState {
   return "unknown";
 }
 
-function normalizeVoen(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
-  return /^\d{10}$/.test(digits) ? digits : null;
+/** First standalone 10-digit VÖEN in text — never concatenate all page digits. */
+export function extractVoenFromText(raw: string): string | null {
+  const groups = raw.match(/\d+/g) ?? [];
+  for (const g of groups) {
+    if (g.length === 10) return g;
+  }
+  return null;
 }
 
 export async function detectEmasActiveVoen(doc: Document): Promise<string | null> {
@@ -32,10 +36,9 @@ export async function detectEmasActiveVoen(doc: Document): Promise<string | null
     }
     for (const node of nodes) {
       const text = (node.textContent ?? "").trim();
-      const voen = normalizeVoen(text);
+      const voen = extractVoenFromText(text);
       if (voen) return voen;
     }
   }
-  const bodyVoen = normalizeVoen(doc.body?.innerText ?? "");
-  return bodyVoen;
+  return extractVoenFromText(doc.body?.innerText ?? "");
 }

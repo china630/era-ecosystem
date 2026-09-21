@@ -110,8 +110,8 @@ export const SURFACE_ESWT: PhysioZoneCode[] = SURFACE_ANATOMICAL.filter(
  */
 export const HEART_SPARING_BATH: PhysioZoneCode[] = [ZONE.FULL_BODY, ZONE.TO_WAIST];
 
-/** Naftalan bath chips: full body + sitz (♀/♂ schedule SKUs). */
-export const BATH_FILL: PhysioZoneCode[] = [ZONE.FULL_BODY, ZONE.SITZ];
+/** Naftalan bath chips: full / sitz (above navel) / to waist. */
+export const BATH_FILL: PhysioZoneCode[] = [ZONE.FULL_BODY, ZONE.SITZ, ZONE.TO_WAIST];
 
 export const FOUR_CHAMBER_ONLY: PhysioZoneCode[] = [ZONE.FOUR_CHAMBER];
 export const FULL_BODY_ONLY: PhysioZoneCode[] = [ZONE.FULL_BODY];

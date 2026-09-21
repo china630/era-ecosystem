@@ -9,6 +9,8 @@ import {
 
 export type OperatingModeView = {
   organizationId: string;
+  name: string;
+  publicOrgNumber: number;
   mode: OrgOperatingModeDto;
   parentOrgId: string | null;
   fiscalRouting: OrgRoutingDto;
@@ -27,6 +29,8 @@ export class OrgOperatingModeService {
       where: { id: organizationId },
       select: {
         id: true,
+        name: true,
+        publicOrgNumber: true,
         operatingMode: true,
         parentOrgId: true,
         fiscalRouting: true,
@@ -36,6 +40,8 @@ export class OrgOperatingModeService {
     if (!org) throw new NotFoundException("Organization not found");
     return {
       organizationId: org.id,
+      name: org.name,
+      publicOrgNumber: org.publicOrgNumber,
       mode: org.operatingMode as OrgOperatingModeDto,
       parentOrgId: org.parentOrgId,
       fiscalRouting: org.fiscalRouting as OrgRoutingDto,
@@ -129,6 +135,8 @@ export class OrgOperatingModeService {
       },
       select: {
         id: true,
+        name: true,
+        publicOrgNumber: true,
         operatingMode: true,
         parentOrgId: true,
         fiscalRouting: true,
@@ -137,6 +145,8 @@ export class OrgOperatingModeService {
     });
     return {
       organizationId: updated.id,
+      name: updated.name,
+      publicOrgNumber: updated.publicOrgNumber,
       mode: updated.operatingMode as OrgOperatingModeDto,
       parentOrgId: updated.parentOrgId,
       fiscalRouting: updated.fiscalRouting as OrgRoutingDto,

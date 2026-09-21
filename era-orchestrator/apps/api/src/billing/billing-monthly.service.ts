@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   BillingStatus,
   Prisma,
+  shouldWaiveEraFoundation,
   SubscriptionInvoiceStatus,
 } from "@era365/database";
 import { Cron } from "@nestjs/schedule";
@@ -267,9 +268,14 @@ export class BillingMonthlyService {
     const trialCoversPeriod =
       sub.isTrial && trialEnd != null && trialEnd.getTime() > periodEnd.getTime();
 
-    const foundationAzn = trialCoversPeriod
-      ? 0
-      : await this.systemConfig.getFoundationMonthlyAzn();
+    const orgRow = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { subscriptionPlan: true, settings: true, activeModules: true },
+    });
+    const foundationAzn =
+      trialCoversPeriod || (orgRow && shouldWaiveEraFoundation(orgRow))
+        ? 0
+        : await this.systemConfig.getFoundationMonthlyAzn();
     if (foundationAzn > 0) {
       lines.push({
         description: `ERA Core (Foundation) — ${orgName} (VÖEN ${taxId})`,

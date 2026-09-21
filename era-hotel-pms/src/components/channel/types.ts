@@ -28,6 +28,9 @@ export type ChannelHealth = {
   envReady: boolean;
   envFlags: Record<string, boolean>;
   channelAutoPushEnabled: boolean;
+  provider?: string;
+  live?: boolean;
+  pendingAriJobs?: number;
   lastPushAt: string | null;
   lastPullAt: string | null;
   lastError: {

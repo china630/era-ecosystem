@@ -117,6 +117,15 @@ export async function getEmployeePrefill(employeeId: string): Promise<unknown> {
   });
 }
 
+/** Wave 7 — pending manual queue for current org (extension picker). */
+export async function getEmasQueue(status = "PENDING_MANUAL"): Promise<unknown> {
+  const org = await getActiveOrganizationId();
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiFetch<unknown>(`/api/hr/emas/queue${qs}`, {
+    organizationId: org,
+  });
+}
+
 export async function getInvoicePrefill(invoiceId: string): Promise<unknown> {
   const org = await getActiveOrganizationId();
   return apiFetch<unknown>(`/api/invoices/${invoiceId}/prefill`, {

@@ -110,6 +110,8 @@ type Episode = {
   canCloseWalkIn?: boolean;
   /** CLI-56 — at least one care-team doctor assigned. */
   hasCareTeam?: boolean;
+  /** W2 — package entitlement signal for list badge. */
+  packageSignal?: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED";
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
@@ -877,7 +879,28 @@ export default function SanatoriumPage() {
       {
         key: "program",
         header: t("colProgram"),
-        render: (e) => e.programInstance?.programCode ?? e.programCode ?? "—",
+        render: (e) => {
+          const code = e.programInstance?.programCode ?? e.programCode ?? "—";
+          const signal = e.packageSignal ?? "OK";
+          const showBadge = signal !== "OK";
+          return (
+            <div className="flex flex-wrap items-center gap-1">
+              <span>{code}</span>
+              {showBadge ? (
+                <span
+                  className={
+                    signal === "NO_PACKAGE_CONFIRMED"
+                      ? "inline-flex rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-700"
+                      : "inline-flex rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-900"
+                  }
+                  title={t(`packageSignal_${signal}`)}
+                >
+                  {t(`packageSignal_${signal}`)}
+                </span>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         key: "daysLeft",
@@ -1303,14 +1326,80 @@ export default function SanatoriumPage() {
                 {!selected.checkupCompletedAt && (
                   <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("checkupPendingHint")}</p>
                 )}
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={!canCompleteCheckup}
-                  onClick={() => setProgramModalOpen(true)}
-                >
-                  {t("completeCheckupSchedule")}
-                </button>
+                {selected.packageSignal && selected.packageSignal !== "OK" ? (
+                  <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                    {t(`packageSignal_${selected.packageSignal}`)}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    disabled={!canCompleteCheckup}
+                    onClick={() => setProgramModalOpen(true)}
+                  >
+                    {t("completeCheckupSchedule")}
+                  </button>
+                  {selected.packageSignal === "NO_PROGRAM_CODE" ||
+                  selected.packageSignal === "NO_PROGRAM" ? (
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={busy}
+                      onClick={() => {
+                        if (!selectedId) return;
+                        setBusy(true);
+                        void fetch(
+                          `/api/sanatorium/episodes/${selectedId}/confirm-no-package`,
+                          { method: "POST" },
+                        )
+                          .then(async (res) => {
+                            if (!res.ok) {
+                              const d = await res.json().catch(() => ({}));
+                              window.alert(
+                                (d as { error?: string }).error ?? "Confirm failed",
+                              );
+                              return;
+                            }
+                            await loadList();
+                            await loadDetail(selectedId);
+                          })
+                          .finally(() => setBusy(false));
+                      }}
+                    >
+                      {t("confirmNoPackage")}
+                    </button>
+                  ) : null}
+                  {selected.packageSignal === "NO_PACKAGE_CONFIRMED" ? (
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={busy}
+                      onClick={() => {
+                        if (!selectedId) return;
+                        setBusy(true);
+                        void fetch(
+                          `/api/sanatorium/episodes/${selectedId}/confirm-no-package`,
+                          { method: "DELETE" },
+                        )
+                          .then(async (res) => {
+                            if (!res.ok) {
+                              const d = await res.json().catch(() => ({}));
+                              window.alert(
+                                (d as { error?: string }).error ?? "Undo failed",
+                              );
+                              return;
+                            }
+                            await loadList();
+                            await loadDetail(selectedId);
+                          })
+                          .finally(() => setBusy(false));
+                      }}
+                    >
+                      {t("undoNoPackage")}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             )}
           </div>

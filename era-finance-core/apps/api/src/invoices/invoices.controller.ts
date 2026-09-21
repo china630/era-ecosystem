@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -15,10 +18,9 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { CheckQuota } from "../common/decorators/check-quota.decorator";
@@ -43,7 +45,7 @@ import { EqaimeSubmissionService } from "./eqaime-submission.service";
 @ApiTags("invoices")
 @ApiBearerAuth("bearer")
 @Controller("invoices")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class InvoicesController {
   constructor(
     private readonly invoices: InvoicesService,
@@ -57,16 +59,26 @@ export class InvoicesController {
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query("pageSize", new DefaultValuePipe(25), ParseIntPipe) pageSize: number,
     @Query("counterpartyId") counterpartyId?: string,
+    @Query("status") status?: string,
+    @Query("dueFrom") dueFrom?: string,
+    @Query("dueTo") dueTo?: string,
+    @Query("sortKey") sortKey?: string,
+    @Query("sortDir") sortDir?: string,
   ) {
     return this.invoices.list(orgId, {
       page,
       pageSize,
       counterpartyId: counterpartyId?.trim() || undefined,
+      status: status?.trim() || undefined,
+      dueFrom: dueFrom?.trim() || undefined,
+      dueTo: dueTo?.trim() || undefined,
+      sortKey: sortKey?.trim() || undefined,
+      sortDir: sortDir?.trim() || undefined,
     });
   }
 
   @Post(":id/payments")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "Записать оплату (частичную или полную). Статус PAID только при полной выплате.",
@@ -90,7 +102,7 @@ export class InvoicesController {
   }
 
   @Post(":id/credit-adjustment")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "Credit-adjust invoice remaining (Dr revenue/expense Cr 211) without changing original invoice lines",
@@ -101,11 +113,11 @@ export class InvoicesController {
     @Body() dto: CreateInvoiceCreditAdjustmentDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.invoices.applyCreditAdjustment(orgId, id, dto, requireOrgRole(user));
+    return this.invoices.applyCreditAdjustment(orgId, id, dto, requireOrgPolicySubject(user));
   }
 
   @Post("payments/allocate")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "Распределить один транш оплаты на несколько инвойсов контрагента (FIFO по дате счёта)",
@@ -120,6 +132,32 @@ export class InvoicesController {
       dto,
       requireOrgRole(user),
     );
+  }
+
+  @Get(":id/print-snapshot")
+  @ApiOperation({
+    summary:
+      "W3 commercial invoice print snapshot (flat placeholders + lines; not fiscal)",
+  })
+  printSnapshot(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Query("lang") lang?: string,
+  ) {
+    return this.invoices.getPrintSnapshot(orgId, id, lang);
+  }
+
+  @Get(":id/print-html")
+  @ApiOperation({
+    summary: "W3 vendor HTML for commercial invoice (from print snapshot)",
+  })
+  async printHtml(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Query("lang") lang?: string,
+  ) {
+    const html = await this.invoices.getPrintHtml(orgId, id, lang);
+    return { html };
   }
 
   @Get(":id/portal-link")
@@ -138,18 +176,18 @@ export class InvoicesController {
   }
 
   @Post("bulk-prefill")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({ summary: "Bulk DTO list for extension e-qaimə prefill" })
   getBulkPrefill(@OrganizationId() orgId: string, @Body() dto: BulkPrefillInvoicesDto) {
     return this.invoices.getExtensionPrefillBulk(orgId, dto.invoiceIds);
   }
 
   @Post("bulk-sync-result")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({ summary: "Persist bulk sync results for invoices (DVX)" })
   saveBulkSyncResult(
     @OrganizationId() orgId: string,
@@ -160,16 +198,16 @@ export class InvoicesController {
   }
 
   @Get(":id/eqaime/status")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({ summary: "e-Qaimə S2S status for sales invoice" })
   eqaimeStatus(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.eqaime.getStatus(orgId, id);
   }
 
   @Post(":id/eqaime/submit")
-  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "Submit sales invoice to DVX e-Qaimə S2S (ERA_EQAIME_S2S_ENABLED=1; 503 when disabled)",
@@ -185,8 +223,8 @@ export class InvoicesController {
   }
 
   @Post()
-  @UseGuards(QuotaGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(QuotaGuard)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @CheckQuota(QuotaResource.INVOICES_PER_MONTH)
   @ApiOperation({ summary: "Создать инвойс (DRAFT), поставить PDF в очередь" })
   create(@OrganizationId() orgId: string, @Body() dto: CreateInvoiceDto) {
@@ -196,7 +234,7 @@ export class InvoicesController {
   @Patch(":id")
   @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TRADE_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({ summary: "Update trade context / Incoterms / export fields (trade_pro)" })
   patch(
     @OrganizationId() orgId: string,
@@ -207,7 +245,7 @@ export class InvoicesController {
   }
 
   @Patch(":id/status")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
       "SENT: Дт 211 Кт 601 (+ склад). PAID: оплата остатка целиком (части — POST …/payments). Статус PARTIALLY_PAID только через платежи.",
@@ -218,17 +256,17 @@ export class InvoicesController {
     @Body() dto: UpdateInvoiceStatusDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.invoices.updateStatus(orgId, id, dto.status, requireOrgRole(user));
+    return this.invoices.updateStatus(orgId, id, dto.status, requireOrgPolicySubject(user));
   }
 
   @Post(":id/send-email")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({ summary: "Отправить PDF инвойса на email контрагента (counterparty.email)" })
   sendEmail(
     @OrganizationId() orgId: string,
     @Param("id") id: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.invoices.sendInvoiceEmail(orgId, id, requireOrgRole(user));
+    return this.invoices.sendInvoiceEmail(orgId, id, requireOrgPolicySubject(user));
   }
 }

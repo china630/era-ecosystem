@@ -21,6 +21,10 @@ describe("WorkforceAbsencesService", () => {
     audit as never,
     satelliteEvents as never,
     timesheets as never,
+    {
+      orderTypeForAbsenceKind: jest.fn().mockReturnValue(null),
+      ensureDraftForMutation: jest.fn(),
+    } as never,
   );
 
   beforeEach(() => {

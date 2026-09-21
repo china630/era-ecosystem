@@ -24,7 +24,9 @@
     "integration": "İnteqrasiya",
     "import": "Cutover import",
     "calendar": "Stol rezervasiyası",
-    "brand": "ERA F&B POS"
+    "brand": "ERA F&B POS",
+    "brandKafe": "ERA Kafe",
+    "access": "Giriş"
   },
   "home": {
     "title": "F&B POS",
@@ -54,7 +56,12 @@
     "tapOpen": "Çek açmaq üçün toxunun",
     "occupiedHint": "Dolu",
     "ticketOpened": "{table} masasında çek — {total} AZN",
-    "menuStrip": "Menyu (çek üçün masa açın)"
+    "menuStrip": "Menyu (çek üçün masa açın)",
+    "stopListTitle": "Bitdi / var",
+    "stopListHint": "Yeməyə toxunun: bitdi çekdən gizlədir.",
+    "openTableFirst": "Əvvəl masa və ya walk-in açın",
+    "soldOut": "Bitdi",
+    "dishAdded": "Əlavə olundu: {name}"
   },
   "kds": {
     "title": "Mətbəx ekranı"
@@ -169,6 +176,7 @@
     "selectTicket": "Çek seçin",
     "fireKitchen": "Mətbəxə",
     "payCash": "Nağd ödəniş",
+    "queuedOffline": "Oflayn saxlanıldı — şəbəkə qayıdanda göndəriləcək",
     "payCard": "Kartla ödəniş",
     "payTransfer": "Köçürmə ilə ödəniş",
     "sendToReception": "Resepsiyaya göndər",
@@ -213,7 +221,10 @@
     "openFailed": "Növbə açılmadı",
     "closeFailed": "Növbə bağlanmadı",
     "managerRequired": "Z-close üçün menecer rolu lazımdır",
-    "openTicketsBlock": "Z-close mümkün deyil: {count} açıq çek"
+    "openTicketsBlock": "Z-close mümkün deyil: {count} açıq çek",
+    "fiscalDevice": "Kassa aparatı (KKM)",
+    "bankTerminal": "Bank POS",
+    "autoDefault": "Defolt / avto"
   },
   "calendar": {
     "title": "Stol rezervasiyası",
@@ -229,13 +240,15 @@
   "common": {
     "azn": "AZN",
     "loading": "Yüklənir…",
-    "emDash": "—"
+    "emDash": "—",
+    "loadError": "Yükləmə xətası",
+    "saveError": "Saxlama xətası"
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
-    "organizationIdLabel": "Təşkilat ID (F&B)",
-    "organizationIdPlaceholder": "UUID — paylaşılan F&B pool üçün tələb olunur",
-    "organizationIdHint": "Dedicated appliance-də boş buraxın — process-bound org istifadə olunur.",
+    "organizationIdLabel": "Təşkilat kodu (ERA ID)",
+    "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
+    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz.",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",
@@ -295,5 +308,29 @@
     "nextPhase": "Növbəti faza",
     "prevPhase": "Əvvəlki faza",
     "phaseProgress": "Faza {current} / {total}"
+  },
+  "settingsAccess": {
+    "title": "Rol giriş",
+    "subtitle": "Hər F&B rolunun icazələrini tənzimləyin. FB_MANAGER matrisa ilə gedir (bypass yoxdur).",
+    "role": "Rol",
+    "clone": "Rol klonu",
+    "save": "Saxla",
+    "reset": "Standarta qaytar",
+    "delete": "Rolu sil",
+    "deleteInUse": "Silməzdən əvvəl istifadəçiləri köçürün",
+    "newCode": "Kod",
+    "newName": "Ad",
+    "cloneFrom": "Klon mənbəyi",
+    "create": "Yarat",
+    "saved": "İcazələr saxlanıldı",
+    "resetDone": "Standart bərpa olundu",
+    "created": "Rol yaradıldı",
+    "deleted": "Rol silindi",
+    "sessionRefreshed": "Sessiya icazələri yeniləndi",
+    "groupScreens": "Ekranlar",
+    "groupTill": "Kassa / çeklər",
+    "groupHotel": "Otel körpüsü",
+    "groupKds": "Mətbəx",
+    "groupAdmin": "Admin"
   }
 }

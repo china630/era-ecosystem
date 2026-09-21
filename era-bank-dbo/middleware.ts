@@ -4,6 +4,7 @@ import {
   DBO_SESSION_COOKIE,
   verifyDboSessionCookie,
 } from "@/lib/dbo-session-cookie";
+import { nextWithOptionalHostBoundOrg } from "@era/satellite-kit/auth/middleware-edge";
 
 const PUBLIC_PATHS = ["/login", "/manifest.webmanifest"];
 
@@ -45,6 +46,14 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
+    }
+    if (pathname === "/login") {
+      const reqHeaders = new Headers(request.headers);
+      return nextWithOptionalHostBoundOrg(
+        reqHeaders,
+        request.headers.get("x-forwarded-host") || request.headers.get("host"),
+        process.env.ERA_SATELLITE_KEY?.trim() || "banking_dbo",
+      );
     }
     return NextResponse.next();
   }

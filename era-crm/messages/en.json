@@ -1,9 +1,9 @@
 {
   "auth": {
     "loginFailed": "Login failed",
-    "organizationIdLabel": "Organization ID (CRM)",
-    "organizationIdPlaceholder": "UUID — required on shared CRM pool",
-    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -93,8 +93,7 @@
     "error": "Error",
     "loadingFailed": "Load failed",
     "saveFailed": "Save failed",
-    "check": "Check",
-    "cancel": "Cancel"
+    "check": "Check"
   },
   "leads": {
     "title": "ERA CRM Field",
@@ -134,8 +133,7 @@
     "estimatedAmount": "Estimated amount (AZN)",
     "finLookup": "Lookup FIN",
     "finLinked": "Person linked via MDM",
-    "pipelineBack": "Back to pipeline",
-    "businessDays": "biz days"
+    "pipelineBack": "Back to pipeline"
   },
   "visits": {
     "title": "Field visits",

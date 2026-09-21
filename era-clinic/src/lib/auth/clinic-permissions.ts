@@ -1,4 +1,9 @@
-import { CLINIC_ROLE, type ClinicRoleCode } from "@/lib/clinic-roles";
+import {
+  CLINIC_ROLE,
+  type ClinicRoleCode,
+} from "@/lib/clinic-roles";
+
+export { SYSTEM_CLINIC_ROLES, CONFIGURABLE_CLINIC_ROLES } from "@/lib/clinic-roles";
 
 /** Stable permission keys — SSOT for nav, middleware, API, and admin matrix. */
 export const CLINIC_PERMISSION = {
@@ -372,6 +377,21 @@ export function parseRolePermissions(json: string): ClinicPermission[] {
   }
 }
 
+/**
+ * True when permissionsJson is missing, blank, or not a JSON array (bootstrap fill).
+ * Valid `[]` is authoritative — does **not** need template.
+ */
+export function permissionsJsonNeedsTemplate(
+  permissionsJson: string | null | undefined,
+): boolean {
+  if (permissionsJson == null || !String(permissionsJson).trim()) return true;
+  try {
+    return !Array.isArray(JSON.parse(permissionsJson));
+  } catch {
+    return true;
+  }
+}
+
 export function serializeRolePermissions(perms: ClinicPermission[]): string {
   return JSON.stringify([...new Set(perms)].sort());
 }
@@ -380,16 +400,24 @@ export function defaultPermissionsForRole(
   roleCode: string,
 ): ClinicPermission[] {
   const code = roleCode as ClinicRoleCode;
-  return DEFAULT_ROLE_PERMISSIONS[code] ?? [...COMMON_AUTHENTICATED];
+  if (DEFAULT_ROLE_PERMISSIONS[code]) {
+    return DEFAULT_ROLE_PERMISSIONS[code];
+  }
+  // Unknown / custom role without stored JSON: do not invent RECEPTION-like grants.
+  return [CLINIC_PERMISSION.SCREEN_HOME];
 }
 
+/**
+ * Valid JSON array (incl. empty) is authoritative; invalid/missing → role template.
+ */
 export function effectiveRolePermissions(
   roleCode: string,
   permissionsJson: string,
 ): ClinicPermission[] {
-  const stored = parseRolePermissions(permissionsJson);
-  if (stored.length > 0) return stored;
-  return defaultPermissionsForRole(roleCode);
+  if (permissionsJsonNeedsTemplate(permissionsJson)) {
+    return defaultPermissionsForRole(roleCode);
+  }
+  return parseRolePermissions(permissionsJson);
 }
 
 export function permissionsJsonForRole(roleCode: string): string {
@@ -435,31 +463,122 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
   [
     { prefix: "/doctor/", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     { prefix: "/nurse/", permission: CLINIC_PERMISSION.SCREEN_NURSE },
+    { prefix: "/visits/", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
+    { prefix: "/lab-orders/", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
+    { prefix: "/print/extra-ticket", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
+    { prefix: "/print/lab-order", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
+    { prefix: "/print/checkup", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     { prefix: "/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER },
     { prefix: "/sanatorium/resources", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES },
     { prefix: "/sanatorium/", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM },
     { prefix: "/admin/", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   ];
 
-/** Resolve page pathname to a screen permission (null = auth-only, no extra gate). */
-export function routePermission(pathname: string): ClinicPermission | null {
-  if (pathname.startsWith("/print") || pathname.startsWith("/portal")) {
+/**
+ * Print forms with any-of grants (doctor desk OR the ops screen that opens the print).
+ * Nurse: procedures from patient plan; USM from lab workflow — not doctor-only.
+ */
+const ROUTE_ANY_OF_PREFIXES: Array<{
+  prefix: string;
+  permissions: ClinicPermission[];
+}> = [
+  {
+    prefix: "/print/procedures",
+    permissions: [
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    ],
+  },
+  {
+    prefix: "/print/usm",
+    permissions: [
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
+    ],
+  },
+];
+
+/** Auth-only staff pages: logged-in required, no screen permission. */
+export const AUTH_ONLY_STAFF_PAGE_PREFIXES = ["/account/password"] as const;
+
+export function isAuthOnlyStaffPage(pathname: string): boolean {
+  return AUTH_ONLY_STAFF_PAGE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/** Public staff paths (middleware skips auth). */
+export const PUBLIC_STAFF_PAGE_PREFIXES = [
+  "/login",
+  "/sso/callback",
+  "/help",
+  "/portal",
+  "/booking",
+  "/images",
+] as const;
+
+export function isPublicStaffPage(pathname: string): boolean {
+  return PUBLIC_STAFF_PAGE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/**
+ * Resolve page pathname → permission(s) for middleware (any-of when length > 1).
+ * Null only for auth-only allowlist or paths handled specially (e.g. visit-exam print).
+ * Unknown staff paths must not return null — fail-closed via middleware.
+ */
+export function routePermissions(pathname: string): ClinicPermission[] | null {
+  if (isAuthOnlyStaffPage(pathname)) {
     return null;
   }
+  // visit-exam: middleware uses sessionMayPrintVisitExam (any-of api:visits|api:patients).
+  if (
+    pathname === "/print/visit-exam" ||
+    pathname.startsWith("/print/visit-exam/")
+  ) {
+    return null;
+  }
+  for (const { prefix, permissions } of ROUTE_ANY_OF_PREFIXES) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return permissions;
+    }
+  }
   if (pathname === "/admin" || pathname === "/admin/") {
-    return CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA;
+    return [CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA];
   }
   const exact = ROUTE_PERMISSION_EXACT[pathname];
-  if (exact) return exact;
+  if (exact) return [exact];
   for (const { prefix, permission } of ROUTE_PREFIX_PERMISSIONS) {
     if (pathname === prefix || pathname.startsWith(prefix)) {
-      return permission;
+      return [permission];
     }
   }
   if (pathname.startsWith("/patients/")) {
-    return CLINIC_PERMISSION.SCREEN_PATIENTS;
+    return [CLINIC_PERMISSION.SCREEN_PATIENTS];
   }
+  // Fail-closed sentinel for unmapped staff UI (middleware denies when still null).
   return null;
+}
+
+/** First required permission (compat / inventory); prefer routePermissions in middleware. */
+export function routePermission(pathname: string): ClinicPermission | null {
+  const all = routePermissions(pathname);
+  return all?.[0] ?? null;
+}
+
+/**
+ * True when stored JSON is a valid array that is not identical to the system template
+ * (includes intentional `[]`).
+ */
+export function rolePermissionsAreCustomized(
+  roleCode: string,
+  permissionsJson: string,
+): boolean {
+  if (permissionsJsonNeedsTemplate(permissionsJson)) return false;
+  const stored = serializeRolePermissions(parseRolePermissions(permissionsJson));
+  if (stored === "[]") return true;
+  return stored !== permissionsJsonForRole(roleCode);
 }
 
 /**
@@ -505,6 +624,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
+  { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
@@ -553,6 +673,7 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/identity/guest-qr", permission: CLINIC_PERMISSION.API_IDENTITY_GUEST_QR },
   { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
+  { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/insurance/check", permission: CLINIC_PERMISSION.API_PATIENTS },
   { prefix: "/api/nurse/qr-scan", permission: CLINIC_PERMISSION.API_NURSE_QR_SCAN },
   { prefix: "/api/nurse/overdue", permission: CLINIC_PERMISSION.API_NURSE_OVERDUE },
@@ -589,12 +710,3 @@ export function navEntryPermission(
   if (!p || typeof p !== "string") return null;
   return isClinicPermission(p) ? p : null;
 }
-
-export const CONFIGURABLE_CLINIC_ROLES: ClinicRoleCode[] = [
-  CLINIC_ROLE.RECEPTION,
-  CLINIC_ROLE.DOCTOR,
-  CLINIC_ROLE.NURSE,
-  CLINIC_ROLE.FLOOR,
-  CLINIC_ROLE.LAB_TECH,
-  CLINIC_ROLE.CLINIC_ADMIN,
-];

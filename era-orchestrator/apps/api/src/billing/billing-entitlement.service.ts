@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma } from "@era365/database";
+import { isOneShotCatalogKey, Prisma, shouldWaiveEraFoundation } from "@era365/database";
 import { PricingService } from "../admin/pricing.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
@@ -217,9 +217,17 @@ export class BillingEntitlementService {
       trialLocked: trialActive && !activatedPremium.includes(key),
     }));
 
+    const orgRow = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { subscriptionPlan: true, settings: true, activeModules: true },
+    });
     const foundationMonthlyAzn = await this.systemConfig.getFoundationMonthlyAzn();
     const trialCoversFoundation = trialActive;
-    const foundation = trialCoversFoundation ? 0 : foundationMonthlyAzn;
+    const kafeWaivesFoundation = orgRow
+      ? shouldWaiveEraFoundation(orgRow)
+      : false;
+    const foundation =
+      trialCoversFoundation || kafeWaivesFoundation ? 0 : foundationMonthlyAzn;
     const premiumTotal = premiumModules
       .filter((p) => p.activated)
       .reduce((s, p) => s + p.monthlyAzn, 0);
@@ -230,7 +238,8 @@ export class BillingEntitlementService {
 
     return {
       currency: "AZN",
-      foundationMonthlyAzn: trialCoversFoundation ? 0 : foundationMonthlyAzn,
+      foundationMonthlyAzn:
+        trialCoversFoundation || kafeWaivesFoundation ? 0 : foundationMonthlyAzn,
       bundles,
       modules,
       allocation,
@@ -390,6 +399,7 @@ export class BillingEntitlementService {
     now: Date,
   ): ActiveModuleRow[] {
     return rows
+      .filter((r) => !isOneShotCatalogKey(r.moduleKey))
       .filter((r) =>
         isBundleActiveNow(
           {

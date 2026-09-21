@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
 
@@ -12,6 +13,7 @@ export class WorkforceSecurityService {
     private readonly entitlement: WorkforceEntitlementService,
     private readonly scope: WorkforceScopeService,
     private readonly seats: WorkforceSeatService,
+    private readonly employments: WorkforceEmploymentsService,
   ) {}
 
   async overview(organizationId: string) {
@@ -130,7 +132,14 @@ export class WorkforceSecurityService {
       }),
       this.prisma.workforceRoleBinding.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    const personIds = items
+      .map((row) => row.employment.globalPersonId)
+      .filter(Boolean);
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { items, total, page, pageSize, persons };
   }
 
   async auditLog(
@@ -141,11 +150,20 @@ export class WorkforceSecurityService {
       action?: string;
       globalPersonId?: string;
       cpEmploymentId?: string;
+      /** When set, union audit across holding orgs visible to this HR user. */
+      organizationIds?: string[];
     },
   ) {
+    const scopedIds =
+      filters?.organizationIds && filters.organizationIds.length > 0
+        ? filters.organizationIds
+        : [organizationId];
+    // Entitlement: active JWT org must have workforce hub.
     await this.entitlement.assertWorkforceHub(organizationId);
     const skip = (page - 1) * pageSize;
-    const where: Prisma.WorkforceAuditLogWhereInput = { organizationId };
+    const where: Prisma.WorkforceAuditLogWhereInput = {
+      organizationId: scopedIds.length === 1 ? scopedIds[0] : { in: scopedIds },
+    };
     if (filters?.action?.trim()) {
       where.action = filters.action.trim();
     }
@@ -164,6 +182,42 @@ export class WorkforceSecurityService {
       }),
       this.prisma.workforceAuditLog.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    const actorUserIds = [
+      ...new Set(
+        items
+          .map((row) => row.actorUserId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const globalPersonIds = [
+      ...new Set(
+        items
+          .map((row) => row.globalPersonId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const [users, persons] = await Promise.all([
+      actorUserIds.length > 0
+        ? this.prisma.user.findMany({
+            where: { id: { in: actorUserIds } },
+            select: { id: true, email: true },
+          })
+        : Promise.resolve([]),
+      globalPersonIds.length > 0
+        ? this.employments.resolvePersonProfiles(organizationId, globalPersonIds)
+        : Promise.resolve({}),
+    ]);
+    const actors = Object.fromEntries(
+      users.map((u) => [u.id, { email: u.email }]),
+    );
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      organizationIds: scopedIds,
+      persons,
+      actors,
+    };
   }
 }

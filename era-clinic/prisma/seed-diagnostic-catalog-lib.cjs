@@ -33,6 +33,140 @@ function loadJson(...parts) {
   return JSON.parse(fs.readFileSync(path.join(__dirname, "seed-data", ...parts), "utf8"));
 }
 
+function loadCatalogCodeCanonMap() {
+  return loadJson("catalog-code-canon.map.json");
+}
+
+async function remapExact(delegate, field, oldCode, newCode) {
+  try {
+    const r = await delegate.updateMany({
+      where: { [field]: oldCode },
+      data: { [field]: newCode },
+    });
+    return r.count;
+  } catch (e) {
+    if (e && e.code === "P2002") return 0;
+    throw e;
+  }
+}
+
+/**
+ * Rename pre-canon DiagnosticService / ServiceCatalogCache / operational SKU strings
+ * (ECG-12 → CARDIO-ECG, GYN-VISIT → VISIT-GYN, …) before JSON upsert so we do not
+ * duplicate rows. Map: prisma/seed-data/catalog-code-canon.map.json.
+ */
+async function applyCatalogCodeCanon(prisma, organizationId = seedOrgId()) {
+  const map = loadCatalogCodeCanonMap();
+  const entries = Object.entries(map).filter(([from, to]) => from && to && from !== to);
+  const counts = {
+    diagnosticRenamed: 0,
+    diagnosticMerged: 0,
+    cacheRenamed: 0,
+    cacheMerged: 0,
+    includesRewritten: 0,
+    skuRows: 0,
+  };
+
+  for (const [from, to] of entries) {
+    const oldSvc = await prisma.diagnosticService.findUnique({
+      where: { organizationId_code: { organizationId, code: from } },
+    });
+    const newSvc = await prisma.diagnosticService.findUnique({
+      where: { organizationId_code: { organizationId, code: to } },
+    });
+    if (oldSvc && !newSvc) {
+      await prisma.diagnosticService.update({
+        where: { id: oldSvc.id },
+        data: {
+          code: to,
+          serviceCode: oldSvc.serviceCode === from ? to : map[oldSvc.serviceCode] || oldSvc.serviceCode,
+        },
+      });
+      counts.diagnosticRenamed += 1;
+    } else if (oldSvc && newSvc) {
+      await prisma.labOrderItem.updateMany({
+        where: { diagnosticServiceId: oldSvc.id },
+        data: { diagnosticServiceId: newSvc.id },
+      });
+      await prisma.diagnosticService.update({
+        where: { id: oldSvc.id },
+        data: { active: false },
+      });
+      counts.diagnosticMerged += 1;
+    }
+
+    const oldCache = await prisma.serviceCatalogCache.findUnique({
+      where: { organizationId_code: { organizationId, code: from } },
+    });
+    const newCache = await prisma.serviceCatalogCache.findUnique({
+      where: { organizationId_code: { organizationId, code: to } },
+    });
+    if (oldCache && !newCache) {
+      await prisma.serviceCatalogCache.update({
+        where: { id: oldCache.id },
+        data: { code: to },
+      });
+      counts.cacheRenamed += 1;
+    } else if (oldCache && newCache) {
+      const oldAmt = Number(oldCache.amount);
+      const newAmt = Number(newCache.amount);
+      const patch = {};
+      if (newAmt === 0 && oldAmt > 0) {
+        patch.amount = oldCache.amount;
+        if (newCache.listAmount == null && oldCache.listAmount != null) {
+          patch.listAmount = oldCache.listAmount;
+        }
+      }
+      if (Object.keys(patch).length) {
+        await prisma.serviceCatalogCache.update({
+          where: { id: newCache.id },
+          data: patch,
+        });
+      }
+      await prisma.serviceCatalogCache.delete({ where: { id: oldCache.id } });
+      counts.cacheMerged += 1;
+    }
+
+    counts.skuRows += await remapExact(prisma.labOrder, "testCode", from, to);
+    counts.skuRows += await remapExact(prisma.labOrderItem, "serviceCode", from, to);
+    counts.skuRows += await remapExact(prisma.labOrderItem, "packageQuotaCode", from, to);
+    counts.skuRows += await remapExact(prisma.visitServiceLine, "serviceCode", from, to);
+    counts.skuRows += await remapExact(prisma.visitServiceLine, "packageQuotaCode", from, to);
+    counts.skuRows += await remapExact(prisma.clinicReceiptLine, "serviceCode", from, to);
+    counts.skuRows += await remapExact(prisma.procedureOrder, "procedureCode", from, to);
+    counts.skuRows += await remapExact(prisma.procedureChargeLog, "procedureCode", from, to);
+    counts.skuRows += await remapExact(prisma.programTemplateProcedure, "procedureCode", from, to);
+    counts.skuRows += await remapExact(prisma.programTemplateQuotaKnot, "procedureCode", from, to);
+    counts.skuRows += await remapExact(prisma.programTemplateBlockMember, "procedureCode", from, to);
+    counts.skuRows += await remapExact(prisma.programProcedureBalance, "procedureCode", from, to);
+  }
+
+  const withIncludes = await prisma.diagnosticService.findMany({
+    where: { organizationId, includesJson: { not: null } },
+    select: { id: true, includesJson: true },
+  });
+  for (const row of withIncludes) {
+    let arr;
+    try {
+      arr = JSON.parse(row.includesJson);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(arr)) continue;
+    const next = arr.map((c) => (typeof c === "string" && map[c]) || c);
+    if (JSON.stringify(next) !== JSON.stringify(arr)) {
+      await prisma.diagnosticService.update({
+        where: { id: row.id },
+        data: { includesJson: JSON.stringify(next) },
+      });
+      counts.includesRewritten += 1;
+    }
+  }
+
+  console.log("[catalog-code-canon] apply", organizationId, JSON.stringify(counts));
+  return counts;
+}
+
 async function upsertModality(prisma, organizationId, def, sortOrder) {
   return prisma.modality.upsert({
     where: { organizationId_code: { organizationId, code: def.code } },
@@ -111,6 +245,7 @@ async function upsertMetaField(prisma, field, sortOrder) {
 }
 
 async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
+  await applyCatalogCodeCanon(prisma, organizationId);
   const raw = loadJson("diagnostic-lab-catalog.json");
   const counts = {
     modalities: 0,
@@ -280,6 +415,8 @@ async function seedDiagnosticNafta(prisma, organizationId = seedOrgId()) {
 
 module.exports = {
   seedOrgId,
+  loadCatalogCodeCanonMap,
+  applyCatalogCodeCanon,
   seedDiagnosticBase,
   seedDiagnosticNafta,
 };

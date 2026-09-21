@@ -12,9 +12,8 @@ import { formatMoneyAzn } from "../../../lib/format-money";
 import { formatInvoiceStatus } from "../../../lib/invoice-status";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
-import { isRestrictedUserRole } from "../../../lib/role-utils";
+import { CP_PERMISSION, isRestrictedUserRole } from "../../../lib/role-utils";
 import { ActivityPanel } from "../../activity/ActivityPanel";
 import { SignatureProviderMark } from "../../signature-provider-mark";
 import { EntityAuditHistory } from "../../admin/entity-audit-history";
@@ -37,6 +36,11 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { SalesModalShell } from "./modal-shell";
 import {
+  ExtraAttributesBlock,
+  type ExtraFieldDefRow,
+} from "../../extra-fields/extra-attributes-block";
+import { PrintLanguageDialog } from "../../print/PrintLanguageDialog";
+import {
   computeInvoiceVatTotalsFromItems,
   previewCreditAdjustVat,
 } from "../../../lib/credit-adjust-vat-preview";
@@ -58,6 +62,7 @@ type InvoiceDetail = {
   currency: string;
   paidTotal: string;
   remaining: string;
+  extraAttributes?: Record<string, unknown>;
   counterpartyId: string;
   revenueRecognized: boolean;
   counterparty: { name: string; taxId: string; email: string | null };
@@ -103,9 +108,10 @@ export function ViewInvoiceModal({
   const router = useRouter();
   const id = invoiceId ?? "";
   const { token, ready } = useRequireAuth();
-  const { user } = useAuth();
-  const mayCommentActivity = !isRestrictedUserRole(user?.role ?? undefined);
-  const { canPostAccounting } = useOrgPermissions();
+  const perms = useOrgPermissions();
+  const mayCommentActivity = !isRestrictedUserRole(perms.subject);
+  const { canPostAccounting } = perms;
+  const canEditExtras = perms.can(CP_PERMISSION.API_INVOICES_UPDATE);
   const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [inv, setInv] = useState<InvoiceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +140,10 @@ export function ViewInvoiceModal({
   const [creditErr, setCreditErr] = useState<string | null>(null);
   const [viewTab, setViewTab] = useState<"details" | "history" | "activity">("details");
   const [shareBusy, setShareBusy] = useState(false);
+  const [extraDefs, setExtraDefs] = useState<ExtraFieldDefRow[]>([]);
+  const [extraDraft, setExtraDraft] = useState<Record<string, unknown>>({});
+  const [extraBusy, setExtraBusy] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!token || !id) {
@@ -148,7 +158,20 @@ export function ViewInvoiceModal({
       setError(`${t("invoiceView.loadError")}: ${res.status}`);
       setInv(null);
     } else {
-      setInv((await res.json()) as InvoiceDetail);
+      const data = (await res.json()) as InvoiceDetail;
+      setInv(data);
+      setExtraDraft(
+        data.extraAttributes && typeof data.extraAttributes === "object"
+          ? { ...data.extraAttributes }
+          : {},
+      );
+      const extras = await apiFetch(
+        "/api/extra-fields?entityType=FINANCE_INVOICE",
+      );
+      if (extras.ok) {
+        const list = (await extras.json()) as ExtraFieldDefRow[];
+        setExtraDefs(Array.isArray(list) ? list : []);
+      }
     }
     setLoading(false);
   }, [token, id, t]);
@@ -474,6 +497,9 @@ export function ViewInvoiceModal({
         >
           {shareBusy ? "…" : t("invoiceView.sharePortal")}
         </Button>
+        <Button type="button" variant="secondary" onClick={() => setPrintOpen(true)}>
+          {t("invoiceView.printCommercial")}
+        </Button>
       </>
     ) : null;
 
@@ -566,6 +592,52 @@ export function ViewInvoiceModal({
                       <span>{formatMoneyAzn(inv.remaining)}</span>
                     </div>
                   </div>
+                  {extraDefs.some((d) => d.active) ? (
+                    <div className="mt-4 space-y-2">
+                      <ExtraAttributesBlock
+                        defs={extraDefs}
+                        values={extraDraft}
+                        onChange={setExtraDraft}
+                        disabled={
+                          extraBusy ||
+                          !canEditExtras ||
+                          inv.status === "CANCELLED" ||
+                          inv.status === "LOCKED_BY_SIGNATURE"
+                        }
+                      />
+                      {canEditExtras &&
+                      inv.status !== "CANCELLED" &&
+                      inv.status !== "LOCKED_BY_SIGNATURE" ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={extraBusy}
+                          onClick={async () => {
+                            setExtraBusy(true);
+                            const res = await apiFetch(
+                              `/api/extra-fields/values/FINANCE_INVOICE/${inv.id}`,
+                              {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ extraAttributes: extraDraft }),
+                              },
+                            );
+                            setExtraBusy(false);
+                            if (!res.ok) {
+                              toast.error(t("common.saveErr"), {
+                                description: await res.text(),
+                              });
+                              return;
+                            }
+                            toast.success(t("common.save"));
+                            await load();
+                          }}
+                        >
+                          {t("extraFields.save")}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {showNettingCta && (
                     <div className="mt-6 space-y-2">
                       <p className="mb-2 text-[13px] text-[#7F8C8D]">{t("invoiceView.payByNettingHint")}</p>
@@ -942,6 +1014,13 @@ export function ViewInvoiceModal({
           </div>
         </div>
       )}
+
+      <PrintLanguageDialog
+        open={printOpen}
+        onClose={() => setPrintOpen(false)}
+        href={id ? `/print/invoice/${id}` : null}
+        title={t("invoiceView.printCommercial")}
+      />
     </>
   );
 }

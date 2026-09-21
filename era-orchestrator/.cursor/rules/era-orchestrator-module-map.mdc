@@ -23,6 +23,8 @@ globs:
 | `/satellites`, `/satellites/[slug]` | `app/satellites/**` | Public satellite pages (not `/industry/*` launcher) |
 | `/help`, `/terms`, `/partner` | `app/help`, `app/terms`, `app/partner` | Public |
 | `/portal/person-access` | `app/portal/person-access/page.tsx` | MDM Phase 2 citizen consent (guest QR session) |
+| `/agency/login` | `app/agency/login/page.tsx` | Hotel agency portal login → pick property → HMAC SSO |
+| `/buyer/login` | `app/buyer/login/page.tsx` | Trade-credit buyer portal login → pick seller org → HMAC SSO to Finance `/buyer` (`trade_credit_control`) |
 
 ## Post-login IA (workspace launcher)
 
@@ -36,7 +38,8 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/workspace` | `app/workspace/page.tsx` | Satellite cards (Open / Modules / Settings). Workforce tile only while `platform_workforce` is off (sidebar otherwise). No Hotel upsell banner; department UUIDs live on `/super-admin/orgs/[orgId]`. `POST connect-satellite`, `POST billing/toggle-module` |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
-| `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership |
+| `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership; invite `organizationRoleCode` from org roles |
+| `/settings/access` | `app/settings/access/page.tsx` | CP Variant A matrix — `GET/PATCH /platform/v1/access/roles`, catalog, clone/delete, `POST …/session/refresh-permissions`; ADR cp-domain-permissions |
 | `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium) |
 | `/settings/invoices` | `app/settings/invoices/page.tsx` | Platform subscription invoices + PDF |
 | `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
@@ -129,39 +132,56 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET/POST /platform/v1/workforce/employments` | `workforce-employments.controller.ts` — list/detail include active `roleBindings` (⋯ Reprovision + satellite filter) |
 | `GET/POST/PATCH /platform/v1/workforce/absences/*` | `workforce-absences.controller.ts` |
 | `GET/POST/PATCH /platform/v1/workforce/vacation-plans/*` | `workforce-vacation-plans.controller.ts` — department submit → HR approve; event `WORKFORCE_VACATION_PLAN_APPROVED` (Finance mirror HEADLESS — no local table yet) |
-| `GET/POST /platform/v1/workforce/personnel-orders/*` | hire/transfer/terminate printable orders + PDF — [ADR cp-personnel-orders](../../../docs/adr/cp-personnel-orders.md) |
+| `GET/POST /platform/v1/workforce/personnel-orders/*` | hire/transfer/terminate/LEAVE_ANNUAL printable orders + templates + `POST …/templates/preview-pdf` + cancel + PDF; `GET/PATCH …/personnel-orders/settings` → `settings.workforce.requireOrderIssuedBeforeTerminate` — [ADR cp-personnel-orders](../../../docs/adr/cp-personnel-orders.md); wave 4 [evrostar-wave-4](../../../docs/runbooks/evrostar-wave-4.md) |
 | `GET/POST /platform/v1/workforce/staff-schedule/*` | ştat cədvəli revisions (occupied/vacant snapshot) + approve + PDF |
-| `GET /platform/v1/workforce/timesheets?year=&month=` | month getOrCreate + active employments + MDM persons + entries |
+| `GET /platform/v1/workforce/holding-directory?holdingId=` | Federated HR people (paginate by person); holding ∩ OWNER/HR_MANAGER orgs; STANDALONE only |
+| `GET /platform/v1/workforce/persons/:globalPersonId/employments` | Person card; `holdingId` optional — omit unions OWNER/HR_MANAGER STANDALONE memberships (dual-VÖEN without Holding) |
+| `GET …/security/audit?holdingId=` | Optional union of visible HR org audit rows |
 | `POST …/timesheets/:id/autofill\|sync-absences\|approve` `PATCH …/entries/batch` | weekday WORK / Sat–Sun OFF; reconcile absence locks; skip APPROVED cells; empty month approve → 400; emits `WORKFORCE_TIMESHEET_APPROVED` with row `type` |
+| `GET /platform/v1/workforce/roster/preview?year=&month=&placeId=&orgUnitId=` | Read-only person × day plan grid (colors in UI); no timesheet write |
+| `POST …/timesheets/:id/materialize-roster?preserveManual=` | Labor roster → DRAFT cells (`source=roster_plan`); skip APPROVED / `lockedFromAbsence`; optional keep `ops_grid`; then `syncAbsences` (locks beat overrides) |
+| `GET/POST/PATCH /platform/v1/workforce/places\|shift-types\|shift-cycles\|brigades\|shift-assignments` + `PUT/DELETE day-overrides` + `POST roster/ensure-defaults` | CP-WF-ROSTER-01 labor constructor (org-scoped); Place ≠ OrgUnit; seeds E/N/OFFICE/H24 + 5/2, 2/2, 24/48 |
+| `POST /platform/v1/workforce/attendance/punches` | **Public** device ingest (`att_*` Bearer, optional HMAC + Nest `rawBody`) — CP-WF-ATT-01; Zod `@era/contracts` batch |
+| `GET/POST …/attendance/devices\|identities\|punches` + `POST rebuild\|import-csv` | HR admin; rebuild body or `?from&to`; CSV/xlsx; nightly cron Asia/Baku 00:15 |
 | `POST …/timesheets/approve` | **410** `TIMESHEET_USE_MONTH_APPROVE` (cherry-pick retired) |
 | `GET/POST /platform/v1/workforce/scope/*` | `workforce-org.controller.ts` |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/org-units/*` | `workforce-org-units.service.ts` + controller |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/positions/*` | `workforce-positions.controller.ts` — `?orgUnitId=` / `?status=`; archive rejects active employments |
-| `PATCH /platform/v1/workforce/employments/:id/reprovision` | `workforce-provision.service.ts` — `LOGIN_REQUIRES_BINDING` without active bindings; `LOGIN_TAKEN` via `assertSatelliteLoginAvailable`; partial unique index on `(organization_id, lower(satellite_staff_login))` for ACTIVE |
+| `PATCH /platform/v1/workforce/employments/:id/reprovision` | `workforce-provision.service.ts` — optional `satelliteKeys` replaces per-person access (revoke + `STAFF_DEACTIVATED` / upsert `HIRE_DEFAULT` + `STAFF_PROVISIONED`); omitted = classic fan-out; `LOGIN_REQUIRES_BINDING` only when login/pin sent with no bindings **and** `satelliteKeys` omitted; empty `satelliteKeys` does not throw; `LOGIN_TAKEN` via `assertSatelliteLoginAvailable`; partial unique index on `(organization_id, lower(satellite_staff_login))` for ACTIVE |
 | `GET/PUT/DELETE /platform/v1/workforce/role-templates/*` | `workforce-role-templates.controller.ts` |
 | `GET /platform/v1/workforce/security/overview` | summary widgets only (small tails) |
-| `GET /platform/v1/workforce/security/bindings` | paginated bindings (`page`/`pageSize`, search, orgUnit, position, satellite, role, provisionState) |
+| `GET /platform/v1/workforce/security/bindings` | paginated bindings (`page`/`pageSize`, search, orgUnit, position, satellite, role, provisionState) + MDM `persons` map |
 | `GET /platform/v1/workforce/security/audit` | paginated audit |
 | `GET/POST /platform/v1/workforce/manual-grants/*` (+ `POST :id/restore`) | `workforce-manual-grants.controller.ts` — list: `employmentId`, `satelliteKey`, `revoked`, `search`, `page`, `pageSize` → `{ items, total, page, pageSize }` |
 | `GET /platform/v1/workforce/export/*` | `workforce-export.controller.ts` |
 | `POST /platform/v1/workforce/import/roster` | `workforce-import.controller.ts` — CSV/xlsx hire (dryRun); empty satellites = headcount; `ADDITIONAL` = second job, no seat |
 | `POST /platform/v1/workforce/import/absences` | `workforce-import.controller.ts` — CSV/xlsx absences (dryRun); `staffCode`/`globalPersonId` |
 | `POST /platform/v1/workforce/import/org-structure` | `workforce-import.controller.ts` — CSV/xlsx units+positions upsert (dryRun); no deletes |
-| Web `/workspace/workforce/security` | matrix + seats; **ACTIVE positions only**; optimistic cell save (no full reload); client filters (search, org unit, position, satellite, access state); deep-link `?orgUnitId=` / `?positionId=`; SSOT `@/lib/workforce-satellites` |
+| Web `/workspace/workforce/security` | matrix + seats; **ACTIVE positions only**; optimistic cell save (no full reload); client filters (search, org unit `{ items }`, position, satellite, access state); deep-link `?orgUnitId=` / `?positionId=`; SSOT `@/lib/workforce-satellites` |
 | Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active |
-| Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); filters + provisionState column |
+| Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); person column; filters parse org-unit `{ items }` + provisionState |
 | Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
 | Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
-| Web `/workspace/workforce/employments` | hire; employee card; Login & access disabled without binding; provisionState Sync failed badge + eventual-sync hint; server page/filters (status/org/position/satellite); SSOT `@/lib/workforce-satellites` |
+| Web `/workspace/workforce/group` (+ `/persons/:id`) | Federated HR directory + person card; mutate via org switch — CP-WF-GROUP-01 |
+| Web `/workspace/workforce/employments` | hire; employee card; Login & access per-person satellite checkboxes (any non-terminated employment); provisionState Sync failed badge + eventual-sync hint; server page/filters (status/org/position/satellite); SSOT `@/lib/workforce-satellites` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
-| Web `/workspace/workforce/personnel-orders` | create/issue/PDF |
+| Web `/workspace/workforce/personnel-orders` | create/issue/cancel/PDF + HTML templates + terminate gate checkbox (settings PATCH) |
 | Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
 | Web `/workspace/workforce/timesheets` | month grid (click cycle, batch CatalogField, autofill / sync absences / approve) |
+| Web `/workspace/workforce/places` | labor places CRUD (CatalogField) — CP-WF-ROSTER-01 |
+| Web `/workspace/workforce/shifts` | shift types + cycles + brigades; seed defaults |
+| Web `/workspace/workforce/roster` | person×day plan grid (place color) + assignments + day override + materialize (`preserveManual`); sync absences after materialize |
+| Web `/workspace/workforce/attendance` | devices (token once), personRef map, UNMAPPED/OPEN queue, rebuild, CSV — CP-WF-ATT-01 |
 | Web `/workspace/workforce/export` | export + import roster/absences (xlsx/csv) |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |
+| `PATCH /internal/v1/workforce/employments/:id/finance-link` | `workforce-registry.controller.ts` — Finance hire-mirror write-back (`financeEmployeeId` on `WorkforceEmployment` + assignments); Bearer `CONTROL_PLANE_SERVICE_TOKEN` / internal token |
+| `GET /platform/v1/workforce/timesheets?year=&month=&page=&pageSize=` | Month grid; employment pagination; `employmentOptions` for batch (full ACTIVE roster) |
+| `POST …/timesheets/:id/autofill` | Chunked autofill + audit `TIMESHEET_AUTOFILL` |
+| `GET /internal/v1/workforce/owners/:ownerUserId/assignments` | `workforce-registry.controller.ts` — S2S assignment list |
+| `GET /internal/v1/workforce/organizations/:organizationId/assignments` | `workforce-registry.controller.ts` — S2S org assignments |
 | `GET /v1/admin/mdm/persons` | `admin-mdm.controller.ts` — paginated directory (FIN/DOB/name/phone filters) |
 | `POST /v1/admin/mdm/persons/lookup-by-fin\|resolve\|merge` | super-admin write; UI `/super-admin/mdm/persons` |
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | `mdm.controller.ts` — workforce batch display (+ `hrProfile` when grant allows) |

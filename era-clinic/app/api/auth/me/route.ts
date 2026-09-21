@@ -11,6 +11,7 @@ import {
   PRESETS_COOKIE,
   serializePresetsCookie,
 } from "@/domain/presets/preset-cookie";
+import { parseClinicRoleStaffKind } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
 import { fetchControlPlaneOrganizationName } from "@era/satellite-kit";
 
@@ -64,6 +65,7 @@ export async function GET() {
       email: user.email,
       fullName: user.fullName,
       role: user.role.code,
+      staffKind: parseClinicRoleStaffKind(user.role.staffKind),
       permissions,
       organizationId: organizationId || null,
       organizationName: controlPlaneName ?? tenant?.name ?? null,

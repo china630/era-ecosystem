@@ -24,6 +24,8 @@ const bodySchema = z.object({
   customHostname: z.string().max(253).optional(),
   reservationId: z.string().uuid().optional(),
   roomNumber: z.string().max(16).optional(),
+  fiscalDeviceId: z.string().min(1).max(64).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(
@@ -48,7 +50,6 @@ export async function POST(
     if (receipt.status === "PAID") return jsonOk(receipt);
 
     const {
-      fiscalizeForSatellite,
       isFiscalPaymentMethod,
       isFiscalSkipped,
       resolveOperatingMode,
@@ -89,19 +90,30 @@ export async function POST(
       }
       settlementChannel = "HOTEL_FOLIO";
     } else if (isFiscalPaymentMethod(body.paymentMethod) && !shouldFiscalizeOnParent(mode)) {
-      const outcome = await fiscalizeForSatellite(
-        {
-          documentRef: id,
-          amount: amountNet,
-          paymentMethod: body.paymentMethod,
-          outletCode: receipt.outlet.code,
-        },
-        orgId,
-      );
+      const { saleForSatelliteRouted } = await import("@era/satellite-kit");
+      const outcome = await saleForSatelliteRouted({
+        documentRef: id,
+        organizationId: orgId,
+        outletCode: receipt.outlet.code,
+        registerRef: receipt.register.code,
+        fiscalDeviceId: body.fiscalDeviceId,
+        bankTerminalId: body.bankTerminalId,
+        shiftFiscalDeviceId: receipt.shift.fiscalDeviceId ?? undefined,
+        shiftBankTerminalId: receipt.shift.bankTerminalId ?? undefined,
+        lines: receipt.lines.map((l) => ({
+          sku: l.plu ?? l.barcode ?? undefined,
+          name: l.description || "Item",
+          qty: Number(l.qty),
+          unitPrice: Number(l.unitPrice),
+        })),
+        tenders: [{ method: body.paymentMethod, amount: amountNet }],
+      });
       if (!isFiscalSkipped(outcome)) {
         fiscalNumber = outcome.receiptId;
       }
-      settlementChannel = "OWN_FISCAL";
+      settlementChannel = isFiscalSkipped(outcome)
+        ? "RECORDED_NO_DEVICE"
+        : "OWN_FISCAL";
     }
 
     const paid = await prisma.receipt.update({

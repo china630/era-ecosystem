@@ -7,7 +7,9 @@ export type BillableActionType =
   | "ORG_WORKSPACE_MONTHLY"
   | "WHATSAPP_ALERT"
   | "OCR_PAGE"
-  | "INVOICE_CREATED";
+  | "INVOICE_CREATED"
+  | "TRADE_CREDIT_BUYER"
+  | "TRADE_CREDIT_ENRICH";
 
 import { TariffTier } from "@erafinance/database";
 

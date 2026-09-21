@@ -35,19 +35,8 @@ type BanquetEvent = {
   referenceNo?: string | null;
 };
 
-function defaultLines(menuItems: MenuItem[]) {
-  const defaultLine = menuItems[0];
-  if (defaultLine) {
-    return [
-      {
-        description: defaultLine.name,
-        qty: 1,
-        unitPriceAzn: Number(defaultLine.priceAzn),
-        menuItemPlu: defaultLine.plu,
-      },
-    ];
-  }
-  return [{ description: "Table service", qty: 1, unitPriceAzn: 0 }];
+function defaultLines(_menuItems: MenuItem[]) {
+  return [];
 }
 
 export default function FloorPanel() {
@@ -64,22 +53,40 @@ export default function FloorPanel() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [outletSaving, setOutletSaving] = useState(false);
+  const [hotelMode, setHotelMode] = useState(true);
+  const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   const selectedOutlet = outlets.find((o) => o.id === selectedOutletId) ?? null;
   const outletCode = selectedOutlet?.code ?? "RESTAURANT";
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [tablesRes, menuRes, outletsRes, banquetsRes] = await Promise.all([
+    const [tablesRes, menuRes, outletsRes, editionRes, soldRes] = await Promise.all([
       fetch("/api/tables"),
       fetch("/api/menu?dailyOnly=true"),
       fetch("/api/outlets"),
-      fetch("/api/banquets"),
+      fetch("/api/edition"),
+      fetch("/api/menu/sold-out"),
     ]);
     const tablesData = await tablesRes.json();
     const menuData = await menuRes.json();
     const outletsData = await outletsRes.json();
-    const banquetsData = await banquetsRes.json();
+    const editionData = await editionRes.json().catch(() => ({}));
+    const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
+    setHotelMode(editionData?.hotelMode !== false && editionData?.edition !== "kafe");
+    setSoldOutIds(
+      new Set(
+        (Array.isArray(soldData.soldOut) ? soldData.soldOut : []).map(
+          (r: { menuItemId: string }) => r.menuItemId,
+        ),
+      ),
+    );
+    let banquetsData: BanquetEvent[] = [];
+    if (editionData?.hotelMode !== false && editionData?.edition !== "kafe") {
+      const banquetsRes = await fetch("/api/banquets");
+      banquetsData = await banquetsRes.json();
+    }
 
     setTables(Array.isArray(tablesData) ? tablesData : []);
     const items = Array.isArray(menuData)
@@ -144,6 +151,44 @@ export default function FloorPanel() {
       return;
     }
     setMessage(t(successKey, { total: Number(data.totalAzn).toFixed(2), ...vars }));
+    if (typeof data.id === "string") setActiveTicketId(data.id);
+    await load();
+  }
+
+  async function addDish(item: MenuItem) {
+    if (soldOutIds.has(item.id)) {
+      setMessage(t("soldOut"));
+      return;
+    }
+    if (!activeTicketId) {
+      setMessage(t("openTableFirst"));
+      return;
+    }
+    const res = await fetch(`/api/tickets/${activeTicketId}/lines`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: item.name,
+        qty: 1,
+        unitPriceAzn: Number(item.priceAzn),
+        menuItemPlu: item.plu,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setMessage(data.error ?? tc("failed"));
+      return;
+    }
+    setMessage(t("dishAdded", { name: item.name }));
+  }
+
+  async function toggleSoldOut(item: MenuItem) {
+    const next = !soldOutIds.has(item.id);
+    await fetch("/api/menu/sold-out", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ menuItemId: item.id, soldOut: next }),
+    });
     await load();
   }
 
@@ -237,6 +282,7 @@ export default function FloorPanel() {
             </button>
           </div>
         </div>
+        {hotelMode ? (
         <div>
           <p className="mb-2 text-sm font-semibold text-[#34495E]">{t("banquetTitle")}</p>
           <div className="flex flex-wrap gap-2">
@@ -267,33 +313,51 @@ export default function FloorPanel() {
             </button>
           </div>
         </div>
+        ) : (
+          <div>
+            <p className="mb-2 text-sm font-semibold text-[#34495E]">{t("stopListTitle")}</p>
+            <p className="text-xs text-[#7F8C8D]">{t("stopListHint")}</p>
+          </div>
+        )}
       </div>
 
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
         <>
-          {menuItems.some((m) => m.imageUrl) && (
+          {menuItems.length > 0 && (
             <div className={`${CARD_CLASS} mb-3 p-3`}>
               <p className="mb-2 text-xs text-[#7F8C8D]">{t("menuStrip")}</p>
               <div className="flex gap-2 overflow-x-auto">
-                {menuItems
-                  .filter((m) => m.imageUrl)
-                  .slice(0, 12)
-                  .map((m) => (
-                    <div
-                      key={m.id}
-                      className="w-20 shrink-0 text-center text-[10px] text-[#34495E]"
+                {menuItems.slice(0, 16).map((m) => (
+                    <div key={m.id} className="w-24 shrink-0 text-center text-[10px] text-[#34495E]">
+                    <button
+                      type="button"
+                      onClick={() => void addDish(m)}
+                      disabled={soldOutIds.has(m.id)}
+                      className={`w-full ${soldOutIds.has(m.id) ? "opacity-40" : ""}`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {m.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={m.imageUrl!}
+                        src={m.imageUrl}
                         alt={m.name}
                         className="mb-1 h-14 w-20 rounded object-cover"
                       />
+                      ) : (
+                        <div className="mb-1 h-14 w-20 rounded bg-[#EBEDF0]" />
+                      )}
                       {m.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-1 rounded bg-[#EBEDF0] px-1 py-0.5"
+                      onClick={() => void toggleSoldOut(m)}
+                    >
+                      {soldOutIds.has(m.id) ? "var" : "bitdi"}
+                    </button>
                     </div>
-                  ))}
+                ))}
               </div>
             </div>
           )}

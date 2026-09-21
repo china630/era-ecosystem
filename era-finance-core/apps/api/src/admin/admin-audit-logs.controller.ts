@@ -1,22 +1,22 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { AdminAuditLogsService } from "./audit.service";
 import { AdminAuditLogsQueryDto } from "./dto/admin-audit-logs-query.dto";
 
 @ApiTags("admin-audit")
 @ApiBearerAuth("bearer")
 @Controller("admin")
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.OWNER)
+@UseGuards(JwtAuthGuard)
+@Permissions(CP_PERMISSION.API_LEDGER_READ)
 export class AdminAuditLogsController {
   constructor(private readonly adminAuditLogs: AdminAuditLogsService) {}
 

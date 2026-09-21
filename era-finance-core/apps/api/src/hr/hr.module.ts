@@ -1,13 +1,13 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { BankingModule } from "../banking/banking.module";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AbsenceTypesController } from "./absence-types.controller";
 import { AbsenceTypesService } from "./absence-types.service";
 import { AbsencesController } from "./absences.controller";
 import { AbsencesService } from "./absences.service";
 import { EmployeesController } from "./employees.controller";
+import { InternalWorkforceEmployeesController } from "./internal-workforce-employees.controller";
 import { EmployeesService } from "./employees.service";
 import { EmasController } from "./emas.controller";
 import { EmasContractService } from "./emas-contract.service";
@@ -50,6 +50,8 @@ import { VacationSeniorityController } from "./vacation-seniority.controller";
 import { VacationSeniorityService } from "./vacation-seniority.service";
 import { ActiveListController } from "./active-list.controller";
 import { ActiveListService } from "./active-list.service";
+import { MgmtLaborDeltaController } from "./mgmt-labor-delta.controller";
+import { MgmtLaborDeltaService } from "./mgmt-labor-delta.service";
 
 @Module({
   imports: [
@@ -65,6 +67,7 @@ import { ActiveListService } from "./active-list.service";
   ],
   controllers: [
     EmployeesController,
+    InternalWorkforceEmployeesController,
     EmasController,
     PayrollController,
     PayrollComponentsController,
@@ -78,6 +81,7 @@ import { ActiveListService } from "./active-list.service";
     WorkSchedulesController,
     VacationSeniorityController,
     ActiveListController,
+    MgmtLaborDeltaController,
   ],
   providers: [
     EmployeesService,
@@ -100,13 +104,19 @@ import { ActiveListService } from "./active-list.service";
     HrStaffProvisioningService,
     HrRemindersService,
     EmployeeDocumentsService,
+    MgmtLaborDeltaService,
     BusinessTripsService,
     PerDiemNormsService,
     WorkSchedulesService,
     VacationSeniorityService,
     ActiveListService,
-    RolesGuard,
   ],
-  exports: [OrgStructureService, TimesheetService, AbsenceTypesService],
+  exports: [
+    OrgStructureService,
+    TimesheetService,
+    AbsenceTypesService,
+    MgmtLaborDeltaService,
+    EmasContractService,
+  ],
 })
 export class HrModule {}

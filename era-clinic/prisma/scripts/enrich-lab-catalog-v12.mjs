@@ -140,7 +140,7 @@ addA("LAB-RENAL", A("TCO2", "mmol/L", "Total CO2", "Общий CO2", "Ümumi CO2
   A("U-BIL", "", "Bilirubin", "Билирубин", "Bilirubin"),
 ].forEach((a) => addA("LAB-URINE", a));
 
-addA("LAB-VITMIN", A("FOL", "ng/mL", "Folate", "Фолат", "Folat"));
+addA("LAB-VITAMIN", A("FOL", "ng/mL", "Folate", "Фолат", "Folat"));
 addA("LAB-ENDO-HORM", A("PTH", "pg/mL", "PTH", "ПТГ", "PTH"));
 addA("LAB-ENDO-HORM", A("GH", "ng/mL", "Growth hormone", "СТГ", "Boy hormonu"));
 addA("LAB-ENDO-HORM", A("IGF1", "ng/mL", "IGF-1", "IGF-1", "IGF-1"));

@@ -70,7 +70,7 @@ Proposed — 2026-06-03. Доработки следующей версии по
 | Событие | Тип | Назначение |
 |---------|-----|------------|
 | `SATELLITE_HOTEL_GUEST_CHECKED_IN` | async | старт программы в клинике (несёт `globalPersonId`, `reservationId`, `roomNumber`, `programCode`, даты) |
-| `SATELLITE_HOTEL_GUEST_CHECKED_OUT` | async | закрытие/перенос процедур (в т.ч. досрочно) |
+| `SATELLITE_HOTEL_GUEST_CHECKED_OUT` | async | закрытие/перенос процедур при **stay** checkout (весь RoomStay). Companion Depart guest must not reuse this event — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D6 |
 | `SATELLITE_HOTEL_ROOM_CHANGED` | async | актуализация номера для folio-routing |
 | `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | async | retail write-off + charge на folio/Accounting |
 | `SATELLITE_CLINIC_PRESCRIPTION_ISSUED` | async | сигнал retail на сборку заказа |
@@ -85,7 +85,7 @@ Envelope расширяется полем `globalPersonId`. Регистрац�
 - Отдельный `era-spa-pos` (см. SV8).
 - Гостевой профиль/QR в Data Hub (см. SV3 — остаётся read-only).
 - Полноценный HL7/FHIR/DICOM в клинике (как и прежде).
-- **Реальная интеграция НБК/КИЗ KKM** — в этой версии только унификация в `@era/fiscal` (mock/stub сохраняются); production-драйвер НБК — future (см. [SANATORIUM-VNEXT-PLAN.md](../SANATORIUM-VNEXT-PLAN.md) § Future).
+- **Реальная интеграция НБК/КИЗ KKM** — в этой версии только унификация в `@era/fiscal` (mock/stub сохраняются); production-драйвер и каталог устройств — [era-fiscal-kkm-kit.md](./era-fiscal-kkm-kit.md) (Proposed).
 
 ## Последствия
 

@@ -25,6 +25,7 @@ import {
 } from "../../../../lib/workforce-satellites";
 import {
   isWorkforceGate403,
+  parseOrgUnitItems,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
@@ -225,7 +226,7 @@ export default function WorkforceSecurityMatrixPage() {
       setTemplates(Array.isArray(rows) ? rows : []);
     }
     if (ouRes.ok) {
-      const units = (await ouRes.json()) as OrgUnitOpt[];
+      const units = parseOrgUnitItems<OrgUnitOpt>(await ouRes.json());
       setOrgUnits(Array.isArray(units) ? units : []);
     }
     setLoading(false);
@@ -335,7 +336,10 @@ export default function WorkforceSecurityMatrixPage() {
                   setFilterOrgUnitId(String(next));
                   setFilterPositionId("");
                 }}
-                options={orgUnitOptions}
+                options={[
+                  { value: "", label: t("filterAll") },
+                  ...orgUnitOptions,
+                ]}
                 emptyLabel={t("filterAll")}
               />
               <CatalogField
@@ -343,10 +347,13 @@ export default function WorkforceSecurityMatrixPage() {
                 label={t("filterPosition")}
                 value={filterPositionId}
                 onChange={(next) => setFilterPositionId(String(next))}
-                options={filterPositionOptions.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
+                options={[
+                  { value: "", label: t("filterAll") },
+                  ...filterPositionOptions.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  })),
+                ]}
                 emptyLabel={t("filterAll")}
               />
               <CatalogField

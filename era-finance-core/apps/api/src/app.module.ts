@@ -65,6 +65,9 @@ import { SatelliteIntegrationModule } from "./integration/integration.module";
 import { IndustryHandoffsModule } from "./industry-handoffs/industry-handoffs.module";
 import { BillingModule } from "./billing/billing.module";
 import { DataHubModule } from "./data-hub/data-hub.module";
+import { TradeCreditModule } from "./trade-credit/trade-credit.module";
+import { ExtraFieldsModule } from "./extra-fields/extra-fields.module";
+import { SavedListViewsModule } from "./saved-list-views/saved-list-views.module";
 
 const apiEnvFiles = apiEnvFilePaths();
 const useControlPlaneAuth =
@@ -105,6 +108,8 @@ const useControlPlaneAuth =
     ContractsModule,
     GovBudgetModule,
     InvoicesModule,
+    ExtraFieldsModule,
+    SavedListViewsModule,
     BankingModule,
     KassaModule,
     FxModule,
@@ -130,6 +135,7 @@ const useControlPlaneAuth =
     SatelliteIntegrationModule,
     IndustryHandoffsModule,
     BillingModule,
+    TradeCreditModule,
   ],
   controllers: [AppController],
   providers: [
