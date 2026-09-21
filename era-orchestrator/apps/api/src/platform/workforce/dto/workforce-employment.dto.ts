@@ -48,6 +48,20 @@ export class ListWorkforceEmploymentsQueryDto {
   @IsString()
   satelliteKey?: string;
 
+  /** Name substring (≥2) or exact AZ FIN (7 chars). Never matches UUID/mask. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  q?: string;
+
+  @IsOptional()
+  @IsString()
+  sex?: string;
+
+  @IsOptional()
+  @IsString()
+  ageBucket?: string;
+
   @IsOptional()
   page?: string;
 

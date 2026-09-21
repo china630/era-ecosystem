@@ -3,6 +3,7 @@ import {
   normalizeSatelliteStaffLogin,
   resolveSatelliteStaffLogin,
   resolveSatelliteStaffPin,
+  requireSatelliteStaffPin,
   assertSatelliteLoginAvailable,
 } from "./workforce-staff-login";
 
@@ -29,10 +30,19 @@ describe("workforce-staff-login", () => {
     );
   });
 
-  it("resolveSatelliteStaffPin defaults to 0000", () => {
-    expect(resolveSatelliteStaffPin(null, undefined)).toBe("0000");
+  it("resolveSatelliteStaffPin returns null without inventing 0000", () => {
+    expect(resolveSatelliteStaffPin(null, undefined)).toBeNull();
     expect(resolveSatelliteStaffPin("1234", undefined)).toBe("1234");
     expect(resolveSatelliteStaffPin("1234", "9999")).toBe("9999");
+  });
+
+  it("requireSatelliteStaffPin throws PIN_REQUIRED when empty", () => {
+    expect(() => requireSatelliteStaffPin(null, undefined)).toThrow(
+      expect.objectContaining({
+        response: expect.objectContaining({ code: "PIN_REQUIRED" }),
+      }),
+    );
+    expect(requireSatelliteStaffPin("1234", undefined)).toBe("1234");
   });
 
   describe("assertSatelliteLoginAvailable", () => {

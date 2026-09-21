@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, MoreHorizontal, Plus, Send, Trash2, X } from "lucide-react";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -12,11 +11,15 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
@@ -79,9 +82,25 @@ export default function VacationPlansPage() {
   const [planYear, setPlanYear] = useState(new Date().getFullYear());
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
   const [busy, setBusy] = useState(false);
+  const [confirmAct, setConfirmAct] = useState<{
+    id: string;
+    action: "submit" | "approve" | "reject";
+  } | null>(null);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(rows);
+
+  useEffect(() => {
+    if (!moreMenuId) return;
+    const onDoc = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("[data-vacation-more-menu]")) return;
+      setMoreMenuId(null);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [moreMenuId]);
 
   const empOptions = useMemo(
     () =>
@@ -181,6 +200,7 @@ export default function VacationPlansPage() {
 
   async function act(id: string, action: "submit" | "approve" | "reject") {
     setBusy(true);
+    setConfirmAct(null);
     setError(null);
     try {
       const res = await workforceFetch(`vacation-plans/${id}/${action}`, {
@@ -216,17 +236,20 @@ export default function VacationPlansPage() {
         }
       />
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className={`${CARD_CONTAINER_CLASS} mb-0 flex flex-wrap items-center gap-3 p-4`}>
-        <label className="flex items-center gap-2 text-[13px] font-medium text-[#34495E]">
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setYear(new Date().getFullYear())}
+      >
+        <label className="text-[13px] font-medium text-[#34495E]">
           {t("year")}
           <input
             type="number"
-            className="w-24 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            className="mt-1 block w-24 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
           />
         </label>
-      </div>
+      </EraListFilterBar>
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
       ) : (
@@ -257,31 +280,66 @@ export default function VacationPlansPage() {
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
                     </td>
-                    <td className={`${DATA_TABLE_TD_CLASS} flex flex-wrap gap-2`}>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "DRAFT"}
-                        onClick={() => void act(r.id, "submit")}
-                      >
-                        {t("submit")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "SUBMITTED"}
-                        onClick={() => void act(r.id, "approve")}
-                      >
-                        {t("approve")}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        disabled={busy || r.status !== "SUBMITTED"}
-                        onClick={() => void act(r.id, "reject")}
-                      >
-                        {t("reject")}
-                      </button>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <div className="relative flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("submit")}
+                          aria-label={t("submit")}
+                          disabled={busy || r.status !== "DRAFT"}
+                          onClick={() =>
+                            setConfirmAct({ id: r.id, action: "submit" })
+                          }
+                        >
+                          <Send className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("approve")}
+                          aria-label={t("approve")}
+                          disabled={busy || r.status !== "SUBMITTED"}
+                          onClick={() =>
+                            setConfirmAct({ id: r.id, action: "approve" })
+                          }
+                        >
+                          <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+                        </button>
+                        <div className="relative" data-vacation-more-menu="">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("moreActions")}
+                            aria-label={t("moreActions")}
+                            disabled={busy}
+                            onClick={() =>
+                              setMoreMenuId((id) => (id === r.id ? null : r.id))
+                            }
+                          >
+                            <MoreHorizontal
+                              className="h-4 w-4 text-[#7F8C8D]"
+                              aria-hidden
+                            />
+                          </button>
+                          {moreMenuId === r.id ? (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[11rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-md">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || r.status !== "SUBMITTED"}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  setConfirmAct({ id: r.id, action: "reject" });
+                                }}
+                              >
+                                <X className="h-3.5 w-3.5 text-[#C0392B]" aria-hidden />
+                                {t("reject")}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -374,36 +432,32 @@ export default function VacationPlansPage() {
                     }
                   />
                 </label>
-                <label className="block text-[13px] font-medium text-[#34495E]">
-                  {t("startDate")}
-                  <input
-                    type="date"
-                    className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
-                    value={line.startDate}
-                    onChange={(e) =>
-                      setLines((prev) =>
-                        prev.map((l, i) =>
-                          i === idx ? { ...l, startDate: e.target.value } : l,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-                <label className="block text-[13px] font-medium text-[#34495E]">
-                  {t("endDate")}
-                  <input
-                    type="date"
-                    className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
-                    value={line.endDate}
-                    onChange={(e) =>
-                      setLines((prev) =>
-                        prev.map((l, i) =>
-                          i === idx ? { ...l, endDate: e.target.value } : l,
-                        ),
-                      )
-                    }
-                  />
-                </label>
+                <DatePicker
+                  label={t("startDate")}
+                  value={line.startDate}
+                  onChange={(iso) =>
+                    setLines((prev) =>
+                      prev.map((l, i) =>
+                        i === idx ? { ...l, startDate: iso } : l,
+                      ),
+                    )
+                  }
+                  placeholder={tCommon("datePlaceholder")}
+                  fluid
+                />
+                <DatePicker
+                  label={t("endDate")}
+                  value={line.endDate}
+                  onChange={(iso) =>
+                    setLines((prev) =>
+                      prev.map((l, i) =>
+                        i === idx ? { ...l, endDate: iso } : l,
+                      ),
+                    )
+                  }
+                  placeholder={tCommon("datePlaceholder")}
+                  fluid
+                />
                 {lines.length > 1 ? (
                   <button
                     type="button"
@@ -431,6 +485,45 @@ export default function VacationPlansPage() {
             {t("create")}
           </button>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={confirmAct != null}
+        title={
+          confirmAct?.action === "approve"
+            ? t("approve")
+            : confirmAct?.action === "reject"
+              ? t("reject")
+              : t("submit")
+        }
+        onClose={() => setConfirmAct(null)}
+        closeLabel={tCommon("close")}
+        maxWidthClass="max-w-sm"
+        footer={
+          <ModalFooter
+            onCancel={() => setConfirmAct(null)}
+            onSubmit={() => {
+              if (confirmAct) void act(confirmAct.id, confirmAct.action);
+            }}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={
+              confirmAct?.action === "approve"
+                ? t("approve")
+                : confirmAct?.action === "reject"
+                  ? t("reject")
+                  : t("submit")
+            }
+            busy={busy}
+          />
+        }
+      >
+        <p className="text-sm text-[#34495E]">
+          {confirmAct?.action === "approve"
+            ? t("confirmApprove")
+            : confirmAct?.action === "reject"
+              ? t("confirmReject")
+              : t("confirmSubmit")}
+        </p>
       </ModalShell>
     </div>
   );

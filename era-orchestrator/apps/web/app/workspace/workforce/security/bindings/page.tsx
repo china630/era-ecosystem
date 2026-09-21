@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -12,6 +11,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
+  EraListFilterBar,
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -202,7 +202,18 @@ export default function WorkforceSecurityBindingsPage() {
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
       ) : (
         <>
-          <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
+          <EraListFilterBar
+            className="mb-4"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setFilterText("");
+              setFilterOrgUnitId("");
+              setFilterPositionId("");
+              setFilterSatellite("");
+              setFilterRole("");
+              setFilterProvisionState("");
+            }}
+          >
             <label className="text-[13px] font-medium text-[#34495E]">
               {t("filterSearch")}
               <input
@@ -220,10 +231,7 @@ export default function WorkforceSecurityBindingsPage() {
                 setFilterOrgUnitId(String(next));
                 setFilterPositionId("");
               }}
-              options={[
-                { value: "", label: t("filterAll") },
-                ...orgUnits.map((u) => ({ value: u.id, label: u.name })),
-              ]}
+              options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
               emptyLabel={t("filterAll")}
             />
             <CatalogField
@@ -262,7 +270,7 @@ export default function WorkforceSecurityBindingsPage() {
               options={provisionStateOptions}
               emptyLabel={t("filterAll")}
             />
-          </div>
+          </EraListFilterBar>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>

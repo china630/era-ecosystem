@@ -171,9 +171,13 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
 | Web `/workspace/workforce/timesheets` | month grid (click cycle, batch CatalogField, autofill / sync absences / approve) |
 | Web `/workspace/workforce/places` | labor places CRUD (CatalogField) — CP-WF-ROSTER-01 |
-| Web `/workspace/workforce/shifts` | shift types + cycles + brigades; seed defaults |
+| Web `/workspace/workforce/shifts` | shift types + seed defaults; local subnav |
+| Web `/workspace/workforce/shifts/cycles` | shift cycles table |
+| Web `/workspace/workforce/shifts/brigades` | brigades CRUD modal |
 | Web `/workspace/workforce/roster` | person×day plan grid (place color) + assignments + day override + materialize (`preserveManual`); sync absences after materialize |
-| Web `/workspace/workforce/attendance` | devices (token once), personRef map, UNMAPPED/OPEN queue, rebuild, CSV — CP-WF-ATT-01 |
+| Web `/workspace/workforce/attendance` | punches (UNMAPPED/OPEN queue), rebuild, CSV; local subnav — CP-WF-ATT-01 |
+| Web `/workspace/workforce/attendance/devices` | devices table + add device (token once) |
+| Web `/workspace/workforce/attendance/identities` | personRef → employment identities |
 | Web `/workspace/workforce/export` | export + import roster/absences (xlsx/csv) |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |

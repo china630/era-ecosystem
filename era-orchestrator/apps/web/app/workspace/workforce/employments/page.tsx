@@ -26,13 +26,16 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
   DEFAULT_LIST_PAGE_SIZE,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
@@ -48,6 +51,7 @@ import {
   humanizeSatelliteRole,
   satelliteLoginHref,
 } from "../../../../lib/workforce-satellites";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type OrgUnitOpt = { id: string; name: string; status: string };
 type PositionOpt = {
@@ -134,35 +138,6 @@ const AGE_BUCKETS = [
   "60+",
 ] as const;
 
-type AgeBucket = (typeof AGE_BUCKETS)[number];
-
-function ageInBaku(birthDateIso: string | null | undefined): number | null {
-  if (!birthDateIso) return null;
-  const parts = birthDateIso.slice(0, 10).split("-").map(Number);
-  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return null;
-  const [y, m, d] = parts;
-  const todayStr = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  const [ty, tm, td] = todayStr.split("-").map(Number);
-  let age = ty - y;
-  if (tm < m || (tm === m && td < d)) age -= 1;
-  return age >= 0 ? age : null;
-}
-
-function ageBucket(age: number | null): AgeBucket | null {
-  if (age == null || age < 18) return null;
-  if (age <= 25) return "18-25";
-  if (age <= 35) return "26-35";
-  if (age <= 45) return "36-45";
-  if (age <= 55) return "46-55";
-  if (age <= 59) return "56-59";
-  return "60+";
-}
-
 function bloodLabel(code: string): string {
   const map: Record<string, string> = {
     A_POS: "A+",
@@ -221,7 +196,7 @@ export default function WorkforceEmploymentsPage() {
   const [loginCopied, setLoginCopied] = useState(false);
   const [orgCopied, setOrgCopied] = useState(false);
   const [loginEditLogin, setLoginEditLogin] = useState("");
-  const [loginEditPin, setLoginEditPin] = useState("0000");
+  const [loginEditPin, setLoginEditPin] = useState("");
   const [loginEditSatelliteKeys, setLoginEditSatelliteKeys] = useState<string[]>([]);
   const [loginModalError, setLoginModalError] = useState<string | null>(null);
 
@@ -248,7 +223,7 @@ export default function WorkforceEmploymentsPage() {
   const [resolveFirstName, setResolveFirstName] = useState("");
   const [resolveMiddleName, setResolveMiddleName] = useState("");
   const [resolveLastName, setResolveLastName] = useState("");
-  const [resolveSex, setResolveSex] = useState("UNKNOWN");
+  const [resolveSex, setResolveSex] = useState("");
   const [resolveBirthDate, setResolveBirthDate] = useState("");
   const [resolveBlood, setResolveBlood] = useState("");
   const [resolvedLabel, setResolvedLabel] = useState<string | null>(null);
@@ -267,7 +242,13 @@ export default function WorkforceEmploymentsPage() {
   const [enabling, setEnabling] = useState(false);
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
   const [hireLogin, setHireLogin] = useState("");
-  const [hirePin, setHirePin] = useState("0000");
+  const [hirePin, setHirePin] = useState("");
+  const [pendingConfirm, setPendingConfirm] = useState<
+    | null
+    | { kind: "hireWithoutFin" }
+    | { kind: "terminate"; emp: EmploymentRow }
+    | { kind: "reprovision"; emp: EmploymentRow }
+  >(null);
   const [dualVoenBanner, setDualVoenBanner] = useState<{
     globalPersonId: string;
     holdingId: string | null;
@@ -279,14 +260,15 @@ export default function WorkforceEmploymentsPage() {
   const [cardFirstName, setCardFirstName] = useState("");
   const [cardMiddleName, setCardMiddleName] = useState("");
   const [cardLastName, setCardLastName] = useState("");
-  const [cardSex, setCardSex] = useState("UNKNOWN");
+  const [cardSex, setCardSex] = useState("");
   const [cardBirthDate, setCardBirthDate] = useState("");
   const [cardPhone, setCardPhone] = useState("");
-  const [cardBlood, setCardBlood] = useState("UNKNOWN");
+  const [cardBlood, setCardBlood] = useState("");
   const [cardOrgUnitId, setCardOrgUnitId] = useState("");
   const [cardPositionId, setCardPositionId] = useState("");
 
   const [filterText, setFilterText] = useState("");
+  const debouncedFilterText = useDebouncedValue(filterText, 300);
   const [filterOrgUnitId, setFilterOrgUnitId] = useState(
     () => searchParams.get("orgUnitId") ?? "",
   );
@@ -375,6 +357,10 @@ export default function WorkforceEmploymentsPage() {
     if (filterOrgUnitId) qs.set("orgUnitId", filterOrgUnitId);
     if (filterPositionId) qs.set("positionId", filterPositionId);
     if (filterSatellite) qs.set("satelliteKey", filterSatellite);
+    const q = debouncedFilterText.trim();
+    if (q) qs.set("q", q);
+    if (filterSex) qs.set("sex", filterSex);
+    if (filterAge) qs.set("ageBucket", filterAge);
     const res = await workforceFetch(`employments?${qs}`);
     if (res.status === 403) {
       const body = (await res.json().catch(() => null)) as {
@@ -409,6 +395,9 @@ export default function WorkforceEmploymentsPage() {
     filterOrgUnitId,
     filterPositionId,
     filterSatellite,
+    debouncedFilterText,
+    filterSex,
+    filterAge,
   ]);
 
   useEffect(() => {
@@ -451,42 +440,13 @@ export default function WorkforceEmploymentsPage() {
     (p) => p.orgUnitId === transferOrgUnitId,
   );
 
-  const filteredRows = useMemo(() => {
-    const q = filterText.trim().toLowerCase();
-    return rows.filter((r) => {
-      const person = persons[r.globalPersonId];
-      if (filterSex) {
-        if ((person?.sex ?? "UNKNOWN") !== filterSex) return false;
-      }
-      if (filterAge) {
-        const bucket = ageBucket(ageInBaku(person?.birthDate));
-        if (bucket !== filterAge) return false;
-      }
-      if (q) {
-        const name = (person?.displayName ?? "").toLowerCase();
-        const fin = (person?.finMasked ?? "").toLowerCase();
-        if (
-          !name.includes(q) &&
-          !fin.includes(q) &&
-          !r.globalPersonId.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [rows, persons, filterText, filterSex, filterAge]);
-
-  const pagedRows = filteredRows;
-  const listTotal =
-    filterText.trim() || filterSex || filterAge
-      ? filteredRows.length
-      : serverTotal;
+  const pagedRows = rows;
+  const listTotal = serverTotal;
 
   useEffect(() => {
     setPage(1);
   }, [
-    filterText,
+    debouncedFilterText,
     filterOrgUnitId,
     filterPositionId,
     filterStatus,
@@ -521,7 +481,7 @@ export default function WorkforceEmploymentsPage() {
     setResolveFirstName("");
     setResolveMiddleName("");
     setResolveLastName("");
-    setResolveSex("UNKNOWN");
+    setResolveSex("");
     setResolveBirthDate("");
     setResolveBlood("");
     setGlobalPersonId("");
@@ -531,7 +491,7 @@ export default function WorkforceEmploymentsPage() {
     setHireDate(new Date().toISOString().slice(0, 10));
     setSatelliteKeys([]);
     setHireLogin("");
-    setHirePin("0000");
+    setHirePin("");
     setModalError(null);
     setHireOpen(true);
   }
@@ -542,7 +502,7 @@ export default function WorkforceEmploymentsPage() {
     setResolveFirstName("");
     setResolveMiddleName("");
     setResolveLastName("");
-    setResolveSex("UNKNOWN");
+    setResolveSex("");
     setResolveBirthDate("");
     setResolveBlood("");
     setGlobalPersonId(personId);
@@ -552,7 +512,7 @@ export default function WorkforceEmploymentsPage() {
     setHireDate(new Date().toISOString().slice(0, 10));
     setSatelliteKeys([]);
     setHireLogin("");
-    setHirePin("0000");
+    setHirePin("");
     setModalError(null);
     setHireOpen(true);
     const opsRes = await mdmWorkforceFetch(`${personId}/ops-profile`);
@@ -602,7 +562,7 @@ export default function WorkforceEmploymentsPage() {
     if (loginFlag === "1" && emp.status !== "TERMINATED") {
       setLoginEmp(emp);
       setLoginEditLogin(displayStaffLogin(emp));
-      setLoginEditPin(emp.satelliteStaffPin?.trim() || "0000");
+      setLoginEditPin(emp.satelliteStaffPin?.trim() || "");
       setLoginEditSatelliteKeys([
         ...new Set(
           (emp.roleBindings ?? [])
@@ -724,11 +684,19 @@ export default function WorkforceEmploymentsPage() {
   async function onHire(e: React.FormEvent) {
     e.preventDefault();
     if (busy || !globalPersonId.trim() || !orgUnitId || !positionId) return;
+    if (satelliteKeys.length > 0 && !hirePin.trim()) {
+      setModalError(t("pinRequired"));
+      return;
+    }
     const finEmpty = !resolveFin.trim() && !hireFinMasked;
     if (finEmpty) {
-      const ok = window.confirm(t("hireWithoutFinConfirm"));
-      if (!ok) return;
+      setPendingConfirm({ kind: "hireWithoutFin" });
+      return;
     }
+    await submitHire();
+  }
+
+  async function submitHire() {
     const hiredGpid = globalPersonId.trim();
     setBusy(true);
     setModalError(null);
@@ -752,7 +720,7 @@ export default function WorkforceEmploymentsPage() {
     setGlobalPersonId("");
     setSatelliteKeys([]);
     setHireLogin("");
-    setHirePin("0000");
+    setHirePin("");
     setHireOpen(false);
     await load();
     void checkDualVoenAfterHire(hiredGpid);
@@ -760,7 +728,10 @@ export default function WorkforceEmploymentsPage() {
   }
 
   async function terminateEmployment(emp: EmploymentRow) {
-    if (!window.confirm(t("terminateConfirm"))) return;
+    setPendingConfirm({ kind: "terminate", emp });
+  }
+
+  async function submitTerminate(emp: EmploymentRow) {
     setBusy(true);
     setError(null);
     const res = await workforceFetch(`employments/${emp.id}/terminate`, {
@@ -783,7 +754,21 @@ export default function WorkforceEmploymentsPage() {
       skipConfirm?: boolean;
     },
   ) {
-    if (!opts?.skipConfirm && !window.confirm(t("reprovisionConfirm"))) return;
+    if (!opts?.skipConfirm) {
+      setPendingConfirm({ kind: "reprovision", emp });
+      return;
+    }
+    return submitReprovision(emp, opts);
+  }
+
+  async function submitReprovision(
+    emp: EmploymentRow,
+    opts?: {
+      login?: string;
+      pin?: string;
+      satelliteKeys?: string[];
+    },
+  ) {
     setMoreMenuId(null);
     setBusy(true);
     setError(null);
@@ -811,6 +796,10 @@ export default function WorkforceEmploymentsPage() {
     e.preventDefault();
     if (!loginEmp || busy) return;
     const hasSatellites = loginEditSatelliteKeys.length > 0;
+    if (hasSatellites && !loginEditPin.trim()) {
+      setLoginModalError(t("pinRequired"));
+      return;
+    }
     const ok = await reprovisionEmployment(loginEmp, {
       login: hasSatellites ? loginEditLogin : undefined,
       pin: hasSatellites ? loginEditPin : undefined,
@@ -854,10 +843,10 @@ export default function WorkforceEmploymentsPage() {
     setCardFirstName(person?.firstName ?? "");
     setCardMiddleName(person?.middleName ?? "");
     setCardLastName(person?.lastName ?? "");
-    setCardSex(person?.sex ?? "UNKNOWN");
+    setCardSex(person?.sex && person.sex !== "UNKNOWN" ? person.sex : "");
     setCardBirthDate(person?.birthDate ?? "");
     setCardPhone("");
-    setCardBlood("UNKNOWN");
+    setCardBlood("");
     setCardOrgUnitId(emp.orgUnitId ?? emp.orgUnit?.id ?? "");
     setCardPositionId(emp.positionId ?? emp.position?.id ?? "");
 
@@ -1093,7 +1082,18 @@ export default function WorkforceEmploymentsPage() {
         </div>
       ) : null}
 
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
+      <EraListFilterBar
+        onReset={() => {
+          setFilterText("");
+          setFilterOrgUnitId("");
+          setFilterPositionId("");
+          setFilterSex("");
+          setFilterAge("");
+          setFilterStatus("");
+          setFilterSatellite("");
+        }}
+        resetLabel={tCommon("filterReset")}
+      >
         <label className="text-[13px] font-medium text-[#34495E]">
           {t("filterSearch")}
           <input
@@ -1141,39 +1141,34 @@ export default function WorkforceEmploymentsPage() {
           options={ageOptions}
           emptyLabel={t("filterAll")}
         />
-        <label className="text-[13px] font-medium text-[#34495E]">
-          {t("filterStatus")}
-          <select
-            className="mt-1 block min-w-[8rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="">{t("filterAll")}</option>
-            <option value="ACTIVE">{t("statusActive")}</option>
-            <option value="TERMINATED">{t("statusTerminated")}</option>
-          </select>
-        </label>
-        <label className="text-[13px] font-medium text-[#34495E]">
-          {t("filterSatellite")}
-          <select
-            className="mt-1 block min-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={filterSatellite}
-            onChange={(e) => setFilterSatellite(e.target.value)}
-          >
-            <option value="">{t("filterAll")}</option>
-            {satelliteFilterOptions.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("filterStatus")}
+          value={filterStatus}
+          onChange={(next) => setFilterStatus(String(next))}
+          options={[
+            { value: "ACTIVE", label: t("statusActive") },
+            { value: "TERMINATED", label: t("statusTerminated") },
+          ]}
+          emptyLabel={t("filterAll")}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("filterSatellite")}
+          value={filterSatellite}
+          onChange={(next) => setFilterSatellite(String(next))}
+          options={satelliteFilterOptions.map((s) => ({
+            value: s.key,
+            label: s.label,
+          }))}
+          emptyLabel={t("filterAll")}
+        />
+      </EraListFilterBar>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : filteredRows.length === 0 ? (
+      ) : pagedRows.length === 0 ? (
         <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>
           {t("empty")}
         </div>
@@ -1326,7 +1321,7 @@ export default function WorkforceEmploymentsPage() {
                                   setMoreMenuId(null);
                                   setLoginEmp(r);
                                   setLoginEditLogin(displayStaffLogin(r));
-                                  setLoginEditPin(r.satelliteStaffPin?.trim() || "0000");
+                                  setLoginEditPin(r.satelliteStaffPin?.trim() || "");
                                   setLoginEditSatelliteKeys([
                                     ...new Set(
                                       (r.roleBindings ?? [])
@@ -1421,7 +1416,6 @@ export default function WorkforceEmploymentsPage() {
                 className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
                 value={resolveFin}
                 onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
-                placeholder="1A2B3C4"
               />
             </label>
           </div>
@@ -1431,18 +1425,17 @@ export default function WorkforceEmploymentsPage() {
               label={t("fieldSex")}
               value={resolveSex}
               onChange={(next) => setResolveSex(String(next))}
-              options={sexOptions}
-              emptyLabel={null}
+              options={sexOptions.filter((o) => o.value !== "UNKNOWN")}
+              emptyLabel={t("selectSex")}
+              required
             />
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldBirthDate")}
-              <input
-                type="date"
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveBirthDate}
-                onChange={(e) => setResolveBirthDate(e.target.value)}
-              />
-            </label>
+            <DatePicker
+              label={t("fieldBirthDate")}
+              value={resolveBirthDate}
+              onChange={setResolveBirthDate}
+              placeholder={tCommon("datePlaceholder")}
+              fluid
+            />
           </div>
           <CatalogField
             kind="CLOSED_SMALL"
@@ -1507,16 +1500,14 @@ export default function WorkforceEmploymentsPage() {
             emptyLabel={t("selectPosition")}
             disabled={filteredPositions.length === 0}
           />
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("hireDate")}
-            <input
-              type="date"
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={hireDate}
-              onChange={(e) => setHireDate(e.target.value)}
-              required
-            />
-          </label>
+          <DatePicker
+            label={t("hireDate")}
+            value={hireDate}
+            onChange={setHireDate}
+            placeholder={tCommon("datePlaceholder")}
+            required
+            fluid
+          />
           <fieldset className="rounded-lg border border-[#D5DADF] p-3">
             <legend className="px-1 text-xs font-medium text-[#34495E]">
               {t("satelliteAccess")}
@@ -1562,8 +1553,12 @@ export default function WorkforceEmploymentsPage() {
                 className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
                 value={hirePin}
                 onChange={(e) => setHirePin(e.target.value)}
-                placeholder="0000"
+                required={satelliteKeys.length > 0}
+                aria-required={satelliteKeys.length > 0}
               />
+              {satelliteKeys.length > 0 ? (
+                <p className="mt-1 text-xs text-[#7F8C8D]">{t("pinRequired")}</p>
+              ) : null}
             </label>
           </div>
           <p className="text-xs text-[#7F8C8D]">{t("fieldStaffLoginHint")}</p>
@@ -1588,7 +1583,13 @@ export default function WorkforceEmploymentsPage() {
             <button
               type="submit"
               className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || !orgUnitId || !positionId || !globalPersonId}
+              disabled={
+                busy ||
+                !orgUnitId ||
+                !positionId ||
+                !globalPersonId ||
+                (satelliteKeys.length > 0 && !hirePin.trim())
+              }
             >
               {busy ? t("busy") : t("hire")}
             </button>
@@ -1707,15 +1708,13 @@ export default function WorkforceEmploymentsPage() {
                 options={sexOptions}
                 emptyLabel={null}
               />
-              <label className="block text-[13px] font-medium text-[#34495E]">
-                {t("fieldBirthDate")}
-                <input
-                  type="date"
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                  value={cardBirthDate}
-                  onChange={(e) => setCardBirthDate(e.target.value)}
-                />
-              </label>
+              <DatePicker
+                label={t("fieldBirthDate")}
+                value={cardBirthDate}
+                onChange={setCardBirthDate}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
             </div>
             <label className="block text-[13px] font-medium text-[#34495E]">
               {t("fieldPhone")}
@@ -1915,6 +1914,7 @@ export default function WorkforceEmploymentsPage() {
                 className="block w-full max-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px]"
                 value={loginEditPin}
                 onChange={(e) => setLoginEditPin(e.target.value)}
+                required={loginEditSatelliteKeys.length > 0}
                 disabled={loginEditSatelliteKeys.length === 0}
                 readOnly={loginEditSatelliteKeys.length === 0}
               />
@@ -1944,7 +1944,6 @@ export default function WorkforceEmploymentsPage() {
                 <p className="mt-1 text-[12px] text-[#7F8C8D]">{t("organizationIdSharedHint")}</p>
               </div>
             ) : null}
-            <p className="text-[#7F8C8D]">{t("defaultPinHint")}</p>
             <p className="text-[12px] text-[#7F8C8D]">{t("syncEventualHint")}</p>
             {loginModalError ? (
               <p className="text-[13px] text-[#C0392B]">{loginModalError}</p>
@@ -1964,13 +1963,50 @@ export default function WorkforceEmploymentsPage() {
               >
                 {tCommon("cancel")}
               </button>
-              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+              <button
+                type="submit"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={
+                  busy ||
+                  (loginEditSatelliteKeys.length > 0 && !loginEditPin.trim())
+                }
+              >
                 {busy ? t("busy") : t("saveLoginAccess")}
               </button>
             </div>
           </form>
         ) : null}
       </ModalShell>
+      <WorkforceConfirmDialog
+        open={pendingConfirm !== null}
+        title={
+          pendingConfirm?.kind === "terminate"
+            ? t("terminateConfirm")
+            : pendingConfirm?.kind === "reprovision"
+              ? t("reprovisionConfirm")
+              : t("hireWithoutFinConfirm")
+        }
+        body={
+          pendingConfirm?.kind === "terminate"
+            ? t("terminateConfirm")
+            : pendingConfirm?.kind === "reprovision"
+              ? t("reprovisionConfirm")
+              : t("hireWithoutFinConfirm")
+        }
+        confirmLabel={tCommon("confirm")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        danger={pendingConfirm?.kind === "terminate"}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={() => {
+          const next = pendingConfirm;
+          setPendingConfirm(null);
+          if (!next) return;
+          if (next.kind === "hireWithoutFin") void submitHire();
+          else if (next.kind === "terminate") void submitTerminate(next.emp);
+          else void submitReprovision(next.emp);
+        }}
+      />
     </>
   );
 }

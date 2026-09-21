@@ -121,6 +121,7 @@ describe("WorkforceProvisionService.hire seats", () => {
       orgUnitId: UNIT,
       positionId: POSITION,
       satelliteKeys: ["industry_hotel_pms"],
+      pin: "4821",
     });
 
     expect(seats.assertSeatAvailable).not.toHaveBeenCalled();

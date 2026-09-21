@@ -139383,7 +139383,7 @@ export namespace Prisma {
 
   export type GlAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139397,7 +139397,7 @@ export namespace Prisma {
 
   export type GlAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139439,7 +139439,7 @@ export namespace Prisma {
 
   export type GlAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139481,7 +139481,7 @@ export namespace Prisma {
 
   export type SystemGlConfigCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     key: string
     glCode: string
@@ -139491,7 +139491,7 @@ export namespace Prisma {
 
   export type SystemGlConfigUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     key: string
     glCode: string
@@ -139521,7 +139521,7 @@ export namespace Prisma {
 
   export type SystemGlConfigCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     key: string
     glCode: string
@@ -139551,7 +139551,7 @@ export namespace Prisma {
 
   export type BranchCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139564,7 +139564,7 @@ export namespace Prisma {
 
   export type BranchUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139603,7 +139603,7 @@ export namespace Prisma {
 
   export type BranchCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -139642,7 +139642,7 @@ export namespace Prisma {
 
   export type BranchLimitCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     limitCode: string
@@ -139654,7 +139654,7 @@ export namespace Prisma {
 
   export type BranchLimitUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     limitCode: string
@@ -139690,7 +139690,7 @@ export namespace Prisma {
 
   export type BranchLimitCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     limitCode: string
@@ -139726,7 +139726,7 @@ export namespace Prisma {
 
   export type BankCustomerCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId?: string | null
     voen?: string | null
@@ -139746,7 +139746,7 @@ export namespace Prisma {
 
   export type BankCustomerUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId?: string | null
     voen?: string | null
@@ -139806,7 +139806,7 @@ export namespace Prisma {
 
   export type BankCustomerCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId?: string | null
     voen?: string | null
@@ -139863,7 +139863,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId: string
     sharePercent: Decimal | DecimalJsLike | number | string
@@ -139873,7 +139873,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     globalPersonId: string
@@ -139903,7 +139903,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     globalPersonId: string
@@ -139932,7 +139932,7 @@ export namespace Prisma {
 
   export type AccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     iban: string
     customerId: string
@@ -139952,7 +139952,7 @@ export namespace Prisma {
 
   export type AccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     iban: string
     customerId: string
@@ -140012,7 +140012,7 @@ export namespace Prisma {
 
   export type AccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     iban: string
     customerId: string
@@ -140069,7 +140069,7 @@ export namespace Prisma {
 
   export type AccountHoldCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     reason: $Enums.HoldReason
@@ -140084,7 +140084,7 @@ export namespace Prisma {
 
   export type AccountHoldUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     amountMinor: bigint | number
@@ -140129,7 +140129,7 @@ export namespace Prisma {
 
   export type AccountHoldCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     amountMinor: bigint | number
@@ -140173,7 +140173,7 @@ export namespace Prisma {
 
   export type JournalTransactionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     idempotencyKey: string
@@ -140191,7 +140191,7 @@ export namespace Prisma {
 
   export type JournalTransactionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     idempotencyKey: string
@@ -140245,7 +140245,7 @@ export namespace Prisma {
 
   export type JournalTransactionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     idempotencyKey: string
@@ -140296,7 +140296,7 @@ export namespace Prisma {
 
   export type JournalEntryCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId?: string | null
     glAccountId: string
@@ -140310,7 +140310,7 @@ export namespace Prisma {
 
   export type JournalEntryUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     transactionId: string
     accountId?: string | null
@@ -140352,7 +140352,7 @@ export namespace Prisma {
 
   export type JournalEntryCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     transactionId: string
     accountId?: string | null
@@ -140393,7 +140393,7 @@ export namespace Prisma {
 
   export type ProductTemplateCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     moduleKey: string
     kind: $Enums.ProductKind
@@ -140408,7 +140408,7 @@ export namespace Prisma {
 
   export type ProductTemplateUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     moduleKey: string
     kind: $Enums.ProductKind
@@ -140453,7 +140453,7 @@ export namespace Prisma {
 
   export type ProductTemplateCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     moduleKey: string
     kind: $Enums.ProductKind
@@ -140498,7 +140498,7 @@ export namespace Prisma {
 
   export type EodRunCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     businessDate: Date | string
     status?: $Enums.EodStatus
@@ -140510,7 +140510,7 @@ export namespace Prisma {
 
   export type EodRunUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     businessDate: Date | string
     status?: $Enums.EodStatus
@@ -140546,7 +140546,7 @@ export namespace Prisma {
 
   export type EodRunCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     businessDate: Date | string
     status?: $Enums.EodStatus
@@ -140582,7 +140582,7 @@ export namespace Prisma {
 
   export type AuditLogEntryCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     entity: string
     entityId: string
@@ -140595,7 +140595,7 @@ export namespace Prisma {
 
   export type AuditLogEntryUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     entity: string
     entityId: string
@@ -140634,7 +140634,7 @@ export namespace Prisma {
 
   export type AuditLogEntryCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     entity: string
     entityId: string
@@ -140673,7 +140673,7 @@ export namespace Prisma {
 
   export type PaymentOrderCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     debtorAccountId?: string | null
     creditorIban: string
@@ -140693,7 +140693,7 @@ export namespace Prisma {
 
   export type PaymentOrderUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     debtorAccountId?: string | null
     creditorIban: string
@@ -140753,7 +140753,7 @@ export namespace Prisma {
 
   export type PaymentOrderCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     debtorAccountId?: string | null
     creditorIban: string
@@ -140810,7 +140810,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     rail: $Enums.PaymentRail
@@ -140821,7 +140821,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     paymentOrderId: string
     direction: string
@@ -140854,7 +140854,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     paymentOrderId: string
     direction: string
@@ -140886,7 +140886,7 @@ export namespace Prisma {
 
   export type DepositContractCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     customerId: string
@@ -140915,7 +140915,7 @@ export namespace Prisma {
 
   export type DepositContractUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     customerId: string
@@ -141002,7 +141002,7 @@ export namespace Prisma {
 
   export type DepositContractCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     customerId: string
@@ -141089,7 +141089,7 @@ export namespace Prisma {
 
   export type LoanContractCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId?: string | null
@@ -141124,7 +141124,7 @@ export namespace Prisma {
 
   export type LoanContractUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId?: string | null
@@ -141229,7 +141229,7 @@ export namespace Prisma {
 
   export type LoanContractCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId?: string | null
@@ -141331,7 +141331,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     sequenceNo: number
     dueDate: Date | string
@@ -141346,7 +141346,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     sequenceNo: number
@@ -141391,7 +141391,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     sequenceNo: number
@@ -141435,7 +141435,7 @@ export namespace Prisma {
 
   export type EclCalculationRunCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     status?: $Enums.EclRunStatus
@@ -141454,7 +141454,7 @@ export namespace Prisma {
 
   export type EclCalculationRunUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     status?: $Enums.EclRunStatus
@@ -141511,7 +141511,7 @@ export namespace Prisma {
 
   export type EclCalculationRunCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     status?: $Enums.EclRunStatus
@@ -141565,7 +141565,7 @@ export namespace Prisma {
 
   export type EclResultCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     stage: number
@@ -141580,7 +141580,7 @@ export namespace Prisma {
 
   export type EclResultUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     runId: string
     loanId: string
@@ -141625,7 +141625,7 @@ export namespace Prisma {
 
   export type EclResultCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     runId: string
     loanId: string
@@ -141669,7 +141669,7 @@ export namespace Prisma {
 
   export type RateIndexQuoteCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     indexKey: string
     asOfDate: Date | string
@@ -141680,7 +141680,7 @@ export namespace Prisma {
 
   export type RateIndexQuoteUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     indexKey: string
     asOfDate: Date | string
@@ -141713,7 +141713,7 @@ export namespace Prisma {
 
   export type RateIndexQuoteCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     indexKey: string
     asOfDate: Date | string
@@ -141746,7 +141746,7 @@ export namespace Prisma {
 
   export type RwaSnapshotCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     totalRwaMinor: bigint | number
@@ -141757,7 +141757,7 @@ export namespace Prisma {
 
   export type RwaSnapshotUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     totalRwaMinor: bigint | number
@@ -141790,7 +141790,7 @@ export namespace Prisma {
 
   export type RwaSnapshotCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     totalRwaMinor: bigint | number
@@ -141823,7 +141823,7 @@ export namespace Prisma {
 
   export type CapitalAdequacySnapshotCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     tier1CapitalMinor: bigint | number
@@ -141836,7 +141836,7 @@ export namespace Prisma {
 
   export type CapitalAdequacySnapshotUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     tier1CapitalMinor: bigint | number
@@ -141875,7 +141875,7 @@ export namespace Prisma {
 
   export type CapitalAdequacySnapshotCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     tier1CapitalMinor: bigint | number
@@ -141914,7 +141914,7 @@ export namespace Prisma {
 
   export type EclParameterSetCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     version: string
     asOfDate: Date | string
@@ -141925,7 +141925,7 @@ export namespace Prisma {
 
   export type EclParameterSetUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     version: string
     asOfDate: Date | string
@@ -141958,7 +141958,7 @@ export namespace Prisma {
 
   export type EclParameterSetCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     version: string
     asOfDate: Date | string
@@ -141991,7 +141991,7 @@ export namespace Prisma {
 
   export type AmlRuleCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     enabled?: boolean
@@ -142002,7 +142002,7 @@ export namespace Prisma {
 
   export type AmlRuleUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     enabled?: boolean
@@ -142035,7 +142035,7 @@ export namespace Prisma {
 
   export type AmlRuleCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     enabled?: boolean
@@ -142068,7 +142068,7 @@ export namespace Prisma {
 
   export type AmlAlertCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     status?: $Enums.AmlAlertStatus
     severity?: $Enums.AmlSeverity
@@ -142089,7 +142089,7 @@ export namespace Prisma {
 
   export type AmlAlertUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     status?: $Enums.AmlAlertStatus
     severity?: $Enums.AmlSeverity
@@ -142152,7 +142152,7 @@ export namespace Prisma {
 
   export type AmlAlertCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     status?: $Enums.AmlAlertStatus
     severity?: $Enums.AmlSeverity
@@ -142212,7 +142212,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     listSource: string
     matchedName: string
@@ -142224,7 +142224,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     alertId?: string | null
     listSource: string
@@ -142260,7 +142260,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     alertId?: string | null
     listSource: string
@@ -142295,7 +142295,7 @@ export namespace Prisma {
 
   export type FmnReportCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     periodFrom: Date | string
     periodTo: Date | string
@@ -142308,7 +142308,7 @@ export namespace Prisma {
 
   export type FmnReportUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     periodFrom: Date | string
     periodTo: Date | string
@@ -142347,7 +142347,7 @@ export namespace Prisma {
 
   export type FmnReportCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     periodFrom: Date | string
     periodTo: Date | string
@@ -142386,7 +142386,7 @@ export namespace Prisma {
 
   export type RegReportRunCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     templateCode: string
     periodFrom: Date | string
@@ -142399,7 +142399,7 @@ export namespace Prisma {
 
   export type RegReportRunUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     templateCode: string
     periodFrom: Date | string
@@ -142438,7 +142438,7 @@ export namespace Prisma {
 
   export type RegReportRunCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     templateCode: string
     periodFrom: Date | string
@@ -142477,7 +142477,7 @@ export namespace Prisma {
 
   export type FatcaCrsClassificationCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     classification: $Enums.FatcaCrsClass
@@ -142487,7 +142487,7 @@ export namespace Prisma {
 
   export type FatcaCrsClassificationUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     classification: $Enums.FatcaCrsClass
@@ -142517,7 +142517,7 @@ export namespace Prisma {
 
   export type FatcaCrsClassificationCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     classification: $Enums.FatcaCrsClass
@@ -142547,7 +142547,7 @@ export namespace Prisma {
 
   export type DboCustomerCredentialCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     loginHash: string
@@ -142561,7 +142561,7 @@ export namespace Prisma {
 
   export type DboCustomerCredentialUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     loginHash: string
@@ -142603,7 +142603,7 @@ export namespace Prisma {
 
   export type DboCustomerCredentialCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     loginHash: string
@@ -142645,7 +142645,7 @@ export namespace Prisma {
 
   export type DboOtpChallengeCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     codeHash: string
@@ -142656,7 +142656,7 @@ export namespace Prisma {
 
   export type DboOtpChallengeUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     codeHash: string
@@ -142689,7 +142689,7 @@ export namespace Prisma {
 
   export type DboOtpChallengeCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     codeHash: string
@@ -142722,7 +142722,7 @@ export namespace Prisma {
 
   export type CorporateSignatoryCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     globalPersonId: string
@@ -142735,7 +142735,7 @@ export namespace Prisma {
 
   export type CorporateSignatoryUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     globalPersonId: string
@@ -142774,7 +142774,7 @@ export namespace Prisma {
 
   export type CorporateSignatoryCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     globalPersonId: string
@@ -142813,7 +142813,7 @@ export namespace Prisma {
 
   export type CardProductCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     productTemplateId: string
     scheme: $Enums.CardScheme
@@ -142824,7 +142824,7 @@ export namespace Prisma {
 
   export type CardProductUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     productTemplateId: string
     scheme: $Enums.CardScheme
@@ -142857,7 +142857,7 @@ export namespace Prisma {
 
   export type CardProductCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     productTemplateId: string
     scheme: $Enums.CardScheme
@@ -142890,7 +142890,7 @@ export namespace Prisma {
 
   export type CardCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -142912,7 +142912,7 @@ export namespace Prisma {
 
   export type CardUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -142978,7 +142978,7 @@ export namespace Prisma {
 
   export type CardCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -143041,7 +143041,7 @@ export namespace Prisma {
 
   export type CardTransactionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     holdId?: string | null
@@ -143063,7 +143063,7 @@ export namespace Prisma {
 
   export type CardTransactionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId: string
     accountId: string
@@ -143129,7 +143129,7 @@ export namespace Prisma {
 
   export type CardTransactionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId: string
     accountId: string
@@ -143194,7 +143194,7 @@ export namespace Prisma {
 
   export type CardProcessorMessageCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     gateway: string
@@ -143205,7 +143205,7 @@ export namespace Prisma {
 
   export type CardProcessorMessageUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     gateway: string
@@ -143238,7 +143238,7 @@ export namespace Prisma {
 
   export type CardProcessorMessageCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     gateway: string
@@ -143271,7 +143271,7 @@ export namespace Prisma {
 
   export type TreasuryCounterpartyCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     bankMfo: string
     name: string
@@ -143283,7 +143283,7 @@ export namespace Prisma {
 
   export type TreasuryCounterpartyUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     bankMfo: string
     name: string
@@ -143319,7 +143319,7 @@ export namespace Prisma {
 
   export type TreasuryCounterpartyCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     bankMfo: string
     name: string
@@ -143355,7 +143355,7 @@ export namespace Prisma {
 
   export type NostroVostroAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId?: string | null
     direction: $Enums.NostroDirection
@@ -143369,7 +143369,7 @@ export namespace Prisma {
 
   export type NostroVostroAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId?: string | null
     direction: $Enums.NostroDirection
@@ -143411,7 +143411,7 @@ export namespace Prisma {
 
   export type NostroVostroAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId?: string | null
     direction: $Enums.NostroDirection
@@ -143453,7 +143453,7 @@ export namespace Prisma {
 
   export type FxDealCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     dealType: $Enums.FxDealType
     baseCurrency: string
@@ -143472,7 +143472,7 @@ export namespace Prisma {
 
   export type FxDealUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     dealType: $Enums.FxDealType
     baseCurrency: string
@@ -143529,7 +143529,7 @@ export namespace Prisma {
 
   export type FxDealCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     dealType: $Enums.FxDealType
     baseCurrency: string
@@ -143586,7 +143586,7 @@ export namespace Prisma {
 
   export type InterbankPlacementCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -143603,7 +143603,7 @@ export namespace Prisma {
 
   export type InterbankPlacementUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -143654,7 +143654,7 @@ export namespace Prisma {
 
   export type InterbankPlacementCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -143705,7 +143705,7 @@ export namespace Prisma {
 
   export type GovSecurityPositionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -143718,7 +143718,7 @@ export namespace Prisma {
 
   export type GovSecurityPositionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -143757,7 +143757,7 @@ export namespace Prisma {
 
   export type GovSecurityPositionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -143796,7 +143796,7 @@ export namespace Prisma {
 
   export type LiquidityGapSnapshotCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketsJson: JsonNullValueInput | InputJsonValue
@@ -143805,7 +143805,7 @@ export namespace Prisma {
 
   export type LiquidityGapSnapshotUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketsJson: JsonNullValueInput | InputJsonValue
@@ -143832,7 +143832,7 @@ export namespace Prisma {
 
   export type LiquidityGapSnapshotCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketsJson: JsonNullValueInput | InputJsonValue
@@ -143859,7 +143859,7 @@ export namespace Prisma {
 
   export type FeeTariffCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -143874,7 +143874,7 @@ export namespace Prisma {
 
   export type FeeTariffUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -143919,7 +143919,7 @@ export namespace Prisma {
 
   export type FeeTariffCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -143964,7 +143964,7 @@ export namespace Prisma {
 
   export type RelationshipPackageCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -143977,7 +143977,7 @@ export namespace Prisma {
 
   export type RelationshipPackageUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -144016,7 +144016,7 @@ export namespace Prisma {
 
   export type RelationshipPackageCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -144049,7 +144049,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     tariffCode: string
     waiverType: string
@@ -144061,7 +144061,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     packageId: string
     tariffCode: string
@@ -144097,7 +144097,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     packageId: string
     tariffCode: string
@@ -144132,7 +144132,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     createdAt?: Date | string
@@ -144141,7 +144141,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     packageId: string
     customerId: string
@@ -144168,7 +144168,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     packageId: string
     customerId: string
@@ -144194,7 +144194,7 @@ export namespace Prisma {
 
   export type SafeDepositBoxCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     boxNumber: string
@@ -144210,7 +144210,7 @@ export namespace Prisma {
 
   export type SafeDepositBoxUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     boxNumber: string
@@ -144258,7 +144258,7 @@ export namespace Prisma {
 
   export type SafeDepositBoxCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     boxNumber: string
@@ -144306,7 +144306,7 @@ export namespace Prisma {
 
   export type CashMovementCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.CashMovementKind
@@ -144323,7 +144323,7 @@ export namespace Prisma {
 
   export type CashMovementUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.CashMovementKind
@@ -144374,7 +144374,7 @@ export namespace Prisma {
 
   export type CashMovementCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.CashMovementKind
@@ -144425,7 +144425,7 @@ export namespace Prisma {
 
   export type InventoryItemCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.InventoryItemKind
@@ -144439,7 +144439,7 @@ export namespace Prisma {
 
   export type InventoryItemUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.InventoryItemKind
@@ -144481,7 +144481,7 @@ export namespace Prisma {
 
   export type InventoryItemCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.InventoryItemKind
@@ -144520,7 +144520,7 @@ export namespace Prisma {
 
   export type InventoryMovementCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     deltaQty: number
     reason: string
@@ -144532,7 +144532,7 @@ export namespace Prisma {
 
   export type InventoryMovementUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     itemId: string
     deltaQty: number
@@ -144568,7 +144568,7 @@ export namespace Prisma {
 
   export type InventoryMovementCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     itemId: string
     deltaQty: number
@@ -144603,7 +144603,7 @@ export namespace Prisma {
 
   export type BranchQueueTicketCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     ticketNo: number
@@ -144618,7 +144618,7 @@ export namespace Prisma {
 
   export type BranchQueueTicketUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     ticketNo: number
@@ -144663,7 +144663,7 @@ export namespace Prisma {
 
   export type BranchQueueTicketCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     ticketNo: number
@@ -144708,7 +144708,7 @@ export namespace Prisma {
 
   export type CollateralValuationCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     amountMinor: bigint | number
@@ -144720,7 +144720,7 @@ export namespace Prisma {
 
   export type CollateralValuationUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     amountMinor: bigint | number
@@ -144756,7 +144756,7 @@ export namespace Prisma {
 
   export type CollateralValuationCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     amountMinor: bigint | number
@@ -144792,7 +144792,7 @@ export namespace Prisma {
 
   export type LienRegisterCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     lienRef: string
@@ -144806,7 +144806,7 @@ export namespace Prisma {
 
   export type LienRegisterUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     lienRef: string
@@ -144848,7 +144848,7 @@ export namespace Prisma {
 
   export type LienRegisterCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     lienRef: string
@@ -144890,7 +144890,7 @@ export namespace Prisma {
 
   export type CreditDecisionRequestCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     applicationId?: string | null
@@ -144903,7 +144903,7 @@ export namespace Prisma {
 
   export type CreditDecisionRequestUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     applicationId?: string | null
@@ -144942,7 +144942,7 @@ export namespace Prisma {
 
   export type CreditDecisionRequestCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     applicationId?: string | null
@@ -144981,7 +144981,7 @@ export namespace Prisma {
 
   export type LoanApplicationCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145001,7 +145001,7 @@ export namespace Prisma {
 
   export type LoanApplicationUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145061,7 +145061,7 @@ export namespace Prisma {
 
   export type LoanApplicationCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145121,7 +145121,7 @@ export namespace Prisma {
 
   export type CreditPolicyRuleCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -145133,7 +145133,7 @@ export namespace Prisma {
 
   export type CreditPolicyRuleUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -145169,7 +145169,7 @@ export namespace Prisma {
 
   export type CreditPolicyRuleCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -145205,7 +145205,7 @@ export namespace Prisma {
 
   export type CreditLineCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145222,7 +145222,7 @@ export namespace Prisma {
 
   export type CreditLineUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145273,7 +145273,7 @@ export namespace Prisma {
 
   export type CreditLineCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -145321,7 +145321,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     accountId?: string | null
@@ -145337,7 +145337,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     creditLineId: string
     amountMinor: bigint | number
@@ -145385,7 +145385,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     creditLineId: string
     amountMinor: bigint | number
@@ -145432,7 +145432,7 @@ export namespace Prisma {
 
   export type CollectionCaseCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     customerId: string
@@ -145447,7 +145447,7 @@ export namespace Prisma {
 
   export type CollectionCaseUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     customerId: string
@@ -145492,7 +145492,7 @@ export namespace Prisma {
 
   export type CollectionCaseCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     customerId: string
@@ -145534,7 +145534,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     dueDate: Date | string
@@ -145545,7 +145545,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     caseId: string
     amountMinor: bigint | number
@@ -145578,7 +145578,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     caseId: string
     amountMinor: bigint | number
@@ -145610,7 +145610,7 @@ export namespace Prisma {
 
   export type StandingOrderCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     fromAccountId: string
@@ -145628,7 +145628,7 @@ export namespace Prisma {
 
   export type StandingOrderUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     fromAccountId: string
@@ -145682,7 +145682,7 @@ export namespace Prisma {
 
   export type StandingOrderCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     fromAccountId: string
@@ -145736,7 +145736,7 @@ export namespace Prisma {
 
   export type DirectDebitMandateCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -145751,7 +145751,7 @@ export namespace Prisma {
 
   export type DirectDebitMandateUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -145796,7 +145796,7 @@ export namespace Prisma {
 
   export type DirectDebitMandateCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -145841,7 +145841,7 @@ export namespace Prisma {
 
   export type VirtualAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     parentAccountId: string
@@ -145853,7 +145853,7 @@ export namespace Prisma {
 
   export type VirtualAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     parentAccountId: string
@@ -145889,7 +145889,7 @@ export namespace Prisma {
 
   export type VirtualAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     parentAccountId: string
@@ -145925,7 +145925,7 @@ export namespace Prisma {
 
   export type CashPoolSweepRuleCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     masterAccountId: string
     childAccountId: string
@@ -145937,7 +145937,7 @@ export namespace Prisma {
 
   export type CashPoolSweepRuleUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     masterAccountId: string
     childAccountId: string
@@ -145973,7 +145973,7 @@ export namespace Prisma {
 
   export type CashPoolSweepRuleCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     masterAccountId: string
     childAccountId: string
@@ -146009,7 +146009,7 @@ export namespace Prisma {
 
   export type ChequeInstrumentCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     chequeNumber: string
@@ -146026,7 +146026,7 @@ export namespace Prisma {
 
   export type ChequeInstrumentUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     chequeNumber: string
@@ -146077,7 +146077,7 @@ export namespace Prisma {
 
   export type ChequeInstrumentCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     chequeNumber: string
@@ -146128,7 +146128,7 @@ export namespace Prisma {
 
   export type LetterOfCreditCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     direction?: string
@@ -146147,7 +146147,7 @@ export namespace Prisma {
 
   export type LetterOfCreditUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     direction?: string
@@ -146204,7 +146204,7 @@ export namespace Prisma {
 
   export type LetterOfCreditCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     direction?: string
@@ -146258,7 +146258,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     seqNo: number
     note: string
@@ -146268,7 +146268,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     lcId: string
     seqNo: number
@@ -146298,7 +146298,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     lcId: string
     seqNo: number
@@ -146327,7 +146327,7 @@ export namespace Prisma {
 
   export type BankGuaranteeCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146343,7 +146343,7 @@ export namespace Prisma {
 
   export type BankGuaranteeUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146391,7 +146391,7 @@ export namespace Prisma {
 
   export type BankGuaranteeCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146439,7 +146439,7 @@ export namespace Prisma {
 
   export type DocumentaryCollectionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146452,7 +146452,7 @@ export namespace Prisma {
 
   export type DocumentaryCollectionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146491,7 +146491,7 @@ export namespace Prisma {
 
   export type DocumentaryCollectionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     reference: string
@@ -146530,7 +146530,7 @@ export namespace Prisma {
 
   export type ScfProgramCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -146544,7 +146544,7 @@ export namespace Prisma {
 
   export type ScfProgramUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -146586,7 +146586,7 @@ export namespace Prisma {
 
   export type ScfProgramCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -146628,7 +146628,7 @@ export namespace Prisma {
 
   export type MoneyMarketPlacementCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -146648,7 +146648,7 @@ export namespace Prisma {
 
   export type MoneyMarketPlacementUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -146708,7 +146708,7 @@ export namespace Prisma {
 
   export type MoneyMarketPlacementCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     counterpartyId: string
     nostroAccountId: string
@@ -146768,7 +146768,7 @@ export namespace Prisma {
 
   export type AcquiringMerchantCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     merchantCode: string
     name: string
@@ -146781,7 +146781,7 @@ export namespace Prisma {
 
   export type AcquiringMerchantUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     merchantCode: string
     name: string
@@ -146820,7 +146820,7 @@ export namespace Prisma {
 
   export type AcquiringMerchantCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     merchantCode: string
     name: string
@@ -146859,7 +146859,7 @@ export namespace Prisma {
 
   export type TradeSwiftMessageCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     mtType: string
     body: string
@@ -146871,7 +146871,7 @@ export namespace Prisma {
 
   export type TradeSwiftMessageUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     mtType: string
     body: string
@@ -146907,7 +146907,7 @@ export namespace Prisma {
 
   export type TradeSwiftMessageCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     mtType: string
     body: string
@@ -146943,7 +146943,7 @@ export namespace Prisma {
 
   export type CardDisputeCaseCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardTransactionId: string
     amountMinor: bigint | number
@@ -146957,7 +146957,7 @@ export namespace Prisma {
 
   export type CardDisputeCaseUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardTransactionId: string
     amountMinor: bigint | number
@@ -146999,7 +146999,7 @@ export namespace Prisma {
 
   export type CardDisputeCaseCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardTransactionId: string
     amountMinor: bigint | number
@@ -147041,7 +147041,7 @@ export namespace Prisma {
 
   export type ThreeDsChallengeCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId: string
     amountMinor: bigint | number
@@ -147053,7 +147053,7 @@ export namespace Prisma {
 
   export type ThreeDsChallengeUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId: string
     amountMinor: bigint | number
@@ -147089,7 +147089,7 @@ export namespace Prisma {
 
   export type ThreeDsChallengeCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId: string
     amountMinor: bigint | number
@@ -147125,7 +147125,7 @@ export namespace Prisma {
 
   export type SafekeepingAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountNo: string
@@ -147138,7 +147138,7 @@ export namespace Prisma {
 
   export type SafekeepingAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountNo: string
@@ -147177,7 +147177,7 @@ export namespace Prisma {
 
   export type SafekeepingAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountNo: string
@@ -147213,7 +147213,7 @@ export namespace Prisma {
 
   export type CustodyPositionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -147226,7 +147226,7 @@ export namespace Prisma {
 
   export type CustodyPositionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     safekeepingAccountId: string
     isin: string
@@ -147265,7 +147265,7 @@ export namespace Prisma {
 
   export type CustodyPositionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     safekeepingAccountId: string
     isin: string
@@ -147300,7 +147300,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -147311,7 +147311,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     custodyPositionId: string
     direction: string
@@ -147344,7 +147344,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     custodyPositionId: string
     direction: string
@@ -147376,7 +147376,7 @@ export namespace Prisma {
 
   export type InsuranceProductCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -147390,7 +147390,7 @@ export namespace Prisma {
 
   export type InsuranceProductUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -147432,7 +147432,7 @@ export namespace Prisma {
 
   export type InsuranceProductCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -147471,7 +147471,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -147483,7 +147483,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     insuranceProductId: string
@@ -147519,7 +147519,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     insuranceProductId: string
@@ -147554,7 +147554,7 @@ export namespace Prisma {
 
   export type IslamicContractCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -147570,7 +147570,7 @@ export namespace Prisma {
 
   export type IslamicContractUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -147618,7 +147618,7 @@ export namespace Prisma {
 
   export type IslamicContractCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -147666,7 +147666,7 @@ export namespace Prisma {
 
   export type DboH2hFileJobCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     fileName: string
     payload: string
@@ -147678,7 +147678,7 @@ export namespace Prisma {
 
   export type DboH2hFileJobUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     fileName: string
     payload: string
@@ -147714,7 +147714,7 @@ export namespace Prisma {
 
   export type DboH2hFileJobCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     fileName: string
     payload: string
@@ -147750,7 +147750,7 @@ export namespace Prisma {
 
   export type OpenBankingConsentCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     scopes?: JsonNullValueInput | InputJsonValue
@@ -147762,7 +147762,7 @@ export namespace Prisma {
 
   export type OpenBankingConsentUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     scopes?: JsonNullValueInput | InputJsonValue
@@ -147798,7 +147798,7 @@ export namespace Prisma {
 
   export type OpenBankingConsentCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     scopes?: JsonNullValueInput | InputJsonValue
@@ -147834,7 +147834,7 @@ export namespace Prisma {
 
   export type AmlCaseCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     alertId?: string | null
     customerId?: string | null
@@ -147847,7 +147847,7 @@ export namespace Prisma {
 
   export type AmlCaseUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     alertId?: string | null
     customerId?: string | null
@@ -147886,7 +147886,7 @@ export namespace Prisma {
 
   export type AmlCaseCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     alertId?: string | null
     customerId?: string | null
@@ -147925,7 +147925,7 @@ export namespace Prisma {
 
   export type FraudScoreRequestCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     channel: string
@@ -147941,7 +147941,7 @@ export namespace Prisma {
 
   export type FraudScoreRequestUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     channel: string
@@ -147989,7 +147989,7 @@ export namespace Prisma {
 
   export type FraudScoreRequestCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     channel: string
@@ -148037,7 +148037,7 @@ export namespace Prisma {
 
   export type IrrbbInputCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketKey: string
@@ -148048,7 +148048,7 @@ export namespace Prisma {
 
   export type IrrbbInputUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketKey: string
@@ -148081,7 +148081,7 @@ export namespace Prisma {
 
   export type IrrbbInputCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     bucketKey: string
@@ -148114,7 +148114,7 @@ export namespace Prisma {
 
   export type OpRiskLossEventCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     eventDate: Date | string
     amountMinor: bigint | number
@@ -148128,7 +148128,7 @@ export namespace Prisma {
 
   export type OpRiskLossEventUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     eventDate: Date | string
     amountMinor: bigint | number
@@ -148170,7 +148170,7 @@ export namespace Prisma {
 
   export type OpRiskLossEventCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     eventDate: Date | string
     amountMinor: bigint | number
@@ -148212,7 +148212,7 @@ export namespace Prisma {
 
   export type InsuranceAffiliateCommissionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -148223,7 +148223,7 @@ export namespace Prisma {
 
   export type InsuranceAffiliateCommissionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -148256,7 +148256,7 @@ export namespace Prisma {
 
   export type InsuranceAffiliateCommissionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -148289,7 +148289,7 @@ export namespace Prisma {
 
   export type AtmTerminalCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     terminalId: string
     branchId: string
@@ -148302,7 +148302,7 @@ export namespace Prisma {
 
   export type AtmTerminalUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     terminalId: string
     branchId: string
@@ -148341,7 +148341,7 @@ export namespace Prisma {
 
   export type AtmTerminalCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     terminalId: string
     branchId: string
@@ -148377,7 +148377,7 @@ export namespace Prisma {
 
   export type AtmTxnCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId?: string | null
     amountMinor: bigint | number
@@ -148392,7 +148392,7 @@ export namespace Prisma {
 
   export type AtmTxnUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     atmTerminalId: string
     cardId?: string | null
@@ -148437,7 +148437,7 @@ export namespace Prisma {
 
   export type AtmTxnCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     atmTerminalId: string
     cardId?: string | null
@@ -148481,7 +148481,7 @@ export namespace Prisma {
 
   export type SchemeMessageOutboxCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     messageType: string
     direction: string
@@ -148493,7 +148493,7 @@ export namespace Prisma {
 
   export type SchemeMessageOutboxUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     messageType: string
     direction: string
@@ -148529,7 +148529,7 @@ export namespace Prisma {
 
   export type SchemeMessageOutboxCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     messageType: string
     direction: string
@@ -148565,7 +148565,7 @@ export namespace Prisma {
 
   export type DerivativeContractCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     contractRef: string
     productType: string
@@ -148579,7 +148579,7 @@ export namespace Prisma {
 
   export type DerivativeContractUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     contractRef: string
     productType: string
@@ -148621,7 +148621,7 @@ export namespace Prisma {
 
   export type DerivativeContractCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     contractRef: string
     productType: string
@@ -148663,7 +148663,7 @@ export namespace Prisma {
 
   export type BondPositionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -148676,7 +148676,7 @@ export namespace Prisma {
 
   export type BondPositionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -148715,7 +148715,7 @@ export namespace Prisma {
 
   export type BondPositionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     faceValueMinor: bigint | number
@@ -148754,7 +148754,7 @@ export namespace Prisma {
 
   export type CsdAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     csdAccountNo: string
@@ -148765,7 +148765,7 @@ export namespace Prisma {
 
   export type CsdAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     csdAccountNo: string
@@ -148798,7 +148798,7 @@ export namespace Prisma {
 
   export type CsdAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     csdAccountNo: string
@@ -148831,7 +148831,7 @@ export namespace Prisma {
 
   export type BrokerageOrderCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     isin: string
@@ -148845,7 +148845,7 @@ export namespace Prisma {
 
   export type BrokerageOrderUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     isin: string
@@ -148887,7 +148887,7 @@ export namespace Prisma {
 
   export type BrokerageOrderCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     isin: string
@@ -148929,7 +148929,7 @@ export namespace Prisma {
 
   export type MetalPositionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     metalCode: string
@@ -148941,7 +148941,7 @@ export namespace Prisma {
 
   export type MetalPositionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     metalCode: string
@@ -148977,7 +148977,7 @@ export namespace Prisma {
 
   export type MetalPositionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     metalCode: string
@@ -149013,7 +149013,7 @@ export namespace Prisma {
 
   export type PensionContributionCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     employerRef: string
@@ -149026,7 +149026,7 @@ export namespace Prisma {
 
   export type PensionContributionUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     employerRef: string
@@ -149065,7 +149065,7 @@ export namespace Prisma {
 
   export type PensionContributionCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     employerRef: string
@@ -149104,7 +149104,7 @@ export namespace Prisma {
 
   export type PsaTsaAccountCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     agencyCode: string
     accountNo: string
@@ -149116,7 +149116,7 @@ export namespace Prisma {
 
   export type PsaTsaAccountUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     agencyCode: string
     accountNo: string
@@ -149152,7 +149152,7 @@ export namespace Prisma {
 
   export type PsaTsaAccountCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     agencyCode: string
     accountNo: string
@@ -149188,7 +149188,7 @@ export namespace Prisma {
 
   export type AgencyLinkCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     peerBankOrgId: string
     agencyType: string
@@ -149199,7 +149199,7 @@ export namespace Prisma {
 
   export type AgencyLinkUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     peerBankOrgId: string
     agencyType: string
@@ -149232,7 +149232,7 @@ export namespace Prisma {
 
   export type AgencyLinkCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     peerBankOrgId: string
     agencyType: string
@@ -149265,7 +149265,7 @@ export namespace Prisma {
 
   export type MisReportJobCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reportCode: string
     paramsJson?: JsonNullValueInput | InputJsonValue
@@ -149277,7 +149277,7 @@ export namespace Prisma {
 
   export type MisReportJobUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reportCode: string
     paramsJson?: JsonNullValueInput | InputJsonValue
@@ -149313,7 +149313,7 @@ export namespace Prisma {
 
   export type MisReportJobCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reportCode: string
     paramsJson?: JsonNullValueInput | InputJsonValue
@@ -149349,7 +149349,7 @@ export namespace Prisma {
 
   export type BpmProcessStubCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     processCode: string
     name: string
@@ -149361,7 +149361,7 @@ export namespace Prisma {
 
   export type BpmProcessStubUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     processCode: string
     name: string
@@ -149397,7 +149397,7 @@ export namespace Prisma {
 
   export type BpmProcessStubCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     processCode: string
     name: string
@@ -149433,7 +149433,7 @@ export namespace Prisma {
 
   export type DmsDocumentMetaCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     documentRef: string
     category: string
@@ -149446,7 +149446,7 @@ export namespace Prisma {
 
   export type DmsDocumentMetaUncheckedCreateInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     documentRef: string
     category: string
@@ -149485,7 +149485,7 @@ export namespace Prisma {
 
   export type DmsDocumentMetaCreateManyInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     documentRef: string
     category: string
@@ -159984,7 +159984,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerCreateWithoutCustomerInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId: string
     sharePercent: Decimal | DecimalJsLike | number | string
@@ -159993,7 +159993,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerUncheckedCreateWithoutCustomerInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId: string
     sharePercent: Decimal | DecimalJsLike | number | string
@@ -160041,7 +160041,7 @@ export namespace Prisma {
 
   export type BankCustomerCreateWithoutBeneficialOwnersInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId?: string | null
     voen?: string | null
@@ -160060,7 +160060,7 @@ export namespace Prisma {
 
   export type BankCustomerUncheckedCreateWithoutBeneficialOwnersInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId?: string | null
     voen?: string | null
@@ -160133,7 +160133,7 @@ export namespace Prisma {
 
   export type AccountHoldCreateWithoutAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     reason: $Enums.HoldReason
@@ -160147,7 +160147,7 @@ export namespace Prisma {
 
   export type AccountHoldUncheckedCreateWithoutAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     reason: $Enums.HoldReason
@@ -160205,7 +160205,7 @@ export namespace Prisma {
 
   export type AccountCreateWithoutHoldsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     iban: string
     customerId: string
@@ -160224,7 +160224,7 @@ export namespace Prisma {
 
   export type AccountUncheckedCreateWithoutHoldsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     iban: string
     customerId: string
@@ -160297,7 +160297,7 @@ export namespace Prisma {
 
   export type JournalEntryCreateWithoutTransactionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId?: string | null
     glAccountId: string
@@ -160310,7 +160310,7 @@ export namespace Prisma {
 
   export type JournalEntryUncheckedCreateWithoutTransactionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId?: string | null
     glAccountId: string
@@ -160366,7 +160366,7 @@ export namespace Prisma {
 
   export type JournalTransactionCreateWithoutEntriesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     idempotencyKey: string
@@ -160383,7 +160383,7 @@ export namespace Prisma {
 
   export type JournalTransactionUncheckedCreateWithoutEntriesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     reference: string
     idempotencyKey: string
@@ -160450,7 +160450,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageCreateWithoutPaymentOrderInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     rail: $Enums.PaymentRail
@@ -160460,7 +160460,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageUncheckedCreateWithoutPaymentOrderInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     rail: $Enums.PaymentRail
@@ -160510,7 +160510,7 @@ export namespace Prisma {
 
   export type PaymentOrderCreateWithoutRailMessagesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     debtorAccountId?: string | null
     creditorIban: string
@@ -160529,7 +160529,7 @@ export namespace Prisma {
 
   export type PaymentOrderUncheckedCreateWithoutRailMessagesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     debtorAccountId?: string | null
     creditorIban: string
@@ -160602,7 +160602,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentCreateWithoutLoanInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     sequenceNo: number
     dueDate: Date | string
@@ -160616,7 +160616,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentUncheckedCreateWithoutLoanInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     sequenceNo: number
     dueDate: Date | string
@@ -160674,7 +160674,7 @@ export namespace Prisma {
 
   export type LoanContractCreateWithoutInstallmentsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId?: string | null
@@ -160708,7 +160708,7 @@ export namespace Prisma {
 
   export type LoanContractUncheckedCreateWithoutInstallmentsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId?: string | null
@@ -160826,7 +160826,7 @@ export namespace Prisma {
 
   export type EclResultCreateWithoutRunInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     stage: number
@@ -160840,7 +160840,7 @@ export namespace Prisma {
 
   export type EclResultUncheckedCreateWithoutRunInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     stage: number
@@ -160898,7 +160898,7 @@ export namespace Prisma {
 
   export type EclCalculationRunCreateWithoutResultsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     status?: $Enums.EclRunStatus
@@ -160916,7 +160916,7 @@ export namespace Prisma {
 
   export type EclCalculationRunUncheckedCreateWithoutResultsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     asOfDate: Date | string
     status?: $Enums.EclRunStatus
@@ -160986,7 +160986,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitCreateWithoutAlertInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     listSource: string
     matchedName: string
@@ -160997,7 +160997,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitUncheckedCreateWithoutAlertInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     listSource: string
     matchedName: string
@@ -161049,7 +161049,7 @@ export namespace Prisma {
 
   export type AmlAlertCreateWithoutScreeningHitsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     status?: $Enums.AmlAlertStatus
     severity?: $Enums.AmlSeverity
@@ -161069,7 +161069,7 @@ export namespace Prisma {
 
   export type AmlAlertUncheckedCreateWithoutScreeningHitsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     status?: $Enums.AmlAlertStatus
     severity?: $Enums.AmlSeverity
@@ -161145,7 +161145,7 @@ export namespace Prisma {
 
   export type CardTransactionCreateWithoutCardInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     holdId?: string | null
@@ -161166,7 +161166,7 @@ export namespace Prisma {
 
   export type CardTransactionUncheckedCreateWithoutCardInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     holdId?: string | null
@@ -161238,7 +161238,7 @@ export namespace Prisma {
 
   export type CardCreateWithoutTransactionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -161259,7 +161259,7 @@ export namespace Prisma {
 
   export type CardUncheckedCreateWithoutTransactionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountId: string
@@ -161338,7 +161338,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkCreateWithoutPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     createdAt?: Date | string
@@ -161346,7 +161346,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkUncheckedCreateWithoutPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     createdAt?: Date | string
@@ -161364,7 +161364,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffCreateWithoutPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     tariffCode: string
     waiverType: string
@@ -161375,7 +161375,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffUncheckedCreateWithoutPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     tariffCode: string
     waiverType: string
@@ -161455,7 +161455,7 @@ export namespace Prisma {
 
   export type RelationshipPackageCreateWithoutTariffsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -161467,7 +161467,7 @@ export namespace Prisma {
 
   export type RelationshipPackageUncheckedCreateWithoutTariffsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -161519,7 +161519,7 @@ export namespace Prisma {
 
   export type RelationshipPackageCreateWithoutLinksInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -161531,7 +161531,7 @@ export namespace Prisma {
 
   export type RelationshipPackageUncheckedCreateWithoutLinksInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -161583,7 +161583,7 @@ export namespace Prisma {
 
   export type InventoryMovementCreateWithoutItemInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     deltaQty: number
     reason: string
@@ -161594,7 +161594,7 @@ export namespace Prisma {
 
   export type InventoryMovementUncheckedCreateWithoutItemInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     deltaQty: number
     reason: string
@@ -161646,7 +161646,7 @@ export namespace Prisma {
 
   export type InventoryItemCreateWithoutMovementsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.InventoryItemKind
@@ -161659,7 +161659,7 @@ export namespace Prisma {
 
   export type InventoryItemUncheckedCreateWithoutMovementsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     branchId: string
     kind: $Enums.InventoryItemKind
@@ -161714,7 +161714,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownCreateWithoutCreditLineInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     accountId?: string | null
@@ -161729,7 +161729,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownUncheckedCreateWithoutCreditLineInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     accountId?: string | null
@@ -161789,7 +161789,7 @@ export namespace Prisma {
 
   export type CreditLineCreateWithoutDrawdownsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -161805,7 +161805,7 @@ export namespace Prisma {
 
   export type CreditLineUncheckedCreateWithoutDrawdownsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     productTemplateId: string
@@ -161869,7 +161869,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayCreateWithoutCaseInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     dueDate: Date | string
@@ -161879,7 +161879,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayUncheckedCreateWithoutCaseInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     dueDate: Date | string
@@ -161929,7 +161929,7 @@ export namespace Prisma {
 
   export type CollectionCaseCreateWithoutPromisesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     customerId: string
@@ -161943,7 +161943,7 @@ export namespace Prisma {
 
   export type CollectionCaseUncheckedCreateWithoutPromisesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     customerId: string
@@ -162001,7 +162001,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentCreateWithoutLcInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     seqNo: number
     note: string
@@ -162010,7 +162010,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentUncheckedCreateWithoutLcInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     seqNo: number
     note: string
@@ -162058,7 +162058,7 @@ export namespace Prisma {
 
   export type LetterOfCreditCreateWithoutAmendmentsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     direction?: string
@@ -162076,7 +162076,7 @@ export namespace Prisma {
 
   export type LetterOfCreditUncheckedCreateWithoutAmendmentsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     direction?: string
@@ -162146,7 +162146,7 @@ export namespace Prisma {
 
   export type CustodyPositionCreateWithoutAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -162158,7 +162158,7 @@ export namespace Prisma {
 
   export type CustodyPositionUncheckedCreateWithoutAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -162211,7 +162211,7 @@ export namespace Prisma {
 
   export type SafekeepingAccountCreateWithoutPositionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountNo: string
@@ -162223,7 +162223,7 @@ export namespace Prisma {
 
   export type SafekeepingAccountUncheckedCreateWithoutPositionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     accountNo: string
@@ -162240,7 +162240,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerCreateWithoutPositionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -162250,7 +162250,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerUncheckedCreateWithoutPositionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -162335,7 +162335,7 @@ export namespace Prisma {
 
   export type CustodyPositionCreateWithoutLedgerEntriesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -162347,7 +162347,7 @@ export namespace Prisma {
 
   export type CustodyPositionUncheckedCreateWithoutLedgerEntriesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     safekeepingAccountId: string
     isin: string
@@ -162399,7 +162399,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkCreateWithoutProductInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -162410,7 +162410,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkUncheckedCreateWithoutProductInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -162462,7 +162462,7 @@ export namespace Prisma {
 
   export type InsuranceProductCreateWithoutPoliciesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -162475,7 +162475,7 @@ export namespace Prisma {
 
   export type InsuranceProductUncheckedCreateWithoutPoliciesInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     code: string
     name: string
@@ -162530,7 +162530,7 @@ export namespace Prisma {
 
   export type AtmTxnCreateWithoutTerminalInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId?: string | null
     amountMinor: bigint | number
@@ -162544,7 +162544,7 @@ export namespace Prisma {
 
   export type AtmTxnUncheckedCreateWithoutTerminalInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId?: string | null
     amountMinor: bigint | number
@@ -162602,7 +162602,7 @@ export namespace Prisma {
 
   export type AtmTerminalCreateWithoutTransactionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     terminalId: string
     branchId: string
@@ -162614,7 +162614,7 @@ export namespace Prisma {
 
   export type AtmTerminalUncheckedCreateWithoutTransactionsInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     terminalId: string
     branchId: string
@@ -162666,7 +162666,7 @@ export namespace Prisma {
 
   export type BeneficialOwnerCreateManyCustomerInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     globalPersonId: string
     sharePercent: Decimal | DecimalJsLike | number | string
@@ -162702,7 +162702,7 @@ export namespace Prisma {
 
   export type AccountHoldCreateManyAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     reason: $Enums.HoldReason
@@ -162758,7 +162758,7 @@ export namespace Prisma {
 
   export type JournalEntryCreateManyTransactionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId?: string | null
     glAccountId: string
@@ -162810,7 +162810,7 @@ export namespace Prisma {
 
   export type PaymentRailMessageCreateManyPaymentOrderInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     rail: $Enums.PaymentRail
@@ -162850,7 +162850,7 @@ export namespace Prisma {
 
   export type LoanScheduleInstallmentCreateManyLoanInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     sequenceNo: number
     dueDate: Date | string
@@ -162906,7 +162906,7 @@ export namespace Prisma {
 
   export type EclResultCreateManyRunInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     loanId: string
     stage: number
@@ -162962,7 +162962,7 @@ export namespace Prisma {
 
   export type AmlScreeningHitCreateManyAlertInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     listSource: string
     matchedName: string
@@ -163006,7 +163006,7 @@ export namespace Prisma {
 
   export type CardTransactionCreateManyCardInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     accountId: string
     holdId?: string | null
@@ -163090,7 +163090,7 @@ export namespace Prisma {
 
   export type RelationshipPackageLinkCreateManyPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     createdAt?: Date | string
@@ -163098,7 +163098,7 @@ export namespace Prisma {
 
   export type RelationshipPackageTariffCreateManyPackageInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     tariffCode: string
     waiverType: string
@@ -163166,7 +163166,7 @@ export namespace Prisma {
 
   export type InventoryMovementCreateManyItemInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     deltaQty: number
     reason: string
@@ -163210,7 +163210,7 @@ export namespace Prisma {
 
   export type CreditLineDrawdownCreateManyCreditLineInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     accountId?: string | null
@@ -163270,7 +163270,7 @@ export namespace Prisma {
 
   export type CollectionPromiseToPayCreateManyCaseInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     amountMinor: bigint | number
     dueDate: Date | string
@@ -163310,7 +163310,7 @@ export namespace Prisma {
 
   export type TradeLcAmendmentCreateManyLcInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     seqNo: number
     note: string
@@ -163346,7 +163346,7 @@ export namespace Prisma {
 
   export type CustodyPositionCreateManyAccountInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     isin: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -163392,7 +163392,7 @@ export namespace Prisma {
 
   export type CustodyPositionLedgerCreateManyPositionInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     direction: string
     quantity: Decimal | DecimalJsLike | number | string
@@ -163432,7 +163432,7 @@ export namespace Prisma {
 
   export type InsurancePolicyLinkCreateManyProductInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     customerId: string
     policyRef: string
@@ -163476,7 +163476,7 @@ export namespace Prisma {
 
   export type AtmTxnCreateManyTerminalInput = {
     id?: string
-    organizationId?: string
+    organizationId: string
     bankOrgId: string
     cardId?: string | null
     amountMinor: bigint | number

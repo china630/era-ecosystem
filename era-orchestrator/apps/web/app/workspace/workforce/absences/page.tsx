@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, Plus } from "lucide-react";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -15,6 +13,8 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
@@ -39,6 +39,17 @@ type AbsenceRow = {
   note: string;
   employmentId: string;
   employment: { globalPersonId: string };
+};
+
+type AbsenceDetail = {
+  id: string;
+  kind: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  note: string;
+  rejectionReason?: string | null;
+  person?: { displayName: string | null; accessDenied: boolean } | null;
 };
 
 type EmploymentRow = { id: string; globalPersonId: string; status: string };
@@ -77,6 +88,8 @@ export default function WorkforceAbsencesPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceAbsences");
   const tCommon = useTranslations("common");
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<AbsenceRow[]>([]);
   const [persons, setPersons] = useState<ListResponse["persons"]>({});
@@ -99,10 +112,28 @@ export default function WorkforceAbsencesPage() {
   );
   const [filterKind, setFilterKind] = useState<"" | AbsenceKind>("");
 
+  const detailId = searchParams.get("id") ?? "";
+  const [detail, setDetail] = useState<AbsenceDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailBusy, setDetailBusy] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+
   useEffect(() => {
     const empId = searchParams.get("employmentId");
     if (empId != null) setFilterEmploymentId(empId);
   }, [searchParams]);
+
+  const setDetailId = useCallback(
+    (id: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (id) params.set("id", id);
+      else params.delete("id");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   const bounds = useMemo(() => {
     const [y, m] = month.split("-").map(Number);
@@ -141,6 +172,30 @@ export default function WorkforceAbsencesPage() {
     if (!ready || !user?.organizationId) return;
     void load();
   }, [ready, user?.organizationId, load]);
+
+  const loadDetail = useCallback(async (id: string) => {
+    setDetailLoading(true);
+    setDetailError(null);
+    setRejectReason("");
+    const res = await workforceFetch(`absences/${id}`);
+    if (!res.ok) {
+      setDetailError(`${res.status}`);
+      setDetail(null);
+      setDetailLoading(false);
+      return;
+    }
+    setDetail((await res.json()) as AbsenceDetail);
+    setDetailLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !user?.organizationId || !detailId) {
+      setDetail(null);
+      setDetailError(null);
+      return;
+    }
+    void loadDetail(detailId);
+  }, [ready, user?.organizationId, detailId, loadDetail]);
 
   async function openCreate() {
     setFKind("VACATION");
@@ -184,6 +239,24 @@ export default function WorkforceAbsencesPage() {
     }
     setCreateOpen(false);
     await load();
+  }
+
+  async function detailAction(path: string, body?: unknown) {
+    if (!detailId) return;
+    setDetailBusy(true);
+    setDetailError(null);
+    const res = await workforceFetch(path, {
+      method: "POST",
+      ...(body != null ? { body: JSON.stringify(body) } : {}),
+    });
+    if (!res.ok) {
+      setDetailError(await res.text());
+      setDetailBusy(false);
+      return;
+    }
+    await loadDetail(detailId);
+    await load();
+    setDetailBusy(false);
   }
 
   const employeeFilterOptions = useMemo(() => {
@@ -234,12 +307,19 @@ export default function WorkforceAbsencesPage() {
         }
       />
 
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-center gap-3 p-4`}>
-        <label className="flex items-center gap-2 text-[13px] font-medium text-[#34495E]">
-          <span className="whitespace-nowrap">{t("monthFilter")}</span>
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setMonth(new Date().toISOString().slice(0, 7));
+          setFilterEmploymentId("");
+          setFilterKind("");
+        }}
+      >
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("monthFilter")}
           <input
             type="month"
-            className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+            className="mt-1 block rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
           />
@@ -266,7 +346,7 @@ export default function WorkforceAbsencesPage() {
           }))}
           emptyLabel={t("filterAll")}
         />
-      </div>
+      </EraListFilterBar>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
       {loading ? (
@@ -292,31 +372,32 @@ export default function WorkforceAbsencesPage() {
                 </tr>
               ) : (
                 paged.map((r) => (
-                <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {personLabel(persons, r.employment.globalPersonId, t("maskedPerson"))}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {t(`kind.${r.kind}` as "kind.VACATION")}
-                  </td>
-                  <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
-                    {String(r.startDate).slice(0, 10)} — {String(r.endDate).slice(0, 10)}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {t(`status.${r.status}` as "status.DRAFT")}
-                  </td>
-                  <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                    <Link
-                      href={`/workspace/workforce/absences/${r.id}`}
-                      className={TABLE_ROW_ICON_BTN_CLASS}
-                      title={t("open")}
-                      aria-label={t("open")}
-                    >
-                      <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                    </Link>
-                  </td>
-                </tr>
-                  ))
+                  <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {personLabel(persons, r.employment.globalPersonId, t("maskedPerson"))}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {t(`kind.${r.kind}` as "kind.VACATION")}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
+                      {String(r.startDate).slice(0, 10)} — {String(r.endDate).slice(0, 10)}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {t(`status.${r.status}` as "status.DRAFT")}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        title={t("open")}
+                        aria-label={t("open")}
+                        onClick={() => setDetailId(r.id)}
+                      >
+                        <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -365,26 +446,22 @@ export default function WorkforceAbsencesPage() {
             }))}
           />
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldFrom")}
-              <input
-                type="date"
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={fStart}
-                onChange={(e) => setFStart(e.target.value)}
-                required
-              />
-            </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldTo")}
-              <input
-                type="date"
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={fEnd}
-                onChange={(e) => setFEnd(e.target.value)}
-                required
-              />
-            </label>
+            <DatePicker
+              label={t("fieldFrom")}
+              value={fStart}
+              onChange={setFStart}
+              placeholder={tCommon("datePlaceholder")}
+              required
+              fluid
+            />
+            <DatePicker
+              label={t("fieldTo")}
+              value={fEnd}
+              onChange={setFEnd}
+              placeholder={tCommon("datePlaceholder")}
+              required
+              fluid
+            />
           </div>
           <label className="block text-[13px] font-medium text-[#34495E]">
             {t("fieldNote")}
@@ -415,6 +492,106 @@ export default function WorkforceAbsencesPage() {
             </button>
           </div>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(detailId)}
+        title={t("detailTitle")}
+        subtitle={detailId ? `#${detailId.slice(0, 8)}` : ""}
+        onClose={() => setDetailId(null)}
+        closeLabel={tCommon("close")}
+      >
+        {detailLoading ? (
+          <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
+        ) : !detail ? (
+          <p className="text-sm text-red-700">{detailError ?? t("notFound")}</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-[13px]">
+              <span className="font-semibold text-[#34495E]">{t("colPerson")}: </span>
+              {detail.person?.displayName ??
+                (detail.person?.accessDenied ? t("maskedPerson") : "—")}
+            </p>
+            <p className="text-[13px]">
+              <span className="font-semibold text-[#34495E]">{t("colKind")}: </span>
+              {t(`kind.${detail.kind}` as "kind.VACATION")}
+            </p>
+            <p className="text-[13px]">
+              <span className="font-semibold text-[#34495E]">{t("colPeriod")}: </span>
+              {String(detail.startDate).slice(0, 10)} — {String(detail.endDate).slice(0, 10)}
+            </p>
+            <p className="text-[13px]">
+              <span className="font-semibold text-[#34495E]">{t("colStatus")}: </span>
+              {t(`status.${detail.status}` as "status.DRAFT")}
+            </p>
+            {detail.note ? (
+              <p className="text-[13px]">
+                <span className="font-semibold text-[#34495E]">{t("fieldNote")}: </span>
+                {detail.note}
+              </p>
+            ) : null}
+            {detail.rejectionReason ? (
+              <p className="text-[13px] text-red-700">{detail.rejectionReason}</p>
+            ) : null}
+
+            {detailError ? <p className="text-sm text-red-700">{detailError}</p> : null}
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              {detail.status === "DRAFT" ? (
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={detailBusy}
+                  onClick={() => void detailAction(`absences/${detailId}/submit`)}
+                >
+                  {t("submit")}
+                </button>
+              ) : null}
+              {detail.status === "SUBMITTED" ? (
+                <>
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    disabled={detailBusy}
+                    onClick={() => void detailAction(`absences/${detailId}/approve`)}
+                  >
+                    {t("approve")}
+                  </button>
+                  <div className="w-full space-y-2">
+                    <input
+                      className="block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                      placeholder={t("rejectReasonPlaceholder")}
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={detailBusy}
+                      onClick={() =>
+                        void detailAction(`absences/${detailId}/reject`, {
+                          rejectionReason: rejectReason,
+                        })
+                      }
+                    >
+                      {t("reject")}
+                    </button>
+                  </div>
+                </>
+              ) : null}
+              {detail.status === "APPROVED" ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={detailBusy}
+                  onClick={() => void detailAction(`absences/${detailId}/cancel`)}
+                >
+                  {t("cancel")}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        )}
       </ModalShell>
     </>
   );

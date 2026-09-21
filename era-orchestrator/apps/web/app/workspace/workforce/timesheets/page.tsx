@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -11,6 +10,9 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
+  ModalFooter,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -21,6 +23,7 @@ import {
   workforceFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type EntryType = "WORK" | "VACATION" | "SICK" | "OFF" | "BUSINESS_TRIP";
 
@@ -84,6 +87,7 @@ function weekdayShortUtc(
 export default function TimesheetsPage() {
   const { ready } = useRequireAuth();
   const t = useTranslations("workforceTimesheets");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -101,6 +105,9 @@ export default function TimesheetsPage() {
   const [batchFrom, setBatchFrom] = useState(1);
   const [batchTo, setBatchTo] = useState(1);
   const [batchType, setBatchType] = useState<EntryType>("VACATION");
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [autofillOpen, setAutofillOpen] = useState(false);
 
   const lastDay = useMemo(() => lastDayUtc(year, month), [year, month]);
   const yearMonth = useMemo(
@@ -287,10 +294,11 @@ export default function TimesheetsPage() {
         ],
       }),
     });
+    setBatchOpen(false);
   }
 
   async function runApprove() {
-    if (!window.confirm(t("confirmApprove"))) return;
+    setApproveOpen(false);
     await mutate("approve", { method: "POST", body: "{}" });
   }
 
@@ -302,41 +310,21 @@ export default function TimesheetsPage() {
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
-        leading={
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-[13px] font-medium text-[#34495E]">
-              <span>{t("monthFilter")}</span>
-              <input
-                type="month"
-                value={yearMonth}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (!/^\d{4}-\d{2}$/.test(v)) return;
-                  setYear(Number(v.slice(0, 4)));
-                  setMonth(Number(v.slice(5, 7)));
-                }}
-                className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              />
-            </label>
-            <p className="m-0 text-sm text-[#7F8C8D]">
-              {t("status")}:{" "}
-              <span className="font-medium text-[#34495E]">
-                {timesheet
-                  ? timesheet.status === "APPROVED"
-                    ? t("statusApproved")
-                    : t("statusDraft")
-                  : "—"}
-              </span>
-            </p>
-          </div>
-        }
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={busy || !canEdit || !timesheet}
+              onClick={() => setBatchOpen(true)}
+            >
+              {t("batchTitle")}
+            </button>
+            <button
+              type="button"
               className={PRIMARY_BUTTON_CLASS}
               disabled={busy || !canEdit || !timesheet}
-              onClick={() => void mutate("autofill", { method: "POST", body: "{}" })}
+              onClick={() => setAutofillOpen(true)}
             >
               {t("autofill")}
             </button>
@@ -354,70 +342,75 @@ export default function TimesheetsPage() {
               type="button"
               className={PRIMARY_BUTTON_CLASS}
               disabled={busy || !canEdit || !timesheet}
-              onClick={() => void runApprove()}
+              onClick={() => setApproveOpen(true)}
             >
               {t("approve")}
             </button>
           </div>
         }
       />
+      <EraListFilterBar
+        className="mb-2"
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          const n = new Date();
+          setYear(n.getFullYear());
+          setMonth(n.getMonth() + 1);
+        }}
+      >
+        <label className="text-[13px] font-medium text-[#34495E]">
+          {t("monthFilter")}
+          <input
+            type="month"
+            value={yearMonth}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!/^\d{4}-\d{2}$/.test(v)) return;
+              setYear(Number(v.slice(0, 4)));
+              setMonth(Number(v.slice(5, 7)));
+            }}
+            className="mt-1 block rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+          />
+        </label>
+        <p className="self-end pb-1.5 text-sm text-[#7F8C8D]">
+          {t("status")}:{" "}
+          <span className="font-medium text-[#34495E]">
+            {timesheet
+              ? timesheet.status === "APPROVED"
+                ? t("statusApproved")
+                : t("statusDraft")
+              : "—"}
+          </span>
+        </p>
+      </EraListFilterBar>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
       ) : timesheet ? (
         <>
-          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            <h2 className="text-sm font-semibold text-[#34495E]">{t("batchTitle")}</h2>
-            <div className="flex flex-wrap items-end gap-3">
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("batchEmployee")}
-                value={batchEmp}
-                onChange={(next) => setBatchEmp(String(next))}
-                options={empOptions}
-              />
-              <label className="block text-[13px] font-medium text-[#34495E]">
-                {t("batchFrom")}
-                <input
-                  type="number"
-                  min={1}
-                  max={lastDay}
-                  className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                  value={batchFrom}
-                  onChange={(e) => setBatchFrom(Number(e.target.value))}
-                  disabled={!canEdit}
-                />
-              </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
-                {t("batchTo")}
-                <input
-                  type="number"
-                  min={1}
-                  max={lastDay}
-                  className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                  value={batchTo}
-                  onChange={(e) => setBatchTo(Number(e.target.value))}
-                  disabled={!canEdit}
-                />
-              </label>
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("batchType")}
-                value={batchType}
-                onChange={(next) => setBatchType(String(next) as EntryType)}
-                options={typeOptions}
-              />
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy || !canEdit || !batchEmp}
-                onClick={() => void runBatch()}
-              >
-                {t("batchApply")}
-              </button>
-            </div>
-            <p className="text-xs text-[#7F8C8D]">{t("legendHint")}</p>
-          </section>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#7F8C8D]">
+            <span>
+              <strong className="text-[#34495E]">{t("codeEmpty")}</strong> {t("typeEmpty")}
+            </span>
+            <span>
+              <strong className="text-[#34495E]">{t("codeWork")}</strong> {t("type.WORK")}
+            </span>
+            <span>
+              <strong className="text-[#34495E]">{t("codeVacation")}</strong>{" "}
+              {t("type.VACATION")}
+            </span>
+            <span>
+              <strong className="text-[#34495E]">{t("codeSick")}</strong> {t("type.SICK")}
+            </span>
+            <span>
+              <strong className="text-[#34495E]">{t("codeOff")}</strong> {t("type.OFF")}
+            </span>
+            <span>
+              <strong className="text-[#34495E]">{t("codeTrip")}</strong>{" "}
+              {t("type.BUSINESS_TRIP")}
+            </span>
+          </div>
+          <p className="text-xs text-[#7F8C8D]">{t("legendHint")}</p>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-max border-collapse`}>
               <thead>
@@ -514,28 +507,101 @@ export default function TimesheetsPage() {
           {employments.length === 0 ? (
             <p className="text-sm text-[#7F8C8D]">{t("empty")}</p>
           ) : null}
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-[#7F8C8D]">
-            <span>
-              <strong>{t("codeEmpty")}</strong> — {t("typeEmpty")}
-            </span>
-            <span>
-              <strong>{t("codeWork")}</strong> — {t("type.WORK")}
-            </span>
-            <span>
-              <strong>{t("codeVacation")}</strong> — {t("type.VACATION")}
-            </span>
-            <span>
-              <strong>{t("codeSick")}</strong> — {t("type.SICK")}
-            </span>
-            <span>
-              <strong>{t("codeOff")}</strong> — {t("type.OFF")}
-            </span>
-            <span>
-              <strong>{t("codeTrip")}</strong> — {t("type.BUSINESS_TRIP")}
-            </span>
-          </div>
         </>
       ) : null}
+
+      <ModalShell
+        open={batchOpen}
+        title={t("batchTitle")}
+        onClose={() => setBatchOpen(false)}
+        closeLabel={tCommon("close")}
+        maxWidthClass="max-w-lg"
+        footer={
+          <ModalFooter
+            onCancel={() => setBatchOpen(false)}
+            onSubmit={() => void runBatch()}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={t("batchApply")}
+            busy={busy}
+            submitDisabled={!canEdit || !batchEmp}
+          />
+        }
+      >
+        <div className="grid gap-3">
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("batchEmployee")}
+            value={batchEmp}
+            onChange={(next) => setBatchEmp(String(next))}
+            options={empOptions}
+          />
+          <div className="flex flex-wrap gap-3">
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("batchFrom")}
+              <input
+                type="number"
+                min={1}
+                max={lastDay}
+                className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={batchFrom}
+                onChange={(e) => setBatchFrom(Number(e.target.value))}
+                disabled={!canEdit}
+              />
+            </label>
+            <label className="block text-[13px] font-medium text-[#34495E]">
+              {t("batchTo")}
+              <input
+                type="number"
+                min={1}
+                max={lastDay}
+                className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={batchTo}
+                onChange={(e) => setBatchTo(Number(e.target.value))}
+                disabled={!canEdit}
+              />
+            </label>
+          </div>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("batchType")}
+            value={batchType}
+            onChange={(next) => setBatchType(String(next) as EntryType)}
+            options={typeOptions}
+          />
+        </div>
+      </ModalShell>
+
+      <WorkforceConfirmDialog
+        open={autofillOpen}
+        title={t("autofill")}
+        body={t("autofillConfirm")}
+        confirmLabel={tCommon("confirm")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        onCancel={() => setAutofillOpen(false)}
+        onConfirm={() => {
+          setAutofillOpen(false);
+          void mutate("autofill", { method: "POST", body: "{}" });
+        }}
+      />
+      <ModalShell
+        open={approveOpen}
+        title={t("approve")}
+        onClose={() => setApproveOpen(false)}
+        closeLabel={tCommon("close")}
+        maxWidthClass="max-w-sm"
+        footer={
+          <ModalFooter
+            onCancel={() => setApproveOpen(false)}
+            onSubmit={() => void runApprove()}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={t("approve")}
+            busy={busy}
+          />
+        }
+      >
+        <p className="text-sm text-[#34495E]">{t("confirmApprove")}</p>
+      </ModalShell>
     </div>
   );
 }

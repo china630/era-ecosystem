@@ -12,6 +12,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -169,16 +170,21 @@ export default function WorkforcePlacesPage() {
           </button>
         }
       />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setFilterStatus("ACTIVE")}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("filterStatus")}
+          value={filterStatus}
+          onChange={(next) =>
+            setFilterStatus(Array.isArray(next) ? (next[0] ?? "") : next)
+          }
+          options={statusOptions}
+        />
+      </EraListFilterBar>
       <div className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex flex-wrap gap-3">
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("filterStatus")}
-            value={filterStatus}
-            onChange={(next) => setFilterStatus(Array.isArray(next) ? (next[0] ?? "") : next)}
-            options={statusOptions}
-          />
-        </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         {loading ? (
           <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
