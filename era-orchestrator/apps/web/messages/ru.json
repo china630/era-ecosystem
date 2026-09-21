@@ -54,6 +54,10 @@
       "earlyAccessLink": "Early access — лист ожидания",
       "securityLink": "Безопасность — споры и state org"
     },
+    "channexVendorTitle": "Ключ партнёра Channex",
+    "channexVendorLoadFailed": "Не удалось загрузить",
+    "channexVendorSaveFailed": "Не удалось сохранить",
+    "channexVendorSaved": "Сохранено",
     "mdm": {
       "title": "MDM",
       "subtitle": "Мастер-данные: юрлица и идентичность персон по всей платформе.",
@@ -421,7 +425,23 @@
       "syncFailed": "Sync не удался ({status})",
       "syncEmpty": "Нет включённых industry-эндпоинтов — сначала сохраните URL hotel/fnb/clinic",
       "syncOk": "Синхронизировано привязок: {count}",
-      "syncPartial": "Синхронизировано {ok}/{total}. Ошибки: {failed}"
+      "syncPartial": "Синхронизировано {ok}/{total}. Ошибки: {failed}",
+      "fiscalTitle": "Фискальные KKM / банковский POS",
+      "fiscalHint": "N аппаратов на организацию. Секреты шифруются в SoR; Sync отдаёт plaintext сателлиту по внутреннему токену. Кит бесплатный — биллится ERA-касса/регистр.",
+      "fiscalKind": "Тип",
+      "fiscalProvider": "Провайдер",
+      "fiscalLabel": "Название",
+      "fiscalOutlet": "Код точки",
+      "fiscalRegister": "Код регистра",
+      "fiscalEndpoint": "URL агента",
+      "fiscalSecrets": "Secrets JSON (необязательно)",
+      "fiscalOrgDefault": "Дефолт орг.",
+      "fiscalAdd": "Добавить",
+      "fiscalRetire": "Снять",
+      "fiscalEmpty": "Нет аппаратов — Kafe пишет cash/card без KKM.",
+      "fiscalSaved": "Аппарат сохранён",
+      "fiscalSaveFailed": "Не удалось сохранить ({status})",
+      "fiscalRetired": "Аппарат снят"
     },
     "referrals": {
       "title": "Реферальные партнёры",
@@ -577,6 +597,7 @@
     "platformMdmPersons": "Персоны",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Безопасность",
+    "platformChannex": "Channex",
     "profileMenuAria": "Меню аккаунта",
     "sidebarExpandAria": "Развернуть меню",
     "sidebarCollapseAria": "Свернуть меню",

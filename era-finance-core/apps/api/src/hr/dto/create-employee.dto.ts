@@ -100,6 +100,16 @@ export class CreateEmployeeDto {
   @Min(0)
   supplementSalary?: number;
 
+  @ApiPropertyOptional({
+    description:
+      "Wave 5: management internal rate (AZN). Ignored by statutory payroll.",
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  internalRate?: number | null;
+
   @ApiPropertyOptional({ description: "Work schedule id" })
   @IsOptional()
   @IsUUID()

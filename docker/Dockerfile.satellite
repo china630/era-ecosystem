@@ -8,7 +8,9 @@ ARG PACKAGE_IMAGE=era-ecosystem/packages:local
 FROM ${PACKAGE_IMAGE} AS pkg-build
 
 FROM node:22-alpine AS base
-RUN apk add --no-cache libc6-compat openssl wget
+# HTTPS apk can fail on Windows Docker Desktop ("TLS: server certificate not trusted").
+RUN apk add --no-cache libc6-compat openssl wget \
+  || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache libc6-compat openssl wget)
 WORKDIR /workspace
 
 FROM base AS app-deps
@@ -16,15 +18,28 @@ ARG SATELLITE_DIR
 COPY --from=pkg-build /workspace/packages ./packages
 COPY ${SATELLITE_DIR}/package.json ${SATELLITE_DIR}/package-lock.json* ./${SATELLITE_DIR}/
 WORKDIR /workspace/${SATELLITE_DIR}
-RUN npm install --ignore-scripts
+# Docker Desktop on this host often MITM-breaks npm TLS (UNABLE_TO_VERIFY_LEAF_SIGNATURE).
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+RUN npm config set strict-ssl false \
+  && for i in 1 2 3 4 5; do rm -rf node_modules && npm install --ignore-scripts && break || sleep 15; done
 
 FROM base AS builder
 ARG SATELLITE_DIR
 COPY --from=pkg-build /workspace/packages ./packages
+# Overlay current workspace packages so `compose build clinic` picks up kit
+# changes without a separate packages-image rebuild.
+COPY packages ./packages
+WORKDIR /workspace/packages/satellite-kit
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+RUN npm config set strict-ssl false \
+  && npm install \
+  && npm run build
+WORKDIR /workspace
 COPY --from=app-deps /workspace/${SATELLITE_DIR}/node_modules ./${SATELLITE_DIR}/node_modules
 COPY ${SATELLITE_DIR} ./${SATELLITE_DIR}
 WORKDIR /workspace/${SATELLITE_DIR}
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 # Dummy URL: generate + migrate diff use the datamodel, not a live DB.
 ENV DATABASE_URL=postgresql://prisma:prisma@127.0.0.1:5432/prisma
 RUN for i in 1 2 3 4 5; do ./node_modules/.bin/prisma generate && break || sleep 15; done \
@@ -37,10 +52,12 @@ ARG SATELLITE_DIR
 ARG SATELLITE_PORT
 WORKDIR /app
 ENV NODE_ENV=production
+ENV ERA_IN_DOCKER=1
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=${SATELLITE_PORT}
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache postgresql-client \
+  || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache postgresql-client)
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder /workspace/${SATELLITE_DIR}/public ./public
 COPY --from=builder /workspace/${SATELLITE_DIR}/.next/standalone ./

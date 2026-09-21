@@ -1,9 +1,9 @@
 {
   "auth": {
     "loginFailed": "Login failed",
-    "organizationIdLabel": "Organization ID (wholesale)",
-    "organizationIdPlaceholder": "UUID — required on shared wholesale pool",
-    "organizationIdHint": "On a dedicated appliance leave blank to use the process-bound org.",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -95,7 +95,17 @@
   "orders": {
     "title": "ERA Wholesale",
     "subtitle": "MVP operational shell per DESIGN.md.",
-    "shellNote": "Registries and forms will use modals per DESIGN.md."
+    "shellNote": "Registries and forms will use modals per DESIGN.md.",
+    "confirm": "Confirm order",
+    "confirmed": "Order {order} confirmed",
+    "confirmFailed": "Confirm failed",
+    "grantCode": "Trade credit grant code",
+    "grantCodePlaceholder": "Pickup grant code",
+    "onAccount": "On account",
+    "prepaid": "Prepaid / cash",
+    "showResidual": "Show credit residual",
+    "available": "Available",
+    "limit": "Limit"
   },
   "importOrders": {
     "title": "Import purchase orders",
@@ -129,6 +139,8 @@
     "counterpartyId": "Counterparty ID",
     "checkCredit": "Check credit",
     "limit": "Limit",
+    "available": "Available",
+    "stopList": "Stop-list",
     "openPickLists": "Open pick lists",
     "confirmPick": "Confirm pick",
     "createFailed": "Error creation",

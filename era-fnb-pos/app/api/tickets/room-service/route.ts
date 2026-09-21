@@ -5,7 +5,10 @@ import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 
 const schema = z.object({
   roomNumber: z.string().min(1),
@@ -25,8 +28,9 @@ const schema = z.object({
 /** Room service ticket — no table; routes to KDS via standard fire flow. */
 export async function POST(request: Request) {
   await assertFnbEntitled();
+  await assertHotelFnbFeature("room-service");
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.ROOM_SERVICE);
   if (denied) return denied;
 
   const body = schema.parse(await request.json());

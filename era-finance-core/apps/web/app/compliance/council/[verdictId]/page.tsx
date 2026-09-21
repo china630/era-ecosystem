@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { CouncilChamberPanel } from "../../components/council-chamber-panel";
 import { PageHeader } from "../../../../components/layout/page-header";
 import { SECONDARY_BUTTON_CLASS } from "../../../../lib/design-system";
-import { useAuth } from "../../../../lib/auth-context";
+import { useOrgPermissions } from "../../../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../../../lib/role-utils";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 
 export default function CouncilChamberPage() {
@@ -14,10 +15,10 @@ export default function CouncilChamberPage() {
   const params = useParams();
   const verdictId = typeof params.verdictId === "string" ? params.verdictId : "";
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
+  const perms = useOrgPermissions();
 
   const canMitigate =
-    user?.role === "OWNER" || user?.role === "ADMIN" || user?.isSuperAdmin;
+    perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS) || perms.isSuperAdmin;
 
   if (!ready || !token || !verdictId) return null;
 

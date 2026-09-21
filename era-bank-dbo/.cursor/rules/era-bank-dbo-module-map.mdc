@@ -13,7 +13,7 @@ Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
 
 | Path | UI |
 |------|-----|
-| `/login` | Retail + corporate auth (OTP / ASAN stub) |
+| `/login` | Retail + corporate auth (OTP / ASAN stub). **No ERA ID field** — org from Host / bind (`ERA_SATELLITE_KEY=banking_dbo`) |
 
 ## Customer (authenticated)
 

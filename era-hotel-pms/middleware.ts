@@ -6,6 +6,7 @@ import {
   getBearerOrCookieToken,
   isPublicApiPath,
   redirectNoStore,
+  nextWithOptionalHostBoundOrg,
   verifyAgencySession,
   verifySatelliteSession,
 } from '@era/satellite-kit/auth/middleware-edge';
@@ -28,6 +29,9 @@ const PUBLIC_API_EXTRA = [
   '/api/integration/staff-provision',
   '/api/auth/agency-sso/exchange',
   '/api/integrations/elektraweb-bridge',
+  '/api/integrations/channex',
+  '/api/integrations/ota',
+  '/api/public',
 ];
 
 function isAgencyPath(pathname: string): boolean {
@@ -142,11 +146,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (pathname === '/login') {
+    return nextWithOptionalHostBoundOrg(
+      reqHeaders,
+      request.headers.get('x-forwarded-host') || request.headers.get('host'),
+      'industry_hotel_pms',
+    );
+  }
+
   if (
-    pathname === '/login' ||
     pathname === '/sso/callback' ||
     pathname === '/help' ||
     pathname.startsWith('/help/') ||
+    pathname === '/b2c' ||
+    pathname.startsWith('/b2c/') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
@@ -189,8 +202,9 @@ export async function middleware(request: NextRequest) {
       permissions: session.permissions,
       isOwner: session.isOwner,
     };
+    // Fail-closed: every staff page must map to a permission (see page inventory test).
     if (
-      required &&
+      !required ||
       !required.some((p) => sessionHasHotelPermission(sessionView, p))
     ) {
       const forbiddenUrl = new URL('/login', request.url);

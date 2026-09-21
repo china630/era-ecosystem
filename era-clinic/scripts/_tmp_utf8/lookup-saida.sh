@@ -1,0 +1,2 @@
+#!/bin/bash
+docker exec -i era-postgres psql -U era -d era_clinic -c "SELECT e.id, e.status, e.\"programCode\", e.\"roomNumber\", left(coalesce(e.\"reservationId\",''), 36) AS res, left(coalesce(e.\"hotelStayId\",''), 36) AS stay, e.\"openedAt\", e.anamnesis_updated_at, left(coalesce(e.anamnesis_text,''), 40) AS anam, p.\"refCode\", p.\"fullName\" FROM \"ClinicalEpisode\" e JOIN \"PatientRef\" p ON p.id = e.\"patientRefId\" WHERE p.\"refCode\" = 'P-001854' ORDER BY e.\"openedAt\";"

@@ -16,7 +16,7 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 |--------|--------|-------|
 | Allotment block | AllotmentBlock + lines | TENTATIVE/DEFINITE/CANCELLED/RELEASED; cutoff soft-release |
 | Booking | ReservationGroup | folioMode, allotmentBlockId, envelope dates |
-| RoomStay | Reservation | roomCount=1 on create; optional roomId |
+| RoomStay | Reservation | One **door + charged product** (`roomCount=1`); optional `roomId`. Party (`ReservationGuest`) lives on the stay — not “one person per row”. See [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) |
 | Assignment | roomId + share pool + shareBedIndex + Stay | Physical door; share pool for union twin — see [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
 | Master guest | ReservationGuest.isPrimary | Folio owner per stay (PRIMARY mode) |
 | Party billing | Reservation.partyBillingMode | PRIMARY (one owner) / EQUAL (each ownsFolio → personal GUEST folio) |
@@ -32,6 +32,7 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 ### Still deferred
 
 - Prisma rename Reservation -> RoomStay (semantic only today)
+- Person-level **Depart guest** / **Move guest** / **Swap rooms** and reservation-card IA target — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md)
 
 ## References
 
@@ -41,3 +42,5 @@ One Reservation row mixed booking + product + assignment. Corporate negotiation 
 ## Related
 
 - [hotel-fo-screen-chain.md](./hotel-fo-screen-chain.md) — FO menu priority and sellable vs doors
+- [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) — union share pool (not household party)
+- [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) — stay card IA; exclusive party vs share vs booking

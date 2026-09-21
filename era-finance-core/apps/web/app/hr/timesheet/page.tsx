@@ -407,7 +407,9 @@ export default function HrTimesheetPage() {
         <p className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#34495E]`}>
           {t("timesheet.cpMasterBanner")}{" "}
           <a
-            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/timesheets`}
+            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/timesheets?year=${year}&month=${month}`}
+            target="_blank"
+            rel="noreferrer"
             className="font-medium text-[#2980B9] underline"
           >
             {t("timesheet.cpMasterLink")}

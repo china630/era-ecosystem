@@ -97,8 +97,11 @@ export function FloatingWidget(props: {
 
   const mismatch = useMemo<MismatchContext | null>(() => {
     const erpVoen = props.erpActiveOrganization?.taxId ?? "";
-    if (!erpVoen) return null;
     if (authState !== "authenticated") return null;
+    // Wave 7 dual-VÖEN: never autofill when ERP org VÖEN is unknown.
+    if (!erpVoen) {
+      return { erpVoen: "missing", portalVoen: portalVoen ?? "unknown" };
+    }
     if (!portalVoen) {
       return { erpVoen, portalVoen: "unknown" };
     }

@@ -11,7 +11,7 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 - [x] Prisma: Ticket model + related domain schema
 - [x] `POST /api/tickets` + room charge bridge API
 - [x] doc/DOCUMENTATION-INDEX.md + UAT-SMOKE.md
-- [x] Auth FB_WAITER / FB_MANAGER — login + RBAC on pay/fire/void/shift/menu
+- [x] Auth FB_WAITER / FB_MANAGER — Variant A grants (`api:`/`screen:`/`admin:`); JWT `permissions[]`; `/admin/access` matrix
 - [x] Menu CRUD admin — `GET/POST /api/menu`, category/item modal CRUD `/admin/menu`, tables `/admin/tables`
 - [x] Menu price history — `MenuItemPrice` + `GET /api/menu/{id}/prices`
 - [x] Standalone GL — `SATELLITE_FB_SALE_COMPLETED` (LOCAL_CASHIER pay) + `SATELLITE_FB_SHIFT_CLOSED` (Z-close)

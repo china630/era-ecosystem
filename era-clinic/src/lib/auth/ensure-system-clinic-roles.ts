@@ -7,16 +7,16 @@ import {
   type ClinicRoleCode,
 } from "@/lib/clinic-roles";
 import {
-  parseRolePermissions,
   permissionsJsonForRole,
+  permissionsJsonNeedsTemplate,
 } from "@/lib/auth/clinic-permissions";
 
 type RoleDb = Pick<PrismaClient, "role">;
 
 /**
  * Upsert the six system ops roles for an organization.
- * Does not overwrite a non-empty customized permissionsJson.
- * Fills empty JSON from the code template; sets isSystem + staffKind when missing.
+ * Does not overwrite a valid permissionsJson array (including intentional empty).
+ * Fills missing/invalid JSON from the code template; sets isSystem + staffKind when missing.
  */
 export async function ensureSystemClinicRoles(
   db: RoleDb,
@@ -57,7 +57,6 @@ async function upsertSystemRole(
     return;
   }
 
-  const stored = parseRolePermissions(existing.permissionsJson);
   const patch: {
     isSystem: boolean;
     staffKind?: string;
@@ -68,13 +67,20 @@ async function upsertSystemRole(
   if (existing.staffKind == null || existing.staffKind === "") {
     patch.staffKind = staffKind;
   }
-  if (stored.length === 0) {
+  if (permissionsJsonNeedsTemplate(existing.permissionsJson)) {
     patch.permissionsJson = templateJson;
   }
   // Keep display name if already set; only fill blank.
   if (!existing.name?.trim()) {
     patch.name = name;
   }
+
+  // Skip no-op writes when only isSystem flag and already system.
+  const onlySystemFlag =
+    Object.keys(patch).length === 1 &&
+    patch.isSystem === true &&
+    existing.isSystem === true;
+  if (onlySystemFlag) return;
 
   await db.role.update({
     where: { id: existing.id },

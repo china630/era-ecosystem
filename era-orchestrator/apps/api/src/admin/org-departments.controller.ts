@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Body,
   Controller,
@@ -15,7 +16,7 @@ import { CreateDepartmentOrgDto } from "./dto/create-department-org.dto";
 import { OrgDepartmentsService } from "./org-departments.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin/orgs/:orgId/departments")
 export class OrgDepartmentsController {
   constructor(private readonly departments: OrgDepartmentsService) {}

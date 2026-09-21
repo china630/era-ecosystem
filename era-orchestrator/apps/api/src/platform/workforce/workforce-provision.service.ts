@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from "@nestjs/common";
 import {
   SATELLITE_STAFF_DEACTIVATED,
@@ -15,6 +17,7 @@ import {
   RoleBindingSource,
   RoleBindingStatus,
   WorkforceEmploymentStatus,
+  WorkforcePersonnelOrderType,
 } from "@era365/database";
 import { randomUUID } from "crypto";
 import { MdmService } from "../../mdm/mdm.service";
@@ -24,6 +27,7 @@ import { SatelliteEventsService } from "../../satellite-events/satellite-events.
 import { SubscriptionAccessService } from "../../subscription/subscription-access.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
+import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceRoleTemplateService } from "./workforce-role-template.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
@@ -77,6 +81,8 @@ export class WorkforceProvisionService {
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly subscriptionAccess: SubscriptionAccessService,
+    @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
+    private readonly personnelOrders: WorkforcePersonnelOrdersService,
   ) {}
 
   async hire(
@@ -259,6 +265,22 @@ export class WorkforceProvisionService {
       },
     });
 
+    try {
+      await this.personnelOrders.ensureDraftForMutation({
+        organizationId,
+        actorUserId,
+        employmentId: employment.id,
+        type: WorkforcePersonnelOrderType.HIRE,
+        effectiveDate: dto.hireDate.slice(0, 10),
+      });
+    } catch (err) {
+      // Best-effort: hire must not fail if DRAFT order cannot be created.
+      console.warn(
+        `[workforce] ensureDraft HIRE failed for ${employment.id}:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
+
     return { employment, bindings };
   }
 
@@ -268,6 +290,21 @@ export class WorkforceProvisionService {
       include: { orgUnit: true, position: true },
     });
     if (!employment) throw new NotFoundException("Employment not found");
+    await this.personnelOrders.assertTerminateAllowed(organizationId, employmentId);
+    try {
+      await this.personnelOrders.ensureDraftForMutation({
+        organizationId,
+        actorUserId,
+        employmentId,
+        type: WorkforcePersonnelOrderType.TERMINATE,
+        effectiveDate: new Date().toISOString().slice(0, 10),
+      });
+    } catch (err) {
+      console.warn(
+        `[workforce] ensureDraft TERMINATE failed for ${employmentId}:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
 
     const bindings = await this.prisma.workforceRoleBinding.findMany({
@@ -337,6 +374,9 @@ export class WorkforceProvisionService {
       action: "TERMINATE",
       entityType: "EMPLOYMENT",
       entityId: employmentId,
+      globalPersonId: employment.globalPersonId,
+      cpEmploymentId: employmentId,
+      workforceScopeId: link.workforceScopeId,
     });
 
     return { ok: true };

@@ -12,6 +12,8 @@ type ClinicCheckInInput = {
   roomNumber?: string | null;
   hotelStayId?: string | null;
   paxKey?: string | null;
+  sex?: string | null;
+  birthDate?: string | null;
 };
 
 function clinicBaseUrl(): string | null {
@@ -64,6 +66,8 @@ export async function notifyClinicCheckIn(input: ClinicCheckInInput): Promise<vo
       roomNumber: input.roomNumber ?? null,
       hotelStayId: input.hotelStayId ?? null,
       paxKey: input.paxKey ?? null,
+      sex: input.sex ?? null,
+      birthDate: input.birthDate ?? null,
     }),
     signal: AbortSignal.timeout(12000),
   });

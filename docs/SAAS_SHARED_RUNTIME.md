@@ -3,6 +3,7 @@
 **Canon (decision):** [`adr/saas-request-tenant-and-vendor-bridges.md`](./adr/saas-request-tenant-and-vendor-bridges.md)  
 **Topology vocabulary:** [`adr/deployment-topology.md`](./adr/deployment-topology.md)  
 **Bind / Sync today:** [`adr/satellite-organization-bind.md`](./adr/satellite-organization-bind.md)  
+**Login alias (ERA ID / Host):** [`adr/org-public-number-and-login-host.md`](./adr/org-public-number-and-login-host.md) — **implemented** (migrations + kit rebuild; not sell/`ga`)  
 **Elektraweb dual-run (ops):** [`adr/hotel-elektraweb-live-bridge.md`](./adr/hotel-elektraweb-live-bridge.md) · [`adr/hotel-elektraweb-reverse-folio-post.md`](./adr/hotel-elektraweb-reverse-folio-post.md)
 
 This page is the **product/engineering index**. It does not change sell/show. Live SHARED pool **sell** and HOT-06 **SHIPPED** are still **not** claimed. Isolation engineering (hotel/clinic request-org stamps, SHARED Sync skip-bind, orch pool members, Placement host apply code path) **landed** — field UAT / Scaffold ✅ still open.
@@ -16,7 +17,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | Already true (Waves 1–12 + isolation eng) | Not true yet |
 |---------------------------|--------------|
 | Hotel + clinic + industry Next: login/SSO JWT org, middleware, `enterSatelliteTenant`, ops stamps via `requestOrganizationId()` (hotel stamps migrated off process bind) | Selling SHARED pool `ga` |
-| SHARED login requires `organizationId` (fail-closed) | HOT-06 **SHIPPED** / field SPA Insert |
+| SHARED login requires `orgNo` → UUID resolve (fail-closed — [ADR](./adr/org-public-number-and-login-host.md)); **era-bank ops** same contract | HOT-06 **SHIPPED** / field SPA Insert |
 | Super-Admin Elektraweb / clinic cutover policy + Sync row upsert (**SHOW** Wave 6 lab) | Field two-org UAT → AC-*-TENANT Scaffold ✅ |
 | Finance: Nest `TenantContextInterceptor` + membership JWT org (not kit ALS) | AC-CP-TOPO Scaffold ✅ (field / lab signoff still open) |
 | Kit `findUserByCredential(login, org?)` | |

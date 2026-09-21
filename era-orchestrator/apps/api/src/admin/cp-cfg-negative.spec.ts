@@ -76,6 +76,9 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       clinicCutoverPolicy: {
         findUnique: jest.fn().mockResolvedValue(null),
       },
+      fiscalHardwareDevice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
     const config = {
       get: (key: string) => {

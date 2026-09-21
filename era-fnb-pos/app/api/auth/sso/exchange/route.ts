@@ -6,10 +6,21 @@ import {
   resolveVerifiedSsoFinanceRole,
   satelliteOrganizationId,
   satelliteRuntimeConfig,
+  signSatelliteSession,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import {
+  ensureSystemFnbRoles,
+  resolveFnbEdition,
+} from "@/lib/auth/ensure-system-fnb-roles";
+import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import {
+  ALL_PERMISSIONS,
+  effectiveRolePermissions,
+} from "@/lib/auth/permissions";
+import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 
 /**
  * SEC-SSO-02 + SEC-SSO-01.
@@ -54,12 +65,55 @@ export async function POST(request: Request) {
 
     enterSatelliteTenant({ organizationId: body.organizationId });
 
-    const { token, user } = await executeSatelliteSsoExchange(
+    const profile = await getFnbOrgProfile(body.organizationId);
+    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    await ensureSystemFnbRoles(prisma, body.organizationId, edition);
+
+    const { token: _baseToken, user } = await executeSatelliteSsoExchange(
       { ...body, financeRole },
       prisma,
     );
 
-    const res = jsonOk({ user, token });
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { role: true },
+    });
+    if (!dbUser) {
+      return jsonError("SSO user missing", 500);
+    }
+
+    const isOwner = user.isOwner === true || user.role === "BUSINESS_OWNER";
+    const bypass = hasFnbPermissionBypass({
+      login: dbUser.login,
+      email: body.email,
+      role: user.role,
+      isOwner,
+    });
+    const permissions = bypass
+      ? [...ALL_PERMISSIONS]
+      : effectiveRolePermissions(
+          dbUser.role.code,
+          dbUser.role.permissionsJson,
+          edition,
+        );
+
+    const token = await signSatelliteSession({
+      sub: user.id,
+      login: user.login,
+      email: body.email,
+      role: user.role,
+      roles: user.roles,
+      fullName: user.fullName,
+      organizationId: body.organizationId,
+      isOwner,
+      financeRole: user.financeRole,
+      permissions,
+    });
+
+    const res = jsonOk({
+      user: { ...user, permissions },
+      token,
+    });
     res.cookies.set(authCookieName(), token, {
       httpOnly: true,
       sameSite: "lax",

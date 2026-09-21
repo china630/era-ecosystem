@@ -7,11 +7,25 @@ import { canRunHotelImport } from '@/lib/import/auth';
 import { fetchControlPlaneOrganizationName } from '@era/satellite-kit';
 import { ALL_PERMISSIONS } from '@/lib/auth/permissions';
 import { hasHotelPermissionBypass } from '@/lib/auth/permission-check';
+import { ensureSystemHotelRoles } from '@/lib/auth/ensure-system-hotel-roles';
 
 export async function GET() {
   try {
     const session = await getSessionFromHeaders();
     if (!session) return jsonError('Unauthorized', 401);
+
+    const organizationId =
+      session.organizationId?.trim() ||
+      (
+        await prisma.user.findUnique({
+          where: { id: session.sub },
+          select: { organizationId: true },
+        })
+      )?.organizationId;
+    if (organizationId) {
+      // Wave 2: remap leftover legacy keys for active sessions (idempotent at v2).
+      await ensureSystemHotelRoles(prisma, organizationId);
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.sub },
@@ -31,13 +45,6 @@ export async function GET() {
       ? await fetchControlPlaneOrganizationName(profile.organizationId)
       : null;
 
-    const canRunElektrawebImport = await canRunHotelImport({
-      email: user.email,
-      login: user.login,
-      status: user.status,
-      roleCode: user.role.code,
-    });
-
     const bypass = hasHotelPermissionBypass({
       login: user.login,
       email: user.email ?? undefined,
@@ -47,6 +54,15 @@ export async function GET() {
     const permissions = bypass
       ? [...ALL_PERMISSIONS]
       : userPermissions(user);
+
+    const canRunElektrawebImport = await canRunHotelImport({
+      email: user.email,
+      login: user.login,
+      status: user.status,
+      roleCode: user.role.code,
+      permissions,
+      isOwner: session.isOwner === true || user.role.code === 'BUSINESS_OWNER',
+    });
 
     return jsonOk({
       id: user.id,

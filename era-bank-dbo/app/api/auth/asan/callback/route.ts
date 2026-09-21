@@ -2,7 +2,12 @@ import { z } from "zod";
 import { completeAsanChallenge } from "@/lib/asan-stub.adapter";
 import { createCustomerSession } from "@/lib/customer-session";
 import { dboPaths, engineDboJson } from "@/lib/engine-dbo-client";
-import { handleRouteError, jsonOk, setSessionCookie } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, setSessionCookie } from "@/lib/api-utils";
+import {
+  enterDboTenant,
+  readDboAuthJson,
+  resolveDboChannelTenant,
+} from "@/lib/dbo-channel-tenant";
 
 const schema = z.object({
   transactionId: z.string().min(1),
@@ -12,7 +17,16 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
+    const parsed = await readDboAuthJson(request);
+    if (!parsed.ok) {
+      return jsonError(parsed.error, parsed.status);
+    }
+    const tenant = await resolveDboChannelTenant(request, parsed.orgNo);
+    if (!tenant.ok) {
+      return jsonError(tenant.error, tenant.status);
+    }
+    enterDboTenant(tenant.organizationId);
+    const body = schema.parse(parsed.raw);
     const stub = completeAsanChallenge(body.transactionId, body.identifier, body.channel);
     if (!stub.verified) {
       return handleRouteError(new Error("ASAN verification failed"));

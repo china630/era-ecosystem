@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { AccountingBookController } from "./accounting-book.controller";
 import { AccountingBookService } from "./accounting-book.service";
 import { AccountingController } from "./accounting.controller";
@@ -48,7 +47,6 @@ import { VatDepositService } from "./vat-deposit.service";
     GrantReceiptService,
     SubcontoService,
     VatDepositService,
-    RolesGuard,
   ],
   exports: [
     AccountingService,

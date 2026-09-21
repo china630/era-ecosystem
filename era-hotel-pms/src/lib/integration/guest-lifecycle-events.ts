@@ -22,6 +22,26 @@ async function publishLifecycle(event: Record<string, unknown>) {
   });
 }
 
+export function lifecycleDemographicsFromPax(pax: {
+  sex?: string | null;
+  birthDate?: Date | string | null;
+  guest?: { sex?: string | null; birthDate?: Date | string | null } | null;
+}): { sex?: string; birthDate?: string } {
+  const rawSex = pax.sex ?? pax.guest?.sex ?? undefined;
+  const rawDob = pax.birthDate ?? pax.guest?.birthDate ?? undefined;
+  let birthDate: string | undefined;
+  if (rawDob instanceof Date && !Number.isNaN(rawDob.getTime())) {
+    birthDate = rawDob.toISOString().slice(0, 10);
+  } else if (typeof rawDob === "string" && /^\d{4}-\d{2}-\d{2}/.test(rawDob.trim())) {
+    birthDate = rawDob.trim().slice(0, 10);
+  }
+  const sex = rawSex?.trim() || undefined;
+  return {
+    ...(sex ? { sex } : {}),
+    ...(birthDate ? { birthDate } : {}),
+  };
+}
+
 export async function dispatchGuestCheckedIn(input: {
   reservationId: string;
   roomNumber?: string;
@@ -32,6 +52,8 @@ export async function dispatchGuestCheckedIn(input: {
   checkOutDate?: string;
   /** Wave E — ReservationGuest.id (or similar) when MDM missing */
   paxKey?: string;
+  sex?: string;
+  birthDate?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
@@ -45,6 +67,8 @@ export async function dispatchGuestCheckedIn(input: {
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
       paxKey: input.paxKey,
+      sex: input.sex,
+      birthDate: input.birthDate,
     },
   };
   await publishLifecycle(event);

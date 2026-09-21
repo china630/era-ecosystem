@@ -1,6 +1,9 @@
 import { PermissionCategory } from "@prisma/client";
 import type { SeedContext } from "../../_engine/upsert";
-import { PERMISSIONS } from "./permissions.data";
+import {
+  LEGACY_BARE_PERMISSION_CODES,
+  PERMISSIONS,
+} from "./permissions.data";
 
 export async function seedPermissions(ctx: SeedContext): Promise<void> {
   if (ctx.dryRun) return;
@@ -18,4 +21,12 @@ export async function seedPermissions(ctx: SeedContext): Promise<void> {
       },
     });
   }
+
+  const legacy = [...LEGACY_BARE_PERMISSION_CODES];
+  await ctx.prisma.rolePermission.deleteMany({
+    where: { permission: { code: { in: legacy } } },
+  });
+  await ctx.prisma.permission.deleteMany({
+    where: { code: { in: legacy } },
+  });
 }

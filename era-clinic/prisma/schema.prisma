@@ -1723,6 +1723,8 @@ model ClinicShift {
   status         String          @default("OPEN")
   openedByUserId String?         @map("opened_by_user_id")
   closedByUserId String?         @map("closed_by_user_id")
+  fiscalDeviceId String?         @map("fiscal_device_id")
+  bankTerminalId String?         @map("bank_terminal_id")
   /// JSON snapshot of Z-report totals at close
   zReportJson    String?         @map("z_report_json") @db.Text
   receipts       ClinicReceipt[]

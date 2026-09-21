@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Ensure PKG-* current templates have intake auto blocks (W2):
- *   SANATORIUM-INTAKE — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
- *   GYN-OR-URO       — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
- *   CARDIO-ECG       — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
- *   USG-ABD          — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
+ *   VISIT-SANATORIUM-INTAKE — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
+ *   GYN-OR-URO              — VISIT, AUTO_ON_OPEN, PER_STAY, requiresDoctor
+ *   CARDIO-ECG              — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
+ *   USG-ABD                 — LAB_ORDER, AUTO_ON_OPEN, PER_STAY
  *
  * Idempotent. Prefer in-place when zero ProgramInstance pins; bump otherwise.
  *

@@ -256,8 +256,9 @@ export class AccountingService {
         basisInvoiceId: basisInvoiceId ?? null,
         basisFixedAssetId: basisFixedAssetId ?? null,
         reversesTransactionId: reversesTransactionId ?? null,
-        // IFRS-only posts intentionally skip NAS→IFRS mirror (status stays NONE).
-        ...(ledgerType === LedgerType.IFRS
+        // IFRS / MANAGEMENT posts intentionally skip NAS→IFRS mirror (status stays NONE).
+        ...(ledgerType === LedgerType.IFRS ||
+        ledgerType === LedgerType.MANAGEMENT
           ? { mirrorStatus: TransactionMirrorStatus.NONE }
           : {}),
       },
@@ -350,13 +351,16 @@ export class AccountingService {
     basisInvoiceId?: string | null;
     basisFixedAssetId?: string | null;
     reversesTransactionId?: string | null;
-    /** Ручная проводка (UI): проверка политики USER. */
+    /** Ручная проводка (UI): JWT grants SoT (Wave 5). */
     actingUserRole?: UserRole;
+    actingUser?: import("../auth/policies/invoice-finance.policy").PolicySubject;
   }): Promise<{ transactionId: string }> {
-    if (params.actingUserRole !== undefined) {
+    if (params.actingUser !== undefined) {
+      assertMayPostManualJournal(params.actingUser);
+    } else if (params.actingUserRole !== undefined) {
       assertMayPostManualJournal(params.actingUserRole);
     }
-    const { actingUserRole: _role, ...journalParams } = params;
+    const { actingUserRole: _role, actingUser: _au, ...journalParams } = params;
     return this.prisma.$transaction((tx) =>
       this.postJournalInTransaction(tx, journalParams),
     );

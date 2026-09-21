@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -9,9 +12,10 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { requireOrgRole } from "../auth/require-org-role";
+import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { AccountingBookService } from "./accounting-book.service";
 import { CreateAccountingBookDto } from "./dto/create-accounting-book.dto";
@@ -23,9 +27,15 @@ export class AccountingBookController {
   constructor(private readonly books: AccountingBookService) {}
 
   @Get()
-  @ApiOperation({ summary: "List accounting books for the organization" })
-  list(@OrganizationId() organizationId: string) {
-    return this.books.listBooks(organizationId);
+  @ApiOperation({
+    summary:
+      "List accounting books for the organization (MANAGEMENT hidden from ACCOUNTANT)",
+  })
+  list(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.books.listBooksForRole(organizationId, requireOrgRole(user));
   }
 
   @Get("slots")
@@ -35,8 +45,8 @@ export class AccountingBookController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Create an extra accounting book" })
   create(
     @OrganizationId() organizationId: string,
@@ -46,14 +56,28 @@ export class AccountingBookController {
   }
 
   @Patch(":id/retire")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_BOOK_MGMT)
   @ApiOperation({ summary: "Retire an unused extra accounting book" })
   retire(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
   ) {
     return this.books.retireBook(organizationId, id);
+  }
+
+  @Patch(":id/default-ops")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
+  @ApiOperation({
+    summary:
+      "Set default ops book (NAS only; MANAGEMENT → 400 OPS_BOOK_MUST_BE_NAS)",
+  })
+  setDefaultOps(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    return this.books.setDefaultOps(organizationId, id);
   }
 
   @Get(":id")

@@ -72,7 +72,7 @@ const VISIT_TITLES: Record<string, string> = {
 
 /**
  * Idempotent Nafta check-in package on episode open.
- * Creates missing intake / GYN|URO visits and ORDERED LabOrders (ECG-12, USG-ABD).
+ * Creates missing intake / GYN|URO visits and ORDERED LabOrders (CARDIO-ECG, USG-ABD).
  * Does not start physio FIFO / program instantiation.
  * Stamps inPackage + packageQuotaCode when a ProgramInstance balance matches (W1).
  * Prices lines via resolveEntitlementCharge (W3) — no silent hardcoded zeros for paid paths.

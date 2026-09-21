@@ -1,12 +1,11 @@
+import { Permissions } from "../common/decorators/permissions.decorator";
 import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { IsArray, IsBoolean, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
-import { TENDER_SEED_ROWS } from "@era/contracts";
-import { Roles } from "../auth/decorators/roles.decorator";
+import { TENDER_SEED_ROWS, CP_PERMISSION } from "@era/contracts";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -28,12 +27,12 @@ class PutTenderEnablementDto {
 @ApiTags("organization-tenders")
 @ApiBearerAuth("bearer")
 @Controller("organization/tenders")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class OrganizationTendersController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
       "Org tender catalog (Finance SoR) — seed rows + enabled codes for satellites",
@@ -58,7 +57,7 @@ export class OrganizationTendersController {
   }
 
   @Put()
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Update org tender enablement list" })
   async put(
     @OrganizationId() organizationId: string,

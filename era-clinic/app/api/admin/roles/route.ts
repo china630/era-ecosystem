@@ -9,7 +9,7 @@ import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   CLINIC_PERMISSION,
   effectiveRolePermissions,
-  parseRolePermissions,
+  rolePermissionsAreCustomized,
   serializeRolePermissions,
 } from "@/lib/auth/clinic-permissions";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
@@ -61,7 +61,10 @@ export async function GET(req: Request) {
           userCount: role._count.users,
           permissionCount: permissions.length,
           permissions,
-          customized: parseRolePermissions(role.permissionsJson).length > 0,
+          customized: rolePermissionsAreCustomized(
+            role.code,
+            role.permissionsJson,
+          ),
         };
       }),
     );

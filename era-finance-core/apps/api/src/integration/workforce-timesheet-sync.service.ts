@@ -6,6 +6,7 @@ import { Decimal, TimesheetEntryType } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { TimesheetService } from "../hr/timesheet.service";
+import { WorkforceMirrorMissingError } from "./workforce-mirror-missing.error";
 
 function parseDateOnly(iso: string): Date {
   return new Date(`${iso.slice(0, 10)}T00:00:00.000Z`);
@@ -57,11 +58,15 @@ export class WorkforceTimesheetSyncService {
 
     const event = satelliteWorkforceTimesheetApprovedSchema.parse(raw);
     let mirrored = 0;
+    let skippedNoEmployee = 0;
+    /** Year-month keys that received at least one cell (approve those headers). */
+    const touchedMonths = new Set<string>();
 
     for (const row of event.payload.rows) {
       const employee = await this.prisma.employee.findFirst({
         where: {
           organizationId,
+          deletedAt: null,
           OR: [
             { cpEmploymentId: row.cpEmploymentId },
             ...(row.financeEmployeeId
@@ -70,7 +75,10 @@ export class WorkforceTimesheetSyncService {
           ],
         },
       });
-      if (!employee) continue;
+      if (!employee) {
+        skippedNoEmployee += 1;
+        continue;
+      }
 
       const d = parseDateOnly(row.workDate);
       const year = d.getUTCFullYear();
@@ -104,8 +112,47 @@ export class WorkforceTimesheetSyncService {
         },
       });
       mirrored += 1;
+      touchedMonths.add(`${year}-${String(month).padStart(2, "0")}`);
     }
 
-    return { meta: { mirrored } };
+    if (event.payload.rows.length > 0 && mirrored === 0) {
+      // Write-back / hire mirror still in flight — do not mark job idempotent.
+      this.logger.error(
+        `WORKFORCE_TIMESHEET_APPROVED org=${organizationId}: 0/${event.payload.rows.length} rows mirrored (no Employee) — retrying`,
+      );
+      throw new WorkforceMirrorMissingError(
+        "employee_mirror_missing",
+        `timesheet rows=${event.payload.rows.length} unmatched`,
+      );
+    }
+    if (skippedNoEmployee > 0) {
+      this.logger.warn(
+        `WORKFORCE_TIMESHEET_APPROVED org=${organizationId}: skipped ${skippedNoEmployee} rows without Employee mirror`,
+      );
+    }
+
+    // Wave 1 critical: CP approve must flip Finance header to APPROVED so
+    // summarizeForPayroll can drive PayrollRun. Idempotent; does not unlock
+    // Finance grid for writes (TIMESHEET_MASTER_IS_CP still applies).
+    const approvedHeaders: string[] = [];
+    for (const key of touchedMonths) {
+      const [ys, ms] = key.split("-");
+      const year = Number(ys);
+      const month = Number(ms);
+      const id = await this.timesheet.markApprovedFromCpMirror(
+        organizationId,
+        year,
+        month,
+      );
+      if (id) approvedHeaders.push(id);
+    }
+
+    return {
+      meta: {
+        mirrored,
+        skippedNoEmployee,
+        approvedTimesheetIds: approvedHeaders,
+      },
+    };
   }
 }

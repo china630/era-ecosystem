@@ -19,7 +19,7 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 | 4 | ERA Data Hub | `era-data-hub` | `data-hub` | `data` | 4200 | `https://data.era-365.online/` |
 | 5 | Bank Core (API) | `era-bank-core` | `bank-core` | `bank-api` | 4300 | `https://bank-api.era-365.online/` |
 
-Bank Core is a regulated **headless engine** (CBS, second core), **not** an industry satellite and has **no UI** — typically deployed **one per bank** (on-prem capable). Its operational UI is the `era-bank` satellite (see Industry satellites table). ADR [era-bank-core.md](./adr/era-bank-core.md) D9.
+Bank Core is a regulated **headless engine** (CBS, second core), **not** an industry satellite and has **no UI**. Typical **appliance** is one process per licensed bank (on-prem capable); product topology is still SHARED / DEDICATED / ONPREM ([era-bank-core.md](./adr/era-bank-core.md) D8–D9). Its operational UI is the `era-bank` satellite (see Industry satellites table).
 
 ‡ Finance API public route: enable with `ERA_FINANCE_API_PUBLIC=true` (open architecture). Internal always: `http://finance-core:4100`.
 
@@ -85,10 +85,14 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | `/help` | Canonical FAQ (az \| ru \| en) | — |
 | `/terms` | User agreement (az \| ru \| en) | — |
 | `/partner` | Referral / partner dashboard | `GET /v1/partner/dashboard` |
+| `/agency/login` | Agency portal login (hotel B2B extranet) | `POST /agency-portal/login`, `POST /agency-portal/properties/pick` |
+| `/buyer/login` | Buyer portal login (trade credit cabinet) | `POST /buyer-portal/login`, `POST /buyer-portal/orgs/pick` |
 | `/` | **Marketing hub** (guest, no sidebar) / auth redirect (authed → workspace/orgs) | overlay `GET /v1/public/pricing` |
 | `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated, **not** public marketing) | SSO launch |
 
 **Redirects to Orchestrator:** Finance `/` (marketing), `/register`, `/register-org`, `/pricing`, `/partner`, `/companies` → `/organizations`, `/settings/subscription`, `/settings/team`, `/dispute/*`, `/super-admin/*`, `/industry/*`; unauthenticated Finance `/login` → `{ORCH_WEB}/login?next=finance` when CP handoff is enabled.
+
+**Finance buyer portal:** Finance web `/buyer` (trade-credit cabinet) — SSO from Orch `/buyer/login` via HMAC exchange → `era_buyer_session`. See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Buyer portal SSO and ADR [finance-trade-credit-control.md](./adr/finance-trade-credit-control.md) §7.1.
 
 ---
 
@@ -116,6 +120,14 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 14 | Bank (operational satellite) | `era-bank` | `bank` | `bank` | 3210 | `https://bank.era-365.online/` |
 
 API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
+
+**SHARED staff login hosts (ERA ID + white-label):**
+
+| Mechanism | Example | Env / notes |
+|-----------|---------|-------------|
+| Pool URL + org code | `https://clinic.era-365.online/login` + `orgNo` | — |
+| ERA-owned subdomain (included) | `https://{orgNo}.clinic.era-365.online/login` (also `{orgNo}.bank.era-365.online`, `{orgNo}.dbo.era-365.online`) | `ERA_LOGIN_POOL_HOSTS=clinic.era-365.online,hotel-pms.era-365.online,...,bank.era-365.online,dbo.era-365.online` (comma-separated pool apex hosts; wildcard DNS + TLS on edge) |
+| White-label CNAME (SKU `platform_domain` / `platform_domain_org`) | `https://pms.client.az/login` | CNAME → pool host (e.g. `clinic.era-365.online`); orch Sync pushes ACTIVE rows to satellite `loginHostnames` map |
 
 **`era-bank`** carries the `industry_banking` gate and is a UI/workflow client of the headless **`era-bank-core`** engine (`:4300`); it holds **no ledger/money state** (ADR D9). Its `/api` is a BFF proxy to the engine. GL reads use **`/api/gl/*`** (trial balance, chart) — not nested under `/api/accounts`.
 
@@ -210,7 +222,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Finance → Orchestrator S2S | `CONTROL_PLANE_SERVICE_TOKEN` (alias `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); URL via kit `resolveOrchestratorBaseUrl` (memory → `CONTROL_PLANE_URL` / `ORCHESTRATOR_*` bootstrap) | Same token value on orch + finance. Health reports configured booleans only. |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
-| Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |
+| Bank Core org | `ERA_BANK_ORGANIZATION_ID` | Emergency / appliance process bind. SHARED request tenant is JWT / `X-Organization-Id` / Host — not this env as login SoT |
 | Bank Core ref-data mode | `ERA_DATA_HUB_ONPREM` | `true` for isolated on-prem bank deployments |
 | Bank satellite → engine | `ERA_BANK_CORE_URL`, `BANK_CORE_SERVICE_TOKEN` | `era-bank` BFF calls to `era-bank-core` |
 | Bank DBO customer JWT | `BANK_DBO_JWT_SECRET` (≥16 chars) | Shared by `era-bank-core` (issue/verify customer JWT) and `era-bank-dbo` (channel session cookie). Dev OTP: `DEV_OTP_CODE` (default `123456`) |
@@ -243,7 +255,7 @@ See [ADR control-plane-jwt-keys](./adr/control-plane-jwt-keys.md).
 127.0.0.1 finance-core.era-365.online finance-api.era-365.online
 127.0.0.1 hotel-pms.era-365.online fnb-pos.era-365.online clinic.era-365.online retail-pos.era-365.online
 127.0.0.1 logistics.era-365.online construction.era-365.online crm.era-365.online
-127.0.0.1 auto-service.era-365.online wholesale.era-365.online
+127.0.0.1 auto-service.era-365.online wholesale.era-365.online bank.era-365.online dbo.era-365.online
 127.0.0.1 data.era-365.online
 ```
 

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -13,10 +16,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { ApprovalsService } from "./approvals.service";
@@ -25,30 +26,19 @@ import { RejectApprovalStepDto } from "./dto/reject-approval-step.dto";
 @ApiTags("approvals")
 @ApiBearerAuth("bearer")
 @Controller("approvals")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class ApprovalsController {
   constructor(private readonly approvals: ApprovalsService) {}
 
   @Get("inbox")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Pending approval requests where the current step matches your org role" })
   inbox(@OrganizationId() orgId: string, @CurrentUser() user: AuthUser) {
     return this.approvals.inboxForUser(orgId, user.userId);
   }
 
   @Post("cash-orders/:id/submit")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Submit draft cash order for approval when a matching policy exists" })
   submitCashOrder(
     @OrganizationId() orgId: string,
@@ -63,18 +53,7 @@ export class ApprovalsController {
   }
 
   @Post("requests/:requestId/steps/:stepNo/approve")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Approve current step (must match assigned role)" })
   approve(
     @OrganizationId() orgId: string,
@@ -91,18 +70,7 @@ export class ApprovalsController {
   }
 
   @Post("requests/:requestId/steps/:stepNo/reject")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.USER,
-    UserRole.PROCUREMENT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.HR_OFFICER,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Reject current step (comment required)" })
   reject(
     @OrganizationId() orgId: string,

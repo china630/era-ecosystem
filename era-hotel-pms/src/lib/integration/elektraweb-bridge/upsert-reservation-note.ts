@@ -41,7 +41,7 @@ export async function upsertReservationNoteFromElektrawebRow(
 
   const plan = planElektrawebNotesRow(row);
   if (plan.skip || !plan.externalRef || !plan.noteType || !plan.text) {
-    return { action: 'skipped', key: plan.externalRef ?? '?' };
+    return { action: 'skipped', key: plan.externalRef ?? '?', mdmLinked: false };
   }
 
   const reservation = await prisma.reservation.findFirst({
@@ -49,7 +49,7 @@ export async function upsertReservationNoteFromElektrawebRow(
     select: { id: true },
   });
   if (!reservation) {
-    return { action: 'skipped', key: plan.externalRef };
+    return { action: 'skipped', key: plan.externalRef, mdmLinked: false };
   }
 
   const existing = await prisma.reservationNote.findUnique({
@@ -81,5 +81,6 @@ export async function upsertReservationNoteFromElektrawebRow(
     action: existing ? 'updated' : 'created',
     key: plan.externalRef,
     reservationId: reservation.id,
+    mdmLinked: false,
   };
 }

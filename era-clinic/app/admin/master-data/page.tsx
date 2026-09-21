@@ -9,6 +9,11 @@ import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModa
 import { PHYSIO_ORDER_FIELD_CODES } from "@/domain/physio/physio-order-fields";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import {
+  applyPhysicalResourcePool,
+  displayPhysicalResourceCodes,
+  physicalResourceCodesFromRequirements,
+} from "@/domain/procedure/procedure-physical-pool";
+import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
@@ -125,10 +130,11 @@ function maskPersonId(id: string | null | undefined): string {
 }
 
 function displayProcedureResourceCode(row: ProcedureType): string {
-  const physical = row.requirements?.find(
-    (r) => r.role === "LOCATION" || r.role === "EQUIPMENT",
-  );
-  return physical?.resourceCode?.trim() || row.resourceCode?.trim() || "—";
+  const fromReqs = row.requirements?.length
+    ? displayPhysicalResourceCodes(row.requirements)
+    : "—";
+  if (fromReqs !== "—") return fromReqs;
+  return row.resourceCode?.trim() || "—";
 }
 
 function defaultProcedureRequirements(): RequirementRow[] {
@@ -691,18 +697,15 @@ export default function MasterDataPage() {
           setMsg(tc("saveFailed"));
           return;
         }
-        const physicalReq = requirements.find(
-          (r) =>
-            (r.role === "LOCATION" || r.role === "EQUIPMENT") &&
-            r.resourceCode?.trim(),
-        );
-        if (physicalReq?.resourceCode?.trim()) {
-          const linked = resources.find((r) => r.code === physicalReq.resourceCode);
+        const poolCodes = physicalResourceCodesFromRequirements(requirements);
+        const firstCode = poolCodes[0];
+        if (firstCode) {
+          const linked = resources.find((r) => r.code === firstCode);
           await fetch(`/api/admin/procedure-types/${typeId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              resourceCode: physicalReq.resourceCode.trim(),
+              resourceCode: firstCode,
               resourceKind: linked?.kind === "ROOM" ? "ROOM" : "EQUIPMENT",
             }),
           });
@@ -741,6 +744,17 @@ export default function MasterDataPage() {
         : [...prev, procedureTypeId],
     );
   }
+
+  const resourcePoolOptions = useMemo(
+    () =>
+      [...resources]
+        .sort((a, b) => a.code.localeCompare(b.code))
+        .map((r) => ({
+          value: r.code,
+          label: `${r.code} — ${r.name}`,
+        })),
+    [resources],
+  );
 
   function updateRequirement(index: number, patch: Partial<RequirementRow>) {
     setRequirements((prev) =>
@@ -1333,53 +1347,44 @@ export default function MasterDataPage() {
               ) : null}
               <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
                 <p className={MODAL_FIELD_LABEL_CLASS}>{t("requirements")}</p>
-                {requirements.length === 0 ? (
-                  <p className={`text-xs ${TEXT_MUTED_CLASS}`}>—</p>
-                ) : (
-                  requirements.map((req, index) => (
-                    <div key={req.id ?? `${req.role}-${index}`} className="space-y-2">
-                      <p className={`text-xs font-semibold ${TEXT_MUTED_CLASS}`}>{req.role}</p>
-                      {req.role === "STAFF" ? (
-                        <FieldSelect
-                          label={t("staffMode")}
-                          preset="select"
-                          value={req.staffMode ?? "SOFT"}
-                          onChange={(e) =>
-                            updateRequirement(index, {
-                              staffMode: e.target.value as "HARD" | "SOFT",
-                            })
-                          }
-                        >
-                          <option value="SOFT">SOFT</option>
-                          <option value="HARD">HARD</option>
-                        </FieldSelect>
-                      ) : null}
-                      {req.role === "LOCATION" || req.role === "EQUIPMENT" ? (
-                        <FieldSelect
-                          label={t("resourceCode")}
-                          preset="select"
-                          value={req.resourceCode ?? ""}
-                          onChange={(e) => {
-                            const code = e.target.value || null;
-                            const linked = resources.find((r) => r.code === code);
-                            const isRoom = linked?.kind === "ROOM";
-                            updateRequirement(index, {
-                              resourceCode: code,
-                              role: isRoom ? "LOCATION" : "EQUIPMENT",
-                              resourceKind: isRoom ? "ROOM" : "EQUIPMENT",
-                            });
-                          }}
-                        >
-                          <option value="">—</option>
-                          {resources.map((res) => (
-                            <option key={res.id} value={res.code}>
-                              {res.code} — {res.name}
-                            </option>
-                          ))}
-                        </FieldSelect>
-                      ) : null}
-                    </div>
-                  ))
+                <CatalogField
+                  kind="MULTI"
+                  label={t("resourceCodes")}
+                  hint={t("resourceCodesHint")}
+                  value={physicalResourceCodesFromRequirements(requirements)}
+                  onChange={(next) => {
+                    const codes = Array.isArray(next)
+                      ? next.map(String)
+                      : next
+                        ? [String(next)]
+                        : [];
+                    setRequirements((prev) =>
+                      applyPhysicalResourcePool(prev, codes, (code) => {
+                        const linked = resources.find((r) => r.code === code);
+                        if (!linked) return undefined;
+                        return linked.kind === "ROOM" ? "ROOM" : "EQUIPMENT";
+                      }),
+                    );
+                  }}
+                  options={resourcePoolOptions}
+                />
+                {requirements.map((req, index) =>
+                  req.role === "STAFF" ? (
+                    <FieldSelect
+                      key={req.id ?? `staff-${index}`}
+                      label={t("staffMode")}
+                      preset="select"
+                      value={req.staffMode ?? "SOFT"}
+                      onChange={(e) =>
+                        updateRequirement(index, {
+                          staffMode: e.target.value as "HARD" | "SOFT",
+                        })
+                      }
+                    >
+                      <option value="SOFT">SOFT</option>
+                      <option value="HARD">HARD</option>
+                    </FieldSelect>
+                  ) : null,
                 )}
               </div>
               <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>

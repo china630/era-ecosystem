@@ -3,6 +3,10 @@ import {
   Injectable,
 } from "@nestjs/common";
 import { UserRole } from "@erafinance/database";
+import {
+  CP_PERMISSION,
+  sessionHasAnyCpPermission,
+} from "@era/contracts";
 import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -47,27 +51,27 @@ export class AccessControlService {
   }
 
   /**
-   * Проведение учёта / касса / банк — не ниже бухгалтера (OWNER, ADMIN, ACCOUNTANT).
+   * Проведение учёта / касса / банк — api:ledger.post from JWT permissions[].
    */
   async assertMayPostAccounting(
     userId: string,
     organizationId: string,
+    jwtPermissions?: string[] | null,
   ): Promise<void> {
-    const membership = await this.prisma.organizationMembership.findUnique({
-      where: {
-        userId_organizationId: { userId, organizationId },
-      },
-    });
+    if (!Array.isArray(jwtPermissions)) {
+      throw new ForbiddenException({
+        code: "ACCOUNTING_ROLE_REQUIRED",
+        message: "This action requires permission api:ledger.post.",
+      });
+    }
     if (
-      !membership ||
-      (membership.role !== UserRole.OWNER &&
-        membership.role !== UserRole.ADMIN &&
-        membership.role !== UserRole.ACCOUNTANT)
+      !sessionHasAnyCpPermission(jwtPermissions, [
+        CP_PERMISSION.API_LEDGER_POST,
+      ])
     ) {
       throw new ForbiddenException({
         code: "ACCOUNTING_ROLE_REQUIRED",
-        message:
-          "This action requires organization role OWNER, ADMIN, or ACCOUNTANT.",
+        message: "This action requires permission api:ledger.post.",
       });
     }
   }

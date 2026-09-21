@@ -44,6 +44,11 @@ import { DatePicker } from "../../ui/date-picker";
 import { NumericAmountInput } from "../../ui/numeric-amount-input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../ui/select";
 import { InvoiceDocumentModalLayout } from "../../invoices/invoice-document-modal-layout";
+import {
+  ExtraAttributesBlock,
+  missingRequiredExtraKeys,
+  type ExtraFieldDefRow,
+} from "../../extra-fields/extra-attributes-block";
 import { SalesModalFooter, SalesModalShell } from "./modal-shell";
 
 type Counterparty = { id: string; name: string; taxId: string };
@@ -195,6 +200,8 @@ export function CreateInvoiceModal({
   const [lineProductLabels, setLineProductLabels] = useState<Record<string, string>>({});
   const [moneyOptions, setMoneyOptions] = useState<MoneyOption[]>([]);
   const [orgBankAccounts, setOrgBankAccounts] = useState<OrgBankAccount[]>([]);
+  const [extraDefs, setExtraDefs] = useState<ExtraFieldDefRow[]>([]);
+  const [extraAttributes, setExtraAttributes] = useState<Record<string, unknown>>({});
 
   const fieldClass = "mt-1 max-w-2xl";
 
@@ -284,6 +291,7 @@ export function CreateInvoiceModal({
     setBusy(false);
     setCounterpartyLabel("");
     setLineProductLabels({});
+    setExtraAttributes({});
     reset({
       counterpartyId: "",
       dueDate: new Date().toISOString().slice(0, 10),
@@ -319,6 +327,15 @@ export function CreateInvoiceModal({
       const banks = await apiFetch("/api/banking/bank-accounts");
       if (banks.ok) {
         setOrgBankAccounts((await banks.json()) as OrgBankAccount[]);
+      }
+      const extras = await apiFetch(
+        "/api/extra-fields?entityType=FINANCE_INVOICE",
+      );
+      if (extras.ok) {
+        const list = (await extras.json()) as ExtraFieldDefRow[];
+        setExtraDefs(Array.isArray(list) ? list.filter((d) => d.active) : []);
+      } else {
+        setExtraDefs([]);
       }
     })();
   }, [open, setValue]);
@@ -558,6 +575,12 @@ export function CreateInvoiceModal({
       return;
     }
 
+    const missingExtras = missingRequiredExtraKeys(extraDefs, extraAttributes);
+    if (missingExtras.length > 0) {
+      toast.error(t("extraFields.invalid"));
+      return;
+    }
+
     setBusy(true);
     const res = await apiFetch("/api/invoices", {
       method: "POST",
@@ -576,6 +599,7 @@ export function CreateInvoiceModal({
         countryOfDestination: data.countryOfDestination.trim() || undefined,
         exportDeclarationRef: data.exportDeclarationRef.trim() || undefined,
         items,
+        extraAttributes,
       }),
     });
     setBusy(false);
@@ -1196,6 +1220,13 @@ export function CreateInvoiceModal({
             </p>
           </div>
         ) : null}
+
+        <ExtraAttributesBlock
+          defs={extraDefs}
+          values={extraAttributes}
+          onChange={setExtraAttributes}
+          disabled={busy}
+        />
 
         {renderGoodsTable()}
         {renderServicesTable()}

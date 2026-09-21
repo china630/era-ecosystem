@@ -15,6 +15,7 @@ describe("WorkforceEmploymentsService.list include", () => {
     {} as never,
     {} as never,
     {} as never,
+    { ensureDraftForMutation: jest.fn(), listDraftBanners: jest.fn().mockResolvedValue({}) } as never,
   );
 
   beforeEach(() => {

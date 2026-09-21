@@ -1,4 +1,4 @@
-import { verifyPassword } from "./password";
+import { burnPasswordVerifyCost, verifyPassword } from "./password";
 import { resolveSatelliteOrganizationId } from "../tenancy/organization-bind-core";
 
 export type SatelliteUserRecord = {
@@ -60,8 +60,15 @@ export async function findUserByCredential(
 
 export async function verifySatelliteUserPassword(
   password: string,
-  user: Pick<SatelliteUserRecord, "passwordHash">,
+  user:
+    | Pick<SatelliteUserRecord, "passwordHash" | "status">
+    | null
+    | undefined,
 ): Promise<boolean> {
+  if (!user || !isSatelliteUserLoginAllowed(user)) {
+    await burnPasswordVerifyCost(password);
+    return false;
+  }
   return verifyPassword(password, user.passwordHash);
 }
 

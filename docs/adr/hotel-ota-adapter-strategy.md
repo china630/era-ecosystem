@@ -1,8 +1,10 @@
 # ADR: Hotel OTA adapter strategy
 
-**Status:** Accepted  
+**Status:** Accepted — **amended 2026-09-20**  
 **Date:** 2026-06-13  
 **Related:** [era-hotel-pms/doc/clone-spec/06-channel-crm-med.md](../../era-hotel-pms/doc/clone-spec/06-channel-crm-med.md) · [BACKLOG-PRODUCTION.md](../../era-hotel-pms/doc/BACKLOG-PRODUCTION.md)
+
+**Production hub (2026-09-20):** live OTA is **Channex**, org-scoped bindings, no operational satellite env — [hotel-channel-manager-pack.md](./hotel-channel-manager-pack.md). This ADR remains the adapter *interface* and the Elektraweb/webhook cutover story. Do not add `EXELY_*` / `BOOKING_COM_*` / `EXPEDIA_*` / `ERA_CHANNEL_ADAPTER` process env as the SaaS path.
 
 ## Context
 

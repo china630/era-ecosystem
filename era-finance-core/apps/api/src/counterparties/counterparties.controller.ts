@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   ConflictException,
@@ -12,9 +15,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CounterpartyRole, CounterpartyLegalForm, UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { CounterpartyRole, CounterpartyLegalForm } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import { counterpartyKindFromLegalForm } from "./counterparty-kind.util";
@@ -59,8 +60,8 @@ function counterpartyExtraFields(dto: CreateCounterpartyDto) {
 @ApiTags("counterparties")
 @ApiBearerAuth("bearer")
 @Controller("counterparties")
-@UseGuards(RolesGuard)
-@Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+@UseGuards(PermissionsGuard)
+@Permissions(CP_PERMISSION.API_REPORTS_NAS)
 export class CounterpartiesController {
   constructor(
     private readonly prisma: PrismaService,
@@ -203,7 +204,7 @@ export class CounterpartiesController {
   }
 
   @Post(":id/bank-accounts")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Добавить банковский счёт контрагенту" })
   createBankAccount(
     @OrganizationId() orgId: string,
@@ -214,7 +215,7 @@ export class CounterpartiesController {
   }
 
   @Delete(":id/bank-accounts/:accountId")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Удалить банковский счёт контрагента" })
   async deleteBankAccount(
     @OrganizationId() orgId: string,
@@ -268,7 +269,7 @@ export class CounterpartiesController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Создать контрагента" })
   async create(
     @OrganizationId() orgId: string,
@@ -388,7 +389,7 @@ export class CounterpartiesController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Обновить контрагента" })
   async update(
     @OrganizationId() orgId: string,
@@ -457,7 +458,7 @@ export class CounterpartiesController {
   }
 
   @Post("merge")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Слить дубликаты контрагентов (source -> target)" })
   async merge(
     @OrganizationId() orgId: string,

@@ -43,9 +43,10 @@ export const SATELLITE_LOGIN_ORIGIN: Record<string, string> = {
 
 export function satelliteLoginHref(
   satelliteKey: string,
-  organizationId: string,
+  publicOrgNumber: string | number,
 ): string | null {
   const origin = SATELLITE_LOGIN_ORIGIN[satelliteKey];
-  if (!origin || !organizationId) return null;
-  return `${origin}/login?organizationId=${encodeURIComponent(organizationId)}`;
+  const orgNo = String(publicOrgNumber ?? "").trim();
+  if (!origin || !orgNo) return null;
+  return `${origin}/login?org=${encodeURIComponent(orgNo)}`;
 }

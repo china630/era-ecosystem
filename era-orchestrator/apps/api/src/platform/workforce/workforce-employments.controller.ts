@@ -8,12 +8,13 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   CreateWorkforceEmploymentDto,
@@ -29,7 +30,7 @@ import { WorkforceProvisionService } from "./workforce-provision.service";
 @ApiTags("platform-workforce-employments")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/employments")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceEmploymentsController {
   constructor(
     private readonly employments: WorkforceEmploymentsService,
@@ -38,7 +39,7 @@ export class WorkforceEmploymentsController {
   ) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "List workforce employments (CP)" })
   async list(
     @OrganizationId() organizationId: string,
@@ -73,7 +74,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Post("hire")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_HIRE)
   @ApiOperation({
     summary:
       "Hire (headcount always; satellite provision only when satelliteKeys set)",
@@ -87,7 +88,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Get(":id")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER, UserRole.DEPARTMENT_HEAD)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Workforce employment detail" })
   async getOne(
     @OrganizationId() organizationId: string,
@@ -102,7 +103,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_HIRE)
   @ApiOperation({ summary: "Hire person into workforce (MDM globalPersonId)" })
   async create(
     @OrganizationId() organizationId: string,
@@ -113,7 +114,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Patch(":id/transfer")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_HIRE)
   @ApiOperation({ summary: "Transfer employment to another org unit/position" })
   transfer(
     @OrganizationId() organizationId: string,
@@ -125,7 +126,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Post(":id/terminate")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_TERMINATE)
   @ApiOperation({ summary: "Terminate employment and revoke satellite access" })
   terminate(
     @OrganizationId() organizationId: string,
@@ -136,7 +137,7 @@ export class WorkforceEmploymentsController {
   }
 
   @Patch(":id/reprovision")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_REPROVISION)
   @ApiOperation({
     summary:
       "Re-emit STAFF_PROVISIONED; optional satelliteKeys replaces per-person satellite access",

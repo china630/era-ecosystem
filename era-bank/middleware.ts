@@ -5,10 +5,16 @@ import {
   eraPathnameRequestHeaders,
   getBearerOrCookieToken,
   isPublicApiPath,
+  nextWithOptionalHostBoundOrg,
   redirectNoStore,
   encodeSessionHeaderUtf8,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
+import {
+  isPublicStaffPage,
+  routePermissions,
+} from "@/lib/auth/page-route-permissions";
+import { sessionHasBankPermission } from "@/lib/auth/permission-check";
 
 const COOKIE = authCookieName();
 
@@ -39,18 +45,23 @@ export async function middleware(request: NextRequest) {
       headers.set("x-user-role", session.role);
       headers.set("x-user-login", encodeSessionHeaderUtf8(session.login));
       headers.set("x-user-fullname", encodeSessionHeaderUtf8(session.fullName));
+      if (session.organizationId) {
+        headers.set("x-era-organization-id", session.organizationId);
+      }
       return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
   }
 
-  if (
-    pathname === "/login" ||
-    pathname === "/sso/callback" ||
-    pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico"
-  ) {
+  if (isPublicStaffPage(pathname)) {
+    if (pathname === "/login") {
+      return nextWithOptionalHostBoundOrg(
+        reqHeaders,
+        request.headers.get("x-forwarded-host") || request.headers.get("host"),
+        "industry_banking",
+      );
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
@@ -66,8 +77,28 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await verifySatelliteSession(token);
-    return NextResponse.next({ request: { headers: reqHeaders } });
+    const session = await verifySatelliteSession(token);
+    const required = routePermissions(pathname);
+    const sessionView = {
+      login: session.login,
+      email: session.email,
+      role: session.role,
+      permissions: session.permissions,
+      isOwner: session.isOwner,
+    };
+    if (
+      !required ||
+      !required.some((p) => sessionHasBankPermission(sessionView, p))
+    ) {
+      const forbiddenUrl = new URL("/login", request.url);
+      forbiddenUrl.searchParams.set("error", "forbidden");
+      return redirectNoStore(forbiddenUrl);
+    }
+    const headers = new Headers(reqHeaders);
+    if (session.organizationId) {
+      headers.set("x-era-organization-id", session.organizationId);
+    }
+    return NextResponse.next({ request: { headers } });
   } catch {
     const loginUrl = new URL("/login", request.url);
     return redirectNoStore(loginUrl);

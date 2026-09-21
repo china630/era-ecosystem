@@ -8,7 +8,7 @@ import {
   MeterUnitPricing,
   SystemConfigService,
 } from "../system-config/system-config.service";
-import { billingPeriodKeyBaku } from "./baku-billing.util";
+import { billingPeriodKeyBaku, bakuMonthBounds } from "./baku-billing.util";
 import { CreditExceededException } from "./credit-exceeded.exception";
 import type { BillableActionType } from "./billing-rate-card";
 import {
@@ -23,7 +23,10 @@ export type MeterBillableKind =
   | "STORAGE_GB_MONTHLY"
   | "WHATSAPP_ALERT"
   | "INVOICE_CREATED"
-  | "OCR_PAGE";
+  | "OCR_PAGE"
+  | "TRADE_CREDIT_BUYER"
+  | "TRADE_CREDIT_ENRICH"
+  | "POS_STATION_MONTHLY";
 
 const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   USER_MONTHLY: "USER_MONTHLY",
@@ -31,6 +34,9 @@ const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   WHATSAPP_ALERT: "WHATSAPP_ALERT",
   INVOICE_CREATED: "INVOICE_CREATED",
   OCR_PAGE: "OCR_PAGE",
+  TRADE_CREDIT_BUYER: "TRADE_CREDIT_BUYER",
+  TRADE_CREDIT_ENRICH: "TRADE_CREDIT_ENRICH",
+  POS_STATION_MONTHLY: "POS_STATION_MONTHLY",
 };
 
 @Injectable()
@@ -175,6 +181,10 @@ export class BillingMeterService {
     );
 
     if (spendReachedTierCeiling(spentAzn, ceiling)) {
+      // Soft overage for trade-credit buyers / enrich: never hard-block shipment on these meters alone.
+      if (kind === "TRADE_CREDIT_BUYER" || kind === "TRADE_CREDIT_ENRICH") {
+        return { spentAzn, addedAzn: added };
+      }
       await this.prisma.organization.update({
         where: { id: orgId },
         data: { billingStatus: BillingStatus.SOFT_BLOCK },
@@ -189,6 +199,33 @@ export class BillingMeterService {
     return { spentAzn, addedAzn: added };
   }
 
+  /**
+   * POS stations are a monthly gauge: bill only the delta vs already recorded
+   * POS_STATION_MONTHLY quantity this Baku month (opening a shift twice must not double-charge).
+   */
+  async recordPosStationOverageGauge(
+    organizationId: string,
+    overageUnits: number,
+  ): Promise<{ billedDelta: number }> {
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (!orgId || overageUnits <= 0) return { billedDelta: 0 };
+    const periodKey = billingPeriodKeyBaku();
+    const { from, to } = bakuMonthBounds(periodKey);
+    const agg = await this.controlPlane.usageMeterEvent.aggregate({
+      where: {
+        organizationId: orgId,
+        actionType: "POS_STATION_MONTHLY",
+        createdAt: { gte: from, lte: to },
+      },
+      _sum: { quantity: true },
+    });
+    const already = Number(agg._sum.quantity ?? 0);
+    const delta = Math.max(0, Math.floor(overageUnits) - already);
+    if (delta <= 0) return { billedDelta: 0 };
+    await this.recordUsage(organizationId, "POS_STATION_MONTHLY", delta);
+    return { billedDelta: delta };
+  }
+
   unitPriceFor(kind: MeterBillableKind, unit: MeterUnitPricing): number {
     switch (kind) {
       case "USER_MONTHLY":
@@ -201,6 +238,12 @@ export class BillingMeterService {
         return unit.pricePerInvoiceAzn;
       case "OCR_PAGE":
         return unit.pricePerOcrPageAzn;
+      case "TRADE_CREDIT_BUYER":
+        return unit.pricePerTradeCreditBuyerAzn ?? 1;
+      case "TRADE_CREDIT_ENRICH":
+        return unit.pricePerTradeCreditEnrichAzn ?? 2;
+      case "POS_STATION_MONTHLY":
+        return unit.pricePerPosStationMonthAzn ?? 19;
       default:
         return 0;
     }

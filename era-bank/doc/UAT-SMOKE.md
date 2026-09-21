@@ -24,7 +24,7 @@ Set `ERA_BANK_CORE_URL=http://localhost:4300` in `era-bank/.env`.
 ## Platform
 
 - [ ] `GET /api/health` → 200 `{ status: "ok", service: "era-bank" }`
-- [ ] `/login` loads; `teller-a` / `demo1234` → `/dashboard`
+- [ ] `/login` loads; `teller-a` / `demo1234` → `/dashboard` (appliance: no ERA ID. SHARED pool: 6-digit org code / `{orgNo}.bank.era-365.online`)
 - [ ] EOD lock banner hidden when no RUNNING EOD
 - [ ] Logout → `/login`
 - [ ] `/api/entitlements` returns `banking_*` flags; nav hides inactive modules
@@ -103,6 +103,21 @@ node era-bank-core/tools/audit/replay-day.mjs $(date +%F)
 | `compliance` | `demo1234` | AML / reg reporting |
 | `cards-officer` | `demo1234` | Cards |
 | `treasury` | `demo1234` | Treasury |
+
+## RBAC Variant A (BANK-RBAC-01)
+
+Doors are grants (`api:*` / `screen:*` / `admin:`), not role names. Maker-checker SoD in the engine is separate (grant ∩ SoD).
+
+| Step | Action | Pass |
+|------|--------|------|
+| R1 | Sign in `manager-b` → `/admin/access` → strip `api:payments.approve` from BRANCH_MANAGER → Save → refresh | Session refreshed |
+| R2 | As manager, open payment PENDING_APPROVAL → Approve | BFF **403** (grant stripped) |
+| R3 | Reset BRANCH_MANAGER defaults; sign in `compliance` → open `/cards` | Redirect forbidden / no cards nav |
+| R4 | As `teller-a`, Approve on posting queue | Button hidden; API 403 if forced |
+| R5 | Engine SoD: maker cannot approve own payment even with approve grant | Engine rejects maker=checker |
+| R6 | As teller, `POST …/deposits/:id/pricing-approve` | BFF **403** (needs `api:deposits.approve`, not write) |
+
+Field UAT open → COVERAGE **SCREEN** (not SHOW / not SHIPPED).
 
 ## Docker smoke
 

@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const discountSchema = z.object({
   discountPercent: z.number().min(0).max(100),
@@ -15,7 +17,7 @@ export async function POST(
 ) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_DISCOUNT);
   if (denied) return denied;
 
   const { id } = await params;

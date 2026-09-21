@@ -92,10 +92,15 @@ export class ExcelBulkController {
   @ApiOperation({ summary: "Import EMAS portal result xlsx for employees" })
   importEmployeeResult(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!file?.buffer) throw new BadRequestException("file is required");
-    return this.excelBulk.importEmployeeResults(organizationId, file.buffer);
+    return this.excelBulk.importEmployeeResults(
+      organizationId,
+      file.buffer,
+      user.userId,
+    );
   }
 
   @Get("customs/declarations/export.xlsx")

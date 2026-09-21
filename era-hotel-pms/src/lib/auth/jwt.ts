@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { remapPermissionList } from "@/lib/auth/hotel-permission-rename";
 
 export interface SessionPayload {
   sub: string;
@@ -31,7 +32,10 @@ export async function signToken(payload: SessionPayload): Promise<string> {
   };
   if (payload.email) claims.email = payload.email;
   if (payload.organizationId) claims.organizationId = payload.organizationId;
-  if (payload.permissions?.length) claims.permissions = payload.permissions;
+  if (payload.permissions?.length) {
+    // Persist fleet-canon only (Wave 2); dual-read still accepts legacy on verify.
+    claims.permissions = remapPermissionList(payload.permissions);
+  }
   if (payload.isOwner === true) claims.isOwner = true;
 
   return new SignJWT(claims)
@@ -48,7 +52,7 @@ export async function verifyToken(token: string): Promise<SessionPayload> {
   if (!sub || typeof sub !== "string") throw new Error("Invalid token subject");
   const permissionsRaw = payload.permissions;
   const permissions = Array.isArray(permissionsRaw)
-    ? permissionsRaw.map(String)
+    ? remapPermissionList(permissionsRaw.map(String))
     : undefined;
   return {
     sub,

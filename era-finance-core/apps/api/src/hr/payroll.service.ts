@@ -11,6 +11,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import PDFDocument from "pdfkit";
 import {
   Decimal,
+  EmployeeEmploymentStatus,
   EmployeeKind,
   OrganizationKind,
   PayrollComponentKind,
@@ -19,6 +20,7 @@ import {
 } from "@erafinance/database";
 import { PayrollComponentCode } from "./payroll-component-codes";
 import { AccountingService } from "../accounting/accounting.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreatePayrollRunDto } from "./dto/create-payroll-run.dto";
@@ -37,6 +39,7 @@ import { BankingGatewayService } from "../banking/banking-gateway.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { batchEmployeePersonMap } from "./employee-person.util";
 import { assertMayAccessPayrollFinance } from "../auth/policies/hr-payroll.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import { NotificationService } from "../notifications/notification.service";
 import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 import {
@@ -58,6 +61,7 @@ export class PayrollService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
     private readonly payrollQueue: PayrollHeavyQueueService,
     private readonly timesheet: TimesheetService,
     private readonly absences: AbsencesService,
@@ -140,7 +144,10 @@ export class PayrollService {
 
     const [employees, org, componentIdByCode] = await Promise.all([
       this.prisma.employee.findMany({
-        where: { organizationId },
+        where: {
+          organizationId,
+          deletedAt: null,
+        },
         include: { workSchedule: true },
       }),
       this.prisma.organization.findUnique({ where: { id: organizationId } }),
@@ -149,6 +156,37 @@ export class PayrollService {
     if (employees.length === 0) {
       throw new BadRequestException("No employees to pay");
     }
+
+    // Wave 1: hire-mirror leaves salary 0 — block blind full-pay drafts until
+    // contract salary is set (bulk PATCH or employee card). Gate ACTIVE only;
+    // TERMINATED may still appear on the run if they worked the month.
+    const zeroSalaryIds = employees
+      .filter((emp) => {
+        if (emp.employmentStatus !== EmployeeEmploymentStatus.ACTIVE) {
+          return false;
+        }
+        const tariff = new Decimal(
+          (emp as { tariffSalary?: Decimal }).tariffSalary ?? 0,
+        );
+        const supplement = new Decimal(
+          (emp as { supplementSalary?: Decimal }).supplementSalary ?? 0,
+        );
+        const gross = tariff.add(supplement).gt(0)
+          ? tariff.add(supplement)
+          : new Decimal(emp.salary);
+        return gross.lte(0);
+      })
+      .map((e) => e.id);
+    if (zeroSalaryIds.length > 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: "CONTRACT_SALARY_REQUIRED",
+        message: `${zeroSalaryIds.length} ACTIVE employee(s) have contract salary 0; set salary before payroll draft`,
+        employeeIds: zeroSalaryIds.slice(0, 50),
+        employeeCount: zeroSalaryIds.length,
+      });
+    }
+
     const personMap = await batchEmployeePersonMap(
       this.mdm,
       organizationId,
@@ -503,7 +541,7 @@ export class PayrollService {
       bankAccountId: string;
       payoutFormat?: "ABB_XML" | "UNIVERSAL_XLSX";
     },
-    actingUserRole: UserRole,
+    actingUserRole: UserRole | PolicySubject,
   ) {
     assertMayAccessPayrollFinance(actingUserRole);
     const run = await this.prisma.payrollRun.findFirst({
@@ -812,6 +850,9 @@ export class PayrollService {
             });
           }
 
+          const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+            organizationId,
+          );
           const { transactionId } = await this.accounting.postJournalInTransaction(
             tx,
             {
@@ -821,6 +862,7 @@ export class PayrollService {
               description: `Зарплата ${run.month}/${run.year} — ${deptLabel}`,
               isFinal: true,
               departmentId: b.departmentId ?? undefined,
+              accountingBookId: opsBook.id,
               lines,
             },
           );

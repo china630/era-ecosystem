@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
+import { getRouteSession, jsonError, jsonOk } from "@/lib/api-utils";
 
 /** Ops notification feed — empty until bank-core emits staff alerts. */
 export async function GET() {
-  return NextResponse.json({ items: [], unreadCount: 0 });
+  const session = await getRouteSession();
+  if (!session) return jsonError("Unauthorized", 401);
+  return jsonOk({ items: [], unreadCount: 0 });
 }
 
 export async function PATCH() {
-  return NextResponse.json({ ok: true });
+  const session = await getRouteSession();
+  if (!session) return jsonError("Unauthorized", 401);
+  return jsonOk({ ok: true });
 }

@@ -563,7 +563,7 @@ export async function checkInReservation(id: string) {
     });
     // Pilot polish: Walkin leisure → no sanatorium lifecycle (clinic stays quiet)
     if (stamped.stayKind !== 'leisure') {
-      const { dispatchGuestCheckedIn } = await import(
+      const { dispatchGuestCheckedIn, lifecycleDemographicsFromPax } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
       const paxList =
@@ -599,6 +599,7 @@ export async function checkInReservation(id: string) {
           checkInDate: reservation.checkInDate.toISOString(),
           checkOutDate: reservation.checkOutDate.toISOString(),
           paxKey,
+          ...lifecycleDemographicsFromPax(pax),
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
       if (full) {

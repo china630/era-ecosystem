@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Controller,
@@ -8,8 +11,6 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { LedgerType, UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { MhbsStatementsService } from "./mhbs-statements.service";
@@ -24,8 +25,8 @@ const MHBS_ROLES = [
 
 @ApiBearerAuth("bearer")
 @Controller("reports/statements")
-@UseGuards(RolesGuard)
-@Roles(...MHBS_ROLES)
+@UseGuards(PermissionsGuard)
+@Permissions(CP_PERMISSION.API_REPORTS_NAS)
 export class MhbsStatementsController {
   constructor(private readonly mhbs: MhbsStatementsService) {}
 

@@ -12,11 +12,18 @@ import {
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
 import { prisma } from "@/lib/prisma";
+import {
+  consumeTradeCreditGrant,
+  createTradeCreditRequestCache,
+  probeTradeCreditSku,
+} from "@/lib/credit-limit";
 import { z } from "zod";
 
 const bodySchema = z.object({
   delivery: z.boolean().optional(),
   customHostname: z.string().optional(),
+  /** Pickup grant code — required when on-account and trade credit SKU is on. */
+  grantCode: z.string().min(8).optional(),
 });
 
 export async function POST(
@@ -30,9 +37,77 @@ export async function POST(
     if (!order) return jsonError("Order not found", 404);
     if (order.status === "CONFIRMED") return jsonOk(order);
 
+    const organizationId = requestOrganizationId();
+    const onAccount = (order.paymentTermDays ?? 0) > 0;
+    let tradeCreditGrantId: string | null = order.tradeCreditGrantId ?? null;
+
+    if (onAccount) {
+      const authHeader =
+        req.headers.get("authorization") ??
+        (process.env.FINANCE_API_TOKEN
+          ? `Bearer ${process.env.FINANCE_API_TOKEN}`
+          : null);
+      const cache = createTradeCreditRequestCache();
+      const probe = await probeTradeCreditSku(
+        order.buyerCounterpartyId,
+        authHeader,
+        cache,
+        organizationId,
+      );
+
+      if (probe.status === "unknown") {
+        return jsonError(
+          probe.error ??
+            "Trade credit status unknown — cannot confirm on-account without Finance",
+          503,
+        );
+      }
+
+      if (probe.status === "on") {
+        if (probe.facility?.stopList) {
+          return jsonError(
+            "Counterparty is on trade-credit stop-list; prepaid only",
+            409,
+          );
+        }
+        const code = body.grantCode?.trim();
+        if (!code) {
+          return jsonError(
+            "grantCode is required for on-account confirm when trade credit is enabled",
+            400,
+          );
+        }
+        const consumed = await consumeTradeCreditGrant({
+          organizationId,
+          counterpartyId: order.buyerCounterpartyId,
+          code,
+          amount: Number(order.amountNet),
+          sourceEntityType: "wholesale_order",
+          sourceEntityId: order.id,
+          authHeader,
+        });
+        if (!consumed.ok) {
+          const status =
+            consumed.status === 402 || consumed.status === 409
+              ? consumed.status
+              : consumed.status >= 400 && consumed.status < 600
+                ? consumed.status
+                : 409;
+          return jsonError(consumed.error, status);
+        }
+        tradeCreditGrantId = consumed.grantId;
+      }
+    }
+
     const confirmed = await prisma.b2BOrder.update({
       where: { id },
-      data: { status: "CONFIRMED", confirmedAt: new Date() },
+      data: {
+        status: "CONFIRMED",
+        confirmedAt: new Date(),
+        ...(tradeCreditGrantId
+          ? { tradeCreditGrantId }
+          : {}),
+      },
     });
 
     await dispatchSatelliteEvent({
@@ -46,7 +121,6 @@ export async function POST(
       },
     });
 
-    const organizationId = requestOrganizationId();
     const amountNet = Number(confirmed.amountNet);
     let payUrl: string | undefined;
     if (organizationId) {

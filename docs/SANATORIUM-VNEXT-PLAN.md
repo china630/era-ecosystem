@@ -76,7 +76,7 @@
   - `era-clinic/app/api/catalog/sync/route.ts:15`, кэш `ServiceCatalogCache`
 
 ### 1.6 Касса клиники + общий фискальный пакет
-- **Новый пакет `packages/era-fiscal`** — единый интерфейс `fiscalize(...)` + провайдеры `mock | nbc | cybernet` + единый env. Сейчас фискалка дублируется в трёх местах с разошедшимися интерфейсами:
+- **Пакет `packages/era-fiscal`** — канон дальше [ADR era-fiscal-kkm-kit](./adr/era-fiscal-kkm-kit.md) (полный контракт, N устройств на оргу, конфиг не env). Исторически: `fiscalize(...)` + `mock | nbc | cybernet` + env. Сейчас фискалка дублировалась в трёх местах:
   - `era-hotel-pms/src/lib/compliance/fiscal-provider.ts` (`fiscalizePayment` → `receiptId`)
   - `era-retail-pos/src/lib/fiscal-provider.ts` (`fiscalizeReceipt` → `fiscalNumber`)
   - `era-fnb-pos/src/lib/kkm/*` (`fiscalize` → `receiptId,driver`, env `KKM_DRIVER`)

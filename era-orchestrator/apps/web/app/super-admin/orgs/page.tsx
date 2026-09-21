@@ -19,6 +19,7 @@ import { cpAdminFetch } from "../../../lib/cp-admin-fetch";
 type OrgRow = {
   id: string;
   name: string;
+  publicOrgNumber: number;
   operatingMode: string;
   deploymentTopology: string;
   billingStatus: string;
@@ -119,6 +120,9 @@ export default function SuperAdminOrgsPage() {
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <div className="font-medium text-[#34495E]">{row.name}</div>
+                    <div className="font-mono text-sm font-semibold text-[#2980B9]">
+                      {row.publicOrgNumber}
+                    </div>
                     <div className="font-mono text-[11px] text-[#95A5A6]">{row.id}</div>
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{row.operatingMode}</td>

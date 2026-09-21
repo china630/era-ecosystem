@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../../lib/role-utils";
 import { auditHubFetch } from "../../../lib/audit-hub-api";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
@@ -30,9 +31,8 @@ type OutboxInvite = {
 export default function AuditHubEngagementsPage() {
   const { t } = useTranslation();
   useRequireAuth();
-  const { user } = useAuth();
-  const canAdminInvites =
-    user?.role === "OWNER" || user?.role === "ADMIN";
+  const perms = useOrgPermissions();
+  const canAdminInvites = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);
 
   const [list, setList] = useState<Engagement[]>([]);
   const [outbox, setOutbox] = useState<OutboxInvite[]>([]);

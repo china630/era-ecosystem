@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Controller,
   DefaultValuePipe,
@@ -13,7 +14,7 @@ import { SuperAdminGuard } from "../common/guards/super-admin.guard";
 import { AdminOrganizationsService } from "./admin-organizations.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin/organizations")
 export class AdminOrganizationsController {
   constructor(private readonly orgs: AdminOrganizationsService) {}

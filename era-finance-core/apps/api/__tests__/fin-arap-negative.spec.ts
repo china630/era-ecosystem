@@ -37,10 +37,8 @@ describe("Finance AR/AP negative paths (AC-FIN-ARAP)", () => {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
     const svc = new NettingService(prisma, accounting, mockPosting(), {
-      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
-        id: bookId ?? "book-nas",
-        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
-      })),
+      resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
+      resolveByIdOrLedgerAlias: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
     } as never);
 
     await expect(
@@ -85,10 +83,8 @@ describe("Finance AR/AP negative paths (AC-FIN-ARAP)", () => {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
     const svc = new NettingService(prisma, accounting, mockPosting(), {
-      resolveByIdOrLedgerAlias: jest.fn(async (_org, bookId, ledger) => ({
-        id: bookId ?? "book-nas",
-        gaapKind: ledger === "IFRS" ? "IFRS" : "NAS",
-      })),
+      resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
+      resolveByIdOrLedgerAlias: jest.fn().mockResolvedValue({ id: "nas-book", code: "NAS", gaapKind: "NAS" }),
     } as never);
 
     await expect(

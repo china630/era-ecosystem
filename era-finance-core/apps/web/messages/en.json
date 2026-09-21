@@ -1,0 +1,29 @@
+{
+  "buyer": {
+    "title": "Buyer cabinet",
+    "subtitle": "Trade credit residual, open AR, and grant request",
+    "loading": "Loading…",
+    "loadErr": "Failed to load data",
+    "requestGrant": "Request pickup grant",
+    "grantAmount": "Amount (AZN)",
+    "submitGrant": "Issue code",
+    "submitting": "Submitting…",
+    "grantErr": "Failed to issue grant",
+    "grantIssued": "Code {{code}} for {{amount}} AZN (until {{expiresAt}}). Show at warehouse.",
+    "openInvoices": "Open invoices (payment schedule)",
+    "noInvoices": "No open invoices",
+    "colNumber": "Number",
+    "colDue": "Due",
+    "colRemaining": "Remaining"
+  },
+  "tradeCredit": {
+    "residualTitle": "Trade credit",
+    "creditLimit": "Limit",
+    "openAr": "Open AR",
+    "unusedGrants": "Unused grants",
+    "available": "Available residual",
+    "inviteTitle": "Invite to buyer cabinet",
+    "inviteOk": "Invite sent",
+    "inviteErr": "Invite failed (counterparty VÖEN required)"
+  }
+}

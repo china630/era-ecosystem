@@ -1,5 +1,5 @@
 import { UserRole } from "@era365/database";
-import { IsEmail, IsEnum, IsOptional } from "class-validator";
+import { IsEmail, IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
 
 export class JoinOrgDto {
   taxId!: string;
@@ -7,7 +7,14 @@ export class JoinOrgDto {
 }
 
 export class ApproveAccessDto {
+  @IsOptional()
+  @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  organizationRoleCode?: string;
 }
 
 export class TransferOwnershipDto {
@@ -21,4 +28,9 @@ export class CreateInviteDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  organizationRoleCode?: string;
 }

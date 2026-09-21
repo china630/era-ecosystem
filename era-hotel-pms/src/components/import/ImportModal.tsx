@@ -15,6 +15,7 @@ import {
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadImportFile } from '@/lib/import/upload';
+import { PERMISSIONS } from '@/lib/auth/permissions';
 
 export type ImportSummary = {
   entity: string;
@@ -40,10 +41,16 @@ export function ImportButton({
   onComplete?: () => void;
   className?: string;
 }) {
-  const { canRunElektrawebImport, loading } = useAuth();
+  const { can, canRunElektrawebImport, loading } = useAuth();
   const [open, setOpen] = useState(false);
 
-  if (loading || !canRunElektrawebImport) return null;
+  if (
+    loading ||
+    !can(PERMISSIONS.API_IMPORT_ELEKTRAWEB) ||
+    !canRunElektrawebImport
+  ) {
+    return null;
+  }
 
   return (
     <>

@@ -35,5 +35,14 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **pilot punch open** |
 | S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; sell-versions catalog + main-SKU night audit; UAT §40 open |
 | S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; **pilot punch open** |
+| S-16 | Reservation card IA D7 W1 | [~] | HOT-BOOK-04 API; ADR hotel-reservation-card-and-party-ops |
+| S-17 | Depart guest (D7 W2) | [~] | HOT-FO-05 API; UAT §43 open |
+| S-18 | Family booking navigator (D7 W3) | [~] | HOT-BOOK-05 API |
+| S-19 | Move guest / Swap rooms (D7 W4–W5) | [~] | HOT-FO-06/07 API; UAT §44 open |
+| S-20 | Keys / HK pickup polish (D7 W6) | [~] | HOT-FO-08 STUB — reissue-key task on Depart/Move/Swap |
+| S-21 | Hotel RBAC Variant A + custom roles | [~] | AC-HOT-RBAC 🟡; `/settings/access` clone; system seed; UAT open — not Pilot |
+| S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |
+| S-23 | Card Rate Grid + Folio chrome | [~] | HOT-BOOK-07/08 API |
+| S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

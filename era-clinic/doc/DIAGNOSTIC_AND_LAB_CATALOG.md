@@ -41,7 +41,7 @@ Shared imaging meta (`commonMetaFields`): indication, studyDate, performer, devi
 
 Labels: `en` + `ru` + `az` on every title/field/analyte. **Study titles (AZ/RU)** lead with the modality token so pickers sort as a family: `USM …` / `УЗИ …`, `Rentgen …` / `Рентген …`, `KT …` / `КТ …`, `MRT …` / `МРТ …`. Field labels stay organ/measure names without that prefix.
 
-**Code canon** (`{FAMILY}-{ENGLISH_SLUG}`): visits are `VISIT-*` (`VISIT-GYN`, `VISIT-CARDIO`, `VISIT-ENDOCRINE`, `VISIT-SANATORIUM-INTAKE`); heart studies `CARDIO-*` (`CARDIO-ECG`, not `CARDIO-ECG`); functional `FUNC-*`; endoscopy `ENDO-*`. English lives in the code; az/ru/en stay in titles. Rename table: [`catalog-code-canon.map.json`](../prisma/seed-data/catalog-code-canon.map.json). `seed-diagnostic-catalog` applies that map to existing org rows, then upserts this JSON. Live DB aliases (`CARDIO-ECG`, `VISIT-GYN`) still resolve in intake/package services.
+**Code canon** (`{FAMILY}-{ENGLISH_SLUG}`): visits are `VISIT-*` (`VISIT-GYN`, `VISIT-CARDIO`, `VISIT-ENDOCRINE`, `VISIT-SANATORIUM-INTAKE`); heart studies `CARDIO-*` (`CARDIO-ECG`, not `ECG-12`); functional `FUNC-*`; endoscopy `ENDO-*`. English lives in the code; az/ru/en stay in titles. Rename table: [`catalog-code-canon.map.json`](../prisma/seed-data/catalog-code-canon.map.json). `seed-diagnostic-catalog` applies that map to existing org rows, then upserts this JSON. Live DB aliases (`ECG-12`, `GYN-VISIT`) still resolve in intake/package services.
 
 ---
 

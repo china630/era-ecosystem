@@ -74,7 +74,9 @@ export class OrganizationSettingsService {
     if (
       valuation !== undefined ||
       dto.asanUserId !== undefined ||
-      dto.ledgerMirrorMode !== undefined
+      dto.ledgerMirrorMode !== undefined ||
+      dto.emasMode !== undefined ||
+      dto.internalRateVisibleToHrManager !== undefined
     ) {
       mergedSettings = { ...baseSettings };
       if (valuation !== undefined) {
@@ -111,6 +113,24 @@ export class OrganizationSettingsService {
           ...prevLm,
           mode: dto.ledgerMirrorMode,
           mappingSetCode: prevLm.mappingSetCode ?? "NAS_TO_IFRS",
+        };
+      }
+      if (dto.emasMode !== undefined || dto.internalRateVisibleToHrManager !== undefined) {
+        const prevHr =
+          baseSettings.hr &&
+          typeof baseSettings.hr === "object" &&
+          !Array.isArray(baseSettings.hr)
+            ? (baseSettings.hr as Record<string, unknown>)
+            : {};
+        mergedSettings.hr = {
+          ...prevHr,
+          ...(dto.emasMode !== undefined ? { emasMode: dto.emasMode } : {}),
+          ...(dto.internalRateVisibleToHrManager !== undefined
+            ? {
+                internalRateVisibleToHrManager:
+                  dto.internalRateVisibleToHrManager,
+              }
+            : {}),
         };
       }
     }

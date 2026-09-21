@@ -1,12 +1,18 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessAnyPermission } from "@/lib/auth/require";
+import { DELIVERY_ACCEPT } from "@/lib/auth/read-permission-sets";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   await assertFnbEntitled();
+  const session = await getSessionFromRequest(request);
+  const denied = denyUnlessAnyPermission(session, DELIVERY_ACCEPT);
+  if (denied) return denied;
   const { id } = await params;
   const order = await prisma.deliveryInboxOrder.findUnique({ where: { id } });
   if (!order) {

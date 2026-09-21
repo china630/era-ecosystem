@@ -35,13 +35,15 @@ Finance boundary: [../../docs/HOSPITALITY_FINANCE_BOUNDARY.md](../../docs/HOSPIT
 
 ### NBC / fiscal production (pre-GA)
 
-| Env | Purpose |
-|-----|---------|
-| `ERA_FISCAL_PROVIDER` | `mock` (default local) · `nbc` · `cybernet` |
-| `ERA_NBC_KKM_CERT_PATH` | Production PKCS#12 path (backlog until cert issued) |
-| `ERA_NBC_KKM_ENDPOINT` | Vendor API base URL |
+**SoR:** org device catalog via orchestrator `FiscalHardwareDevice` + Sync ([ADR era-fiscal-kkm-kit](../../docs/adr/era-fiscal-kkm-kit.md)). Do **not** treat hotel DELIVERY “NBC done” as certified.
 
-Local UAT uses **mock**. Production cutover requires certified adapter (not blocking GA).
+| Setting | Where |
+|---------|--------|
+| Device `providerId` / `endpoint` / PKCS#12 secrets | Super-Admin `GET/POST /v1/admin/orgs/:id/fiscal-devices` |
+| Install fallback (deprecated) | `ERA_FISCAL_NBC_URL` / `ERA_FISCAL_NBC_TOKEN` / `ERA_FISCAL_CYBERNET_URL` |
+| ~~`ERA_NBC_KKM_CERT_PATH` / `ERA_NBC_KKM_ENDPOINT`~~ | **Retired** — use device vault fields (`pkcs12Base64`, `endpoint`) |
+
+Local UAT uses **mock**. Live vendor stays STUB until field cert.
 
 ### OTA (pre-GA stub)
 

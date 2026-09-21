@@ -16,6 +16,8 @@ export type TaxpayerLookupResult = {
   isVatPayer: boolean;
   address: string | null;
   isRiskyTaxpayer: boolean | null;
+  /** Explicit inactive/deregistered signal when present in e-taxes payload; null = unknown. */
+  isInactive: boolean | null;
 };
 
 const DEFAULT_TAXPAYER_URL =
@@ -137,6 +139,7 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
         isVatPayer: true,
         address: "Bakı şəh.",
         isRiskyTaxpayer: false,
+        isInactive: false,
       };
       assertValidTaxpayerLookup(mock);
       return mock;
@@ -265,7 +268,14 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
         "unvan",
       ]);
       const isRiskyTaxpayer = this.pickRiskFlag(o);
-      return { name, isVatPayer, address: address ?? null, isRiskyTaxpayer };
+      const isInactive = this.pickInactiveFlag(o);
+      return {
+        name,
+        isVatPayer,
+        address: address ?? null,
+        isRiskyTaxpayer,
+        isInactive,
+      };
     }
 
     if (typeof data === "string") {
@@ -336,6 +346,50 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
         const s = v.trim().toLowerCase();
         if (["1", "true", "bəli", "var", "riskli"].includes(s)) return true;
         if (["0", "false", "yox", "yoxdur", "risksiz"].includes(s)) return false;
+      }
+    }
+    return null;
+  }
+
+  private pickInactiveFlag(o: Record<string, unknown>): boolean | null {
+    const keys = [
+      "isInactive",
+      "inactive",
+      "isActive",
+      "active",
+      "status",
+      "taxpayerStatus",
+      "voenStatus",
+      "state",
+    ];
+    for (const k of keys) {
+      const v = o[k];
+      if (k === "isActive" || k === "active") {
+        if (typeof v === "boolean") return !v;
+        if (typeof v === "number") return v === 0;
+        if (typeof v === "string") {
+          const s = v.trim().toLowerCase();
+          if (["1", "true", "bəli", "active", "aktiv"].includes(s)) return false;
+          if (["0", "false", "yox", "inactive", "deaktiv", "bağlı"].includes(s))
+            return true;
+        }
+        continue;
+      }
+      if (typeof v === "boolean") {
+        if (k === "isInactive" || k === "inactive") return v;
+      }
+      if (typeof v === "string") {
+        const s = v.trim().toLowerCase();
+        if (
+          ["inactive", "deaktiv", "bağlı", "closed", "liquidated", "cancelled"].some(
+            (x) => s.includes(x),
+          )
+        ) {
+          return true;
+        }
+        if (["active", "aktiv", "open"].some((x) => s.includes(x))) {
+          return false;
+        }
       }
     }
     return null;

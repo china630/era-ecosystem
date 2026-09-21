@@ -10,7 +10,6 @@ import { AuthService } from "./auth.service";
 import { TeamController } from "./team.controller";
 import { UsersController } from "./users.controller";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RolesGuard } from "./guards/roles.guard";
 import { SuperAdminGuard } from "./guards/super-admin.guard";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { PiiCryptoService } from "../security/pii-crypto.service";
@@ -41,10 +40,9 @@ import { ControlPlaneModule } from "../control-plane/control-plane.module";
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
-    RolesGuard,
     SuperAdminGuard,
     PiiCryptoService,
   ],
-  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard, SuperAdminGuard],
+  exports: [AuthService, JwtModule, JwtAuthGuard, SuperAdminGuard],
 })
 export class AuthModule {}

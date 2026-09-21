@@ -9,7 +9,7 @@ const outPath = path.join(root, "tmp/era-local-credentials.md");
 
 const emails =
   process.env.PLATFORM_SUPER_ADMIN_EMAILS?.trim() ||
-  "inaram84@gmail.com, shirinov.chingiz@gmail.com, chingiz@era.com";
+  "shirinov.chingiz@gmail.com";
 const password =
   process.env.PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD?.trim() || "12345678";
 const pgUser = process.env.POSTGRES_USER?.trim() || "era";
@@ -91,7 +91,6 @@ Legacy hotel-only logins (seed): \`admin\` / \`admin123\`, etc.
 | Login | Password | Role |
 |-------|----------|------|
 | shirinov.chingiz@gmail.com | ${password} | Hotel_Admin (platform) |
-| chingiz@era.com | ${password} | Hotel_Admin |
 | admin | admin123 | Hotel_Admin |
 | reception | reception123 | Receptionist |
 | manager | manager123 | Manager |

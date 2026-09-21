@@ -1,16 +1,23 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from "@nestjs/common";
 import { WORKFORCE_EMPLOYMENT_TRANSFERRED } from "@era/contracts";
-import { RoleBindingStatus, WorkforceEmploymentStatus } from "@era365/database";
+import {
+  RoleBindingStatus,
+  WorkforceEmploymentStatus,
+  WorkforcePersonnelOrderType,
+} from "@era365/database";
 import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
+import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import type { CreateWorkforceEmploymentDto } from "./dto/workforce-employment.dto";
@@ -47,6 +54,8 @@ export class WorkforceEmploymentsService {
     private readonly positions: WorkforcePositionsService,
     private readonly orgUnits: WorkforceOrgUnitsService,
     private readonly satelliteEvents: SatelliteEventsService,
+    @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
+    private readonly personnelOrders: WorkforcePersonnelOrdersService,
   ) {}
 
   async list(
@@ -66,7 +75,13 @@ export class WorkforceEmploymentsService {
     let orgUnitFilter: { orgUnitId: { in: string[] } } | undefined;
     if (opts?.orgUnitIds != null) {
       if (opts.orgUnitIds.length === 0) {
-        return { items: [], total: 0, page: 1, pageSize: opts.pageSize ?? 50 };
+        return {
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: opts.pageSize ?? 50,
+          draftOrdersByEmployment: {},
+        };
       }
       orgUnitFilter = { orgUnitId: { in: opts.orgUnitIds } };
     } else if (opts?.orgUnitId) {
@@ -103,7 +118,11 @@ export class WorkforceEmploymentsService {
       }),
       this.prisma.workforceEmployment.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    const draftOrdersByEmployment = await this.personnelOrders.listDraftBanners(
+      organizationId,
+      items.map((i) => i.id),
+    );
+    return { items, total, page, pageSize, draftOrdersByEmployment };
   }
 
   async getOne(organizationId: string, id: string) {
@@ -209,8 +228,26 @@ export class WorkforceEmploymentsService {
       action: "EMPLOYMENT_TRANSFERRED",
       entityType: "EMPLOYMENT",
       entityId: id,
+      globalPersonId: existing.globalPersonId,
+      cpEmploymentId: id,
       payload: dto as unknown as Record<string, unknown>,
     });
+
+    try {
+      await this.personnelOrders.ensureDraftForMutation({
+        organizationId,
+        actorUserId,
+        employmentId: id,
+        type: WorkforcePersonnelOrderType.TRANSFER,
+        effectiveDate: new Date().toISOString().slice(0, 10),
+        note: `Transfer to ${dto.orgUnitId}/${dto.positionId}`,
+      });
+    } catch (err) {
+      console.warn(
+        `[workforce] ensureDraft TRANSFER failed for ${id}:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
 
     await this.satelliteEvents.enqueue({
       type: WORKFORCE_EMPLOYMENT_TRANSFERRED,

@@ -133,6 +133,7 @@ Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the
 
 ## Cursor / AI agents
 
+- **Hot reload skill:** say **релод клиники** / **reload clinic** (or hotel, fnb, orch, …) → [`.cursor/skills/era-hot-reload/`](../.cursor/skills/era-hot-reload/SKILL.md) starts host `npm run dev` and stops the matching compose app container (keeps postgres/redis).
 - Scope context to the subfolder you are editing (`era-hotel-pms/**`, `era-finance-core/**`).
 - Pull infra URLs and port conventions from **repo root** `.env.example` and this doc — not from obsolete submodule READMEs.
 - UI shell contract: [`DESIGN.md`](../DESIGN.md) § App shell · [`UI_PLAYBOOK_SATELLITES.md`](./UI_PLAYBOOK_SATELLITES.md).

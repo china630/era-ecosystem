@@ -43,6 +43,10 @@ describe("WorkforceProvisionService.reprovision", () => {
   const audit = { log: jest.fn() };
   const satelliteEvents = { enqueue: jest.fn() };
   const subscriptionAccess = { hasModule: jest.fn() };
+  const personnelOrders = {
+    ensureDraftForMutation: jest.fn().mockResolvedValue(null),
+    assertTerminateAllowed: jest.fn().mockResolvedValue(undefined),
+  };
 
   const svc = new WorkforceProvisionService(
     prisma as never,
@@ -55,6 +59,7 @@ describe("WorkforceProvisionService.reprovision", () => {
     audit as never,
     satelliteEvents as never,
     subscriptionAccess as never,
+    personnelOrders as never,
   );
 
   beforeEach(() => {

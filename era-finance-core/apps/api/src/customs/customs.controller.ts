@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   BadRequestException,
   Body,
@@ -10,14 +12,12 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import {
   CustomsDeclarationFullPrefillCaptureSchema,
   CustomsDeclarationPrefillCaptureSchema,
 } from "@erafinance/api-contracts";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { VoenIntegrityGuard } from "../auth/guards/voen-integrity.guard";
@@ -37,7 +37,7 @@ import { ImportPipelineService } from "./import-pipeline.service";
 @ApiTags("customs")
 @ApiBearerAuth("bearer")
 @Controller("customs/declarations")
-@UseGuards(RolesGuard, VoenIntegrityGuard)
+@UseGuards( VoenIntegrityGuard)
 export class CustomsController {
   constructor(
     private readonly customs: CustomsService,
@@ -46,13 +46,13 @@ export class CustomsController {
   ) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   list(@OrganizationId() organizationId: string) {
     return this.customs.list(organizationId);
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   create(@OrganizationId() organizationId: string, @Body() dto: UpsertCustomsDeclarationDto) {
     return this.customs.create(organizationId, dto);
   }
@@ -60,7 +60,7 @@ export class CustomsController {
   @Post("import-pipeline")
   @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TRADE_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Stub import pipeline: OCR → purchase draft → BGD link → landed cost (trade_pro)",
   })
@@ -77,7 +77,7 @@ export class CustomsController {
   }
 
   @Get(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Get customs declaration with line items and mismatch hints" })
   getOne(
     @OrganizationId() organizationId: string,
@@ -89,7 +89,7 @@ export class CustomsController {
   @Post("prefill-capture")
   @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TRADE_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create BGD draft from extension/widget capture (trade_pro)" })
   prefillCapture(
     @OrganizationId() organizationId: string,
@@ -113,7 +113,7 @@ export class CustomsController {
   @Post(":id/allocate-landed-cost")
   @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TRADE_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Allocate BGD duty/fees/excise to linked products (trade_pro)" })
   allocateLandedCost(
     @OrganizationId() organizationId: string,
@@ -126,7 +126,7 @@ export class CustomsController {
   @Patch(":id/items/:itemId/product")
   @UseGuards(SubscriptionGuard)
   @RequiresModule(ModuleEntitlement.TRADE_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Link catalog product to BGD line item (trade_pro)" })
   patchItemProduct(
     @OrganizationId() organizationId: string,
@@ -138,7 +138,7 @@ export class CustomsController {
   }
 
   @Patch(":id/attach")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   attach(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,

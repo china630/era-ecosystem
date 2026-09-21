@@ -4,7 +4,10 @@
  * commercial clinic SKUs, capacity meters. Entitlement + seed share this file.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OUTLET_OVERAGE_AZN = exports.CAPACITY_DRIVERS = exports.PASS_THROUGH_CATALOG_KEYS = exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = exports.CLINIC_COMMERCIAL_MODULE_KEYS = exports.CLINIC_FEATURE_PARENTS = exports.CLINIC_COMMERCIAL_GRANTS = exports.CATALOG_MUTEX_GROUPS = exports.WORKFORCE_HUB_KEYS = exports.WORKFORCE_XOR = exports.DATA_HUB_XOR = exports.HOTEL_SANATORIUM_BUNDLE_NAME = exports.CATALOG_PALETTE_AZN = void 0;
+exports.OUTLET_OVERAGE_AZN = exports.CAPACITY_DRIVERS = exports.PASS_THROUGH_CATALOG_KEYS = exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = exports.CLINIC_COMMERCIAL_MODULE_KEYS = exports.CLINIC_FEATURE_PARENTS = exports.CLINIC_COMMERCIAL_GRANTS = exports.ONE_SHOT_CATALOG_KEYS = exports.CATALOG_MUTEX_GROUPS = exports.WORKFORCE_HUB_KEYS = exports.WORKFORCE_XOR = exports.DATA_HUB_XOR = exports.HOTEL_SANATORIUM_BUNDLE_NAME = exports.CATALOG_PALETTE_AZN = void 0;
+exports.isOneShotCatalogKey = isOneShotCatalogKey;
+exports.isKafeEdition = isKafeEdition;
+exports.shouldWaiveEraFoundation = shouldWaiveEraFoundation;
 exports.isWorkforceHubKey = isWorkforceHubKey;
 exports.inferSatelliteKeyFromModuleKey = inferSatelliteKeyFromModuleKey;
 exports.isPassThroughCatalogModuleKeyExtended = isPassThroughCatalogModuleKeyExtended;
@@ -31,10 +34,37 @@ exports.WORKFORCE_HUB_KEYS = [
 exports.CATALOG_MUTEX_GROUPS = [
     exports.DATA_HUB_XOR,
     exports.WORKFORCE_XOR,
+    ["platform_domain", "platform_domain_org"],
     ["platform_loyalty", "retail_promotions"],
     ["platform_delivery", "fnb_delivery_hub"],
+    ["fnb_qr_menu", "platform_portal"],
     ["hotel_medical_sanatorium", "clinic_sanatorium_clinical"],
 ];
+/** One-shot SKUs — billed at toggle, never on the monthly Foundation run. */
+exports.ONE_SHOT_CATALOG_KEYS = ["platform_onsite_visit"];
+function isOneShotCatalogKey(key) {
+    return exports.ONE_SHOT_CATALOG_KEYS.includes(key);
+}
+function isKafeEdition(org) {
+    const plan = (org.subscriptionPlan ?? "").trim().toLowerCase();
+    if (plan === "kafe")
+        return true;
+    const s = org.settings;
+    if (s && typeof s === "object" && !Array.isArray(s)) {
+        const rec = s;
+        const edition = String(rec.edition ?? rec.signupSource ?? "").toLowerCase();
+        if (edition === "kafe")
+            return true;
+    }
+    return false;
+}
+/** Street Kafe: waive ERA Foundation until NAS / finance satellite is on. */
+function shouldWaiveEraFoundation(org) {
+    if (!isKafeEdition(org))
+        return false;
+    const mods = org.activeModules ?? [];
+    return !mods.some((m) => m === "nas" || m === "industry_finance");
+}
 /** Child feature keys granted when a commercial parent SKU is on (price 0). */
 exports.CLINIC_COMMERCIAL_GRANTS = {
     clinic_registry_emr: [

@@ -44,7 +44,7 @@ See [.env.example](./.env.example). Required:
 - `DATABASE_URL` → `era_bank`
 - `ERA_BANK_CORE_URL` → engine base (e.g. `http://localhost:4300`)
 - `BANK_CORE_SERVICE_TOKEN` → satellite→engine auth
-- `ERA_BANK_ORGANIZATION_ID` → single bank org for deployment
+- `ERA_BANK_ORGANIZATION_ID` → emergency / appliance process bind (not SHARED login SoT)
 
 ## BFF route map
 

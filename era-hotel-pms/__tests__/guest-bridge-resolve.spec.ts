@@ -71,9 +71,8 @@ describe("bridge guest resolve helpers", () => {
   });
 
   it("maps EW gender 0/1 and GENDERID aliases", async () => {
-    const { genderRawFromElektrawebGuestRow } = await import(
-      "@/lib/integration/elektraweb-bridge/upsert-guest"
-    );
+    const { genderRawFromElektrawebGuestRow, birthDateFromElektrawebGuestRow } =
+      await import("@/lib/integration/elektraweb-bridge/upsert-guest");
     const { genderFromElektrawebGuest } = await import(
       "@/lib/integration/elektraweb-share-map"
     );
@@ -88,5 +87,27 @@ describe("bridge guest resolve helpers", () => {
         gender: genderRawFromElektrawebGuestRow({ GENDERID: 1 }),
       }),
     ).toBe("F");
+    expect(
+      genderRawFromElektrawebGuestRow({ GENDERID_GENDERNAME: "0 - Male" }),
+    ).toBe("0 - Male");
+    expect(
+      birthDateFromElektrawebGuestRow({ BIRTHDATE: "1959-07-19" })
+        ?.toISOString()
+        .slice(0, 10),
+    ).toBe("1959-07-19");
+  });
+});
+
+describe("parseElektrawebDate", () => {
+  it("parses EW guest-card DMY and ISO day", async () => {
+    const { parseElektrawebDate } = await import(
+      "@/lib/integration/elektraweb-bridge/normalize"
+    );
+    expect(parseElektrawebDate("13.03.1953")?.toISOString().slice(0, 10)).toBe(
+      "1953-03-13",
+    );
+    expect(parseElektrawebDate("1953-03-13")?.toISOString().slice(0, 10)).toBe(
+      "1953-03-13",
+    );
   });
 });

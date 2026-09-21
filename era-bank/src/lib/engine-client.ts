@@ -2,9 +2,12 @@ import {
   authCookieName,
   fetchSubscriptionSnapshot,
   getBearerOrCookieToken,
+  getSatelliteTenantContext,
   hasActiveModule,
   parseActiveModules,
   satelliteOrganizationId,
+  satelliteRuntimeConfig,
+  verifySatelliteSession,
 } from "@era/satellite-kit";
 import { cookies, headers } from "next/headers";
 
@@ -12,13 +15,36 @@ const ENGINE_BASE =
   process.env.ERA_BANK_CORE_URL?.replace(/\/$/, "") ?? "http://localhost:4300";
 const SERVICE_TOKEN = process.env.BANK_CORE_SERVICE_TOKEN ?? "";
 
-function bankOrgId(): string {
+function processBindBankOrgId(): string {
   try {
     const id = satelliteOrganizationId();
     return id === "demo-org" ? "" : id;
   } catch {
     return "";
   }
+}
+
+/** Request tenant first (JWT / ALS / middleware), process bind only for appliance. */
+async function requestBankOrgId(): Promise<string> {
+  const als = getSatelliteTenantContext()?.organizationId?.trim();
+  if (als) return als;
+  try {
+    const headerStore = await headers();
+    const fromHeader = headerStore.get("x-era-organization-id")?.trim();
+    if (fromHeader) return fromHeader;
+  } catch {
+    /* headers() unavailable outside a request */
+  }
+  const jwt = await resolveUserJwt();
+  if (jwt) {
+    try {
+      const session = await verifySatelliteSession(jwt);
+      if (session.organizationId?.trim()) return session.organizationId.trim();
+    } catch {
+      /* ignore invalid session; fall through */
+    }
+  }
+  return processBindBankOrgId();
 }
 
 export class BankEngineError extends Error {
@@ -56,7 +82,7 @@ export async function loadBankSubscriptionSnapshot(): Promise<Record<string, unk
     "";
 
   // Prefer internal snapshot (service token). /v1/subscription/me is JWT-only.
-  const BANK_ORG_ID = bankOrgId();
+  const BANK_ORG_ID = await requestBankOrgId();
   if (base && BANK_ORG_ID) {
     try {
       const res = await fetch(
@@ -85,7 +111,7 @@ export async function loadBankSubscriptionSnapshot(): Promise<Record<string, unk
 export async function assertBankingEntitlement(
   moduleKey = "industry_banking",
 ): Promise<void> {
-  const BANK_ORG_ID = bankOrgId();
+  const BANK_ORG_ID = await requestBankOrgId();
   if (!BANK_ORG_ID) {
     if (process.env.NODE_ENV !== "production") return;
     throw new BankingEntitlementError(moduleKey);
@@ -160,10 +186,21 @@ export async function forwardToBankCore(
     });
   }
 
+  const orgId = await requestBankOrgId();
+  if (satelliteRuntimeConfig().deploymentTopology === "SHARED" && !orgId) {
+    throw new BankEngineError(
+      400,
+      { error: "organizationId is required" },
+      "organizationId is required",
+    );
+  }
+
   const reqHeaders: Record<string, string> = {
     Accept: "application/json",
-    "X-Organization-Id": bankOrgId(),
   };
+  if (orgId) {
+    reqHeaders["X-Organization-Id"] = orgId;
+  }
   // Prefer service-token auth for BFF→core. Satellite session JWT must NOT be
   // sent as Authorization — BankAuthGuard reads Bearer first and rejects it.
   if (SERVICE_TOKEN) {

@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -17,11 +19,10 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { OrganizationId } from "../common/org-id.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { PatchOrganizationSettingsDto } from "./dto/patch-organization-settings.dto";
 import { OrganizationSettingsService } from "./organization-settings.service";
@@ -30,7 +31,7 @@ import { PatchNetworkDocumentsSettingsDto } from "../network/dto/patch-network-d
 @ApiTags("organization")
 @ApiBearerAuth("bearer")
 @Controller("organization")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class OrganizationSettingsController {
   constructor(
     private readonly settings: OrganizationSettingsService,
@@ -38,14 +39,14 @@ export class OrganizationSettingsController {
   ) {}
 
   @Get("settings")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Organization profile + bank accounts" })
   getSettings(@OrganizationId() organizationId: string) {
     return this.settings.getSettings(organizationId);
   }
 
   @Patch("settings")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Update organization profile and/or bank accounts" })
   patchSettings(
     @OrganizationId() organizationId: string,
@@ -55,7 +56,7 @@ export class OrganizationSettingsController {
   }
 
   @Patch("settings/network-documents")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Enable/disable inbound ERA network documents" })
   patchNetworkDocuments(
     @OrganizationId() organizationId: string,
@@ -65,7 +66,7 @@ export class OrganizationSettingsController {
   }
 
   @Patch("settings/period-lock")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Set accounting-book period lock date (book + legacy ledger maps)" })
   patchPeriodLock(
     @OrganizationId() organizationId: string,
@@ -80,7 +81,7 @@ export class OrganizationSettingsController {
   }
 
   @Post("settings/logo")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
   @ApiOperation({ summary: "Upload organization logo (PNG/JPEG/WebP, max 2 MB)" })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -98,7 +99,7 @@ export class OrganizationSettingsController {
   }
 
   @Get("directory/by-voen/:taxId")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary: "Global company directory lookup by VÖEN (smart-fill)",
   })

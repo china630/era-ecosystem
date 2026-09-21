@@ -8,7 +8,10 @@ import {
   parsePermissions,
   serializePermissions,
 } from "@/lib/auth/permissions";
-import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
+import {
+  ensureSystemHotelRoles,
+  HOTEL_PERMISSION_CATALOG_VERSION,
+} from "@/lib/auth/ensure-system-hotel-roles";
 import {
   HOTEL_CUSTOM_ROLE_CODE_RE,
   isValidCustomHotelRoleCode,
@@ -105,6 +108,7 @@ export async function POST(req: Request) {
         isSystem: false,
         cloneFromCode: donor.code,
         permissionsJson: serializePermissions(permissions),
+        permissionCatalogVersion: HOTEL_PERMISSION_CATALOG_VERSION,
       },
     });
 

@@ -27,9 +27,11 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | POS / KDS | `floor + KDS` | 🟡 |
+| ERA Kafe till | `/floor` `/pin` `/m/[slug]` `/kafe` | 🟡 |
 | Admin | `/admin` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (FNB-RBAC-01; not SHOW) |
 
-Admin modal CRUD is now in place for menu, tables, settings, and daily-menu board; sell/show remains 🟡 until live sign-off.
+Admin modal CRUD is now in place for menu, tables, settings, and daily-menu board; RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
 
@@ -50,4 +52,4 @@ Admin modal CRUD is now in place for menu, tables, settings, and daily-menu boar
 - Edition column copies `docs/editions/fnb.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
-- Forbidden: «SHARED F&B SaaS pool» — tenant-root org + kit filter ≠ live multi-tenant pool ([deployment-topology.md](../adr/deployment-topology.md)).
+- Forbidden: claiming ERA Kafe **GA** while Pilot field is open. Street café SKUs (`industry_fnb_pos`, Zal, KDS, QR) are **mvp** on the existing F&B SHARED pool; Foundation is waived until NAS.

@@ -73,6 +73,7 @@ Ops UX **ops-mvp / lab-pilot** — teller back-office over `era-bank-core`. Kit 
 - [x] i18n keys for teller screens (az/ru/en parity)
 - [x] `/dashboard/executive` — read-only trial balance via `/api/gl/trial-balance`
 - [x] Teller drawer documented in [TELLER-DRAWER.md](./TELLER-DRAWER.md) (vNext reconciliation)
+- [x] Variant A RBAC — `OpsRole.permissionsJson`, `/admin/access`, JWT `permissions[]`, BFF grant doors (BANK-RBAC-01 SCREEN; field UAT open)
 
 ## Post-GA (certification track)
 

@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -10,10 +12,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
+
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import {
   CreateAccountSubcontoConfigDto,
@@ -26,26 +26,26 @@ import { SubcontoService } from "./subconto.service";
 @ApiTags("accounting")
 @ApiBearerAuth("bearer")
 @Controller("accounting/subconto")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class SubcontoController {
   constructor(private readonly subconto: SubcontoService) {}
 
   @Get("feature-status")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "ERA_SUBCONTO_ENABLED feature flag status" })
   featureStatus() {
     return this.subconto.getFeatureStatus();
   }
 
   @Post("seed-system-types")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Seed system subconto types (COUNTERPARTY, COST_CENTER, …)" })
   seedSystemTypes(@OrganizationId() organizationId: string) {
     return this.subconto.seedSystemTypes(organizationId);
   }
 
   @Post("backfill-from-transactions")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({
     summary:
       "Backfill JournalEntryDimension from Transaction counterpartyId/departmentId (idempotent)",
@@ -55,14 +55,14 @@ export class SubcontoController {
   }
 
   @Get("types")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List subconto types for organization" })
   listTypes(@OrganizationId() organizationId: string) {
     return this.subconto.listTypes(organizationId);
   }
 
   @Post("types")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Create custom subconto type" })
   createType(
     @OrganizationId() organizationId: string,
@@ -72,7 +72,7 @@ export class SubcontoController {
   }
 
   @Patch("types/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Update subconto type name" })
   updateType(
     @OrganizationId() organizationId: string,
@@ -83,14 +83,14 @@ export class SubcontoController {
   }
 
   @Delete("types/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Delete custom subconto type" })
   deleteType(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.subconto.deleteType(organizationId, id);
   }
 
   @Get("account-configs")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List account subconto configs (optional accountId filter)" })
   listAccountConfigs(
     @OrganizationId() organizationId: string,
@@ -100,7 +100,7 @@ export class SubcontoController {
   }
 
   @Post("account-configs")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Bind subconto type to account (max 3 per account)" })
   createAccountConfig(
     @OrganizationId() organizationId: string,
@@ -110,7 +110,7 @@ export class SubcontoController {
   }
 
   @Patch("account-configs/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Update account subconto config" })
   updateAccountConfig(
     @OrganizationId() organizationId: string,
@@ -121,7 +121,7 @@ export class SubcontoController {
   }
 
   @Delete("account-configs/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Remove account subconto config" })
   deleteAccountConfig(
     @OrganizationId() organizationId: string,

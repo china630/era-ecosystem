@@ -77,5 +77,6 @@ Do not call this table «product readiness».
 | `era-clinic/__tests__/cli-rbac-negative.spec.ts` | AC-CLI-RBAC (Wave 1) |
 | `era-clinic/__tests__/cli-rbac-admin-negative.spec.ts` | AC-CLI-RBAC (Wave 2) |
 | `era-clinic/__tests__/cli-rbac-ops-negative.spec.ts` | AC-CLI-RBAC (Wave 3) |
+| `era-clinic/__tests__/clinic-page-route-inventory.spec.ts` | AC-CLI-RBAC (Wave 3 page fail-closed) |
 | `era-clinic/__tests__/clinic-system-roles.spec.ts` | AC-CLI-RBAC (system seed + custom role model) |
 | `era-clinic/__tests__/clinic-role-admin.spec.ts` | AC-CLI-RBAC (create/delete/staffKind/assign API rules) |

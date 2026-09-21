@@ -6,18 +6,28 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import {
   EmployeeEmploymentStatus,
   EmployeeKind,
+  EmasContractEventType,
   Prisma,
   TaxResidencyStatus,
+  UserRole,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { IntegrationSyncRunService } from "../integrations/integration-sync-run.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { EMAS_FIELD_MAPPING_VERSION } from "@erafinance/api-contracts";
 import { BulkSyncResultEmployeesDto } from "./dto/bulk-sync-result-employees.dto";
 import { ConvertEmployeeToFinDto, CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
+import {
+  assertCanEditInternalRate,
+  canEditInternalRate,
+  canSeeInternalRate,
+  stripInternalRateIfForbidden,
+} from "../accounting/ops-book.guard";
 import {
   blindIndex,
   decryptText,
@@ -95,11 +105,34 @@ export class EmployeesService {
     private readonly prisma: PrismaService,
     private readonly syncRuns: IntegrationSyncRunService,
     private readonly mdm: OrchestratorMdmClientService,
+    private readonly moduleRef: ModuleRef,
   ) {}
+
+  private async enqueueEmasSafe(
+    organizationId: string,
+    employeeId: string,
+    eventType: EmasContractEventType,
+  ) {
+    try {
+      const { EmasContractService } = await import("./emas-contract.service");
+      const emas = this.moduleRef.get(EmasContractService, { strict: false });
+      if (emas) {
+        await emas.enqueueManualLifecycle(organizationId, employeeId, eventType);
+      }
+    } catch {
+      // Hire must not fail if ƏMAS queue is unavailable
+    }
+  }
 
   async list(
     organizationId: string,
-    query?: { page?: number; pageSize?: number; departmentId?: string },
+    query?: {
+      page?: number;
+      pageSize?: number;
+      departmentId?: string;
+      cpEmploymentId?: string;
+      actingUserRole?: UserRole | string;
+    },
   ) {
     const page = Math.max(1, query?.page ?? 1);
     const pageSize = Math.min(500, Math.max(1, query?.pageSize ?? 20));
@@ -107,6 +140,9 @@ export class EmployeesService {
       organizationId,
       ...(query?.departmentId
         ? { jobPosition: { departmentId: query.departmentId } }
+        : {}),
+      ...(query?.cpEmploymentId
+        ? { cpEmploymentId: query.cpEmploymentId }
         : {}),
     };
     const result = await this.prisma.$transaction(async (tx) => {
@@ -144,7 +180,13 @@ export class EmployeesService {
         .filter((item): item is typeof item & { globalPersonId: string } =>
           Boolean(item.globalPersonId),
         )
-        .map((item) => attachEmployeePerson(item, personMap)),
+        .map((item) => {
+          const withPerson = attachEmployeePerson(item, personMap);
+          return stripInternalRateIfForbidden(
+            withPerson as Record<string, unknown>,
+            query?.actingUserRole,
+          ) as typeof withPerson;
+        }),
       persons,
     };
   }
@@ -209,7 +251,14 @@ export class EmployeesService {
     timeout: 15000,
   } as const;
 
-  async create(organizationId: string, dto: CreateEmployeeDto) {
+  async create(
+    organizationId: string,
+    dto: CreateEmployeeDto,
+    actingUserRole?: UserRole | string,
+  ) {
+    if (dto.internalRate !== undefined && dto.internalRate !== null) {
+      assertCanEditInternalRate(actingUserRole);
+    }
     const kind = dto.kind ?? EmployeeKind.EMPLOYEE;
     if (kind === EmployeeKind.CONTRACTOR && !dto.voen?.trim()) {
       throw new BadRequestException("Для подрядчика (CONTRACTOR) укажите VÖEN (10 цифр)");
@@ -261,6 +310,9 @@ export class EmployeesService {
             salary: salaryParts.salary,
             tariffSalary: salaryParts.tariffSalary,
             supplementSalary: salaryParts.supplementSalary,
+            // Hire path / CP mirror leave internalRate null (Wave 5).
+            internalRate:
+              dto.internalRate != null ? new Decimal(dto.internalRate) : null,
             workScheduleId: dto.workScheduleId ?? null,
             initialVacationDays: new Decimal(dto.initialVacationDays ?? 0),
             avgMonthlySalaryLastYear:
@@ -286,7 +338,28 @@ export class EmployeesService {
         EmployeesService.hireGateTxOptions,
       );
       const person = await this.personDisplay(organizationId, globalPersonId);
-      return { ...created, person };
+      await this.enqueueEmasSafe(
+        organizationId,
+        created.id,
+        EmasContractEventType.HIRE,
+      );
+      const orgSettings = await this.prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { settings: true },
+      });
+      const { parseEmasMode } = await import("./emas-mode");
+      const mode = parseEmasMode(orgSettings?.settings);
+      return {
+        ...created,
+        person,
+        ...(mode === "FULL" && !hasFin
+          ? {
+              emasFinWarning: true,
+              message:
+                "ƏMAS FULL mode: hire saved without FIN — complete convert-to-FIN before portal filing",
+            }
+          : {}),
+      };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         throw new ConflictException("Employee already linked to this MDM person");
@@ -341,10 +414,19 @@ export class EmployeesService {
       },
     });
     const personDisplay = await this.personDisplay(organizationId, globalPersonId);
+    await this.enqueueEmasSafe(
+      organizationId,
+      updated.id,
+      EmasContractEventType.HIRE,
+    );
     return { ...updated, person: personDisplay };
   }
 
-  async getOne(organizationId: string, id: string) {
+  async getOne(
+    organizationId: string,
+    id: string,
+    actingUserRole?: UserRole | string,
+  ) {
     const row = await this.prisma.employee.findFirst({
       where: { id, organizationId },
       include: {
@@ -358,7 +440,15 @@ export class EmployeesService {
       throw new BadRequestException("Employee missing MDM globalPersonId link");
     }
     const person = await this.personDisplay(organizationId, row.globalPersonId);
-    return { ...row, person };
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return stripInternalRateIfForbidden(
+      { ...row, person } as Record<string, unknown>,
+      actingUserRole,
+      org?.settings,
+    ) as typeof row & { person: EmployeePersonDisplay };
   }
 
   /** Minimal DTO for ERA Finance Assistant (ƏMAS e-müqavilə prefill). */
@@ -393,7 +483,16 @@ export class EmployeesService {
     id: string,
     cpEmploymentIdHint?: string,
   ) {
-    const row = await this.getOne(organizationId, id);
+    const raw = await this.getOne(organizationId, id);
+    const row = raw as {
+      id: string;
+      startDate: Date;
+      globalPersonId: string;
+      cpEmploymentId: string | null;
+      emasEligible: boolean;
+      salary: { toFixed: (n: number) => string };
+      jobPosition: { name: string; department?: { name: string } | null };
+    };
     const start = row.startDate.toISOString().slice(0, 10);
     const personMap = await batchEmployeePersonMap(this.mdm, organizationId, [
       row.globalPersonId,
@@ -447,7 +546,30 @@ export class EmployeesService {
         contractEndDate: null as string | null,
         contractId: row.id,
         absenceWindow,
+        mappingVersion: EMAS_FIELD_MAPPING_VERSION,
         message: "ƏMAS requires FIN — use convert-to-FIN when citizen ID is available",
+      };
+    }
+    const salaryNum = Number(row.salary.toFixed(2));
+    if (!Number.isFinite(salaryNum) || salaryNum <= 0) {
+      return {
+        employeeId: row.id,
+        cpEmploymentId,
+        emasStatus: "PENDING_SALARY" as const,
+        firstName: emasGivenName,
+        lastName,
+        middleName: middleName || null,
+        finCode: compliance.fin,
+        positionTitle: row.jobPosition.name,
+        departmentName: row.jobPosition.department?.name ?? null,
+        salaryGrossAzn: row.salary.toFixed(2),
+        contractStartDate: start,
+        contractEndDate: null as string | null,
+        contractId: row.id,
+        absenceWindow,
+        mappingVersion: EMAS_FIELD_MAPPING_VERSION,
+        message:
+          "Contract salary is 0 — set Employee.salary before portal prefill (never use internalRate)",
       };
     }
     return {
@@ -465,6 +587,7 @@ export class EmployeesService {
       contractEndDate: null as string | null,
       contractId: row.id,
       absenceWindow,
+      mappingVersion: EMAS_FIELD_MAPPING_VERSION,
     };
   }
 
@@ -530,8 +653,16 @@ export class EmployeesService {
     return { ok: true, successCount, errorCount };
   }
 
-  async update(organizationId: string, id: string, dto: UpdateEmployeeDto) {
-    const current = await this.getOne(organizationId, id);
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateEmployeeDto,
+    actingUserRole?: UserRole | string,
+  ) {
+    const current = await this.getOne(organizationId, id, actingUserRole);
+    if (dto.internalRate !== undefined) {
+      assertCanEditInternalRate(actingUserRole);
+    }
     const kind = dto.kind ?? current.kind;
     if (kind === EmployeeKind.CONTRACTOR) {
       const voen =
@@ -591,6 +722,10 @@ export class EmployeesService {
       data.salary = salaryParts.salary;
       data.tariffSalary = salaryParts.tariffSalary;
       data.supplementSalary = salaryParts.supplementSalary;
+    }
+    if (dto.internalRate !== undefined) {
+      data.internalRate =
+        dto.internalRate == null ? null : new Decimal(dto.internalRate);
     }
     if (dto.workScheduleId !== undefined) {
       data.workScheduleId = dto.workScheduleId;
@@ -684,6 +819,70 @@ export class EmployeesService {
       }
       throw e;
     }
+  }
+
+  /**
+   * Wave 1: bulk contract salary after CP hire-mirror (salary 0).
+   * Sets tariffSalary = salary, supplementSalary = 0 (same as single PATCH with salary only).
+   */
+  async bulkContractSalary(
+    organizationId: string,
+    items: Array<{
+      employeeId: string;
+      salary: number;
+      internalRate?: number | null;
+    }>,
+    actingUserRole?: UserRole | string,
+  ): Promise<{ updated: number; skipped: number; missingIds: string[] }> {
+    if (!items.length) {
+      throw new BadRequestException("items must not be empty");
+    }
+    const wantsRate = items.some((i) => i.internalRate !== undefined);
+    if (wantsRate) {
+      assertCanEditInternalRate(actingUserRole);
+    }
+    const allowRate = canEditInternalRate(actingUserRole);
+    const ids = [...new Set(items.map((i) => i.employeeId))];
+    const existing = await this.prisma.employee.findMany({
+      where: {
+        organizationId,
+        id: { in: ids },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    const found = new Set(existing.map((e) => e.id));
+    const missingIds = ids.filter((id) => !found.has(id));
+    const byId = new Map(items.map((i) => [i.employeeId, i]));
+    let updated = 0;
+    for (const id of found) {
+      const item = byId.get(id);
+      if (!item || !(item.salary > 0)) continue;
+      const parts = resolveSalaryParts({ salary: item.salary });
+      if (!parts) continue;
+      await this.prisma.employee.update({
+        where: { id },
+        data: {
+          salary: parts.salary,
+          tariffSalary: parts.tariffSalary,
+          supplementSalary: parts.supplementSalary,
+          ...(allowRate && item.internalRate !== undefined
+            ? {
+                internalRate:
+                  item.internalRate == null
+                    ? null
+                    : new Decimal(item.internalRate),
+              }
+            : {}),
+        },
+      });
+      updated += 1;
+    }
+    return {
+      updated,
+      skipped: ids.length - updated - missingIds.length,
+      missingIds,
+    };
   }
 
   async remove(organizationId: string, id: string) {

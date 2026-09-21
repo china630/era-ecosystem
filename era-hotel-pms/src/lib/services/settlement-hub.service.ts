@@ -171,19 +171,40 @@ export async function payPendingCharge(input: PayPendingInput) {
 
   let fiscalReceiptId: string | null = null;
   let fiscalQrPayload: string | null = null;
+  const liveFiscal = process.env.ERA_FISCAL_LIVE === 'true';
   if (['CASH', 'CARD'].includes(input.paymentMethod)) {
-    const { fiscalize } = await import('@era/fiscal');
+    const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const orgId = requestOrganizationId();
     try {
-      const receipt = await fiscalize({
-        documentRef: pending.id,
-        amount: expected,
-        paymentMethod: input.paymentMethod,
-        registerRef: shift.registerId,
-      });
-      fiscalReceiptId = receipt.receiptId;
-      fiscalQrPayload = receipt.qrPayload;
+      const receipt = await fiscalizeForSatellite(
+        {
+          documentRef: pending.id,
+          amount: expected,
+          paymentMethod: input.paymentMethod,
+          registerRef: shift.registerId,
+          organizationId: orgId,
+          fiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+          bankTerminalId: shift.bankTerminalId ?? undefined,
+          shiftFiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+          shiftBankTerminalId: shift.bankTerminalId ?? undefined,
+          lines: [
+            {
+              name: pending.description || 'Settlement',
+              qty: 1,
+              unitPrice: expected,
+            },
+          ],
+        },
+        orgId,
+      );
+      if (!isFiscalSkipped(receipt)) {
+        fiscalReceiptId = receipt.receiptId;
+        fiscalQrPayload = receipt.qrPayload;
+      }
     } catch (e) {
       console.error('KKM fiscalize failed for pending settlement', e);
+      if (liveFiscal || (e instanceof Error && e.name === 'FiscalError')) throw e;
     }
   }
 

@@ -26,6 +26,8 @@ function unavailablePricingSnapshot(): PublicPricingResponse {
       pricePerWhatsappAlertAzn: 0,
       pricePerInvoiceAzn: 0,
       pricePerOcrPageAzn: 0,
+      pricePerTradeCreditBuyerAzn: 1,
+      pricePerTradeCreditEnrichAzn: 2,
     },
     tierSpendCeilings: {},
     ocrJobsPerOrgMonth: null,

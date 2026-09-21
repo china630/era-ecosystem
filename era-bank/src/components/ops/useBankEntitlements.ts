@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isNavAllowedForRole } from "@/components/ops/bank-role-nav";
-import { useOpsMe } from "@/components/ops/useOpsMe";
+import { isNavAllowedForSession } from "@/components/ops/bank-role-nav";
+import { opsMeToSession, useOpsMe } from "@/components/ops/useOpsMe";
 
 const NAV_MODULE_MAP: Record<string, string> = {
   "/cif": "banking_core",
@@ -12,6 +12,7 @@ const NAV_MODULE_MAP: Record<string, string> = {
   "/admin/branches": "banking_core",
   "/admin/eod": "banking_core",
   "/admin/audit": "banking_core",
+  "/admin/access": "banking_core",
   "/aml": "banking_aml",
   "/deposits": "banking_deposits",
   "/loans": "banking_loans",
@@ -57,8 +58,8 @@ export function useBankEntitlements() {
   function isNavVisible(href: string): boolean {
     if (!isModuleVisible(href)) return false;
     if (me?.isPlatformSuperAdmin) return true;
-    return isNavAllowedForRole(href, me?.role);
+    return isNavAllowedForSession(href, opsMeToSession(me));
   }
 
-  return { modules, role: me?.role ?? null, isNavVisible };
+  return { modules, role: me?.role ?? null, isNavVisible, me };
 }

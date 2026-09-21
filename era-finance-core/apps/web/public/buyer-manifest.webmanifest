@@ -1,0 +1,19 @@
+{
+  "name": "ERA Buyer Cabinet",
+  "short_name": "Buyer",
+  "description": "Trade credit residual, grants, and invoice payments",
+  "start_url": "/buyer",
+  "scope": "/buyer",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#171717",
+  "icons": [
+    {
+      "src": "/buyer-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

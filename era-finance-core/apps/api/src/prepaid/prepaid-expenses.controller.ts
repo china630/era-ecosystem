@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Body,
@@ -13,9 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreatePrepaidExpenseDto } from "./dto/create-prepaid-expense.dto";
 import { PrepaidExpensesService } from "./prepaid-expenses.service";
@@ -23,26 +24,26 @@ import { PrepaidExpensesService } from "./prepaid-expenses.service";
 @ApiTags("prepaid-expenses")
 @ApiBearerAuth("bearer")
 @Controller("prepaid-expenses")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class PrepaidExpensesController {
   constructor(private readonly prepaid: PrepaidExpensesService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List prepaid expenses for the organization" })
   list(@OrganizationId() orgId: string) {
     return this.prepaid.list(orgId);
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create prepaid expense and generate monthly schedule" })
   create(@OrganizationId() orgId: string, @Body() dto: CreatePrepaidExpenseDto) {
     return this.prepaid.create(orgId, dto);
   }
 
   @Post(":id/post-month")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Post amortization for a schedule period (Dr expense / Cr prepaid)",
   })

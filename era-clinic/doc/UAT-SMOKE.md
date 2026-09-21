@@ -76,7 +76,7 @@
 
 ## Admin master data (2026-06-15) — UI paths (no curl)
 
-Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `docker compose up clinic` seed runs (`RUN_SEED=true`).
+Prerequisite: `shirinov.chingiz@gmail.com` / bootstrap password, `CLINIC_ADMIN`; after `docker compose up clinic` seed runs (`RUN_SEED=true`).
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
@@ -85,7 +85,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
 7. **Home `/`** (owner) — executive KPI block on top; filter by date and practitioner.
-8. **`/cashier`** — open shift; **To pay** table (filters date/patient/origin/channel); row opens settle modal (unified lines: visit + lab + procedures). Channel actions: local pay (split CASH/CARD), folio charge, or send to hub. Mock fiscal badge on local. Deep link `/cashier?visitId=` opens modal.
+8. **`/cashier`** — open shift (optional KKM / bank POS when catalog synced); **To pay** table (filters date/patient/origin/channel); row opens settle modal (unified lines: visit + lab + procedures). Channel actions: local pay (split CASH/CARD), folio charge, or send to hub. Local pay uses `@era/fiscal` (empty catalog = recorded_no_device; mock driver when a KKM row exists). Deep link `/cashier?visitId=` opens modal.
 9. **`/cashier` History** — reprint; VOID local PAID receipt with reason.
 10. **`/cashier` Over-quota** — see sanatorium over-quota / folio logs; **Collect locally** for standalone `LOCAL` rows.
 11. **Settlement hub:** walk-in with hub policy → channel `SETTLEMENT_HUB` in queue (not a hard UI block); hotel `/front-cash/pending` after settle.
@@ -93,8 +93,9 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 ## Workforce local login (CLI-WF-01 / CLI-WF-PWD-01)
 
 1. CP Workforce grant or Reprovision for a clinic binding → clinic `/login` with `emp-{staffCode}` and PIN **`0000`**.
-2. After sign-in: profile menu → **Change password** (`/account/password`). Current = `0000`, new password ≥ 8 characters. Re-login with the new password.
-3. SSO owner accounts have no local password (the form returns 403).
+2. **SHARED pool:** enter the 6-digit **ERA ID** (`orgNo`) on `/login` (field or `?org=104221`). Copy from Control Plane → Super-admin → Organizations or Workforce → Login & access. Do **not** paste the UUID.
+3. After sign-in: profile menu → **Change password** (`/account/password`). Current = `0000`, new password ≥ 8 characters. Re-login with the new password.
+4. SSO owner accounts have no local password (the form returns 403).
 
 ## Sanatorium clinical day
 
@@ -188,6 +189,8 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 12. **Custom role (chief doctor):** Create role `CHIEF_DOCTOR` clone from `DOCTOR`; set **staffKind=DOCTOR** if needed; enable `scope:episodes.all` + `screen:patients`; Save. On the same page **Staff role assignment** — pick a user → `CHIEF_DOCTOR`. Chief sees another doctor’s episode (**200**); plain DOCTOR still **404**. Delete custom role only when `userCount=0`.
 13. **FO manager permission (no role-name bypass):** Uncheck `api:procedures.fo_manager` on **CLINIC_ADMIN**, Save + refresh. Package assign modal must **not** show out-of-package Replace solely because role is CLINIC_ADMIN. Re-check permission → Replace returns.
 14. **Ops:** after image/DB upgrade run clinic Prisma migrate so `Role.is_system` / `staff_kind` / `clone_from_code` exist; first login or `/admin/access` runs `ensureSystemClinicRoles`.
+15. **Empty matrix (Wave 3 hole-close):** Uncheck **all** grants on **CLINIC_ADMIN**, Save + refresh. Admin screens and APIs **403** — access must **not** fall back to the full role template. If pre-upgrade the UI showed an empty matrix but access still worked, use **Reset to defaults** after this wave. JWT without `permissions[]` (legacy session) → re-login (fail-closed pages).
+16. **Print gates:** role without `screen:reception.extra_tickets` → `/print/extra-ticket/…` forbidden. Without `screen:lab_orders` → `/print/lab-order/…` forbidden. NURSE with `screen:reports.procedures` (no `screen:doctor`) may open `/print/procedures/…`; with `screen:lab_orders` may open `/print/usm/…`. Visit-exam print still any-of `api:visits` \| `api:patients`.
 
 
 
@@ -314,7 +317,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time. After this deploy: re-Apply `#27` so lab rows have `LabOrderItem` (not empty COMPLETED shells) and single-test Word files (Dimer/CRP/PRL/Insulin/Hormon) bind to catalog codes.
 5. Intake checklist (not WO CheckUp `#33`): patient card **2152** / **2019** show section **İlkin diaqnostik prosedurlar** with four rows (`VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO`, `CARDIO-ECG`, `USG-ABD`). After `#31`, USM row is DONE/ORDERED (not MISSING). Check-up print form remains at `/print/checkup/...` (not linked from intake header).
-6. Live check-in (hotel stay / walk-in): open episode → ECG-12 + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
+6. Live check-in (hotel stay / walk-in): open episode → CARDIO-ECG + USG-ABD appear as ORDERED if missing; second open does not duplicate; physio FIFO still requires complete-checkup / program path (not auto from intake).
 7. After re-Apply `#23` (Baku `+04:00` slot parse): Yağmur — two Solyuks times both visible; compact PLAN date+time matches modal for the same `procedure:{id}`; **Növbəti** is nearest `scheduledAt >= now` in Baku (not a 2024 leftover). No 18:36↔10:36 jump after re-import.
 
 ## CLI-49 — Physio sites (W2–W4)

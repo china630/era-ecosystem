@@ -15,13 +15,18 @@ enum OpsUserStatus {
 
 /// Operational staff — branch-bound; no ledger data.
 model OpsRole {
-  id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
-  code           String
-  name           String
-  limitsJson     Json      @default("{}")
-  users          OpsUser[]
-  createdAt      DateTime  @default(now())
+  id                       String    @id @default(cuid())
+  organizationId           String    @map("organization_id")
+  code                     String
+  name                     String
+  /// Numeric amount caps only (maxDebitMinor, dailyPostingLimitAzn). Doors live in permissionsJson.
+  limitsJson               Json      @default("{}")
+  permissionsJson          String    @default("[]") @map("permissions_json")
+  isSystem                 Boolean   @default(false) @map("is_system")
+  cloneFromCode            String?   @map("clone_from_code")
+  permissionCatalogVersion Int       @default(0) @map("permission_catalog_version")
+  users                    OpsUser[]
+  createdAt                DateTime  @default(now())
 
   @@unique([organizationId, code])
   @@index([organizationId])

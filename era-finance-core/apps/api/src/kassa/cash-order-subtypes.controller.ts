@@ -1,6 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CashOrderSubtypeDirection, UserRole } from "@erafinance/database";
+import { CashOrderSubtypeDirection } from "@erafinance/database";
 import {
   IsEnum,
   IsInt,
@@ -8,8 +11,6 @@ import {
   IsString,
   MinLength,
 } from "class-validator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { CashOrderSubtypesService } from "./cash-order-subtypes.service";
 
@@ -60,8 +61,8 @@ export class CashOrderSubtypesController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create custom cash-order subtype" })
   create(
     @OrganizationId() organizationId: string,

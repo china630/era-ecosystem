@@ -10,6 +10,8 @@ const openSchema = z.object({
   cashier: z.string().min(1),
   registerId: z.string().min(1),
   isPrimary: z.boolean().optional(),
+  fiscalDeviceId: z.string().min(1).max(64).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function GET() {
@@ -45,8 +47,26 @@ export async function POST(request: Request) {
       where: { status: 'OPEN', isPrimary: true },
     });
     const isPrimary = body.isPrimary ?? !hasPrimary;
+    const { resolveDefaultDevicesForSatellite, assertLiveFiscalReady } =
+      await import('@era/satellite-kit');
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const organizationId = requestOrganizationId();
+    if (process.env.ERA_FISCAL_LIVE === 'true') {
+      assertLiveFiscalReady({ organizationId, registerRef: body.registerId });
+    }
+    const defaults = resolveDefaultDevicesForSatellite({
+      organizationId,
+      registerRef: body.registerId,
+    });
     const shift = await prisma.cashShift.create({
-      data: { ...body, status: 'OPEN', isPrimary },
+      data: {
+        cashier: body.cashier,
+        registerId: body.registerId,
+        isPrimary,
+        status: 'OPEN',
+        fiscalDeviceId: body.fiscalDeviceId ?? defaults.fiscalDeviceId ?? null,
+        bankTerminalId: body.bankTerminalId ?? defaults.bankTerminalId ?? null,
+      },
     });
     return jsonOk(serialize(shift), 201);
   } catch (err) {

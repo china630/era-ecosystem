@@ -22,7 +22,7 @@ Env (canonical, [ECOSYSTEM_URLS.md](../docs/ECOSYSTEM_URLS.md)):
 | `ERA_BANK_ORIGIN` | Public origin of the satellite |
 | `ERA_BANK_CORE_URL` | Internal engine API base |
 | `BANK_CORE_SERVICE_TOKEN` | Service token for satellite→engine calls |
-| `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |
+| `ERA_BANK_ORGANIZATION_ID` | Emergency / appliance process bind. SHARED ops login uses `orgNo` / Host; request tenant is JWT UUID |
 | `BANK_SATELLITE_DB` | `era_bank` |
 | `ERA_JWT_*` | SSO verification (orchestrator issuer) |
 

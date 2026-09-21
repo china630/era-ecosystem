@@ -33,7 +33,8 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 ## 1. Auth & navigation
 
 1. Open `/login`, sign in as `reception` / `reception123`.
-2. Confirm Chessboard loads; AppNav shows allowed links only.
+2. **SHARED pool:** enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). DEDICATED appliance may omit the field.
+3. Confirm Chessboard loads; AppNav shows allowed links only.
 
 ## 1b. Room type availability (FO chain)
 
@@ -341,7 +342,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 1. **H-BL-28:** clinic `/admin/procedure-rules` — add FORBID_SAME_DAY rule → hotel `/procedures` book rejects conflict.
 2. **H-BL-26:** Guest card CRM — interests/social/general CRM pages; see `doc/GUEST-CRM-ELECTRAWEB.md`.
 3. **H-BL-27:** Folio split settlement shows loyalty balance; `LOYALTY_POINTS` line burns CP ledger.
-4. **H-BL-25:** `ERA_CHANNEL_ADAPTER=booking_com` + env → channel push includes BAR price.
+4. **H-BL-25:** Channel binding `provider=channex` + property id → push enqueues ARI (staging). Do not set `ERA_CHANNEL_ADAPTER`.
 5. **H-BL-23:** `POST /api/migration/{id}/submit` → mock `externalRef` on registration.
 6. **H-BL-24:** Fiscal doc shows `eqaimeId` / status when set.
 7. **H-BL-20:** `/concierge` catalog + order complete posts folio charge.
@@ -439,7 +440,9 @@ UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / 
 3. **Transfers (HOT-XFER-01):** `/transfers` → filter pickup date → **Print driver sheet**; complete posts via folio routing; **Cancel** voids charge when DONE+charged.
 4. **BEO day sheet (HOT-BEO-01):** `/banquets/[id]` → preferred folio on confirm → **Print day sheet** (HTML lines/resources/staff/master folio).
 5. **CL snapshot (HOT-CL-04):** `/front-cash/agency-ledger` → select agency → see last snapshot meta → **Push CL snapshot** → **Open Finance AR** when Finance URL configured.
-6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — health panel; cancel OTA by externalRef/reservationId only (no latest-OTA fallback); error journal OPEN→RESOLVED. Live Booking/Expedia/Exely = HOT-CH-02 **STUB** until vendor creds + UAT.
+6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — binding card (provider/channex property/IBE key); health panel; cancel OTA by externalRef/reservationId only; error journal OPEN→RESOLVED.
+7. **Channex staging path (HOT-CH-02 STUB until live UAT):** Super-Admin `/super-admin/vendors/channex` partner key → hotel binding `provider=channex` + property id → map rooms/rates → **Push OTA** → pending ARI jobs drain via cron `/api/cron/channel-ari-drain`. Webhook: `POST /api/integrations/channex/webhook` with `property_id`. Do **not** use `ERA_CHANNEL_ADAPTER=booking_com`. Live=`true` only after PMS certification (W8).
+8. **Direct IBE (HOT-IBE-01):** `/b2c` with publishable key → `GET /api/public/v1/availability`; hold + book with Idempotency-Key. Wrong key / other origin → 401/403. Legacy rates URL returns 410.
 
 ## 30. Shared twin assignment (HOT-FO-03) (2026-08-20)
 
@@ -681,10 +684,13 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 **Status:** Engineering SCREEN — field UAT open (not SHOW / not SHIPPED).
 
-1. Sign in as **Hotel_Admin** → **/settings/access** opens; matrix lists system roles and permission groups.
-2. Uncheck `folio:void` on **Hotel_Admin**, Save (session refresh). Void charge on folio returns **403**; UI hides void when can(folio:void) is false.
+1. Sign in as **Hotel_Admin** → **/settings/access** opens; matrix lists system roles and permission groups (incl. Import / bridge).
+2. Uncheck `api:folio.void` on **Hotel_Admin**, Save (session refresh). Void charge on folio returns **403**; UI hides void when can(`api:folio.void`) is false.
 3. Re-check + Save → void restored.
 4. **Clone** NightAuditor → NIGHT_MANAGER; assign a user on /settings/users; login as that user → grants match clone.
 5. Delete empty custom role OK; role with users → 409.
 6. Provision unknown satelliteRole → fail (no silent Receptionist).
-7. After image/DB upgrade run hotel Prisma migrate so Role.isSystem / cloneFromCode exist; first login or /settings/access runs `ensureSystemHotelRoles`.
+7. After image/DB upgrade run hotel Prisma migrate (`Role.isSystem` / `cloneFromCode` / `permissionCatalogVersion`); **re-login or any page load** (`/api/auth/me` → ensure) so role JSON remaps to fleet-canon and page JWT picks up Wave-2 keys (API already dual-reads / reloads DB).
+8. Uncheck `api:import.elektraweb` (keep SKU), Save → `/settings/import` and `/api/import` **403**; re-check restores (SKU still required). Strip must survive the next login (`ensure` must not re-add).
+9. Sign in as **Housekeeper** → open `/spa` by URL → redirected forbidden (middleware).
+10. `/settings/hk-policy` is master-data (not HK prefix). Staff bridge JWT after grant strip → 403 without re-mint.

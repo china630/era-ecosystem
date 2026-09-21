@@ -378,7 +378,7 @@ export default function HotelAccessPage() {
             <h3 className="text-sm font-semibold">{t(group.labelKey)}</h3>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {group.permissions.map((perm) => {
-                const labelKey = perm.replace(/:/g, "_");
+                const labelKey = perm.replace(/[:.]/g, "_");
                 return (
                   <label
                     key={perm}

@@ -6,6 +6,16 @@ const prisma = new PrismaClient().$extends(
 ) as unknown as PrismaClient;
 
 async function main() {
+  const cashierRole = await prisma.role.upsert({
+    where: { code: "FB_CASHIER" },
+    update: {},
+    create: { code: "FB_CASHIER", name: "Cashier" },
+  });
+  const kitchenRole = await prisma.role.upsert({
+    where: { code: "FB_KITCHEN" },
+    update: {},
+    create: { code: "FB_KITCHEN", name: "Kitchen" },
+  });
   const waiterRole = await prisma.role.upsert({
     where: { code: "FB_WAITER" },
     update: {},

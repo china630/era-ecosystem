@@ -1,7 +1,7 @@
 import { isPlatformSuperAdminEdge } from "@/lib/auth/platform-super-admin-edge";
 import {
   ALL_PERMISSIONS,
-  isHotelPermission,
+  coerceHotelPermission,
   type Permission,
 } from "@/lib/auth/permissions";
 
@@ -35,10 +35,18 @@ export function resolveSessionPermissions(
   if (hasHotelPermissionBypass(session)) {
     return [...ALL_PERMISSIONS];
   }
-  if (session.permissions?.length) {
-    return session.permissions.filter(isHotelPermission);
+  if (!session.permissions?.length) return [];
+  // Dual-read JWT snapshot: legacy alias → fleet-canon until refresh.
+  const out: Permission[] = [];
+  const seen = new Set<string>();
+  for (const raw of session.permissions) {
+    const n = coerceHotelPermission(String(raw));
+    if (n && !seen.has(n)) {
+      seen.add(n);
+      out.push(n);
+    }
   }
-  return [];
+  return out;
 }
 
 export function sessionHasHotelPermission(

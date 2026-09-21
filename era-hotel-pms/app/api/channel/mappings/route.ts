@@ -4,6 +4,7 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { createChannel, listChannels } from '@/lib/services/wave-b-master.service';
 import { prisma } from '@/lib/prisma';
 
@@ -23,6 +24,7 @@ const rateMappingSchema = z.object({
 
 export async function GET() {
   try {
+    await requireHotelModule('hotel_distribution');
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
     return jsonOk(serialize(await listChannels()));
@@ -33,6 +35,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await requireHotelModule('hotel_distribution');
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
     const body = await request.json();

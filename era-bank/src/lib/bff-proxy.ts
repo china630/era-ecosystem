@@ -6,6 +6,11 @@ import {
   forwardToBankCore,
 } from "@/lib/engine-client";
 import { getRouteSession, jsonError } from "@/lib/api-utils";
+import { requiredPermissionsForEngineProxy } from "@/lib/auth/bff-permission-map";
+import { denyUnlessAnyPermission } from "@/lib/auth/require";
+import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
+import { sanitizeLimitsJson } from "@/lib/auth/permissions";
+import type { SatelliteSessionPayload } from "@era/satellite-kit";
 
 type ProxyOptions = {
   enginePrefix: string;
@@ -46,6 +51,46 @@ function deriveSemanticAction(
   return `${area}_${method}`;
 }
 
+function extractAmountMinor(body: string | null): number | null {
+  if (!body) return null;
+  try {
+    const parsed = JSON.parse(body) as Record<string, unknown>;
+    if (typeof parsed.amountMinor === "number") return parsed.amountMinor;
+    if (typeof parsed.amount === "number") return parsed.amount;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function denyIfOverDebitLimit(
+  opsUserId: string,
+  body: string | null,
+): Promise<Response | null> {
+  const amountMinor = extractAmountMinor(body);
+  if (amountMinor == null || amountMinor <= 0) return null;
+  const user = await prisma.opsUser.findUnique({
+    where: { id: opsUserId },
+    include: { opsRole: true },
+  });
+  if (!user) return jsonError("Unauthorized", 401);
+  const limits = sanitizeLimitsJson(
+    (user.opsRole.limitsJson ?? {}) as Record<string, unknown>,
+  );
+  const cap = limits.maxDebitMinor;
+  if (typeof cap === "number" && amountMinor > cap) {
+    return jsonError("Amount exceeds role debit limit", 403);
+  }
+  return null;
+}
+
+async function sessionWithDbPermissions(
+  session: SatelliteSessionPayload,
+): Promise<SatelliteSessionPayload> {
+  const permissions = await permissionsForUserId(session.sub);
+  return { ...session, permissions };
+}
+
 async function proxyRequest(
   request: NextRequest,
   pathSegments: string[] | undefined,
@@ -55,6 +100,15 @@ async function proxyRequest(
   if (!session) {
     return jsonError("Unauthorized", 401);
   }
+
+  const authed = await sessionWithDbPermissions(session);
+  const required = requiredPermissionsForEngineProxy({
+    enginePrefix: options.enginePrefix,
+    method: request.method,
+    pathSegments,
+  });
+  const denied = denyUnlessAnyPermission(authed, required);
+  if (denied) return denied;
 
   const search = request.nextUrl.search;
   const engineApiPath = enginePath(options.enginePrefix, pathSegments, search);
@@ -66,6 +120,8 @@ async function proxyRequest(
   let body: string | null = null;
   if (request.method !== "GET" && request.method !== "HEAD") {
     body = await request.text();
+    const limitDenied = await denyIfOverDebitLimit(session.sub, body);
+    if (limitDenied) return limitDenied;
   }
 
   const res = await forwardToBankCore({

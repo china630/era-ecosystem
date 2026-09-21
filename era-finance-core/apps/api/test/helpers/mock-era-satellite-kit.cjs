@@ -6,6 +6,9 @@ const {
   assertEnvServiceToken,
   assertBridgeSecret,
 } = require("../../../../../packages/satellite-kit/dist/auth/assert-service-token.js");
+const extra = require("../../../../../packages/satellite-kit/dist/extra-fields/extra-attributes.js");
+const savedViews = require("../../../../../packages/satellite-kit/dist/list-views/saved-list-view.js");
+const printSnap = require("../../../../../packages/satellite-kit/dist/print/print-snapshot.js");
 
 function composePersonFullName(firstName, middleName, lastName) {
   return [firstName, middleName, lastName]
@@ -33,6 +36,9 @@ function splitFullNameToParts(fullName) {
 }
 
 module.exports = {
+  ...extra,
+  ...savedViews,
+  ...printSnap,
   assertEnvServiceToken,
   assertBridgeSecret,
   composePersonFullName,

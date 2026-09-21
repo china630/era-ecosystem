@@ -1,8 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { VoenIntegrityGuard } from "../auth/guards/voen-integrity.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
@@ -20,7 +21,7 @@ import { VatDepositService } from "./vat-deposit.service";
 @ApiTags("accounting")
 @ApiBearerAuth("bearer")
 @Controller("accounting/vat-deposit")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class VatDepositController {
   constructor(
     private readonly vatDeposit: VatDepositService,
@@ -30,7 +31,7 @@ export class VatDepositController {
   @Get("balance")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "ƏDV depozit GL balance and linked bank account" })
   balance(@OrganizationId() organizationId: string) {
     return this.vatDeposit.getBalance(organizationId);
@@ -39,7 +40,7 @@ export class VatDepositController {
   @Get("movements")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "ƏDV depozit ledger movements" })
   movements(
     @OrganizationId() organizationId: string,
@@ -52,7 +53,7 @@ export class VatDepositController {
   @Post("route")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Route incoming VAT portion from main bank to ƏDV deposit (Dr deposit / Cr bank)",
@@ -79,7 +80,7 @@ export class VatDepositController {
   @Post("remit")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Remit VAT to treasury from deposit (Dr VAT output / Cr deposit)",
   })
@@ -103,7 +104,7 @@ export class VatDepositController {
   @Post("reconcile")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.AUDITOR)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Best-effort reconcile GL deposit movements vs bank statement inflows",
   })

@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   Body,
   Controller,
@@ -17,7 +18,7 @@ import { PlacementJobService } from "./placement-job.service";
 import type { TopologyCode } from "./placement-hops";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller()
 export class PlacementJobController {
   constructor(private readonly jobs: PlacementJobService) {}

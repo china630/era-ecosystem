@@ -9,9 +9,10 @@ import {
 } from "@nestjs/common";
 import { UserRole } from "@era365/database";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
-import { Roles } from "../common/decorators/roles.decorator";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
-import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import type { EraJwtPayload } from "../auth/jwt-payload.type";
 import {
   ApproveAccessDto,
@@ -47,8 +48,8 @@ export class OrganizationController {
   }
 
   @Get("team/access-requests")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_MEMBERS_READ)
   listAccessRequests(@CurrentUser() user: EraJwtPayload) {
     if (!user.organizationId) {
       throw new ForbiddenException("Organization context required");
@@ -57,8 +58,8 @@ export class OrganizationController {
   }
 
   @Get("team/members")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_MEMBERS_READ)
   listMembers(@CurrentUser() user: EraJwtPayload) {
     if (!user.organizationId) {
       throw new ForbiddenException("Organization context required");
@@ -67,8 +68,8 @@ export class OrganizationController {
   }
 
   @Get("team/invites")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_MEMBERS_READ)
   listOrgInvites(@CurrentUser() user: EraJwtPayload) {
     if (!user.organizationId) {
       throw new ForbiddenException("Organization context required");
@@ -77,8 +78,8 @@ export class OrganizationController {
   }
 
   @Post("team/invites")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_INVITES)
   createInvite(
     @CurrentUser() user: EraJwtPayload,
     @Body() dto: CreateInviteDto,
@@ -91,12 +92,13 @@ export class OrganizationController {
       user.sub,
       dto.email,
       dto.role ?? UserRole.USER,
+      dto.organizationRoleCode,
     );
   }
 
   @Post("team/invites/:id/revoke")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_INVITES)
   revokeInvite(
     @CurrentUser() user: EraJwtPayload,
     @Param("id") inviteId: string,
@@ -108,8 +110,8 @@ export class OrganizationController {
   }
 
   @Post("team/access-requests/:id/approve")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   approveAccess(
     @CurrentUser() user: EraJwtPayload,
     @Param("id") requestId: string,
@@ -125,12 +127,13 @@ export class OrganizationController {
       user.role,
       true,
       dto.role ?? UserRole.USER,
+      dto.organizationRoleCode,
     );
   }
 
   @Post("team/access-requests/:id/decline")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_MEMBERS_WRITE)
   declineAccess(
     @CurrentUser() user: EraJwtPayload,
     @Param("id") requestId: string,
@@ -148,8 +151,8 @@ export class OrganizationController {
   }
 
   @Post("organizations/transfer-ownership")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_TRANSFER_OWNERSHIP)
   transferOwnership(
     @CurrentUser() user: EraJwtPayload,
     @Body() dto: TransferOwnershipDto,
@@ -165,8 +168,8 @@ export class OrganizationController {
   }
 
   @Get("organizations/departments")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.DIRECTOR)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CP_PERMISSION.API_ORG_DEPARTMENTS)
   listDepartments(@CurrentUser() user: EraJwtPayload) {
     if (!user.organizationId) {
       throw new ForbiddenException("Organization context required");

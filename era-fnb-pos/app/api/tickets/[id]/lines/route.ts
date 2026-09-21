@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
+import { handleRouteError } from "@/lib/api-utils";
 
 const lineSchema = z.object({
   description: z.string().min(1),
@@ -19,9 +23,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_LINES);
   if (denied) return denied;
 
   const { id } = await params;
@@ -46,6 +51,13 @@ export async function POST(
         where: { plu: item.menuItemPlu },
       });
       menuItemId = menuItem?.id;
+      if (menuItemId) {
+        await assertMenuItemNotSoldOut({
+          outletId: ticket.outletId,
+          menuItemId,
+          plu: item.menuItemPlu,
+        });
+      }
     }
 
     await prisma.ticketLine.create({
@@ -64,4 +76,7 @@ export async function POST(
   const lines = await prisma.ticketLine.findMany({ where: { ticketId: id } });
 
   return NextResponse.json({ ...updated, lines }, { status: 201 });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

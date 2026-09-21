@@ -1,6 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { FinanceModule } from "../finance/finance.module";
 import { FixedAssetsModule } from "../fixed-assets/fixed-assets.module";
 import { IntangibleAssetsModule } from "../intangible-assets/intangible-assets.module";
@@ -50,7 +49,6 @@ import { SystemConfigModule } from "../system-config/system-config.module";
     HttpEtaxesSubmissionAdapter,
     HsmEtaxesSubmissionAdapter,
     EtaxesSubmissionAdapterFactory,
-    RolesGuard,
   ],
   exports: [
     ReportingService,

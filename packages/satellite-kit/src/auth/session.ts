@@ -15,6 +15,10 @@ export type SatelliteSessionPayload = {
   financeRole?: string;
   /** Domain permission codes (industry satellite RBAC; optional). */
   permissions?: string[];
+  /** F&B / retail PIN clock sessions — never get OrgOwner bypass. */
+  pin?: boolean;
+  /** Bound outlet for PIN / device sessions (F&B Kafe). */
+  outletId?: string;
 };
 
 function getSecret(): Uint8Array {
@@ -42,7 +46,12 @@ export async function signSatelliteSession(
   if (payload.roles?.length) claims.roles = payload.roles;
   if (payload.isOwner != null) claims.isOwner = payload.isOwner;
   if (payload.financeRole) claims.financeRole = payload.financeRole;
-  if (payload.permissions?.length) claims.permissions = payload.permissions;
+  // Include empty [] so satellites can treat array-as-SoT vs missing claim (fail-closed).
+  if (Array.isArray(payload.permissions)) {
+    claims.permissions = payload.permissions;
+  }
+  if (payload.pin === true) claims.pin = true;
+  if (payload.outletId) claims.outletId = payload.outletId;
 
   return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
@@ -81,5 +90,7 @@ export async function verifySatelliteSession(
       ? String(payload.financeRole)
       : undefined,
     permissions,
+    pin: payload.pin === true,
+    outletId: payload.outletId ? String(payload.outletId) : undefined,
   };
 }

@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -15,12 +18,11 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { Response } from "express";
-import { LedgerType, UserRole } from "@erafinance/database";
+import { LedgerType } from "@erafinance/database";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
+import { requireOrgPolicySubject } from "../auth/policies/policy-subject";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreateManualAdjustmentDto } from "./dto/create-manual-adjustment.dto";
 import { ReverseManualAdjustmentDto } from "./dto/reverse-manual-adjustment.dto";
@@ -37,8 +39,8 @@ export class ManualAdjustmentController {
   constructor(private readonly adjustments: ManualAdjustmentService) {}
 
   @Get("templates")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Suggested Dt/Ct account codes for a voucher template" })
   suggest(
     @OrganizationId() organizationId: string,
@@ -58,19 +60,20 @@ export class ManualAdjustmentController {
   }
 
   @Post("preview")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Validate and preview manual adjustment lines without posting" })
   preview(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateManualAdjustmentDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.adjustments.preview(organizationId, dto);
+    return this.adjustments.preview(organizationId, dto, requireOrgPolicySubject(user));
   }
 
   @Get(":id/pdf")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVOICES_CREATE)
   @Header("Content-Type", "application/pdf")
   @ApiOperation({ summary: "Download internal accounting certificate PDF (not a credit note)" })
   async pdf(
@@ -87,16 +90,16 @@ export class ManualAdjustmentController {
   }
 
   @Get(":id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_INVOICES_CREATE)
   @ApiOperation({ summary: "Get one manual adjustment with journal lines" })
   getOne(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.adjustments.getOne(organizationId, id);
   }
 
   @Post(":id/reverse")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Reverse a posted manual adjustment with a mirror voucher" })
   reverse(
     @OrganizationId() organizationId: string,
@@ -104,15 +107,16 @@ export class ManualAdjustmentController {
     @Body() dto: ReverseManualAdjustmentDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.adjustments.reverse(organizationId, id, dto, requireOrgRole(user));
+    return this.adjustments.reverse(organizationId, id, dto, requireOrgPolicySubject(user));
   }
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List posted manual adjusting journals" })
   list(
     @OrganizationId() organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Query("dateFrom") dateFrom?: string,
     @Query("dateTo") dateTo?: string,
     @Query("page") page?: string,
@@ -135,12 +139,13 @@ export class ManualAdjustmentController {
       pageSize: pageSize ? Number(pageSize) : undefined,
       ledgerType,
       accountingBookId,
+      actingUserRole: requireOrgPolicySubject(user),
     });
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Post a manual adjusting journal (əl ilə tənzimləmə). Does not mutate existing documents.",
@@ -150,6 +155,6 @@ export class ManualAdjustmentController {
     @Body() dto: CreateManualAdjustmentDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.adjustments.create(organizationId, dto, requireOrgRole(user));
+    return this.adjustments.create(organizationId, dto, requireOrgPolicySubject(user));
   }
 }

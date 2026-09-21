@@ -299,6 +299,12 @@ export default function BankOpsShell({
       ]),
       section("admin", "sectionAdmin", FileBarChart, [
         { id: "audit", href: "/admin/audit", labelKey: "audit", icon: FileBarChart },
+        {
+          id: "access",
+          href: "/admin/access",
+          labelKey: "access",
+          icon: ShieldAlert,
+        },
       ]),
     ].filter(Boolean) as EraOpsNavSection[];
     return sections;

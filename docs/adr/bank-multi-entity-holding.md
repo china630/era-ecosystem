@@ -2,7 +2,7 @@
 
 **Status:** Accepted (lab scaffold XO-6)  
 **Date:** 2026-08-06  
-**Related:** [era-bank-core.md](./era-bank-core.md) D5 (one deployment = one bank)
+**Related:** [era-bank-core.md](./era-bank-core.md) D5 (one **license** / consolidated balance per bank). Placement (SHARED pool vs appliance) is D8 — do not read D5 as “login SoT = process env”.
 
 ## Context
 

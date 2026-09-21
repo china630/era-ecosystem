@@ -52,6 +52,7 @@ import {
   assertMatchingServiceToken,
   maskPhone,
 } from "../common/utils/internal-service-token.util";
+import { allocatePublicOrgNumber } from "../organization/public-org-number";
 import * as QRCode from "qrcode";
 
 const FIN_PATTERN = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
@@ -203,11 +204,14 @@ export class MdmService {
       throw new ConflictException("VÖEN already in MDM");
     }
 
+    const publicOrgNumber = await allocatePublicOrgNumber(this.controlPlane);
+
     const org = await this.controlPlane.organization.create({
       data: {
         name,
         taxIdBlindIndex,
         ownerId: input.ownerUserId ?? null,
+        publicOrgNumber,
       },
     });
 
@@ -220,7 +224,11 @@ export class MdmService {
       },
     });
 
-    return { organizationId: org.id, globalLegalEntityId: legalEntity.id };
+    return {
+      organizationId: org.id,
+      publicOrgNumber: org.publicOrgNumber,
+      globalLegalEntityId: legalEntity.id,
+    };
   }
 
   async lookupNaturalPersonByFin(input: {

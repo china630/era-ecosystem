@@ -63,7 +63,7 @@ On OPEN courses, DELETE of the last care doctor returns `LAST_CARE_DOCTOR` (409)
 
 When OPEN episode has **anamnesis AND ≥1 complaint** (both required; ICD optional; labs not required):
 
-1. `SANATORIUM-INTAKE` checklist → DONE.
+1. `VISIT-SANATORIUM-INTAKE` checklist → DONE.
 2. If `programCode` is set and no `ProgramInstance` yet → **auto-instantiate** package as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) and stamp `checkupCompletedAt` (= therapist stage closed, not “full checkup with labs”).
 3. Doctor confirms first 2–3 on the card (CLI-52). Patient must not wait for ECG/USG results to start package procedures.
 

@@ -22,6 +22,8 @@ export type OrchUser = {
   organizationId: string | null;
   role?: string | null;
   isSuperAdmin?: boolean;
+  isOwner?: boolean;
+  permissions?: string[];
 };
 
 export type MembershipRow = {
@@ -31,11 +33,36 @@ export type MembershipRow = {
   isOwner: boolean;
 };
 
+type JwtClaims = {
+  sub?: string;
+  email?: string;
+  organizationId?: string | null;
+  role?: string | null;
+  isSuperAdmin?: boolean;
+  isOwner?: boolean;
+  permissions?: string[];
+};
+
+function userFromToken(accessToken: string): OrchUser {
+  const payload = JSON.parse(atob(accessToken.split(".")[1] ?? "")) as JwtClaims;
+  return {
+    id: payload.sub ?? "",
+    email: payload.email ?? "",
+    organizationId: payload.organizationId ?? null,
+    role: payload.role ?? null,
+    isSuperAdmin: payload.isSuperAdmin ?? false,
+    isOwner: payload.isOwner ?? false,
+    permissions: Array.isArray(payload.permissions) ? payload.permissions : [],
+  };
+}
+
 type AuthContextValue = {
   ready: boolean;
   token: string | null;
   user: OrchUser | null;
   memberships: MembershipRow[];
+  permissions: string[];
+  can: (permission: string) => boolean;
   login: (
     accessToken: string,
     user: OrchUser,
@@ -43,6 +70,7 @@ type AuthContextValue = {
   ) => void;
   logout: () => void;
   switchOrganization: (organizationId: string) => Promise<void>;
+  applyAccessToken: (accessToken: string, refreshToken?: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -66,23 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const payload = JSON.parse(
-        atob(stored.split(".")[1] ?? ""),
-      ) as {
-        sub?: string;
-        email?: string;
-        organizationId?: string | null;
-        role?: string | null;
-        isSuperAdmin?: boolean;
-      };
       setToken(stored);
-      setUser({
-        id: payload.sub ?? "",
-        email: payload.email ?? "",
-        organizationId: payload.organizationId ?? null,
-        role: payload.role ?? null,
-        isSuperAdmin: payload.isSuperAdmin ?? false,
-      });
+      setUser(userFromToken(stored));
       setReady(true);
       // Do not clear tokens on memberships failure — transient API/CORS blips
       // were wiping orch SSO state and made satellite launch look "broken".
@@ -103,10 +116,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ) => {
       setOrchTokens(accessToken, refreshToken);
       setToken(accessToken);
-      setUser(nextUser);
+      const fromJwt = userFromToken(accessToken);
+      setUser({
+        ...nextUser,
+        isOwner: fromJwt.isOwner ?? nextUser.isOwner,
+        permissions: fromJwt.permissions ?? nextUser.permissions ?? [],
+      });
       void loadMemberships(accessToken).then(setMemberships);
     },
     [loadMemberships],
+  );
+
+  const applyAccessToken = useCallback(
+    (accessToken: string, refreshToken?: string | null) => {
+      setOrchTokens(accessToken, refreshToken);
+      setToken(accessToken);
+      setUser(userFromToken(accessToken));
+    },
+    [],
   );
 
   const logout = useCallback(() => {
@@ -134,6 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           organizationId: string;
           role: string;
           isSuperAdmin?: boolean;
+          isOwner?: boolean;
+          permissions?: string[];
         };
       };
       const nextUser: OrchUser = {
@@ -142,10 +171,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizationId: data.claims.organizationId,
         role: data.claims.role,
         isSuperAdmin: data.claims.isSuperAdmin,
+        isOwner: data.claims.isOwner,
+        permissions: data.claims.permissions ?? [],
       };
       login(data.accessToken, nextUser, data.refreshToken);
     },
     [token, login],
+  );
+
+  const permissions = user?.permissions ?? [];
+
+  const can = useCallback(
+    (permission: string) => {
+      if (!user) return false;
+      if (user.isSuperAdmin || user.isOwner) return true;
+      return permissions.includes(permission);
+    },
+    [user, permissions],
   );
 
   const value = useMemo(
@@ -154,11 +196,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       user,
       memberships,
+      permissions,
+      can,
       login,
       logout,
       switchOrganization,
+      applyAccessToken,
     }),
-    [ready, token, user, memberships, login, logout, switchOrganization],
+    [
+      ready,
+      token,
+      user,
+      memberships,
+      permissions,
+      can,
+      login,
+      logout,
+      switchOrganization,
+      applyAccessToken,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

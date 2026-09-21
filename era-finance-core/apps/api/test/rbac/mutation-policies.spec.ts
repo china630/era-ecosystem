@@ -1,19 +1,32 @@
 import "reflect-metadata";
+import { ForbiddenException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { UserRole } from "@erafinance/database";
-import { ROLES_KEY } from "../../src/auth/decorators/roles.decorator";
-import { RolesGuard } from "../../src/auth/guards/roles.guard";
+import { CP_PERMISSION } from "@era/contracts";
+import { PERMISSIONS_KEY } from "../../src/common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../src/common/guards/permissions.guard";
 import { AccountingController } from "../../src/accounting/accounting.controller";
 import { OrganizationSettingsController } from "../../src/organizations/organization-settings.controller";
 import { IntegrationsHealthController } from "../../src/integrations/integrations-health.controller";
 import { AdminController } from "../../src/admin/admin.controller";
 import { SuperAdminGuard } from "../../src/auth/guards/super-admin.guard";
 
-function ctx(role: UserRole, handler: (...args: unknown[]) => unknown, klass: new (...args: unknown[]) => unknown) {
+function ctx(
+  role: UserRole,
+  handler: (...args: unknown[]) => unknown,
+  klass: new (...args: unknown[]) => unknown,
+  extra?: { permissions?: string[]; isOwner?: boolean },
+) {
   return {
     switchToHttp: () => ({
       getRequest: () => ({
-        user: { role, userId: "u-1", organizationId: "o-1" },
+        user: {
+          role,
+          userId: "u-1",
+          organizationId: "o-1",
+          permissions: extra?.permissions,
+          isOwner: extra?.isOwner,
+        },
       }),
     }),
     getHandler: () => handler,
@@ -21,66 +34,86 @@ function ctx(role: UserRole, handler: (...args: unknown[]) => unknown, klass: ne
   } as any;
 }
 
-describe("RBAC mutation policy enforcement", () => {
-  const guard = new RolesGuard(new Reflector());
+describe("RBAC mutation policy enforcement (PermissionsGuard)", () => {
+  const guard = new PermissionsGuard(new Reflector());
 
-  it("denies USER role for accounting mutation", () => {
-    expect(
+  it("denies USER for accounting mutation (no api:ledger.post)", () => {
+    expect(() =>
       guard.canActivate(
         ctx(
           UserRole.USER,
           AccountingController.prototype.quickExpense,
           AccountingController,
+          { permissions: [] },
         ),
       ),
-    ).toBe(false);
+    ).toThrow(ForbiddenException);
   });
 
-  it("denies USER role for organization settings mutation", () => {
-    expect(
+  it("denies USER for organization settings mutation", () => {
+    expect(() =>
       guard.canActivate(
         ctx(
           UserRole.USER,
           OrganizationSettingsController.prototype.patchSettings,
           OrganizationSettingsController,
+          { permissions: [] },
         ),
       ),
-    ).toBe(false);
+    ).toThrow(ForbiddenException);
   });
 
-  it("denies USER role for period lock mutation", () => {
-    expect(
+  it("denies USER for period lock mutation", () => {
+    expect(() =>
       guard.canActivate(
         ctx(
           UserRole.USER,
           OrganizationSettingsController.prototype.patchPeriodLock,
           OrganizationSettingsController,
+          { permissions: [] },
         ),
       ),
-    ).toBe(false);
+    ).toThrow(ForbiddenException);
   });
 
-  it("allows ACCOUNTANT for period lock mutation", () => {
+  it("allows ACCOUNTANT for period lock when grant includes api:ledger.period_close", () => {
     expect(
       guard.canActivate(
         ctx(
           UserRole.ACCOUNTANT,
           OrganizationSettingsController.prototype.patchPeriodLock,
           OrganizationSettingsController,
+          { permissions: [CP_PERMISSION.API_LEDGER_PERIOD_CLOSE] },
         ),
       ),
     ).toBe(true);
   });
 
-  it("integrations health route remains owner-only", () => {
-    const handlerRoles = Reflect.getMetadata(
-      ROLES_KEY,
+  it("denies ACCOUNTANT for period lock when CP stripped period_close", () => {
+    expect(() =>
+      guard.canActivate(
+        ctx(
+          UserRole.ACCOUNTANT,
+          OrganizationSettingsController.prototype.patchPeriodLock,
+          OrganizationSettingsController,
+          { permissions: [CP_PERMISSION.API_LEDGER_POST] },
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("integrations health requires api:billing.manage (owner bypass)", () => {
+    const handlerPerms = Reflect.getMetadata(
+      PERMISSIONS_KEY,
       IntegrationsHealthController.prototype.health,
-    ) as UserRole[] | undefined;
-    const classRoles = Reflect.getMetadata(ROLES_KEY, IntegrationsHealthController) as
-      | UserRole[]
-      | undefined;
-    expect(handlerRoles ?? classRoles).toEqual([UserRole.OWNER]);
+    ) as string[] | undefined;
+    const classPerms = Reflect.getMetadata(
+      PERMISSIONS_KEY,
+      IntegrationsHealthController,
+    ) as string[] | undefined;
+    expect(handlerPerms ?? classPerms).toEqual([
+      CP_PERMISSION.API_BILLING_MANAGE,
+    ]);
   });
 
   it("admin controller stays super-admin protected", () => {
@@ -89,5 +122,17 @@ describe("RBAC mutation policy enforcement", () => {
       | undefined;
     expect(Array.isArray(guards)).toBe(true);
     expect(guards?.some((g) => g === SuperAdminGuard)).toBe(true);
+  });
+
+  it("missing permissions claim fail-closes even for ACCOUNTANT donor", () => {
+    expect(() =>
+      guard.canActivate(
+        ctx(
+          UserRole.ACCOUNTANT,
+          AccountingController.prototype.quickExpense,
+          AccountingController,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
   });
 });

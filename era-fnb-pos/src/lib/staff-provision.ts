@@ -8,20 +8,29 @@ import { hashPassword } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { hashStaffPin } from "@/lib/labor-pin";
 import { requestOrganizationId } from "@/lib/request-organization";
-
-const ROLE_CODES: Record<string, string> = {
-  WAITER: "FB_WAITER",
-  MANAGER: "FB_MANAGER",
-  CHEF: "FB_WAITER",
-  CASHIER: "FB_WAITER",
-  STAFF: "FB_WAITER",
-};
+import {
+  ensureSystemFnbRoles,
+  resolveFnbEdition,
+} from "@/lib/auth/ensure-system-fnb-roles";
+import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import {
+  resolveFnbRoleCode,
+  roleCodeToPinRole,
+} from "@/lib/auth/permissions";
 
 export class SatelliteLoginTakenError extends Error {
   readonly code = "LOGIN_TAKEN" as const;
   constructor(login: string) {
     super(`Login already taken: ${login}`);
     this.name = "SatelliteLoginTakenError";
+  }
+}
+
+export class UnknownSatelliteRoleError extends Error {
+  readonly code = "UNKNOWN_SATELLITE_ROLE" as const;
+  constructor(satelliteRole: string) {
+    super(`Unknown satellite role: ${satelliteRole}`);
+    this.name = "UnknownSatelliteRoleError";
   }
 }
 
@@ -53,10 +62,21 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
     const organizationId = requestOrganizationId();
-    const roleCode = ROLE_CODES[p.satelliteRole] ?? "waiter";
-    const role = await prisma.role.findFirst({ where: { code: roleCode } });
-    if (!role) throw new Error(`Role not found: ${roleCode}`);
 
+    const profile = await getFnbOrgProfile(organizationId);
+    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    await ensureSystemFnbRoles(prisma, organizationId, edition);
+
+    const roleCode = resolveFnbRoleCode(p.satelliteRole);
+    if (!roleCode) {
+      throw new UnknownSatelliteRoleError(p.satelliteRole);
+    }
+    const role = await prisma.role.findFirst({
+      where: { organizationId, code: roleCode },
+    });
+    if (!role) throw new UnknownSatelliteRoleError(p.satelliteRole);
+
+    const pinRole = roleCodeToPinRole(roleCode);
     const pin = p.pin ?? "0000";
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const cpEmploymentId = p.cpEmploymentId;
@@ -75,6 +95,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const rosterPatch = {
       fullName: p.fullName,
       pinHash,
+      pinRole,
       globalPersonId,
       cpEmploymentId,
       active: true,
@@ -146,7 +167,6 @@ export async function handleStaffProvisionEvent(event: unknown) {
       where: { id: target.id },
       data: { status: "INACTIVE" },
     });
-    // StaffRoster has unique cpEmploymentId (no userId FK) — deactivate that single row.
     await prisma.staffRoster.updateMany({
       where: { cpEmploymentId: p.cpEmploymentId },
       data: { active: false },

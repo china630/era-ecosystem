@@ -1,7 +1,9 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -18,7 +20,7 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   await assertFnbEntitled();
   const session = await getSessionFromRequest(request);
-  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_OFFLINE_REPLAY);
   if (denied) return denied;
 
   const { actions } = bodySchema.parse(await request.json());

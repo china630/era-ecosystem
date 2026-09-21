@@ -3,7 +3,10 @@ import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { TILL_READ_DAILY_MENU } from "@/lib/auth/read-permission-sets";
 
 function parseBoardDate(raw: string | null): Date {
   const d = raw ? new Date(raw) : new Date();
@@ -14,6 +17,9 @@ function parseBoardDate(raw: string | null): Date {
 export async function GET(request: Request) {
   await assertFnbEntitled();
   try {
+    const session = await getSessionFromRequest(request);
+    const denied = denyUnlessAnyPermission(session, TILL_READ_DAILY_MENU);
+    if (denied) return denied;
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
     const date = parseBoardDate(url.searchParams.get("date"));
@@ -56,7 +62,7 @@ export async function PUT(request: Request) {
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_DAILY_MENU);
     if (denied) return denied;
 
     const body = putSchema.parse(await request.json());
@@ -92,7 +98,7 @@ export async function POST(request: Request) {
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_DAILY_MENU);
     if (denied) return denied;
 
     const body = copySchema.parse(await request.json());

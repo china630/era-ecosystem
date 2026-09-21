@@ -10,6 +10,10 @@ import {
 } from "@/lib/billing-router";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
+import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const bodySchema = z
   .object({
@@ -23,6 +27,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   await assertFnbEntitled();
+  await assertHotelFnbFeature("room-charge");
+  const session = await getSessionFromRequest(request);
+  const denied = denyUnlessPermission(session, PERMISSIONS.ROOM_CHARGE);
+  if (denied) return denied;
   const { id } = await params;
   const body = bodySchema.parse(await request.json().catch(() => undefined));
 

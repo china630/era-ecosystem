@@ -20,6 +20,7 @@ import { ChannelFormModals } from '@/components/channel/ChannelFormModals';
 import { ChannelHealthDetailsModal } from '@/components/channel/ChannelHealthDetailsModal';
 import { ChannelInventoryTab } from '@/components/channel/ChannelInventoryTab';
 import { ChannelJournalTab } from '@/components/channel/ChannelJournalTab';
+import { ChannelBindingCard } from '@/components/channel/ChannelBindingCard';
 import { ChannelOverviewTab } from '@/components/channel/ChannelOverviewTab';
 import {
   CHANNEL_PAGE_TABS,
@@ -395,21 +396,24 @@ export default function ChannelPage() {
       </div>
 
       {tab === 'overview' && (
-        <ChannelOverviewTab
-          health={health}
-          channelCount={channels.length}
-          openErrorCount={openErrorCount}
-          availFrom={availFrom}
-          availTo={availTo}
-          onAvailFrom={setAvailFrom}
-          onAvailTo={setAvailTo}
-          syncBusy={syncBusy}
-          onPush={() => void pushOta()}
-          onPull={() => void pullOta()}
-          onOpenCancelOta={() => setCancelOtaModalOpen(true)}
-          onOpenHealthDetails={() => setHealthDetailsOpen(true)}
-          onGoTab={setTab}
-        />
+        <div className="space-y-4">
+          <ChannelBindingCard onSaved={() => void load()} />
+          <ChannelOverviewTab
+            health={health}
+            channelCount={channels.length}
+            openErrorCount={openErrorCount}
+            availFrom={availFrom}
+            availTo={availTo}
+            onAvailFrom={setAvailFrom}
+            onAvailTo={setAvailTo}
+            syncBusy={syncBusy}
+            onPush={() => void pushOta()}
+            onPull={() => void pullOta()}
+            onOpenCancelOta={() => setCancelOtaModalOpen(true)}
+            onOpenHealthDetails={() => setHealthDetailsOpen(true)}
+            onGoTab={setTab}
+          />
+        </div>
       )}
 
       {tab === 'channels' && (

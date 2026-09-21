@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "../auth/cp-permissions";
 import {
   BadRequestException,
   Body,
@@ -45,7 +46,7 @@ import { TrialCatalogService } from "../subscription/trial-catalog.service";
 import { TrialSyncService } from "../subscription/trial-sync.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
-@RequirePermissions("admin.system")
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
 @Controller("v1/admin")
 export class AdminBillingController {
   constructor(

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
   authCookieName,
+  enterSatelliteTenant,
   getBearerOrCookieToken,
   verifySatelliteSession,
   type SatelliteSessionPayload,
@@ -45,8 +46,16 @@ export function handleRouteError(err: unknown) {
   if (err && typeof err === "object" && "issues" in err) {
     return jsonError("Validation failed", 400);
   }
-  const msg = err instanceof Error ? err.message : "Internal error";
-  return jsonError(msg, 500);
+  if (err instanceof Error) {
+    if (err.message === "Unauthorized") {
+      return jsonError(err.message, 401);
+    }
+    if (err.message.startsWith("Forbidden")) {
+      return jsonError(err.message, 403);
+    }
+    return jsonError(err.message, 500);
+  }
+  return jsonError("Internal error", 500);
 }
 
 /** Call at the start of authenticated API handlers (session helper). */
@@ -65,7 +74,11 @@ export async function getRouteSession(): Promise<SatelliteSessionPayload | null>
   );
   if (!token) return null;
   try {
-    return await verifySatelliteSession(token);
+    const session = await verifySatelliteSession(token);
+    if (session.organizationId) {
+      enterSatelliteTenant({ organizationId: session.organizationId });
+    }
+    return session;
   } catch {
     return null;
   }

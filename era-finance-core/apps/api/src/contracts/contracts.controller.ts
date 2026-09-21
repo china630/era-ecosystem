@@ -1,3 +1,5 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
 import {
   Body,
   Controller,
@@ -16,9 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -31,19 +31,13 @@ import { ContractsService } from "./contracts.service";
 @ApiTags("contracts")
 @ApiBearerAuth("bearer")
 @Controller("contracts")
-@UseGuards(SubscriptionGuard, RolesGuard)
+@UseGuards(SubscriptionGuard)
 @RequiresModule(ModuleEntitlement.CONTRACT_MANAGEMENT_PRO)
 export class ContractsController {
   constructor(private readonly contracts: ContractsService) {}
 
   @Get()
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "List contracts" })
   list(
     @OrganizationId() organizationId: string,
@@ -54,7 +48,7 @@ export class ContractsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Create contract (DRAFT)" })
   create(
     @OrganizationId() organizationId: string,
@@ -64,13 +58,7 @@ export class ContractsController {
   }
 
   @Post("check-limit")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({
     summary:
       "Hard-block check: ACTIVE status, dateTo not expired, amount limit vs commitments",
@@ -83,13 +71,7 @@ export class ContractsController {
   }
 
   @Get(":id")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Get contract" })
   get(
     @OrganizationId() organizationId: string,
@@ -99,7 +81,7 @@ export class ContractsController {
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Update contract" })
   patch(
     @OrganizationId() organizationId: string,
@@ -110,7 +92,7 @@ export class ContractsController {
   }
 
   @Post(":id/activate")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({ summary: "Activate contract" })
   activate(
     @OrganizationId() organizationId: string,

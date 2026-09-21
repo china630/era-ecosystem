@@ -92,5 +92,6 @@ Onsite cutover: [v3-workforce-cutover.md](../runbooks/v3-workforce-cutover.md)
 | ƏMAS / e-qaimé boundary | [workforce-compliance-emas-boundary.md](./workforce-compliance-emas-boundary.md) |
 | Seat licensing | [workforce-seat-licensing.md](./workforce-seat-licensing.md) |
 | Dual audit | [workforce-dual-audit.md](./workforce-dual-audit.md) |
+| Field-workforce pilot (group HR, labor roster, NAS vs MGMT) | [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md) |
 
 Additional events: `WORKFORCE_TIMESHEET_BATCH_IMPORTED`, `WORKFORCE_TIMESHEET_APPROVED`.

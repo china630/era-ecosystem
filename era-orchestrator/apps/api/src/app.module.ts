@@ -28,6 +28,10 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { HoldingsModule } from "./holdings/holdings.module";
 import { PlacementModule } from "./placement/placement.module";
 import { AgencyPortalModule } from "./agency-portal/agency-portal.module";
+import { BuyerPortalModule } from "./buyer-portal/buyer-portal.module";
+import { AccessModule } from "./access/access.module";
+import { KafeModule } from "./kafe/kafe.module";
+import { VendorsModule } from "./vendors/vendors.module";
 
 @Module({
   imports: [
@@ -49,6 +53,7 @@ import { AgencyPortalModule } from "./agency-portal/agency-portal.module";
     AuthModule,
     MembershipModule,
     OrganizationModule,
+    AccessModule,
     HoldingsModule,
     DisputeModule,
     EntitlementsModule,
@@ -65,6 +70,9 @@ import { AgencyPortalModule } from "./agency-portal/agency-portal.module";
     PlatformModule,
     PlacementModule,
     AgencyPortalModule,
+    BuyerPortalModule,
+    KafeModule,
+    VendorsModule,
   ],
   controllers: [AppController],
   providers: [

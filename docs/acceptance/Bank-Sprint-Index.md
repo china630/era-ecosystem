@@ -40,5 +40,6 @@ Current **line** rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Pilot lab [
 | S-1 | Stage-gate script green + signoff | [x] | A0 + W0 signoffs |
 | S-2 | Pilot lab UAT-SMOKE signed | [x] | bank + dbo pilot-lab signoffs (lab kit) |
 | S-3 | Field / customer sign-off | [ ] | YC-E7 |
+| S-RBAC | Bank RBAC Variant A + custom roles | [~] | AC-BNK-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

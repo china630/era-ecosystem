@@ -20,6 +20,15 @@ export class DomainsController {
     return this.domains.createDomain(organizationId, body);
   }
 
+  @Post("domains/:domainId/activate")
+  @ApiOperation({ summary: "Verify DNS CNAME and activate custom domain" })
+  activateDomain(
+    @OrganizationId() organizationId: string,
+    @Param("domainId") domainId: string,
+  ) {
+    return this.domains.activateDomain(organizationId, domainId);
+  }
+
   @Get("resolve/:hostname")
   @ApiOperation({ summary: "Resolve tenant by hostname (Live routing)" })
   resolve(@Param("hostname") hostname: string) {

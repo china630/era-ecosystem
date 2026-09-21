@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "@era/contracts";
 import {
   Body,
   Controller,
@@ -17,10 +18,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
@@ -36,19 +35,13 @@ import { SupplierScorecardService } from "./supplier-scorecard.service";
 @ApiTags("procurement-supplier-scorecard")
 @ApiBearerAuth("bearer")
 @Controller("procurement/supplier-scorecards")
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class SupplierScorecardController {
   constructor(private readonly scorecards: SupplierScorecardService) {}
 
   @Get()
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "List supplier scorecards" })
   listScorecards(
     @OrganizationId() organizationId: string,
@@ -65,8 +58,8 @@ export class SupplierScorecardController {
   }
 
   @Post()
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Create supplier scorecard" })
   createScorecard(
     @OrganizationId() organizationId: string,
@@ -76,14 +69,8 @@ export class SupplierScorecardController {
   }
 
   @Get("ratings")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "List supplier ratings" })
   listRatings(
     @OrganizationId() organizationId: string,
@@ -99,8 +86,8 @@ export class SupplierScorecardController {
   }
 
   @Post("ratings")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Create supplier rating (1–5)" })
   createRating(
     @OrganizationId() organizationId: string,
@@ -111,8 +98,8 @@ export class SupplierScorecardController {
   }
 
   @Patch("ratings/:id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Update supplier rating" })
   updateRating(
     @OrganizationId() organizationId: string,
@@ -123,8 +110,8 @@ export class SupplierScorecardController {
   }
 
   @Delete("ratings/:id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Delete supplier rating" })
   deleteRating(
     @OrganizationId() organizationId: string,
@@ -134,14 +121,8 @@ export class SupplierScorecardController {
   }
 
   @Get(":id")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Get supplier scorecard" })
   getScorecard(
     @OrganizationId() organizationId: string,
@@ -151,8 +132,8 @@ export class SupplierScorecardController {
   }
 
   @Patch(":id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Update supplier scorecard" })
   updateScorecard(
     @OrganizationId() organizationId: string,
@@ -163,8 +144,8 @@ export class SupplierScorecardController {
   }
 
   @Delete(":id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Delete supplier scorecard" })
   deleteScorecard(
     @OrganizationId() organizationId: string,

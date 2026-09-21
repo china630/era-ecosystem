@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations` | 🟡 |
-| Workforce | `/workspace/workforce/*` | 🟡 — month timesheet harden + vacation multi-line; not sell-ready (no UAT-SMOKE) |
+| Workforce | `/workspace/workforce/*` | 🟡 — month timesheet harden + vacation multi-line; not sell-ready (no UAT-SMOKE). Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED) — [ADR](../adr/evrostar-workforce-pilot.md) |
 | Super-admin | `/super-admin/*` | 🟡 |
 | Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 

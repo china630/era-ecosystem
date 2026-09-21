@@ -106,6 +106,16 @@ function isPrismaUniqueViolation(err: unknown): boolean {
   );
 }
 
+/** ~240×31 upserts blow a single transaction / HTTP timeout — chunk by employment. */
+const AUTOFILL_EMPLOYMENT_CHUNK = 25;
+const DEFAULT_GRID_PAGE_SIZE = 40;
+const MAX_GRID_PAGE_SIZE = 100;
+
+export type TimesheetGridPageOpts = {
+  page?: number;
+  pageSize?: number;
+};
+
 @Injectable()
 export class WorkforceTimesheetsService {
   constructor(
@@ -174,14 +184,23 @@ export class WorkforceTimesheetsService {
     return { created };
   }
 
-  async getOrCreateMonth(organizationId: string, year: number, month: number) {
+  async getOrCreateMonth(
+    organizationId: string,
+    year: number,
+    month: number,
+    pageOpts?: TimesheetGridPageOpts,
+  ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     this.assertYearMonth(year, month);
     const sheet = await this.ensureSheet(organizationId, year, month);
-    return this.getFull(organizationId, sheet.id);
+    return this.getFull(organizationId, sheet.id, pageOpts);
   }
 
-  async autofill(organizationId: string, timesheetId: string) {
+  async autofill(
+    organizationId: string,
+    timesheetId: string,
+    actorUserId: string,
+  ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     const ts = await this.requireSheet(organizationId, timesheetId);
     this.assertDraft(ts);
@@ -195,41 +214,65 @@ export class WorkforceTimesheetsService {
       existingRows.map((e) => [entryKey(e.employmentId, e.workDate), e]),
     );
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const emp of employments) {
-        for (let d = 1; d <= lastDay; d++) {
-          const workDate = dayDateUtc(year, month, d);
-          const existing = existingMap.get(entryKey(emp.id, workDate));
-          if (isCellImmutable(existing)) continue;
-          const type = autofillTypeForDay(workDate);
-          const hours = defaultHoursForType(type);
-          await tx.workforceTimesheetEntry.upsert({
-            where: {
-              timesheetId_employmentId_workDate: {
+    let cellsTouched = 0;
+    for (let i = 0; i < employments.length; i += AUTOFILL_EMPLOYMENT_CHUNK) {
+      const chunk = employments.slice(i, i + AUTOFILL_EMPLOYMENT_CHUNK);
+      await this.prisma.$transaction(async (tx) => {
+        for (const emp of chunk) {
+          for (let d = 1; d <= lastDay; d++) {
+            const workDate = dayDateUtc(year, month, d);
+            const existing = existingMap.get(entryKey(emp.id, workDate));
+            if (isCellImmutable(existing)) continue;
+            const type = autofillTypeForDay(workDate);
+            const hours = defaultHoursForType(type);
+            await tx.workforceTimesheetEntry.upsert({
+              where: {
+                timesheetId_employmentId_workDate: {
+                  timesheetId,
+                  employmentId: emp.id,
+                  workDate,
+                },
+              },
+              create: {
+                organizationId,
                 timesheetId,
                 employmentId: emp.id,
                 workDate,
+                type,
+                hours,
+                source: "ops_grid",
+                status: "DRAFT",
               },
-            },
-            create: {
-              organizationId,
-              timesheetId,
-              employmentId: emp.id,
-              workDate,
-              type,
-              hours,
-              source: "ops_grid",
-              status: "DRAFT",
-            },
-            update: { type, hours, lockedFromAbsence: false },
-          });
+              update: { type, hours, lockedFromAbsence: false },
+            });
+            cellsTouched += 1;
+          }
         }
-      }
+      });
+    }
+
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "TIMESHEET_AUTOFILL",
+      entityType: "TIMESHEET",
+      entityId: timesheetId,
+      payload: {
+        year,
+        month,
+        employmentCount: employments.length,
+        cellsTouched,
+        chunkSize: AUTOFILL_EMPLOYMENT_CHUNK,
+      },
     });
     return this.getFull(organizationId, timesheetId);
   }
 
-  async syncAbsences(organizationId: string, timesheetId: string) {
+  async syncAbsences(
+    organizationId: string,
+    timesheetId: string,
+    actorUserId: string,
+  ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     const ts = await this.requireSheet(organizationId, timesheetId);
     this.assertDraft(ts);
@@ -267,6 +310,7 @@ export class WorkforceTimesheetsService {
       where: { timesheetId, organizationId },
     });
 
+    let cellsTouched = 0;
     await this.prisma.$transaction(async (tx) => {
       for (const e of existingRows) {
         if (!e.lockedFromAbsence) continue;
@@ -283,6 +327,7 @@ export class WorkforceTimesheetsService {
             source: "ops_grid",
           },
         });
+        cellsTouched += 1;
       }
 
       for (const a of absences) {
@@ -325,8 +370,23 @@ export class WorkforceTimesheetsService {
             },
             update: { type, hours, lockedFromAbsence: true },
           });
+          cellsTouched += 1;
         }
       }
+    });
+
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "TIMESHEET_SYNC_ABSENCES",
+      entityType: "TIMESHEET",
+      entityId: timesheetId,
+      payload: {
+        year,
+        month,
+        absenceCount: absences.length,
+        cellsTouched,
+      },
     });
     return this.getFull(organizationId, timesheetId);
   }
@@ -374,6 +434,7 @@ export class WorkforceTimesheetsService {
     organizationId: string,
     timesheetId: string,
     batches: WorkforceTimesheetBatchItemDto[],
+    actorUserId: string,
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     const ts = await this.requireSheet(organizationId, timesheetId);
@@ -387,6 +448,8 @@ export class WorkforceTimesheetsService {
       existingRows.map((e) => [entryKey(e.employmentId, e.workDate), e]),
     );
 
+    let cellsTouched = 0;
+    const employmentIds = new Set<string>();
     await this.prisma.$transaction(async (tx) => {
       for (const b of batches) {
         if (b.fromDay > b.toDay) {
@@ -401,6 +464,7 @@ export class WorkforceTimesheetsService {
         if (!emp) {
           throw new BadRequestException(`Employment ${b.employmentId} not found`);
         }
+        employmentIds.add(b.employmentId);
         const hrs =
           b.hours != null
             ? new Prisma.Decimal(b.hours)
@@ -429,8 +493,24 @@ export class WorkforceTimesheetsService {
             },
             update: { type: b.type, hours: hrs, lockedFromAbsence: false },
           });
+          cellsTouched += 1;
         }
       }
+    });
+
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "TIMESHEET_BATCH",
+      entityType: "TIMESHEET",
+      entityId: timesheetId,
+      payload: {
+        year,
+        month,
+        batchCount: batches.length,
+        employmentIds: [...employmentIds],
+        cellsTouched,
+      },
     });
     return this.getFull(organizationId, timesheetId);
   }
@@ -510,24 +590,55 @@ export class WorkforceTimesheetsService {
     return row;
   }
 
-  private async getFull(organizationId: string, timesheetId: string) {
+  private async getFull(
+    organizationId: string,
+    timesheetId: string,
+    pageOpts?: TimesheetGridPageOpts,
+  ) {
     const ts = await this.requireSheet(organizationId, timesheetId);
-    const employments = await this.prisma.workforceEmployment.findMany({
+    const allEmployments = await this.prisma.workforceEmployment.findMany({
       where: { organizationId, status: WorkforceEmploymentStatus.ACTIVE },
       include: { orgUnit: true, position: true },
       orderBy: [{ hireDate: "asc" }, { createdAt: "asc" }],
     });
+    const employmentTotal = allEmployments.length;
+    const pageSizeRaw = pageOpts?.pageSize ?? DEFAULT_GRID_PAGE_SIZE;
+    const pageSize = Math.min(
+      MAX_GRID_PAGE_SIZE,
+      Math.max(1, Number.isFinite(pageSizeRaw) ? pageSizeRaw : DEFAULT_GRID_PAGE_SIZE),
+    );
+    const pageRaw = pageOpts?.page ?? 1;
+    const page = Math.max(1, Number.isFinite(pageRaw) ? pageRaw : 1);
+    const start = (page - 1) * pageSize;
+    const employments = allEmployments.slice(start, start + pageSize);
+    // Resolve names for the full ACTIVE roster so batch CatalogField is not
+    // limited to the current grid page (~240 is within MDM batch budget).
     const persons = await this.employments.resolvePersonProfiles(
       organizationId,
-      employments.map((e) => e.globalPersonId),
+      allEmployments.map((e) => e.globalPersonId),
     );
+    const pageEmpIds = employments.map((e) => e.id);
     const entries = await this.prisma.workforceTimesheetEntry.findMany({
-      where: { timesheetId, organizationId },
+      where: {
+        timesheetId,
+        organizationId,
+        ...(pageEmpIds.length
+          ? { employmentId: { in: pageEmpIds } }
+          : { employmentId: { in: [] } }),
+      },
       orderBy: [{ employmentId: "asc" }, { workDate: "asc" }],
     });
     return {
       timesheet: ts,
       employments,
+      /** Lightweight roster for batch UI (all ACTIVE, not just this page). */
+      employmentOptions: allEmployments.map((e) => ({
+        id: e.id,
+        globalPersonId: e.globalPersonId,
+      })),
+      employmentTotal,
+      page,
+      pageSize,
       persons,
       entries: entries.map((e) => ({
         ...e,

@@ -475,7 +475,7 @@ export class TaxExportService {
     const { start, end } = monthRangeUtc(year, month);
     const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
     const opsBook =
-      await this.accountingBooks.resolveDefaultOpsBook(organizationId);
+      await this.accountingBooks.resolveOpsBookForMoneyPath(organizationId);
     const ledgerType = ledgerTypeForBookGaap(opsBook.gaapKind);
     const account = await this.prisma.account.findFirst({
       where: {

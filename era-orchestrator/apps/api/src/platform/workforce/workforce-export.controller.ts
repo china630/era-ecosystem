@@ -5,23 +5,24 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { CP_PERMISSION } from "../../auth/cp-permissions";
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
-import { UserRole } from "@era365/database";
-import { Roles } from "../../common/decorators/roles.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { RolesGuard } from "../../common/guards/roles.guard";
 import { WorkforceExportService } from "./workforce-export.service";
 
 @ApiTags("platform-workforce-export")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/export")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class WorkforceExportController {
   constructor(private readonly exportService: WorkforceExportService) {}
 
   @Get("roster")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_EXPORT)
   @ApiOperation({ summary: "Export active roster CSV (no FIN)" })
   async roster(
     @OrganizationId() organizationId: string,
@@ -41,7 +42,7 @@ export class WorkforceExportController {
   }
 
   @Get("absences")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_EXPORT)
   @ApiOperation({ summary: "Export approved absences CSV for period" })
   async absences(
     @OrganizationId() organizationId: string,
@@ -67,7 +68,7 @@ export class WorkforceExportController {
   }
 
   @Get("timesheet")
-  @Roles(UserRole.OWNER, UserRole.HR_MANAGER)
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_EXPORT)
   @ApiOperation({ summary: "Export approved CP timesheet rows CSV" })
   async timesheet(
     @OrganizationId() organizationId: string,

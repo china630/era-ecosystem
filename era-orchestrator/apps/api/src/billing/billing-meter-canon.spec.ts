@@ -12,9 +12,12 @@ describe("billing meter catalog freeze", () => {
       pricePerWhatsappAlertAzn: 0.05,
       pricePerInvoiceAzn: 0.1,
       pricePerOcrPageAzn: 0.02,
+      pricePerTradeCreditBuyerAzn: 1,
     });
     expect(next.pricePerInvoiceAzn).toBe(0);
     expect(next.pricePerOcrPageAzn).toBe(0.02);
+    expect(next.pricePerTradeCreditBuyerAzn).toBe(1);
+    expect(next.pricePerTradeCreditEnrichAzn).toBe(2);
   });
 
   it("rewrites legacy 10 x 15 AZN headcount block to 1 x 2", () => {
@@ -36,9 +39,22 @@ describe("billing meter catalog freeze", () => {
       pricePerWhatsappAlertAzn: 0.05,
       pricePerInvoiceAzn: 0.1,
       pricePerOcrPageAzn: 0.02,
+      pricePerTradeCreditBuyerAzn: 1,
     };
     const after = canonMeterUnitPricing(before);
     expect(billingCanonChanged(before, after)).toBe(true);
     expect(billingCanonChanged(after, canonMeterUnitPricing(after))).toBe(false);
+  });
+
+  it("defaults enrich meter to 2 AZN when omitted", () => {
+    const next = canonMeterUnitPricing({
+      pricePerUserMonthAzn: 2,
+      pricePerGbMonthAzn: 0.5,
+      pricePerWhatsappAlertAzn: 0.05,
+      pricePerInvoiceAzn: 0,
+      pricePerOcrPageAzn: 0.02,
+      pricePerTradeCreditBuyerAzn: 1,
+    });
+    expect(next.pricePerTradeCreditEnrichAzn).toBe(2);
   });
 });

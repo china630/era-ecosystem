@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
@@ -15,7 +17,7 @@ export async function PATCH(
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 
     const { id } = await params;
@@ -40,7 +42,7 @@ export async function DELETE(
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(_request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 
     const { id } = await params;

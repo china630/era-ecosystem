@@ -326,6 +326,8 @@ model Role {
   isSystem        Boolean  @default(false)
   /// Custom role created by cloning; Reset copies donor's effective grants.
   cloneFromCode   String?
+  /// One-shot additive catalog bumps (Wave 1 import/bridge keys = 1).
+  permissionCatalogVersion Int @default(0)
   users           User[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1955,6 +1957,62 @@ model ChannelRateMapping {
   @@unique([channelId, ratePlanId])
 }
 
+/** Per-org Channel Manager / IBE binding — never process env (ADR hotel-channel-manager-pack). */
+model ChannelManagerBinding {
+  id                   String   @id @default(uuid())
+  organizationId       String   @unique
+  /** off | stub | webhook | channex */
+  provider             String   @default("off")
+  channexPropertyId    String?
+  /** hotel | vacation_rental */
+  propertyType         String   @default("hotel")
+  live                 Boolean  @default(false)
+  ibePublishableKey    String?
+  ibeAllowedOrigins    Json     @default("[]")
+  webhookSecretCipher  String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([channexPropertyId])
+  @@unique([ibePublishableKey])
+}
+
+/** ARI push queue — drain with 10 availability + 10 restriction calls/min/property. */
+model ChannelAriJob {
+  id                   String    @id @default(uuid())
+  organizationId       String
+  kind                 String    @default("AVAILABILITY")
+  payloadHash          String
+  payloadJson          String    @db.Text
+  status               String    @default("PENDING")
+  attempts             Int       @default(0)
+  lastError            String?
+  notBefore            DateTime  @default(now())
+  processingStartedAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([organizationId, status, notBefore])
+  @@index([organizationId, kind, payloadHash])
+}
+
+/** Direct IBE short hold before book. */
+model IbeHold {
+  id             String   @id @default(uuid())
+  organizationId String
+  roomTypeId     String
+  ratePlanId     String
+  checkInDate    DateTime @db.Date
+  checkOutDate   DateTime @db.Date
+  adults         Int      @default(1)
+  children       Int      @default(0)
+  expiresAt      DateTime
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, status, expiresAt])
+}
+
 model Stay {
   id             String      @id @default(uuid())
   organizationId String
@@ -2154,6 +2212,8 @@ model CashShift {
   registerId String
   status     CashShiftStatus @default(OPEN)
   isPrimary  Boolean         @default(false)
+  fiscalDeviceId String?
+  bankTerminalId String?
   openedAt   DateTime        @default(now())
   closedAt   DateTime?
   pendingSettlements SettlementPendingCharge[]
@@ -2232,13 +2292,17 @@ model HousekeepingTask {
 }
 
 model ChannelSyncError {
-  id            String             @id @default(uuid())
-  reservationId String?
-  reservation   Reservation?       @relation(fields: [reservationId], references: [id])
-  otaReference  String?
-  errorMessage  String
-  status        ChannelErrorStatus @default(OPEN)
-  createdAt     DateTime           @default(now())
+  id             String             @id @default(uuid())
+  organizationId String
+  reservationId  String?
+  reservation    Reservation?       @relation(fields: [reservationId], references: [id])
+  otaReference   String?
+  errorMessage   String
+  status         ChannelErrorStatus @default(OPEN)
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, status])
 }
 
 model MedicalAlert {
@@ -2766,14 +2830,18 @@ model RecipeLine {
 }
 
 model OutboundEventLog {
-  id          String              @id @default(uuid())
-  eventType   String
-  payloadJson String              @db.Text
-  status      OutboundEventStatus @default(PENDING)
-  attempts    Int                 @default(0)
-  lastError   String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id             String              @id @default(uuid())
+  organizationId String?
+  eventType      String
+  payloadJson    String              @db.Text
+  status         OutboundEventStatus @default(PENDING)
+  attempts       Int                 @default(0)
+  lastError      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, eventType])
 }
 
 model YieldRule {

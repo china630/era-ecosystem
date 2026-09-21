@@ -150,11 +150,20 @@ export class WorkforceSecurityService {
       action?: string;
       globalPersonId?: string;
       cpEmploymentId?: string;
+      /** When set, union audit across holding orgs visible to this HR user. */
+      organizationIds?: string[];
     },
   ) {
+    const scopedIds =
+      filters?.organizationIds && filters.organizationIds.length > 0
+        ? filters.organizationIds
+        : [organizationId];
+    // Entitlement: active JWT org must have workforce hub.
     await this.entitlement.assertWorkforceHub(organizationId);
     const skip = (page - 1) * pageSize;
-    const where: Prisma.WorkforceAuditLogWhereInput = { organizationId };
+    const where: Prisma.WorkforceAuditLogWhereInput = {
+      organizationId: scopedIds.length === 1 ? scopedIds[0] : { in: scopedIds },
+    };
     if (filters?.action?.trim()) {
       where.action = filters.action.trim();
     }
@@ -173,6 +182,42 @@ export class WorkforceSecurityService {
       }),
       this.prisma.workforceAuditLog.count({ where }),
     ]);
-    return { items, total, page, pageSize };
+    const actorUserIds = [
+      ...new Set(
+        items
+          .map((row) => row.actorUserId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const globalPersonIds = [
+      ...new Set(
+        items
+          .map((row) => row.globalPersonId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const [users, persons] = await Promise.all([
+      actorUserIds.length > 0
+        ? this.prisma.user.findMany({
+            where: { id: { in: actorUserIds } },
+            select: { id: true, email: true },
+          })
+        : Promise.resolve([]),
+      globalPersonIds.length > 0
+        ? this.employments.resolvePersonProfiles(organizationId, globalPersonIds)
+        : Promise.resolve({}),
+    ]);
+    const actors = Object.fromEntries(
+      users.map((u) => [u.id, { email: u.email }]),
+    );
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      organizationIds: scopedIds,
+      persons,
+      actors,
+    };
   }
 }

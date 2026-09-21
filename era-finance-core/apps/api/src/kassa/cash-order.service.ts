@@ -20,6 +20,7 @@ import {
   CashOrderRkoSubtype,
 } from "./cash-order-subtype-codes";
 import { AccountingService } from "../accounting/accounting.service";
+import { AccountingBookService } from "../accounting/accounting-book.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import {
   assertValidCashDeskAccountCode,
@@ -60,6 +61,7 @@ export class CashOrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly accountingBooks: AccountingBookService,
     private readonly reporting: ReportingService,
     private readonly treasury: TreasuryService,
     private readonly approvals: ApprovalsService,
@@ -643,12 +645,18 @@ export class CashOrderService {
           { accountCode: cash, debit: "0", credit: cashPaid.toString() },
         ];
       }
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: order.date,
         reference: order.orderNumber,
         description: order.purpose,
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines,
       });
       const claimed = await tx.cashOrder.updateMany({
@@ -907,12 +915,18 @@ export class CashOrderService {
         "MISC_OPERATING_EXPENSE",
         tx,
       );
+      const opsBook = await this.accountingBooks.resolveOpsBookForMoneyPath(
+        organizationId,
+        undefined,
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: rep.reportDate,
         reference: `AVANS-${rep.id.slice(0, 8)}`,
         description: rep.purpose || "Avans hesabatı",
         isFinal: true,
+        accountingBookId: opsBook.id,
         lines: [
           {
             accountCode: miscExpenseCode,

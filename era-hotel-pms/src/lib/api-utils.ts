@@ -20,6 +20,9 @@ export function handleRouteError(err: unknown) {
   if (err instanceof IndustryModuleInactiveError) {
     return jsonError(err.message, 403);
   }
+  if (err instanceof Error && err.name === 'FiscalError') {
+    return jsonError(err.message, 400);
+  }
   if (err instanceof GuestMdmRequiredError) {
     return jsonError(err.message, 400);
   }

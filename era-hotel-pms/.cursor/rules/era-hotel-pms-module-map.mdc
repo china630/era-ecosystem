@@ -51,7 +51,8 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | `/distribution/travel-agencies` | `GET/POST /api/admin/travel-agencies` | Travel agent master (commission + settlementMode) |
 | `/distribution/companies` | `GET/POST /api/admin/companies` | Corporate master (settlementMode, no commission) |
 | `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
-| `/distribution/channel` | `GET/POST/DELETE /api/channel/*`, `GET /api/channel/health`, `POST /api/channel/ota-cancel`, sync push/pull | Local CM (HOT-CH-01); live OTA STUB (HOT-CH-02) |
+| `/distribution/channel` | `GET/PUT /api/channel/binding`, `GET/POST /api/channel/*`, health, ota-cancel, sync push/pull; `POST /api/integrations/channex/webhook`; cron `channel-ari-drain` | Local CM (HOT-CH-01); Channex binding + ARI queue (HOT-CH-02 STUB until live UAT) |
+| `/b2c` | `GET /api/public/v1/availability`, `POST /api/public/v1/holds`, `POST /api/public/v1/bookings` | Direct IBE (HOT-IBE-01); legacy `/api/public/booking/rates` → 410 |
 | Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
 | Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
@@ -209,9 +210,14 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Notes |
 |-------|-----|-------|
-| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `access:manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
-| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`users:manage`); role select includes custom clones |
-| Staff `/login` / SSO | JWT `permissions[]`; ensure system roles | Hotel_Admin does **not** bypass matrix |
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
+| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`admin:users`); role select includes custom clones |
+| `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
+| Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |
+| Role clone / matrix Save | `POST /api/admin/roles`, `PATCH …/permissions` | Stamp `permissionCatalogVersion` so ensure does not restore stripped Wave-1 keys |
+| Staff `/login` / SSO | JWT `permissions[]`; ensure system roles + `permissionCatalogVersion`=3 (`screen:*` + `api:*`) | Hotel_Admin does **not** bypass matrix; page middleware fail-closed inventory |
+
+**Page map:** `src/lib/auth/page-route-permissions.ts` — every staff `app/**/page.tsx` must map (test: `hotel-page-route-inventory.spec.ts`).
 
 ## Related docs
 

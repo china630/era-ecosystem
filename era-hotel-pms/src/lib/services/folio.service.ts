@@ -188,20 +188,75 @@ export async function postPayment(input: {
 
   let fiscalReceiptId: string | null = null;
   let fiscalQrPayload: string | null = null;
+  const liveFiscal = process.env.ERA_FISCAL_LIVE === "true";
+  const orgId = requestOrganizationId();
 
   if (kind === 'PAYMENT' && ['CASH', 'CARD'].includes(input.paymentMethod)) {
-    const { fiscalize } = await import('@era/fiscal');
+    const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
     try {
-      const receipt = await fiscalize({
-        documentRef: input.folioId,
-        amount: input.amount,
-        paymentMethod: input.paymentMethod,
-        registerRef: input.registerRef,
+      const cashShift = await prisma.cashShift.findFirst({
+        where: { status: 'OPEN' },
+        orderBy: { openedAt: 'desc' },
       });
-      fiscalReceiptId = receipt.receiptId;
-      fiscalQrPayload = receipt.qrPayload;
+      const receipt = await fiscalizeForSatellite(
+        {
+          documentRef: input.folioId,
+          amount: input.amount,
+          paymentMethod: input.paymentMethod,
+          registerRef: input.registerRef,
+          organizationId: orgId,
+          fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
+          bankTerminalId: cashShift?.bankTerminalId ?? undefined,
+          shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
+          shiftBankTerminalId: cashShift?.bankTerminalId ?? undefined,
+          lines: [
+            {
+              name: `Folio ${input.folioId.slice(0, 8)}`,
+              qty: 1,
+              unitPrice: input.amount,
+            },
+          ],
+        },
+        orgId,
+      );
+      if (!isFiscalSkipped(receipt)) {
+        fiscalReceiptId = receipt.receiptId;
+        fiscalQrPayload = receipt.qrPayload;
+      }
     } catch (e) {
       console.error('KKM fiscalize failed', e);
+      if (liveFiscal || (e instanceof Error && e.name === 'FiscalError')) throw e;
+    }
+  }
+
+  if (kind === 'REFUND' && ['CASH', 'CARD'].includes(input.paymentMethod)) {
+    const { refundForSatelliteRouted, isFiscalSkipped } = await import('@era/satellite-kit');
+    try {
+      const original = input.refundOfPaymentId
+        ? await prisma.folioPayment.findUnique({ where: { id: input.refundOfPaymentId } })
+        : null;
+      if (original?.fiscalReceiptId) {
+        const cashShift = await prisma.cashShift.findFirst({
+          where: { status: 'OPEN' },
+          orderBy: { openedAt: 'desc' },
+        });
+        const refunded = await refundForSatelliteRouted({
+          organizationId: orgId,
+          documentRef: `refund:${input.folioId}:${original.id}`,
+          originalReceiptId: original.fiscalReceiptId,
+          amount: input.amount,
+          fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
+          shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
+          reason: input.refundReason,
+        });
+        if (!isFiscalSkipped(refunded)) {
+          fiscalReceiptId = refunded.receiptId;
+          fiscalQrPayload = refunded.qrPayload;
+        }
+      }
+    } catch (e) {
+      console.error('KKM refund failed', e);
+      if (liveFiscal || (e instanceof Error && e.name === 'FiscalError')) throw e;
     }
   }
 

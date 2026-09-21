@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { accountDisplayName } from "../../../lib/account-display-name";
 import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import {
   CARD_CONTAINER_CLASS,
@@ -39,8 +40,8 @@ type TemplateRow = {
   kind: string;
 };
 
-function canImportNas(role: string | null | undefined): boolean {
-  return role === "OWNER" || role === "ADMIN" || role === "ACCOUNTANT";
+function canImportNas(canPost: boolean): boolean {
+  return canPost;
 }
 
 export default function NasChartSettingsPage() {
@@ -48,7 +49,8 @@ export default function NasChartSettingsPage() {
   const { token, ready } = useRequireAuth();
   const { user, organizations } = useAuth();
   const { ledgerType } = useLedger();
-  const canImport = canImportNas(user?.role);
+  const { canPostAccounting } = useOrgPermissions();
+  const canImport = canImportNas(canPostAccounting);
   const loc = uiLangRuAz(i18n.language);
 
   const [accounts, setAccounts] = useState<AccountRow[]>([]);

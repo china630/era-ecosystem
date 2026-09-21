@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowRightLeft,
@@ -35,6 +35,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
+import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   mdmWorkforceFetch,
@@ -82,6 +83,10 @@ type ListResponse = {
   total?: number;
   page?: number;
   pageSize?: number;
+  draftOrdersByEmployment?: Record<
+    string,
+    Array<{ id: string; type: string; orderNumber: string }>
+  >;
   persons: Record<
     string,
     {
@@ -199,6 +204,9 @@ export default function WorkforceEmploymentsPage() {
 
   const [rows, setRows] = useState<EmploymentRow[]>([]);
   const [persons, setPersons] = useState<ListResponse["persons"]>({});
+  const [draftOrdersByEmployment, setDraftOrdersByEmployment] = useState<
+    NonNullable<ListResponse["draftOrdersByEmployment"]>
+  >({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [hireOpen, setHireOpen] = useState(false);
@@ -217,10 +225,11 @@ export default function WorkforceEmploymentsPage() {
   const [loginEditSatelliteKeys, setLoginEditSatelliteKeys] = useState<string[]>([]);
   const [loginModalError, setLoginModalError] = useState<string | null>(null);
 
-  const workspaceOrgId =
-    user?.organizationId?.trim() ||
-    orgIdFromToken(getOrchAccessToken()) ||
-    "";
+  const { snapshot: subscriptionSnapshot } = useSubscription();
+  const workspaceOrgNo =
+    subscriptionSnapshot?.publicOrgNumber != null
+      ? String(subscriptionSnapshot.publicOrgNumber)
+      : "";
 
 
   useEffect(() => {
@@ -243,6 +252,7 @@ export default function WorkforceEmploymentsPage() {
   const [resolveBirthDate, setResolveBirthDate] = useState("");
   const [resolveBlood, setResolveBlood] = useState("");
   const [resolvedLabel, setResolvedLabel] = useState<string | null>(null);
+  const [hireFinMasked, setHireFinMasked] = useState<string | null>(null);
   const [orgUnitId, setOrgUnitId] = useState("");
   const [positionId, setPositionId] = useState("");
   const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
@@ -258,6 +268,12 @@ export default function WorkforceEmploymentsPage() {
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
   const [hireLogin, setHireLogin] = useState("");
   const [hirePin, setHirePin] = useState("0000");
+  const [dualVoenBanner, setDualVoenBanner] = useState<{
+    globalPersonId: string;
+    holdingId: string | null;
+    orgNames: string[];
+  } | null>(null);
+  const deepLinkKeyRef = useRef<string | null>(null);
 
   // Employee card fields
   const [cardFirstName, setCardFirstName] = useState("");
@@ -382,6 +398,7 @@ export default function WorkforceEmploymentsPage() {
     const data = (await res.json()) as ListResponse;
     setRows(data.items ?? []);
     setPersons(data.persons ?? {});
+    setDraftOrdersByEmployment(data.draftOrdersByEmployment ?? {});
     setServerTotal(typeof data.total === "number" ? data.total : (data.items ?? []).length);
     setLoading(false);
   }, [
@@ -509,12 +526,98 @@ export default function WorkforceEmploymentsPage() {
     setResolveBlood("");
     setGlobalPersonId("");
     setResolvedLabel(null);
+    setHireFinMasked(null);
     setPositionId("");
     setHireDate(new Date().toISOString().slice(0, 10));
     setSatelliteKeys([]);
+    setHireLogin("");
+    setHirePin("0000");
     setModalError(null);
     setHireOpen(true);
   }
+
+  /** Deep-link from group person card: hire=1&globalPersonId= */
+  async function openHireForPerson(personId: string) {
+    setResolveFin("");
+    setResolveFirstName("");
+    setResolveMiddleName("");
+    setResolveLastName("");
+    setResolveSex("UNKNOWN");
+    setResolveBirthDate("");
+    setResolveBlood("");
+    setGlobalPersonId(personId);
+    setResolvedLabel(null);
+    setHireFinMasked(null);
+    setPositionId("");
+    setHireDate(new Date().toISOString().slice(0, 10));
+    setSatelliteKeys([]);
+    setHireLogin("");
+    setHirePin("0000");
+    setModalError(null);
+    setHireOpen(true);
+    const opsRes = await mdmWorkforceFetch(`${personId}/ops-profile`);
+    if (opsRes.ok) {
+      const ops = (await opsRes.json()) as {
+        displayName?: string | null;
+        firstName?: string | null;
+        lastName?: string | null;
+        finMasked?: string | null;
+        primaryIdentifierMasked?: string | null;
+      };
+      const fin =
+        ops.finMasked?.trim() ||
+        ops.primaryIdentifierMasked?.trim() ||
+        null;
+      setHireFinMasked(fin && fin !== "—" ? fin : null);
+      const label =
+        ops.displayName?.trim() ||
+        [ops.firstName, ops.lastName].filter(Boolean).join(" ").trim() ||
+        personId.slice(0, 8);
+      setResolvedLabel(label);
+    } else {
+      setResolvedLabel(personId.slice(0, 8));
+    }
+  }
+
+  // Consume ?hire=1&globalPersonId= / ?employmentId= / ?login=1 once rows are ready.
+  useEffect(() => {
+    if (!ready || loading) return;
+    const hireFlag = searchParams.get("hire");
+    const gpid = searchParams.get("globalPersonId");
+    const empId = searchParams.get("employmentId");
+    const loginFlag = searchParams.get("login");
+    const key = `${hireFlag}|${gpid}|${empId}|${loginFlag}`;
+    if (!hireFlag && !empId) return;
+    if (deepLinkKeyRef.current === key) return;
+
+    if (hireFlag === "1" && gpid?.trim()) {
+      deepLinkKeyRef.current = key;
+      void openHireForPerson(gpid.trim());
+      return;
+    }
+    if (!empId?.trim()) return;
+    const emp = rows.find((r) => r.id === empId.trim());
+    if (!emp) return;
+    deepLinkKeyRef.current = key;
+    if (loginFlag === "1" && emp.status !== "TERMINATED") {
+      setLoginEmp(emp);
+      setLoginEditLogin(displayStaffLogin(emp));
+      setLoginEditPin(emp.satelliteStaffPin?.trim() || "0000");
+      setLoginEditSatelliteKeys([
+        ...new Set(
+          (emp.roleBindings ?? [])
+            .map((b) => b.satelliteKey)
+            .filter(Boolean),
+        ),
+      ]);
+      setLoginModalError(null);
+      setLoginCopied(false);
+      setLoginOpen(true);
+      return;
+    }
+    void openEmployeeCard(emp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-shot deep-link
+  }, [ready, loading, rows, searchParams]);
 
   async function onResolvePerson() {
     if (
@@ -556,6 +659,8 @@ export default function WorkforceEmploymentsPage() {
         ? `${data.opsProfile.displayName} (${data.opsProfile.primaryIdentifierMasked ?? "—"})`
         : data.globalPersonId.slice(0, 8),
     );
+    const fin = data.opsProfile?.primaryIdentifierMasked?.trim();
+    setHireFinMasked(fin && fin !== "—" ? fin : resolveFin.trim() || null);
 
     if (resolveBlood && resolveBlood !== "UNKNOWN") {
       const hrRes = await mdmWorkforceFetch(
@@ -571,15 +676,66 @@ export default function WorkforceEmploymentsPage() {
     }
   }
 
+  async function applyDualVoenFromCard(
+    gpid: string,
+    holdingId: string | null,
+    path: string,
+  ) {
+    const res = await workforceFetch(path);
+    if (!res.ok) return false;
+    const body = (await res.json()) as {
+      employments?: Array<{ status: string; orgName: string }>;
+    };
+    const active = (body.employments ?? []).filter((e) => e.status === "ACTIVE");
+    if (active.length < 2) return false;
+    setDualVoenBanner({
+      globalPersonId: gpid,
+      holdingId,
+      orgNames: active.map((e) => e.orgName),
+    });
+    return true;
+  }
+
+  async function checkDualVoenAfterHire(gpid: string) {
+    const token = getOrchAccessToken();
+    if (!token) return;
+    const holdingsRes = await orchFetch("/v1/holdings", { token });
+    if (holdingsRes.ok) {
+      const holdings = (await holdingsRes.json()) as Array<{
+        id: string;
+        name: string;
+      }>;
+      for (const holding of holdings) {
+        const ok = await applyDualVoenFromCard(
+          gpid,
+          holding.id,
+          `persons/${encodeURIComponent(gpid)}/employments?holdingId=${encodeURIComponent(holding.id)}`,
+        );
+        if (ok) return;
+      }
+    }
+    await applyDualVoenFromCard(
+      gpid,
+      null,
+      `persons/${encodeURIComponent(gpid)}/employments`,
+    );
+  }
+
   async function onHire(e: React.FormEvent) {
     e.preventDefault();
     if (busy || !globalPersonId.trim() || !orgUnitId || !positionId) return;
+    const finEmpty = !resolveFin.trim() && !hireFinMasked;
+    if (finEmpty) {
+      const ok = window.confirm(t("hireWithoutFinConfirm"));
+      if (!ok) return;
+    }
+    const hiredGpid = globalPersonId.trim();
     setBusy(true);
     setModalError(null);
     const res = await workforceFetch("employments/hire", {
       method: "POST",
       body: JSON.stringify({
-        globalPersonId: globalPersonId.trim(),
+        globalPersonId: hiredGpid,
         hireDate,
         orgUnitId,
         positionId,
@@ -599,6 +755,7 @@ export default function WorkforceEmploymentsPage() {
     setHirePin("0000");
     setHireOpen(false);
     await load();
+    void checkDualVoenAfterHire(hiredGpid);
     setBusy(false);
   }
 
@@ -911,6 +1068,31 @@ export default function WorkforceEmploymentsPage() {
         </div>
       ) : null}
 
+      {dualVoenBanner ? (
+        <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-start justify-between gap-3 p-4`}>
+          <p className="text-sm text-[#34495E]">
+            {t("dualVoenBanner", { orgs: dualVoenBanner.orgNames.join(", ") })}{" "}
+            {dualVoenBanner.holdingId ? (
+              <Link
+                href={`/workspace/workforce/group/persons/${dualVoenBanner.globalPersonId}?holdingId=${dualVoenBanner.holdingId}`}
+                className="text-[#2980B9] hover:underline"
+              >
+                {t("dualVoenBannerLink")}
+              </Link>
+            ) : (
+              <span>{t("dualVoenBannerNoGroup")}</span>
+            )}
+          </p>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => setDualVoenBanner(null)}
+          >
+            {t("dualVoenDismiss")}
+          </button>
+        </div>
+      ) : null}
+
       <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-4`}>
         <label className="text-[13px] font-medium text-[#34495E]">
           {t("filterSearch")}
@@ -1052,7 +1234,19 @@ export default function WorkforceEmploymentsPage() {
                       {String(r.hireDate).slice(0, 10)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {formatStatus(r.status)}
+                      <div className="flex flex-col gap-1">
+                        <span>{formatStatus(r.status)}</span>
+                        {(draftOrdersByEmployment[r.id]?.length ?? 0) > 0 ? (
+                          <Link
+                            href={`/workspace/workforce/personnel-orders?employmentId=${r.id}`}
+                            className="text-[11px] text-[#2980B9] hover:underline"
+                          >
+                            {t("draftOrderBanner", {
+                              count: draftOrdersByEmployment[r.id]!.length,
+                            })}
+                          </Link>
+                        ) : null}
+                      </div>
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="relative flex flex-wrap items-center gap-1">
@@ -1377,6 +1571,11 @@ export default function WorkforceEmploymentsPage() {
           {modalError && hireOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
           ) : null}
+          {!resolveFin.trim() && !hireFinMasked && globalPersonId ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              {t("hireWithoutFinBanner")}
+            </p>
+          ) : null}
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
@@ -1630,7 +1829,7 @@ export default function WorkforceEmploymentsPage() {
                     (b) => b.satelliteKey === s.key,
                   );
                   const checked = loginEditSatelliteKeys.includes(s.key);
-                  const href = satelliteLoginHref(s.key, workspaceOrgId);
+                  const href = satelliteLoginHref(s.key, workspaceOrgNo);
                   return (
                     <div
                       key={s.key}
@@ -1720,20 +1919,20 @@ export default function WorkforceEmploymentsPage() {
                 readOnly={loginEditSatelliteKeys.length === 0}
               />
             </label>
-            {workspaceOrgId ? (
+            {workspaceOrgNo ? (
               <div>
                 <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
                   {t("organizationIdLabel")}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <code className="break-all rounded bg-[#F4F6F7] px-2 py-1 font-mono text-[12px] text-[#2C3E50]">
-                    {workspaceOrgId}
+                    {workspaceOrgNo}
                   </code>
                   <button
                     type="button"
                     className={SECONDARY_BUTTON_CLASS}
                     onClick={() => {
-                      void navigator.clipboard?.writeText(workspaceOrgId).then(() => {
+                      void navigator.clipboard?.writeText(workspaceOrgNo).then(() => {
                         setOrgCopied(true);
                         window.setTimeout(() => setOrgCopied(false), 2000);
                       });

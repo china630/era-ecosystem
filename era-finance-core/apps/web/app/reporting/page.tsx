@@ -8,7 +8,9 @@ import { apiFetch } from "../../lib/api-client";
 import {
   canCloseAccountingPeriod,
   canUsePlDepartmentFilter,
+  CP_PERMISSION,
 } from "../../lib/role-utils";
+import { useOrgPermissions } from "../../lib/use-org-permissions";
 import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { CHART_ACCOUNT_NAMES_AZ } from "../../lib/i18n/chart-account-names-az";
@@ -116,6 +118,8 @@ export default function ReportingPage() {
   const [closeMsg, setCloseMsg] = useState<string | null>(null);
   const canClose = canCloseAccountingPeriod(user?.role ?? undefined);
   const canFilterPlByDepartment = canUsePlDepartmentFilter(user?.role ?? undefined);
+  const { can: canPerm } = useOrgPermissions();
+  const canCompareBooks = canPerm(CP_PERMISSION.API_BOOK_MGMT);
   const [plDepartments, setPlDepartments] = useState<{ id: string; name: string }[]>([]);
   const [plDepartmentId, setPlDepartmentId] = useState("");
   const [exportBusy, setExportBusy] = useState<null | "tb-pdf" | "tb-xlsx" | "pl-pdf" | "pl-xlsx">(null);
@@ -294,9 +298,11 @@ export default function ReportingPage() {
               <Link href="/reporting/account-card" className="text-action hover:text-primary">
                 {t("reporting.accountCard.link")}
               </Link>
-              <Link href="/reporting/compare-books" className="text-action hover:text-primary">
-                {t("compareBooks.title")}
-              </Link>
+              {canCompareBooks ? (
+                <Link href="/reporting/compare-books" className="text-action hover:text-primary">
+                  {t("compareBooks.title")}
+                </Link>
+              ) : null}
               <Link href="/reporting/turnovers" className="text-action hover:text-primary">
                 {t("reporting.turnovers.link")}
               </Link>

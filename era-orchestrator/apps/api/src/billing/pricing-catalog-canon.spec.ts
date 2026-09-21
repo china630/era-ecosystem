@@ -8,6 +8,21 @@ import {
 import { bundleDiscountedPriceAzn } from "../billing/billing-entitlement.util";
 
 describe("pricing catalog freeze", () => {
+  it("XOR platform_domain host vs org pack", () => {
+    expect(
+      applyCatalogMutex(
+        ["platform_domain", "platform_domain_org"],
+        "platform_domain_org",
+      ),
+    ).toEqual(["platform_domain_org"]);
+    expect(
+      applyCatalogMutex(
+        ["platform_domain", "platform_domain_org"],
+        "platform_domain",
+      ),
+    ).toEqual(["platform_domain"]);
+  });
+
   it("XOR data hub and loyalty vs retail promo", () => {
     expect(
       applyCatalogMutex(
@@ -60,12 +75,28 @@ describe("pricing catalog freeze", () => {
     ).toBe(true);
   });
 
-  it("prices Hotel Resort bundle at 188.70 AZN", () => {
+  it("prices Hotel City bundle at 113.40 AZN", () => {
     const priceByKey = new Map([
       ["hotel_core", 29],
       ["hotel_housekeeping", 19],
       ["hotel_migration_pro", 39],
-      ["hotel_distribution", 29],
+      ["hotel_distribution", 39],
+    ]);
+    const keys = [
+      "hotel_core",
+      "hotel_housekeeping",
+      "hotel_migration_pro",
+      "hotel_distribution",
+    ];
+    expect(bundleDiscountedPriceAzn(keys, 10, priceByKey)).toBe(113.4);
+  });
+
+  it("prices Hotel Resort bundle at 197.20 AZN", () => {
+    const priceByKey = new Map([
+      ["hotel_core", 29],
+      ["hotel_housekeeping", 19],
+      ["hotel_migration_pro", 39],
+      ["hotel_distribution", 39],
       ["hotel_guest_experience", 29],
       ["hotel_spa_scheduling", 29],
       ["hotel_banquets", 29],
@@ -81,7 +112,33 @@ describe("pricing catalog freeze", () => {
       "hotel_banquets",
       "hotel_transfers",
     ];
-    expect(bundleDiscountedPriceAzn(keys, 15, priceByKey)).toBe(188.7);
+    expect(bundleDiscountedPriceAzn(keys, 15, priceByKey)).toBe(197.2);
+  });
+
+  it("prices Hotel Sanatorium bundle at 238.48 AZN", () => {
+    const priceByKey = new Map([
+      ["hotel_core", 29],
+      ["hotel_housekeeping", 19],
+      ["hotel_migration_pro", 39],
+      ["hotel_distribution", 39],
+      ["hotel_guest_experience", 29],
+      ["hotel_spa_scheduling", 29],
+      ["hotel_banquets", 29],
+      ["hotel_transfers", 19],
+      ["hotel_medical_sanatorium", 39],
+    ]);
+    const keys = [
+      "hotel_core",
+      "hotel_housekeeping",
+      "hotel_migration_pro",
+      "hotel_distribution",
+      "hotel_guest_experience",
+      "hotel_transfers",
+      "hotel_banquets",
+      "hotel_spa_scheduling",
+      "hotel_medical_sanatorium",
+    ];
+    expect(bundleDiscountedPriceAzn(keys, 12, priceByKey)).toBe(238.48);
   });
 
   it("treats nas and fnb_* as pass-through catalog keys", () => {

@@ -3,7 +3,7 @@
 **Status:** Accepted — **Waves 1–12 + isolation engineering landed** (request tenant; cron orch pool SoR; hotel/clinic request-org stamps; SHARED Sync skip-bind; Placement artifact + host agent apply path). **Still open (do not claim ready):** HOT-06 field SHIPPED, field TENANT Scaffold ✅, Placement field UAT / AC-CP-TOPO Scaffold ✅, edition `ga` / sell SHARED pool.  
 **Date:** 2026-08-27 (honesty closeout Wave 12: 2026-08-28)  
 **Coverage:** HOT-06 stays **HEADLESS**. AC-*-TENANT 🟡, AC-CP-TOPO 🟡, edition `ga` unchanged. See [SaaS-Honesty-Closeout.md](../acceptance/SaaS-Honesty-Closeout.md).  
-**Related:** [deployment-topology.md](./deployment-topology.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [hotel-elektraweb-live-bridge.md](./hotel-elektraweb-live-bridge.md) · [hotel-elektraweb-reverse-folio-post.md](./hotel-elektraweb-reverse-folio-post.md)
+**Related:** [deployment-topology.md](./deployment-topology.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [hotel-elektraweb-live-bridge.md](./hotel-elektraweb-live-bridge.md) · [hotel-elektraweb-reverse-folio-post.md](./hotel-elektraweb-reverse-folio-post.md) · [org-public-number-and-login-host.md](./org-public-number-and-login-host.md) (ERA ID / login Host — accepted, not implemented) · [era-fiscal-kkm-kit.md](./era-fiscal-kkm-kit.md) (KKM/bank POS credentials per org/device, not env)
 
 **Reading path (short):** [docs/SAAS_SHARED_RUNTIME.md](../SAAS_SHARED_RUNTIME.md)
 
@@ -49,7 +49,7 @@ Cron: `runCronForEachTenant` (already in topology ADR).
 
 ### 3. Staff login is per org
 
-`User.login` is unique as `@@unique([organizationId, login])`. Widget and local `/login` in SHARED **must** take `organizationId` (field, query, or hostname map). `findFirst({ login })` across the pool is forbidden.
+`User.login` is unique as `@@unique([organizationId, login])`. Widget and local `/login` in SHARED **must** name the org via public `orgNo` (field / `?org=` / ERA subdomain / paid custom Host) resolving to UUID — [org-public-number-and-login-host.md](./org-public-number-and-login-host.md). `findFirst({ login })` across the pool is forbidden.
 
 ### 4. Vendor dual-run bridge (Elektraweb first; pattern for others)
 

@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "@era/contracts";
 import {
   Body,
   Controller,
@@ -17,9 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -32,20 +31,13 @@ import { ProcurementProtocolsService } from "./procurement-protocols.service";
 @ApiTags("procurement-protocols")
 @ApiBearerAuth("bearer")
 @Controller("procurement/protocols")
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class ProcurementProtocolsController {
   constructor(private readonly protocols: ProcurementProtocolsService) {}
 
   @Get()
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "List procurement protocols" })
   list(
     @OrganizationId() organizationId: string,
@@ -56,13 +48,8 @@ export class ProcurementProtocolsController {
   }
 
   @Post()
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Create procurement protocol (DRAFT)" })
   create(
     @OrganizationId() organizationId: string,
@@ -72,15 +59,8 @@ export class ProcurementProtocolsController {
   }
 
   @Get(":id")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.PROCUREMENT,
-    UserRole.AUDITOR,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Get procurement protocol" })
   get(
     @OrganizationId() organizationId: string,
@@ -90,13 +70,8 @@ export class ProcurementProtocolsController {
   }
 
   @Patch(":id")
-  @Permissions("purchases.manage")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.PROCUREMENT,
-  )
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Update procurement protocol" })
   update(
     @OrganizationId() organizationId: string,
@@ -107,8 +82,8 @@ export class ProcurementProtocolsController {
   }
 
   @Delete(":id")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Delete DRAFT procurement protocol" })
   remove(
     @OrganizationId() organizationId: string,
@@ -118,8 +93,8 @@ export class ProcurementProtocolsController {
   }
 
   @Post(":id/register")
-  @Permissions("purchases.manage")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.DIRECTOR, UserRole.PROCUREMENT)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
   @ApiOperation({ summary: "Register protocol (DRAFT → REGISTERED)" })
   register(
     @OrganizationId() organizationId: string,

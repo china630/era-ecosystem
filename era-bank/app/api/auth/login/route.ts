@@ -1,39 +1,96 @@
 import {
+  ORG_NO_RE,
   authCookieName,
-  hashPassword,
+  enterSatelliteTenant,
+  jsonLoginHostBinding,
+  readStaffLoginJson,
+  resolveSatelliteOrganizationId,
+  resolveStaffLoginTenant,
+  satelliteRuntimeConfig,
   signSatelliteSession,
-  verifyPassword,
+  verifySatelliteUserPassword,
 } from "@era/satellite-kit";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBankRoles } from "@/lib/auth/ensure-system-bank-roles";
+import {
+  ALL_PERMISSIONS,
+  effectiveRolePermissions,
+} from "@/lib/auth/permissions";
+import { hasBankPermissionBypass } from "@/lib/auth/permission-check";
 
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
+  /** SHARED pool: required. Appliance: omit → process bind only. */
+  orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
-    const username = body.login.trim();
+    const rawBody = await readStaffLoginJson(request);
+    if (!rawBody.ok) {
+      return jsonError(rawBody.error, rawBody.status);
+    }
+    const body = schema.parse(rawBody.raw);
+    const tenant = await resolveStaffLoginTenant({
+      orgNo: body.orgNo,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+      request,
+    });
+    if (!tenant.ok) {
+      return jsonError(tenant.error, tenant.status);
+    }
 
-    const user = await prisma.opsUser.findFirst({
-      where: { username },
-      include: { opsRole: true },
+    let organizationId = tenant.organizationId?.trim() || "";
+    if (!organizationId) {
+      try {
+        organizationId = resolveSatelliteOrganizationId().organizationId;
+      } catch {
+        organizationId = "";
+      }
+    }
+
+    // Enter ALS before OpsUser lookup so the Prisma tenant extension cannot
+    // AND-merge leftover process bind (compose ERA_BANK_ORGANIZATION_ID) against
+    // a different orgNo UUID on SHARED.
+    if (organizationId) {
+      enterSatelliteTenant({ organizationId });
+    }
+
+    const username = body.login.trim();
+    const user = organizationId
+      ? await prisma.opsUser.findFirst({
+          where: { organizationId, username },
+          include: { opsRole: true },
+        })
+      : null;
+
+    if (
+      !(await verifySatelliteUserPassword(body.password, {
+        passwordHash: user?.passwordHash ?? "",
+        status: user?.status ?? "CLOSED",
+      })) ||
+      !user
+    ) {
+      return jsonError("Invalid credentials", 401);
+    }
+
+    await ensureSystemBankRoles(prisma, user.organizationId);
+
+    const role = await prisma.opsRole.findUniqueOrThrow({
+      where: { id: user.opsRoleId },
     });
 
-    if (!user || user.status !== "ACTIVE") {
-      return jsonError("Invalid credentials", 401);
-    }
-    if (!user.passwordHash || user.passwordHash === "sso:no-password") {
-      return jsonError("Invalid credentials", 401);
-    }
-
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) {
-      return jsonError("Invalid credentials", 401);
-    }
+    const bypass = hasBankPermissionBypass({
+      login: user.username,
+      role: role.code,
+      isOwner: role.code === "BUSINESS_OWNER",
+    });
+    const permissions = bypass
+      ? [...ALL_PERMISSIONS]
+      : effectiveRolePermissions(role.code, role.permissionsJson);
 
     await prisma.opsSession.create({
       data: {
@@ -45,8 +102,11 @@ export async function POST(request: Request) {
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.username,
-      role: user.opsRole.code,
+      role: role.code,
       fullName: user.fullName,
+      organizationId: user.organizationId,
+      permissions,
+      isOwner: role.code === "BUSINESS_OWNER",
     });
 
     const res = jsonOk({
@@ -54,8 +114,10 @@ export async function POST(request: Request) {
         id: user.id,
         login: user.username,
         fullName: user.fullName,
-        role: user.opsRole.code,
+        role: role.code,
         branchId: user.branchId,
+        organizationId: user.organizationId,
+        permissions,
       },
       token,
     });
@@ -71,4 +133,8 @@ export async function POST(request: Request) {
   } catch (err) {
     return handleRouteError(err);
   }
+}
+
+export async function GET(request: Request) {
+  return jsonLoginHostBinding(request);
 }

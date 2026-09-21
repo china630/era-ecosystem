@@ -4,8 +4,10 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
-import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../../lib/role-utils";
 import { useLedger } from "../../../lib/ledger-context";
 import {
   CARD_CONTAINER_CLASS,
@@ -40,16 +42,20 @@ type OrgSettings = {
     tax?: {
       asanUserId?: string | null;
     };
+    hr?: {
+      emasMode?: "OFF" | "SELECTIVE" | "FULL";
+      internalRateVisibleToHrManager?: boolean;
+    };
   };
 };
 
 export default function OrganizationSettingsPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
+  const perms = useOrgPermissions();
   const { ledgerType, accountingBookId, activeBook } = useLedger();
-  const canEditGeneral = user?.role === "OWNER" || user?.role === "ADMIN";
-  const canEditPeriodLock = user?.role === "OWNER" || user?.role === "ACCOUNTANT";
+  const canEditGeneral = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);
+  const canEditPeriodLock = perms.can(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE);
   const canOpenPage = canEditGeneral || canEditPeriodLock;
 
   const [tab, setTab] = useState<"general" | "policy">("general");
@@ -66,6 +72,9 @@ export default function OrganizationSettingsPage() {
   const [taxId, setTaxId] = useState("");
   const [lockedPeriodUntil, setLockedPeriodUntil] = useState("");
   const [asanUserId, setAsanUserId] = useState("");
+  const [emasMode, setEmasMode] = useState<"OFF" | "SELECTIVE" | "FULL">("OFF");
+  const [internalRateVisibleToHrManager, setInternalRateVisibleToHrManager] =
+    useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -94,6 +103,15 @@ export default function OrganizationSettingsPage() {
         "",
     );
     setAsanUserId(o.settings?.tax?.asanUserId ?? "");
+    setEmasMode(
+      o.settings?.hr?.emasMode === "SELECTIVE" ||
+        o.settings?.hr?.emasMode === "FULL"
+        ? o.settings.hr.emasMode
+        : "OFF",
+    );
+    setInternalRateVisibleToHrManager(
+      o.settings?.hr?.internalRateVisibleToHrManager === true,
+    );
     setLoading(false);
   }, [token, ledgerType, accountingBookId]);
 
@@ -118,6 +136,8 @@ export default function OrganizationSettingsPage() {
         logoUrl: logoUrl || null,
         valuationMethod,
         asanUserId: asanUserId.trim() || null,
+        emasMode,
+        internalRateVisibleToHrManager,
       }),
     });
     setSaving(false);
@@ -340,6 +360,71 @@ export default function OrganizationSettingsPage() {
                   />
                   <span className="mt-1 block text-xs text-[#7F8C8D]">
                     {t("orgSettings.asanUserIdHelp")}
+                  </span>
+                </label>
+                <div className="max-w-md">
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("orgSettings.emasMode", "ƏMAS mode")}
+                    value={emasMode}
+                    onChange={(next) => {
+                      const v = Array.isArray(next) ? next[0] ?? "OFF" : String(next ?? "OFF");
+                      if (v === "OFF" || v === "SELECTIVE" || v === "FULL") {
+                        setEmasMode(v);
+                      }
+                    }}
+                    options={[
+                      {
+                        value: "OFF",
+                        label: t("orgSettings.emasModeOff", "OFF — no queue"),
+                      },
+                      {
+                        value: "SELECTIVE",
+                        label: t(
+                          "orgSettings.emasModeSelective",
+                          "SELECTIVE — FIN-eligible only",
+                        ),
+                      },
+                      {
+                        value: "FULL",
+                        label: t(
+                          "orgSettings.emasModeFull",
+                          "FULL — queue all (warn without FIN)",
+                        ),
+                      },
+                    ]}
+                    disabled={!canEditGeneral}
+                  />
+                  <span className="mt-1 block text-xs text-[#7F8C8D]">
+                    {t(
+                      "orgSettings.emasModeHelp",
+                      "Per legal entity / VÖEN. Manual portal queue only — S2S stays off until gateway is configured.",
+                    )}
+                  </span>
+                </div>
+                <label className="flex max-w-md items-start gap-2 text-sm text-[#34495E]">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={internalRateVisibleToHrManager}
+                    onChange={(e) =>
+                      setInternalRateVisibleToHrManager(e.target.checked)
+                    }
+                    disabled={!canEditGeneral}
+                  />
+                  <span>
+                    <span className="font-medium">
+                      {t(
+                        "orgSettings.internalRateVisibleToHrManager",
+                        "Show MGMT internal rate to HR_MANAGER",
+                      )}
+                    </span>
+                    <span className="mt-1 block text-xs text-[#7F8C8D]">
+                      {t(
+                        "orgSettings.internalRateVisibleToHrManagerHelp",
+                        "When enabled, HR_MANAGER sees grey FOT (internal rate). ACCOUNTANT never sees internal rate.",
+                      )}
+                    </span>
                   </span>
                 </label>
               </section>

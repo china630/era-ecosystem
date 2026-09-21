@@ -10,7 +10,8 @@ import {
 } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
-import { useOpsMe } from "@/components/ops/useOpsMe";
+import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 import { OpsError, StatusBadge, formatAznMinor } from "@/components/ops-ui";
 import {
   loadAccountOptions,
@@ -264,7 +265,7 @@ export function DepositDetailModal({
   const tCommon = useTranslations("common");
   const { mutationsDisabled } = useEodLock();
   const me = useOpsMe();
-  const canApprove = me?.canApprove === true;
+  const canApprove = meCan(me, PERMISSIONS.DEPOSITS_APPROVE);
   const [data, setData] = useState<DepositDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
+import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import {
   CARD_CONTAINER_CLASS,
@@ -22,15 +23,16 @@ type PostingRoleRow = {
   overrideId: string | null;
 };
 
-function canEditPostingRoles(role: string | null | undefined): boolean {
-  return role === "OWNER" || role === "ADMIN" || role === "ACCOUNTANT";
+function canEditPostingRoles(canPost: boolean): boolean {
+  return canPost;
 }
 
 export default function PostingRolesPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { user } = useAuth();
-  const canEdit = canEditPostingRoles(user?.role);
+  const { canPostAccounting } = useOrgPermissions();
+  const canEdit = canEditPostingRoles(canPostAccounting);
 
   const [rows, setRows] = useState<PostingRoleRow[]>([]);
   const [loading, setLoading] = useState(true);

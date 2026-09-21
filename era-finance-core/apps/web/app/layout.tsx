@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { Providers } from "./providers";
 import { AppShell } from "./app-shell";
 import { ExtensionBridge } from "../components/extension-bridge";
-import { isBarePublicWebPath, isPublicWebPath } from "../lib/public-routes";
+import { isBarePublicWebPath, isChromelessAppPath, isPublicWebPath } from "../lib/public-routes";
 
 /** Auth and pathname come from middleware; avoid stale static layout without `x-erafinance-pathname`. */
 export const dynamic = "force-dynamic";
@@ -26,13 +26,14 @@ export default async function RootLayout({
   const pathname = headerStore.get("x-erafinance-pathname") ?? "";
   const publicPath = isPublicWebPath(pathname);
   const barePublicLayout = isBarePublicWebPath(pathname);
+  const chromeless = isChromelessAppPath(pathname);
 
   return (
     <html lang="az" suppressHydrationWarning>
       <body style={{ fontFamily: "system-ui", margin: 0 }}>
         <ExtensionBridge />
         <Providers>
-          {barePublicLayout || (publicPath && !token) ? (
+          {barePublicLayout || chromeless || (publicPath && !token) ? (
             children
           ) : (
             <Suspense fallback={<div className="min-h-screen bg-[#EBEDF0]" />}>

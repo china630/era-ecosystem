@@ -1,5 +1,5 @@
 import { Decimal } from "@erafinance/database";
-import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
+import { createMockAccountingBooks, createMockPostingResolver } from "../helpers/mock-posting-resolver";
 import { BankingService } from "../../src/banking/banking.service";
 
 describe("BankingService treasury operations", () => {
@@ -44,6 +44,7 @@ describe("BankingService treasury operations", () => {
       prisma,
       {} as any,
       accounting,
+      createMockAccountingBooks(),
       {} as any,
       {} as any,
       createMockPostingResolver(),

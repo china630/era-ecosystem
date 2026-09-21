@@ -9,7 +9,10 @@
     "loginIdLabel": "Username",
     "passwordLabel": "Password",
     "submitLabel": "Sign in",
-    "loginFailed": "Invalid username or password"
+    "loginFailed": "Invalid username or password",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank."
   },
   "login": {
     "subtitle": "Local ops login — branch-bound staff",
@@ -73,7 +76,8 @@
     "card3ds": "3DS challenges",
     "cardAtm": "ATM network",
     "markets": "Markets FO",
-    "amlCases": "AML cases"
+    "amlCases": "AML cases",
+    "access": "Access matrix"
   },
   "home": {
     "title": "Bank operations",
@@ -92,14 +96,16 @@
     "eodLockBanner": "EOD is {status} — mutations blocked until batch completes.",
     "filterReset": "Reset",
     "rowsPerPage": "Rows per page",
-    "pageOf": "Page {page} of {pages} ({total})",
+    "pageOf": "Page '{'page'}' of '{'pages'}' ({'{'total'}'})",
     "prev": "Previous",
     "next": "Next",
     "actions": "Actions",
     "search": "Search",
     "all": "All",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "loadError": "Failed to load",
+    "saveError": "Failed to save"
   },
   "pages": {
     "cif": {
@@ -1046,5 +1052,37 @@
     "empty": "No notifications",
     "markAll": "Mark all read",
     "close": "Close"
+  },
+  "settingsAccess": {
+    "title": "Role access",
+    "subtitle": "Configure which permissions each bank ops role has. BRANCH_MANAGER follows the matrix (no bypass).",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset defaults",
+    "delete": "Delete role",
+    "deleteInUse": "Reassign users before deleting",
+    "newCode": "Code",
+    "newName": "Display name",
+    "cloneFrom": "Clone from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "sessionRefreshed": "Session permissions refreshed",
+    "assignTitle": "Assign staff role",
+    "assignUser": "Staff user",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groupScreens": "Screens",
+    "groupCore": "Core / GL",
+    "groupPayments": "Payments / cash",
+    "groupProducts": "Products",
+    "groupCards": "Cards",
+    "groupAml": "AML / reports",
+    "groupTreasury": "Treasury / risk",
+    "groupAdmin": "Admin"
   }
 }

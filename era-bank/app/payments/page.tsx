@@ -14,7 +14,8 @@ import {
 } from "@era/satellite-kit/ui";
 import { BankDataGrid } from "@/components/BankDataGrid";
 import { OpsModalShell, useOpsModal } from "@/components/ops";
-import { useOpsMe } from "@/components/ops/useOpsMe";
+import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 import {
   PaymentCreateModal,
   PaymentDetailModal,
@@ -47,7 +48,7 @@ function PaymentsPageInner() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [inboundCurrency, setInboundCurrency] = useState("AZN");
-  const canApprove = me?.canApprove === true;
+  const canApprove = meCan(me, PERMISSIONS.PAYMENTS_APPROVE);
 
   useEffect(() => {
     const id = searchParams.get("id");

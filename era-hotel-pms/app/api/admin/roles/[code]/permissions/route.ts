@@ -14,6 +14,7 @@ import {
   type RoleCode,
 } from "@/lib/auth/permissions";
 import { isSystemHotelRoleCode } from "@/lib/hotel-roles";
+import { HOTEL_PERMISSION_CATALOG_VERSION } from "@/lib/auth/ensure-system-hotel-roles";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { recordHotelAudit } from "@/lib/satellite-audit";
@@ -95,7 +96,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const before = parsePermissions(role.permissionsJson);
     const updated = await prisma.role.update({
       where: { id: role.id },
-      data: { permissionsJson: serializePermissions(next) },
+      data: {
+        permissionsJson: serializePermissions(next),
+        permissionCatalogVersion: HOTEL_PERMISSION_CATALOG_VERSION,
+      },
     });
 
     await recordHotelAudit(

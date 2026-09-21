@@ -11,7 +11,7 @@ import {
 } from "./design-system";
 
 export function ModalShell({
-  open,
+  open = true,
   title,
   subtitle,
   onClose,
@@ -23,7 +23,8 @@ export function ModalShell({
   footerClassName = "mt-4 shrink-0 border-t border-[#D5DADF] pt-4",
   closeLabel = "Close",
 }: {
-  open: boolean;
+  /** When omitted, the shell is open (typical `{show ? <ModalShell>` mounts). */
+  open?: boolean;
   title: string;
   subtitle?: string;
   onClose: () => void;

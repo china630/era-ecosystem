@@ -11,8 +11,9 @@ Port **3210**. Ops satellite — **no ledger in `era_bank` DB**.
 
 | Path | Notes |
 |------|-------|
-| `/login` | Local ops users |
-| `/sso/callback` | Owner SSO from orchestrator |
+| `/login` | Local ops users — SHARED `orgNo` (ERA ID), Host bind, JWT UUID |
+| `GET /api/auth/login` | Host-binding hint (`hostBound`) |
+| `/sso/callback` | Owner SSO from orchestrator (ticket UUID) |
 
 ## Ops UI
 
@@ -29,6 +30,7 @@ Port **3210**. Ops satellite — **no ledger in `era_bank` DB**.
 | `/cards`, `/card-txns` | `/api/cards/*`, `/api/card-txns/*` |
 | `/treasury` | `/api/treasury/*` |
 | `/admin/branches`, `/admin/product-factory`, `/admin/eod` | admin proxies |
+| `/admin/access` | `/api/admin/roles`, `…/permissions`, `/api/admin/users`, refresh-permissions — Variant A (`admin:access_manage` + `screen:admin.access`) |
 | `/cash` | `/api/cash/*` (`banking_cash`) |
 | `/fees` | `/api/fees/*` (tariffs / SDB / packages) |
 | `/payments/extras` | `/api/payments/standing-orders|virtual-accounts|cheques|sweep-rules` |

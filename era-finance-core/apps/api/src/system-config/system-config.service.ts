@@ -74,6 +74,9 @@ export type MeterUnitPricing = {
   pricePerWhatsappAlertAzn: number;
   pricePerInvoiceAzn: number;
   pricePerOcrPageAzn: number;
+  pricePerTradeCreditBuyerAzn: number;
+  /** Phase 2b registry deep-check (~1–3 AZN). */
+  pricePerTradeCreditEnrichAzn: number;
 };
 
 const DEFAULT_METER_UNIT_PRICING: MeterUnitPricing = {
@@ -82,6 +85,8 @@ const DEFAULT_METER_UNIT_PRICING: MeterUnitPricing = {
   pricePerWhatsappAlertAzn: 0.05,
   pricePerInvoiceAzn: 0,
   pricePerOcrPageAzn: 0.02,
+  pricePerTradeCreditBuyerAzn: 1,
+  pricePerTradeCreditEnrichAzn: 2,
 };
 
 @Injectable()
@@ -245,6 +250,14 @@ export class SystemConfigService {
         ),
         pricePerInvoiceAzn: 0,
         pricePerOcrPageAzn: toPositiveNum(o.pricePerOcrPageAzn, DEFAULT_METER_UNIT_PRICING.pricePerOcrPageAzn),
+        pricePerTradeCreditBuyerAzn: toPositiveNum(
+          o.pricePerTradeCreditBuyerAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerTradeCreditBuyerAzn,
+        ),
+        pricePerTradeCreditEnrichAzn: toPositiveNum(
+          o.pricePerTradeCreditEnrichAzn,
+          DEFAULT_METER_UNIT_PRICING.pricePerTradeCreditEnrichAzn,
+        ),
       };
     }
     return { ...DEFAULT_METER_UNIT_PRICING };
@@ -270,6 +283,14 @@ export class SystemConfigService {
         patch.pricePerOcrPageAzn !== undefined
           ? Math.max(0, patch.pricePerOcrPageAzn)
           : current.pricePerOcrPageAzn,
+      pricePerTradeCreditBuyerAzn:
+        patch.pricePerTradeCreditBuyerAzn !== undefined
+          ? Math.max(0, patch.pricePerTradeCreditBuyerAzn)
+          : current.pricePerTradeCreditBuyerAzn,
+      pricePerTradeCreditEnrichAzn:
+        patch.pricePerTradeCreditEnrichAzn !== undefined
+          ? Math.max(0, patch.pricePerTradeCreditEnrichAzn)
+          : current.pricePerTradeCreditEnrichAzn,
     };
     await this.setJson(METER_UNIT_PRICING_KEY, next);
     return next;

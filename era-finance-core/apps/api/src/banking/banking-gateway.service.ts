@@ -8,6 +8,7 @@ import { Inject } from "@nestjs/common";
 import { Decimal, UserRole } from "@erafinance/database";
 import { AuditService } from "../audit/audit.service";
 import { assertMayAccessPayrollFinance } from "../auth/policies/hr-payroll.policy";
+import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
 import { PrismaService } from "../prisma/prisma.service";
 import { ProviderRegistryService, type BankingProviderKey } from "./bank-providers/provider-registry.service";
 import { AbbAdapter } from "./bank-providers/abb.adapter";
@@ -190,7 +191,10 @@ export class BankingGatewayService {
     };
   }
 
-  async prepareSalaryRegistry(registryId: string, actingUserRole: UserRole) {
+  async prepareSalaryRegistry(
+    registryId: string,
+    actingUserRole: UserRole | PolicySubject,
+  ) {
     assertMayAccessPayrollFinance(actingUserRole);
     const registry = await (this.prisma as any).salaryRegistry.findUnique({
       where: { id: registryId },

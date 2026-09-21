@@ -13,7 +13,7 @@
 | Авторизация | `Role.permissionsJson` (valid JSON array is authoritative, incl. empty) + session grants |
 | Квоты | `POST /api/admin/users` → licensing check |
 | SSO | `POST /api/auth/sso/exchange` → `Financial_Auditor`, `isCrossSystem=true` |
-| Access matrix | `/settings/access` (`access:manage`); clone custom roles |
+| Access matrix | `/settings/access` (`admin:access_manage`); clone custom roles |
 
 ERP **не хранит** пароли портье и горничных.
 
@@ -34,21 +34,25 @@ ERP **не хранит** пароли портье и горничных.
 
 ## Permissions (кратко)
 
+Fleet-canon keys (Wave 2). Map: `src/lib/auth/hotel-permission-rename.ts`.
+
 | Permission | Типичные роли |
 |------------|---------------|
-| `reservations:read/write/checkin/checkout/cancel` | Reception, Manager, NightAuditor |
-| `folio:read/charge/payment` | Reception, Manager |
-| `folio:void` | Manager, Hotel_Admin |
-| `rooms:status` | Reception, Housekeeper, Manager |
-| `housekeeping:manage` | Housekeeper, Manager |
-| `medical:manage` | Doctor |
-| `channel:manage` | CRM, Manager |
-| `night_audit:run` | NightAuditor, Manager |
-| `master_data:manage` | Hotel_Admin, Manager |
-| `users:manage` | Hotel_Admin |
-| `access:manage` | Hotel_Admin (matrix UI `/settings/access`) |
-| `reports:read` | NightAuditor, Financial_Auditor |
-| `cash:shift` | Reception, NightAuditor, Financial_Auditor |
+| `api:reservations.read/write/checkin/checkout/cancel` | Reception, Manager, NightAuditor |
+| `api:folio.read/charge/payment` | Reception, Manager |
+| `api:folio.void` | Manager, Hotel_Admin |
+| `api:rooms.status` | Reception, Housekeeper, Manager |
+| `api:housekeeping.manage` | Housekeeper, Manager |
+| `api:medical.manage` | Doctor |
+| `api:channel.manage` | CRM, Manager |
+| `api:night_audit.run` | NightAuditor, Manager |
+| `admin:master_data` | Hotel_Admin, Manager |
+| `admin:users` | Hotel_Admin |
+| `admin:access_manage` | Hotel_Admin (matrix UI `/settings/access`) |
+| `api:reports.read` | NightAuditor, Financial_Auditor |
+| `api:cash.shift` | Reception, NightAuditor, Financial_Auditor |
+| `api:import.elektraweb` | Hotel_Admin, Manager (+ SKU) |
+| `api:integration.elektraweb_bridge` | Hotel_Admin, Manager, Reception, NightAuditor |
 
 ## API auth
 
@@ -58,8 +62,8 @@ ERP **не хранит** пароли портье и горничных.
 | POST | `/api/auth/logout` | JWT |
 | GET | `/api/auth/me` | JWT |
 | POST | `/api/auth/sso/exchange` | да (подпись HMAC) |
-| POST | `/api/admin/users` | `users:manage` + seat check |
-| POST | `/api/folios/charges/:chargeId/void` | `folio:void` |
+| POST | `/api/admin/users` | `admin:users` + seat check |
+| POST | `/api/folios/charges/:chargeId/void` | `api:folio.void` |
 
 Middleware ([`middleware.ts`](../../middleware.ts)): все `/api/*` кроме login, sso/exchange, `mock-receiver`, `mock-licensing` требуют JWT. Route handlers дополнительно вызывают `assertPermission`.
 
@@ -87,16 +91,16 @@ Middleware ([`middleware.ts`](../../middleware.ts)): все `/api/*` кроме 
 |------|------------|
 | `/login` | публичный |
 | `/` | chessboard |
-| `/bookings/new` | `reservations:write` |
-| `/folio/[reservationId]` | `folio:read` |
-| `/admin/users` | `users:manage` |
-| `/admin/master-data` | `master_data:manage` |
-| `/housekeeping` | `housekeeping:manage` |
-| `/operations` | `night_audit:run` |
-| `/channel` | `channel:manage` |
-| `/medical` | `medical:manage` |
-| `/room-plan` | `reservations:read` |
-| `/reports/occupancy` | `reports:read` |
+| `/bookings/new` | `api:reservations.write` |
+| `/folio/[reservationId]` | `api:folio.read` |
+| `/admin/users` | `admin:users` |
+| `/admin/master-data` | `admin:master_data` |
+| `/housekeeping` | `api:housekeeping.manage` |
+| `/operations` | `api:night_audit.run` |
+| `/channel` | `api:channel.manage` |
+| `/medical` | `api:medical.manage` |
+| `/room-plan` | `api:reservations.read` |
+| `/reports/occupancy` | `api:reports.read` |
 
 ## Env
 

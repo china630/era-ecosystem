@@ -1,12 +1,13 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { AbsenceTypesService } from "./absence-types.service";
 
@@ -17,8 +18,8 @@ export class AbsenceTypesController {
   constructor(private readonly types: AbsenceTypesService) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_REPORTS_NAS)
   @ApiOperation({
     summary:
       "Məzuniyyət növləri (AZ); boşdursa — TK AР üzrə standart dəst avtomatik yaradılır",

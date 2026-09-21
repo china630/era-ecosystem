@@ -71,14 +71,27 @@ export async function getCurrentShift() {
   });
 }
 
-export async function openShift(userId?: string | null) {
+export async function openShift(
+  userId?: string | null,
+  bind?: { fiscalDeviceId?: string | null; bankTerminalId?: string | null },
+) {
   const existing = await getCurrentShift();
   if (existing) return existing;
+  const { resolveDefaultDevicesForSatellite, assertLiveFiscalReady } =
+    await import("@era/satellite-kit");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const organizationId = requestOrganizationId();
+  if (process.env.ERA_FISCAL_LIVE === "true") {
+    assertLiveFiscalReady({ organizationId });
+  }
+  const defaults = resolveDefaultDevicesForSatellite({ organizationId });
   return prisma.clinicShift.create({
     data: {
       code: `SHIFT-${Date.now()}`,
       status: "OPEN",
       openedByUserId: userId ?? null,
+      fiscalDeviceId: bind?.fiscalDeviceId ?? defaults.fiscalDeviceId ?? null,
+      bankTerminalId: bind?.bankTerminalId ?? defaults.bankTerminalId ?? null,
     },
   });
 }

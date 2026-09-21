@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   BadRequestException,
   Body,
@@ -14,10 +17,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { isDepartmentHeadRole } from "../auth/policies/hr-payroll.policy";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
@@ -37,14 +38,8 @@ export class TimesheetController {
   ) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary: "Табель за месяц (по умолчанию создаёт черновик). create=false — только чтение",
   })
@@ -79,14 +74,8 @@ export class TimesheetController {
   }
 
   @Post(":id/autofill")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary:
       "Автозаполнение: WORK в рабочие дни, OFF в выходные (АР 2026 — производственный календарь)",
@@ -104,14 +93,8 @@ export class TimesheetController {
   }
 
   @Post(":id/sync-absences")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({
     summary: "Синхронизация утверждённых отпусков/больничных (ячейки блокируются)",
   })
@@ -128,14 +111,8 @@ export class TimesheetController {
   }
 
   @Patch(":id/entries/batch")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Пакетное обновление диапазона дней для сотрудника" })
   async batch(
     @OrganizationId() organizationId: string,
@@ -156,14 +133,8 @@ export class TimesheetController {
   }
 
   @Post(":id/approve")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Утвердить табель (READ_ONLY)" })
   async approve(
     @OrganizationId() organizationId: string,
@@ -178,14 +149,8 @@ export class TimesheetController {
   }
 
   @Post(":id/approve-mass")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_HR_CARD)
   @ApiOperation({ summary: "Массово утвердить сотрудников в табеле (scope-aware)" })
   async approveMass(
     @OrganizationId() organizationId: string,

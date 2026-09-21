@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -10,9 +13,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import {
   CreateDiscountRuleDto,
@@ -25,7 +26,7 @@ import { PriceListsService } from "./price-lists.service";
 @ApiTags("price-lists")
 @ApiBearerAuth("bearer")
 @Controller("price-lists")
-@UseGuards(RolesGuard)
+@UseGuards(PermissionsGuard)
 export class PriceListsController {
   constructor(private readonly priceLists: PriceListsService) {}
 
@@ -70,7 +71,7 @@ export class PriceListsController {
   }
 
   @Post("discount-rules")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create discount rule" })
   createDiscountRule(
     @OrganizationId() orgId: string,
@@ -80,7 +81,7 @@ export class PriceListsController {
   }
 
   @Patch("discount-rules/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Update discount rule" })
   updateDiscountRule(
     @OrganizationId() orgId: string,
@@ -91,7 +92,7 @@ export class PriceListsController {
   }
 
   @Delete("discount-rules/:id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Deactivate discount rule" })
   removeDiscountRule(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.priceLists.removeDiscountRule(orgId, id);
@@ -104,14 +105,14 @@ export class PriceListsController {
   }
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create price list" })
   create(@OrganizationId() orgId: string, @Body() dto: CreatePriceListDto) {
     return this.priceLists.create(orgId, dto);
   }
 
   @Patch(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Update price list" })
   update(
     @OrganizationId() orgId: string,
@@ -122,7 +123,7 @@ export class PriceListsController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Deactivate price list" })
   remove(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.priceLists.remove(orgId, id);

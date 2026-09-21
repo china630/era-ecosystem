@@ -1,3 +1,6 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
   Body,
   Controller,
@@ -12,9 +15,7 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { OrganizationKind, UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+import { OrganizationKind } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { AccountsService } from "./accounts.service";
@@ -89,8 +90,8 @@ export class AccountsController {
   }
 
   @Post("ifrs-mirror")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Ops escape hatch: clone NAS CoA codes into IFRS (not onboarding default — P1 uses TemplateIFRSMapping)",
@@ -100,8 +101,8 @@ export class AccountsController {
   }
 
   @Post("ifrs-provision")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary:
       "Provision IFRS accounts + LedgerMappingSet from TemplateIFRSMapping (idempotent)",
@@ -111,8 +112,8 @@ export class AccountsController {
   }
 
   @Post("ifrs")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create an IFRS account in the org chart" })
   createIfrs(
     @OrganizationId() organizationId: string,
@@ -122,8 +123,8 @@ export class AccountsController {
   }
 
   @Post("import-from-template")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({
     summary: "Импортировать NAS-счёт из глобального шаблона в план организации",
   })
@@ -138,8 +139,8 @@ export class AccountsController {
   }
 
   @Post("bank-accounts")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Create a bank ledger account (221.xx)" })
   createBankAccount(
     @OrganizationId() organizationId: string,

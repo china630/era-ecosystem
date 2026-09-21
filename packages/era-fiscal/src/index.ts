@@ -1,40 +1,94 @@
-import { CybernetFiscalDriverStub } from "./drivers/cybernet-stub";
+import {
+  fiscalize,
+  listDevicesForContext,
+  refundForSatellite,
+  saleForSatellite,
+  voidForSatellite,
+} from "./facade";
+import {
+  listDevices,
+  resolveDefaultDevices,
+} from "./defaults";
+import {
+  createMemoryDeviceDirectory,
+  getDeviceDirectory,
+  resetDeviceDirectoryForTests,
+  setDeviceDirectory,
+  type DeviceDirectory,
+} from "./device-directory";
+import {
+  createMemoryIdempotencyStore,
+  getIdempotencyStore,
+  resetIdempotencyStoreForTests,
+  setIdempotencyStore,
+} from "./idempotency";
+import {
+  resolveFiscalDriver,
+  resolveFiscalDriverByProvider,
+  resolveFiscalProviderName,
+} from "./drivers/registry";
 import { MockFiscalDriver } from "./drivers/mock";
 import { NbcFiscalDriverStub } from "./drivers/nbc-stub";
 import { NbcFiscalDriverHttp } from "./drivers/nbc-http";
-import type { FiscalDriver, FiscalizeInput, FiscalizeResult } from "./types";
+import { CybernetFiscalDriverStub } from "./drivers/cybernet-stub";
+import { CybernetFiscalDriverHttp } from "./drivers/cybernet-http";
+import { OmnitechFiscalDriver } from "./drivers/omnitech";
 
-export type { FiscalDriver, FiscalizeInput, FiscalizeResult };
+export type {
+  FiscalDeviceKind,
+  FiscalDeviceStatus,
+  FiscalDeviceRef,
+  FiscalContext,
+  SaleLine,
+  Tender,
+  SaleInput,
+  SaleResult,
+  RefundInput,
+  VoidInput,
+  DeviceShiftInput,
+  DeviceReportResult,
+  BankAuthInput,
+  BankAuthResult,
+  DeviceStatusResult,
+  FiscalizeInput,
+  FiscalizeResult,
+  SaleForSatelliteOutcome,
+  FiscalDriver,
+} from "./types";
 
-const drivers: Record<string, FiscalDriver> = {
-  mock: new MockFiscalDriver(),
-  nbc: process.env.ERA_FISCAL_NBC_URL?.trim()
-    ? new NbcFiscalDriverHttp()
-    : new NbcFiscalDriverStub(),
-  cybernet: new CybernetFiscalDriverStub(),
+export { FiscalError, FISCAL_ERROR } from "./types";
+
+export {
+  fiscalize,
+  saleForSatellite,
+  refundForSatellite,
+  voidForSatellite,
+  listDevices,
+  listDevicesForContext,
+  resolveDefaultDevices,
+  resolveFiscalDriver,
+  resolveFiscalDriverByProvider,
+  resolveFiscalProviderName,
+  getDeviceDirectory,
+  setDeviceDirectory,
+  createMemoryDeviceDirectory,
+  resetDeviceDirectoryForTests,
+  getIdempotencyStore,
+  setIdempotencyStore,
+  createMemoryIdempotencyStore,
+  resetIdempotencyStoreForTests,
+  MockFiscalDriver,
+  NbcFiscalDriverStub,
+  NbcFiscalDriverHttp,
+  CybernetFiscalDriverStub,
+  CybernetFiscalDriverHttp,
+  OmnitechFiscalDriver,
 };
 
-export function resolveFiscalProviderName(env?: NodeJS.ProcessEnv): string {
-  const e = env ?? process.env;
-  return (
-    e.ERA_FISCAL_PROVIDER ??
-    e.KKM_DRIVER ??
-    "mock"
-  )
-    .trim()
-    .toLowerCase();
-}
+export type { DeviceDirectory };
 
-export function resolveFiscalDriver(env?: NodeJS.ProcessEnv): FiscalDriver {
-  const key = resolveFiscalProviderName(env);
-  return drivers[key] ?? drivers.mock;
-}
-
-export async function fiscalize(
-  input: FiscalizeInput,
-  env?: NodeJS.ProcessEnv,
-): Promise<FiscalizeResult> {
-  return resolveFiscalDriver(env).fiscalize(input);
-}
-
-export { MockFiscalDriver, NbcFiscalDriverStub, CybernetFiscalDriverStub };
+export {
+  FISCAL_PROVIDER_CREDENTIAL_SCHEMAS,
+  credentialSchemaForProvider,
+  type ProviderCredentialSchema,
+} from "./credentials";

@@ -168,6 +168,7 @@ describe("AccountingBookService resolution", () => {
         nameRu: "Управленческий",
         nameEn: "Management",
         gaapKind: AccountingBookGaapKind.MANAGEMENT,
+        coaStrategy: "TEMPLATE",
       }),
     ).resolves.toBe(created);
     expect(tx.accountingBook.create).toHaveBeenCalledWith({

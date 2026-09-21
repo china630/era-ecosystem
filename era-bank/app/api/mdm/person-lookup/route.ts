@@ -5,7 +5,10 @@ import {
   normalizeNationalityIso,
   resolveIncomingNameParts,
 } from "@era/satellite-kit";
-import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getRouteSession } from "@/lib/api-utils";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { denyUnlessAnyPermission } from "@/lib/auth/require";
+import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
 
 const schema = z
   .object({
@@ -29,6 +32,15 @@ const schema = z
 /** Resolve MDM global person id from FIN / passport (CIF natural linkage). */
 export async function POST(request: Request) {
   try {
+    const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    const permissions = await permissionsForUserId(session.sub);
+    const denied = denyUnlessAnyPermission(
+      { ...session, permissions },
+      [PERMISSIONS.CIF_READ, PERMISSIONS.CIF_WRITE],
+    );
+    if (denied) return denied;
+
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? "Invalid body", 400);

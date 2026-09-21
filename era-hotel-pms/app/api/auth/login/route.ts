@@ -1,35 +1,47 @@
+import {
+  ORG_NO_RE,
+  burnPasswordVerifyCost,
+  enterSatelliteTenant,
+  jsonLoginHostBinding,
+  readStaffLoginJson,
+  resolveStaffLoginTenant,
+  satelliteRuntimeConfig,
+} from "@era/satellite-kit";
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { verifyPassword } from "@/lib/auth/password";
 import { signToken } from "@/lib/auth/jwt";
 import { getUserByLogin, userPermissions } from "@/lib/services/user.service";
 import { prisma } from "@/lib/prisma";
-import { enterSatelliteTenant, satelliteRuntimeConfig } from "@era/satellite-kit";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
 
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
   /** SHARED pool: required. Appliance: omit → process bind only. */
-  organizationId: z.string().uuid().optional(),
+  orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
 
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
-    if (
-      satelliteRuntimeConfig().deploymentTopology === "SHARED" &&
-      !body.organizationId?.trim()
-    ) {
-      return Response.json(
-        { error: "organizationId is required on SHARED pool" },
-        { status: 400 },
-      );
+    const rawBody = await readStaffLoginJson(request);
+    if (!rawBody.ok) {
+      return Response.json({ error: rawBody.error }, { status: rawBody.status });
     }
-    const user = await getUserByLogin(body.login, body.organizationId);
+    const body = schema.parse(rawBody.raw);
+    const tenant = await resolveStaffLoginTenant({
+      orgNo: body.orgNo,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+      request,
+    });
+    if (!tenant.ok) {
+      return Response.json({ error: tenant.error }, { status: tenant.status });
+    }
+    const user = await getUserByLogin(body.login, tenant.organizationId);
     if (!user || user.status !== "ACTIVE") {
+      await burnPasswordVerifyCost(body.password);
       return Response.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
@@ -91,4 +103,8 @@ export async function POST(request: Request) {
   } catch (err) {
     return handleRouteError(err);
   }
+}
+
+export async function GET(request: Request) {
+  return jsonLoginHostBinding(request);
 }

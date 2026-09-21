@@ -7,7 +7,7 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
     { key: "hotel_core", name: "Core", pricePerMonth: 29, sortOrder: 110, isPremium: false, satelliteKey: "industry_hotel_pms" },
     { key: "hotel_housekeeping", name: "HK", pricePerMonth: 19, sortOrder: 111, isPremium: false, satelliteKey: "industry_hotel_pms" },
     { key: "hotel_migration_pro", name: "Migration", pricePerMonth: 39, sortOrder: 112, isPremium: true, satelliteKey: "industry_hotel_pms" },
-    { key: "hotel_distribution", name: "Distribution", pricePerMonth: 29, sortOrder: 113, isPremium: false, satelliteKey: "industry_hotel_pms" },
+    { key: "hotel_distribution", name: "Channel Manager (OTA & Direct)", pricePerMonth: 39, sortOrder: 113, isPremium: true, satelliteKey: "industry_hotel_pms" },
     { key: "hotel_guest_experience", name: "Guest", pricePerMonth: 29, sortOrder: 114, isPremium: false, satelliteKey: "industry_hotel_pms" },
     { key: "hotel_spa_scheduling", name: "SPA", pricePerMonth: 29, sortOrder: 115, isPremium: false, satelliteKey: "industry_hotel_pms" },
     { key: "hotel_banquets", name: "Banquets", pricePerMonth: 29, sortOrder: 116, isPremium: false, satelliteKey: "industry_hotel_pms" },
@@ -62,12 +62,14 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
         pricePerWhatsappAlertAzn: 0.05,
         pricePerInvoiceAzn: 0,
         pricePerOcrPageAzn: 0.02,
+        pricePerTradeCreditBuyerAzn: 1,
+        pricePerTradeCreditEnrichAzn: 2,
       },
     });
 
     const resort = out.hospitalityBundles.find((b) => b.marketingId === "hotel_resort");
     expect(resort).toBeDefined();
-    expect(resort?.discountedPriceAzn).toBe(188.7);
+    expect(resort?.discountedPriceAzn).toBe(197.2);
     expect(out.bundles.every((b) => b.marketingId !== "hotel_resort")).toBe(true);
     expect(out.premiumModules.map((m) => m.key)).toEqual(["tax_pro"]);
   });
@@ -84,6 +86,8 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
         pricePerWhatsappAlertAzn: 0.05,
         pricePerInvoiceAzn: 0,
         pricePerOcrPageAzn: 0.02,
+        pricePerTradeCreditBuyerAzn: 1,
+        pricePerTradeCreditEnrichAzn: 2,
       },
     });
     const clinic = out.industryGroups.find((g) => g.satelliteKey === "industry_clinic");
@@ -103,6 +107,8 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
         pricePerWhatsappAlertAzn: 0.05,
         pricePerInvoiceAzn: 0,
         pricePerOcrPageAzn: 0.02,
+        pricePerTradeCreditBuyerAzn: 1,
+        pricePerTradeCreditEnrichAzn: 2,
       },
     });
     expect(out.capacityDrivers.find((d) => d.satelliteKey === "industry_hotel_pms")).toEqual({

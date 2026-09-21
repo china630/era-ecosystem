@@ -18,6 +18,10 @@ import {
 import { EntityAuditHistory } from "../../components/admin/entity-audit-history";
 import { Button } from "../../components/ui/button";
 import { EmasS2sPanel } from "./emas-s2s-panel";
+import { useAuth } from "../../lib/auth-context";
+import { useOrgPermissions } from "../../lib/use-org-permissions";
+import { CP_PERMISSION } from "../../lib/role-utils";
+import { isValidFinCode, normalizeFinInput } from "../../lib/fin-code";
 
 type JobPositionOpt = {
   id: string;
@@ -25,16 +29,27 @@ type JobPositionOpt = {
   department: { id: string; name: string };
 };
 
+const ORCH_WEB_BASE = (
+  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000"
+).replace(/\/$/, "");
+
+function cpTerminateUrl(cpEmploymentId: string): string {
+  return `${ORCH_WEB_BASE}/workspace/workforce/employments?employmentId=${encodeURIComponent(cpEmploymentId)}`;
+}
+
 type EmployeeDetail = {
   id: string;
   kind?: string;
+  cpEmploymentId?: string | null;
   globalPersonId: string;
-  voen?: string | null;
   positionId: string;
   startDate: string;
   salary: unknown;
+  internalRate?: unknown | null;
   contractorMonthlySocialAzn?: unknown | null;
   vacationDaysBalance?: unknown | null;
+  emasEligible?: boolean;
+  voen?: string | null;
   person?: {
     displayName: string | null;
     finMasked: string | null;
@@ -70,6 +85,9 @@ export function EditEmployeeModal({
   onSaved: () => void;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const perms = useOrgPermissions();
+  const canEditInternalRate = perms.can(CP_PERMISSION.API_BOOK_MGMT);
   const [positions, setPositions] = useState<JobPositionOpt[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -86,10 +104,24 @@ export function EditEmployeeModal({
   const [positionId, setPositionId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
+  const [internalRate, setInternalRate] = useState("");
   const [vacationBalanceLabel, setVacationBalanceLabel] = useState("—");
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
+  const [emasEligible, setEmasEligible] = useState(true);
+  const [convertFin, setConvertFin] = useState("");
+  const [convertBusy, setConvertBusy] = useState(false);
+  const [emasMode, setEmasMode] = useState<"OFF" | "SELECTIVE" | "FULL" | null>(
+    null,
+  );
+  const [cpEmploymentId, setCpEmploymentId] = useState<string | null>(null);
 
   const title = useMemo(() => t("employees.editSection"), [t]);
+  const needsFin =
+    emasEligible === false ||
+    !personDisplay?.finMasked ||
+    personDisplay.finMasked === "—";
+  const salaryNum = Number(String(salary).replace(",", "."));
+  const salaryMissing = Number.isFinite(salaryNum) && salaryNum <= 0;
 
   const loadPositions = useCallback(async () => {
     if (!open) return;
@@ -137,6 +169,14 @@ export function EditEmployeeModal({
           ? (r.salary as { toString(): string }).toString()
           : String(r.salary ?? ""),
       );
+      const ir = r.internalRate;
+      setInternalRate(
+        ir != null && typeof ir === "object" && ir !== null && "toString" in ir
+          ? (ir as { toString(): string }).toString()
+          : ir != null
+            ? String(ir)
+            : "",
+      );
       const soc = r.contractorMonthlySocialAzn;
       setContractorSocial(
         soc != null && typeof soc === "object" && soc !== null && "toString" in soc
@@ -147,6 +187,9 @@ export function EditEmployeeModal({
       );
       setVacationBalanceLabel(formatVacationDaysBalance(r.vacationDaysBalance));
       setGlobalPersonId(r.globalPersonId ?? null);
+      setCpEmploymentId(r.cpEmploymentId ?? null);
+      setEmasEligible(r.emasEligible !== false);
+      setConvertFin("");
     } catch {
       setLoadErr(t("employees.loadErr"));
     } finally {
@@ -154,16 +197,61 @@ export function EditEmployeeModal({
     }
   }, [employeeId, open, t, token]);
 
+  const loadOrgEmasMode = useCallback(async () => {
+    if (!open || !token) return;
+    try {
+      const res = await apiFetch("/api/organization/settings");
+      if (!res.ok) return;
+      const o = (await res.json()) as {
+        settings?: { hr?: { emasMode?: string } };
+      };
+      const mode = o.settings?.hr?.emasMode;
+      if (mode === "OFF" || mode === "SELECTIVE" || mode === "FULL") {
+        setEmasMode(mode);
+      } else {
+        setEmasMode("OFF");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [open, token]);
+
   useEffect(() => {
     if (!open) return;
     setTab("form");
     void loadPositions();
-  }, [open, loadPositions]);
+    void loadOrgEmasMode();
+  }, [open, loadPositions, loadOrgEmasMode]);
 
   useEffect(() => {
     if (!open || !employeeId) return;
     void loadEmployee();
   }, [open, employeeId, loadEmployee]);
+
+  async function onConvertToFin() {
+    if (!employeeId || !token || convertBusy) return;
+    const fin = normalizeFinInput(convertFin);
+    if (!isValidFinCode(fin)) {
+      toast.error(t("employees.finInvalidStrict"));
+      return;
+    }
+    setConvertBusy(true);
+    const res = await apiFetch(`/api/hr/employees/${employeeId}/convert-to-fin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ finCode: fin }),
+    });
+    setConvertBusy(false);
+    if (!res.ok) {
+      toast.error(t("employees.convertToFinErr"), {
+        description: await res.text(),
+      });
+      return;
+    }
+    toast.success(t("employees.convertToFinOk"));
+    onSaved();
+    await loadEmployee();
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -188,6 +276,18 @@ export function EditEmployeeModal({
       startDate,
       salary: sal,
     };
+    if (canEditInternalRate) {
+      if (internalRate.trim() !== "") {
+        const ir = Number(String(internalRate).replace(",", "."));
+        if (!Number.isFinite(ir) || ir < 0) {
+          toast.error(t("employees.fillRequired"));
+          return;
+        }
+        body.internalRate = ir;
+      } else {
+        body.internalRate = null;
+      }
+    }
     if (kind === "CONTRACTOR") {
       body.voen = voen.trim();
       body.contractorMonthlySocialAzn =
@@ -270,6 +370,67 @@ export function EditEmployeeModal({
                   defaultValue: "Personal data lives in MDM; edit payroll fields only.",
                 })}
               </p>
+              {cpEmploymentId ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2">
+                  <p className="m-0 text-[13px] font-semibold text-amber-950">
+                    {t("employees.terminateInCp", "Terminate in Control Plane")}
+                  </p>
+                  <p className="m-0 text-[12px] text-amber-900">
+                    {t(
+                      "employees.terminateInCpHint",
+                      "Saving or deleting here updates the Finance payroll mirror only — labor termination and ƏMAS compliance happen in Control Plane Workforce.",
+                    )}
+                  </p>
+                  <a
+                    href={cpTerminateUrl(cpEmploymentId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex"
+                  >
+                    <Button type="button" variant="primary" className={MODAL_FOOTER_BUTTON_CLASS}>
+                      {t("employees.terminateInCp", "Terminate in Control Plane")}
+                    </Button>
+                  </a>
+                </div>
+              ) : null}
+              {needsFin ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2">
+                  <p className="m-0 text-[13px] font-semibold text-amber-950">
+                    {t("employees.convertToFinTitle")}
+                  </p>
+                  <p className="m-0 text-[12px] text-amber-900">
+                    {emasMode === "FULL"
+                      ? t("employees.convertToFinFullHint")
+                      : t("employees.convertToFinHint")}
+                  </p>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className={`${MODAL_FIELD_LABEL_CLASS} min-w-[10rem] flex-1`}>
+                      {t("employees.fin")}
+                      <input
+                        className={`mt-1 block w-full ${MODAL_INPUT_CLASS} font-mono uppercase`}
+                        value={convertFin}
+                        maxLength={7}
+                        onChange={(e) => setConvertFin(normalizeFinInput(e.target.value))}
+                        placeholder="XXXXXXX"
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className={MODAL_FOOTER_BUTTON_CLASS}
+                      disabled={convertBusy}
+                      onClick={() => void onConvertToFin()}
+                    >
+                      {convertBusy ? "…" : t("employees.convertToFinBtn")}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              {salaryMissing ? (
+                <p className="m-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                  {t("employees.salaryZeroCardWarning")}
+                </p>
+              ) : null}
               <div className="rounded-lg border border-[#D5DADF] bg-[#F8FAFB] p-3 text-[13px] text-[#34495E] space-y-1">
                 <div>
                   <span className="text-[#7F8C8D]">{t("employees.thName")}: </span>
@@ -368,6 +529,22 @@ export function EditEmployeeModal({
                     onChange={(e) => setSalary(e.target.value)}
                   />
                 </label>
+                {canEditInternalRate ? (
+                  <label className={MODAL_FIELD_LABEL_CLASS}>
+                    {t("employees.internalRate")}
+                    <input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      className={`mt-1 block w-full ${MODAL_INPUT_NUMERIC_CLASS}`}
+                      value={internalRate}
+                      onChange={(e) => setInternalRate(e.target.value)}
+                    />
+                    <p className="mb-0 mt-1 text-[11px] leading-snug text-[#7F8C8D]">
+                      {t("employees.internalRateHint")}
+                    </p>
+                  </label>
+                ) : null}
                 {kind === "EMPLOYEE" && !loading ? (
                   <div className={`${MODAL_FIELD_LABEL_CLASS} md:col-span-2`}>
                     <span className="text-[#34495E]">{t("employees.vacationDaysAvailable")}</span>

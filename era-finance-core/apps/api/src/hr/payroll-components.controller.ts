@@ -1,8 +1,9 @@
+import { CP_PERMISSION } from "@era/contracts";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
+
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreatePayrollComponentDto } from "./dto/create-payroll-component.dto";
 import { PayrollComponentsService } from "./payroll-components.service";
@@ -22,8 +23,8 @@ export class PayrollComponentsController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_PAYROLL_MONEY)
   @ApiOperation({ summary: "Create custom payroll component (arbitrary code)" })
   create(
     @OrganizationId() organizationId: string,

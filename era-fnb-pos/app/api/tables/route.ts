@@ -1,11 +1,18 @@
 import { z } from "zod";
 import { handleRouteError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
-import { prisma } from "@/lib/prisma";import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/session";
+import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { TILL_READ_TABLES } from "@/lib/auth/read-permission-sets";
 
-export async function GET() {
+export async function GET(request: Request) {
   await assertFnbEntitled();
   try {
+    const session = await getSessionFromRequest(request);
+    const denied = denyUnlessAnyPermission(session, TILL_READ_TABLES);
+    if (denied) return denied;
     const tables = await prisma.posTable.findMany({
       orderBy: { code: "asc" },
       select: {
@@ -36,7 +43,7 @@ export async function POST(request: Request) {
   await assertFnbEntitled();
   try {
     const session = await getSessionFromRequest(request);
-    const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+    const denied = denyUnlessPermission(session, PERMISSIONS.TABLES_MANAGE);
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());

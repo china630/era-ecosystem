@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field, FieldSelect } from "@era/satellite-kit/ui";
@@ -7,6 +8,7 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
+  LINK_ACCENT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { formatMoneyAzn } from "../../../lib/format-money";
@@ -112,6 +114,16 @@ export default function CompareBooksPage() {
         title={t("compareBooks.title")}
         subtitle={t("compareBooks.subtitle")}
       />
+      <p className="text-sm text-slate-600">
+        {t(
+          "compareBooks.mgmtLaborHint",
+          "NAS vs MGMT payroll (FOT) is not GL compare-books — use",
+        )}{" "}
+        <Link href="/hr/mgmt-labor-delta" className={LINK_ACCENT_CLASS}>
+          {t("compareBooks.mgmtLaborLink", "MGMT labor delta")}
+        </Link>
+        .
+      </p>
       <div className={`${CARD_CONTAINER_CLASS} grid gap-3 p-4 md:grid-cols-5`}>
         <FieldSelect
           label={t("compareBooks.bookA")}

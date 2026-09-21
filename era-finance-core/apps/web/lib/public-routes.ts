@@ -8,6 +8,7 @@ export function isPublicWebPath(pathname: string): boolean {
   if (pathname === "/auth/cp-handoff") return true;
   if (pathname.startsWith("/verify/")) return true;
   if (pathname.startsWith("/portal")) return true;
+  if (pathname.startsWith("/buyer")) return true;
   if (pathname.startsWith("/api/")) return true;
   // Reverse proxy to the orchestrator control plane; it enforces its own Bearer auth.
   // The finance edge middleware must not intercept it (e.g. pre-session SSO handoff redeem).
@@ -20,6 +21,12 @@ export function isBarePublicWebPath(pathname: string): boolean {
   if (pathname === "/") return true;
   if (pathname === "/login") return true;
   if (pathname.startsWith("/portal")) return true;
+  if (pathname.startsWith("/buyer")) return true;
   if (pathname.startsWith("/verify/")) return true;
   return false;
+}
+
+/** Authenticated chromeless surfaces (print blanks). */
+export function isChromelessAppPath(pathname: string): boolean {
+  return pathname.startsWith("/print/");
 }
