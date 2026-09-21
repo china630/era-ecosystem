@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations` | 🟡 |
-| Workforce | `/workspace/workforce/*` | 🟡 — month timesheet harden + vacation multi-line; not sell-ready (no UAT-SMOKE). Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED) — [ADR](../adr/evrostar-workforce-pilot.md) |
+| Workforce | `/workspace/workforce/*` | 🟡 — list/modal + server search hygiene (2026-09-21); still not sell-ready (no UAT-SMOKE / not Pilot) |
 | Super-admin | `/super-admin/*` | 🟡 |
 | Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 
@@ -71,3 +71,5 @@ Canon: [`docs/adr/deployment-topology.md`](../adr/deployment-topology.md).
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
 - Forbidden: «SaaS multi-tenant» / «one-click on-prem migrate» while AC-CP-TOPO is not Scaffold ✅ / Pilot-ready. Later TOPO ✅ still does **not** sell the pool without a separate sell claim.
 - Forbidden: treating CP-BIND/CFG/TENANT/PLACE API as Pilot-ready SHARED pool.
+
+| 2026-09-21 | Workforce UI hygiene (53-item inventory): EraListFilterBar, ModalShell chrome, nested shifts/attendance, server `q` FIN+name. UI stays 🟡; Demo/Pilot unchanged; not ga. |
