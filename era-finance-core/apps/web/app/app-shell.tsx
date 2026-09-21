@@ -203,7 +203,6 @@ function QuickActionsMobileFab({
 
 function LedgerToggle() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
   const perms = useOrgPermissions();
   const {
     ready,

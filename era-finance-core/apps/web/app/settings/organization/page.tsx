@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
-import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../../lib/role-utils";
 import { useLedger } from "../../../lib/ledger-context";
@@ -53,7 +52,6 @@ type OrgSettings = {
 export default function OrganizationSettingsPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
-  const { user } = useAuth();
   const perms = useOrgPermissions();
   const { ledgerType, accountingBookId, activeBook } = useLedger();
   const canEditGeneral = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);

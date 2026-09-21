@@ -119,14 +119,14 @@ export const mockGovBudgetService = { checkLimit: jest.fn() } as Record<string, 
 export function createMockAccountingBooks(): AccountingBookService {
   return {
     resolveByIdOrLedgerAlias: jest.fn(
-      async (_organizationId: string, _bookId?: string, alias?: string) => {
+      async (_organizationId: string, bookId?: string, alias?: string) => {
         if (alias === "IFRS") {
-          return { id: "ifrs-book", code: "IFRS", gaapKind: "IFRS" };
+          return { id: bookId ?? "ifrs-book", code: "IFRS", gaapKind: "IFRS" };
         }
         if (alias === "MANAGEMENT") {
-          return { id: "mgmt-book", code: "MGMT", gaapKind: "MANAGEMENT" };
+          return { id: bookId ?? "mgmt-book", code: "MGMT", gaapKind: "MANAGEMENT" };
         }
-        return { id: "nas-book", code: "NAS", gaapKind: "NAS" };
+        return { id: bookId ?? "nas-book", code: "NAS", gaapKind: "NAS" };
       },
     ),
     resolveOpsBookForMoneyPath: jest.fn().mockResolvedValue({

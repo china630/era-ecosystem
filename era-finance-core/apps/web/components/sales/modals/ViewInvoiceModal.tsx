@@ -12,7 +12,6 @@ import { formatMoneyAzn } from "../../../lib/format-money";
 import { formatInvoiceStatus } from "../../../lib/invoice-status";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { CP_PERMISSION, isRestrictedUserRole } from "../../../lib/role-utils";
 import { ActivityPanel } from "../../activity/ActivityPanel";
@@ -109,7 +108,6 @@ export function ViewInvoiceModal({
   const router = useRouter();
   const id = invoiceId ?? "";
   const { token, ready } = useRequireAuth();
-  const { user } = useAuth();
   const perms = useOrgPermissions();
   const mayCommentActivity = !isRestrictedUserRole(perms.subject);
   const { canPostAccounting } = perms;

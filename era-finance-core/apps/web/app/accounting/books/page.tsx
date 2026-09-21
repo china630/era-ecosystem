@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { Field, FieldSelect } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
-import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../../lib/role-utils";
 import {
@@ -51,7 +50,6 @@ const INITIAL_FORM = {
 export default function AccountingBooksPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { user } = useAuth();
   const { refreshBooks } = useLedger();
   const [books, setBooks] = useState<Book[]>([]);
   const [slots, setSlots] = useState<Slots | null>(null);

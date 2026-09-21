@@ -1419,6 +1419,7 @@ model Organization {
   elektrawebBridgePolicy        ElektrawebBridgePolicy?
   clinicCutoverPolicy           ClinicCutoverPolicy?
   clinicCutoverAsHotel          ClinicCutoverPolicy[]              @relation("ClinicCutoverHotelOrg")
+  fiscalHardwareDevices         FiscalHardwareDevice[]
   owner                         User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
   parentOrg                     Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
   departments                   Organization[]                     @relation("OrgParent")
@@ -1461,6 +1462,32 @@ model ClinicCutoverPolicy {
 
   @@index([hotelOrganizationId])
   @@map("clinic_cutover_policies")
+}
+
+/// N KKM + bank POS devices per org (SoR for @era/fiscal). Secrets encrypted at rest.
+model FiscalHardwareDevice {
+  id                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  kind              String       @db.VarChar(32)
+  providerId        String       @map("provider_id") @db.VarChar(64)
+  label             String       @db.VarChar(200)
+  outletCode        String?      @map("outlet_code") @db.VarChar(64)
+  registerCode      String?      @map("register_code") @db.VarChar(64)
+  serial            String?      @db.VarChar(128)
+  externalIdsJson   Json?        @map("external_ids_json")
+  endpoint          String?      @db.VarChar(512)
+  secretsCipher     String?      @map("secrets_cipher") @db.Text
+  status            String       @default("active") @db.VarChar(16)
+  isOrgDefault      Boolean      @default(false) @map("is_org_default")
+  isOutletDefault   Boolean      @default(false) @map("is_outlet_default")
+  isRegisterDefault Boolean      @default(false) @map("is_register_default")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, kind, status])
+  @@index([organizationId, outletCode])
+  @@map("fiscal_hardware_devices")
 }
 
 /// Platform identity (shared `users` table during control-plane migration).

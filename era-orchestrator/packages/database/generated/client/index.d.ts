@@ -279,6 +279,11 @@ export type ElektrawebBridgePolicy = $Result.DefaultSelection<Prisma.$Elektraweb
  */
 export type ClinicCutoverPolicy = $Result.DefaultSelection<Prisma.$ClinicCutoverPolicyPayload>
 /**
+ * Model FiscalHardwareDevice
+ * N KKM + bank POS devices per org (SoR for @era/fiscal). Secrets encrypted at rest.
+ */
+export type FiscalHardwareDevice = $Result.DefaultSelection<Prisma.$FiscalHardwareDevicePayload>
+/**
  * Model User
  * Platform identity (shared `users` table during control-plane migration).
  */
@@ -1842,6 +1847,16 @@ export class PrismaClient<
   get clinicCutoverPolicy(): Prisma.ClinicCutoverPolicyDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.fiscalHardwareDevice`: Exposes CRUD operations for the **FiscalHardwareDevice** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FiscalHardwareDevices
+    * const fiscalHardwareDevices = await prisma.fiscalHardwareDevice.findMany()
+    * ```
+    */
+  get fiscalHardwareDevice(): Prisma.FiscalHardwareDeviceDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
@@ -2667,6 +2682,7 @@ export namespace Prisma {
     Organization: 'Organization',
     ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
     ClinicCutoverPolicy: 'ClinicCutoverPolicy',
+    FiscalHardwareDevice: 'FiscalHardwareDevice',
     User: 'User',
     Holding: 'Holding',
     HoldingMembership: 'HoldingMembership',
@@ -2716,7 +2732,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -6642,6 +6658,80 @@ export namespace Prisma {
           }
         }
       }
+      FiscalHardwareDevice: {
+        payload: Prisma.$FiscalHardwareDevicePayload<ExtArgs>
+        fields: Prisma.FiscalHardwareDeviceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FiscalHardwareDeviceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FiscalHardwareDeviceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          findFirst: {
+            args: Prisma.FiscalHardwareDeviceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FiscalHardwareDeviceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          findMany: {
+            args: Prisma.FiscalHardwareDeviceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>[]
+          }
+          create: {
+            args: Prisma.FiscalHardwareDeviceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          createMany: {
+            args: Prisma.FiscalHardwareDeviceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FiscalHardwareDeviceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>[]
+          }
+          delete: {
+            args: Prisma.FiscalHardwareDeviceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          update: {
+            args: Prisma.FiscalHardwareDeviceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          deleteMany: {
+            args: Prisma.FiscalHardwareDeviceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FiscalHardwareDeviceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.FiscalHardwareDeviceUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>[]
+          }
+          upsert: {
+            args: Prisma.FiscalHardwareDeviceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FiscalHardwareDevicePayload>
+          }
+          aggregate: {
+            args: Prisma.FiscalHardwareDeviceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFiscalHardwareDevice>
+          }
+          groupBy: {
+            args: Prisma.FiscalHardwareDeviceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FiscalHardwareDeviceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FiscalHardwareDeviceCountArgs<ExtArgs>
+            result: $Utils.Optional<FiscalHardwareDeviceCountAggregateOutputType> | number
+          }
+        }
+      }
       User: {
         payload: Prisma.$UserPayload<ExtArgs>
         fields: Prisma.UserFieldRefs
@@ -9319,6 +9409,7 @@ export namespace Prisma {
     organization?: OrganizationOmit
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOmit
     clinicCutoverPolicy?: ClinicCutoverPolicyOmit
+    fiscalHardwareDevice?: FiscalHardwareDeviceOmit
     user?: UserOmit
     holding?: HoldingOmit
     holdingMembership?: HoldingMembershipOmit
@@ -10318,6 +10409,7 @@ export namespace Prisma {
     workforceAttendancePunches: number
     orgUnitCommercialLinks: number
     clinicCutoverAsHotel: number
+    fiscalHardwareDevices: number
     departments: number
     agencyPropertyGrants: number
     buyerOrgGrants: number
@@ -10363,6 +10455,7 @@ export namespace Prisma {
     workforceAttendancePunches?: boolean | OrganizationCountOutputTypeCountWorkforceAttendancePunchesArgs
     orgUnitCommercialLinks?: boolean | OrganizationCountOutputTypeCountOrgUnitCommercialLinksArgs
     clinicCutoverAsHotel?: boolean | OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs
+    fiscalHardwareDevices?: boolean | OrganizationCountOutputTypeCountFiscalHardwareDevicesArgs
     departments?: boolean | OrganizationCountOutputTypeCountDepartmentsArgs
     agencyPropertyGrants?: boolean | OrganizationCountOutputTypeCountAgencyPropertyGrantsArgs
     buyerOrgGrants?: boolean | OrganizationCountOutputTypeCountBuyerOrgGrantsArgs
@@ -10650,6 +10743,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ClinicCutoverPolicyWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountFiscalHardwareDevicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FiscalHardwareDeviceWhereInput
   }
 
   /**
@@ -69845,6 +69945,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
     clinicCutoverAsHotel?: boolean | Organization$clinicCutoverAsHotelArgs<ExtArgs>
+    fiscalHardwareDevices?: boolean | Organization$fiscalHardwareDevicesArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
@@ -69994,6 +70095,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
     clinicCutoverAsHotel?: boolean | Organization$clinicCutoverAsHotelArgs<ExtArgs>
+    fiscalHardwareDevices?: boolean | Organization$fiscalHardwareDevicesArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
@@ -70058,6 +70160,7 @@ export namespace Prisma {
       elektrawebBridgePolicy: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs> | null
       clinicCutoverPolicy: Prisma.$ClinicCutoverPolicyPayload<ExtArgs> | null
       clinicCutoverAsHotel: Prisma.$ClinicCutoverPolicyPayload<ExtArgs>[]
+      fiscalHardwareDevices: Prisma.$FiscalHardwareDevicePayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
       parentOrg: Prisma.$OrganizationPayload<ExtArgs> | null
       departments: Prisma.$OrganizationPayload<ExtArgs>[]
@@ -70538,6 +70641,7 @@ export namespace Prisma {
     elektrawebBridgePolicy<T extends Organization$elektrawebBridgePolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$elektrawebBridgePolicyArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     clinicCutoverPolicy<T extends Organization$clinicCutoverPolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverPolicyArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     clinicCutoverAsHotel<T extends Organization$clinicCutoverAsHotelArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverAsHotelArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    fiscalHardwareDevices<T extends Organization$fiscalHardwareDevicesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$fiscalHardwareDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     parentOrg<T extends Organization$parentOrgArgs<ExtArgs> = {}>(args?: Subset<T, Organization$parentOrgArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     departments<T extends Organization$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -71991,6 +72095,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ClinicCutoverPolicyScalarFieldEnum | ClinicCutoverPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.fiscalHardwareDevices
+   */
+  export type Organization$fiscalHardwareDevicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    where?: FiscalHardwareDeviceWhereInput
+    orderBy?: FiscalHardwareDeviceOrderByWithRelationInput | FiscalHardwareDeviceOrderByWithRelationInput[]
+    cursor?: FiscalHardwareDeviceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: FiscalHardwareDeviceScalarFieldEnum | FiscalHardwareDeviceScalarFieldEnum[]
   }
 
   /**
@@ -74398,6 +74526,1221 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ClinicCutoverPolicyInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model FiscalHardwareDevice
+   */
+
+  export type AggregateFiscalHardwareDevice = {
+    _count: FiscalHardwareDeviceCountAggregateOutputType | null
+    _min: FiscalHardwareDeviceMinAggregateOutputType | null
+    _max: FiscalHardwareDeviceMaxAggregateOutputType | null
+  }
+
+  export type FiscalHardwareDeviceMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: string | null
+    providerId: string | null
+    label: string | null
+    outletCode: string | null
+    registerCode: string | null
+    serial: string | null
+    endpoint: string | null
+    secretsCipher: string | null
+    status: string | null
+    isOrgDefault: boolean | null
+    isOutletDefault: boolean | null
+    isRegisterDefault: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FiscalHardwareDeviceMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: string | null
+    providerId: string | null
+    label: string | null
+    outletCode: string | null
+    registerCode: string | null
+    serial: string | null
+    endpoint: string | null
+    secretsCipher: string | null
+    status: string | null
+    isOrgDefault: boolean | null
+    isOutletDefault: boolean | null
+    isRegisterDefault: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FiscalHardwareDeviceCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    kind: number
+    providerId: number
+    label: number
+    outletCode: number
+    registerCode: number
+    serial: number
+    externalIdsJson: number
+    endpoint: number
+    secretsCipher: number
+    status: number
+    isOrgDefault: number
+    isOutletDefault: number
+    isRegisterDefault: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type FiscalHardwareDeviceMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    providerId?: true
+    label?: true
+    outletCode?: true
+    registerCode?: true
+    serial?: true
+    endpoint?: true
+    secretsCipher?: true
+    status?: true
+    isOrgDefault?: true
+    isOutletDefault?: true
+    isRegisterDefault?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FiscalHardwareDeviceMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    providerId?: true
+    label?: true
+    outletCode?: true
+    registerCode?: true
+    serial?: true
+    endpoint?: true
+    secretsCipher?: true
+    status?: true
+    isOrgDefault?: true
+    isOutletDefault?: true
+    isRegisterDefault?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FiscalHardwareDeviceCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    providerId?: true
+    label?: true
+    outletCode?: true
+    registerCode?: true
+    serial?: true
+    externalIdsJson?: true
+    endpoint?: true
+    secretsCipher?: true
+    status?: true
+    isOrgDefault?: true
+    isOutletDefault?: true
+    isRegisterDefault?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type FiscalHardwareDeviceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FiscalHardwareDevice to aggregate.
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FiscalHardwareDevices to fetch.
+     */
+    orderBy?: FiscalHardwareDeviceOrderByWithRelationInput | FiscalHardwareDeviceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FiscalHardwareDeviceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FiscalHardwareDevices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FiscalHardwareDevices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned FiscalHardwareDevices
+    **/
+    _count?: true | FiscalHardwareDeviceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FiscalHardwareDeviceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FiscalHardwareDeviceMaxAggregateInputType
+  }
+
+  export type GetFiscalHardwareDeviceAggregateType<T extends FiscalHardwareDeviceAggregateArgs> = {
+        [P in keyof T & keyof AggregateFiscalHardwareDevice]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFiscalHardwareDevice[P]>
+      : GetScalarType<T[P], AggregateFiscalHardwareDevice[P]>
+  }
+
+
+
+
+  export type FiscalHardwareDeviceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FiscalHardwareDeviceWhereInput
+    orderBy?: FiscalHardwareDeviceOrderByWithAggregationInput | FiscalHardwareDeviceOrderByWithAggregationInput[]
+    by: FiscalHardwareDeviceScalarFieldEnum[] | FiscalHardwareDeviceScalarFieldEnum
+    having?: FiscalHardwareDeviceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FiscalHardwareDeviceCountAggregateInputType | true
+    _min?: FiscalHardwareDeviceMinAggregateInputType
+    _max?: FiscalHardwareDeviceMaxAggregateInputType
+  }
+
+  export type FiscalHardwareDeviceGroupByOutputType = {
+    id: string
+    organizationId: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode: string | null
+    registerCode: string | null
+    serial: string | null
+    externalIdsJson: JsonValue | null
+    endpoint: string | null
+    secretsCipher: string | null
+    status: string
+    isOrgDefault: boolean
+    isOutletDefault: boolean
+    isRegisterDefault: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: FiscalHardwareDeviceCountAggregateOutputType | null
+    _min: FiscalHardwareDeviceMinAggregateOutputType | null
+    _max: FiscalHardwareDeviceMaxAggregateOutputType | null
+  }
+
+  type GetFiscalHardwareDeviceGroupByPayload<T extends FiscalHardwareDeviceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FiscalHardwareDeviceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FiscalHardwareDeviceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FiscalHardwareDeviceGroupByOutputType[P]>
+            : GetScalarType<T[P], FiscalHardwareDeviceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FiscalHardwareDeviceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    providerId?: boolean
+    label?: boolean
+    outletCode?: boolean
+    registerCode?: boolean
+    serial?: boolean
+    externalIdsJson?: boolean
+    endpoint?: boolean
+    secretsCipher?: boolean
+    status?: boolean
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fiscalHardwareDevice"]>
+
+  export type FiscalHardwareDeviceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    providerId?: boolean
+    label?: boolean
+    outletCode?: boolean
+    registerCode?: boolean
+    serial?: boolean
+    externalIdsJson?: boolean
+    endpoint?: boolean
+    secretsCipher?: boolean
+    status?: boolean
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fiscalHardwareDevice"]>
+
+  export type FiscalHardwareDeviceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    providerId?: boolean
+    label?: boolean
+    outletCode?: boolean
+    registerCode?: boolean
+    serial?: boolean
+    externalIdsJson?: boolean
+    endpoint?: boolean
+    secretsCipher?: boolean
+    status?: boolean
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fiscalHardwareDevice"]>
+
+  export type FiscalHardwareDeviceSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    providerId?: boolean
+    label?: boolean
+    outletCode?: boolean
+    registerCode?: boolean
+    serial?: boolean
+    externalIdsJson?: boolean
+    endpoint?: boolean
+    secretsCipher?: boolean
+    status?: boolean
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type FiscalHardwareDeviceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "kind" | "providerId" | "label" | "outletCode" | "registerCode" | "serial" | "externalIdsJson" | "endpoint" | "secretsCipher" | "status" | "isOrgDefault" | "isOutletDefault" | "isRegisterDefault" | "createdAt" | "updatedAt", ExtArgs["result"]["fiscalHardwareDevice"]>
+  export type FiscalHardwareDeviceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type FiscalHardwareDeviceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type FiscalHardwareDeviceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $FiscalHardwareDevicePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "FiscalHardwareDevice"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      kind: string
+      providerId: string
+      label: string
+      outletCode: string | null
+      registerCode: string | null
+      serial: string | null
+      externalIdsJson: Prisma.JsonValue | null
+      endpoint: string | null
+      secretsCipher: string | null
+      status: string
+      isOrgDefault: boolean
+      isOutletDefault: boolean
+      isRegisterDefault: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["fiscalHardwareDevice"]>
+    composites: {}
+  }
+
+  type FiscalHardwareDeviceGetPayload<S extends boolean | null | undefined | FiscalHardwareDeviceDefaultArgs> = $Result.GetResult<Prisma.$FiscalHardwareDevicePayload, S>
+
+  type FiscalHardwareDeviceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<FiscalHardwareDeviceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: FiscalHardwareDeviceCountAggregateInputType | true
+    }
+
+  export interface FiscalHardwareDeviceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['FiscalHardwareDevice'], meta: { name: 'FiscalHardwareDevice' } }
+    /**
+     * Find zero or one FiscalHardwareDevice that matches the filter.
+     * @param {FiscalHardwareDeviceFindUniqueArgs} args - Arguments to find a FiscalHardwareDevice
+     * @example
+     * // Get one FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FiscalHardwareDeviceFindUniqueArgs>(args: SelectSubset<T, FiscalHardwareDeviceFindUniqueArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one FiscalHardwareDevice that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {FiscalHardwareDeviceFindUniqueOrThrowArgs} args - Arguments to find a FiscalHardwareDevice
+     * @example
+     * // Get one FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FiscalHardwareDeviceFindUniqueOrThrowArgs>(args: SelectSubset<T, FiscalHardwareDeviceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FiscalHardwareDevice that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceFindFirstArgs} args - Arguments to find a FiscalHardwareDevice
+     * @example
+     * // Get one FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FiscalHardwareDeviceFindFirstArgs>(args?: SelectSubset<T, FiscalHardwareDeviceFindFirstArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FiscalHardwareDevice that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceFindFirstOrThrowArgs} args - Arguments to find a FiscalHardwareDevice
+     * @example
+     * // Get one FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FiscalHardwareDeviceFindFirstOrThrowArgs>(args?: SelectSubset<T, FiscalHardwareDeviceFindFirstOrThrowArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more FiscalHardwareDevices that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all FiscalHardwareDevices
+     * const fiscalHardwareDevices = await prisma.fiscalHardwareDevice.findMany()
+     * 
+     * // Get first 10 FiscalHardwareDevices
+     * const fiscalHardwareDevices = await prisma.fiscalHardwareDevice.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const fiscalHardwareDeviceWithIdOnly = await prisma.fiscalHardwareDevice.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends FiscalHardwareDeviceFindManyArgs>(args?: SelectSubset<T, FiscalHardwareDeviceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a FiscalHardwareDevice.
+     * @param {FiscalHardwareDeviceCreateArgs} args - Arguments to create a FiscalHardwareDevice.
+     * @example
+     * // Create one FiscalHardwareDevice
+     * const FiscalHardwareDevice = await prisma.fiscalHardwareDevice.create({
+     *   data: {
+     *     // ... data to create a FiscalHardwareDevice
+     *   }
+     * })
+     * 
+     */
+    create<T extends FiscalHardwareDeviceCreateArgs>(args: SelectSubset<T, FiscalHardwareDeviceCreateArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many FiscalHardwareDevices.
+     * @param {FiscalHardwareDeviceCreateManyArgs} args - Arguments to create many FiscalHardwareDevices.
+     * @example
+     * // Create many FiscalHardwareDevices
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FiscalHardwareDeviceCreateManyArgs>(args?: SelectSubset<T, FiscalHardwareDeviceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many FiscalHardwareDevices and returns the data saved in the database.
+     * @param {FiscalHardwareDeviceCreateManyAndReturnArgs} args - Arguments to create many FiscalHardwareDevices.
+     * @example
+     * // Create many FiscalHardwareDevices
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many FiscalHardwareDevices and only return the `id`
+     * const fiscalHardwareDeviceWithIdOnly = await prisma.fiscalHardwareDevice.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FiscalHardwareDeviceCreateManyAndReturnArgs>(args?: SelectSubset<T, FiscalHardwareDeviceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a FiscalHardwareDevice.
+     * @param {FiscalHardwareDeviceDeleteArgs} args - Arguments to delete one FiscalHardwareDevice.
+     * @example
+     * // Delete one FiscalHardwareDevice
+     * const FiscalHardwareDevice = await prisma.fiscalHardwareDevice.delete({
+     *   where: {
+     *     // ... filter to delete one FiscalHardwareDevice
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FiscalHardwareDeviceDeleteArgs>(args: SelectSubset<T, FiscalHardwareDeviceDeleteArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one FiscalHardwareDevice.
+     * @param {FiscalHardwareDeviceUpdateArgs} args - Arguments to update one FiscalHardwareDevice.
+     * @example
+     * // Update one FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FiscalHardwareDeviceUpdateArgs>(args: SelectSubset<T, FiscalHardwareDeviceUpdateArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more FiscalHardwareDevices.
+     * @param {FiscalHardwareDeviceDeleteManyArgs} args - Arguments to filter FiscalHardwareDevices to delete.
+     * @example
+     * // Delete a few FiscalHardwareDevices
+     * const { count } = await prisma.fiscalHardwareDevice.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FiscalHardwareDeviceDeleteManyArgs>(args?: SelectSubset<T, FiscalHardwareDeviceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FiscalHardwareDevices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many FiscalHardwareDevices
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FiscalHardwareDeviceUpdateManyArgs>(args: SelectSubset<T, FiscalHardwareDeviceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FiscalHardwareDevices and returns the data updated in the database.
+     * @param {FiscalHardwareDeviceUpdateManyAndReturnArgs} args - Arguments to update many FiscalHardwareDevices.
+     * @example
+     * // Update many FiscalHardwareDevices
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more FiscalHardwareDevices and only return the `id`
+     * const fiscalHardwareDeviceWithIdOnly = await prisma.fiscalHardwareDevice.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends FiscalHardwareDeviceUpdateManyAndReturnArgs>(args: SelectSubset<T, FiscalHardwareDeviceUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one FiscalHardwareDevice.
+     * @param {FiscalHardwareDeviceUpsertArgs} args - Arguments to update or create a FiscalHardwareDevice.
+     * @example
+     * // Update or create a FiscalHardwareDevice
+     * const fiscalHardwareDevice = await prisma.fiscalHardwareDevice.upsert({
+     *   create: {
+     *     // ... data to create a FiscalHardwareDevice
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the FiscalHardwareDevice we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FiscalHardwareDeviceUpsertArgs>(args: SelectSubset<T, FiscalHardwareDeviceUpsertArgs<ExtArgs>>): Prisma__FiscalHardwareDeviceClient<$Result.GetResult<Prisma.$FiscalHardwareDevicePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of FiscalHardwareDevices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceCountArgs} args - Arguments to filter FiscalHardwareDevices to count.
+     * @example
+     * // Count the number of FiscalHardwareDevices
+     * const count = await prisma.fiscalHardwareDevice.count({
+     *   where: {
+     *     // ... the filter for the FiscalHardwareDevices we want to count
+     *   }
+     * })
+    **/
+    count<T extends FiscalHardwareDeviceCountArgs>(
+      args?: Subset<T, FiscalHardwareDeviceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FiscalHardwareDeviceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a FiscalHardwareDevice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FiscalHardwareDeviceAggregateArgs>(args: Subset<T, FiscalHardwareDeviceAggregateArgs>): Prisma.PrismaPromise<GetFiscalHardwareDeviceAggregateType<T>>
+
+    /**
+     * Group by FiscalHardwareDevice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FiscalHardwareDeviceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FiscalHardwareDeviceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FiscalHardwareDeviceGroupByArgs['orderBy'] }
+        : { orderBy?: FiscalHardwareDeviceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FiscalHardwareDeviceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFiscalHardwareDeviceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the FiscalHardwareDevice model
+   */
+  readonly fields: FiscalHardwareDeviceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for FiscalHardwareDevice.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FiscalHardwareDeviceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the FiscalHardwareDevice model
+   */
+  interface FiscalHardwareDeviceFieldRefs {
+    readonly id: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly organizationId: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly kind: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly providerId: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly label: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly outletCode: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly registerCode: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly serial: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly externalIdsJson: FieldRef<"FiscalHardwareDevice", 'Json'>
+    readonly endpoint: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly secretsCipher: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly status: FieldRef<"FiscalHardwareDevice", 'String'>
+    readonly isOrgDefault: FieldRef<"FiscalHardwareDevice", 'Boolean'>
+    readonly isOutletDefault: FieldRef<"FiscalHardwareDevice", 'Boolean'>
+    readonly isRegisterDefault: FieldRef<"FiscalHardwareDevice", 'Boolean'>
+    readonly createdAt: FieldRef<"FiscalHardwareDevice", 'DateTime'>
+    readonly updatedAt: FieldRef<"FiscalHardwareDevice", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * FiscalHardwareDevice findUnique
+   */
+  export type FiscalHardwareDeviceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter, which FiscalHardwareDevice to fetch.
+     */
+    where: FiscalHardwareDeviceWhereUniqueInput
+  }
+
+  /**
+   * FiscalHardwareDevice findUniqueOrThrow
+   */
+  export type FiscalHardwareDeviceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter, which FiscalHardwareDevice to fetch.
+     */
+    where: FiscalHardwareDeviceWhereUniqueInput
+  }
+
+  /**
+   * FiscalHardwareDevice findFirst
+   */
+  export type FiscalHardwareDeviceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter, which FiscalHardwareDevice to fetch.
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FiscalHardwareDevices to fetch.
+     */
+    orderBy?: FiscalHardwareDeviceOrderByWithRelationInput | FiscalHardwareDeviceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FiscalHardwareDevices.
+     */
+    cursor?: FiscalHardwareDeviceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FiscalHardwareDevices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FiscalHardwareDevices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FiscalHardwareDevices.
+     */
+    distinct?: FiscalHardwareDeviceScalarFieldEnum | FiscalHardwareDeviceScalarFieldEnum[]
+  }
+
+  /**
+   * FiscalHardwareDevice findFirstOrThrow
+   */
+  export type FiscalHardwareDeviceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter, which FiscalHardwareDevice to fetch.
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FiscalHardwareDevices to fetch.
+     */
+    orderBy?: FiscalHardwareDeviceOrderByWithRelationInput | FiscalHardwareDeviceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FiscalHardwareDevices.
+     */
+    cursor?: FiscalHardwareDeviceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FiscalHardwareDevices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FiscalHardwareDevices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FiscalHardwareDevices.
+     */
+    distinct?: FiscalHardwareDeviceScalarFieldEnum | FiscalHardwareDeviceScalarFieldEnum[]
+  }
+
+  /**
+   * FiscalHardwareDevice findMany
+   */
+  export type FiscalHardwareDeviceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter, which FiscalHardwareDevices to fetch.
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FiscalHardwareDevices to fetch.
+     */
+    orderBy?: FiscalHardwareDeviceOrderByWithRelationInput | FiscalHardwareDeviceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing FiscalHardwareDevices.
+     */
+    cursor?: FiscalHardwareDeviceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FiscalHardwareDevices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FiscalHardwareDevices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FiscalHardwareDevices.
+     */
+    distinct?: FiscalHardwareDeviceScalarFieldEnum | FiscalHardwareDeviceScalarFieldEnum[]
+  }
+
+  /**
+   * FiscalHardwareDevice create
+   */
+  export type FiscalHardwareDeviceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a FiscalHardwareDevice.
+     */
+    data: XOR<FiscalHardwareDeviceCreateInput, FiscalHardwareDeviceUncheckedCreateInput>
+  }
+
+  /**
+   * FiscalHardwareDevice createMany
+   */
+  export type FiscalHardwareDeviceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many FiscalHardwareDevices.
+     */
+    data: FiscalHardwareDeviceCreateManyInput | FiscalHardwareDeviceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * FiscalHardwareDevice createManyAndReturn
+   */
+  export type FiscalHardwareDeviceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * The data used to create many FiscalHardwareDevices.
+     */
+    data: FiscalHardwareDeviceCreateManyInput | FiscalHardwareDeviceCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * FiscalHardwareDevice update
+   */
+  export type FiscalHardwareDeviceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a FiscalHardwareDevice.
+     */
+    data: XOR<FiscalHardwareDeviceUpdateInput, FiscalHardwareDeviceUncheckedUpdateInput>
+    /**
+     * Choose, which FiscalHardwareDevice to update.
+     */
+    where: FiscalHardwareDeviceWhereUniqueInput
+  }
+
+  /**
+   * FiscalHardwareDevice updateMany
+   */
+  export type FiscalHardwareDeviceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update FiscalHardwareDevices.
+     */
+    data: XOR<FiscalHardwareDeviceUpdateManyMutationInput, FiscalHardwareDeviceUncheckedUpdateManyInput>
+    /**
+     * Filter which FiscalHardwareDevices to update
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * Limit how many FiscalHardwareDevices to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * FiscalHardwareDevice updateManyAndReturn
+   */
+  export type FiscalHardwareDeviceUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * The data used to update FiscalHardwareDevices.
+     */
+    data: XOR<FiscalHardwareDeviceUpdateManyMutationInput, FiscalHardwareDeviceUncheckedUpdateManyInput>
+    /**
+     * Filter which FiscalHardwareDevices to update
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * Limit how many FiscalHardwareDevices to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * FiscalHardwareDevice upsert
+   */
+  export type FiscalHardwareDeviceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the FiscalHardwareDevice to update in case it exists.
+     */
+    where: FiscalHardwareDeviceWhereUniqueInput
+    /**
+     * In case the FiscalHardwareDevice found by the `where` argument doesn't exist, create a new FiscalHardwareDevice with this data.
+     */
+    create: XOR<FiscalHardwareDeviceCreateInput, FiscalHardwareDeviceUncheckedCreateInput>
+    /**
+     * In case the FiscalHardwareDevice was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FiscalHardwareDeviceUpdateInput, FiscalHardwareDeviceUncheckedUpdateInput>
+  }
+
+  /**
+   * FiscalHardwareDevice delete
+   */
+  export type FiscalHardwareDeviceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
+    /**
+     * Filter which FiscalHardwareDevice to delete.
+     */
+    where: FiscalHardwareDeviceWhereUniqueInput
+  }
+
+  /**
+   * FiscalHardwareDevice deleteMany
+   */
+  export type FiscalHardwareDeviceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FiscalHardwareDevices to delete
+     */
+    where?: FiscalHardwareDeviceWhereInput
+    /**
+     * Limit how many FiscalHardwareDevices to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * FiscalHardwareDevice without action
+   */
+  export type FiscalHardwareDeviceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FiscalHardwareDevice
+     */
+    select?: FiscalHardwareDeviceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FiscalHardwareDevice
+     */
+    omit?: FiscalHardwareDeviceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FiscalHardwareDeviceInclude<ExtArgs> | null
   }
 
 
@@ -113945,6 +115288,29 @@ export namespace Prisma {
   export type ClinicCutoverPolicyScalarFieldEnum = (typeof ClinicCutoverPolicyScalarFieldEnum)[keyof typeof ClinicCutoverPolicyScalarFieldEnum]
 
 
+  export const FiscalHardwareDeviceScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    kind: 'kind',
+    providerId: 'providerId',
+    label: 'label',
+    outletCode: 'outletCode',
+    registerCode: 'registerCode',
+    serial: 'serial',
+    externalIdsJson: 'externalIdsJson',
+    endpoint: 'endpoint',
+    secretsCipher: 'secretsCipher',
+    status: 'status',
+    isOrgDefault: 'isOrgDefault',
+    isOutletDefault: 'isOutletDefault',
+    isRegisterDefault: 'isRegisterDefault',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type FiscalHardwareDeviceScalarFieldEnum = (typeof FiscalHardwareDeviceScalarFieldEnum)[keyof typeof FiscalHardwareDeviceScalarFieldEnum]
+
+
   export const UserScalarFieldEnum: {
     id: 'id',
     email: 'email',
@@ -119584,6 +120950,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
     clinicCutoverAsHotel?: ClinicCutoverPolicyListRelationFilter
+    fiscalHardwareDevices?: FiscalHardwareDeviceListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
@@ -119662,6 +121029,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOrderByWithRelationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyOrderByWithRelationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyOrderByRelationAggregateInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
     parentOrg?: OrganizationOrderByWithRelationInput
     departments?: OrganizationOrderByRelationAggregateInput
@@ -119743,6 +121111,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
     clinicCutoverAsHotel?: ClinicCutoverPolicyListRelationFilter
+    fiscalHardwareDevices?: FiscalHardwareDeviceListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
@@ -119957,6 +121326,121 @@ export namespace Prisma {
     hotelOrganizationId?: UuidNullableWithAggregatesFilter<"ClinicCutoverPolicy"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"ClinicCutoverPolicy"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ClinicCutoverPolicy"> | Date | string
+  }
+
+  export type FiscalHardwareDeviceWhereInput = {
+    AND?: FiscalHardwareDeviceWhereInput | FiscalHardwareDeviceWhereInput[]
+    OR?: FiscalHardwareDeviceWhereInput[]
+    NOT?: FiscalHardwareDeviceWhereInput | FiscalHardwareDeviceWhereInput[]
+    id?: UuidFilter<"FiscalHardwareDevice"> | string
+    organizationId?: UuidFilter<"FiscalHardwareDevice"> | string
+    kind?: StringFilter<"FiscalHardwareDevice"> | string
+    providerId?: StringFilter<"FiscalHardwareDevice"> | string
+    label?: StringFilter<"FiscalHardwareDevice"> | string
+    outletCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    registerCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    serial?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    externalIdsJson?: JsonNullableFilter<"FiscalHardwareDevice">
+    endpoint?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    secretsCipher?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    status?: StringFilter<"FiscalHardwareDevice"> | string
+    isOrgDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isOutletDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isRegisterDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    createdAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+    updatedAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type FiscalHardwareDeviceOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    providerId?: SortOrder
+    label?: SortOrder
+    outletCode?: SortOrderInput | SortOrder
+    registerCode?: SortOrderInput | SortOrder
+    serial?: SortOrderInput | SortOrder
+    externalIdsJson?: SortOrderInput | SortOrder
+    endpoint?: SortOrderInput | SortOrder
+    secretsCipher?: SortOrderInput | SortOrder
+    status?: SortOrder
+    isOrgDefault?: SortOrder
+    isOutletDefault?: SortOrder
+    isRegisterDefault?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type FiscalHardwareDeviceWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: FiscalHardwareDeviceWhereInput | FiscalHardwareDeviceWhereInput[]
+    OR?: FiscalHardwareDeviceWhereInput[]
+    NOT?: FiscalHardwareDeviceWhereInput | FiscalHardwareDeviceWhereInput[]
+    organizationId?: UuidFilter<"FiscalHardwareDevice"> | string
+    kind?: StringFilter<"FiscalHardwareDevice"> | string
+    providerId?: StringFilter<"FiscalHardwareDevice"> | string
+    label?: StringFilter<"FiscalHardwareDevice"> | string
+    outletCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    registerCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    serial?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    externalIdsJson?: JsonNullableFilter<"FiscalHardwareDevice">
+    endpoint?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    secretsCipher?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    status?: StringFilter<"FiscalHardwareDevice"> | string
+    isOrgDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isOutletDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isRegisterDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    createdAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+    updatedAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id">
+
+  export type FiscalHardwareDeviceOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    providerId?: SortOrder
+    label?: SortOrder
+    outletCode?: SortOrderInput | SortOrder
+    registerCode?: SortOrderInput | SortOrder
+    serial?: SortOrderInput | SortOrder
+    externalIdsJson?: SortOrderInput | SortOrder
+    endpoint?: SortOrderInput | SortOrder
+    secretsCipher?: SortOrderInput | SortOrder
+    status?: SortOrder
+    isOrgDefault?: SortOrder
+    isOutletDefault?: SortOrder
+    isRegisterDefault?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: FiscalHardwareDeviceCountOrderByAggregateInput
+    _max?: FiscalHardwareDeviceMaxOrderByAggregateInput
+    _min?: FiscalHardwareDeviceMinOrderByAggregateInput
+  }
+
+  export type FiscalHardwareDeviceScalarWhereWithAggregatesInput = {
+    AND?: FiscalHardwareDeviceScalarWhereWithAggregatesInput | FiscalHardwareDeviceScalarWhereWithAggregatesInput[]
+    OR?: FiscalHardwareDeviceScalarWhereWithAggregatesInput[]
+    NOT?: FiscalHardwareDeviceScalarWhereWithAggregatesInput | FiscalHardwareDeviceScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    organizationId?: UuidWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    kind?: StringWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    providerId?: StringWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    label?: StringWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    outletCode?: StringNullableWithAggregatesFilter<"FiscalHardwareDevice"> | string | null
+    registerCode?: StringNullableWithAggregatesFilter<"FiscalHardwareDevice"> | string | null
+    serial?: StringNullableWithAggregatesFilter<"FiscalHardwareDevice"> | string | null
+    externalIdsJson?: JsonNullableWithAggregatesFilter<"FiscalHardwareDevice">
+    endpoint?: StringNullableWithAggregatesFilter<"FiscalHardwareDevice"> | string | null
+    secretsCipher?: StringNullableWithAggregatesFilter<"FiscalHardwareDevice"> | string | null
+    status?: StringWithAggregatesFilter<"FiscalHardwareDevice"> | string
+    isOrgDefault?: BoolWithAggregatesFilter<"FiscalHardwareDevice"> | boolean
+    isOutletDefault?: BoolWithAggregatesFilter<"FiscalHardwareDevice"> | boolean
+    isRegisterDefault?: BoolWithAggregatesFilter<"FiscalHardwareDevice"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"FiscalHardwareDevice"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"FiscalHardwareDevice"> | Date | string
   }
 
   export type UserWhereInput = {
@@ -127191,6 +128675,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -127269,6 +128754,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -127341,6 +128827,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -127419,6 +128906,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -127651,6 +129139,145 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     elektrawebDualRun?: BoolFieldUpdateOperationsInput | boolean
     hotelOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FiscalHardwareDeviceCreateInput = {
+    id?: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutFiscalHardwareDevicesInput
+  }
+
+  export type FiscalHardwareDeviceUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FiscalHardwareDeviceUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutFiscalHardwareDevicesNestedInput
+  }
+
+  export type FiscalHardwareDeviceUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FiscalHardwareDeviceCreateManyInput = {
+    id?: string
+    organizationId: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FiscalHardwareDeviceUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FiscalHardwareDeviceUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -134315,6 +135942,12 @@ export namespace Prisma {
     none?: ClinicCutoverPolicyWhereInput
   }
 
+  export type FiscalHardwareDeviceListRelationFilter = {
+    every?: FiscalHardwareDeviceWhereInput
+    some?: FiscalHardwareDeviceWhereInput
+    none?: FiscalHardwareDeviceWhereInput
+  }
+
   export type UserNullableScalarRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -134453,6 +136086,10 @@ export namespace Prisma {
   }
 
   export type ClinicCutoverPolicyOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type FiscalHardwareDeviceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -134677,6 +136314,64 @@ export namespace Prisma {
     organizationId?: SortOrder
     elektrawebDualRun?: SortOrder
     hotelOrganizationId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FiscalHardwareDeviceCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    providerId?: SortOrder
+    label?: SortOrder
+    outletCode?: SortOrder
+    registerCode?: SortOrder
+    serial?: SortOrder
+    externalIdsJson?: SortOrder
+    endpoint?: SortOrder
+    secretsCipher?: SortOrder
+    status?: SortOrder
+    isOrgDefault?: SortOrder
+    isOutletDefault?: SortOrder
+    isRegisterDefault?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FiscalHardwareDeviceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    providerId?: SortOrder
+    label?: SortOrder
+    outletCode?: SortOrder
+    registerCode?: SortOrder
+    serial?: SortOrder
+    endpoint?: SortOrder
+    secretsCipher?: SortOrder
+    status?: SortOrder
+    isOrgDefault?: SortOrder
+    isOutletDefault?: SortOrder
+    isRegisterDefault?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FiscalHardwareDeviceMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    providerId?: SortOrder
+    label?: SortOrder
+    outletCode?: SortOrder
+    registerCode?: SortOrder
+    serial?: SortOrder
+    endpoint?: SortOrder
+    secretsCipher?: SortOrder
+    status?: SortOrder
+    isOrgDefault?: SortOrder
+    isOutletDefault?: SortOrder
+    isRegisterDefault?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -140156,6 +141851,13 @@ export namespace Prisma {
     connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
   }
 
+  export type FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput> | FiscalHardwareDeviceCreateWithoutOrganizationInput[] | FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput | FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: FiscalHardwareDeviceCreateManyOrganizationInputEnvelope
+    connect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+  }
+
   export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -140484,6 +142186,13 @@ export namespace Prisma {
     connectOrCreate?: ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput | ClinicCutoverPolicyCreateOrConnectWithoutHotelOrganizationInput[]
     createMany?: ClinicCutoverPolicyCreateManyHotelOrganizationInputEnvelope
     connect?: ClinicCutoverPolicyWhereUniqueInput | ClinicCutoverPolicyWhereUniqueInput[]
+  }
+
+  export type FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput> | FiscalHardwareDeviceCreateWithoutOrganizationInput[] | FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput | FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: FiscalHardwareDeviceCreateManyOrganizationInputEnvelope
+    connect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
   }
 
   export type OrganizationUncheckedCreateNestedManyWithoutParentOrgInput = {
@@ -141102,6 +142811,20 @@ export namespace Prisma {
     update?: ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateWithWhereUniqueWithoutHotelOrganizationInput[]
     updateMany?: ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput | ClinicCutoverPolicyUpdateManyWithWhereWithoutHotelOrganizationInput[]
     deleteMany?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
+  }
+
+  export type FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput> | FiscalHardwareDeviceCreateWithoutOrganizationInput[] | FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput | FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: FiscalHardwareDeviceUpsertWithWhereUniqueWithoutOrganizationInput | FiscalHardwareDeviceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: FiscalHardwareDeviceCreateManyOrganizationInputEnvelope
+    set?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    disconnect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    delete?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    connect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    update?: FiscalHardwareDeviceUpdateWithWhereUniqueWithoutOrganizationInput | FiscalHardwareDeviceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: FiscalHardwareDeviceUpdateManyWithWhereWithoutOrganizationInput | FiscalHardwareDeviceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: FiscalHardwareDeviceScalarWhereInput | FiscalHardwareDeviceScalarWhereInput[]
   }
 
   export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
@@ -141752,6 +143475,20 @@ export namespace Prisma {
     deleteMany?: ClinicCutoverPolicyScalarWhereInput | ClinicCutoverPolicyScalarWhereInput[]
   }
 
+  export type FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput> | FiscalHardwareDeviceCreateWithoutOrganizationInput[] | FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput | FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: FiscalHardwareDeviceUpsertWithWhereUniqueWithoutOrganizationInput | FiscalHardwareDeviceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: FiscalHardwareDeviceCreateManyOrganizationInputEnvelope
+    set?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    disconnect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    delete?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    connect?: FiscalHardwareDeviceWhereUniqueInput | FiscalHardwareDeviceWhereUniqueInput[]
+    update?: FiscalHardwareDeviceUpdateWithWhereUniqueWithoutOrganizationInput | FiscalHardwareDeviceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: FiscalHardwareDeviceUpdateManyWithWhereWithoutOrganizationInput | FiscalHardwareDeviceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: FiscalHardwareDeviceScalarWhereInput | FiscalHardwareDeviceScalarWhereInput[]
+  }
+
   export type OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput = {
     create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
     connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
@@ -141836,6 +143573,20 @@ export namespace Prisma {
     delete?: OrganizationWhereInput | boolean
     connect?: OrganizationWhereUniqueInput
     update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutClinicCutoverAsHotelInput, OrganizationUpdateWithoutClinicCutoverAsHotelInput>, OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutFiscalHardwareDevicesInput = {
+    create?: XOR<OrganizationCreateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutFiscalHardwareDevicesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutFiscalHardwareDevicesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutFiscalHardwareDevicesInput
+    upsert?: OrganizationUpsertWithoutFiscalHardwareDevicesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutFiscalHardwareDevicesInput, OrganizationUpdateWithoutFiscalHardwareDevicesInput>, OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput>
   }
 
   export type OrganizationMembershipCreateNestedManyWithoutUserInput = {
@@ -144690,6 +146441,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -144767,6 +146519,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -144854,6 +146607,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -144931,6 +146685,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -145240,6 +146995,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -145317,6 +147073,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -145447,6 +147204,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -145524,6 +147282,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -145595,6 +147354,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -145672,6 +147432,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -145759,6 +147520,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -145836,6 +147598,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -146222,6 +147985,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -146299,6 +148063,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -146413,6 +148178,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -146490,6 +148256,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -146594,6 +148361,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -146671,6 +148439,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -146785,6 +148554,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -146862,6 +148632,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -146966,6 +148737,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -147043,6 +148815,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -147130,6 +148903,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -147207,6 +148981,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -147278,6 +149053,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -147355,6 +149131,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -147442,6 +149219,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -147519,6 +149297,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -148821,6 +150600,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -148898,6 +150678,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -149061,6 +150842,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -149138,6 +150920,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -150218,6 +152001,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -150295,6 +152079,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -150970,6 +152755,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -151047,6 +152833,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -151745,6 +153532,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -151822,6 +153610,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -151949,6 +153738,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -152026,6 +153816,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -152305,6 +154096,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -152382,6 +154174,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -152662,6 +154455,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -152739,6 +154533,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -152940,6 +154735,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -153017,6 +154813,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -153181,6 +154978,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -153258,6 +155056,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -153384,6 +155183,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -153461,6 +155261,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -153613,6 +155414,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -153690,6 +155492,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -153832,6 +155635,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -153909,6 +155713,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -154127,6 +155932,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -154204,6 +156010,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -154424,6 +156231,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -154501,6 +156309,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -154646,6 +156455,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -154723,6 +156533,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -154837,6 +156648,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -154914,6 +156726,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -155059,6 +156872,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -155136,6 +156950,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -155375,6 +157190,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -155452,6 +157268,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -155597,6 +157414,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -155674,6 +157492,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -155969,6 +157788,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -156046,6 +157866,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -156283,6 +158104,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -156360,6 +158182,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -156605,6 +158428,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -156682,6 +158506,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -156902,6 +158727,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -156979,6 +158805,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -157964,6 +159791,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -158041,6 +159869,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -158209,6 +160038,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -158286,6 +160116,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -160005,6 +161836,54 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type FiscalHardwareDeviceCreateWithoutOrganizationInput = {
+    id?: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FiscalHardwareDeviceCreateOrConnectWithoutOrganizationInput = {
+    where: FiscalHardwareDeviceWhereUniqueInput
+    create: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type FiscalHardwareDeviceCreateManyOrganizationInputEnvelope = {
+    data: FiscalHardwareDeviceCreateManyOrganizationInput | FiscalHardwareDeviceCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserCreateWithoutOwnedOrganizationsInput = {
     id?: string
     email: string
@@ -160111,6 +161990,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
@@ -160188,6 +162068,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
@@ -160264,6 +162145,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
@@ -160340,6 +162222,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -161589,6 +163472,45 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"ClinicCutoverPolicy"> | Date | string
   }
 
+  export type FiscalHardwareDeviceUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: FiscalHardwareDeviceWhereUniqueInput
+    update: XOR<FiscalHardwareDeviceUpdateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<FiscalHardwareDeviceCreateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type FiscalHardwareDeviceUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: FiscalHardwareDeviceWhereUniqueInput
+    data: XOR<FiscalHardwareDeviceUpdateWithoutOrganizationInput, FiscalHardwareDeviceUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type FiscalHardwareDeviceUpdateManyWithWhereWithoutOrganizationInput = {
+    where: FiscalHardwareDeviceScalarWhereInput
+    data: XOR<FiscalHardwareDeviceUpdateManyMutationInput, FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type FiscalHardwareDeviceScalarWhereInput = {
+    AND?: FiscalHardwareDeviceScalarWhereInput | FiscalHardwareDeviceScalarWhereInput[]
+    OR?: FiscalHardwareDeviceScalarWhereInput[]
+    NOT?: FiscalHardwareDeviceScalarWhereInput | FiscalHardwareDeviceScalarWhereInput[]
+    id?: UuidFilter<"FiscalHardwareDevice"> | string
+    organizationId?: UuidFilter<"FiscalHardwareDevice"> | string
+    kind?: StringFilter<"FiscalHardwareDevice"> | string
+    providerId?: StringFilter<"FiscalHardwareDevice"> | string
+    label?: StringFilter<"FiscalHardwareDevice"> | string
+    outletCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    registerCode?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    serial?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    externalIdsJson?: JsonNullableFilter<"FiscalHardwareDevice">
+    endpoint?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    secretsCipher?: StringNullableFilter<"FiscalHardwareDevice"> | string | null
+    status?: StringFilter<"FiscalHardwareDevice"> | string
+    isOrgDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isOutletDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    isRegisterDefault?: BoolFilter<"FiscalHardwareDevice"> | boolean
+    createdAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+    updatedAt?: DateTimeFilter<"FiscalHardwareDevice"> | Date | string
+  }
+
   export type UserUpsertWithoutOwnedOrganizationsInput = {
     update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
@@ -161712,6 +163634,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
@@ -161789,6 +163712,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
@@ -162004,6 +163928,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -162081,6 +164006,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -162168,6 +164094,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -162245,6 +164172,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -162316,6 +164244,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -162393,6 +164322,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -162469,6 +164399,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -162546,6 +164477,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -162633,6 +164565,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -162710,6 +164643,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -162792,6 +164726,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -162869,6 +164804,323 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutFiscalHardwareDevicesInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutFiscalHardwareDevicesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput>
+  }
+
+  export type OrganizationUpsertWithoutFiscalHardwareDevicesInput = {
+    update: XOR<OrganizationUpdateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput>
+    create: XOR<OrganizationCreateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutFiscalHardwareDevicesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutFiscalHardwareDevicesInput, OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput>
+  }
+
+  export type OrganizationUpdateWithoutFiscalHardwareDevicesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -163083,6 +165335,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
@@ -163159,6 +165412,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -163494,6 +165748,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -163570,6 +165825,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -163876,6 +166132,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -163953,6 +166210,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -164070,6 +166328,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -164147,6 +166406,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -164273,6 +166533,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -164350,6 +166611,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -164513,6 +166775,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -164590,6 +166853,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -165011,6 +167275,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -165088,6 +167353,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -165214,6 +167480,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -165291,6 +167558,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -165407,6 +167675,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -165484,6 +167753,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -165610,6 +167880,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -165687,6 +167958,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -165803,6 +168075,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -165880,6 +168153,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -166006,6 +168280,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -166083,6 +168358,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -166199,6 +168475,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -166276,6 +168553,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -166409,6 +168687,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -166486,6 +168765,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -166573,6 +168853,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -166650,6 +168931,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -166798,6 +169080,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -166875,6 +169158,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -167040,6 +169324,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -167117,6 +169402,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -167251,6 +169537,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -167328,6 +169615,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -167399,6 +169687,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -167476,6 +169765,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -167602,6 +169892,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -167679,6 +169970,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -167795,6 +170087,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -167872,6 +170165,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -167959,6 +170253,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -168036,6 +170331,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -168107,6 +170403,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -168184,6 +170481,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -168339,6 +170637,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -168416,6 +170715,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -168519,6 +170819,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -168596,6 +170897,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -168744,6 +171046,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -168821,6 +171124,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -168939,6 +171243,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -169016,6 +171321,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -169155,6 +171461,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -169232,6 +171539,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -169367,6 +171675,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -169444,6 +171753,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -169531,6 +171841,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -169608,6 +171919,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -169679,6 +171991,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -169756,6 +172069,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -169843,6 +172157,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -169920,6 +172235,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -169991,6 +172307,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -170068,6 +172385,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -170155,6 +172473,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -170232,6 +172551,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -170303,6 +172623,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -170380,6 +172701,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -170467,6 +172789,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -170544,6 +172867,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -170615,6 +172939,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -170692,6 +173017,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -170779,6 +173105,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -170856,6 +173183,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -170927,6 +173255,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -171004,6 +173333,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
@@ -171091,6 +173421,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -171168,6 +173499,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -171313,6 +173645,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -171390,6 +173723,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
@@ -171508,6 +173842,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -171585,6 +173920,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
@@ -171727,6 +174063,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -171804,6 +174141,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
   }
@@ -171922,6 +174260,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -171999,6 +174338,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
   }
@@ -175057,6 +177397,25 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type FiscalHardwareDeviceCreateManyOrganizationInput = {
+    id?: string
+    kind: string
+    providerId: string
+    label: string
+    outletCode?: string | null
+    registerCode?: string | null
+    serial?: string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: string | null
+    secretsCipher?: string | null
+    status?: string
+    isOrgDefault?: boolean
+    isOutletDefault?: boolean
+    isRegisterDefault?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrganizationCreateManyParentOrgInput = {
     id?: string
     name: string
@@ -176517,6 +178876,63 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type FiscalHardwareDeviceUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FiscalHardwareDeviceUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    providerId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    outletCode?: NullableStringFieldUpdateOperationsInput | string | null
+    registerCode?: NullableStringFieldUpdateOperationsInput | string | null
+    serial?: NullableStringFieldUpdateOperationsInput | string | null
+    externalIdsJson?: NullableJsonNullValueInput | InputJsonValue
+    endpoint?: NullableStringFieldUpdateOperationsInput | string | null
+    secretsCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isOrgDefault?: BoolFieldUpdateOperationsInput | boolean
+    isOutletDefault?: BoolFieldUpdateOperationsInput | boolean
+    isRegisterDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationUpdateWithoutParentOrgInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -176584,6 +179000,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
@@ -176660,6 +179077,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -177073,6 +179491,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
@@ -177149,6 +179568,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -177355,6 +179775,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -177431,6 +179852,7 @@ export namespace Prisma {
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput

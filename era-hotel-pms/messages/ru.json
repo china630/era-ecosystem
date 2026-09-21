@@ -2843,6 +2843,25 @@
     "perm_screen_settings": "screen:settings",
     "perm_screen_settings_users": "screen:settings.users",
     "perm_screen_settings_access": "screen:settings.access",
-    "perm_screen_settings_import": "screen:settings.import"
+    "perm_screen_settings_import": "screen:settings.import",
+    "perm_reservations_read": "Чтение броней",
+    "perm_reservations_write": "Запись броней",
+    "perm_reservations_checkin": "Check-in",
+    "perm_reservations_checkout": "Check-out",
+    "perm_reservations_cancel": "Отмена брони",
+    "perm_folio_read": "Чтение фолио",
+    "perm_folio_charge": "Начисление",
+    "perm_folio_payment": "Приём оплаты",
+    "perm_folio_void": "Void начислений",
+    "perm_rooms_status": "Статус номера",
+    "perm_housekeeping_manage": "Управление HK",
+    "perm_medical_manage": "Мед. заказы",
+    "perm_channel_manage": "Channel manager",
+    "perm_night_audit_run": "Запуск night audit",
+    "perm_master_data_manage": "Master data",
+    "perm_users_manage": "Пользователи",
+    "perm_access_manage": "Матрица ролей",
+    "perm_reports_read": "Чтение отчётов",
+    "perm_cash_shift": "Кассовая смена"
   }
 }

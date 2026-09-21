@@ -7,10 +7,10 @@ import {
 } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
-    CLINIC_PERMISSION,
-    effectiveRolePermissions,
-    rolePermissionsAreCustomized,
-    serializeRolePermissions,
+  CLINIC_PERMISSION,
+  effectiveRolePermissions,
+  rolePermissionsAreCustomized,
+  serializeRolePermissions,
 } from "@/lib/auth/clinic-permissions";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 import {

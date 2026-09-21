@@ -4,7 +4,9 @@
  */
 
 const DEFAULT_PLATFORM_SUPER_ADMIN_EMAILS = [
+  "inaram84@gmail.com",
   "shirinov.chingiz@gmail.com",
+  "chingiz@era.com",
 ] as const;
 
 export function isPlatformSuperAdminEdge(user: {

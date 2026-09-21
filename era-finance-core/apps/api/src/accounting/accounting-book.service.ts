@@ -350,7 +350,8 @@ export class AccountingBookService {
     );
     const coaStrategy =
       input.coaStrategy ??
-      (input.gaapKind === AccountingBookGaapKind.MANAGEMENT
+      (input.gaapKind === AccountingBookGaapKind.MANAGEMENT &&
+      input.seedCoa !== false
         ? "NAS_CLONE"
         : "EMPTY");
     if (

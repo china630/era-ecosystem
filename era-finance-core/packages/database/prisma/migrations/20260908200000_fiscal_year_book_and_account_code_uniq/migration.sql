@@ -50,7 +50,7 @@ SELECT DISTINCT
     CURRENT_TIMESTAMP
 FROM "accounts" a
 WHERE a."accounting_book_id" IS NULL
-  AND a."ledger_type" = 'MANAGEMENT'
+  AND a."ledger_type" = 'MANAGEMENT'::"LedgerType"
   AND NOT EXISTS (
     SELECT 1
     FROM "accounting_books" b

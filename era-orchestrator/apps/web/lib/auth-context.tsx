@@ -97,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(stored);
       setUser(userFromToken(stored));
       setReady(true);
+      // Do not clear tokens on memberships failure — transient API/CORS blips
+      // were wiping orch SSO state and made satellite launch look "broken".
       void loadMemberships(stored)
         .then(setMemberships)
         .catch(() => undefined);

@@ -2843,6 +2843,25 @@
     "perm_screen_settings": "screen:settings",
     "perm_screen_settings_users": "screen:settings.users",
     "perm_screen_settings_access": "screen:settings.access",
-    "perm_screen_settings_import": "screen:settings.import"
+    "perm_screen_settings_import": "screen:settings.import",
+    "perm_reservations_read": "Rezervasiyaları oxu",
+    "perm_reservations_write": "Rezervasiya yaz",
+    "perm_reservations_checkin": "Check-in",
+    "perm_reservations_checkout": "Check-out",
+    "perm_reservations_cancel": "Rezervasiyanı ləğv et",
+    "perm_folio_read": "Folionu oxu",
+    "perm_folio_charge": "Xərclər yaz",
+    "perm_folio_payment": "Ödəniş qəbul et",
+    "perm_folio_void": "Xərcləri void et",
+    "perm_rooms_status": "Otaq statusu",
+    "perm_housekeeping_manage": "Housekeeping idarə et",
+    "perm_medical_manage": "Tibbi sifarişlər",
+    "perm_channel_manage": "Kanal meneceri",
+    "perm_night_audit_run": "Night audit işlət",
+    "perm_master_data_manage": "Master data",
+    "perm_users_manage": "İstifadəçiləri idarə et",
+    "perm_access_manage": "Rol matrisini idarə et",
+    "perm_reports_read": "Hesabatları oxu",
+    "perm_cash_shift": "Kassa növbəsi"
   }
 }

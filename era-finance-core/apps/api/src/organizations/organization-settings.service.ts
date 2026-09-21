@@ -75,7 +75,8 @@ export class OrganizationSettingsService {
       valuation !== undefined ||
       dto.asanUserId !== undefined ||
       dto.ledgerMirrorMode !== undefined ||
-      dto.emasMode !== undefined
+      dto.emasMode !== undefined ||
+      dto.internalRateVisibleToHrManager !== undefined
     ) {
       mergedSettings = { ...baseSettings };
       if (valuation !== undefined) {

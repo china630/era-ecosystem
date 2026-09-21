@@ -4,7 +4,6 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { accountDisplayName } from "../../../lib/account-display-name";
 import { apiFetch } from "../../../lib/api-client";
-import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { uiLangRuAz } from "../../../lib/i18n/ui-lang";
@@ -80,7 +79,6 @@ function canEditMappings(canPost: boolean): boolean {
 function LedgerMappingsContent() {
   const { t, i18n } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const { user } = useAuth();
   const { canPostAccounting } = useOrgPermissions();
   const edit = canEditMappings(canPostAccounting);
 

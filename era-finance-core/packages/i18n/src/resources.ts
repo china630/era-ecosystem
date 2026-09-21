@@ -9810,6 +9810,22 @@ export const resources = {
         retryErr: "Retry failed",
         retryOk: "Mirror retry finished",
       },
+      postingRolesPage: {
+        title: "Posting role profile",
+        subtitle:
+          "Semantic roles for auto-posting, mapped to NAS accounts for the organization kind.",
+        backToChart: "Chart of accounts",
+        readOnlyHint: "Only OWNER, ADMIN or ACCOUNTANT can edit.",
+        loading: "Loading...",
+        loadErr: "Failed to load posting roles",
+        saveErr: "Failed to save posting role",
+        colRole: "Role",
+        colTemplate: "Template",
+        colAccount: "Account code",
+        overrideBadge: "override",
+        save: "Save",
+        reset: "Reset",
+      },
       manualAdjustments: {
         title: "Manual adjustments",
         subtitle:

@@ -794,6 +794,26 @@ exports.Prisma.ClinicCutoverPolicyScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.FiscalHardwareDeviceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  kind: 'kind',
+  providerId: 'providerId',
+  label: 'label',
+  outletCode: 'outletCode',
+  registerCode: 'registerCode',
+  serial: 'serial',
+  externalIdsJson: 'externalIdsJson',
+  endpoint: 'endpoint',
+  secretsCipher: 'secretsCipher',
+  status: 'status',
+  isOrgDefault: 'isOrgDefault',
+  isOutletDefault: 'isOutletDefault',
+  isRegisterDefault: 'isRegisterDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -1652,6 +1672,7 @@ exports.Prisma.ModelName = {
   Organization: 'Organization',
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
   ClinicCutoverPolicy: 'ClinicCutoverPolicy',
+  FiscalHardwareDevice: 'FiscalHardwareDevice',
   User: 'User',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',

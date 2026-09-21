@@ -17,6 +17,13 @@ export type QuotaUnitPricing = {
   pricePerDocumentPackAzn: number;
 };
 
+export type QuotaUnitPricing = {
+  employeeBlockSize: number;
+  pricePerEmployeeBlockAzn: number;
+  documentPackSize: number;
+  pricePerDocumentPackAzn: number;
+};
+
 export type PublicPricingModule = {
   key: string;
   name: string;

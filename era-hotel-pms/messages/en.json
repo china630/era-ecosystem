@@ -2875,6 +2875,25 @@
     "perm_screen_settings": "screen:settings",
     "perm_screen_settings_users": "screen:settings.users",
     "perm_screen_settings_access": "screen:settings.access",
-    "perm_screen_settings_import": "screen:settings.import"
+    "perm_screen_settings_import": "screen:settings.import",
+    "perm_reservations_read": "Read reservations",
+    "perm_reservations_write": "Write reservations",
+    "perm_reservations_checkin": "Check-in",
+    "perm_reservations_checkout": "Check-out",
+    "perm_reservations_cancel": "Cancel reservation",
+    "perm_folio_read": "Read folio",
+    "perm_folio_charge": "Post charges",
+    "perm_folio_payment": "Take payments",
+    "perm_folio_void": "Void charges",
+    "perm_rooms_status": "Room status",
+    "perm_housekeeping_manage": "Manage housekeeping",
+    "perm_medical_manage": "Medical orders",
+    "perm_channel_manage": "Channel manager",
+    "perm_night_audit_run": "Run night audit",
+    "perm_master_data_manage": "Master data",
+    "perm_users_manage": "Manage users",
+    "perm_access_manage": "Manage role matrix",
+    "perm_reports_read": "Read reports",
+    "perm_cash_shift": "Cash shift"
   }
 }

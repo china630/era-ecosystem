@@ -970,6 +970,13 @@ export function MainSidebar({
             />
           ) : null}
           <SideNavSubItem
+            href="/reporting/compare-books"
+            label={t("nav.compareBooks")}
+            isActive={pathname.startsWith("/reporting/compare-books")}
+            icon={Scale}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/reporting/turnovers"
             label={t("nav.accountTurnovers")}
             isActive={pathname.startsWith("/reporting/turnovers")}

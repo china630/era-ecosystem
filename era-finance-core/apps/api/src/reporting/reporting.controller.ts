@@ -1249,7 +1249,7 @@ export class ReportingController {
   }
 
   @Post("reopen-period")
-  @UseGuards(VoenIntegrityGuard)
+  @UseGuards(PermissionsGuard, VoenIntegrityGuard)
   @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
   @ApiOperation({
     summary:

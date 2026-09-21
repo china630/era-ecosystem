@@ -1,3 +1,5 @@
+/** Catalog freeze: invoices are documents, not a 0.10/invoice meter. */
+
 export type MeterCanonInput = {
   pricePerUserMonthAzn: number;
   pricePerGbMonthAzn: number;
