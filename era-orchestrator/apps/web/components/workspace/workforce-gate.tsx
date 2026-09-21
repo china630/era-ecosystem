@@ -11,7 +11,11 @@ import { enableWorkforceModule } from "../../lib/workforce-fetch";
  * Friendly "Workforce not enabled" gate shown when a workforce page receives
  * a PLATFORM_WORKFORCE_REQUIRED (403). Lets the owner enable the module inline.
  */
-export function WorkforceGate({ onEnabled }: { onEnabled: () => void | Promise<void> }) {
+export function WorkforceGate({
+  onEnabled,
+}: {
+  onEnabled?: () => void | Promise<void>;
+}) {
   const t = useTranslations("workforceGate");
   const [enabling, setEnabling] = useState(false);
 
@@ -19,7 +23,7 @@ export function WorkforceGate({ onEnabled }: { onEnabled: () => void | Promise<v
     setEnabling(true);
     const ok = await enableWorkforceModule();
     setEnabling(false);
-    if (ok) await onEnabled();
+    if (ok) await onEnabled?.();
   }
 
   return (

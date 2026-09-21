@@ -14,6 +14,10 @@
       "types": "./dist/orchestrator-gateway.d.ts",
       "default": "./dist/orchestrator-gateway.js"
     },
+    "./print": {
+      "types": "./dist/print/print-snapshot.d.ts",
+      "default": "./dist/print/print-snapshot.js"
+    },
     "./ui": {
       "types": "./dist/ui/index.d.ts",
       "default": "./dist/ui/index.js"

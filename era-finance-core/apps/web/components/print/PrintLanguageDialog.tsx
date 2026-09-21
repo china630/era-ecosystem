@@ -8,8 +8,8 @@ import {
   MODAL_FOOTER_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
   MODAL_CLOSE_BUTTON_CLASS,
-} from "../../../lib/design-system";
-import { Button } from "../../ui/button";
+} from "../../lib/design-system";
+import { Button } from "../ui/button";
 import { X } from "lucide-react";
 
 export type PrintLang = "az" | "ru" | "en";

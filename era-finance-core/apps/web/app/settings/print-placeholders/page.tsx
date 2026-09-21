@@ -6,7 +6,7 @@ import {
   FINANCE_INVOICE_COMMERCIAL_BASE_WHITELIST,
   FINANCE_INVOICE_COMMERCIAL_LINE_WHITELIST,
   PRINT_BLANK_FINANCE_INVOICE_COMMERCIAL,
-} from "@era/satellite-kit";
+} from "@era/satellite-kit/print";
 import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";

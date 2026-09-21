@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CatalogField } from "@era/satellite-kit/ui";
-import { apiFetch } from "../../lib/api-client";
-import { PageHeader } from "../../components/layout/page-header";
+import { apiFetch } from "../../../lib/api-client";
+import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -17,7 +17,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
-} from "../../lib/design-system";
+} from "../../../lib/design-system";
 
 type QueueItem = {
   id: string;

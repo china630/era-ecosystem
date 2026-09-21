@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Shield } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
   PageHeader,
@@ -194,8 +193,7 @@ export default function AccessSettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title={tAccess("title")}
-        description={tAccess("subtitle")}
-        icon={Shield}
+        subtitle={tAccess("subtitle")}
       />
       {error ? (
         <p className="text-sm text-[var(--era-danger,#b91c1c)]">{error}</p>

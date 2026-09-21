@@ -157,7 +157,7 @@ export default function WorkforceGroupPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("title")} description={t("hint")} />
+      <PageHeader title={t("title")} subtitle={t("hint")} />
       <div className={CARD_CONTAINER_CLASS}>
         <div className="mb-3 flex flex-wrap gap-3">
           <CatalogField
