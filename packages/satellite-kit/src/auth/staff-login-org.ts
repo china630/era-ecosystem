@@ -2,9 +2,13 @@ import { burnPasswordVerifyCost } from "./password";
 import {
   assertLoginOrgRateLimit,
   ORG_NO_RE,
-  UUID_RE,
   resolveLoginOrganizationId,
 } from "./resolve-login-org";
+export {
+  LOGIN_ORG_NO_STORAGE_KEY,
+  readLoginOrgNoPrefill,
+  persistLoginOrgNo,
+} from "./staff-login-org-storage";
 import {
   assertOrgNoMatchesHost,
   loginPoolHostSuffixesFromEnv,
@@ -14,9 +18,6 @@ import {
   resolveLoginHost,
   satelliteKeyFromEnv,
 } from "../tenancy/login-hostname-memory";
-
-/** Browser localStorage key for last successful staff login org code (A3/A5). */
-export const LOGIN_ORG_NO_STORAGE_KEY = "era.login.orgNo";
 
 export function clientIpFromRequest(request: Request): string {
   return (
@@ -165,35 +166,4 @@ export async function readStaffLoginJson(
     return { ok: false, status: 400, error: "Invalid organization code" };
   }
   return { ok: true, raw };
-}
-
-export function readLoginOrgNoPrefill(searchParams: {
-  get: (key: string) => string | null;
-}): string {
-  const fromQuery = searchParams.get("org")?.trim() ?? "";
-  if (fromQuery) {
-    if (UUID_RE.test(fromQuery)) return "";
-    if (ORG_NO_RE.test(fromQuery)) return fromQuery;
-    return "";
-  }
-  if (typeof globalThis !== "undefined" && "localStorage" in globalThis) {
-    try {
-      return localStorage.getItem(LOGIN_ORG_NO_STORAGE_KEY)?.trim() ?? "";
-    } catch {
-      return "";
-    }
-  }
-  return "";
-}
-
-export function persistLoginOrgNo(orgNo: string): void {
-  const v = orgNo.trim();
-  if (!v || typeof globalThis === "undefined" || !("localStorage" in globalThis)) {
-    return;
-  }
-  try {
-    localStorage.setItem(LOGIN_ORG_NO_STORAGE_KEY, v);
-  } catch {
-    // ignore quota / privacy mode
-  }
 }
