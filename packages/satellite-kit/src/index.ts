@@ -1,5 +1,6 @@
 export {
   publishToOrchestratorGateway,
+  SatelliteEventAuthError,
   satelliteOrganizationId,
   type OrchestratorGatewayResult,
 } from "./orchestrator-gateway";
@@ -58,12 +59,26 @@ export {
   resetRuntimeConfigForTests,
   type SatelliteRuntimeConfig,
 } from "./tenancy/runtime-config-core";
-export { getRuntimeSsoSharedSecret } from "./tenancy/runtime-config-memory";
+export {
+  pullDesiredStateOnce,
+  startDesiredStateReconcileLoop,
+  resolveSatelliteKeyForDesiredState,
+  shouldPullDesiredStateOnBoot,
+  resetDesiredStatePullForTests,
+  type DesiredStatePullResult,
+  type PullDesiredStateOpts,
+} from "./tenancy/desired-state-pull";
+export {
+  getRuntimeConfigMemory,
+  getRuntimeSsoSharedSecret,
+} from "./tenancy/runtime-config-memory";
+export { isFolkloreS2sToken } from "./tenancy/folklore-s2s-token";
 export {
   resolveOrchestratorBaseUrl,
   resolveSatelliteEventServiceToken,
   resolveControlPlaneBearerToken,
   rewriteComposeHostnameForHost,
+  preferInClusterOrchestratorUrl,
 } from "./tenancy/resolve-orchestrator-url";
 export {
   runWithSatelliteTenant,

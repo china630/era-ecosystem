@@ -41,7 +41,6 @@ export class RegistryCacheService implements OnModuleDestroy {
   }
 
   ttlForPath(path: string): number {
-    const today = new Date().toISOString().slice(0, 10);
     if (path.includes("/fx/rates") && !path.includes("/range")) {
       return 300;
     }
@@ -51,7 +50,6 @@ export class RegistryCacheService implements OnModuleDestroy {
     if (path.includes("/calendar")) {
       return 86_400;
     }
-    void today;
     return 3600;
   }
 

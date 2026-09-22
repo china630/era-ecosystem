@@ -2,6 +2,10 @@
   "compilerOptions": {
     "module": "commonjs",
     "declaration": false,
+    "baseUrl": "./",
+    "paths": {
+      "@era/satellite-kit/time": ["../../../packages/satellite-kit/dist/time/baku"]
+    },
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

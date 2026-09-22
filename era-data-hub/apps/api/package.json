@@ -10,6 +10,7 @@
     "test": "jest --config jest.config.cjs --ci"
   },
   "dependencies": {
+    "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@era/data-hub-database": "*",
     "@erafinance/database": "file:../../../era-finance-core/packages/database",
     "@nestjs/common": "^11.0.8",

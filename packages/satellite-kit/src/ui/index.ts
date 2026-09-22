@@ -29,7 +29,14 @@ export { NATIONALITY_OPTIONS } from "../catalog/nationality-options";
 export { FieldSection } from "./field-section";
 export { FieldPanel } from "./field-panel";
 export { buildAuthLoginLabels } from "./auth-login-labels";
-export { AuthLoginCard, type AuthLoginCardLabels, type AuthLoginCardProps } from "./auth-login-card";
+export {
+  AuthLoginCard,
+  AUTH_FIELD_GROUP_CLASS,
+  AUTH_FIELD_LABEL_CLASS,
+  AUTH_FORM_STACK_CLASS,
+  type AuthLoginCardLabels,
+  type AuthLoginCardProps,
+} from "./auth-login-card";
 export { AuthPageHeader } from "./auth-page-header";
 export { SatelliteRootChrome } from "./satellite-root-chrome";
 export {

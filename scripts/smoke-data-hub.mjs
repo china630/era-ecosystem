@@ -5,6 +5,8 @@
  *   node scripts/smoke-data-hub.mjs
  *   DATA_HUB_URL=http://127.0.0.1:4200 DATA_HUB_API_KEY=dev-data-hub-key node scripts/smoke-data-hub.mjs
  */
+import { todayBakuYmd } from "./lib/today-baku-ymd.mjs";
+
 const base = (process.env.DATA_HUB_URL ?? "http://127.0.0.1:4200").replace(/\/$/, "");
 const apiKey = process.env.DATA_HUB_API_KEY ?? "dev-data-hub-key";
 const serviceToken = process.env.DATA_HUB_SERVICE_TOKEN ?? "";
@@ -36,7 +38,7 @@ async function main() {
   console.log(`Smoke data-hub @ ${base}\n`);
   await get("/healthz", "healthz");
   const fxRates = await get("/registry/v1/fx/rates?symbols=USD,EUR", "fx/rates");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBakuYmd();
   await get(`/registry/v1/fx/rates?date=${today}&symbols=USD,EUR`, "fx/rates-dated");
   await get(
     `/registry/v1/fx/convert?from=USD&to=AZN&amount=100&date=${today}`,

@@ -1,17 +1,11 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { CbarRateStatus, Prisma } from "@era/data-hub-database";
+import { bakuDateKey, todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 
-function bakuDateKey(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function parseDateParam(raw: string | undefined): Date {
-  if (!raw) return new Date();
+  if (!raw) return new Date(`${todayBakuYmd()}T12:00:00.000Z`);
   const key = raw.slice(0, 10);
   const d = new Date(`${key}T12:00:00.000Z`);
   if (Number.isNaN(d.getTime())) {
