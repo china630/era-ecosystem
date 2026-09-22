@@ -9,6 +9,7 @@ import { RequirePermissions } from "../../common/decorators/permissions.decorato
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
 
+import { addBakuDays, bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { OrganizationId } from "../../common/org-id.decorator";
@@ -50,10 +51,8 @@ export class WorkforceExportController {
     @Query("to") to: string,
     @Res() res: Response,
   ) {
-    const fromIso = from ?? new Date().toISOString().slice(0, 10);
-    const toIso =
-      to ??
-      new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    const fromIso = from ?? todayBakuYmd();
+    const toIso = to ?? addBakuDays(todayBakuYmd(), 30);
     const csv = await this.exportService.exportAbsencesCsv(
       organizationId,
       fromIso,
@@ -76,13 +75,18 @@ export class WorkforceExportController {
     @Query("month") month: string,
     @Res() res: Response,
   ) {
-    const y = Number(year) || new Date().getUTCFullYear();
-    const m = Number(month) || new Date().getUTCMonth() + 1;
-    const csv = await this.exportService.exportTimesheetCsv(organizationId, y, m);
+    const { y, m } = bakuYmd(new Date());
+    const yearNum = Number(year) || y;
+    const monthNum = Number(month) || m;
+    const csv = await this.exportService.exportTimesheetCsv(
+      organizationId,
+      yearNum,
+      monthNum,
+    );
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="workforce-timesheet-${y}-${String(m).padStart(2, "0")}.csv"`,
+      `attachment; filename="workforce-timesheet-${yearNum}-${String(monthNum).padStart(2, "0")}.csv"`,
     );
     return res.send(csv);
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Check,
@@ -10,13 +10,16 @@ import {
   Plus,
   Send,
 } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -67,8 +70,13 @@ export default function StaffSchedulePage() {
     action: "submit" | "approve";
   } | null>(null);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState("");
+  const filtered = useMemo(() => {
+    if (!filterStatus) return rows;
+    return rows.filter((r) => r.status === filterStatus);
+  }, [rows, filterStatus]);
   const { page, pageSize, setPage, setPageSize, paged, total } =
-    useListPagination(rows);
+    useListPagination(filtered);
 
   useEffect(() => {
     if (!moreMenuId) return;
@@ -196,6 +204,22 @@ export default function StaffSchedulePage() {
           </button>
         }
       />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setFilterStatus("")}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("filterStatus")}
+          value={filterStatus}
+          onChange={(next) => setFilterStatus(String(next))}
+          options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
+            value: v,
+            label: t(`status.${v}` as "status.DRAFT"),
+          }))}
+          emptyLabel={tCommon("all")}
+        />
+      </EraListFilterBar>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
@@ -225,7 +249,7 @@ export default function StaffSchedulePage() {
                       {t(`status.${r.status}` as "status.DRAFT")}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {r.createdAt ? String(r.createdAt).slice(0, 10) : "—"}
+                      {r.createdAt ? bakuDateDisplay(r.createdAt) : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="relative flex flex-wrap items-center gap-1">

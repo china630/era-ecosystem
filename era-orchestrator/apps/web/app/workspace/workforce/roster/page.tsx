@@ -13,12 +13,14 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  DatePicker,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -34,6 +36,7 @@ type Employment = {
   id: string;
   staffCode: string | null;
   status: string;
+  globalPersonId?: string;
   orgUnitId?: string | null;
   orgUnit?: { id: string; name: string } | null;
 };
@@ -81,9 +84,9 @@ export default function WorkforceRosterPage() {
   const t = useTranslations("workforceRoster");
   const tCommon = useTranslations("common");
 
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const bakuNow = bakuYmd();
+  const [year, setYear] = useState(bakuNow.y);
+  const [month, setMonth] = useState(bakuNow.m);
   const [preserveManual, setPreserveManual] = useState(false);
   const [filterPlaceId, setFilterPlaceId] = useState("");
   const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
@@ -92,6 +95,9 @@ export default function WorkforceRosterPage() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [brigades, setBrigades] = useState<Brigade[]>([]);
   const [employments, setEmployments] = useState<Employment[]>([]);
+  const [persons, setPersons] = useState<
+    Record<string, { displayName?: string | null }>
+  >({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [lastDay, setLastDay] = useState(31);
@@ -111,9 +117,7 @@ export default function WorkforceRosterPage() {
   const [formCycleId, setFormCycleId] = useState("");
   const [formEmploymentId, setFormEmploymentId] = useState("");
   const [formBrigadeId, setFormBrigadeId] = useState("");
-  const [formFrom, setFormFrom] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
+  const [formFrom, setFormFrom] = useState(() => todayBakuYmd());
   const [formTo, setFormTo] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -171,6 +175,7 @@ export default function WorkforceRosterPage() {
       const body = await eRes.json();
       const items = Array.isArray(body) ? body : (body.items ?? []);
       setEmployments(items);
+      if (!Array.isArray(body) && body.persons) setPersons(body.persons);
     }
     if (uRes.ok) {
       setUnits(parseOrgUnitItems(await uRes.json()));
@@ -328,9 +333,16 @@ export default function WorkforceRosterPage() {
     value: c.id,
     label: `${c.code} — ${c.name}`,
   }));
+  const empLabel = (empId: string) => {
+    const emp = employments.find((e) => e.id === empId);
+    const name = emp?.globalPersonId
+      ? persons[emp.globalPersonId]?.displayName?.trim()
+      : "";
+    return name || emp?.staffCode || tCommon("unnamedPerson");
+  };
   const empOptions = employments.map((e) => ({
     value: e.id,
-    label: e.staffCode ?? e.id.slice(0, 8),
+    label: empLabel(e.id),
   }));
   const brigadeOptions = brigades.map((b) => ({
     value: b.id,
@@ -395,10 +407,12 @@ export default function WorkforceRosterPage() {
               type="button"
               className={PRIMARY_BUTTON_CLASS}
               onClick={() => {
-                setFormPlaceId(places[0]?.id ?? "");
-                setFormCycleId(cycles[0]?.id ?? "");
+                setFormPlaceId("");
+                setFormCycleId("");
                 setFormEmploymentId("");
                 setFormBrigadeId("");
+                setFormFrom("");
+                setFormTo("");
                 setFormError(null);
                 setAssignOpen(true);
               }}
@@ -413,9 +427,9 @@ export default function WorkforceRosterPage() {
       <EraListFilterBar
         resetLabel={tCommon("filterReset")}
         onReset={() => {
-          const n = new Date();
-          setYear(n.getFullYear());
-          setMonth(n.getMonth() + 1);
+          const n = bakuYmd();
+          setYear(n.y);
+          setMonth(n.m);
           setFilterPlaceId("");
           setFilterOrgUnitId("");
         }}
@@ -476,7 +490,7 @@ export default function WorkforceRosterPage() {
                   {previewRows.map((row) => (
                     <tr key={row.employmentId} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {row.staffCode ?? row.employmentId.slice(0, 8)}
+                        {empLabel(row.employmentId)}
                       </td>
                       {row.cells.map((cell) => {
                         const label =
@@ -537,8 +551,7 @@ export default function WorkforceRosterPage() {
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.employmentId
-                          ? row.employment?.staffCode ??
-                            row.employmentId.slice(0, 8)
+                          ? empLabel(row.employmentId)
                           : row.brigade
                             ? `${row.brigade.code} (${t("brigade")})`
                             : "—"}
@@ -546,10 +559,10 @@ export default function WorkforceRosterPage() {
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.place
                           ? `${row.place.code} — ${row.place.name}`
-                          : row.placeId.slice(0, 8)}
+                          : "—"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {row.cycle?.code ?? row.cycleId.slice(0, 8)}
+                        {row.cycle?.code ?? "—"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {String(row.effectiveFrom).slice(0, 10)}
@@ -572,6 +585,16 @@ export default function WorkforceRosterPage() {
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
         title={t("addAssignment")}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setAssignOpen(false)}
+            onSubmit={() => void createAssignment()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
       >
         <div className="space-y-3">
           <CatalogField
@@ -593,6 +616,7 @@ export default function WorkforceRosterPage() {
               value={formEmploymentId}
               onChange={(v) => setFormEmploymentId(String(v))}
               options={empOptions}
+              emptyLabel={tCommon("select")}
             />
           ) : (
             <CatalogField
@@ -601,6 +625,7 @@ export default function WorkforceRosterPage() {
               value={formBrigadeId}
               onChange={(v) => setFormBrigadeId(String(v))}
               options={brigadeOptions}
+              emptyLabel={tCommon("select")}
             />
           )}
           <CatalogField
@@ -609,6 +634,7 @@ export default function WorkforceRosterPage() {
             value={formPlaceId}
             onChange={(v) => setFormPlaceId(String(v))}
             options={placeOptions}
+            emptyLabel={tCommon("select")}
           />
           <CatalogField
             kind="ENTITY_REF"
@@ -616,39 +642,23 @@ export default function WorkforceRosterPage() {
             value={formCycleId}
             onChange={(v) => setFormCycleId(String(v))}
             options={cycleOptions}
+            emptyLabel={tCommon("select")}
           />
-          <CatalogField
-            kind="FREE_TEXT"
+          <DatePicker
             label={t("colFrom")}
             value={formFrom}
-            onChange={(v) => setFormFrom(String(v))}
-            options={[]}
+            onChange={setFormFrom}
+            placeholder={tCommon("datePlaceholder")}
+            fluid
           />
-          <CatalogField
-            kind="FREE_TEXT"
+          <DatePicker
             label={t("colTo")}
             value={formTo}
-            onChange={(v) => setFormTo(String(v))}
-            options={[]}
+            onChange={setFormTo}
+            placeholder={tCommon("datePlaceholder")}
+            fluid
           />
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setAssignOpen(false)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void createAssignment()}
-            >
-              {tCommon("save")}
-            </button>
-          </div>
         </div>
       </ModalShell>
 

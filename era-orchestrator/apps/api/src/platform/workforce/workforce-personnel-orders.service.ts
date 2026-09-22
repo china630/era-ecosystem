@@ -12,6 +12,7 @@ import {
   WorkforcePersonnelOrderType,
 } from "@era365/database";
 import PDFDocument from "pdfkit";
+import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { MdmService } from "../../mdm/mdm.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import {
@@ -289,7 +290,7 @@ export class WorkforcePersonnelOrdersService {
       personDisplayName = null;
     }
 
-    const year = parseDateOnly(dto.effectiveDate).getUTCFullYear();
+    const year = bakuYmd(parseDateOnly(dto.effectiveDate)).y;
     const { orderNumber, sequenceYear, sequenceSeq } = await this.allocateNumber(
       organizationId,
       dto.type,
@@ -583,12 +584,12 @@ export class WorkforcePersonnelOrdersService {
       select: { name: true, settings: true },
     });
 
-    const year = new Date().getUTCFullYear();
+    const year = bakuYmd().y;
     const ctx = {
       order: {
         number: formatOrderNumber(dto.type, year, 1),
         type: dto.type,
-        effectiveDate: new Date().toISOString().slice(0, 10),
+        effectiveDate: todayBakuYmd(),
         note: "Sample note / Nümunə qeyd",
       },
       person: {

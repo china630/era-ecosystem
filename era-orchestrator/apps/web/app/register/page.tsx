@@ -7,10 +7,10 @@ import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 import {
   AuthRegisterCard,
-  FORM_FIELD_GROUP_CLASS,
+  AUTH_FIELD_GROUP_CLASS,
+  AUTH_FIELD_LABEL_CLASS,
   FORM_INPUT_CLASS,
   LINK_ACCENT_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   parseApiError,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "../../lib/auth-context";
@@ -82,7 +82,6 @@ function RegisterForm() {
     <AuthRegisterCard
       locale={locale}
       title={t("title")}
-      subtitle={t("subtitle")}
       onSubmit={onSubmit}
       busy={busy}
       error={error}
@@ -94,44 +93,52 @@ function RegisterForm() {
         ru: tAuth("localeRu"),
         en: tAuth("localeEn"),
       }}
+      legalAppPrefix="ERA365"
+      legalLabels={{
+        navAria: tAuth("footerLegalNavAria"),
+        faq: tAuth("footerFaq"),
+        terms: tAuth("footerTerms"),
+        privacy: tAuth("footerPrivacy"),
+        status: tAuth("footerStatus"),
+      }}
       fields={
         <>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("firstName")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("firstName")}</span>
             <input
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
               autoComplete="given-name"
             />
           </label>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("lastName")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("lastName")}</span>
             <input
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
               autoComplete="family-name"
             />
           </label>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("email")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("email")}</span>
             <input
               type="email"
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="username"
             />
           </label>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("password")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("password")}</span>
             <input
               type="password"
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

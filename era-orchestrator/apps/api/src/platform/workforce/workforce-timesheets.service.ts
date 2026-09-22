@@ -19,6 +19,7 @@ import {
   WorkforceTimesheetEntryType,
   WorkforceTimesheetStatus,
 } from "@era365/database";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
@@ -108,12 +109,14 @@ function isPrismaUniqueViolation(err: unknown): boolean {
 
 /** ~240×31 upserts blow a single transaction / HTTP timeout — chunk by employment. */
 const AUTOFILL_EMPLOYMENT_CHUNK = 25;
-const DEFAULT_GRID_PAGE_SIZE = 40;
+const DEFAULT_GRID_PAGE_SIZE = 25;
 const MAX_GRID_PAGE_SIZE = 100;
 
 export type TimesheetGridPageOpts = {
   page?: number;
   pageSize?: number;
+  orgUnitId?: string;
+  employmentId?: string;
 };
 
 @Injectable()
@@ -213,6 +216,7 @@ export class WorkforceTimesheetsService {
     const existingMap = new Map(
       existingRows.map((e) => [entryKey(e.employmentId, e.workDate), e]),
     );
+    const todayIso = todayBakuYmd();
 
     let cellsTouched = 0;
     for (let i = 0; i < employments.length; i += AUTOFILL_EMPLOYMENT_CHUNK) {
@@ -221,6 +225,7 @@ export class WorkforceTimesheetsService {
         for (const emp of chunk) {
           for (let d = 1; d <= lastDay; d++) {
             const workDate = dayDateUtc(year, month, d);
+            if (isoDay(workDate) > todayIso) continue;
             const existing = existingMap.get(entryKey(emp.id, workDate));
             if (isCellImmutable(existing)) continue;
             const type = autofillTypeForDay(workDate);
@@ -291,6 +296,7 @@ export class WorkforceTimesheetsService {
     });
     const startIso = isoDay(monthStart);
     const endIso = isoDay(monthEnd);
+    const todayIso = todayBakuYmd();
 
     const covered = new Set<string>();
     for (const a of absences) {
@@ -299,7 +305,13 @@ export class WorkforceTimesheetsService {
       for (let d = 1; d <= lastDay; d++) {
         const workDate = dayDateUtc(year, month, d);
         const di = isoDay(workDate);
-        if (di < absFrom || di > absTo || di < startIso || di > endIso) {
+        if (
+          di < absFrom ||
+          di > absTo ||
+          di < startIso ||
+          di > endIso ||
+          di > todayIso
+        ) {
           continue;
         }
         covered.add(entryKey(a.employmentId, workDate));
@@ -338,7 +350,13 @@ export class WorkforceTimesheetsService {
         for (let d = 1; d <= lastDay; d++) {
           const workDate = dayDateUtc(year, month, d);
           const di = isoDay(workDate);
-          if (di < absFrom || di > absTo || di < startIso || di > endIso) {
+          if (
+            di < absFrom ||
+            di > absTo ||
+            di < startIso ||
+            di > endIso ||
+            di > todayIso
+          ) {
             continue;
           }
           const existing = existingRows.find(
@@ -469,8 +487,10 @@ export class WorkforceTimesheetsService {
           b.hours != null
             ? new Prisma.Decimal(b.hours)
             : defaultHoursForType(b.type);
+        const todayIso = todayBakuYmd();
         for (let d = b.fromDay; d <= b.toDay; d++) {
           const workDate = dayDateUtc(year, month, d);
+          if (isoDay(workDate) > todayIso) continue;
           const existing = existingMap.get(entryKey(b.employmentId, workDate));
           if (isCellImmutable(existing)) continue;
           await tx.workforceTimesheetEntry.upsert({
@@ -601,7 +621,23 @@ export class WorkforceTimesheetsService {
       include: { orgUnit: true, position: true },
       orderBy: [{ hireDate: "asc" }, { createdAt: "asc" }],
     });
-    const employmentTotal = allEmployments.length;
+    const orgUnitOptions = [
+      ...new Map(
+        allEmployments
+          .filter((e) => e.orgUnit?.id)
+          .map((e) => [
+            e.orgUnit!.id,
+            { id: e.orgUnit!.id, name: e.orgUnit!.name },
+          ]),
+      ).values(),
+    ].sort((a, b) => a.name.localeCompare(b.name));
+    let roster = allEmployments;
+    if (pageOpts?.employmentId) {
+      roster = roster.filter((e) => e.id === pageOpts.employmentId);
+    } else if (pageOpts?.orgUnitId) {
+      roster = roster.filter((e) => e.orgUnit?.id === pageOpts.orgUnitId);
+    }
+    const employmentTotal = roster.length;
     const pageSizeRaw = pageOpts?.pageSize ?? DEFAULT_GRID_PAGE_SIZE;
     const pageSize = Math.min(
       MAX_GRID_PAGE_SIZE,
@@ -610,13 +646,16 @@ export class WorkforceTimesheetsService {
     const pageRaw = pageOpts?.page ?? 1;
     const page = Math.max(1, Number.isFinite(pageRaw) ? pageRaw : 1);
     const start = (page - 1) * pageSize;
-    const employments = allEmployments.slice(start, start + pageSize);
+    const employments = roster.slice(start, start + pageSize);
     // Resolve names for the full ACTIVE roster so batch CatalogField is not
     // limited to the current grid page (~240 is within MDM batch budget).
     const persons = await this.employments.resolvePersonProfiles(
       organizationId,
       allEmployments.map((e) => e.globalPersonId),
     );
+    const optionRoster = pageOpts?.orgUnitId
+      ? allEmployments.filter((e) => e.orgUnit?.id === pageOpts.orgUnitId)
+      : allEmployments;
     const pageEmpIds = employments.map((e) => e.id);
     const entries = await this.prisma.workforceTimesheetEntry.findMany({
       where: {
@@ -631,10 +670,12 @@ export class WorkforceTimesheetsService {
     return {
       timesheet: ts,
       employments,
-      /** Lightweight roster for batch UI (all ACTIVE, not just this page). */
-      employmentOptions: allEmployments.map((e) => ({
+      orgUnitOptions,
+      /** Lightweight roster for filters/batch (not limited to the grid page). */
+      employmentOptions: optionRoster.map((e) => ({
         id: e.id,
         globalPersonId: e.globalPersonId,
+        orgUnitId: e.orgUnit?.id ?? null,
       })),
       employmentTotal,
       page,

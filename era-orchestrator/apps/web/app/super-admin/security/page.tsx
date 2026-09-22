@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -69,6 +70,10 @@ export default function SuperAdminSecurityPage() {
 
   function fmtValue(v: unknown): string {
     if (v == null) return "—";
+    if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T/.test(v)) {
+      const d = new Date(v);
+      if (!Number.isNaN(d.getTime())) return bakuDateTimeDisplay(v);
+    }
     if (typeof v === "object") return JSON.stringify(v);
     return String(v);
   }

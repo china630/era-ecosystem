@@ -297,7 +297,7 @@ export default function WorkforceSecurityBindingsPage() {
                         {persons[b.employment?.globalPersonId ?? ""]?.displayName ??
                           (persons[b.employment?.globalPersonId ?? ""]?.accessDenied
                             ? t("maskedPerson")
-                            : (b.employment?.globalPersonId?.slice(0, 8) ?? "—"))}
+                            : tCommon("unnamedPerson"))}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {b.employment?.orgUnit?.name ?? "—"}

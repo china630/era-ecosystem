@@ -7,10 +7,10 @@ import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 import {
   AuthRegisterCard,
-  FORM_FIELD_GROUP_CLASS,
+  AUTH_FIELD_GROUP_CLASS,
+  AUTH_FIELD_LABEL_CLASS,
   FORM_INPUT_CLASS,
   LINK_ACCENT_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   parseApiError,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "../../lib/auth-context";
@@ -110,7 +110,6 @@ export default function RegisterOrgPage() {
     <AuthRegisterCard
       locale={locale}
       title={t("title")}
-      subtitle={t("subtitle")}
       onSubmit={onSubmit}
       busy={busy}
       error={error}
@@ -122,22 +121,30 @@ export default function RegisterOrgPage() {
         ru: tAuth("localeRu"),
         en: tAuth("localeEn"),
       }}
+      legalAppPrefix="ERA365"
+      legalLabels={{
+        navAria: tAuth("footerLegalNavAria"),
+        faq: tAuth("footerFaq"),
+        terms: tAuth("footerTerms"),
+        privacy: tAuth("footerPrivacy"),
+        status: tAuth("footerStatus"),
+      }}
       fields={
         <>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("orgName")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("orgName")}</span>
             <input
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               autoComplete="organization"
             />
           </label>
-          <label className={FORM_FIELD_GROUP_CLASS}>
-            <span className={MODAL_FIELD_LABEL_CLASS}>{t("taxId")}</span>
+          <label className={AUTH_FIELD_GROUP_CLASS}>
+            <span className={AUTH_FIELD_LABEL_CLASS}>{t("taxId")}</span>
             <input
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
               value={taxId}
               onChange={(e) => setTaxId(e.target.value.replace(/\D/g, "").slice(0, 10))}
               inputMode="numeric"

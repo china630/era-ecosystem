@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Pencil, Plus } from "lucide-react";
 import {
+  CatalogField,
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -10,8 +12,12 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ModalFooter,
+  ModalShell,
   PageHeader,
+  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
@@ -21,6 +27,18 @@ import {
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
 import { WorkforceShiftsSubnav } from "../../../../components/workspace/workforce-shifts-subnav";
 import { fmtMinutes, type ShiftType } from "./_lib/types";
+
+function minutesToHm(m: number): string {
+  const h = Math.floor(Math.max(0, m) / 60);
+  const min = Math.max(0, m) % 60;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+function hmToMinutes(raw: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(raw.trim());
+  if (!m) return 0;
+  return Math.min(1440, Number(m[1]) * 60 + Number(m[2]));
+}
 
 export default function WorkforceShiftTypesPage() {
   const { ready } = useRequireAuth();
@@ -32,6 +50,16 @@ export default function WorkforceShiftTypesPage() {
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [startHm, setStartHm] = useState("08:00");
+  const [endHm, setEndHm] = useState("16:00");
+  const [hours, setHours] = useState("8");
+  const [night, setNight] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +80,30 @@ export default function WorkforceShiftTypesPage() {
     if (ready) void load();
   }, [ready, load]);
 
+  function openCreate() {
+    setEditId(null);
+    setCode("");
+    setName("");
+    setStartHm("08:00");
+    setEndHm("16:00");
+    setHours("8");
+    setNight(false);
+    setFormError(null);
+    setOpen(true);
+  }
+
+  function openEdit(row: ShiftType) {
+    setEditId(row.id);
+    setCode(row.code);
+    setName(row.name);
+    setStartHm(minutesToHm(row.startMinute));
+    setEndHm(minutesToHm(row.endMinute));
+    setHours(String(row.defaultHours));
+    setNight(row.isNight);
+    setFormError(null);
+    setOpen(true);
+  }
+
   async function ensureDefaults() {
     setBusy(true);
     await wfFetch("roster/ensure-defaults", { method: "POST", body: "{}" });
@@ -59,21 +111,44 @@ export default function WorkforceShiftTypesPage() {
     await load();
   }
 
+  async function saveShift() {
+    if (!name.trim() || (!editId && !code.trim())) {
+      setFormError(t("requiredFields"));
+      return;
+    }
+    setBusy(true);
+    setFormError(null);
+    const payload = {
+      name: name.trim(),
+      startMinute: hmToMinutes(startHm),
+      endMinute: hmToMinutes(endHm),
+      isNight: night,
+      defaultHours: Number(hours) || 0,
+      ...(editId ? {} : { code: code.trim() }),
+    };
+    const res = await wfFetch(editId ? `shift-types/${editId}` : "shift-types", {
+      method: editId ? "PATCH" : "POST",
+      body: JSON.stringify(payload),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setFormError(t("saveError"));
+      return;
+    }
+    setOpen(false);
+    await load();
+  }
+
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t("shiftsTitle")} subtitle={t("shiftsHint")} />
-      <WorkforceShiftsSubnav />
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-      ) : (
-        <section className={CARD_CONTAINER_CLASS}>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold">{t("shiftTypesHeading")}</h2>
+    <div className="space-y-4">
+      <PageHeader
+        title={t("shiftsTitle")}
+        subtitle={t("shiftsHint")}
+        actions={
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
@@ -82,7 +157,20 @@ export default function WorkforceShiftTypesPage() {
             >
               {t("seedDefaults")}
             </button>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addShift")}
+            </button>
           </div>
+        }
+      />
+      <WorkforceShiftsSubnav />
+
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {loading ? (
+        <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
+      ) : (
+        <section className={CARD_CONTAINER_CLASS}>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
@@ -91,6 +179,7 @@ export default function WorkforceShiftTypesPage() {
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colWindow")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHours")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
                 </tr>
               </thead>
               <tbody>
@@ -105,6 +194,17 @@ export default function WorkforceShiftTypesPage() {
                     <td className={DATA_TABLE_TD_CLASS}>
                       {String(row.defaultHours)}
                     </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        title={t("editShift")}
+                        aria-label={t("editShift")}
+                        onClick={() => openEdit(row)}
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -112,6 +212,71 @@ export default function WorkforceShiftTypesPage() {
           </div>
         </section>
       )}
+
+      <ModalShell
+        open={open}
+        title={editId ? t("editShift") : t("addShift")}
+        onClose={() => setOpen(false)}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setOpen(false)}
+            onSubmit={() => void saveShift()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
+      >
+        <div className="grid gap-3">
+          {!editId ? (
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("colCode")}
+              value={code}
+              onChange={(v) => setCode(String(v))}
+              options={[]}
+            />
+          ) : null}
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("colName")}
+            value={name}
+            onChange={(v) => setName(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("fieldStart")}
+            value={startHm}
+            onChange={(v) => setStartHm(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("fieldEnd")}
+            value={endHm}
+            onChange={(v) => setEndHm(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("fieldHours")}
+            value={hours}
+            onChange={(v) => setHours(String(v))}
+            options={[]}
+          />
+          <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              checked={night}
+              onChange={(e) => setNight(e.target.checked)}
+            />
+            {t("fieldNight")}
+          </label>
+          {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+        </div>
+      </ModalShell>
     </div>
   );
 }

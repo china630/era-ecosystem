@@ -17,35 +17,15 @@ import { SystemConfigService } from "../system-config/system-config.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import { ReferralsService } from "../referrals/referrals.service";
 import {
+  bakuCivilUtcDate,
   bakuMonthBounds,
   billingPeriodKeyBaku,
   previousBillingPeriodKeyBaku,
+  todayBakuYmd,
 } from "./baku-billing.util";
 import { PREMIUM_MODULE_MONTHLY_AZN } from "./tariff-limits";
 
 const Decimal = Prisma.Decimal;
-
-function startOfMonthUtc(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0),
-  );
-}
-
-function endOfMonthUtc(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59, 999),
-  );
-}
-
-function previousMonthAnchorUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
-}
-
-function billingPeriodLabelUtc(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
-}
 
 function roundMoney2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -73,9 +53,7 @@ export class BillingMonthlyService {
   async runMonthlyBilling(now = new Date()): Promise<void> {
     const billingPeriod = previousBillingPeriodKeyBaku(now);
     const { from: periodStart, to: periodEnd } = bakuMonthBounds(billingPeriod);
-    const dateOnly = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-    );
+    const dateOnly = bakuCivilUtcDate(todayBakuYmd(now));
 
     await this.orgModules.finalizeExpiredModuleCancellations(now);
     await this.orgBundles.finalizeExpiredBundleCancellations(now);
@@ -363,8 +341,7 @@ export class BillingMonthlyService {
 
   @Cron("0 0 6 * *")
   async runHardBlockEscalationCron(): Promise<void> {
-    const previousMonth = previousMonthAnchorUtc(new Date());
-    const billingPeriod = billingPeriodLabelUtc(previousMonth);
+    const billingPeriod = previousBillingPeriodKeyBaku();
     await runWithTenantContextAsync(
       { organizationId: null, skipTenantFilter: true },
       async () => {

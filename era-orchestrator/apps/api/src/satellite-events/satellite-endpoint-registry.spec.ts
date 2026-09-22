@@ -39,6 +39,38 @@ describe("SatelliteEndpointRegistryService", () => {
     expect(r?.baseUrl).toBe("https://clinic.example.com");
   });
 
+  it("uses CLINIC_API_URL when registry URL is public HTTPS", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: true,
+      baseUrl: "https://clinic.era-365.online/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      CLINIC_API_URL: "http://clinic:3203",
+      SATELLITE_BRIDGE_SECRET: "bridge-secret",
+    }).resolveEndpoint("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toEqual({
+      baseUrl: "http://clinic:3203",
+      secret: "bridge-secret",
+    });
+  });
+
+  it("uses CLINIC_API_URL when registry URL is loopback", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: true,
+      baseUrl: "http://127.0.0.1:3203/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      CLINIC_API_URL: "http://clinic:3203",
+      SATELLITE_BRIDGE_SECRET: "bridge-secret",
+    }).resolveEndpoint("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toEqual({
+      baseUrl: "http://clinic:3203",
+      secret: "bridge-secret",
+    });
+  });
+
   it("falls back to env for industry_clinic when no row", async () => {
     prisma.satelliteEndpoint.findUnique.mockResolvedValue(null);
     const r = await svc({

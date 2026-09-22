@@ -21,6 +21,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -74,12 +75,14 @@ export default function VacationPlansPage() {
   const [loading, setLoading] = useState(true);
   const [gated, setGated] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => bakuYmd().y);
+  const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
   const [open, setOpen] = useState(false);
   const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
   const [employments, setEmployments] = useState<EmploymentOpt[]>([]);
   const [orgUnitId, setOrgUnitId] = useState("");
-  const [planYear, setPlanYear] = useState(new Date().getFullYear());
+  const [planYear, setPlanYear] = useState(() => bakuYmd().y);
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
   const [busy, setBusy] = useState(false);
   const [confirmAct, setConfirmAct] = useState<{
@@ -88,8 +91,13 @@ export default function VacationPlansPage() {
   } | null>(null);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
+  const visibleRows = useMemo(() => {
+    if (!filterStatus) return rows;
+    return rows.filter((r) => r.status === filterStatus);
+  }, [rows, filterStatus]);
+
   const { page, pageSize, setPage, setPageSize, paged, total } =
-    useListPagination(rows);
+    useListPagination(visibleRows, `${year}|${filterOrgUnitId}|${filterStatus}`);
 
   useEffect(() => {
     if (!moreMenuId) return;
@@ -106,15 +114,20 @@ export default function VacationPlansPage() {
     () =>
       employments.map((e) => ({
         value: e.id,
-        label: persons[e.globalPersonId]?.displayName ?? e.globalPersonId.slice(0, 8),
+        label: persons[e.globalPersonId]?.displayName ?? tCommon("unnamedPerson"),
       })),
-    [employments, persons],
+    [employments, persons, tCommon],
   );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await workforceFetch(`vacation-plans?year=${year}`);
+    const qs = new URLSearchParams({ year: String(year) });
+    if (filterOrgUnitId) qs.set("orgUnitId", filterOrgUnitId);
+    const [res, unitRes] = await Promise.all([
+      workforceFetch(`vacation-plans?${qs.toString()}`),
+      workforceFetch("org-units"),
+    ]);
     if (await isWorkforceGate403(res)) {
       setGated(true);
       setLoading(false);
@@ -132,8 +145,13 @@ export default function VacationPlansPage() {
       | { items?: PlanRow[]; persons?: Record<string, { displayName: string | null }> };
     setRows(Array.isArray(data) ? data : (data.items ?? []));
     if (!Array.isArray(data) && data.persons) setPersons(data.persons);
+    if (unitRes.ok) {
+      const u = (await unitRes.json()) as { items?: OrgUnitOpt[] } | OrgUnitOpt[];
+      const list = Array.isArray(u) ? u : (u.items ?? []);
+      setOrgUnits(list.filter((x) => x.status !== "ARCHIVED"));
+    }
     setLoading(false);
-  }, [year, t]);
+  }, [year, filterOrgUnitId, t]);
 
   useEffect(() => {
     if (ready) void load();
@@ -238,7 +256,11 @@ export default function VacationPlansPage() {
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <EraListFilterBar
         resetLabel={tCommon("filterReset")}
-        onReset={() => setYear(new Date().getFullYear())}
+        onReset={() => {
+          setYear(bakuYmd().y);
+          setFilterOrgUnitId("");
+          setFilterStatus("");
+        }}
       >
         <label className="text-[13px] font-medium text-[#34495E]">
           {t("year")}
@@ -249,6 +271,25 @@ export default function VacationPlansPage() {
             onChange={(e) => setYear(Number(e.target.value))}
           />
         </label>
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("colOrgUnit")}
+          value={filterOrgUnitId}
+          onChange={(next) => setFilterOrgUnitId(String(next))}
+          options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
+          emptyLabel={t("filterAll")}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colStatus")}
+          value={filterStatus}
+          onChange={(next) => setFilterStatus(String(next))}
+          options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
+            value: v,
+            label: t(`status.${v}` as "status.DRAFT"),
+          }))}
+          emptyLabel={t("filterAll")}
+        />
       </EraListFilterBar>
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>

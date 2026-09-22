@@ -18,7 +18,6 @@ type PickerState = {
 
 function LoginForm() {
   const router = useRouter();
-  const t = useTranslations("login");
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
   const { login, token, ready, user } = useAuth();
@@ -162,13 +161,6 @@ function LoginForm() {
     }
   }
 
-  let demoHint: string | undefined;
-  try {
-    demoHint = t("demoHint");
-  } catch {
-    demoHint = undefined;
-  }
-
   function roleLabel(role: string): string {
     try {
       return tOrg(`roles.${role.toLowerCase()}` as "roles.owner");
@@ -182,10 +174,7 @@ function LoginForm() {
       <AuthLoginCard
         locale={locale}
         localeControl={<OrchLanguageSwitcher />}
-        labels={{
-          ...buildAuthLoginLabels(tAuth, { emailMode: true }),
-          loginTitle: t("title"),
-        }}
+        labels={buildAuthLoginLabels(tAuth, { emailMode: true })}
         loginId={email}
         password={password}
         onLoginIdChange={setEmail}
@@ -193,8 +182,6 @@ function LoginForm() {
         onSubmit={onSubmit}
         busy={busy}
         error={error ?? undefined}
-        subtitle={t("subtitle")}
-        ssoHint={demoHint}
         emailMode
         registerHref="/register"
         registerOrgHref="/register-org"

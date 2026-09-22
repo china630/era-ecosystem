@@ -6,6 +6,10 @@ import "dotenv/config";
 import { Prisma, PrismaClient, SubscriptionInvoiceStatus, TariffTier } from "@era365/database/generated/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import {
+  bakuMonthBounds,
+  previousBillingPeriodKeyBaku,
+} from "../apps/api/src/billing/baku-billing.util";
 
 const Decimal = Prisma.Decimal;
 
@@ -14,18 +18,6 @@ function createClient(): PrismaClient {
   if (!url) throw new Error("DATABASE_URL is required");
   const pool = new Pool({ connectionString: url });
   return new PrismaClient({ adapter: new PrismaPg(pool as unknown as never) });
-}
-
-function startOfMonthUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
-}
-
-function endOfMonthUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59, 999));
-}
-
-function previousMonthAnchorUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
 }
 
 function parsePeriodArg(): string | null {
@@ -90,12 +82,8 @@ async function main() {
   const prisma = createClient();
   const now = new Date();
   const periodStr = parsePeriodArg();
-  const anchor = periodStr
-    ? new Date(`${periodStr}-01T12:00:00.000Z`)
-    : previousMonthAnchorUtc(now);
-  const periodStart = startOfMonthUtc(anchor);
-  const periodEnd = endOfMonthUtc(anchor);
-  const billingPeriod = `${anchor.getUTCFullYear()}-${String(anchor.getUTCMonth() + 1).padStart(2, "0")}`;
+  const billingPeriod = periodStr || previousBillingPeriodKeyBaku(now);
+  const { from: periodStart, to: periodEnd } = bakuMonthBounds(billingPeriod);
 
   console.log(`[cp-billing-reconcile] period=${billingPeriod}`);
 

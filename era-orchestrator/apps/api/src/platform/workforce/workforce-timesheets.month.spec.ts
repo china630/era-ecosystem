@@ -258,4 +258,60 @@ describe("WorkforceTimesheetsService month grid", () => {
       GoneException,
     );
   });
+
+  it("getOrCreateMonth filters roster by orgUnitId before paging", async () => {
+    const unitA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const empB = "88888888-8888-4888-8888-888888888888";
+    prisma.workforceTimesheet.findFirst.mockResolvedValue(sheet);
+    prisma.workforceEmployment.findMany.mockResolvedValue([
+      {
+        id: EMP,
+        globalPersonId: "p1",
+        orgUnit: { id: unitA, name: "Front" },
+        position: null,
+      },
+      {
+        id: empB,
+        globalPersonId: "p2",
+        orgUnit: { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Kitchen" },
+        position: null,
+      },
+    ]);
+    const out = await svc.getOrCreateMonth(ORG, 2026, 8, { orgUnitId: unitA });
+    expect(out.employments).toHaveLength(1);
+    expect(out.employments[0].id).toBe(EMP);
+    expect(out.employmentTotal).toBe(1);
+    expect(out.orgUnitOptions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: unitA, name: "Front" })]),
+    );
+  });
+
+  it("batchUpdate skips days after Asia/Baku today", async () => {
+    const future = {
+      ...sheet,
+      year: 2099,
+      month: 1,
+    };
+    prisma.workforceTimesheet.findFirst.mockResolvedValue(future);
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([]);
+    prisma.workforceEmployment.findFirst.mockResolvedValue({
+      id: EMP,
+      organizationId: ORG,
+    });
+    prisma.workforceTimesheetEntry.upsert.mockResolvedValue({});
+    await svc.batchUpdate(
+      ORG,
+      TS,
+      [
+        {
+          employmentId: EMP,
+          fromDay: 1,
+          toDay: 1,
+          type: WorkforceTimesheetEntryType.WORK,
+        },
+      ],
+      ACTOR,
+    );
+    expect(prisma.workforceTimesheetEntry.upsert).not.toHaveBeenCalled();
+  });
 });

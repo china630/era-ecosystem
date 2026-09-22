@@ -12,6 +12,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -33,6 +34,9 @@ export default function WorkforceBrigadesPage() {
 
   const [brigades, setBrigades] = useState<Brigade[]>([]);
   const [employments, setEmployments] = useState<Employment[]>([]);
+  const [persons, setPersons] = useState<
+    Record<string, { displayName: string | null }>
+  >({});
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +66,9 @@ export default function WorkforceBrigadesPage() {
     else setError(t("loadError"));
     if (eRes.ok) {
       const body = await eRes.json();
-      setEmployments(Array.isArray(body) ? body : (body.items ?? []));
+      const items = Array.isArray(body) ? body : (body.items ?? []);
+      setEmployments(items);
+      if (!Array.isArray(body) && body.persons) setPersons(body.persons);
     }
     setLoading(false);
   }, [t]);
@@ -126,12 +132,24 @@ export default function WorkforceBrigadesPage() {
 
   const empOptions = employments.map((e) => ({
     value: e.id,
-    label: e.staffCode ?? e.id.slice(0, 8),
+    label:
+      (e.globalPersonId && persons[e.globalPersonId]?.displayName?.trim()) ||
+      e.staffCode ||
+      tCommon("unnamedPerson"),
   }));
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("brigadesHeading")} subtitle={t("shiftsHint")} />
+      <PageHeader
+        title={t("brigadesHeading")}
+        subtitle={t("shiftsHint")}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateBrigade}>
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("addBrigade")}
+          </button>
+        }
+      />
       <WorkforceShiftsSubnav />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -139,17 +157,6 @@ export default function WorkforceBrigadesPage() {
         <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
       ) : (
         <section className={CARD_CONTAINER_CLASS}>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold">{t("brigadesHeading")}</h2>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={openCreateBrigade}
-            >
-              <Plus className="h-4 w-4" />
-              {t("addBrigade")}
-            </button>
-          </div>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
@@ -189,6 +196,16 @@ export default function WorkforceBrigadesPage() {
         open={brigadeOpen}
         onClose={() => setBrigadeOpen(false)}
         title={brigadeEditId ? t("editBrigade") : t("addBrigade")}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setBrigadeOpen(false)}
+            onSubmit={() => void saveBrigade()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
       >
         <div className="space-y-3">
           {!brigadeEditId ? (
@@ -217,23 +234,6 @@ export default function WorkforceBrigadesPage() {
             options={empOptions}
           />
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setBrigadeOpen(false)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void saveBrigade()}
-            >
-              {tCommon("save")}
-            </button>
-          </div>
         </div>
       </ModalShell>
     </div>

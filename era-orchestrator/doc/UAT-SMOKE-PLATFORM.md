@@ -216,7 +216,8 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 
 | Surface | Path | Check |
 |---------|------|-------|
-| Workforce employments | `/workspace/workforce/employments` | ⋯ Login & access: tick/untick Hotel/Clinic/F&B (incl. hire-default), Save; `emp-{staffCode}` + copy org ID + Open login |
+| Workforce employments | `/workspace/workforce/employments` | ⋯ Login & access: tick/untick Hotel/Clinic/F&B (incl. hire-default), Save; `emp-{staffCode}` + copy org ID + Open login. **Clock:** default hireDate / personnel-order effectiveDate = **Asia/Baku** (`todayBakuYmd`), not UTC slice. |
+| Workforce attendance | `/workspace/workforce/attendance` | Punch list **occurredAt** labels = Asia/Baku via `bakuDateTimeDisplay` (browser TZ ignored). |
 | Workforce bindings | `/workspace/workforce/security/bindings` | Person column; org-unit / position dropdowns list units (not “No matches”) |
 | Workforce role matrix | `/workspace/workforce/security` | Org-unit filter lists units; matrix is position defaults, not per-person access |
 | Workforce vacation | `/workspace/workforce/vacation-plans` | list + submit/approve modal |

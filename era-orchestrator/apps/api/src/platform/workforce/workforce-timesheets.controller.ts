@@ -45,7 +45,12 @@ export class WorkforceTimesheetsController {
       organizationId,
       query.year,
       query.month,
-      { page: query.page, pageSize: query.pageSize },
+      {
+        page: query.page,
+        pageSize: query.pageSize,
+        orgUnitId: query.orgUnitId,
+        employmentId: query.employmentId,
+      },
     );
   }
 

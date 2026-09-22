@@ -30,7 +30,11 @@ export type Brigade = {
   _count?: { members: number };
 };
 
-export type Employment = { id: string; staffCode: string | null };
+export type Employment = {
+  id: string;
+  staffCode: string | null;
+  globalPersonId?: string;
+};
 
 export function fmtMinutes(m: number): string {
   const h = Math.floor(m / 60);
