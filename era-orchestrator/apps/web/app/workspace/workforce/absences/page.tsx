@@ -276,7 +276,7 @@ export default function WorkforceAbsencesPage() {
       );
     }
     return [...seen.entries()].map(([id, label]) => ({ id, label }));
-    [rows, persons, t, tCommon],
+  }, [rows, persons, t, tCommon]);
 
   const filteredRows = useMemo(
     () =>
