@@ -104,6 +104,7 @@ export default function WorkforceExportImportPage() {
     day: "2-digit",
   }).format(new Date());
   const year = Number(iso.slice(0, 4));
+  const month = Number(iso.slice(5, 7));
   const from = `${iso.slice(0, 7)}-01`;
   const to = iso;
 
