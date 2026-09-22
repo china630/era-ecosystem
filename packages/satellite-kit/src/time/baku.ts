@@ -31,7 +31,7 @@ export function todayBakuYmd(asOf = new Date()): string {
 }
 
 /** Year / month / day parts in Asia/Baku. */
-export function bakuYmd(d: Date): { y: number; m: number; day: number } {
+export function bakuYmd(d: Date = new Date()): { y: number; m: number; day: number } {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: BAKU_TZ,
     year: "numeric",

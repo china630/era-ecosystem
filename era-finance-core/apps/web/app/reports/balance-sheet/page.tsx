@@ -140,7 +140,7 @@ export default function BalanceSheetPage() {
             type="button"
             className={SECONDARY_BUTTON_CLASS}
             disabled={loading}
-            onClick={() => setAsOf(todayUtc())}
+            onClick={() => setAsOf(todayBakuYmd())}
           >
             {t("common.today")}
           </button>
