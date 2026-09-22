@@ -1,3 +1,5 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
+
 export type ClinicCapacitySummary = {
   bookingAllowed: boolean;
   riskLevel: 'ok' | 'warning' | 'critical' | string;
@@ -23,7 +25,7 @@ export async function fetchClinicCapacitySummary(
   const secret = process.env.CLINIC_BRIDGE_SECRET;
   if (!base || !secret) return null;
   try {
-    const qs = `date=${encodeURIComponent(refDate.toISOString().slice(0, 10))}`;
+    const qs = `date=${encodeURIComponent(todayBakuYmd(refDate))}`;
     const res = await fetch(`${base}/api/capacity/summary?${qs}`, {
       headers: { 'x-clinic-bridge-secret': secret },
       cache: 'no-store',

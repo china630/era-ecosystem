@@ -1,8 +1,6 @@
 /**
- * Upsert platform super-admin / ecosystem demo users in a satellite DB.
- * Creates every email from PLATFORM_SUPER_ADMIN_EMAILS (defaults include
- * shirinov.chingiz@gmail.com) with Hotel_Admin role + full permissions +
- * bootstrap password.
+ * Upsert platform super-admin / ecosystem demo users in hotel DB.
+ * Requires ERA_SATELLITE_ORGANIZATION_ID (demo-org forbidden). Manual only — not entrypoint.
  *
  * Run from satellite root: npx tsx prisma/scripts/upsert-ecosystem-demo-user.ts
  */
@@ -16,11 +14,10 @@ const {
   platformSuperAdminEmails,
   platformSuperAdminBootstrapPassword,
 } = require("@era/satellite-kit") as typeof import("@era/satellite-kit");
-const { satelliteOrganizationId } = require("@era/satellite-kit/orchestrator-gateway") as typeof import("@era/satellite-kit/orchestrator-gateway");
 const { createSatelliteTenantExtension } = require("@era/satellite-kit/tenancy") as typeof import("@era/satellite-kit/tenancy");
 
-const { ROLE_CODES } = require("./src/lib/auth/permissions") as typeof import("../../src/lib/auth/permissions");
-const { ensureHotelAdminRole } = require("./src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
+const { ROLE_CODES } = require("../../src/lib/auth/permissions") as typeof import("../../src/lib/auth/permissions");
+const { ensureHotelAdminRole } = require("../../src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
 
 const password =
   process.env.ECOSYSTEM_DEMO_PASSWORD?.trim() ||
@@ -28,6 +25,19 @@ const password =
 const fullName = process.env.ECOSYSTEM_DEMO_FULL_NAME ?? "Platform Super Admin";
 const adminRoleCode =
   process.env.ECOSYSTEM_DEMO_ADMIN_ROLE?.trim() || ROLE_CODES.HOTEL_ADMIN;
+
+function requireSeedOrgId(): string {
+  const id =
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ORGANIZATION_ID?.trim() ||
+    "";
+  if (!id || id === "demo-org" || id === "demo-clinic-org" || id === "demo-bank-org-001") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID required; demo-org is forbidden",
+    );
+  }
+  return id;
+}
 
 function resolveLogins(): string[] {
   const emails = [...platformSuperAdminEmails()];
@@ -43,13 +53,14 @@ const prisma = new PrismaClient().$extends(
 ) as unknown as InstanceType<typeof PrismaClient>;
 
 async function main() {
+  const organizationId = requireSeedOrgId();
+  process.env.ERA_SATELLITE_ORGANIZATION_ID = organizationId;
   const hash = await hashPassword(password);
-  const organizationId = satelliteOrganizationId();
   const adminRole =
     adminRoleCode === ROLE_CODES.HOTEL_ADMIN
       ? await ensureHotelAdminRole(prisma, organizationId)
       : await (async () => {
-          const { ensureSystemHotelRoles } = require("./src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
+          const { ensureSystemHotelRoles } = require("../../src/lib/auth/ensure-system-hotel-roles") as typeof import("../../src/lib/auth/ensure-system-hotel-roles");
           await ensureSystemHotelRoles(prisma, organizationId);
           const role = await prisma.role.findFirst({
             where: { organizationId, code: adminRoleCode },
@@ -60,8 +71,9 @@ async function main() {
 
   for (const login of resolveLogins()) {
     await prisma.user.upsert({
-      where: { login },
+      where: { organizationId_login: { organizationId, login } },
       create: {
+        organizationId,
         login,
         email: login,
         fullName,

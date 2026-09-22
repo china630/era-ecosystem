@@ -5,6 +5,7 @@ import {
   LedgerType,
   Prisma,
 } from "@erafinance/database";
+import { addBakuDays, bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { attachEmployeePerson, batchEmployeePersonMap } from "../hr/employee-person.util";
@@ -151,10 +152,10 @@ export class TreasuryService {
     const days = Number.isFinite(horizonDays)
       ? Math.min(Math.max(Math.trunc(horizonDays), 1), 180)
       : 30;
-    const today = new Date();
-    const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-    const end = new Date(start);
-    end.setUTCDate(end.getUTCDate() + (days - 1));
+    const startYmd = todayBakuYmd();
+    const endYmd = addBakuDays(startYmd, days - 1);
+    const start = bakuCivilUtcDate(startYmd);
+    const end = bakuCivilUtcDate(endYmd);
 
     const bankAccounts = await this.prisma.organizationBankAccount.findMany({
       where: { organizationId, isArchived: false },
@@ -236,9 +237,7 @@ export class TreasuryService {
     }> = [];
     let running = currentBalance;
     for (let i = 0; i < days; i += 1) {
-      const date = new Date(start);
-      date.setUTCDate(start.getUTCDate() + i);
-      const key = date.toISOString().slice(0, 10);
+      const key = addBakuDays(startYmd, i);
       const io = byDate.get(key) ?? {
         inflow: new Prisma.Decimal(0),
         outflow: new Prisma.Decimal(0),

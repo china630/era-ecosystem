@@ -14,6 +14,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
+import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
 
 type DoctorLinesItem = {
   procedure: { code: string; name: string };
@@ -59,23 +60,11 @@ type ApiResponse = {
 };
 
 function todayIsoBaku() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  return todayBakuYmd();
 }
 
 function monthAgoBaku() {
-  const d = new Date();
-  d.setDate(d.getDate() - 30);
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+  return addBakuDays(todayBakuYmd(), -30);
 }
 
 export default function ProceduresReportPage() {
@@ -315,7 +304,7 @@ export default function ProceduresReportPage() {
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
-                        <td className={DATA_TABLE_TD_CLASS}>{new Date(row.procedureDate).toLocaleDateString()}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.procedureDate)}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.paid}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.origin}</td>

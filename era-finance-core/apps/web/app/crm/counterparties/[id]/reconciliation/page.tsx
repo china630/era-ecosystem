@@ -23,6 +23,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
 } from "../../../../../lib/design-system";
+import { billingPeriodKeyBaku, todayBakuYmd } from "@era/satellite-kit/time";
 
 const lbl = "block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5";
 
@@ -57,11 +58,8 @@ type ReconPayload = {
 };
 
 function defaultPeriod(): { start: string; end: string } {
-  const now = new Date();
-  const end = now.toISOString().slice(0, 10);
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-    .toISOString()
-    .slice(0, 10);
+  const end = todayBakuYmd();
+  const start = `${billingPeriodKeyBaku()}-01`;
   return { start, end };
 }
 

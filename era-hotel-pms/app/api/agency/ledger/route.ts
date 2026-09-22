@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getAgencySession } from '@/lib/auth/agency-session';
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     await requireHotelModule('hotel_agency_portal');
     const session = await getAgencySession();
     const url = new URL(request.url);
-    const fromStr = url.searchParams.get('from') ?? new Date().toISOString().slice(0, 10);
+    const fromStr = url.searchParams.get('from') ?? todayBakuYmd();
     const toStr = url.searchParams.get('to') ?? fromStr;
     const from = new Date(fromStr);
     const to = new Date(toStr);

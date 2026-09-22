@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 seedDiagnosticBase(prisma)
   .then((summary) => {
     console.log(
-      "[seed-diagnostic-catalog-base] modalities=" +
+      "[seed-diagnostic-catalog-base] templates modalities=" +
         summary.modalities +
         " services=" +
         summary.services +

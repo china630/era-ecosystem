@@ -9,6 +9,7 @@ import {
   showApiError,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { BankDataGrid } from "@/components/BankDataGrid";
 
 type AuditRow = {
@@ -94,7 +95,7 @@ export default function OpsAuditPage() {
             {
               key: "at",
               header: t("colTime"),
-              render: (row) => new Date(String(row.at)).toLocaleString(),
+              render: (row) => bakuDateTimeDisplay(String(row.at)),
             },
             { key: "fullName", header: t("colUser") },
             {

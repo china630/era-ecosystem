@@ -2,12 +2,25 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@era/i18n-common";
+import {
+  AuthPublicShell,
+  AUTH_FIELD_GROUP_CLASS,
+  AUTH_FIELD_LABEL_CLASS,
+  AUTH_FORM_STACK_CLASS,
+  FORM_INPUT_CLASS,
+  MODAL_FOOTER_OUTLINE_CLASS,
+  MODAL_FOOTER_PRIMARY_CLASS,
+  PublicLegalFooter,
+  orchPublicHref,
+} from "@era/satellite-kit/ui";
 
 type Channel = "RETAIL" | "CORPORATE";
 
 export default function LoginClient() {
   const t = useTranslations("login");
+  const locale = useLocale() as Locale;
   const searchParams = useSearchParams();
   const asanTx = searchParams.get("asanTx");
   const channelParam = searchParams.get("channel") as Channel | null;
@@ -98,14 +111,31 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-8">
-      <div className="rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="mb-4 text-xl font-semibold text-dbo-ink">{t("title")}</h1>
-        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          {t("asanStubBadge")}
+    <AuthPublicShell
+      locale={locale}
+      title={t("title")}
+      footer={
+        <PublicLegalFooter
+          locale={locale}
+          faqHref={orchPublicHref("/help")}
+          showFaq={false}
+          labels={{
+            navAria: t("footerLegalNavAria"),
+            faq: t("footerFaq"),
+            terms: t("footerTerms"),
+            privacy: t("footerPrivacy"),
+            status: t("footerStatus"),
+          }}
+        />
+      }
+    >
+      {error ? (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
         </p>
-
-        <div className="mb-4 flex rounded-lg bg-dbo-surface p-1">
+      ) : null}
+      <div className={AUTH_FORM_STACK_CLASS}>
+        <div className="flex rounded-lg border border-[#D5DADF] bg-[#EBEDF0] p-1">
           {(["RETAIL", "CORPORATE"] as Channel[]).map((c) => (
             <button
               key={c}
@@ -115,77 +145,74 @@ export default function LoginClient() {
                 setOtpSent(false);
               }}
               className={`flex-1 rounded-md py-2 text-sm font-medium ${
-                channel === c ? "bg-white text-dbo-primary shadow-sm" : "text-dbo-muted"
+                channel === c ? "bg-white text-[#34495E] shadow-sm" : "text-[#7F8C8D]"
               }`}
             >
               {c === "RETAIL" ? t("retailTab") : t("corporateTab")}
             </button>
           ))}
         </div>
-
-        <label className="mb-1 block text-xs text-dbo-muted">
-          {channel === "RETAIL" ? t("finLabel") : t("voenLabel")}
+        <label className={AUTH_FIELD_GROUP_CLASS}>
+          <span className={AUTH_FIELD_LABEL_CLASS}>
+            {channel === "RETAIL" ? t("finLabel") : t("voenLabel")}
+          </span>
+          <input
+            className={FORM_INPUT_CLASS}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
+            placeholder={channel === "RETAIL" ? t("finPlaceholder") : t("voenPlaceholder")}
+          />
         </label>
-        <input
-          className="mb-4 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
-          placeholder={channel === "RETAIL" ? "1234567" : "1234567890"}
-        />
-
         {!otpSent ? (
           <button
             type="button"
             disabled={loading || !identifier}
             onClick={requestOtp}
-            className="mb-2 w-full rounded-lg bg-dbo-primary py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full`}
           >
             {t("otpRequest")}
           </button>
         ) : (
           <>
-            <label className="mb-1 block text-xs text-dbo-muted">{t("otpCode")}</label>
-            <input
-              className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              inputMode="numeric"
-              maxLength={6}
-            />
+            <label className={AUTH_FIELD_GROUP_CLASS}>
+              <span className={AUTH_FIELD_LABEL_CLASS}>{t("otpCode")}</span>
+              <input
+                className={FORM_INPUT_CLASS}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                inputMode="numeric"
+                maxLength={6}
+              />
+            </label>
             <button
               type="button"
               disabled={loading || otpCode.length < 4}
               onClick={verifyOtp}
-              className="mb-2 w-full rounded-lg bg-dbo-primary py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full`}
             >
               {t("otpVerify")}
             </button>
           </>
         )}
-
         <button
           type="button"
           disabled={loading || !identifier}
           onClick={startAsan}
-          className="mb-2 w-full rounded-lg border border-dbo-primary py-2.5 text-sm font-medium text-dbo-primary disabled:opacity-50"
+          className={`${MODAL_FOOTER_OUTLINE_CLASS} w-full`}
         >
           {t("asanLogin")}
         </button>
-
         {asanTxId ? (
           <button
             type="button"
             disabled={loading}
             onClick={completeAsan}
-            className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full`}
           >
             {t("asanComplete")}
           </button>
         ) : null}
-
-        <p className="mt-4 text-center text-xs text-dbo-muted">{t("devHint")}</p>
-        {error ? <p className="mt-2 text-center text-xs text-red-600">{error}</p> : null}
       </div>
-    </div>
+    </AuthPublicShell>
   );
 }

@@ -9,6 +9,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsModalShell, useEodLock } from "@/components/ops";
 import { StatusBadge } from "@/components/ops-ui";
 
@@ -27,7 +28,7 @@ export default function EodAdminPage() {
   const t = useTranslations("pages.eod");
   const tCommon = useTranslations("common");
   const { mutationsDisabled } = useEodLock();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBakuYmd();
   const [businessDate, setBusinessDate] = useState(today);
   const [run, setRun] = useState<EodRun | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -19,14 +19,15 @@ import {
 } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 
 type DayCell = { date: string; quota: number; occupied: number; available: number; stopSell: boolean };
 type TypeRow = { roomTypeId: string; roomTypeCode: string; roomTypeName: string; quota: number; days: DayCell[] };
 type Matrix = { nights: string[]; rows: TypeRow[]; totals: DayCell[] };
 
-function defaultFrom() { return new Date().toISOString().slice(0, 10); }
-function defaultTo() { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10); }
+function defaultFrom() { return hotelDateKey(); }
+function defaultTo() { return addHotelDays(hotelDateKey(), 7); }
 function cellClass(available: number, stopSell: boolean) {
   if (stopSell || available < 0) return 'bg-rose-100 text-rose-900';
   if (available === 0) return 'bg-amber-100 text-amber-900';

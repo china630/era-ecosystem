@@ -42,5 +42,6 @@ See [SMOKE_ALL_SERVICES.md](../../docs/SMOKE_ALL_SERVICES.md) § Module maturity
 1. Login as manager at `/login`.
 2. Open `/admin/settings` → `Edit` workshop name in `ModalShell` → `Save`.
 3. Open `/appointments` → `Book` modal → create appointment with `vehiclePlate` + datetime.
-4. Open `/work-orders` → `Create work order` modal → save a new order.
-5. On `/work-orders`, select the created order → add labor line, add part line, then `Complete work order`.
+4. **Clock:** if create snaps across a non-working day, wall time stays Asia/Baku (`bakuDateKey` + `parseBakuDateTime`) — e.g. 18:36 Baku remains `14:36Z`, not rewritten as `18:36Z`. Calendar `from` default = Baku today.
+5. Open `/work-orders` → `Create work order` modal → save a new order.
+6. On `/work-orders`, select the created order → add labor line, add part line, then `Complete work order`.

@@ -16,6 +16,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -169,7 +170,7 @@ export default function BanquetDetailPage() {
     const resourceRows = resources
       .map(
         (r) =>
-          `<tr><td>${esc(r.label)}</td><td>${esc(r.startAt && new Date(String(r.startAt)).toLocaleString())}</td><td>${esc(r.endAt && new Date(String(r.endAt)).toLocaleString())}</td><td>${esc(r.notes)}</td></tr>`,
+          `<tr><td>${esc(r.label)}</td><td>${esc(r.startAt ? bakuDateTimeDisplay(String(r.startAt)) : '')}</td><td>${esc(r.endAt ? bakuDateTimeDisplay(String(r.endAt)) : '')}</td><td>${esc(r.notes)}</td></tr>`,
       )
       .join('');
     const staffRows = staff
@@ -193,7 +194,7 @@ export default function BanquetDetailPage() {
       </style></head><body>
       <h1>${esc(data.eventName)}</h1>
       <div class="meta">
-        ${esc(data.referenceNo)} · ${esc(data.eventDate && new Date(String(data.eventDate)).toLocaleDateString())}
+        ${esc(data.referenceNo)} · ${esc(data.eventDate ? bakuDateDisplay(String(data.eventDate)) : '')}
         · ${esc(data.status)} · pax ${esc(data.pax)} · ${esc(data.saloon)}
         · contact ${esc(data.contactName)}
       </div>
@@ -218,7 +219,7 @@ export default function BanquetDetailPage() {
     <>
       <PageHeader
         title={(event?.eventName as string) ?? t('detail')}
-        subtitle={event?.eventDate ? new Date(String(event.eventDate)).toLocaleDateString() : ''}
+        subtitle={event?.eventDate ? bakuDateDisplay(String(event.eventDate)) : ''}
         actions={
           <div className="flex gap-2">
             <Link href="/banquets" className={SECONDARY_BUTTON_CLASS}>
@@ -342,8 +343,8 @@ export default function BanquetDetailPage() {
             {((event?.resourceBookings as Array<{ id: string; label?: string | null; startAt: string; endAt?: string; saloon?: { name: string } | null }>) ?? []).map((b) => (
               <li key={b.id}>
                 {b.label ?? b.saloon?.name ?? 'Resource'} —{' '}
-                {new Date(b.startAt).toLocaleString()}
-                {b.endAt ? ` → ${new Date(b.endAt).toLocaleString()}` : ''}
+                {bakuDateTimeDisplay(b.startAt)}
+                {b.endAt ? ` → ${bakuDateTimeDisplay(b.endAt)}` : ''}
               </li>
             ))}
           </ul>

@@ -9,12 +9,13 @@ import {
   EraListFilterBar,
   PageHeader,
 } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getReportBySlug, reportHref } from '@/lib/reports/catalog';
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 type ReportDef = {

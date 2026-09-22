@@ -1,6 +1,6 @@
 import type { ProcedureRotationRule } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { bakuDateKey } from "@/domain/patient/patient-timeline.service";
+import { addBakuDays, bakuDateKey } from "@/lib/baku-day";
 
 export type RotationContextSlot = {
   procedureCode: string;
@@ -22,8 +22,7 @@ function dayKey(d: Date): string {
 }
 
 function addDaysKey(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+  return addBakuDays(ymd, days);
 }
 
 function matchesMember(

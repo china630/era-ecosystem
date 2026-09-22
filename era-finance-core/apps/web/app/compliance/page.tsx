@@ -18,6 +18,7 @@ import {
 import { PageHeader } from "../../components/layout/page-header";
 import { useOrgPermissions } from "../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../lib/role-utils";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { useSubscription } from "../../lib/subscription-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { TaxLimitWidget } from "./components/tax-limit-widget";
@@ -296,7 +297,7 @@ export default function ComplianceDashboardPage() {
                     </div>
                     <p className="text-[13px] font-medium text-[#34495E]">{row.description}</p>
                     <p className="font-mono text-[12px] text-[#7F8C8D] tabular-nums">
-                      {new Date(row.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(row.createdAt)}
                     </p>
                   </div>
                   {row.status === "PENDING" ? (

@@ -10,6 +10,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 export default function DoctorPage() {
   const t = useTranslations("doctor");
@@ -63,7 +64,7 @@ export default function DoctorPage() {
                 {v.patientRef.fullName} — {v.status}
                 {v.scheduledAt ? (
                   <span className={`block text-xs ${TEXT_MUTED_CLASS}`}>
-                    {new Date(v.scheduledAt).toLocaleString()}
+                    {bakuDateTimeDisplay(v.scheduledAt)}
                     {v.practitioner ? ` · ${v.practitioner.fullName}` : ""}
                   </span>
                 ) : null}

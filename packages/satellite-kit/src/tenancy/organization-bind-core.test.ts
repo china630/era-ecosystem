@@ -82,7 +82,10 @@ describe("resolveSatelliteOrganizationId", () => {
 describe("onSatelliteBoot", () => {
   it("returns env source when no prisma and env set", async () => {
     process.env.ERA_SATELLITE_ORGANIZATION_ID = "boot-env-org";
-    const r = await onSatelliteBoot({ prisma: null });
+    const r = await onSatelliteBoot({
+      prisma: null,
+      pullDesiredState: false,
+    });
     assert.equal(r.organizationId, "boot-env-org");
     assert.equal(r.source, "env");
   });
@@ -93,7 +96,7 @@ describe("onSatelliteBoot", () => {
       $queryRawUnsafe: async <T,>() =>
         [{ organizationId: "db-org-uuid" }] as unknown as T,
     };
-    const r = await onSatelliteBoot({ prisma });
+    const r = await onSatelliteBoot({ prisma, pullDesiredState: false });
     assert.equal(r.organizationId, "db-org-uuid");
     assert.equal(r.source, "db");
     const resolved = resolveSatelliteOrganizationId();
@@ -103,7 +106,7 @@ describe("onSatelliteBoot", () => {
 
   it("returns none when unbound", async () => {
     process.env.NODE_ENV = "development";
-    const r = await onSatelliteBoot({ prisma: null });
+    const r = await onSatelliteBoot({ prisma: null, pullDesiredState: false });
     assert.equal(r.organizationId, null);
     assert.equal(r.source, "none");
   });

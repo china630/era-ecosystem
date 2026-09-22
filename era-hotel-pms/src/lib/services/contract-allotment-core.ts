@@ -1,12 +1,15 @@
 /** Pure helpers for contract allotment availability (unit-tested). */
 
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+
 export function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
-  const cursor = new Date(from.toISOString().slice(0, 10));
-  const end = new Date(to.toISOString().slice(0, 10));
-  while (cursor < end) {
-    nights.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
+  let cur = hotelDateKey(from);
+  const end = hotelDateKey(to);
+  while (cur < end) {
+    nights.push(bakuCivilUtcDate(cur));
+    cur = addHotelDays(cur, 1);
   }
   return nights;
 }

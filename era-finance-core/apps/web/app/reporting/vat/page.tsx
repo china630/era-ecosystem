@@ -1,5 +1,6 @@
 "use client";
 
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -61,7 +62,7 @@ export default function VatDeclarationPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const now = new Date();
-  const [year, setYear] = useState(now.getUTCFullYear());
+  const [year, setYear] = useState(() => bakuCalendarYear());
   const [quarter, setQuarter] = useState(Math.floor(now.getUTCMonth() / 3) + 1);
   const [tab, setTab] = useState<"sales" | "purchases">("sales");
   const [data, setData] = useState<VatPackage | null>(null);

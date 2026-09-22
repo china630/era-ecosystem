@@ -13,6 +13,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type MenuItem = {
@@ -540,11 +541,11 @@ export default function MenuAdminPanel() {
               <tr key={p.id} className="border-b border-[#EEF1F3]">
                 <td className="py-1">{Number(p.priceAzn).toFixed(2)}</td>
                 <td className="py-1">
-                  {new Date(p.effectiveFrom).toLocaleString()}
+                  {bakuDateDisplay(p.effectiveFrom)}
                 </td>
                 <td className="py-1">
                   {p.effectiveTo
-                    ? new Date(p.effectiveTo).toLocaleString()
+                    ? bakuDateDisplay(p.effectiveTo)
                     : t("current")}
                 </td>
                 <td className="py-1">{p.reason || "—"}</td>

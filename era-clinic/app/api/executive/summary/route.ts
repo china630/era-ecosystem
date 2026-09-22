@@ -7,11 +7,12 @@ import {
 } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { getCapacitySummary } from "@/lib/capacity.service";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
-function startOfDay(input?: string): Date {
-  const d = input ? new Date(`${input}T00:00:00`) : new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+function resolveDayBounds(dateParam?: string) {
+  const ymd = dateParam?.trim() || todayBakuYmd();
+  const { start, end } = bakuDayBounds(ymd);
+  return { ymd, start, end };
 }
 
 export async function GET(req: Request) {
@@ -26,9 +27,7 @@ export async function GET(req: Request) {
     const dateParam = url.searchParams.get("date") ?? undefined;
     const practitionerId = url.searchParams.get("practitionerId") ?? undefined;
 
-    const today = startOfDay(dateParam);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const { ymd, start: today, end: tomorrow } = resolveDayBounds(dateParam);
 
     const visitWhere = {
       createdAt: { gte: today, lt: tomorrow },
@@ -57,7 +56,7 @@ export async function GET(req: Request) {
     const capacity = await getCapacitySummary(today);
 
     return jsonOk({
-      date: today.toISOString().slice(0, 10),
+      date: ymd,
       practitionerId: practitionerId ?? null,
       visitsToday,
       labRevenueToday,

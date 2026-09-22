@@ -13,10 +13,10 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -204,7 +204,9 @@ export default function WorkforcePlacesPage() {
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.status === "ACTIVE" ? t("statusActive") : t("statusArchived")}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <button
                         type="button"
@@ -227,6 +229,16 @@ export default function WorkforcePlacesPage() {
         open={editState != null}
         onClose={() => setEditState(null)}
         title={editState?.mode === "create" ? t("addPlace") : t("editPlace")}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setEditState(null)}
+            onSubmit={() => void save()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
       >
         <div className="space-y-3">
           {editState?.mode === "create" ? (
@@ -262,23 +274,6 @@ export default function WorkforcePlacesPage() {
             options={unitOptions}
           />
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setEditState(null)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void save()}
-            >
-              {tCommon("save")}
-            </button>
-          </div>
         </div>
       </ModalShell>
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { bakuTimeLabel } from '@era/satellite-kit/time';
 
 type Row = {
   date: string;
@@ -38,8 +39,8 @@ export default function TourPrintPage() {
     <div className="mx-auto max-w-[800px] bg-white p-8 text-black print:p-0">
       <h1 className="text-xl font-bold">{dep.agenda}</h1>
       <p>
-        {dep.date.slice(0, 10)} · {t('pickup')} {new Date(dep.pickupAt).toLocaleTimeString()} · {t('return')}{' '}
-        {new Date(dep.returnAt).toLocaleTimeString()}
+        {dep.date.slice(0, 10)} · {t('pickup')} {bakuTimeLabel(dep.pickupAt)} · {t('return')}{' '}
+        {bakuTimeLabel(dep.returnAt)}
       </p>
       <p>
         {t('meetingPoint')}: {dep.meetingPoint} · {t('guide')}: {dep.guideName ?? '—'}

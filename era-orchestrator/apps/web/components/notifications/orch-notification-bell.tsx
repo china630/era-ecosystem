@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { getOrchAccessToken, orchFetch } from "../../lib/orch-api";
 
 type OutboxRow = {
@@ -110,7 +111,7 @@ export function OrchNotificationBell() {
                     </div>
                     <div className="mt-0.5 text-xs text-[#7F8C8D]">{n.status}</div>
                     <div className="mt-1 text-[10px] text-[#7F8C8D]">
-                      {new Date(n.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(n.createdAt)}
                     </div>
                   </li>
                 ))}

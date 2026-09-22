@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds } from "@/lib/baku-day";
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -40,12 +41,8 @@ export async function GET(req: Request) {
     });
 
     const createdAt: { gte?: Date; lt?: Date } = {};
-    if (query.dateFrom) createdAt.gte = new Date(`${query.dateFrom}T00:00:00.000Z`);
-    if (query.dateTo) {
-      const end = new Date(`${query.dateTo}T00:00:00.000Z`);
-      end.setUTCDate(end.getUTCDate() + 1);
-      createdAt.lt = end;
-    }
+    if (query.dateFrom) createdAt.gte = bakuDayBounds(query.dateFrom).start;
+    if (query.dateTo) createdAt.lt = bakuDayBounds(query.dateTo).end;
 
     const where = {
       ...(query.overQuotaOnly !== false ? { overQuota: true } : {}),

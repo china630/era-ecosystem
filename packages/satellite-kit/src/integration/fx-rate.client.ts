@@ -10,6 +10,7 @@ import type {
   FxRatesRangeResponse,
   FxRatesResponse,
 } from "@era/contracts";
+import { todayBakuYmd } from "../time/baku";
 
 export type FxRateClientOptions = {
   dataHubUrl?: string;
@@ -72,10 +73,6 @@ async function getJson<T>(
   }
 }
 
-function bakuDateKey(d: Date = new Date()): string {
-  return d.toISOString().slice(0, 10);
-}
-
 /** Official AZN per 1 unit on date (strict path prefers FINAL from hub). */
 export async function getFxRate(
   currency: string,
@@ -87,11 +84,11 @@ export async function getFxRate(
     return {
       currencyCode: code,
       rate: 1,
-      rateDate: date ?? bakuDateKey(),
+      rateDate: date ?? todayBakuYmd(),
       status: "FINAL",
     };
   }
-  const dateKey = date ?? bakuDateKey();
+  const dateKey = date ?? todayBakuYmd();
   const cacheKey = `${dateKey}:${code}`;
   const cached = dateCache.get(cacheKey);
   if (cached && Date.now() - cached.at < DATE_TTL_MS) {
@@ -110,7 +107,7 @@ export async function getFxRates(
   symbols = "USD,EUR",
   opts?: FxRateClientOptions,
 ): Promise<FxRatePoint[]> {
-  const dateKey = date ?? bakuDateKey();
+  const dateKey = date ?? todayBakuYmd();
   const cacheKey = `${dateKey}:${symbols}`;
   const cached = spotCache.get(cacheKey);
   if (cached && Date.now() - cached.at < SPOT_TTL_MS) {

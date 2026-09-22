@@ -20,7 +20,10 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@era/satellite-kit/time": ["../../../packages/satellite-kit/dist/time/baku"]
+    }
   },
   "include": ["src/**/*"]
 }

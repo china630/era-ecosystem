@@ -1,16 +1,16 @@
 /**
- * Physio catalog: satellite base then Nafta org overlay.
+ * Physio catalog: satellite base templates then Nafta org overlay.
  * Run: npx tsx prisma/seed-physio-catalog.ts
- * ADR: docs/adr/clinic-catalog-base-and-org-overlay-seeds.md
+ * ADR: docs/adr/clinic-catalog-template-overlay.md
  */
 import { PrismaClient } from "@prisma/client";
-import { seedOrgId, seedPhysioBase, seedPhysioNafta } from "./seed-physio-catalog-lib";
+import { requireSeedOrgId, seedPhysioBase, seedPhysioNafta } from "./seed-physio-catalog-lib";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const organizationId = seedOrgId();
-  const base = await seedPhysioBase(prisma, organizationId);
+  const base = await seedPhysioBase(prisma);
+  const organizationId = requireSeedOrgId();
   const nafta = await seedPhysioNafta(prisma, organizationId);
   console.log(JSON.stringify({ organizationId, base, nafta }));
 }

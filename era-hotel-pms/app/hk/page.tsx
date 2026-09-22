@@ -17,6 +17,8 @@ import {
   showApiError,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
+import { bakuTimeLabel } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -53,7 +55,7 @@ export default function HousekeepingPage() {
   const [sheetFloor, setSheetFloor] = useState('2');
   const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
   const [printPages, setPrintPages] = useState<Array<{ floor: number; rows: Array<Record<string, unknown>> }>>([]);
-  const [sheetDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [sheetDate] = useState(() => hotelDateKey());
   const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
 
   const load = useCallback(async () => {
@@ -262,7 +264,7 @@ export default function HousekeepingPage() {
                         className={MODAL_INPUT_CLASS}
                         defaultValue={
                           r.neededByAt
-                            ? String(r.neededByAt).slice(11, 16)
+                            ? bakuTimeLabel(String(r.neededByAt))
                             : ''
                         }
                         onBlur={(e) => {

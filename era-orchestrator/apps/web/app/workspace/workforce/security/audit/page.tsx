@@ -15,6 +15,7 @@ import {
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { getOrchAccessToken, orchFetch } from "../../../../../lib/orch-api";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../../lib/use-list-pagination";
@@ -227,7 +228,7 @@ export default function WorkforceSecurityAuditPage() {
               return (
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(row.createdAt).toLocaleString()}
+                    {bakuDateTimeDisplay(row.createdAt)}
                   </td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>
                     {t(`action.${row.action}` as "action.HIRE", {
@@ -235,24 +236,23 @@ export default function WorkforceSecurityAuditPage() {
                     })}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {actorEmail ??
-                      (row.actorUserId ? row.actorUserId.slice(0, 8) : "—")}
+                    {actorEmail ?? "—"}
                   </td>
                   <td
                     className={DATA_TABLE_TD_CLASS}
                     title={`${row.entityType} / ${row.entityId}`}
                   >
-                    {row.entityType} / {row.entityId.slice(0, 8)}…
+                    {row.entityType}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {personName ??
-                      (row.globalPersonId ? row.globalPersonId.slice(0, 8) : "—")}
+                      (row.globalPersonId ? tCommon("unnamedPerson") : "—")}
                   </td>
                   <td
                     className={DATA_TABLE_TD_CLASS}
                     title={row.cpEmploymentId ?? undefined}
                   >
-                    {row.cpEmploymentId?.slice(0, 8) ?? "—"}
+                    —
                   </td>
                 </tr>
               );

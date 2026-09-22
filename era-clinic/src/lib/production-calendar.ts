@@ -2,11 +2,17 @@ import {
   getCalendarDay,
 } from "@era/satellite-kit";
 import type { CalendarDayType } from "@era/contracts";
+import { bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
 
 const SHORTENED_END_HOUR = 13;
 
+function addBakuDays(ymd: string, days: number): string {
+  const { start } = bakuDayBounds(ymd);
+  return bakuDateKey(new Date(start.getTime() + days * 86_400_000));
+}
+
 export async function isElectiveSchedulingAllowed(date: Date): Promise<boolean> {
-  const iso = date.toISOString().slice(0, 10);
+  const iso = bakuDateKey(date);
   const day = await getCalendarDay(iso);
   if (!day) return true;
   if (day.dayType === "mourning") return false;
@@ -15,7 +21,7 @@ export async function isElectiveSchedulingAllowed(date: Date): Promise<boolean> 
 }
 
 export async function resolveSchedulingEndHour(date: Date): Promise<number> {
-  const iso = date.toISOString().slice(0, 10);
+  const iso = bakuDateKey(date);
   const day = await getCalendarDay(iso);
   if (day?.dayType === ("shortened" as CalendarDayType)) {
     return SHORTENED_END_HOUR;
@@ -24,11 +30,11 @@ export async function resolveSchedulingEndHour(date: Date): Promise<number> {
 }
 
 export async function nextSchedulingDay(from: Date): Promise<Date> {
-  let cursor = new Date(from);
-  cursor.setHours(0, 0, 0, 0);
+  let ymd = bakuDateKey(from);
   for (let i = 0; i < 366; i++) {
+    const { start: cursor } = bakuDayBounds(ymd);
     if (await isElectiveSchedulingAllowed(cursor)) return cursor;
-    cursor.setDate(cursor.getDate() + 1);
+    ymd = addBakuDays(ymd, 1);
   }
-  return cursor;
+  return bakuDayBounds(ymd).start;
 }

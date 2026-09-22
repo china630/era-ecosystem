@@ -21,6 +21,7 @@
 
 - [ ] `GET /api/health` → 200
 - [x] Home page loads — **`/`** ops day dashboard: today’s appointment/procedure KPIs, by-status and by-type, queue/labs/overdue; change date (Asia/Baku); quick links
+- [x] **Clock:** queue ticket numbering, appointments/sanatorium calendar defaults, executive summary, and EOD no-show sweep use **Asia/Baku** day bounds (`bakuDayBounds` / `parseBakuDateTime`) — not host `setHours(0)` / UTC slice. After 20:00Z previous UTC day = still current Baku calendar day until 20:00Z.
 - [ ] `POST /api/events/dispatch` (with orchestrator running)
 
 ## K2 — Lab order lifecycle
@@ -76,7 +77,7 @@
 
 ## Admin master data (2026-06-15) — UI paths (no curl)
 
-Prerequisite: `shirinov.chingiz@gmail.com` / bootstrap password, `CLINIC_ADMIN`; after `docker compose up clinic` seed runs (`RUN_SEED=true`).
+Prerequisite: `shirinov.chingiz@gmail.com` / bootstrap password, `CLINIC_ADMIN`. Droplet / compose: `CLINIC_RUN_SEED` / `RUN_SEED` stays **false** (ADR clinic-catalog-template-overlay). Do **not** run full `npm run db:seed` after cutover. Local empty DB: `npm run db:seed` (ICD + satellite templates only) then Sync/bind so copy-if-empty fills the org; kitchen-sink demo = `npm run db:seed:demo` only.
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
@@ -103,8 +104,8 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 
 1. **`/sanatorium`** — open courses table with **ListPaginationFooter** (server page/pageSize; **no** page echo from API; footer stays visible while loading) + search + origin + **hotel room** + **program/package** filters; episode visible; **no** procedures until checkup (complaint + ICD). Search ICD in **one** searchable field (`I10` / гипертенз) → add diagnosis → then schedule program. Treatment chart: delete complaint/diagnosis rows; delete lab only if ORDERED; adding a duplicate COMPLETED lab shows Yes/No repeat confirm. Quota bars show **Name (CODE)** not raw `WO-TR-*`. **Register walk-in**: Ad / Soyad / Ata adı; nationality SEARCHABLE empty (not AZ); FIN or passport required; allocates `P-######`.
 2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day. Slots require free **cabin/equipment** AND **skilled HARD staff** (Pattern A allocations).
-3. **`/nurse`** — day board: agenda (previous slot → EOD) + day progress; kanban Missed / Upcoming / In progress / Completed. **Check-in** only while unified window open (`endsAt`, +gap if next slot free) → `CHECKED_IN`. No nurse No-show button. Missed rows stay `SCHEDULED` until EOD sweep. Late guests: reception reschedules.
-4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks; lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Drag/move/cancel as before.
+3. **`/nurse`** — day board: agenda (previous slot → EOD) + day progress; kanban Missed / Upcoming / In progress / Completed. Slot times via `bakuTimeLabel` (browser TZ ignored). **Check-in** only while unified window open (`endsAt`, +gap if next slot free) → `CHECKED_IN`. No nurse No-show button. Missed rows stay `SCHEDULED` until EOD sweep. Late guests: reception reschedules.
+4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks (**UI labels** via `bakuTimeLabel` / `bakuDateTimeDisplay` — browser TZ ignored); lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Drag/move/cancel as before.
 5. Dispute path: audit on ProcedureOrder (`checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`).
 5. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
 6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
@@ -325,7 +326,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 SatAdmin:
 
 1. Sign in as `CLINIC_ADMIN`. Open **Catalogs → Physio sites** (`/admin/physio-sites`).
-2. Tabs **Sites / Programs / Substances** list seeded rows (after `npm run db:seed:physio` = base + Nafta overlay).
+2. Tabs **Sites / Programs / Substances** list seeded rows (after Sync/login copy-if-empty from satellite templates, or `npm run db:seed` then bind; Nafta WO aliases via import / `db:seed:physio:nafta`).
 3. Open a site: titles az/ru/en/la, kind Select, coarse MULTI, aliases textarea. Save.
 4. Add a substance. Retire it (row stays, picker drops it).
 5. `/admin/master-data` → Procedure types → Amplipuls: **Needs site chips** on; order fields include work-kind + electrodes. Ozone: chips off.

@@ -20,6 +20,11 @@ async function audit(
 // ---------------------------------------------------------------------------
 
 export async function listModalities(opts?: { includeInactive?: boolean }) {
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const { ensureClinicCatalogIfEmpty } = await import(
+    "@/domain/catalog/ensure-clinic-catalog-from-templates"
+  );
+  await ensureClinicCatalogIfEmpty(prisma, requestOrganizationId());
   return prisma.modality.findMany({
     where: opts?.includeInactive ? undefined : { active: true },
     orderBy: [{ sortOrder: "asc" }, { code: "asc" }],

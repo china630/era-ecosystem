@@ -12,7 +12,8 @@ Customer digital banking channel (port **3211**). BFF proxies to `era-bank-core`
 cd era-bank-dbo
 npm install
 npx prisma db push
-npm run db:seed
+npm run db:seed              # no-op (boot-safe)
+npm run db:seed:demo         # lab Open API key — never droplet boot
 npm run dev
 ```
 

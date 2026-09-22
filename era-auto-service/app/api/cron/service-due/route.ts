@@ -1,4 +1,5 @@
 import { runCronForEachTenant } from "@era/satellite-kit";
+import { addBakuDays, parseBakuDateTime, todayBakuYmd } from "@era/satellite-kit/time";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { listCronOrganizationIdsFromDb, fetchAutoPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from "@/lib/prisma";
@@ -44,9 +45,9 @@ export async function POST(req: Request) {
         for (const wo of workOrders) {
           if (!wo.vehiclePlate) continue;
 
-          const tomorrowIso = new Date(Date.now() + 24 * 3600_000).toISOString().slice(0, 10);
+          const tomorrowIso = addBakuDays(todayBakuYmd(), 1);
           const workingIso = await nextServiceAppointmentDay(tomorrowIso);
-          const slotStart = new Date(`${workingIso}T10:00:00.000Z`);
+          const slotStart = parseBakuDateTime(workingIso, "10:00:00");
           const slotEnd = new Date(slotStart.getTime() + 60 * 60_000);
           const slot = await createBookingSlots(
             {

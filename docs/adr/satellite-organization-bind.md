@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-15  
-**Updated:** 2026-08-17 (Wave 3 — request-time resolver)
+**Updated:** 2026-09-22 (Waves 6–7 — satellite desired-state pull / reconcile)
 
 ## Context
 
@@ -22,7 +22,9 @@ Industry satellites historically resolve tenancy from `ERA_SATELLITE_ORGANIZATIO
    - Uses registered enabled endpoints; department-owned endpoints bind that department UUID; parent-registered F&B/Clinic/Retail endpoints may resolve to a matching child department by name heuristic.
 6. **Scope (updated 2026-08-17):** bank ops BFF (`era-bank`), DBO channel (`era-bank-dbo`), and bank-core Nest expose the same bind contract; Sync fans out `industry_banking`. **Still out:** docker.sock / mutating compose from orch; Finance Core *business* multi-org routing (JWT/membership — Sync bind is a contract only, not appliance single-org).
 7. **Next (required):** bind is only the org UUID. Full **desired-state** runtime config (SSO material, event token, edition, topology, public URL) is [deployment-topology.md](./deployment-topology.md) §4 — kill leftover compose/env folklore. Human login alias (`orgNo`) is **not** bind: [org-public-number-and-login-host.md](./org-public-number-and-login-host.md).
-8. **Runtime config API (Wave 2+6):** `POST/GET /api/internal/v1/runtime-config` (same Bearer as bind). Orchestrator **Sync satellite bindings** also POSTs desired config (event URL, PSA emails, SSO shared secret, event token, `activeModules` / optional `hotelModules`, optional `deploymentTopology` + `edition`). Satellites persist `_era_runtime_config` + `.data/runtime-config.json` and apply env side-effects so existing `ERA_SSO_SHARED_SECRET` / `PLATFORM_SUPER_ADMIN_EMAILS` readers work. **`deploymentTopology` is informational** — satellites must **not** skip the `organizationId` tenant filter based on SHARED/DEDICATED/ONPREM.
+8. **Runtime config API (Wave 2+6+7):** `POST/GET /api/internal/v1/runtime-config` (same Bearer as bind). Orchestrator **Sync satellite bindings** also POSTs desired config (internal event URL, PSA emails, SSO shared secret, event token, optional `vendorBridgesEnabled`, `activeModules` / optional `hotelModules`, optional `deploymentTopology` + `edition`). Sync **omits** folklore secrets so they cannot overwrite droplet install env. Satellites persist `_era_runtime_config` + `.data/runtime-config.json` and apply env side-effects so existing `ERA_SSO_SHARED_SECRET` / `PLATFORM_SUPER_ADMIN_EMAILS` readers work — folklore values are stripped and do not stomp `process.env`. **`deploymentTopology` is informational** — satellites must **not** skip the `organizationId` tenant filter based on SHARED/DEDICATED/ONPREM.
+
+   **Pull / reconcile (Waves 6–7):** Orchestrator exposes `GET /v1/internal/satellites/desired-state?satelliteKey=` (Bearer control-plane / satellite-event token family, `X-Organization-Id` required). Payload builder is shared with Sync (`buildRuntimeConfigPayload`); folklore secrets omitted. **Require** an enabled `SatelliteEndpoint` row for that org+key (cluster-wide token must not read arbitrary orgs). Kit `onSatelliteBoot` hydrates local snapshot, then `pullDesiredStateOnce` (default on when `ERA_IN_DOCKER=1`; override `ERA_DESIRED_STATE_PULL=0|1`). Pull failure or orch down **does not** fail boot. Wave 7: jittered poll `ERA_DESIRED_STATE_POLL_MS` (default 60s, `0` disables); hash skip (memory + persisted `desiredStateHash` / `pulledAt` on `_era_runtime_config`); 5xx backoff cap 15 min; **401 stops** the loop (and does not start it after a boot 401). Process-wide fields only — per-org Elektraweb / clinic cutover / fiscal / login hosts remain Sync-push (not SHARED per-org upsert on pull). **Not** PlacementJob / `era-placement-agent.mjs` (topology hop axis).
 9. **Wave 3 (request-time helper):** product call sites (SSO exchange, billing-snapshot, receipts, settlement, bank BFF/engine headers, kit MDM/catalog/workforce clients) **must** call `satelliteOrganizationId()` / `resolveSatelliteOrganizationId()` from `@era/satellite-kit` **inside the handler/function** — never capture org id into a module-level `const` from `process.env` for request paths. Dropped legacy `ERA_HOTEL_ORGANIZATION_ID` / `ERA_CLINIC_ORGANIZATION_ID` aliases from kit integration clients. Seeds/offline bootstrap may still read env (documented); bank/dbo/bank-core Prisma boot may `setRuntimeOrganizationId` from env once at process start.
 
 ## Resolution order (`satelliteOrganizationId()`)
@@ -34,7 +36,7 @@ Industry satellites historically resolve tenancy from `ERA_SATELLITE_ORGANIZATIO
 
 DB row is loaded on bind GET/POST and when handlers hydrate; prefer calling kit helper rather than caching org id in module-level `const`.
 
-**Boot hydrate (required):** each satellite must call `onSatelliteBoot({ prisma })` from Next.js `instrumentation.ts` (or Nest bootstrap) so a container recreate without `.data/` volume still restores `_era_organization_bind` into runtime before the first request. Production `satelliteOrganizationId()` refuses silent `demo-org` fallback (`SatelliteOrganizationUnboundError`).
+**Boot hydrate (required):** each satellite must call `onSatelliteBoot({ prisma })` from Next.js `instrumentation.ts` (or Nest bootstrap) so a container recreate without `.data/` volume still restores `_era_organization_bind` into runtime before the first request. Production `satelliteOrganizationId()` refuses silent `demo-org` fallback (`SatelliteOrganizationUnboundError`). In Docker, boot then **pulls** CP desired-state once and may start the reconcile loop (see §8); host `npm run dev` leaves pull off unless `ERA_DESIRED_STATE_PULL=1`.
 
 ## Consequences
 

@@ -7,6 +7,7 @@ import {
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
 import { listEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
+import { todayBakuYmd } from "@/lib/baku-day";
 
 /** Print Doctor column = episode care team, never cabin/roster STAFF. */
 export function episodeCareTeamPrintName(names: string[]): string {
@@ -164,7 +165,7 @@ export async function buildProceduresPrint(
       nationality: patient.nationality,
       roomNumber: episode?.roomNumber ?? null,
       doctorName: null,
-      date: new Date().toISOString().slice(0, 10),
+      date: todayBakuYmd(),
     },
     rowsByDate: [...map.entries()].map(([date, rows]) => ({ date, rows })),
   };

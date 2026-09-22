@@ -21,6 +21,8 @@ import {
 } from "@/domain/patient/patient-ref-code";
 import { splitFullNameToParts } from "@era/satellite-kit";
 import { ensureWritableCurrentTemplate } from "@/domain/sanatorium/program-template-admin";
+import { ensureIntakeBlocksOnTemplate } from "@/domain/sanatorium/intake-blocks";
+import { ensurePlanningDefaults } from "@/domain/planning/ensure-planning-defaults";
 
 function orgId(): string {
   return requestOrganizationId();
@@ -1706,22 +1708,48 @@ const programTemplatesAdapter: ImportAdapter<{
         },
       },
     });
+    let outcome: UpsertOutcome = "created";
     if (knot) {
       await tx.programTemplateQuotaKnot.update({
         where: { id: knot.id },
         data: { qty: row.qty },
       });
-      return "updated";
+      outcome = "updated";
+    } else {
+      await tx.programTemplateQuotaKnot.create({
+        data: {
+          templateId: template.id,
+          nights: row.nights,
+          procedureCode: row.procedureCode,
+          qty: row.qty,
+        },
+      });
     }
-    await tx.programTemplateQuotaKnot.create({
-      data: {
-        templateId: template.id,
-        nights: row.nights,
-        procedureCode: row.procedureCode,
-        qty: row.qty,
-      },
-    });
-    return "created";
+    if (row.templateCode.startsWith("PKG-")) {
+      const knots = await tx.programTemplateQuotaKnot.findMany({
+        where: { templateId: template.id },
+        select: { nights: true },
+      });
+      const nightCols = [...new Set(knots.map((k) => k.nights))].sort((a, b) => a - b);
+      await ensureIntakeBlocksOnTemplate(tx as never, template.id, nightCols);
+    }
+    return outcome;
+  },
+};
+
+const planningRulesAdapter: ImportAdapter<Record<string, never>> = {
+  entity: "planning-rules",
+  label: "Planning rules (body-part / rotation / cabin pools)",
+  order: 9,
+  templateHint: "Fileless — applies Nafta planning defaults after procedures/rooms",
+  fileless: true,
+  headerAliases: {},
+  rowSchema: z.object({}),
+  mapRow: () => ({}),
+  upsert: async (tx, _row, dryRun) => {
+    if (dryRun) return "skipped";
+    await ensurePlanningDefaults(tx as never, orgId());
+    return "updated";
   },
 };
 
@@ -1732,6 +1760,7 @@ const ADAPTERS = [
   roomsAdapter,
   procedureRequirementsAdapter,
   programTemplatesAdapter,
+  planningRulesAdapter,
   practitionersAdapter,
   patientsAdapter,
   quotasAdapter,

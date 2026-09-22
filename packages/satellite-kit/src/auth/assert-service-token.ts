@@ -2,6 +2,8 @@
  * Shared fail-closed helpers for satellite internal/bridge routes.
  * Production: missing expected secret → deny. Non-production: open only when unset (local smoke).
  */
+import { isFolkloreS2sToken } from "../tenancy/folklore-s2s-token";
+import { getInstallSatelliteEventToken } from "../tenancy/install-s2s-env";
 
 export type ServiceTokenAssertResult =
   | { ok: true }
@@ -27,15 +29,14 @@ export function assertEnvServiceToken(opts: {
   allowOpenInNonProduction?: boolean;
 }): ServiceTokenAssertResult {
   const allowOpen = opts.allowOpenInNonProduction !== false;
-  let expected = "";
-  for (const key of opts.expectedEnvKeys) {
-    const v = process.env[key]?.trim();
-    if (v) {
-      expected = v;
-      break;
-    }
-  }
-  if (!expected) {
+  const fromEnv = opts.expectedEnvKeys
+    .map((key) => process.env[key]?.trim() || "")
+    .filter(Boolean);
+  const install = getInstallSatelliteEventToken();
+  const candidates = install ? [...fromEnv, install] : fromEnv;
+  const real = candidates.filter((v) => !isFolkloreS2sToken(v));
+  const acceptable = real.length > 0 ? real : candidates;
+  if (acceptable.length === 0) {
     if (process.env.NODE_ENV === "production" || !allowOpen) {
       return { ok: false, status: 401, error: "Service token not configured" };
     }
@@ -45,7 +46,7 @@ export function assertEnvServiceToken(opts: {
     opts.authorization ?? null,
     opts.xServiceToken ?? null,
   );
-  if (!token || token !== expected) {
+  if (!token || !acceptable.includes(token)) {
     return { ok: false, status: 401, error: "Unauthorized" };
   }
   return { ok: true };

@@ -7,6 +7,7 @@ import {
   WORKSPACE_SYSTEMS,
   type WorkspaceSystemKey,
 } from "@era/satellite-kit/platform/workspace-system-catalog";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { ModalShell, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import type { PublicPricingResponse } from "../../lib/public-pricing-types";
 import type { SubscriptionSnapshot } from "../../lib/subscription-context";
@@ -33,7 +34,7 @@ function formatDate(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toISOString().slice(0, 10);
+  return bakuDateDisplay(iso);
 }
 
 export function WorkspaceSatelliteSettingsModal({

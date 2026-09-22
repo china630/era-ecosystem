@@ -1,3 +1,5 @@
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
@@ -6,19 +8,18 @@ import {
   loadShareSlicesForType,
 } from '@/lib/services/share-assignment.service';
 
+/** Civil @db.Date night key (UTC midnight of Asia/Baku YMD). */
 function dateOnly(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  return bakuCivilUtcDate(hotelDateKey(d));
 }
 
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
-  const cur = dateOnly(from);
-  const end = dateOnly(to);
+  let cur = hotelDateKey(from);
+  const end = hotelDateKey(to);
   while (cur < end) {
-    nights.push(new Date(cur));
-    cur.setDate(cur.getDate() + 1);
+    nights.push(bakuCivilUtcDate(cur));
+    cur = addHotelDays(cur, 1);
   }
   return nights;
 }

@@ -16,6 +16,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   VoenLookupField,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type ImportOrder = {
   id: string;
@@ -56,7 +57,7 @@ export default function ImportOrdersAdminPage() {
   }, [load]);
 
   useEffect(() => {
-    const from = new Date().toISOString().slice(0, 10);
+    const from = todayBakuYmd();
     const days = Number(paymentTermDays) || 0;
     void fetch(`/api/payment-terms/due-date?from=${from}&days=${days}`)
       .then((r) => r.json())

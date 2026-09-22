@@ -19,8 +19,10 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 type UpdateRow = {
   id: string;
@@ -39,7 +41,7 @@ type UpdateRow = {
 type ActionFilter = 'ALL' | 'CANCEL' | 'EXTEND' | 'NOTE' | 'OTHER';
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function NightAuditReservationUpdatesPage() {
@@ -154,7 +156,7 @@ export default function NightAuditReservationUpdatesPage() {
               {rows.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(r.updatedAt).toLocaleString()}
+                    {bakuDateTimeDisplay(r.updatedAt)}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.guestName}</td>
                   <td className={DATA_TABLE_TD_CLASS}>

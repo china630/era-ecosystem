@@ -19,15 +19,17 @@ Every `/api/*` money route forwards to `ERA_BANK_CORE_URL` with `BANK_CORE_SERVI
 ```bash
 cd era-bank
 cp .env.example .env
+# Set ERA_BANK_ORGANIZATION_ID to a real orch org UUID after bind
 npm install
 npx prisma db push
-npm run db:seed
+npm run db:seed              # system role templates only
+npm run db:seed:demo         # lab tellers (teller-a / demo1234, …)
 npm run dev
 ```
 
 Open http://localhost:3210/login
 
-### Demo users (password `demo1234`)
+### Demo users (password `demo1234`) — after `db:seed:demo`
 
 | Username | Role |
 |----------|------|
@@ -69,7 +71,8 @@ See [.env.example](./.env.example). Required:
 
 ```bash
 docker build -t era-bank .
-docker run -p 3210:3210 --env-file .env -e RUN_SEED=true era-bank
+# Default BANK_RUN_SEED=false. Role templates only if RUN_SEED=true + real org.
+docker run -p 3210:3210 --env-file .env era-bank
 ```
 
 ## Docs

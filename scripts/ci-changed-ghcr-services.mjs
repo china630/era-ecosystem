@@ -10,7 +10,13 @@ import path from "node:path";
  *   node scripts/ci-changed-ghcr-services.mjs --dispatch-services orchestrator,clinic
  *   node scripts/ci-changed-ghcr-services.mjs --all
  *
- * stdout: JSON plan { skip, rebuildPackages, services, servicesCsv, deployScope, deployServices, matrix }
+ * stdout: JSON plan {
+ *   skip / skipImages — no images to build (empty matrix OK),
+ *   deploySkip — artifact SKIP for deploy-staging (docs-only only),
+ *   imageTagMode — floating (branch) when deployScope=all without full rebuild,
+ *                  else sha (branch-<short>); avoids GHCR 404 on unbuilt services,
+ *   deployScope, deployServices, matrix, …
+ * }
  */
 export const GHCR_MATRIX = [
   { service: "orchestrator", dockerfile: "era-orchestrator/Dockerfile", satellite_dir: "", satellite_port: "" },
@@ -32,6 +38,15 @@ export const GHCR_MATRIX = [
 ];
 
 const ALL_SERVICES = GHCR_MATRIX.map((row) => row.service);
+
+/** Compose / install-contract / droplet scripts — deploy all; may skip image rebuild. */
+export const INSTALL_CONTRACT_FILES = new Set([
+  "docker-compose.yml",
+  "docker-compose.prod.yml",
+  "config/satellite-install-contract.yaml",
+  "docker/scripts/deploy-droplet.sh",
+  "docker/scripts/migrate-all.sh",
+]);
 
 const DIR_TO_SERVICE = {
   "era-orchestrator": "orchestrator",
@@ -58,9 +73,15 @@ function isForceAll(file) {
   if (file.startsWith("packages/")) return true;
   if (file === "docker/Dockerfile.packages") return true;
   if (file === "docker/Dockerfile.satellite") return true;
+  // Copied into every satellite image — must rebuild all GHCR satellites.
+  if (file === "docker/scripts/satellite-entrypoint.sh") return true;
   if (file === ".github/workflows/build-images.yml") return true;
   if (file === "scripts/ci-changed-ghcr-services.mjs") return true;
   return false;
+}
+
+export function isInstallContractFile(file) {
+  return INSTALL_CONTRACT_FILES.has(normalize(file));
 }
 
 function serviceForFile(file) {
@@ -77,18 +98,40 @@ function serviceForFile(file) {
   return DIR_TO_SERVICE[top] || null;
 }
 
-function planFromServices(serviceSet, { rebuildPackages, all }) {
+function planFromServices(serviceSet, { rebuildPackages, all, deployScopeOverride } = {}) {
   const services = all ? [...ALL_SERVICES] : ALL_SERVICES.filter((s) => serviceSet.has(s));
-  const skip = !all && services.length === 0;
-  const matrix = skip ? [] : GHCR_MATRIX.filter((row) => services.includes(row.service));
+  const skipImages = !all && services.length === 0;
+  const matrix = skipImages ? [] : GHCR_MATRIX.filter((row) => services.includes(row.service));
+
+  let deployScope;
+  if (deployScopeOverride) {
+    deployScope = deployScopeOverride;
+  } else if (skipImages) {
+    deployScope = "skip";
+  } else if (all) {
+    deployScope = "all";
+  } else {
+    deployScope = "custom";
+  }
+
+  const deploySkip = deployScope === "skip";
+  const deployAll = deployScope === "all";
+  // Full recreate without a full image rebuild must pull floating branch tags
+  // (dev / master), not branch-<sha> — unbuilt services 404 at the new sha.
+  const imageTagMode = deployAll && !all ? "floating" : "sha";
+
   return {
-    skip,
+    /** @deprecated alias of skipImages — build-images job gate */
+    skip: skipImages,
+    skipImages,
+    deploySkip,
+    imageTagMode,
     rebuildPackages: Boolean(rebuildPackages || all),
     all: Boolean(all),
     services,
     servicesCsv: all ? "" : services.join(","),
-    deployScope: skip ? "skip" : all ? "all" : "custom",
-    deployServices: skip || all ? "" : services.join(" "),
+    deployScope,
+    deployServices: deploySkip || deployAll ? "" : services.join(" "),
     matrix,
   };
 }
@@ -111,15 +154,38 @@ export function resolveGhcrPlan(files, { dispatchServices, forceAll } = {}) {
   }
 
   const list = (files || []).map(normalize).filter(Boolean);
+  const contractTouched = list.some(isInstallContractFile);
+
   if (list.some(isForceAll)) {
     return planFromServices(new Set(ALL_SERVICES), { rebuildPackages: true, all: true });
   }
+
   const serviceSet = new Set();
   for (const file of list) {
+    if (isInstallContractFile(file)) continue;
     const service = serviceForFile(file);
     if (service) serviceSet.add(service);
   }
-  return planFromServices(serviceSet, { rebuildPackages: false, all: false });
+
+  if (serviceSet.size === 0 && !contractTouched) {
+    return planFromServices(new Set(), { rebuildPackages: false, all: false });
+  }
+
+  if (serviceSet.size === 0 && contractTouched) {
+    // Compose/contract only: recreate all on droplet with existing IMAGE_TAG; no rebuild.
+    return planFromServices(new Set(), {
+      rebuildPackages: false,
+      all: false,
+      deployScopeOverride: "all",
+    });
+  }
+
+  // App code (± contract): build touched images; contract forces full deploy recreate.
+  return planFromServices(serviceSet, {
+    rebuildPackages: false,
+    all: false,
+    deployScopeOverride: contractTouched ? "all" : undefined,
+  });
 }
 
 function parseArgs(argv) {

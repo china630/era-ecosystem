@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { trySendPlatformNotification, runCronForEachTenant } from "@era/satellite-kit";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 
 /**
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       const to = process.env.HOTEL_REPORT_EMAIL_TO ?? "manager@demo.local";
       const rawLocale = (process.env.HOTEL_REPORT_EMAIL_LOCALE ?? "az").trim();
       const locale = rawLocale === "ru" || rawLocale === "en" || rawLocale === "az" ? rawLocale : "az";
-      const businessDate = new Date().toISOString().slice(0, 10);
+      const businessDate = todayBakuYmd();
       const origin = (
         process.env.ERA_HOTEL_PMS_ORIGIN ||
         process.env.HOTEL_PUBLIC_URL ||

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 export function GuestCardLoyaltyTab({
   loyaltyTier,
@@ -79,7 +80,7 @@ export function GuestCardLoyaltyTab({
           type="button"
           className="text-[12px] font-medium text-[#2980B9]"
           onClick={async () => {
-            const entryDate = window.prompt(t('loyalty.entryDate'), new Date().toISOString().slice(0, 10));
+            const entryDate = window.prompt(t('loyalty.entryDate'), hotelDateKey());
             const pts = window.prompt(t('loyalty.points'), '100');
             if (!entryDate || !pts) return;
             await fetch(`/api/guests/${guestId}/loyalty/points`, {

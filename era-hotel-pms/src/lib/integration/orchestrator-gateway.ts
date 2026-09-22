@@ -1,4 +1,3 @@
-import axios, { AxiosError } from "axios";
 import {
   SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED,
   SATELLITE_HOTEL_RESERVATION_COMPLETED,
@@ -15,6 +14,7 @@ import {
   type SatelliteHotelGuestCheckedOutEvent,
   type SatelliteHotelRoomChangedEvent,
 } from "@era/contracts";
+import { publishToOrchestratorGateway as publishViaKit } from "@era/satellite-kit/orchestrator-gateway";
 import type { IntegrationEnvelope } from "./event-types";
 
 export function envelopeToReservationCompletedEvent(
@@ -181,7 +181,7 @@ export type OrchestratorGatewayResult = {
 
 /**
  * Publishes typed satellite events to era-orchestrator ingress.
- * `POST ${ORCHESTRATOR_EVENT_URL}/api/v1/satellite-events` with service token.
+ * Uses kit resolve (runtime-config + install token) — not raw process.env.
  */
 export async function publishToOrchestratorGateway(
   event:
@@ -193,29 +193,5 @@ export async function publishToOrchestratorGateway(
     | SatelliteHotelGuestCheckedOutEvent
     | SatelliteHotelRoomChangedEvent,
 ): Promise<OrchestratorGatewayResult> {
-  const baseUrl =
-    process.env.ORCHESTRATOR_EVENT_URL ??
-    process.env.ORCHESTRATOR_URL ??
-    "http://localhost:4100";
-  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN ?? "";
-  const url = `${baseUrl.replace(/\/$/, "")}/api/v1/satellite-events`;
-
-  try {
-    const res = await axios.post(url, event, {
-      timeout: Number(process.env.ORCHESTRATOR_EVENT_TIMEOUT_MS ?? 15_000),
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    return { ok: res.status >= 200 && res.status < 300, status: res.status };
-  } catch (err) {
-    const message =
-      err instanceof AxiosError
-        ? `${err.message}${err.response ? ` (${err.response.status})` : ""}`
-        : err instanceof Error
-          ? err.message
-          : "Unknown error";
-    return { ok: false, error: message };
-  }
+  return publishViaKit(event as Record<string, unknown>);
 }

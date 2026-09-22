@@ -25,6 +25,7 @@ import {
   structuredResultPayload,
   type ResultLineState,
 } from "@/components/TemplateResultForm";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 import type {
   CatalogFieldDef,
   DiagnosticCatalogItem,
@@ -549,7 +550,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                   <p className={`text-[13px] ${TEXT_SUCCESS_CLASS}`}>
                     {t("completed")}
                     {order.publishedAt
-                      ? ` · ${t("published")} ${new Date(order.publishedAt).toLocaleString()}`
+                      ? ` · ${t("published")} ${bakuDateTimeDisplay(order.publishedAt)}`
                       : ""}
                   </p>
                 </div>

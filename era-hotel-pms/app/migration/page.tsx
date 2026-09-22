@@ -11,6 +11,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 
 type Row = {
   id: string;
@@ -129,7 +130,7 @@ export default function MigrationQueuePage() {
                     <span className="rounded bg-[#ECF0F1] px-2 py-0.5 text-xs">{r.status}</span>
                   </td>
                   <td className="py-2 pr-2">{r.reservationId ?? '—'}</td>
-                  <td className="py-2 pr-2">{new Date(r.createdAt).toLocaleString()}</td>
+                  <td className="py-2 pr-2">{bakuDateTimeDisplay(r.createdAt)}</td>
                   <td className="py-2">
                     <div className="flex flex-wrap gap-2">
                       <button

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { EmployeeEmploymentStatus, EmployeeKind, UserRole } from "@erafinance/database";
+import { addBakuDays, bakuCivilUtcDate, bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
@@ -18,18 +19,9 @@ const HR_NOTIFY_ROLES: UserRole[] = [
   UserRole.ADMIN,
 ];
 
-function utcDayStart(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
-
-function addDays(d: Date, days: number): Date {
-  const x = new Date(d);
-  x.setUTCDate(x.getUTCDate() + days);
-  return x;
-}
-
-function sameMonthDay(a: Date, b: Date): boolean {
-  return a.getUTCMonth() === b.getUTCMonth() && a.getUTCDate() === b.getUTCDate();
+function sameBakuMonthDay(a: Date, bYmd: { y: number; m: number; day: number }): boolean {
+  // @db.Date birth stored as UTC midnight civil parts
+  return a.getUTCMonth() + 1 === bYmd.m && a.getUTCDate() === bYmd.day;
 }
 
 @Injectable()
@@ -50,8 +42,9 @@ export class HrRemindersService {
       return;
     }
 
-    const today = utcDayStart(new Date());
-    const contractTarget = addDays(today, 7);
+    const todayYmd = todayBakuYmd();
+    const todayParts = bakuYmd(new Date());
+    const contractTarget = bakuCivilUtcDate(addBakuDays(todayYmd, 7));
 
     const employees = await this.prisma.employee.findMany({
       where: {
@@ -102,7 +95,11 @@ export class HrRemindersService {
       const recipients = await this.hrRecipientEmails(emp.organizationId);
       if (recipients.length === 0) continue;
 
-      if (emp.contractEndDate && utcDayStart(emp.contractEndDate).getTime() === contractTarget.getTime()) {
+      if (
+        emp.contractEndDate &&
+        bakuCivilUtcDate(emp.contractEndDate.toISOString().slice(0, 10)).getTime() ===
+          contractTarget.getTime()
+      ) {
         for (const email of recipients) {
           await this.safeNotify(emp.organizationId, email, {
             templateKey: "hr.contract.end.reminder",
@@ -115,7 +112,7 @@ export class HrRemindersService {
         }
       }
 
-      if (emp.birthDate && sameMonthDay(emp.birthDate, today)) {
+      if (emp.birthDate && sameBakuMonthDay(emp.birthDate, todayParts)) {
         for (const email of recipients) {
           await this.safeNotify(emp.organizationId, email, {
             templateKey: "hr.birthday.reminder",

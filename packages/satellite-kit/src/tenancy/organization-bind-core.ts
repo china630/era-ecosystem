@@ -8,6 +8,11 @@ import {
   setRuntimeOrganizationId,
   type OrganizationBindSource,
 } from "./organization-bind-runtime";
+import {
+  pullDesiredStateOnce,
+  shouldPullDesiredStateOnBoot,
+  startDesiredStateReconcileLoop,
+} from "./desired-state-pull";
 
 export {
   getRuntimeOrganizationId,
@@ -93,10 +98,19 @@ export function resolveSatelliteOrganizationId(opts?: {
  * Hydrate org bind from Postgres into runtime (+ process.env) at process start.
  * Call from satellite `instrumentation.ts` / Nest bootstrap so recreate without
  * `.data/` volume still recovers the last Sync bind.
- * Also hydrates desired-state runtime config when present.
+ * Also hydrates desired-state runtime config when present, then optionally
+ * pulls CP desired-state (Wave 6) and starts reconcile (Wave 7).
  */
 export async function onSatelliteBoot(opts: {
   prisma?: OrgBindPrisma | null;
+  /**
+   * After local hydrate, GET orch desired-state once.
+   * Default: true when `ERA_IN_DOCKER=1` (override with ERA_DESIRED_STATE_PULL=0|1).
+   */
+  pullDesiredState?: boolean;
+  /** Start jittered reconcile loop after pull (default: same as pullDesiredState). */
+  reconcileDesiredState?: boolean;
+  satelliteKey?: string | null;
 }): Promise<{ organizationId: string | null; source: OrganizationBindSource | "none" }> {
   await onSatelliteRuntimeBoot({ prisma: opts.prisma ?? null });
 
@@ -104,12 +118,80 @@ export async function onSatelliteBoot(opts: {
   const { hydrateLoginOrgNoMapFromDisk } = await import("./login-org-no-persist");
   hydrateLoginOrgNoMapFromDisk();
 
+  let result: {
+    organizationId: string | null;
+    source: OrganizationBindSource | "none";
+  };
+
   if (opts.prisma) {
     const id = await hydrateOrganizationBindFromDb(opts.prisma);
     if (id) {
-      return { organizationId: id, source: "db" };
+      result = { organizationId: id, source: "db" };
+    } else {
+      result = finishBootWithoutDb();
+    }
+  } else {
+    result = finishBootWithoutDb();
+  }
+
+  const doPull = shouldPullDesiredStateOnBoot(opts.pullDesiredState);
+  if (doPull) {
+    let pullStatus: string | null = null;
+    let pullHttp: number | undefined;
+    try {
+      const pull = await pullDesiredStateOnce({
+        prisma: opts.prisma ?? null,
+        satelliteKey: opts.satelliteKey,
+      });
+      pullStatus = pull.status;
+      pullHttp = pull.status === "error" ? pull.httpStatus : undefined;
+      if (pull.status === "error") {
+        console.warn(
+          `[desired-state] boot pull: ${pull.reason}${pull.httpStatus ? ` (${pull.httpStatus})` : ""} — keeping local snapshot`,
+        );
+      } else if (pull.status === "skipped") {
+        console.info(`[desired-state] boot pull skipped: ${pull.reason}`);
+      } else if (pull.status === "applied") {
+        console.info("[desired-state] boot pull applied");
+        const id = getRuntimeOrganizationId();
+        if (id) {
+          result = {
+            organizationId: id,
+            source: result.source === "none" ? "runtime" : result.source,
+          };
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "[desired-state] boot pull failed — keeping local snapshot",
+        err instanceof Error ? err.message : err,
+      );
+    }
+
+    const doReconcile =
+      typeof opts.reconcileDesiredState === "boolean"
+        ? opts.reconcileDesiredState
+        : doPull;
+    // Do not poll when boot skipped (folklore / unbound) or 401 (token drift).
+    const startLoop =
+      doReconcile &&
+      pullStatus !== "skipped" &&
+      !(pullStatus === "error" && pullHttp === 401);
+    if (startLoop) {
+      startDesiredStateReconcileLoop({
+        prisma: opts.prisma ?? null,
+        satelliteKey: opts.satelliteKey,
+      });
     }
   }
+
+  return result;
+}
+
+function finishBootWithoutDb(): {
+  organizationId: string | null;
+  source: OrganizationBindSource | "none";
+} {
   hydrateFromFileOnce();
   if (getRuntimeOrganizationId()) {
     return { organizationId: getRuntimeOrganizationId(), source: "runtime" };

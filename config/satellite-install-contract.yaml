@@ -1,0 +1,48 @@
+# Satellite install contract — inventory for CI lint (not runtime SoR).
+# Law: compose/.env on host = bootstrap only (ports, DNS, tokens, RUN_SEED, DB URL).
+# Org UUID, SSO, event token, edition = Sync / _era_organization_bind / runtime-config.
+# ADR: docs/adr/satellite-organization-bind.md · docs/adr/satellite-seed-hygiene.md
+
+version: 1
+
+ports:
+  orchestrator_api: 4000
+  finance_api: 4100
+  data_hub: 4200
+  bank_core: 4300
+
+# Satellite .env.example must point orch at :4000 (not finance :4100).
+orchestrator_url_examples:
+  host_loopback: "http://127.0.0.1:4000"
+  forbidden_finance_port_on_orch_keys: 4100
+
+forbidden_org_env_values:
+  - demo-org
+  - demo-clinic-org
+  - demo-bank-org-001
+
+# docker-compose.prod.yml must never set these under environment: (blank overlay landmine).
+prod_overlay_forbidden_env_key_suffixes:
+  - _SERVICE_TOKEN
+
+compose_contract_files:
+  - docker-compose.yml
+  - docker-compose.prod.yml
+  - config/satellite-install-contract.yaml
+  - docker/scripts/deploy-droplet.sh
+  - docker/scripts/migrate-all.sh
+
+# Apps whose .env.example is linted for orch URL + demo-org.
+satellite_env_examples:
+  - era-hotel-pms/.env.example
+  - era-fnb-pos/.env.example
+  - era-clinic/.env.example
+  - era-retail-pos/.env.example
+  - era-logistics/.env.example
+  - era-construction/.env.example
+  - era-crm/.env.example
+  - era-auto-service/.env.example
+  - era-wholesale/.env.example
+  - era-bank/.env.example
+  - era-bank-dbo/.env.example
+  - era-bank-core/.env.example

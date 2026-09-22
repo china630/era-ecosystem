@@ -16,6 +16,7 @@ import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { buildCpoePayloadSnapshot } from "@/domain/cpoe/cpoe-payload";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 type CpoeRow = {
   id: string;
@@ -164,7 +165,7 @@ export function VisitCpoePanel({ visitId }: Props) {
               className={`flex items-center justify-between gap-2 rounded border px-2 py-1 ${TEXT_MUTED_CLASS}`}
             >
               <span>
-                {new Date(e.createdAt).toLocaleString()} · {e.templateId ?? "—"}
+                {bakuDateTimeDisplay(e.createdAt)} · {e.templateId ?? "—"}
               </span>
               <button
                 type="button"

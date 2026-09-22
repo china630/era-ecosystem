@@ -20,6 +20,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -70,9 +71,7 @@ export default function PricingComponentsPage() {
   const [editCode, setEditCode] = useState<string | null>(null);
   const [sellAmount, setSellAmount] = useState('');
   const [cogsAmount, setCogsAmount] = useState('');
-  const [effectiveFrom, setEffectiveFrom] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
+  const [effectiveFrom, setEffectiveFrom] = useState(() => hotelDateKey());
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [historyCode, setHistoryCode] = useState<string | null>(null);
@@ -103,7 +102,7 @@ export default function PricingComponentsPage() {
     setEditCode(row.code);
     setSellAmount(row.current?.sellAmount != null ? String(row.current.sellAmount) : '');
     setCogsAmount(row.current?.cogsAmount != null ? String(row.current.cogsAmount) : '');
-    setEffectiveFrom(new Date().toISOString().slice(0, 10));
+    setEffectiveFrom(hotelDateKey());
     setNote('');
   }
 

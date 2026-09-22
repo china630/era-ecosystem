@@ -1,16 +1,26 @@
 /**
  * Diagnostic catalog seed helpers (no CLI side effects).
- * ADR: docs/adr/clinic-catalog-base-and-org-overlay-seeds.md
+ * ADR: docs/adr/clinic-catalog-template-overlay.md
  */
 const fs = require("fs");
 const path = require("path");
 
-function seedOrgId() {
-  return (
+function requireSeedOrgId() {
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID (or ORGANIZATION_ID) required for org overlay seed; demo-org is forbidden",
+    );
+  }
+  return id;
+}
+
+/** @deprecated use requireSeedOrgId */
+function seedOrgId() {
+  return requireSeedOrgId();
 }
 
 const LAB_MODALITY = {
@@ -167,7 +177,7 @@ async function applyCatalogCodeCanon(prisma, organizationId = seedOrgId()) {
   return counts;
 }
 
-async function upsertModality(prisma, organizationId, def, sortOrder) {
+async function upsertModalityOrg(prisma, organizationId, def, sortOrder) {
   return prisma.modality.upsert({
     where: { organizationId_code: { organizationId, code: def.code } },
     create: {
@@ -189,7 +199,7 @@ async function upsertModality(prisma, organizationId, def, sortOrder) {
   });
 }
 
-async function upsertService(prisma, organizationId, input) {
+async function upsertServiceOrg(prisma, organizationId, input) {
   const data = {
     modalityId: input.modalityId,
     category: input.category ?? "",
@@ -209,7 +219,7 @@ async function upsertService(prisma, organizationId, input) {
   });
 }
 
-async function upsertAnalyte(prisma, serviceId, analyte, sortOrder) {
+async function upsertAnalyteOrg(prisma, serviceId, analyte, sortOrder) {
   const data = {
     unit: analyte.unit ?? null,
     labelEn: analyte.label.en,
@@ -224,6 +234,143 @@ async function upsertAnalyte(prisma, serviceId, analyte, sortOrder) {
     create: { serviceId, code: analyte.code, ...data },
     update: data,
   });
+}
+
+async function upsertModalityTemplate(prisma, def, sortOrder) {
+  return prisma.modalityTemplate.upsert({
+    where: { code: def.code },
+    create: {
+      code: def.code,
+      kind: def.kind,
+      titleEn: def.title.en,
+      titleRu: def.title.ru,
+      titleAz: def.title.az,
+      sortOrder,
+    },
+    update: {
+      kind: def.kind,
+      titleEn: def.title.en,
+      titleRu: def.title.ru,
+      titleAz: def.title.az,
+      sortOrder,
+    },
+  });
+}
+
+async function upsertServiceTemplate(prisma, input) {
+  const data = {
+    modalityId: input.modalityId,
+    category: input.category ?? "",
+    kind: input.kind,
+    titleEn: input.title.en,
+    titleRu: input.title.ru,
+    titleAz: input.title.az,
+    serviceCode: input.serviceCode,
+    fieldsJson: input.fields ? JSON.stringify(input.fields) : null,
+    includesJson: input.includes ? JSON.stringify(input.includes) : null,
+    sortOrder: input.sortOrder,
+  };
+  return prisma.diagnosticServiceTemplate.upsert({
+    where: { code: input.code },
+    create: { code: input.code, ...data },
+    update: data,
+  });
+}
+
+async function upsertAnalyteTemplate(prisma, serviceId, analyte, sortOrder) {
+  const data = {
+    unit: analyte.unit ?? null,
+    labelEn: analyte.label.en,
+    labelRu: analyte.label.ru,
+    labelAz: analyte.label.az,
+    refMin: analyte.refMin ?? null,
+    refMax: analyte.refMax ?? null,
+    sortOrder,
+  };
+  return prisma.diagnosticAnalyteTemplate.upsert({
+    where: { serviceId_code: { serviceId, code: analyte.code } },
+    create: { serviceId, code: analyte.code, ...data },
+    update: data,
+  });
+}
+
+/** Copy-if-empty templates → org (CJS path for Nafta seed). */
+async function copyDiagnosticTemplatesToOrg(prisma, organizationId) {
+  const templates = await prisma.modalityTemplate.findMany({
+    where: { active: true },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      services: {
+        where: { active: true },
+        orderBy: { sortOrder: "asc" },
+        include: { analytes: { orderBy: { sortOrder: "asc" } } },
+      },
+    },
+  });
+  for (const mt of templates) {
+    let modality = await prisma.modality.findUnique({
+      where: { organizationId_code: { organizationId, code: mt.code } },
+    });
+    if (!modality) {
+      modality = await prisma.modality.create({
+        data: {
+          organizationId,
+          code: mt.code,
+          kind: mt.kind,
+          titleEn: mt.titleEn,
+          titleRu: mt.titleRu,
+          titleAz: mt.titleAz,
+          sortOrder: mt.sortOrder,
+          active: mt.active,
+        },
+      });
+    }
+    for (const st of mt.services) {
+      let service = await prisma.diagnosticService.findUnique({
+        where: { organizationId_code: { organizationId, code: st.code } },
+      });
+      if (!service) {
+        service = await prisma.diagnosticService.create({
+          data: {
+            organizationId,
+            code: st.code,
+            modalityId: modality.id,
+            category: st.category,
+            kind: st.kind,
+            titleEn: st.titleEn,
+            titleRu: st.titleRu,
+            titleAz: st.titleAz,
+            serviceCode: st.serviceCode,
+            fieldsJson: st.fieldsJson,
+            includesJson: st.includesJson,
+            sortOrder: st.sortOrder,
+            active: st.active,
+          },
+        });
+      }
+      for (const at of st.analytes) {
+        const existingA = await prisma.diagnosticAnalyte.findUnique({
+          where: { serviceId_code: { serviceId: service.id, code: at.code } },
+        });
+        if (existingA) continue;
+        await prisma.diagnosticAnalyte.create({
+          data: {
+            serviceId: service.id,
+            code: at.code,
+            unit: at.unit,
+            labelEn: at.labelEn,
+            labelRu: at.labelRu,
+            labelAz: at.labelAz,
+            refMin: at.refMin,
+            refMax: at.refMax,
+            section: at.section,
+            valueType: at.valueType,
+            sortOrder: at.sortOrder,
+          },
+        });
+      }
+    }
+  }
 }
 
 async function upsertMetaField(prisma, field, sortOrder) {
@@ -244,8 +391,8 @@ async function upsertMetaField(prisma, field, sortOrder) {
   });
 }
 
-async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
-  await applyCatalogCodeCanon(prisma, organizationId);
+/** Satellite base → unscoped modality / service / analyte templates + meta fields. */
+async function seedDiagnosticBase(prisma) {
   const raw = loadJson("diagnostic-lab-catalog.json");
   const counts = {
     modalities: 0,
@@ -263,9 +410,8 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
   let modalitySort = 0;
 
   for (const modality of raw.modalities || []) {
-    const modRow = await upsertModality(
+    const modRow = await upsertModalityTemplate(
       prisma,
-      organizationId,
       { code: modality.code, kind: modality.kind, title: modality.title },
       modalitySort++,
     );
@@ -273,7 +419,7 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
 
     let serviceSort = 0;
     for (const tpl of modality.templates || []) {
-      await upsertService(prisma, organizationId, {
+      await upsertServiceTemplate(prisma, {
         code: tpl.code,
         modalityId: modRow.id,
         category: tpl.category,
@@ -287,11 +433,11 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
     }
   }
 
-  const labModRow = await upsertModality(prisma, organizationId, LAB_MODALITY, modalitySort++);
+  const labModRow = await upsertModalityTemplate(prisma, LAB_MODALITY, modalitySort++);
   counts.modalities += 1;
   let labSort = 0;
   for (const panel of raw.labPanels ?? []) {
-    const svcRow = await upsertService(prisma, organizationId, {
+    const svcRow = await upsertServiceTemplate(prisma, {
       code: panel.code,
       modalityId: labModRow.id,
       category: panel.category,
@@ -304,16 +450,16 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
 
     let analyteSort = 0;
     for (const analyte of panel.analytes ?? []) {
-      await upsertAnalyte(prisma, svcRow.id, analyte, analyteSort++);
+      await upsertAnalyteTemplate(prisma, svcRow.id, analyte, analyteSort++);
       counts.analytes += 1;
     }
   }
 
-  const pkgModRow = await upsertModality(prisma, organizationId, PACKAGE_MODALITY, modalitySort++);
+  const pkgModRow = await upsertModalityTemplate(prisma, PACKAGE_MODALITY, modalitySort++);
   counts.modalities += 1;
   let pkgSort = 0;
   for (const pkg of raw.packages ?? []) {
-    await upsertService(prisma, organizationId, {
+    await upsertServiceTemplate(prisma, {
       code: pkg.code,
       modalityId: pkgModRow.id,
       category: "checkup",
@@ -326,11 +472,11 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
     bump("package");
   }
 
-  const visitModRow = await upsertModality(prisma, organizationId, VISIT_MODALITY, modalitySort++);
+  const visitModRow = await upsertModalityTemplate(prisma, VISIT_MODALITY, modalitySort++);
   counts.modalities += 1;
   let visitSort = 0;
   for (const visit of raw.visitTemplates ?? []) {
-    await upsertService(prisma, organizationId, {
+    await upsertServiceTemplate(prisma, {
       code: visit.code,
       modalityId: visitModRow.id,
       category: visit.specialty,
@@ -349,10 +495,13 @@ async function seedDiagnosticBase(prisma, organizationId = seedOrgId()) {
     counts.metaFields += 1;
   }
 
-  return { organizationId, layer: "base", ...counts };
+  return { layer: "base", ...counts };
 }
 
-async function seedDiagnosticNafta(prisma, organizationId = seedOrgId()) {
+async function seedDiagnosticNafta(prisma, organizationId = requireSeedOrgId()) {
+  await applyCatalogCodeCanon(prisma, organizationId);
+  await copyDiagnosticTemplatesToOrg(prisma, organizationId);
+
   const overlay = loadJson("nafta", "diagnostic-overlay.json");
   const counts = { packages: 0, servicePatches: 0 };
 
@@ -360,12 +509,12 @@ async function seedDiagnosticNafta(prisma, organizationId = seedOrgId()) {
     where: { organizationId_code: { organizationId, code: "PACKAGE" } },
   });
   if (!pkgMod) {
-    throw new Error("[seed-diagnostic-nafta] PACKAGE modality missing — run base seed first");
+    throw new Error("[seed-diagnostic-nafta] PACKAGE modality missing — run db:seed templates first");
   }
 
   let pkgSort = 900;
   for (const pkg of overlay.packages ?? []) {
-    await upsertService(prisma, organizationId, {
+    await upsertServiceOrg(prisma, organizationId, {
       code: pkg.code,
       modalityId: pkgMod.id,
       category: "checkup",
@@ -415,8 +564,10 @@ async function seedDiagnosticNafta(prisma, organizationId = seedOrgId()) {
 
 module.exports = {
   seedOrgId,
+  requireSeedOrgId,
   loadCatalogCodeCanonMap,
   applyCatalogCodeCanon,
   seedDiagnosticBase,
   seedDiagnosticNafta,
+  copyDiagnosticTemplatesToOrg,
 };

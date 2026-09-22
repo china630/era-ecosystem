@@ -12,6 +12,7 @@ import { connectionFromRedisUrl } from "../../queue/bullmq.config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SubscriptionAccessService } from "../../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../../subscription/subscription.constants";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { CouncilEngineService } from "./council-engine.service";
 import { CouncilDispatcherService } from "./council-dispatcher.service";
 import { COUNCIL_ANALYSIS_QUEUE } from "./council.queue";
@@ -86,7 +87,7 @@ export class CouncilWorker implements OnModuleInit, OnModuleDestroy {
       select: { id: true },
     });
 
-    const week = new Date().toISOString().slice(0, 10);
+    const week = todayBakuYmd();
     const dedupeSuffix =
       trigger === "WEEKLY_CRON"
         ? `weekly_${week.slice(0, 7)}`

@@ -10,6 +10,7 @@ import {
 import { getCurrentShift, openShift } from "@/domain/cashier/cashier-shift.service";
 import type { ClinicReceiptChannel } from "@prisma/client";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { bakuDayBounds } from "@/lib/baku-day";
 
 export type PaymentSplit = { method: string; amount: number };
 
@@ -312,12 +313,8 @@ export async function listReceipts(filters: {
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 25;
   const createdAt: { gte?: Date; lt?: Date } = {};
-  if (filters.dateFrom) createdAt.gte = new Date(`${filters.dateFrom}T00:00:00.000Z`);
-  if (filters.dateTo) {
-    const end = new Date(`${filters.dateTo}T00:00:00.000Z`);
-    end.setUTCDate(end.getUTCDate() + 1);
-    createdAt.lt = end;
-  }
+  if (filters.dateFrom) createdAt.gte = bakuDayBounds(filters.dateFrom).start;
+  if (filters.dateTo) createdAt.lt = bakuDayBounds(filters.dateTo).end;
 
   const where = {
     ...(filters.status ? { status: filters.status } : {}),

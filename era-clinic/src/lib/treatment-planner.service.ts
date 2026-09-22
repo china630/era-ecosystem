@@ -2,7 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
-import { bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
+import {
+  addBakuDays,
+  bakuDateKey,
+  bakuDayBounds,
+  bakuHourMinute,
+  parseBakuDateTime,
+} from "@/lib/baku-day";
 import {
   clampDailyPackageProcedureCap,
   inPackageCodesOnBakuDay,
@@ -50,6 +56,12 @@ type PlannedSlot = {
 
 function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60_000);
+}
+
+function bakuWallTime(ref: Date, hour: number, minute = 0): Date {
+  const hh = String(hour).padStart(2, "0");
+  const mm = String(minute).padStart(2, "0");
+  return parseBakuDateTime(bakuDateKey(ref), `${hh}:${mm}`);
 }
 
 function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
@@ -143,11 +155,9 @@ export async function hasProcedureSameDay(
 
 /** @internal exported for unit tests */
 export function skipLunch(slot: Date, hours: TenantWorkHours = DEFAULT_WORK_HOURS): Date {
-  const h = slot.getHours();
+  const { hour: h } = bakuHourMinute(slot);
   if (h >= hours.lunchStartHour && h < hours.lunchEndHour) {
-    const out = new Date(slot);
-    out.setHours(hours.lunchEndHour, 0, 0, 0);
-    return out;
+    return bakuWallTime(slot, hours.lunchEndHour);
   }
   return slot;
 }
@@ -163,15 +173,11 @@ export function avoidLunchOverlap(
   hours: TenantWorkHours = DEFAULT_WORK_HOURS,
 ): Date {
   const s = skipLunch(start, hours);
-  const lunchStart = new Date(s);
-  lunchStart.setHours(hours.lunchStartHour, 0, 0, 0);
-  const lunchEnd = new Date(s);
-  lunchEnd.setHours(hours.lunchEndHour, 0, 0, 0);
+  const lunchStart = bakuWallTime(s, hours.lunchStartHour);
+  const lunchEnd = bakuWallTime(s, hours.lunchEndHour);
   const end = new Date(s.getTime() + durationMin * 60_000);
   if (s.getTime() < lunchEnd.getTime() && end.getTime() > lunchStart.getTime()) {
-    const out = new Date(s);
-    out.setHours(hours.lunchEndHour, 0, 0, 0);
-    return out;
+    return bakuWallTime(s, hours.lunchEndHour);
   }
   return s;
 }
@@ -185,19 +191,18 @@ export async function nextWorkSlot(
   const endHour = dayEndHour ?? hours.dayEndHour;
   let d = new Date(cursor);
   d = skipLunch(d, hours);
-  if (d.getHours() >= endHour) {
-    d.setDate(d.getDate() + 1);
-    d.setHours(hours.dayStartHour, 0, 0, 0);
+  if (bakuHourMinute(d).hour >= endHour) {
+    const nextYmd = addBakuDays(bakuDateKey(d), 1);
+    d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
     d = await nextSchedulingDay(d);
-    d.setHours(hours.dayStartHour, 0, 0, 0);
+    d = bakuWallTime(d, hours.dayStartHour);
   }
-  if (d.getHours() < hours.dayStartHour) {
-    d.setHours(hours.dayStartHour, 0, 0, 0);
+  if (bakuHourMinute(d).hour < hours.dayStartHour) {
+    d = bakuWallTime(d, hours.dayStartHour);
   }
   if (!(await isElectiveSchedulingAllowed(d))) {
     const next = await nextSchedulingDay(d);
-    next.setHours(hours.dayStartHour, 0, 0, 0);
-    return next;
+    return bakuWallTime(next, hours.dayStartHour);
   }
   return d;
 }
@@ -207,9 +212,8 @@ async function jumpNextWorkMorning(
   hours: TenantWorkHours,
   dayEndHour?: number,
 ): Promise<Date> {
-  const d = new Date(from);
-  d.setDate(d.getDate() + 1);
-  d.setHours(hours.dayStartHour, 0, 0, 0);
+  const nextYmd = addBakuDays(bakuDateKey(from), 1);
+  const d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
   return nextWorkSlot(d, hours, dayEndHour);
 }
 
@@ -497,31 +501,32 @@ export async function placeConfirmedProcedures(
     });
 
     let slotStart = await nextWorkSlot(now, typeHours, dayEnd);
-    if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
-      slotStart.setDate(slotStart.getDate() + 1);
-      slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+    if (!pt.afterLunchAllowed && bakuHourMinute(slotStart).hour >= typeHours.lunchEndHour) {
+      const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
+      slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
     }
-    if (!pt.beforeLunchAllowed && slotStart.getHours() < typeHours.lunchEndHour) {
-      slotStart.setHours(typeHours.lunchEndHour, 0, 0, 0);
+    if (!pt.beforeLunchAllowed && bakuHourMinute(slotStart).hour < typeHours.lunchEndHour) {
+      slotStart = bakuWallTime(slotStart, typeHours.lunchEndHour);
     }
 
     let orderPlaced = false;
     for (let attempt = 0; attempt < 240 && !orderPlaced; attempt++) {
       slotStart = avoidLunchOverlap(slotStart, duration, typeHours);
-      if (!pt.afterLunchAllowed && slotStart.getHours() >= typeHours.lunchEndHour) {
-        slotStart.setDate(slotStart.getDate() + 1);
-        slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+      if (!pt.afterLunchAllowed && bakuHourMinute(slotStart).hour >= typeHours.lunchEndHour) {
+        const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
+        slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
-      if (!pt.beforeLunchAllowed && slotStart.getHours() < typeHours.lunchEndHour) {
-        slotStart.setHours(typeHours.lunchEndHour, 0, 0, 0);
+      if (!pt.beforeLunchAllowed && bakuHourMinute(slotStart).hour < typeHours.lunchEndHour) {
+        slotStart = bakuWallTime(slotStart, typeHours.lunchEndHour);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }
 
       const slotEnd = addMinutes(slotStart, duration);
-      if (slotEnd.getHours() > dayEnd || (slotEnd.getHours() === dayEnd && slotEnd.getMinutes() > 0)) {
+      const slotEndHm = bakuHourMinute(slotEnd);
+      if (slotEndHm.hour > dayEnd || (slotEndHm.hour === dayEnd && slotEndHm.minute > 0)) {
         slotStart = addMinutes(slotStart, slotMinutes);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
@@ -554,8 +559,8 @@ export async function placeConfirmedProcedures(
         context: rotationContext,
       });
       if (!rotation.ok) {
-        slotStart.setDate(slotStart.getDate() + 1);
-        slotStart.setHours(typeHours.dayStartHour, 0, 0, 0);
+        const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
+        slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
         slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
         continue;
       }

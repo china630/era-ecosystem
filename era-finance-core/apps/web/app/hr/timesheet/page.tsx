@@ -1,5 +1,6 @@
 "use client";
 
+import { bakuYmd } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -61,9 +62,9 @@ export default function HrTimesheetPage() {
   const { user } = useAuth();
   const readOnlyRole = isRestrictedUserRole(user?.role ?? undefined);
 
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const bakuNow = bakuYmd(new Date());
+  const [year, setYear] = useState(bakuNow.y);
+  const [month, setMonth] = useState(bakuNow.m);
   const [timesheet, setTimesheet] = useState<Ts | null>(null);
   const [employees, setEmployees] = useState<EmpRow[]>([]);
   const [entries, setEntries] = useState<TsEntry[]>([]);

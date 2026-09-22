@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { TrendingDown } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
@@ -48,7 +49,7 @@ export default function AgingPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
-  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [asOf, setAsOf] = useState(() => todayBakuYmd());
   const [data, setData] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

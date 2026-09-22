@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 
@@ -22,7 +23,7 @@ export class BanksService {
         headPhones: true,
       },
     });
-    return { meta: registryMeta("bank_glossary", new Date().toISOString().slice(0, 10)), banks: rows };
+    return { meta: registryMeta("bank_glossary", todayBakuYmd()), banks: rows };
   }
 
   async getBranch(branchCode: string) {
@@ -42,7 +43,7 @@ export class BanksService {
     if (dir) company = { taxId: dir.taxId, name: dir.name };
 
     return {
-      meta: registryMeta("bank_branches", new Date().toISOString().slice(0, 10)),
+      meta: registryMeta("bank_branches", todayBakuYmd()),
       branch: {
         branchCode: branch.branchCode,
         name: branch.name,

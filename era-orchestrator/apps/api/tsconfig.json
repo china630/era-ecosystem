@@ -17,6 +17,9 @@
     "paths": {
       "@era/satellite-kit/integration/person-name": [
         "../../../packages/satellite-kit/dist/integration/person-name"
+      ],
+      "@era/satellite-kit/time": [
+        "../../../packages/satellite-kit/dist/time/baku"
       ]
     }
   },

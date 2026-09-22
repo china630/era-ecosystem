@@ -13,6 +13,7 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type Appointment = {
   id: string;
@@ -103,7 +104,7 @@ export default function AppointmentsPage() {
                 <div className="font-medium">{a.vehiclePlate}</div>
                 <div className="text-[#7F8C8D]">
                   {a.customerName ?? "—"} ·{" "}
-                  {new Date(a.scheduledAt).toLocaleString()} · {a.status}
+                  {bakuDateTimeDisplay(a.scheduledAt)} · {a.status}
                 </div>
                 {a.workOrder && (
                   <Link href="/work-orders" className="text-[#2980B9] underline">

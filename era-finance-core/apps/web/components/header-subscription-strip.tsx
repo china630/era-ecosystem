@@ -1,21 +1,14 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { az as azLocale, ru as ruLocale } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { HeaderTierUsageBar } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useAuth } from "../lib/auth-context";
-import { uiLangRuAz } from "../lib/i18n/ui-lang";
 import { useSubscription } from "../lib/subscription-context";
 
-function shortDemoEnd(iso: string, lang: string): string {
-  const d = parseISO(iso);
-  const loc = uiLangRuAz(lang) === "ru" ? ruLocale : azLocale;
-  return format(d, "d.MM.yyyy", { locale: loc });
-}
-
 export function HeaderSubscriptionStrip() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { token, user } = useAuth();
   const { ready, effectiveSnapshot: snapshot } = useSubscription();
 
@@ -35,7 +28,7 @@ export function HeaderSubscriptionStrip() {
         <span className="font-normal normal-case text-amber-800">
           ·{" "}
           {t("headerStrip.trialUntil", {
-            date: shortDemoEnd(demoEndIso!, i18n.language),
+            date: bakuDateDisplay(demoEndIso!),
           })}
         </span>
       ) : null}

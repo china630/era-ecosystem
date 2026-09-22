@@ -11,12 +11,12 @@ import {
   persistLoginOrgNo,
   useStaffLoginOrgNo,
   StaffLoginOrgNoField,
+  LINK_ACCENT_CLASS,
 } from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const t = useTranslations("login");
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
   const [loginId, setLoginId] = useState("");
@@ -51,51 +51,37 @@ function LoginForm() {
     }
   }
 
-  let subtitle: string | undefined;
-  let ssoHint: string | undefined;
-  try {
-    subtitle = t("subtitle");
-  } catch {
-    subtitle = undefined;
-  }
-  try {
-    ssoHint = t("ssoHint") || t("demoHint");
-  } catch {
-    ssoHint = undefined;
-  }
-
   const pinHref = orgNo.trim()
     ? `/pin?org=${encodeURIComponent(orgNo.trim())}`
     : "/pin";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#EBEDF0] p-8">
-      <AuthLoginCard
-        locale={locale}
-        labels={buildAuthLoginLabels(tAuth)}
-        loginId={loginId}
-        password={password}
-        onLoginIdChange={setLoginId}
-        onPasswordChange={setPassword}
-        onSubmit={onSubmit}
-        busy={busy}
-        subtitle={subtitle}
-        ssoHint={ssoHint}
-        formExtras={
-          <StaffLoginOrgNoField
-            orgNo={orgNo}
-            onOrgNoChange={setOrgNo}
-            hostBound={hostBound}
-            label={tAuth("organizationIdLabel")}
-            placeholder={tAuth("organizationIdPlaceholder")}
-            hint={tAuth("organizationIdHint")}
-          />
-        }
-      />
-      <a href={pinHref} className="text-sm text-[#2980B9] underline">
-        Cashier / waiter PIN
-      </a>
-    </div>
+    <AuthLoginCard
+      locale={locale}
+      labels={buildAuthLoginLabels(tAuth)}
+      loginId={loginId}
+      password={password}
+      onLoginIdChange={setLoginId}
+      onPasswordChange={setPassword}
+      onSubmit={onSubmit}
+      busy={busy}
+      formExtras={
+        <StaffLoginOrgNoField
+          orgNo={orgNo}
+          onOrgNoChange={setOrgNo}
+          hostBound={hostBound}
+          label={tAuth("organizationIdLabel")}
+          placeholder={tAuth("organizationIdPlaceholder")}
+        />
+      }
+      extraLinks={
+        <p>
+          <a href={pinHref} className={LINK_ACCENT_CLASS}>
+            {tAuth("pinLogin")}
+          </a>
+        </p>
+      }
+    />
   );
 }
 

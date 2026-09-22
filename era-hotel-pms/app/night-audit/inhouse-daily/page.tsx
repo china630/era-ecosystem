@@ -12,6 +12,7 @@ import {
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 type Row = {
   id: string;
@@ -23,7 +24,7 @@ type Row = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function InhouseDailyPage() {

@@ -76,7 +76,7 @@ These are **not** Nafta Elektraweb ids. They belong to the **hotel (or clinic) p
 | `DATABASE_URL`, Redis, listen port | Machine |
 | `AUTH_JWT_SECRET` | Signs **all** sessions in this hotel process. Changing it “for Nafta” would invalidate 120 hotels. |
 | `POS_BRIDGE_SECRET` | Proves clinic-pool → hotel-pool S2S. Which hotel is in the JSON `organizationId`. May later Sync as **pool** desired state, still not per-property EW ids. |
-| Optional pool flag “vendor bridges allowed on this install” | Emergency kill for **everyone**; Super-Admin platform flag is fine. Does not enable Nafta by itself. |
+| Optional pool flag `vendorBridgesEnabled` (Sync) / `ELEKTRAWEB_BRIDGE_ENABLED` (install bootstrap) | Emergency kill for **everyone**; Super-Admin platform flag / runtime-config is fine. Does not enable Nafta by itself. |
 
 **Must leave env (and `config.ts`) for property-shaped values:** `ELEKTRAWEB_HOTEL_ID`, `ELEKTRAWEB_BRIDGE_WRITE_ENABLED`, `ELEKTRAWEB_WALKIN_*`, `ELEKTRAWEB_SPA_DEPID` / `CURRENCY_ID` as process defaults, `CLINIC_ELEKTRAWEB_DUAL_RUN`. Nafta numbers (31606, Tibbi `RESNAMEID`) live only on **Nafta’s** policy row.
 

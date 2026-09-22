@@ -1,8 +1,8 @@
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 
 function dateOnly(d: Date): Date {
-  const x = new Date(d.toISOString().slice(0, 10));
-  return x;
+  return bakuCivilUtcDate(d.toISOString().slice(0, 10));
 }
 
 function parseIntegrationSettings(json: string | null | undefined): {
@@ -30,7 +30,7 @@ export async function getCurrentBusinessDate(): Promise<Date> {
     orderBy: { date: 'desc' },
   });
   if (openDay) return dateOnly(openDay.date);
-  return dateOnly(new Date());
+  return bakuCivilUtcDate(todayBakuYmd());
 }
 
 export async function isStrictBusinessDateGate(): Promise<boolean> {
@@ -96,7 +96,7 @@ export async function lockBusinessDateForAudit(): Promise<void> {
 export async function getBusinessDateStatus() {
   const profile = await getHotelProfile();
   const current = await getCurrentBusinessDate();
-  const wall = dateOnly(new Date());
+  const wall = bakuCivilUtcDate(todayBakuYmd());
   const lagDays = Math.round((wall.getTime() - current.getTime()) / 86400000);
   const day = await prisma.businessDay.findFirst({ where: { date: current } });
 

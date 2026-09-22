@@ -141,16 +141,10 @@
     "agencyMedicalSku": "Agency→SKU"
   },
   "auth": {
-    "signInHint": "Sign in with your hotel account",
-    "login": "Login",
-    "password": "Password",
-    "signIn": "Sign in",
-    "signingIn": "Signing in…",
     "loginFailed": "Login failed",
-    "demoHint": "Demo: admin / admin123 · reception / reception123 · manager / manager123",
-    "organizationIdLabel": "Organization ID (hotel)",
-    "organizationIdPlaceholder": "UUID — required on shared hotel pool",
-    "organizationIdHint": "Required on the cloud shared pool. Get it from Control Plane → Workforce → ⋯ → Login & access, or open Hotel from Workspace (SSO).",
+    "organizationIdLabel": "Organization code (ERA ID)",
+    "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
+    "organizationIdHint": "",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -159,6 +153,7 @@
     "loginTitle": "Sign in",
     "loginId": "Username / email / phone",
     "email": "Email",
+    "password": "Password",
     "submitLogin": "Sign in",
     "submitBusy": "…",
     "needAccount": "No account? Register",
@@ -2244,12 +2239,11 @@
     "channelModule": "Channel Manager"
   },
   "login": {
-    "subtitle": "Sign in to your account",
+    "subtitle": "",
     "login": "Login",
     "password": "Password",
     "submit": "Sign in",
-    "busy": "…",
-    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+    "busy": "…"
   },
   "home": {
     "subtitle": "ERA industry satellite",

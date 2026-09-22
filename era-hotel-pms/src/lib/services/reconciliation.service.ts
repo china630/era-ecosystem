@@ -1,12 +1,13 @@
+import { bakuCivilUtcDate, bakuDayBounds } from '@era/satellite-kit/time';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import type { NightAuditPayload } from '@/lib/integration/event-types';
 
 export async function getReconciliationReport(businessDate: string) {
-  const date = new Date(businessDate);
-  date.setHours(0, 0, 0, 0);
-  const next = new Date(date);
-  next.setDate(next.getDate() + 1);
+  const date = bakuCivilUtcDate(businessDate);
+  const next = bakuCivilUtcDate(addHotelDays(businessDate, 1));
+  const { start: dayStart, end: dayEnd } = bakuDayBounds(businessDate);
 
   const charges = await prisma.folioCharge.findMany({
     where: { businessDate: { gte: date, lt: next } },
@@ -23,7 +24,7 @@ export async function getReconciliationReport(businessDate: string) {
     where: {
       eventType: 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED',
       status: 'SENT',
-      createdAt: { gte: date, lt: next },
+      createdAt: { gte: dayStart, lt: dayEnd },
     },
     orderBy: { createdAt: 'desc' },
   });

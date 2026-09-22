@@ -2,6 +2,7 @@ import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { postDailyWardCharges } from "@/domain/inpatient/daily-charge.service";
 import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { runCronForEachTenant } from "@era/satellite-kit";
+import { bakuCivilUtcDate } from "@/lib/baku-day";
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
       async (organizationId) => {
         const url = new URL(req.url);
         const dateParam = url.searchParams.get("date");
-        const chargeDate = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date();
+        const chargeDate = dateParam ? bakuCivilUtcDate(dateParam) : new Date();
         const result = await postDailyWardCharges(chargeDate);
         return { organizationId, ...result };
       },

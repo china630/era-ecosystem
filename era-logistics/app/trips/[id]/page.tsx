@@ -17,6 +17,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 
 type Trip = {
   id: string;
@@ -81,7 +82,7 @@ export default function TripDetailPage() {
     setPodSignatureUrl(data.podSignatureUrl ?? "");
     setFuelLiters(data.fuelLiters != null ? String(data.fuelLiters) : "");
     setFuelCost(data.fuelCost != null ? String(data.fuelCost) : "");
-    const from = new Date().toISOString().slice(0, 10);
+    const from = todayBakuYmd();
     void fetch(`/api/sla/eta?from=${from}&days=3`)
       .then((r) => r.json())
       .then((d) => setSlaEta(d.eta ?? null))
@@ -268,7 +269,7 @@ export default function TripDetailPage() {
             <p>
               <strong>{trip.waybillNumber}</strong>
               {trip.waybillIssuedAt
-                ? ` · ${new Date(trip.waybillIssuedAt).toLocaleString()}`
+                ? ` · ${bakuDateTimeDisplay(trip.waybillIssuedAt)}`
                 : ""}
             </p>
           ) : (
@@ -328,7 +329,7 @@ export default function TripDetailPage() {
           </div>
           {trip.podCapturedAt && (
             <p className="text-[12px] text-[#7F8C8D]">
-              {t("captured")}: {new Date(trip.podCapturedAt).toLocaleString()}
+              {t("captured")}: {bakuDateTimeDisplay(trip.podCapturedAt)}
               {trip.podRecipient ? ` · ${trip.podRecipient}` : ""}
             </p>
           )}

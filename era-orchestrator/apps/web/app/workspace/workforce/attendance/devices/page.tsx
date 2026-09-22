@@ -12,6 +12,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -114,7 +115,25 @@ export default function WorkforceAttendanceDevicesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("devicesTitle")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("devicesTitle")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setDevName("");
+              setDevPlaceId("");
+              setDevHmac(false);
+              setDeviceModal(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("addDevice")}
+          </button>
+        }
+      />
       <WorkforceAttendanceSubnav />
       {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
       {shownToken ? (
@@ -132,16 +151,6 @@ export default function WorkforceAttendanceDevicesPage() {
       ) : null}
 
       <section className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-base font-semibold">{t("devicesTitle")}</h2>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => setDeviceModal(true)}
-          >
-            {t("addDevice")}
-          </button>
-        </div>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -158,7 +167,7 @@ export default function WorkforceAttendanceDevicesPage() {
                 <tr key={d.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{d.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {d.place?.name ?? d.placeId}
+                    {d.place?.name ?? "—"}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{d.status}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -194,18 +203,29 @@ export default function WorkforceAttendanceDevicesPage() {
 
       {deviceModal ? (
         <ModalShell
+          open
           title={t("addDevice")}
           onClose={() => setDeviceModal(false)}
+          closeLabel={tCommon("close")}
+          footer={
+            <ModalFooter
+              onCancel={() => setDeviceModal(false)}
+              onSubmit={() => void createDevice()}
+              busy={busy}
+              submitDisabled={!devName.trim() || !devPlaceId}
+              cancelLabel={tCommon("cancel")}
+              submitLabel={tCommon("save")}
+            />
+          }
         >
-          <div className="space-y-3">
-            <label className="block text-sm">
-              {t("colName")}
-              <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                value={devName}
-                onChange={(e) => setDevName(e.target.value)}
-              />
-            </label>
+          <div className="grid gap-3">
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("colName")}
+              value={devName}
+              onChange={(v) => setDevName(String(v))}
+              options={[]}
+            />
             <CatalogField
               kind="ENTITY_REF"
               label={t("colPlace")}
@@ -215,8 +235,9 @@ export default function WorkforceAttendanceDevicesPage() {
                 value: p.id,
                 label: `${p.code} — ${p.name}`,
               }))}
+              emptyLabel={tCommon("select")}
             />
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
                 type="checkbox"
                 checked={devHmac}
@@ -224,23 +245,6 @@ export default function WorkforceAttendanceDevicesPage() {
               />
               {t("requireHmac")}
             </label>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setDeviceModal(false)}
-              >
-                {tCommon("cancel")}
-              </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy}
-                onClick={() => void createDevice()}
-              >
-                {tCommon("save")}
-              </button>
-            </div>
           </div>
         </ModalShell>
       ) : null}

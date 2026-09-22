@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Prisma } from "@erafinance/database";
+import { bakuDateKey } from "@era/satellite-kit/time";
 
 export type DataHubFxRate = {
   currencyCode: string;
@@ -121,17 +122,7 @@ export class DataHubClientService {
   }
 
   isoDateBaku(d: Date): string {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Baku",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(d);
-    const y = parts.find((p) => p.type === "year")?.value;
-    const m = parts.find((p) => p.type === "month")?.value;
-    const day = parts.find((p) => p.type === "day")?.value;
-    if (!y || !m || !day) return d.toISOString().slice(0, 10);
-    return `${y}-${m}-${day}`;
+    return bakuDateKey(d);
   }
 
   async getFxRates(date?: string, symbols = "USD,EUR"): Promise<DataHubFxRate[] | null> {
@@ -322,7 +313,7 @@ export class DataHubClientService {
   ): Promise<{ rate: number; rateDate: string; isFallback: boolean } | null> {
     const upper = currencyCode.trim().toUpperCase();
     if (upper === "AZN" || upper === "AZM") {
-      return { rate: 1, rateDate: date.toISOString().slice(0, 10), isFallback: false };
+      return { rate: 1, rateDate: bakuDateKey(date), isFallback: false };
     }
     const dateKey = this.isoDateBaku(date);
     if (this.isEnabled()) {

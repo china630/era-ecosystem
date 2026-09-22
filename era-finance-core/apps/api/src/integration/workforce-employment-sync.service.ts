@@ -13,6 +13,7 @@ import { SubscriptionAccessService } from "../subscription/subscription-access.s
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { WorkforceMirrorMissingError } from "./workforce-mirror-missing.error";
 import { WorkforceOrgEnsureService } from "./workforce-org-ensure.service";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 @Injectable()
 export class WorkforceEmploymentSyncService {
@@ -146,7 +147,7 @@ export class WorkforceEmploymentSyncService {
     const p = event.payload;
     const terminateDay =
       event.occurredAt?.slice(0, 10) ||
-      new Date().toISOString().slice(0, 10);
+      todayBakuYmd();
 
     let employee = await this.prisma.employee.findFirst({
       where: {

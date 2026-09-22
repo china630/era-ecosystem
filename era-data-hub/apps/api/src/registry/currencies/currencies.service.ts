@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 
@@ -23,7 +24,7 @@ export class CurrenciesService {
       },
     });
     return {
-      meta: registryMeta("currencies", new Date().toISOString().slice(0, 10)),
+      meta: registryMeta("currencies", todayBakuYmd()),
       currencies: rows,
     };
   }

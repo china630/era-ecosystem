@@ -1,3 +1,5 @@
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { getChannelAvailability } from '@/lib/services/channel.service';
 import { logSyncError } from '@/lib/services/channel.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
@@ -118,8 +120,9 @@ export async function maybeAutoPushAfterStopSell() {
   const policy = await getHotelPolicy();
   if (!policy.channelAutoPushEnabled) return { skipped: true as const };
 
-  const from = new Date();
-  const to = new Date(Date.now() + 14 * 86400000);
+  const fromYmd = hotelDateKey();
+  const from = bakuCivilUtcDate(fromYmd);
+  const to = bakuCivilUtcDate(addHotelDays(fromYmd, 14));
   void pushChannelAvailability(from, to).catch((err) => {
     console.error('channel auto-push after stop-sell failed', err);
   });

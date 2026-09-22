@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const url = new URL(request.url);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     const from = url.searchParams.get('from') ?? today;
     const to = url.searchParams.get('to') ?? from;
     return jsonOk(serialize(await queryFolioTransactions(from, to)));

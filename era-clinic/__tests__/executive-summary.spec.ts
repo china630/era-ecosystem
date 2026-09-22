@@ -18,6 +18,8 @@ jest.mock("@/lib/capacity.service", () => ({
   }),
 }));
 
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+
 describe("executive summary query", () => {
   it("filters visits by practitioner when provided", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
@@ -25,10 +27,7 @@ describe("executive summary query", () => {
     prisma.labOrder.findMany.mockResolvedValue([{ amountNet: "10" }]);
     prisma.labOrder.count.mockResolvedValue(2);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const { start: today, end: tomorrow } = bakuDayBounds(todayBakuYmd());
 
     await prisma.visit.count({
       where: {

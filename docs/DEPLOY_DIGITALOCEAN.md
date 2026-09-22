@@ -59,12 +59,16 @@ node scripts/ecosystem-smoke-all.mjs
 Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `ENV_FILE`, `GHCR_PULL_TOKEN`), then:
 
 1. Merge to **`dev`** → **Build and push images** path-filters changed services  
-2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` those services → migrate → `up` with `IMAGE_TAG=dev-<sha>`  
+2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `git reset --hard $SHA` → `pull` → migrate → `up` with `IMAGE_TAG` from the build artifact (`dev-<sha>` for scoped app deploys; floating `dev`/`master` when `deployScope=all` without a full image rebuild)
+
+**Compose / install-contract only** (`docker-compose.yml`, `docker-compose.prod.yml`, `config/satellite-install-contract.yaml`, `docker/scripts/deploy-droplet.sh`, `docker/scripts/migrate-all.sh`): build matrix may be empty (`skipImages`), but artifact sets `DEPLOY_SCOPE=all`, `SKIP=false`, and `IMAGE_TAG_MODE=floating` so the droplet recreates all services against current floating tags (no 16-image rebuild, no GHCR 404). App + compose uses the same floating tag after rebuilding only the touched images (those also push `:dev` / `:master`). Docs-only commits stay `deployScope=skip`. See `scripts/ci-changed-ghcr-services.mjs`.
 
 This `deploy-staging.yml` listener is read from **`master`**. After changing it, promote `dev` → `master` before the next scoped (non-all) image build.
 
 Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
 Production: **Deploy production** remains manual only.
+
+**ENV_FILE note:** seed hygiene (`BANK_*_RUN_SEED=false`) is plan/wave 4 — do not edit droplet secrets in the install-contract PR except that documented flag.
 
 Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW Anywhere is fine for staging).
 

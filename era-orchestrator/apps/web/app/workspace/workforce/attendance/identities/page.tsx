@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import {
   CatalogField,
   CARD_CONTAINER_CLASS,
@@ -11,6 +12,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -51,15 +53,14 @@ export default function WorkforceAttendanceIdentitiesPage() {
     () =>
       emps.map((e) => {
         const name =
-          persons[e.globalPersonId]?.displayName ??
-          e.globalPersonId.slice(0, 8);
+          persons[e.globalPersonId]?.displayName ?? tCommon("unnamedPerson");
         const code = staffCodeFromEmployment(e.id);
         return {
           value: e.id,
           label: `${name} (${code})`,
         };
       }),
-    [emps, persons],
+    [emps, persons, tCommon],
   );
 
   const load = useCallback(async () => {
@@ -126,21 +127,28 @@ export default function WorkforceAttendanceIdentitiesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("identitiesTitle")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("identitiesTitle")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setPersonRef("");
+              setEmploymentId("");
+              setIdModal(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            {t("addIdentity")}
+          </button>
+        }
+      />
       <WorkforceAttendanceSubnav />
       {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
 
       <section className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-base font-semibold">{t("identitiesTitle")}</h2>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => setIdModal(true)}
-          >
-            {t("addIdentity")}
-          </button>
-        </div>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -154,7 +162,9 @@ export default function WorkforceAttendanceIdentitiesPage() {
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{row.personRef}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {row.employment?.position?.name ?? row.employmentId}
+                    {empOptions.find((o) => o.value === row.employmentId)?.label ??
+                      row.employment?.position?.name ??
+                      row.employmentId}
                   </td>
                 </tr>
               ))}
@@ -172,42 +182,37 @@ export default function WorkforceAttendanceIdentitiesPage() {
 
       {idModal ? (
         <ModalShell
+          open
           title={t("addIdentity")}
           onClose={() => setIdModal(false)}
+          closeLabel={tCommon("close")}
+          footer={
+            <ModalFooter
+              onCancel={() => setIdModal(false)}
+              onSubmit={() => void saveIdentity()}
+              busy={busy}
+              submitDisabled={!personRef.trim() || !employmentId}
+              cancelLabel={tCommon("cancel")}
+              submitLabel={tCommon("save")}
+            />
+          }
         >
-          <div className="space-y-3">
-            <label className="block text-sm">
-              {t("colPersonRef")}
-              <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                value={personRef}
-                onChange={(e) => setPersonRef(e.target.value)}
-              />
-            </label>
+          <div className="grid gap-3">
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("colPersonRef")}
+              value={personRef}
+              onChange={(v) => setPersonRef(String(v))}
+              options={[]}
+            />
             <CatalogField
               kind="ENTITY_REF"
               label={t("colEmployment")}
               value={employmentId}
               onChange={(v) => setEmploymentId(String(v))}
               options={empOptions}
+              emptyLabel={tCommon("select")}
             />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setIdModal(false)}
-              >
-                {tCommon("cancel")}
-              </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy}
-                onClick={() => void saveIdentity()}
-              >
-                {tCommon("save")}
-              </button>
-            </div>
           </div>
         </ModalShell>
       ) : null}

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { SimpleCrudPage } from '@/components/wave-b/SimpleCrudPage';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 export default function LostAndFoundPage() {
   const { can } = useAuth();
@@ -27,7 +28,7 @@ export default function LostAndFoundPage() {
         { name: 'description', label: t('description'), preset: 'longText', required: true, multiline: true },
       ]}
       buildAddBody={(values) => ({
-        foundDate: new Date().toISOString().slice(0, 10),
+        foundDate: hotelDateKey(),
         location: values.location,
         description: values.description,
         ...(guestId ? { guestId } : {}),

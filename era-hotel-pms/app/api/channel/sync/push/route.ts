@@ -1,3 +1,5 @@
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
@@ -20,8 +22,8 @@ export async function POST(request: Request) {
       })
       .parse(await request.json().catch(() => ({})));
 
-    const from = new Date(body.from ?? new Date().toISOString().slice(0, 10));
-    const to = new Date(body.to ?? new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
+    const from = bakuCivilUtcDate(body.from ?? todayBakuYmd());
+    const to = bakuCivilUtcDate(body.to ?? addHotelDays(todayBakuYmd(), 14));
 
     return jsonOk(serialize(await pushChannelAvailability(from, to)));
   } catch (err) {

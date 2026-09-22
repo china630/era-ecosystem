@@ -22,7 +22,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | Finance: Nest `TenantContextInterceptor` + membership JWT org (not kit ALS) | AC-CP-TOPO Scaffold ✅ (field / lab signoff still open) |
 | Kit `findUserByCredential(login, org?)` | |
 | Hotel / clinic / auto cron via `runCronForEachTenant` + `byOrganization` JSON | |
-| SHARED cron: `ERA_CRON_ORGANIZATION_IDS` → **orch pool members** (`GET /api/v1/internal/satellite-pool/members`) → User DISTINCT → bind | |
+| SHARED cron: `ERA_CRON_ORGANIZATION_IDS` → **orch pool members** (`GET /v1/internal/satellite-pool/members`) → User DISTINCT → bind | |
 | Hotel + clinic **lab** two-org isolation CI | Field SHARED pool isolation UAT |
 | HOT-06 lab SHOW; extension write HEADLESS | |
 | Placement: hotel curated JSON slice + **artifact on job** + host agent import-slice + apply log | Field migrate UAT; multi-sat slices |

@@ -21,6 +21,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -56,9 +57,7 @@ export default function PackagePricesPage() {
   const [sellPrice, setSellPrice] = useState('');
   const [costFloor, setCostFloor] = useState('');
   const [occupancy, setOccupancy] = useState('1');
-  const [effectiveFrom, setEffectiveFrom] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
+  const [effectiveFrom, setEffectiveFrom] = useState(() => hotelDateKey());
   const [note, setNote] = useState('');
   const formId = 'pkg-sell-version-form';
 

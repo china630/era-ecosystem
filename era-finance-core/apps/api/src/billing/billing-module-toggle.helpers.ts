@@ -1,4 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
+import { bakuYmd } from "@era/satellite-kit/time";
+import { billingPeriodKeyBaku, bakuMonthBounds } from "./baku-billing.util";
 import {
   hasCashBankModuleInList,
   isLegacyCashBankModuleKey,
@@ -107,12 +109,12 @@ export function isCatalogModuleActive(
   }
 }
 
-/** Доля месяца от текущего UTC-дня до конца месяца включительно (для Pro-rata). */
+/** Pro-rata fraction from current Baku calendar day through month end (inclusive). */
 export function proRataFractionUtc(now = new Date()): number {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  const day = now.getUTCDate();
+  const periodKey = billingPeriodKeyBaku(now);
+  const { to } = bakuMonthBounds(periodKey);
+  const { day } = bakuYmd(now);
+  const daysInMonth = bakuYmd(to).day;
   const daysLeftIncludingToday = daysInMonth - day + 1;
   return daysLeftIncludingToday / daysInMonth;
 }

@@ -9,28 +9,12 @@
  */
 import { Prisma, SubscriptionInvoiceStatus, TariffTier } from "@prisma/client";
 import { createPrismaClient, closePrismaPool } from "../packages/database/prisma/prisma-client";
+import {
+  bakuMonthBounds,
+  previousBillingPeriodKeyBaku,
+} from "../apps/api/src/billing/baku-billing.util";
 
 const Decimal = Prisma.Decimal;
-
-function startOfMonthUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
-}
-
-function endOfMonthUtc(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59, 999),
-  );
-}
-
-function previousMonthAnchorUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
-}
-
-function billingPeriodLabelUtc(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
-}
 
 function parsePeriodArg(): string | null {
   const a = process.argv.find((x) => x.startsWith("--period="));
@@ -97,15 +81,11 @@ async function main() {
   const prisma = createPrismaClient();
   const now = new Date();
   const periodStr = parsePeriodArg();
-  const anchor = periodStr
-    ? new Date(`${periodStr}-01T12:00:00.000Z`)
-    : previousMonthAnchorUtc(now);
-  const periodStart = startOfMonthUtc(anchor);
-  const periodEnd = endOfMonthUtc(anchor);
-  const billingPeriod = `${anchor.getUTCFullYear()}-${String(anchor.getUTCMonth() + 1).padStart(2, "0")}`;
+  const billingPeriod = periodStr || previousBillingPeriodKeyBaku(now);
+  const { from: periodStart, to: periodEnd } = bakuMonthBounds(billingPeriod);
 
   console.log(
-    `[billing-reconciliation] period=${billingPeriod} (${periodStart.toISOString().slice(0, 10)}…${periodEnd.toISOString().slice(0, 10)})`,
+    `[billing-reconciliation] period=${billingPeriod} (${periodStart.toISOString()}…${periodEnd.toISOString()})`,
   );
 
   const orgs = await prisma.organization.findMany({

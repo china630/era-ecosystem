@@ -19,6 +19,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -48,7 +49,7 @@ export default function WorkforceAttendancePunchesPage() {
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [punchFilter, setPunchFilter] = useState("");
+  const [punchFilter, setPunchFilter] = useState("UNMAPPED");
 
   const [idModal, setIdModal] = useState(false);
   const [personRef, setPersonRef] = useState("");
@@ -69,15 +70,14 @@ export default function WorkforceAttendancePunchesPage() {
     () =>
       emps.map((e) => {
         const name =
-          persons[e.globalPersonId]?.displayName ??
-          e.globalPersonId.slice(0, 8);
+          persons[e.globalPersonId]?.displayName ?? tCommon("unnamedPerson");
         const code = staffCodeFromEmployment(e.id);
         return {
           value: e.id,
           label: `${name} (${code})`,
         };
       }),
-    [emps, persons],
+    [emps, persons, tCommon],
   );
 
   const load = useCallback(async () => {
@@ -206,7 +206,34 @@ export default function WorkforceAttendancePunchesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => {
+                setRebuildMsg(null);
+                setRebuildOpen(true);
+              }}
+            >
+              {t("rebuildTitle")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => {
+                setCsvMsg(null);
+                setCsvOpen(true);
+              }}
+            >
+              {t("csvTitle")}
+            </button>
+          </div>
+        }
+      />
       <WorkforceAttendanceSubnav />
       {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
 
@@ -230,31 +257,6 @@ export default function WorkforceAttendancePunchesPage() {
         />
       </EraListFilterBar>
       <section className={CARD_CONTAINER_CLASS}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-base font-semibold">{t("punchesTitle")}</h2>
-          <div className="flex flex-wrap items-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => {
-                setRebuildMsg(null);
-                setRebuildOpen(true);
-              }}
-            >
-              {t("rebuildTitle")}
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => {
-                setCsvMsg(null);
-                setCsvOpen(true);
-              }}
-            >
-              {t("csvTitle")}
-            </button>
-          </div>
-        </div>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -271,7 +273,7 @@ export default function WorkforceAttendancePunchesPage() {
               {punches.map((p) => (
                 <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(p.occurredAt).toLocaleString()}
+                    {bakuDateTimeDisplay(p.occurredAt)}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{p.personRef}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{p.direction}</td>

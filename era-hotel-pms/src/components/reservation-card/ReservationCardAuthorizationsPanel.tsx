@@ -11,6 +11,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 
 type CardAuthRow = {
   id: string;
@@ -130,7 +131,7 @@ export function ReservationCardAuthorizationsPanel({
                       <td className="p-1">{Number(row.amount).toFixed(2)} AZN</td>
                       <td className="p-1">{t(`cardAuth.statusValue.${row.status}` as 'cardAuth.statusValue.HELD')}</td>
                       <td className="p-1">
-                        {row.expiresAt ? new Date(row.expiresAt).toLocaleDateString() : '—'}
+                        {row.expiresAt ? bakuDateDisplay(row.expiresAt) : '—'}
                       </td>
                       <td className="p-1 truncate max-w-[120px]" title={row.externalAuthId ?? undefined}>
                         {row.externalAuthId ?? '—'}

@@ -7,11 +7,16 @@ const prisma = new PrismaClient();
 const DEFAULT_PATH = path.join(__dirname, "seed-data", "nafta", "era-prices.json");
 
 function seedOrgId() {
-  return (
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID required for load-nafta-prices; demo-org is forbidden",
+    );
+  }
+  return id;
 }
 
 function inferKind(code, department) {

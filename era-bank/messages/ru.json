@@ -5,19 +5,31 @@
   },
   "auth": {
     "loginTitle": "Вход",
-    "loginSubtitle": "Операции филиала",
-    "loginIdLabel": "Логин",
-    "passwordLabel": "Пароль",
-    "submitLabel": "Войти",
-    "loginFailed": "Неверный логин или пароль",
+    "loginFailed": "Вход не выполнен",
     "organizationIdLabel": "Код организации (ERA ID)",
-    "organizationIdPlaceholder": "6 цифр (например 104221)",
-    "organizationIdHint": "Обязателен на общем облачном пуле. Возьмите код у руководителя или в Control Plane → Super-admin → Organizations. На выделенном appliance оставьте пустым."
+    "organizationIdPlaceholder": "6 цифр (напр. 104221)",
+    "organizationIdHint": "",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginId": "Логин / эл. почта / телефон",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Зарегистрировать компанию и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
   },
   "login": {
-    "subtitle": "Локальный ops-вход — сотрудники филиала",
-    "ssoHint": "Демо: teller-a / demo1234",
-    "demoHint": "Демо: teller-a / demo1234"
+    "subtitle": ""
   },
   "nav": {
     "dashboard": "Панель",

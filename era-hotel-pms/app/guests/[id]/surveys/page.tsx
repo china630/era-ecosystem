@@ -1,6 +1,8 @@
 'use client';
 
 import { GuestCrmPromptListPage } from '@/components/guest-crm/GuestCrmPromptListPage';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 
 export default function Page() {
   return (
@@ -14,7 +16,7 @@ export default function Page() {
           label: 'Filled at',
           required: true,
           preset: 'date',
-          defaultValue: new Date().toISOString().slice(0, 10),
+          defaultValue: hotelDateKey(),
         },
       ]}
       buildBody={(v) => ({
@@ -24,7 +26,7 @@ export default function Page() {
       searchKeys={['surveyName', 'filledAt']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
-          {String(r.surveyName)} — {String(r.filledAt).slice(0, 10)}
+          {String(r.surveyName)} — {bakuDateDisplay(String(r.filledAt))}
         </li>
       )}
     />

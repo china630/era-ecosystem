@@ -5,6 +5,7 @@ import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { dispatchCityLedgerSnapshot } from '@/lib/integration/event-dispatcher';
 import { recordHotelAudit } from '@/lib/satellite-audit';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 
 const postSchema = z.object({
@@ -49,7 +50,7 @@ export async function POST(
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const { id } = await params;
     const body = postSchema.parse(await request.json().catch(() => ({})));
-    const asOfDate = body.asOfDate ?? new Date().toISOString().slice(0, 10);
+    const asOfDate = body.asOfDate ?? todayBakuYmd();
     const result = await dispatchCityLedgerSnapshot(id, asOfDate);
     await recordHotelAudit(
       { userId: session?.sub, request },

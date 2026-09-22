@@ -25,10 +25,15 @@
     "otpRequest": "Send OTP",
     "otpVerify": "Verify",
     "otpCode": "OTP code",
-    "asanLogin": "ASAN Sign (stub)",
-    "asanComplete": "Complete ASAN",
-    "devHint": "Dev OTP: 123456",
-    "asanStubBadge": "ASAN İmza / SİMA runs in stub mode — not live government signing (live = certification track)."
+    "asanLogin": "ASAN İmza",
+    "asanComplete": "ASAN confirm",
+    "finPlaceholder": "7 characters",
+    "voenPlaceholder": "10 digits",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status"
   },
   "dashboard": {
     "title": "Home",

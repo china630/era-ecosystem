@@ -5,6 +5,7 @@ import {
   isPassThroughCatalogModuleKey,
   PRICING_MODULE_CASH_BANK_PRO,
 } from "@era365/database";
+import { bakuYmd } from "./baku-billing.util";
 
 export const TOGGLE_MODULE_META_PURPOSE = "toggle_module" as const;
 
@@ -128,12 +129,10 @@ export function isCatalogModuleActive(
   }
 }
 
-/** Доля месяца от текущего UTC-дня до конца месяца включительно (для Pro-rata). */
+/** Доля месяца от текущего дня Баку до конца месяца включительно (для Pro-rata). */
 export function proRataFractionUtc(now = new Date()): number {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  const day = now.getUTCDate();
+  const { y, m, day } = bakuYmd(now);
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const daysLeftIncludingToday = daysInMonth - day + 1;
   return daysLeftIncludingToday / daysInMonth;
 }

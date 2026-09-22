@@ -35,7 +35,7 @@ Inherits nothing; app-specific rules add detail on top. User chat — **Russian*
 
 - Currency **AZN**; phone **+994**; legal entity **VÖEN** (10 digits); citizen **FIN** (7 chars, no I/O) when applicable.
 - Foreigners: passport + `issuingCountry` as alternate identifier; FIN optional until residency.
-- Dates: **UTC in DB**; display in **Asia/Baku** locale where user-facing.
+- Dates: **UTC in DB**; display and operational calendar in **Asia/Baku** — [asia-baku-clock.md](../../docs/adr/asia-baku-clock.md). Use `@era/satellite-kit/time` (`todayBakuYmd`, `bakuDayBounds`, …). Do not use `toISOString().slice(0,10)` as “today”, `toLocale*` without `timeZone`, or `setHours(0,0,0,0)` as day bounds; do not set container `TZ=Asia/Baku` as the platform fix. Gate: `npm run lint:baku-clock`.
 
 ## Data integrity
 

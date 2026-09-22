@@ -9,6 +9,7 @@ import {
 } from "../../lib/design-system";
 import { AuditActionChip } from "./audit-action-chip";
 import { AuditDiffModal } from "./audit-diff-modal";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type AuditUser = {
   id: string;
@@ -154,7 +155,7 @@ export function EntityAuditHistory({
                 return (
                   <tr key={r.id} className="border-t border-[#D5DADF]">
                     <td className="px-3 py-2 whitespace-nowrap text-[#34495E]">
-                      {new Date(r.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(r.createdAt)}
                     </td>
                     <td className="px-3 py-2 text-[#34495E]">
                       {actorLabel(r.user ?? undefined, r.userId)}

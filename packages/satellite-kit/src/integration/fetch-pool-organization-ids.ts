@@ -5,7 +5,7 @@ import {
 
 /**
  * Pull SHARED pool org membership from orchestrator SoR
- * (`GET /api/v1/internal/satellite-pool/members`).
+ * (`GET /v1/internal/satellite-pool/members` — Nest has no `/api` global prefix).
  * Returns [] when orch URL/token/baseUrl missing or request fails.
  */
 export async function fetchPoolOrganizationIdsFromOrch(input: {
@@ -24,7 +24,7 @@ export async function fetchPoolOrganizationIdsFromOrch(input: {
   const satelliteKey = input.satelliteKey.trim();
   if (!orch || !token || !baseUrl || !satelliteKey) return [];
 
-  const url = new URL(`${orch.replace(/\/$/, "")}/api/v1/internal/satellite-pool/members`);
+  const url = new URL(`${orch.replace(/\/$/, "")}/v1/internal/satellite-pool/members`);
   url.searchParams.set("satelliteKey", satelliteKey);
   url.searchParams.set("baseUrl", baseUrl);
 

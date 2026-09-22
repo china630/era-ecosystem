@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { CARD_CONTAINER_CLASS } from "@era/satellite-kit/ui";
 import { SuperAdminDataTable } from "../../../components/super-admin-data-table";
 import { cpAdminFetch } from "../../../lib/cp-admin-fetch";
@@ -116,7 +117,7 @@ export default function SuperAdminEarlyAccessPage() {
             moduleKey: e.moduleKey ?? "",
             eventType: e.eventType ?? "",
             organizationId: e.organizationId ?? "",
-            createdAt: e.createdAt ?? "",
+            createdAt: e.createdAt ? bakuDateTimeDisplay(e.createdAt) : "",
           }))}
         />
       </div>

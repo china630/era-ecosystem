@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DatePicker, FieldSelect } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 export type MoveGuestSibling = {
@@ -28,9 +29,7 @@ export function MoveGuestModal({
   const t = useTranslations('reservationCard');
   const tc = useTranslations('common');
   const [toId, setToId] = useState(siblings[0]?.id ?? '');
-  const [effectiveDate, setEffectiveDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [effectiveDate, setEffectiveDate] = useState(() => hotelDateKey());
 
   return (
     <EraModal

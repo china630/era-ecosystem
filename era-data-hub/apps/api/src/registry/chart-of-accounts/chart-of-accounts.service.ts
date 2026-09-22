@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { registryMeta } from "../../common/registry-meta";
 
 const PROFILES = ["commercial", "ngo", "budget"] as const;
@@ -28,7 +29,7 @@ export class ChartOfAccountsService {
       await readFile(join(this.catalogRoot(), file), "utf-8"),
     ) as unknown;
     return {
-      meta: registryMeta(`chart-of-accounts-${profile}`, new Date().toISOString().slice(0, 10)),
+      meta: registryMeta(`chart-of-accounts-${profile}`, todayBakuYmd()),
       profile,
       accounts: data,
     };

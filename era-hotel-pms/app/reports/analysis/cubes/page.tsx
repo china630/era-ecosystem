@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ReportFilterBar } from '@/components/reports/ReportFilterBar';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 const CUBES = ['revenue-cube', 'folio-cube', 'reservation-cube', 'agency-sales-cube'] as const;
 const DIMS = ['date', 'department', 'agency', 'revenueCode', 'roomType'] as const;
@@ -33,10 +34,10 @@ function ReportCubesInner() {
     fetch('/api/business-date')
       .then((r) => r.json())
       .then((d) => {
-        const bd = d.businessDate ?? d.date ?? new Date().toISOString().slice(0, 10);
+        const bd = d.businessDate ?? d.date ?? hotelDateKey();
         setBusinessDate(typeof bd === 'string' ? bd.slice(0, 10) : bd);
       })
-      .catch(() => setBusinessDate(new Date().toISOString().slice(0, 10)));
+      .catch(() => setBusinessDate(hotelDateKey()));
   }, []);
 
   const fetchData = useCallback(

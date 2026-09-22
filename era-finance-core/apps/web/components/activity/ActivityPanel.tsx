@@ -9,6 +9,7 @@ import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "../../lib/design-s
 import { useAuth } from "../../lib/auth-context";
 import { isAuditorDonorRole } from "../../lib/role-utils";
 import { useSubscription } from "../../lib/subscription-context";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type TimelineItem =
   | {
@@ -179,7 +180,7 @@ export function ActivityPanel({ entityType, entityId, canComment = true }: Props
                     {it.summary ?? `${t("activityStream.systemEvent")}: ${verbLabel(it.verb)}`}
                   </div>
                   <div className="mt-0.5 text-[10px] text-[#95A5A6]">
-                    {new Date(it.createdAt).toLocaleString()}
+                    {bakuDateTimeDisplay(it.createdAt)}
                   </div>
                 </div>
               ) : (
@@ -187,7 +188,7 @@ export function ActivityPanel({ entityType, entityId, canComment = true }: Props
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#7F8C8D]">
                     <span>
                       {it.authorEmail ?? it.authorUserId.slice(0, 8)} ·{" "}
-                      {new Date(it.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(it.createdAt)}
                     </span>
                     {it.commentKind === "AUDIT_NOTE" ? (
                       <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">

@@ -16,6 +16,7 @@ import {
 import { Button } from "../ui/button";
 import { SalesModalShell } from "../sales/modals/modal-shell";
 import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 const TEMPLATES = [
   "FREEFORM",
@@ -48,7 +49,7 @@ function emptyLine(): LineDraft {
 }
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayBakuYmd();
 }
 
 export function ManualAdjustmentModal({

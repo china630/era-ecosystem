@@ -1,16 +1,14 @@
+import { bakuDayBounds, bakuDateKey } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 
-function dateOnly(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+function dayBounds(d: Date): { start: Date; end: Date } {
+  const { start, end } = bakuDayBounds(bakuDateKey(d));
+  return { start, end };
 }
 
 export async function listInhouseDaily(date: Date) {
-  const day = dateOnly(date);
-  const next = new Date(day);
-  next.setDate(next.getDate() + 1);
+  const { start: dayStart, end: dayEnd } = dayBounds(date);
 
   const inHouse = await prisma.reservation.findMany({
     where: { status: 'IN_HOUSE' },
@@ -21,12 +19,12 @@ export async function listInhouseDaily(date: Date) {
   const departures = await prisma.reservation.findMany({
     where: {
       status: { in: ['IN_HOUSE', 'CONFIRMED'] },
-      checkOutDate: { gte: day, lt: next },
+      checkOutDate: { gte: dayStart, lt: dayEnd },
     },
     include: { guest: true, room: true, roomType: true, agency: true },
   });
 
-  return { date: day, inHouse, departures };
+  return { date: dayStart, inHouse, departures };
 }
 
 export async function listReservationNotesReport() {
@@ -64,16 +62,14 @@ export type ReservationTimesQuery = {
   agencyQ?: string;
 };
 
-/** Inclusive calendar `to` → exclusive next-day bound (local dateOnly). */
+/** Inclusive calendar `to` → exclusive next-day bound (Baku civil day). */
 export function exclusiveEndOfDay(d: Date): Date {
-  const x = dateOnly(d);
-  x.setDate(x.getDate() + 1);
-  return x;
+  return bakuDayBounds(bakuDateKey(d)).end;
 }
 
 /** Actual CI/CO journal: Stay exists and CI or CO falls in [from, to]. */
 export function buildReservationTimesWhere(q: ReservationTimesQuery) {
-  const from = dateOnly(q.from);
+  const from = bakuDayBounds(bakuDateKey(q.from)).start;
   const toExcl = exclusiveEndOfDay(q.to);
   const guestQ = q.guestQ?.trim();
   const agencyQ = q.agencyQ?.trim();

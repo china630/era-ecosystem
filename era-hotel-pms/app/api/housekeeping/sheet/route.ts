@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const sp = new URL(request.url).searchParams;
-    const date = sp.get('date') ?? new Date().toISOString().slice(0, 10);
+    const date = sp.get('date') ?? todayBakuYmd();
     if (sp.get('format') === 'pdf') {
       const buf = await generateFloorSheetPdf(date);
       return new Response(new Uint8Array(buf), {

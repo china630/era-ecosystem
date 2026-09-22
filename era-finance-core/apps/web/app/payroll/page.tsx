@@ -48,6 +48,7 @@ import { Button } from "../../components/ui/button";
 import { VacationCalcModal } from "../../components/payroll/vacation-calc-modal";
 import { SickCalcModal } from "../../components/payroll/sick-calc-modal";
 import { PayrollRunModal } from "../../components/payroll/payroll-run-modal";
+import { bakuYmd, billingPeriodKeyBaku } from "@era/satellite-kit/time";
 import {
   EmployeeAbsencesModal,
   type EmployeeAbsenceRow,
@@ -159,8 +160,8 @@ function PayrollPageInner() {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(() => bakuYmd(new Date()).y);
+  const [month, setMonth] = useState(() => bakuYmd(new Date()).m);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<unknown>(null);
 
@@ -177,9 +178,7 @@ function PayrollPageInner() {
 
   const workspaceAbsencesUrl = `${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/absences`;
 
-  const [monthValue, setMonthValue] = useState(() =>
-    monthValueFromYm(new Date().getFullYear(), new Date().getMonth() + 1),
-  );
+  const [monthValue, setMonthValue] = useState(() => billingPeriodKeyBaku());
   const [departmentId, setDepartmentId] = useState("");
 
   const [employeeAbsencesOpen, setEmployeeAbsencesOpen] = useState(false);

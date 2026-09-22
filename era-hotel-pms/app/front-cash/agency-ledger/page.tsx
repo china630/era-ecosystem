@@ -12,11 +12,13 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import {
   CityLedgerStatementGrid,
   type ClStatementLine,
 } from '@/components/CityLedgerStatementGrid';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -65,7 +67,7 @@ interface SnapshotMeta {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function AgencyLedgerPage() {
@@ -301,7 +303,7 @@ export default function AgencyLedgerPage() {
           {lastSnapshot ? (
             <p className="mb-2 text-[12px] text-[#7F8C8D]">
               {t('lastSnapshotMeta', {
-                at: new Date(lastSnapshot.at).toLocaleString(),
+                at: bakuDateTimeDisplay(lastSnapshot.at),
                 asOf: lastSnapshot.changes?.asOfDate ?? '—',
                 balance:
                   lastSnapshot.changes?.result?.balance != null

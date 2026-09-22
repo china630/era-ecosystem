@@ -207,13 +207,13 @@ npm run db:bootstrap-local   # migrate + seed (dev)
 # Hotel
 cd era-hotel-pms
 npx prisma migrate deploy   # includes Wave D2: 20260602120000_wave_d2_guest_res_submodals
-npm run db:seed
+npm run db:seed              # reference only; wipe lab: npm run db:seed:demo
 # After pull with new UI keys: node scripts/apply-wave-d3-fo-i18n.mjs && npm run verify:i18n
 
 # F&B POS
 cd era-fnb-pos
 npx prisma migrate deploy
-npx tsx prisma/seed.ts
+npm run db:seed              # no-op; lab: ERA_SATELLITE_ORGANIZATION_ID=<uuid> npm run db:seed:demo
 ```
 
 ---
@@ -500,14 +500,17 @@ docker compose up -d
 ```bash
 npm install
 npx prisma migrate deploy
+# Reference catalogs only (insert-if-missing). Requires ERA_SATELLITE_ORGANIZATION_ID.
 npm run db:seed
+# First empty lab with wipe/demo users: npm run db:seed:demo
 npm run dev
 ```
 
-- UI: http://localhost:3000  
-- Demo login: `admin` / `admin123`, `reception` / `reception123`
+- UI: http://localhost:3201  
+- Demo login (after `db:seed:demo`): `admin` / `admin123`, `reception` / `reception123`  
+- Standalone compose: `RUN_SEED` default false (`HOTEL_RUN_SEED=true` → reference seed only). Wipe/demo: host `npm run db:seed:demo`.
 
-Документация: [`era-hotel-pms/README.md`](../era-hotel-pms/README.md), [`era-hotel-pms/doc/UAT-SMOKE.md`](../era-hotel-pms/doc/UAT-SMOKE.md).
+Документация: [`era-hotel-pms/README.md`](../era-hotel-pms/README.md), [`era-hotel-pms/doc/UAT-SMOKE.md`](../era-hotel-pms/doc/UAT-SMOKE.md) · Seed law: [`docs/adr/satellite-seed-hygiene.md`](./adr/satellite-seed-hygiene.md).
 
 ---
 
@@ -540,13 +543,15 @@ FB_POS_WEBHOOK_SECRET=dev-fb-pos-webhook-secret
 ```bash
 npm install
 npx prisma db push
-npx tsx prisma/seed.ts
+# Default seed is a no-op (org-scoped). Lab waiter/outlet/menu:
+# ERA_SATELLITE_ORGANIZATION_ID=<uuid> npm run db:seed:demo
+npm run db:seed
 npm run dev
 ```
 
-- UI: http://localhost:3200  
+- UI: http://localhost:3202  
 
-Документация: [`era-fnb-pos/README.md`](../era-fnb-pos/README.md).
+Документация: [`era-fnb-pos/README.md`](../era-fnb-pos/README.md) · Seed law: [`docs/adr/satellite-seed-hygiene.md`](./adr/satellite-seed-hygiene.md).
 
 ---
 
@@ -710,21 +715,25 @@ bash docker/scripts/migrate-all.sh
 
 ### Local dev
 
+Set a real `ERA_BANK_ORGANIZATION_ID` after orch bind (never `demo-bank-org-001`). Compose defaults `BANK_*_RUN_SEED=false`.
+
 ```bash
-# Engine
+# Engine — GL/product factory (requires org). Demo customers: npm run db:seed:demo
 cd era-bank-core && cp .env.example .env && npm install
 npm run db:migrate:deploy && npm run db:seed && npm run dev
 
-# Ops satellite
+# Ops satellite — role templates. Demo tellers: npm run db:seed:demo
 cd era-bank && cp .env.example .env && npm install
 npx prisma db push && npm run db:seed && npm run dev
 
-# DBO channel
+# DBO channel — boot seed is no-op. Lab Open API key: npm run db:seed:demo
 cd era-bank-dbo && cp .env.example .env && npm install
 npx prisma db push && npm run db:seed && npm run dev
 ```
 
-UAT: [era-bank-core/doc/UAT-SMOKE-FULL.md](../era-bank-core/doc/UAT-SMOKE-FULL.md) · Ops teller walkthrough: [era-bank/doc/UAT-SMOKE.md](../era-bank/doc/UAT-SMOKE.md) · Card stub: `node tools/card-acquiring-stub.mjs`
+**Droplet:** before recreating bank services after this wave, ensure `ENV_FILE` has `BANK_CORE_RUN_SEED=false`, `BANK_RUN_SEED=false`, `BANK_DBO_RUN_SEED=false`. Do not force-recreate postgres.
+
+UAT: [era-bank-core/doc/UAT-SMOKE-FULL.md](../era-bank-core/doc/UAT-SMOKE-FULL.md) · Ops teller walkthrough: [era-bank/doc/UAT-SMOKE.md](../era-bank/doc/UAT-SMOKE.md) · Card stub: `node tools/card-acquiring-stub.mjs` · Seed law: [`docs/adr/satellite-seed-hygiene.md`](./adr/satellite-seed-hygiene.md)
 
 On-prem reference data (no live data-hub): set `ERA_DATA_HUB_ONPREM=true` in `era-bank-core/.env`, validate bundle with `npm run ref-data:load`. Hardening tools: `node era-bank-core/tools/load/posting-benchmark.mjs`, `node era-bank-core/tools/audit/replay-day.mjs <date>`.
 

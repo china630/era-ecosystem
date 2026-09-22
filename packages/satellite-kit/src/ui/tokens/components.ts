@@ -142,7 +142,8 @@ export const SIDEBAR_LINK_ACTIVE_CLASS =
 
 export const FORM_FIELD_GROUP_CLASS = "space-y-1.5";
 
-export const FORM_STACK_CLASS = "space-y-4";
+/** Public auth forms (login / register) — extra gap so submit is not flush to the last field. */
+export const FORM_STACK_CLASS = "space-y-5";
 
 export const LINK_ACCENT_CLASS =
   "text-[13px] font-medium text-[#2980B9] hover:text-[#2471A3] hover:underline";

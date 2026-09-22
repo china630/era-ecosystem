@@ -1,3 +1,4 @@
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -6,7 +7,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { listFrontCashJournal } from '@/lib/services/front-cash-transactions.service';
 
 function dayStart(iso: string) {
-  return new Date(`${iso}T00:00:00.000Z`);
+  return bakuCivilUtcDate(iso);
 }
 
 export async function GET(request: Request) {
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const url = new URL(request.url);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     const from = dayStart(url.searchParams.get('from') ?? today);
     const to = dayStart(url.searchParams.get('to') ?? today);
     const cashShiftId = url.searchParams.get('cashShiftId') ?? undefined;

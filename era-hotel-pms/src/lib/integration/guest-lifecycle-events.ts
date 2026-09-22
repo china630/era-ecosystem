@@ -14,12 +14,17 @@ import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-ga
 async function publishLifecycle(event: Record<string, unknown>) {
   const organizationId = requestOrganizationId();
   if (!organizationId || organizationId === "demo-org") return;
-  await publishToOrchestratorGateway({
+  const result = await publishToOrchestratorGateway({
     ...event,
     organizationId,
     correlationId: randomUUID(),
     occurredAt: new Date().toISOString(),
   });
+  if (!result.ok) {
+    throw new Error(
+      `lifecycle event publish failed status=${result.status ?? "n/a"} ${result.error ?? ""}`.trim(),
+    );
+  }
 }
 
 export function lifecycleDemographicsFromPax(pax: {

@@ -38,6 +38,7 @@ import {
   createControlPlanePaymentLink,
 } from "../integration/control-plane-notifications.client";
 import { MailService } from "../mail/mail.service";
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { createInvoicePaymentMirrorLine } from "../banking/banking-registry.helper";
 import { CashOrderService } from "../kassa/cash-order.service";
@@ -2044,7 +2045,7 @@ export class InvoicesService {
   }
 
   private async nextInvoiceNumber(organizationId: string): Promise<string> {
-    const year = new Date().getFullYear();
+    const year = bakuCalendarYear();
     const prefix = `INV-${year}-`;
     const count = await this.prisma.invoice.count({
       where: { organizationId, number: { startsWith: prefix } },

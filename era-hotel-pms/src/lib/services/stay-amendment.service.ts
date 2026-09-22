@@ -1,3 +1,5 @@
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
@@ -14,9 +16,7 @@ import {
 import { dispatchStayProductChanged } from '@/lib/integration/guest-lifecycle-events';
 
 function dateOnly(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  return bakuCivilUtcDate(hotelDateKey(d));
 }
 
 export async function previewStayAmendment(input: {

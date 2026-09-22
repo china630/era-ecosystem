@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 
@@ -8,7 +9,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const params = querySchema.parse({ from: url.searchParams.get("from") ?? undefined });
-    const from = params.from ?? new Date().toISOString().slice(0, 10);
+    const from = params.from ?? todayBakuYmd();
     const nextDay = await nextServiceAppointmentDay(from);
     return jsonOk({ from, nextWorkingDay: nextDay, source: "era-data-hub" });
   } catch (err) {

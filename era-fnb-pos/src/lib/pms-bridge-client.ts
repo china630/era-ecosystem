@@ -2,6 +2,8 @@
  * HTTP client for era-hotel-pms bridge (doc/openapi/fnb-pos-pms-bridge.yaml).
  */
 
+import { todayBakuYmd } from "@era/satellite-kit/time";
+
 export type RoomChargePayload = {
   reservationId?: string;
   roomNumber?: string;
@@ -142,7 +144,7 @@ export type ActiveBanquetEvent = {
 
 export async function listActiveBanquets(): Promise<ActiveBanquetEvent[]> {
   if (isPmsStubMode()) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     return [
       {
         id: "00000000-0000-4000-8000-beo000001",
@@ -166,7 +168,7 @@ export async function listActiveBanquets(): Promise<ActiveBanquetEvent[]> {
   const base = pmsBaseUrl();
   if (!base) return [];
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBakuYmd();
   const res = await fetch(
     `${base}/api/banquets?status=CONFIRMED&from=${today}&to=${today}`,
     { headers: bridgeHeaders(), cache: "no-store" },

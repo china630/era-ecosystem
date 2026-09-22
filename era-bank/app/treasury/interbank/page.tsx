@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsDataTable, OpsModalShell, useOpsModal } from "@/components/ops";
 import { OpsError, OpsResult, StatusBadge, formatAznMinor } from "@/components/ops-ui";
 
@@ -82,8 +83,8 @@ function InterbankPageInner() {
           principalMinor: form.get("principalMinor"),
           currency: "AZN",
           rateAnnual: Number(form.get("rateAnnual")),
-          startDate: new Date().toISOString(),
-          maturityDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+          startDate: todayBakuYmd(),
+          maturityDate: addBakuDays(todayBakuYmd(), 7),
           idempotencyKey: `ib-ui-${Date.now()}`,
         }),
       });

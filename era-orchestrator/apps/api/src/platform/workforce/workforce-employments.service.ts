@@ -6,6 +6,7 @@ import {
   forwardRef,
 } from "@nestjs/common";
 import { WORKFORCE_EMPLOYMENT_TRANSFERRED } from "@era/contracts";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
   RoleBindingStatus,
   WorkforceEmploymentStatus,
@@ -315,7 +316,7 @@ export class WorkforceEmploymentsService {
         actorUserId,
         employmentId: id,
         type: WorkforcePersonnelOrderType.TRANSFER,
-        effectiveDate: new Date().toISOString().slice(0, 10),
+        effectiveDate: todayBakuYmd(),
         note: `Transfer to ${dto.orgUnitId}/${dto.positionId}`,
       });
     } catch (err) {

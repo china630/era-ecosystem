@@ -97,11 +97,16 @@ export default function WorkforceExportImportPage() {
   const rosterInputRef = useRef<HTMLInputElement>(null);
   const absenceInputRef = useRef<HTMLInputElement>(null);
 
-  const now = new Date();
-  const month = now.getUTCMonth() + 1;
-  const year = now.getUTCFullYear();
-  const from = `${year}-${String(month).padStart(2, "0")}-01`;
-  const to = now.toISOString().slice(0, 10);
+  const iso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baku",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const year = Number(iso.slice(0, 4));
+  const month = Number(iso.slice(5, 7));
+  const from = `${iso.slice(0, 7)}-01`;
+  const to = iso;
 
   const rosterReady = rosterCsv.trim().length > 0 || Boolean(rosterXlsx);
   const absenceReady = absenceCsv.trim().length > 0 || Boolean(absenceXlsx);

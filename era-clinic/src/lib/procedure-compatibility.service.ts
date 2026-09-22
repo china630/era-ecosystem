@@ -1,5 +1,6 @@
 import type { ProcedureCompatibilityRuleType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { bakuDateKey } from '@/lib/baku-day';
 
 export type ScheduledProcedure = {
   procedureCode: string;
@@ -15,7 +16,7 @@ export type CompatibilityViolation = {
 };
 
 function sameDay(a: Date, b: Date): boolean {
-  return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
+  return bakuDateKey(a) === bakuDateKey(b);
 }
 
 function hoursBetween(a: Date, b: Date): number {

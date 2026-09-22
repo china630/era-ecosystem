@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
 
 type Disc = { id: string; roomId: string; kind: string; notes: string | null; status: string };
@@ -10,7 +11,7 @@ type Esc = { roomNumber: string; kind: string; days: number };
 export default function HkDiscrepancyPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => hotelDateKey());
   const [rows, setRows] = useState<Disc[]>([]);
   const [escalations, setEscalations] = useState<Esc[]>([]);
   const [roomId, setRoomId] = useState('');

@@ -170,25 +170,31 @@ Nightly CI: [`.github/workflows/design-regression.yml`](../.github/workflows/des
 
 Modal migration waves: [`FIELD_SYSTEM_MODAL_WAVES.md`](./FIELD_SYSTEM_MODAL_WAVES.md).
 
-## Public auth pages (`/login`)
+## Public auth pages (`/login`, `/register`)
 
-Use **`AuthLoginCard`** from `@era/satellite-kit/ui` on every satellite and match [DESIGN.md](../DESIGN.md):
+Use **`AuthLoginCard`** / **`AuthRegisterCard`** / **`AuthPublicShell`** from `@era/satellite-kit/ui`. Product name belongs in `document.title` (`meta.title`), **not** in the card H1. Non-password public entry (F&B `/pin`, DBO OTP/ASAN) uses the same shell and header slots; identity/PIN fields replace password, not the header.
 
-- Background `#EBEDF0`; card `CARD_CONTAINER_CLASS`
-- Title row: product title (left) + **`SatelliteLocaleToggle`** (right)
-- Single credential field: login / email / phone + password
-- Submit → `POST /api/auth/login`
-- Links (in order): need account → register on Orch → pricing on Orch → FAQ on Orch; user agreement → Orch `/terms`
-- URLs: `orchPublicHref("/register")`, `orchPublicHref("/pricing")`, etc. — import from **`@era/satellite-kit/ui`** only (not main kit barrel; avoids `node:fs` in client bundles)
+**Fixed slots** (do not insert copy between 1 and 3):
 
-Reference: `packages/satellite-kit/src/ui/auth-login-card.tsx`, Finance `apps/web/app/login/page.tsx`.
+1. H1 **Giriş / Вход / Sign in** left + **`SatelliteLocaleToggle`** right (`AuthPageHeader`)
+2. Identity field (staff: login / email / phone; platform/finance: email)
+3. Password
+4. ERA ID (`StaffLoginOrgNoField`) — staff SHARED only; placeholder 6 digits; **no hint paragraph**
+5. Primary submit
+6. Account / pricing / FAQ / terms links (`AuthLoginCard`; hide with `showAccountLinks={false}` on agency/buyer). Extra links (F&B PIN) go **after** that block via `extraLinks`, never between submit and “need account”.
+
+**Forbidden on auth screens:** product H1, subtitle, demo passwords, bootstrap/`tmp/` paths, SSO essays, Super-admin/Workforce/dedicated pool hints, prefilled demo credentials.
+
+Staff login reference: `era-clinic/app/login/page.tsx`. Do not regenerate pages with `tools/apply-auth-login-card.mjs` (middleware/schema only).
+
+URLs: `orchPublicHref("/register")` etc. from **`@era/satellite-kit/ui`** only (not the main kit barrel).
 
 ## Error display (auth + API)
 
 - Mount **`EraToastProvider`** or **`SatelliteAppProviders`** in app layout (Orch: `AppProviders` includes `EraToastProvider`).
-- On failed login/register/API calls: **`showApiError(body, fallbackKey)`** — toast **top-right** only.
+- On failed login/register/API calls: **`showApiError(body, fallbackKey)`** — toast **top-right** only (preferred). `AuthLoginCard` / `AuthRegisterCard` may show a one-shot error banner above the form; do not add permanent subtitle/hint copy.
 - Post-login navigation: **`assignNoStoreRedirect(url)`** from `@era/satellite-kit/ui` (not the main kit barrel).
-- Do **not** render inline `text-red-600` under auth form fields; `AuthLoginCard` / `AuthRegisterCard` ignore the deprecated `error` prop.
+- Do **not** use inline `text-red-600` under fields as the primary error UX.
 
 ## Scaffold tool
 

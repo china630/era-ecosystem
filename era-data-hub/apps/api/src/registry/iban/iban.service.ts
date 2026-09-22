@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 import { validateAzIban } from "./iban.util";
@@ -35,7 +36,7 @@ export class IbanService {
       }
     }
     return {
-      meta: registryMeta("iban", new Date().toISOString().slice(0, 10)),
+      meta: registryMeta("iban", todayBakuYmd()),
       iban: local.normalized,
       isValid: local.isValid,
       reason: local.reason,

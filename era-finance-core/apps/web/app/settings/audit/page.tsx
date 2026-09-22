@@ -27,6 +27,7 @@ import {
   DEFAULT_LIST_PAGE_SIZE,
 } from "../../../components/list-pagination-footer";
 import { parsePaginatedList } from "../../../lib/paginated-list";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type AuditRow = {
   id: string;
@@ -249,7 +250,7 @@ export default function AuditSettingsPage() {
             {rows.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-[#34495E]`}>
-                  {new Date(r.createdAt).toLocaleString()}
+                  {bakuDateTimeDisplay(r.createdAt)}
                 </td>
                 <td className={`${DATA_TABLE_TD_CLASS} max-w-[180px] truncate`} title={r.user?.email ?? r.userId ?? ""}>
                   {r.user

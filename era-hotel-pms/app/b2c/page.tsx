@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { hotelDateKey } from '@/lib/hotel-calendar';
+
 type Offer = {
   ratePlanCode: string;
   ratePlanName?: string;
@@ -31,7 +33,7 @@ export default function B2cBookingPage() {
       return;
     }
     localStorage.setItem('era_ibe_pk', key.trim());
-    const from = new Date().toISOString().slice(0, 10);
+    const from = hotelDateKey();
     const res = await fetch(
       `/api/public/v1/availability?from=${from}&nights=2&adults=2`,
       { headers: { Authorization: `Bearer ${key.trim()}` } },

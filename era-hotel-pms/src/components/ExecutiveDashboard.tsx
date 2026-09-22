@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import ExecutiveCockpit, { type CockpitData } from '@/components/ExecutiveCockpit';
 
 export default function ExecutiveDashboard() {
   const t = useTranslations('executiveDashboard');
   const tc = useTranslations('common');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => hotelDateKey());
   const [data, setData] = useState<CockpitData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

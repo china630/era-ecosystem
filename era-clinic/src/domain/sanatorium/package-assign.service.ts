@@ -21,6 +21,7 @@ import {
   isSeedProcedureCode,
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
+import { parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -846,8 +847,7 @@ export async function assignPackageProcedures(
       : null;
 
   const orgId = requestOrganizationId();
-  const workStart = new Date();
-  workStart.setHours(8, 0, 0, 0);
+  const workStart = parseBakuDateTime(todayBakuYmd(), "08:00");
 
   const createdIds: string[] = [];
   let seq = 0;

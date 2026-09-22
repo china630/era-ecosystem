@@ -13,6 +13,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { bakuCivilUtcDate, todayBakuYmd } from "../billing/baku-billing.util";
 import { normalizeListPagination } from "../common/list-pagination";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { CreateContractDto } from "./dto/create-contract.dto";
@@ -29,11 +30,8 @@ export type ContractLimitCheckResult = {
   dateTo?: string | null;
 };
 
-function utcTodayDateOnly(): Date {
-  const n = new Date();
-  return new Date(
-    Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()),
-  );
+function todayBakuDateOnly(): Date {
+  return bakuCivilUtcDate(todayBakuYmd());
 }
 
 function toDateOnlyUtc(d: Date): Date {
@@ -218,7 +216,7 @@ export class ContractsService {
     }
 
     if (contract.dateTo) {
-      const today = utcTodayDateOnly();
+        const today = todayBakuDateOnly();
       const end = toDateOnlyUtc(contract.dateTo);
       if (today.getTime() > end.getTime()) {
         return {
@@ -344,7 +342,7 @@ export class ContractsService {
 
   /** Sets ACTIVE contracts with dateTo &lt; today (UTC) to EXPIRED. */
   async expireOverdueContracts(): Promise<{ updated: number }> {
-    const today = utcTodayDateOnly();
+        const today = todayBakuDateOnly();
     const candidates = await this.prisma.contract.findMany({
       where: {
         status: ContractStatus.ACTIVE,

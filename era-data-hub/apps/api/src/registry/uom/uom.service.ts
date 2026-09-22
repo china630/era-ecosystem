@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Injectable } from "@nestjs/common";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 
@@ -25,7 +26,7 @@ export class UomService {
       /* optional in container — copy in Dockerfile later */
     }
     return {
-      meta: registryMeta("units_of_measure", new Date().toISOString().slice(0, 10)),
+      meta: registryMeta("units_of_measure", todayBakuYmd()),
       units: rows,
       customsLawMapping: customsMapping,
     };

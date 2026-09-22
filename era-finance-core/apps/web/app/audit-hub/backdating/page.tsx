@@ -17,6 +17,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type BackdatingRow = {
   entityType: string;
@@ -123,7 +124,7 @@ export default function AuditHubBackdatingPage() {
                     <td className={`${DATA_TABLE_TD_CLASS} text-xs`}>{row.label}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-xs`}>{row.documentDate}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-xs`}>
-                      {row.createdAt?.replace("T", " ").slice(0, 19)}
+                      {row.createdAt ? bakuDateTimeDisplay(row.createdAt) : "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_RIGHT_CLASS} text-xs`}>{row.deltaDays}</td>
                   </tr>

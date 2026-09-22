@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { todayBakuYmd, parseBakuDateTime } from "@era/satellite-kit/time";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { prisma } from "@/lib/prisma";
@@ -23,9 +24,9 @@ export async function PATCH(
 
     let nextContactAt: Date;
     if (body.offsetBusinessDays != null) {
-      const from = body.fromDate?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+      const from = body.fromDate?.slice(0, 10) ?? todayBakuYmd();
       const dueIso = await crmNextContactDue(from, body.offsetBusinessDays);
-      nextContactAt = new Date(`${dueIso}T09:00:00.000Z`);
+      nextContactAt = parseBakuDateTime(dueIso, "09:00:00");
     } else if (body.nextContactAt) {
       nextContactAt = new Date(body.nextContactAt);
     } else {

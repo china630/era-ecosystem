@@ -21,6 +21,7 @@ import {
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
+import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 
 type Proc = {
   id: string;
@@ -35,19 +36,6 @@ type Proc = {
   patientRef: { id: string; fullName: string; refCode?: string };
   resource?: { id: string; code: string; name: string } | null;
 };
-
-function todayBakuYmd(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 const STATUS_OPTIONS = [
   "ACTIVE",
@@ -267,8 +255,7 @@ export default function NursePage() {
 
   /** Agenda: one procedure before now … end of clinic day. */
   const agenda = useMemo(() => {
-    const dayEnd = new Date();
-    dayEnd.setHours(dayEndHour, 0, 0, 0);
+    const dayEnd = parseBakuDateTime(date, `${String(dayEndHour).padStart(2, "0")}:00`);
     const eligible = [...orders]
       .filter((o) =>
         ["SCHEDULED", "CHECKED_IN", "COMPLETED"].includes(o.status),
@@ -288,13 +275,11 @@ export default function NursePage() {
       const start = new Date(o.scheduledAt).getTime();
       return start >= fromTs && start < dayEnd.getTime();
     });
-  }, [orders, nowTick, dayEndHour]);
+  }, [orders, nowTick, dayEndHour, date]);
 
   const dayProgress = useMemo(() => {
-    const start = new Date();
-    start.setHours(dayStartHour, 0, 0, 0);
-    const end = new Date();
-    end.setHours(dayEndHour, 0, 0, 0);
+    const start = parseBakuDateTime(date, `${String(dayStartHour).padStart(2, "0")}:00`);
+    const end = parseBakuDateTime(date, `${String(dayEndHour).padStart(2, "0")}:00`);
     const total = end.getTime() - start.getTime();
     if (total <= 0) return { pct: 0, label: t("dayClosed"), closed: true };
     if (nowTick < start.getTime()) {
@@ -313,7 +298,7 @@ export default function NursePage() {
       label: t("dayRemaining", { hours: h, minutes: m }),
       closed: false,
     };
-  }, [nowTick, dayStartHour, dayEndHour, t]);
+  }, [nowTick, dayStartHour, dayEndHour, date, t]);
 
   function renderOrderCard(o: Proc, opts?: { allowCheckIn?: boolean }) {
     const chip = STATUS_CHIP[o.status] ?? "bg-slate-100 text-slate-700";
@@ -344,9 +329,9 @@ export default function NursePage() {
             <span className={TEXT_MUTED_CLASS}> · {o.procedureCode}</span>
             <span className={TEXT_MUTED_CLASS}>
               {" "}
-              · {fmtTime(o.scheduledAt)}
+              · {bakuTimeLabel(o.scheduledAt)}
               {o.endsAt || o.effectiveEndsAt
-                ? `–${fmtTime(o.endsAt || o.effectiveEndsAt!)}`
+                ? `–${bakuTimeLabel(o.endsAt || o.effectiveEndsAt!)}`
                 : ""}
             </span>
             {o.resource ? (

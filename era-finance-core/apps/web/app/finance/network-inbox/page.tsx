@@ -20,6 +20,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 
 type InboxRow = {
   id: string;
@@ -241,7 +242,7 @@ export default function NetworkInboxPage() {
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                       {formatMoneyAzn(r.totalGross)} {r.currency}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.createdAt.slice(0, 10)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(r.createdAt)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {r.eqaimeStatus === "MATCH" ? (
                         <Badge variant="success">{r.eQaimeRef ?? "✓"}</Badge>

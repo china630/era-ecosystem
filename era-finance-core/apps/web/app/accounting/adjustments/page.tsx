@@ -37,6 +37,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { Button } from "../../../components/ui/button";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type Row = {
   id: string;
@@ -81,7 +82,7 @@ export default function ManualAdjustmentsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState<ManualAdjustmentPrefill | null>(null);
   const [reverseRow, setReverseRow] = useState<Row | null>(null);
-  const [reverseDate, setReverseDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [reverseDate, setReverseDate] = useState(() => todayBakuYmd());
   const [reverseReason, setReverseReason] = useState("");
   const [reverseBusy, setReverseBusy] = useState(false);
   const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
@@ -376,7 +377,7 @@ export default function ManualAdjustmentsPage() {
                             className={SECONDARY_BUTTON_CLASS}
                             onClick={() => {
                               setReverseRow(r);
-                              setReverseDate(new Date().toISOString().slice(0, 10));
+                              setReverseDate(todayBakuYmd());
                               setReverseReason("");
                             }}
                           >

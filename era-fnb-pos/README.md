@@ -16,8 +16,9 @@ ERA **Food & Beverage POS** satellite — floor, orders, KDS, reservations, fisc
 cp .env.example .env
 npm install
 npx prisma db push
-npx tsx prisma/seed.ts
-npm run dev   # http://localhost:3200
+npm run db:seed              # no-op (org-scoped)
+# Lab waiter/outlet: ERA_SATELLITE_ORGANIZATION_ID=<uuid> npm run db:seed:demo
+npm run dev   # http://localhost:3202
 ```
 
 Point `PMS_BRIDGE_URL` at running `era-hotel-pms` and match `POS_BRIDGE_SECRET`.

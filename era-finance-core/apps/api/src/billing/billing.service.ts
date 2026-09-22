@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, TariffTier } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
+import { billingPeriodKeyBaku, bakuMonthBounds } from "./baku-billing.util";
 
 @Injectable()
 export class BillingService {
@@ -84,7 +85,9 @@ export class BillingService {
 
     const now = new Date();
     const periodEnd =
-      sub.expiresAt && sub.expiresAt.getTime() > now.getTime() ? sub.expiresAt : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+      sub.expiresAt && sub.expiresAt.getTime() > now.getTime()
+        ? sub.expiresAt
+        : bakuMonthBounds(billingPeriodKeyBaku(now)).to;
     const periodStart = new Date(periodEnd.getTime());
     periodStart.setUTCMonth(periodStart.getUTCMonth() - 1);
 

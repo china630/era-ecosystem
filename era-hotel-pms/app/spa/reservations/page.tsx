@@ -10,6 +10,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 
 type Row = {
@@ -79,7 +80,7 @@ export default function SpaReservationsPage() {
         columns={[
           { key: 'guest', header: tc('guest'), render: (r) => r.reservation.guest.fullName },
           { key: 'service', header: 'Service', render: (r) => r.service.name },
-          { key: 'start', header: 'Start', render: (r) => r.startAt.slice(0, 16) },
+          { key: 'start', header: 'Start', render: (r) => bakuDateTimeDisplay(r.startAt) },
           { key: 'place', header: 'Place', render: (r) => r.placeCode ?? '—' },
         ]}
         rows={filtered}

@@ -3,6 +3,7 @@ import { jsonOk, jsonError, handleRouteError, getRouteSession, requireClinicPerm
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { verifyGuestQrToken } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const schema = z.object({
   token: z.string().min(8),
@@ -21,10 +22,8 @@ export async function POST(req: Request) {
       return jsonError("Invalid or expired guest QR token", 400);
     }
 
-    const day = body.date ? new Date(`${body.date}T00:00:00`) : new Date();
-    day.setHours(0, 0, 0, 0);
-    const next = new Date(day);
-    next.setDate(next.getDate() + 1);
+    const dayYmd = body.date?.trim() || todayBakuYmd();
+    const { start: day, end: next } = bakuDayBounds(dayYmd);
 
     const patient = await prisma.patientRef.findFirst({
       where: { globalPersonId: payload.globalPersonId },

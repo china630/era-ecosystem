@@ -37,23 +37,35 @@ def psql(db: str, sql: str) -> str:
     )
 
 
-def stamp_url(db: str) -> str:
-    return psql(
-        db,
-        """
-UPDATE "_era_runtime_config"
-SET "configJson" = jsonb_set(
-  COALESCE("configJson"::jsonb, '{}'::jsonb),
-  '{orchestratorEventUrl}',
-  '"http://orchestrator:4000"'::jsonb,
-  true
-)::text,
-"updatedAt" = NOW(),
-"updatedBy" = 'droplet-replay-checkin'
-WHERE id = 1;
-SELECT COALESCE("configJson"::jsonb->>'orchestratorEventUrl', 'MISSING');
-""",
+def stamp_runtime(db: str, token: str, vendor_bridges: bool | None) -> str:
+    token_sql = token.replace("\\", "\\\\").replace("'", "''")
+    j = (
+        "jsonb_set("
+        "jsonb_set("
+        "COALESCE(\"configJson\"::jsonb, '{}'::jsonb), "
+        "'{orchestratorEventUrl}', "
+        "'\"http://orchestrator:4000\"'::jsonb, true), "
+        "'{satelliteEventServiceToken}', "
+        f"to_jsonb('{token_sql}'::text), true)"
     )
+    if vendor_bridges is True:
+        j = f"jsonb_set({j}, '{{vendorBridgesEnabled}}', 'true'::jsonb, true)"
+    elif vendor_bridges is False:
+        j = f"jsonb_set({j}, '{{vendorBridgesEnabled}}', 'false'::jsonb, true)"
+    sql = f"""
+UPDATE "_era_runtime_config"
+SET "configJson" = ({j})::text,
+    "updatedAt" = NOW(),
+    "updatedBy" = 'droplet-replay-checkin'
+WHERE id = 1;
+SELECT
+  CASE WHEN length(COALESCE("configJson"::jsonb->>'satelliteEventServiceToken','')) >= 8
+       THEN 'token_set' ELSE 'token_missing' END
+  || ' url=' || COALESCE("configJson"::jsonb->>'orchestratorEventUrl', 'MISSING')
+  || ' vendor=' || COALESCE("configJson"::jsonb->>'vendorBridgesEnabled', 'null')
+FROM "_era_runtime_config" WHERE id = 1;
+"""
+    return psql(db, sql)
 
 
 def orch_post(path: str, token: str, body: dict) -> str:
@@ -84,26 +96,46 @@ def orch_post(path: str, token: str, body: dict) -> str:
 
 
 def main() -> None:
-    print("== stamp orchestratorEventUrl")
-    print("hotel", stamp_url("era_hotel_pms"))
-    print("clinic", stamp_url("era_clinic"))
+    token = run(["docker", "exec", "era-hotel-pms", "printenv", "SATELLITE_EVENT_SERVICE_TOKEN"])
+    if not token:
+        raise SystemExit("SATELLITE_EVENT_SERVICE_TOKEN empty")
+    ew = run(["docker", "exec", "era-hotel-pms", "printenv", "ELEKTRAWEB_BRIDGE_ENABLED"])
+    vendor = True if ew.strip() in ("1", "true") else None
+
+    print("== stamp orchestratorEventUrl + event token (value not logged)")
+    print("hotel", stamp_runtime("era_hotel_pms", token, vendor))
+    print("clinic", stamp_runtime("era_clinic", token, None))
 
     ep = psql(
         "era_orchestrator",
         """SELECT satellite_key || ' ' || base_url
            FROM satellite_endpoints
            WHERE satellite_key = 'industry_clinic' AND enabled IS TRUE;""",
-    )
+    ) or ""
     print("clinic endpoint:", ep or "(none)")
     if "127.0.0.1" in ep or "localhost" in ep:
-        print("rewrite clinic SatelliteEndpoint → http://era-clinic:3203")
+        print("rewrite clinic SatelliteEndpoint loopback → http://clinic:3203")
         psql(
             "era_orchestrator",
             """UPDATE satellite_endpoints
-               SET base_url = 'http://era-clinic:3203', updated_at = NOW()
+               SET base_url = 'http://clinic:3203', updated_at = NOW()
                WHERE satellite_key = 'industry_clinic'
                  AND (base_url ILIKE '%127.0.0.1%' OR base_url ILIKE '%localhost%');""",
         )
+
+    print("== drop stale satellite file cache (must not clobber DB on boot)")
+    for c in ("era-hotel-pms", "era-clinic"):
+        run(
+            [
+                "docker",
+                "exec",
+                c,
+                "sh",
+                "-lc",
+                "rm -f /app/.data/runtime-config.json; true",
+            ]
+        )
+        print(c, "runtime-config.json removed")
 
     print("== restart orch, hotel, clinic")
     run(["docker", "restart", "era-orchestrator"])
@@ -111,9 +143,6 @@ def main() -> None:
     run(["docker", "restart", "era-hotel-pms", "era-clinic"])
     time.sleep(10)
 
-    token = run(["docker", "exec", "era-hotel-pms", "printenv", "SATELLITE_EVENT_SERVICE_TOKEN"])
-    if not token:
-        raise SystemExit("SATELLITE_EVENT_SERVICE_TOKEN empty")
     org = psql(
         "era_hotel_pms",
         'SELECT "organizationId" FROM "_era_organization_bind" WHERE id = 1;',

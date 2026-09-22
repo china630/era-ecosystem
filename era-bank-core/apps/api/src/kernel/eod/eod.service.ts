@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { EodStatus, HoldReason } from "@era/bank-core-database";
+import { bakuDayBounds } from "@era/satellite-kit/time";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
@@ -107,13 +108,14 @@ export class EodService {
       },
       data: { status: "RELEASED" },
     });
+    const cardDay = bakuDayBounds(businessDate.toISOString().slice(0, 10));
     const cardSettlementCount = await this.prisma.cardTransaction.count({
       where: {
         bankOrgId: this.bankOrg.bankOrgId,
         status: "SETTLED",
         capturedAt: {
-          gte: new Date(businessDate.toISOString().slice(0, 10)),
-          lt: new Date(new Date(businessDate).getTime() + 86400000),
+          gte: cardDay.start,
+          lt: cardDay.end,
         },
       },
     });

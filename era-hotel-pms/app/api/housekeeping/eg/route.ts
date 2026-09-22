@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = (await request.json()) as { date?: string; burn?: boolean };
-    const date = body.date ?? new Date().toISOString().slice(0, 10);
+    const date = body.date ?? todayBakuYmd();
     if (body.burn) return jsonOk(serialize(await burnEgBalances(date)));
     return jsonOk(serialize(await accrueEgForDate(date)));
   } catch (err) {

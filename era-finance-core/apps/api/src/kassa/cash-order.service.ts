@@ -36,6 +36,11 @@ import { ApprovalsService } from "../approvals/approvals.service";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
 import { AdvanceReportService } from "./advance-report.service";
 import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
+import {
+  bakuDateKey,
+  bakuYearStartYmd,
+  todayBakuYmd,
+} from "@era/satellite-kit/time";
 
 type Tx = Prisma.TransactionClient;
 
@@ -161,8 +166,8 @@ export class CashOrderService {
     organizationId: string,
     ledgerType: LedgerType,
   ): Promise<Record<string, string>> {
-    const today = new Date().toISOString().slice(0, 10);
-    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
+    const today = todayBakuYmd();
+    const yearStart = bakuYearStartYmd();
     const tb = await this.reporting.trialBalance(
       organizationId,
       yearStart,
@@ -450,8 +455,8 @@ export class CashOrderService {
     },
   ): Promise<void> {
     if (params.kind !== CashOrderKind.KXO) return;
-    const orderDay = params.date.toISOString().slice(0, 10);
-    const todayDay = new Date().toISOString().slice(0, 10);
+    const orderDay = bakuDateKey(params.date);
+    const todayDay = todayBakuYmd();
     if (orderDay >= todayDay) return;
 
     const daysSpan = utcDayIteratorInclusive(orderDay, todayDay).length;
@@ -476,7 +481,7 @@ export class CashOrderService {
 
     const byDay = new Map<string, Decimal>();
     for (const e of entries) {
-      const key = e.transaction.date.toISOString().slice(0, 10);
+      const key = bakuDateKey(e.transaction.date);
       const net = d(e.debit).sub(d(e.credit));
       byDay.set(key, (byDay.get(key) ?? new Decimal(0)).add(net));
     }
@@ -793,8 +798,8 @@ export class CashOrderService {
       organizationId,
       "ACCOUNTABLE_PERSONS",
     );
-    const today = new Date().toISOString().slice(0, 10);
-    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
+    const today = todayBakuYmd();
+    const yearStart = bakuYearStartYmd();
     const tb = await this.reporting.trialBalance(
       organizationId,
       yearStart,

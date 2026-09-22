@@ -97,12 +97,15 @@ Everything else comes from orchestrator → satellite **runtime-config** Sync pa
 | `publicBaseUrl` | Public orch / launcher base |
 | `platformSuperAdminEmails` | PSA list |
 | `ssoSharedSecret` | SSO HMAC material |
-| `satelliteEventServiceToken` | Event / internal Bearer |
+| `satelliteEventServiceToken` | Event / internal Bearer (**omit** compose folklore / `change-me…`) |
+| `vendorBridgesEnabled` | Process-wide Elektraweb (and later vendor) kill — not a per-org Nafta id |
 | `activeModules` / `hotelModules` | Entitlement cache |
 | `deploymentTopology` | SHARED \| DEDICATED \| ONPREM (**informational** — never skip tenant filter) |
 | `edition` | Subscription / plan label string |
 
-Resolution order (target): memory → DB `_era_runtime_config` → file cache → env override.
+Resolution order (boot): file cache first, then `_era_runtime_config` **wins** so a stale `.data/runtime-config.json` cannot resurrect folklore tokens or Traefik event URLs. Live readers: memory → env override. Non-folklore **install** `SATELLITE_EVENT_SERVICE_TOKEN` beats a stale Sync placeholder. In-cluster `orchestratorEventUrl` must be docker DNS (`ERA_ORCHESTRATOR_INTERNAL_URL`), never the public launcher URL.
+
+**Satellite pull (Waves 6–7):** after local hydrate, industry/finance call `GET /v1/internal/satellites/desired-state` (same payload as Sync, folklore omitted). Default on in Docker (`ERA_IN_DOCKER=1`); interval reconcile via `ERA_DESIRED_STATE_POLL_MS` (default 60s). Push Sync remains. This is **not** PlacementJob / host compose apply — [satellite-organization-bind.md](./satellite-organization-bind.md) §8.
 
 **Finance SSO lesson (Nafta):** drifted compose tokens / PII keys / HMAC versions. Same class of bug on every satellite — desired state is the fix. Finance Nest clients re-resolve orch URL per call (Wave 5) so Sync updates apply without process restart.
 
