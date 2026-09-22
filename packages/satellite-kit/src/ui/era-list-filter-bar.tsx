@@ -38,7 +38,7 @@ export function EraListFilterBar({
 
   return (
     <div
-      className={[CARD_CONTAINER_CLASS, "mb-0 p-2.5", className].filter(Boolean).join(" ")}
+      className={[CARD_CONTAINER_CLASS, "mb-4 p-2.5", className].filter(Boolean).join(" ")}
     >
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
         {children}

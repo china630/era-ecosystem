@@ -36,6 +36,7 @@ import {
 } from '@/components/channel/types';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 export default function ChannelPage() {
   const { can } = useAuth();
@@ -52,10 +53,8 @@ export default function ChannelPage() {
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
   const [channels, setChannels] = useState<ChannelMappingRow[]>([]);
   const [q, setQ] = useState('');
-  const [availFrom, setAvailFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [availTo, setAvailTo] = useState(
-    new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-  );
+  const [availFrom, setAvailFrom] = useState(hotelDateKey());
+  const [availTo, setAvailTo] = useState(addHotelDays(hotelDateKey(), 7));
   const [otaRef, setOtaRef] = useState('');
   const [errorText, setErrorText] = useState('');
   const [stopDate, setStopDate] = useState('');

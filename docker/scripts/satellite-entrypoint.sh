@@ -12,7 +12,11 @@ if [ "${SKIP_PRISMA_MIGRATE:-0}" != "1" ] && [ -f prisma/schema.prisma ]; then
     fi
   fi
   if [ "$RUN_SEED" = "true" ]; then
-    npm run db:seed 2>/dev/null || npm run db:seed:vnext 2>/dev/null || true
+    # Default false on droplet (CLINIC_*/BANK_*/HOTEL_*_RUN_SEED).
+    # db:seed = satellite/reference only (never db:seed:demo / wipe / demo-org).
+    # ADR: docs/adr/satellite-seed-hygiene.md · clinic-catalog-template-overlay.md
+    echo "[entrypoint] RUN_SEED=true → npm run db:seed"
+    npm run db:seed || echo "[entrypoint] WARN: db:seed failed" >&2
   fi
 fi
 

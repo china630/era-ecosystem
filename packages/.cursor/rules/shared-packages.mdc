@@ -22,6 +22,8 @@ Cross-satellite **auth** (SSO exchange, session, login-user), **operating mode**
 
 Put here: behavior needed by **2+ satellites** or orchestrator integration. Do not duplicate in each app's `src/lib`.
 
+**Time / Asia/Baku:** `packages/satellite-kit/src/time/baku.ts` via subpath `@era/satellite-kit/time` (not the main barrel; do not import time through `@era/satellite-kit/ui`). ADR: `docs/adr/asia-baku-clock.md`. New “today”, day bounds, and wall-clock labels go here — do not copy `BAKU_TZ` helpers per app. Lint lock: `npm run lint:baku-clock`.
+
 Workforce MDM helpers (Plan D): `packages/satellite-kit/src/integration/workforce-person.client.ts` — `linkWorkforcePersonIdentity`, `fetchWorkforcePersonOpsBatch`, `buildWorkforceDisplayRow`.
 
 ## `packages/era-fiscal`

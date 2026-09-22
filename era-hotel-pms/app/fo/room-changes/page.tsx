@@ -10,6 +10,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -107,7 +108,7 @@ export default function RoomChangesPage() {
           {
             key: 'when',
             header: t('effective'),
-            render: (r) => r.effectiveAt.slice(0, 16).replace('T', ' '),
+            render: (r) => bakuDateTimeDisplay(r.effectiveAt),
           },
           { key: 'reason', header: t('reason'), render: (r) => r.reasonCode ?? r.notes ?? '—' },
           { key: 'status', header: t('status') },

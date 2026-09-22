@@ -1,5 +1,6 @@
 "use client";
 
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -30,10 +31,6 @@ type BalanceSheetPayload = {
   cached?: boolean;
 };
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function fmt(v: unknown): string {
   return formatMoneyAzn(v).replace("₼", "").trim();
 }
@@ -42,7 +39,7 @@ export default function BalanceSheetPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
-  const [asOf, setAsOf] = useState(() => todayUtc());
+  const [asOf, setAsOf] = useState(() => todayBakuYmd());
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [data, setData] = useState<BalanceSheetPayload | null>(null);

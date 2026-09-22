@@ -1,4 +1,9 @@
-import { createSatelliteTenantExtension, hashPassword } from "@era/satellite-kit";
+/**
+ * Bank ops satellite — system role templates only (insert/update permissions carefully).
+ * Demo teller/manager users: npm run db:seed:demo
+ * Requires ERA_BANK_ORGANIZATION_ID or ERA_SATELLITE_ORGANIZATION_ID (no demo-org).
+ */
+import { createSatelliteTenantExtension } from "@era/satellite-kit";
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
   permissionsForRole,
@@ -11,12 +16,18 @@ const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
 ) as unknown as PrismaClient;
 
-const DEMO_BRANCH_ID = "demo-branch-hq";
-const DEMO_PASSWORD = "demo1234";
-const ORG_ID =
-  process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
-  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-  "demo-org";
+function requireBankOrgId(): string {
+  const id =
+    process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    "";
+  if (!id || id === "demo-org" || id === "demo-bank-org-001") {
+    throw new Error(
+      "ERA_BANK_ORGANIZATION_ID required for bank seed; demo-org / demo-bank-org-001 are forbidden",
+    );
+  }
+  return id;
+}
 
 const roles = [
   {
@@ -46,41 +57,11 @@ const roles = [
   },
 ] as const;
 
-const users = [
-  {
-    username: "teller-a",
-    fullName: "Aysel Mammadova (Teller)",
-    roleCode: "TELLER",
-  },
-  {
-    username: "manager-b",
-    fullName: "Rashad Aliyev (Branch manager)",
-    roleCode: "BRANCH_MANAGER",
-  },
-  {
-    username: "compliance",
-    fullName: "Leyla Hasanova (Compliance)",
-    roleCode: "AML_OFFICER",
-  },
-  {
-    username: "cards-officer",
-    fullName: "Orxan Quliyev (Cards)",
-    roleCode: "CARDS_OFFICER",
-  },
-  {
-    username: "treasury",
-    fullName: "Nigar Suleymanova (Treasury)",
-    roleCode: "TREASURY_OFFICER",
-  },
-] as const;
-
-async function main() {
-  const passwordHash = await hashPassword(DEMO_PASSWORD);
-
+async function seedRoles(organizationId: string) {
   for (const role of roles) {
     const existing = await prisma.opsRole.findUnique({
       where: {
-        organizationId_code: { organizationId: ORG_ID, code: role.code },
+        organizationId_code: { organizationId, code: role.code },
       },
     });
     const templateJson = serializePermissions(permissionsForRole(role.code));
@@ -89,7 +70,7 @@ async function main() {
     if (!existing) {
       await prisma.opsRole.create({
         data: {
-          organizationId: ORG_ID,
+          organizationId,
           code: role.code,
           name: role.name,
           limitsJson: limits,
@@ -122,40 +103,14 @@ async function main() {
       },
     });
   }
+}
 
-  for (const user of users) {
-    const role = await prisma.opsRole.findUniqueOrThrow({
-      where: {
-        organizationId_code: { organizationId: ORG_ID, code: user.roleCode },
-      },
-    });
-    await prisma.opsUser.upsert({
-      where: {
-        organizationId_username: {
-          organizationId: ORG_ID,
-          username: user.username,
-        },
-      },
-      update: {
-        fullName: user.fullName,
-        passwordHash,
-        branchId: DEMO_BRANCH_ID,
-        opsRoleId: role.id,
-        status: "ACTIVE",
-      },
-      create: {
-        organizationId: ORG_ID,
-        username: user.username,
-        fullName: user.fullName,
-        passwordHash,
-        branchId: DEMO_BRANCH_ID,
-        opsRoleId: role.id,
-        status: "ACTIVE",
-      },
-    });
-  }
-
-  console.log(`Seeded bank ops roles/users for org ${ORG_ID}`);
+async function main() {
+  const organizationId = requireBankOrgId();
+  process.env.ERA_BANK_ORGANIZATION_ID = organizationId;
+  process.env.ERA_SATELLITE_ORGANIZATION_ID = organizationId;
+  await seedRoles(organizationId);
+  console.log(`Seeded bank ops roles for org ${organizationId}`);
 }
 
 main()

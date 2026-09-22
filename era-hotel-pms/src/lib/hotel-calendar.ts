@@ -5,20 +5,15 @@
  * Stored as UTC instants (14:00 Baku = 10:00Z, 12:00 Baku = 08:00Z).
  */
 
-export const HOTEL_TIME_ZONE = 'Asia/Baku';
+import { ERA_TIME_ZONE, bakuDateKey } from '@era/satellite-kit/time';
+
+export const HOTEL_TIME_ZONE = ERA_TIME_ZONE;
 export const CHECK_IN_HOUR_BAKU = 14;
 export const CHECK_OUT_HOUR_BAKU = 12;
 
 /** YYYY-MM-DD in the hotel property timezone. */
 export function hotelDateKey(isoOrDate: string | Date = new Date()): string {
-  if (typeof isoOrDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(isoOrDate)) {
-    return isoOrDate;
-  }
-  const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
-  if (Number.isNaN(d.getTime())) {
-    return String(isoOrDate).slice(0, 10);
-  }
-  return new Intl.DateTimeFormat('en-CA', { timeZone: HOTEL_TIME_ZONE }).format(d);
+  return bakuDateKey(isoOrDate);
 }
 
 /** Grid / stay anchor at hotel noon (12:00 Baku = 08:00 UTC). */

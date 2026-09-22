@@ -23,6 +23,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { endOfUtcDay, parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { TreasuryService } from "../treasury/treasury.service";
+import { bakuYearStartYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { parseBankStatementCsv } from "./csv/bank-csv.parser";
 import type { CreateBankConversionDto } from "./dto/create-bank-conversion.dto";
 import type { CreateCashDepositDto } from "./dto/create-cash-deposit.dto";
@@ -138,8 +139,8 @@ export class BankingService {
     accountingBookId?: string,
   ) {
     const kind = await this.posting.getOrganizationKind(organizationId);
-    const today = new Date().toISOString().slice(0, 10);
-    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
+    const today = todayBakuYmd();
+    const yearStart = bakuYearStartYmd();
     const tb = await this.reporting.trialBalance(
       organizationId,
       yearStart,

@@ -18,6 +18,7 @@ import { EmptySelectOption } from "../../lib/empty-select-option";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { LINK_ACCENT_CLASS } from "../../lib/design-system";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type WarehouseRow = { id: string; name: string; inventoryAccountCode?: string };
 
@@ -110,10 +111,7 @@ export function InventoryAuditCreateFlow({
     void load();
   }, [load, ready, token]);
 
-  const dateStr = useMemo(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  }, []);
+  const dateStr = useMemo(() => todayBakuYmd(), []);
 
   async function createDraft() {
     if (!token || creating) return;

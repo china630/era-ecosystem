@@ -18,7 +18,7 @@
 
 
 
-Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`, `npm run dev`.
+Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed` (reference) or `npm run db:seed:demo` (FO wipe lab), `npm run dev`.
 
 ## Logins (seed)
 
@@ -35,6 +35,7 @@ Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API call
 1. Open `/login`, sign in as `reception` / `reception123`.
 2. **SHARED pool:** enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). DEDICATED appliance may omit the field.
 3. Confirm Chessboard loads; AppNav shows allowed links only.
+4. **Clock (Asia/Baku):** FO availability / reservation-times / front-cash / HK date defaults and night-audit “today” use **Asia/Baku** civil day (`hotelDateKey` / `todayBakuYmd`), not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the default date is already the new Baku day when Node `TZ=UTC`. **UI labels:** front-cash transactions / folio-journal / agency-ledger timestamps use `bakuDateTimeDisplay` (browser TZ ignored).
 
 ## 1b. Room type availability (FO chain)
 
@@ -329,7 +330,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 ## 23. Nafta P2 — H-BL backlog (2026-06-14)
 
 1. **BAR pricing:** run `npx tsx prisma/scripts/seed-bar-from-legacy.ts` → `/admin/bar-calendar` shows rates → booking recalc matches BAR cell total.
-2. **Night audit:** NA posts room charge from daily rate / BAR (not flat `pricePerNight`); `/operations` shows business date vs wall clock.
+2. **Night audit:** NA posts room charge from daily rate / BAR (not flat `pricePerNight`); `/operations` shows business date vs wall clock (**both Asia/Baku** — wall clock is not UTC host day; after 00:00–04:00 Baku the civil day rolls with Baku, not UTC).
 3. **Credit limit:** set `HotelProfile.defaultCreditLimitAzn=500` → fb-pos room-charge over limit returns `CREDIT_LIMIT`.
 4. **Meal gate:** BB guest zero-post ticket → 201; RO guest zero-post → 403 `MEAL_NOT_INCLUDED`.
 5. **Deposits:** `POST /api/reservations/{id}/deposits` HELD → check-in applies payment to folio.
@@ -450,7 +451,7 @@ UI paths (OpsUI) — required before Status=SHIPPED. Queue APIs are API-only (no
 
 1. **Share checkbox:** reservation card → Assignment → enable **Shared twin (share)** (not near guest count) → gender Select **M or F** required → save. Ungendered guest: share refused / exclusive only.
 2. **T2 reject:** confirm male share stay when type quota full for female pool on overlapping dates → second booking rejected; first keeps slot.
-3. **Same door (N beds):** assign same-gender share singles up to `maxBed` → N lanes on room plan; badge `♂ n/N` or `♀ n/N`. Opposite gender on door → reject. **Vacated bed reuse:** guest A to the 10th on bed 1 + guest B to the 5th on bed 2 → new share from the 6th must land on **bed 2** (lower lane), not overlay A on the top lane. Demo seed: room **105** (`105 share A/B/C` notes) after `npm run db:seed`.
+3. **Same door (N beds):** assign same-gender share singles up to `maxBed` → N lanes on room plan; badge `♂ n/N` or `♀ n/N`. Opposite gender on door → reject. **Vacated bed reuse:** guest A to the 10th on bed 1 + guest B to the 5th on bed 2 → new share from the 6th must land on **bed 2** (lower lane), not overlay A on the top lane. Demo seed: room **105** (`105 share A/B/C` notes) after `npm run db:seed:demo`.
 4. **Rack / arrivals assign:** first guest IN_HOUSE on OCCUPIED door → second same-gender share assignable from rack/chessboard (not only CLEAN).
 5. **Check-in second:** second share check-in on OCCUPIED succeeds.
 6. **Partial checkout / cancel:** first share leaves while roommate remains → door OCCUPIED (bed-HK note allowed, not full DIRTY); last-out → DIRTY + HK task.

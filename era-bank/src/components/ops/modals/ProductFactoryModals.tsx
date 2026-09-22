@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CatalogField, Field, showApiError } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { OpsError } from "@/components/ops-ui";
 import {
@@ -82,7 +83,7 @@ export function ProductFactoryModal({
   const [currency, setCurrency] = useState("AZN");
   const [name, setName] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState(
-    () => new Date().toISOString().slice(0, 10),
+    () => todayBakuYmd(),
   );
   const [termMonths, setTermMonths] = useState("12");
   const [ratePct, setRatePct] = useState("12");
@@ -131,7 +132,7 @@ export function ProductFactoryModal({
       setEffectiveFrom(
         initial.effectiveFrom
           ? String(initial.effectiveFrom).slice(0, 10)
-          : new Date().toISOString().slice(0, 10),
+          : todayBakuYmd(),
       );
       const p = initial.paramsJson ?? {};
       setTermMonths(String(p.termMonths ?? 12));
@@ -176,7 +177,7 @@ export function ProductFactoryModal({
       setKind("TERM_DEPOSIT");
       setCurrency("AZN");
       setName("");
-      setEffectiveFrom(new Date().toISOString().slice(0, 10));
+      setEffectiveFrom(todayBakuYmd());
       setTermMonths("12");
       setRatePct("12");
       setTermMin("");

@@ -12,7 +12,8 @@ if [ -f prisma/schema.prisma ]; then
     npx prisma db push 2>/dev/null || true
   fi
   if [ "$RUN_SEED" = "true" ]; then
-    npm run db:seed 2>/dev/null || npm run db:seed:vnext 2>/dev/null || true
+    echo "[entrypoint] RUN_SEED=true → npm run db:seed (satellite templates; not db:seed:vnext)"
+    npm run db:seed || echo "[entrypoint] WARN: db:seed failed" >&2
   fi
 fi
 

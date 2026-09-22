@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
@@ -334,7 +335,7 @@ export default function EmployeesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `active-list-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.download = `active-list-${todayBakuYmd()}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   }

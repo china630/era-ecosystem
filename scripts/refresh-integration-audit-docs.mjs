@@ -11,9 +11,10 @@ import { join, dirname } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { resolve } from "path";
 import { runAllAudits } from "./run-integration-audits.mjs";
+import { todayBakuYmd } from "./lib/today-baku-ymd.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = todayBakuYmd();
 
 const DOC_TARGETS = [
   {

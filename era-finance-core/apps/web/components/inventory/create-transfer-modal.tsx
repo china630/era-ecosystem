@@ -18,6 +18,7 @@ import { ProductCombobox, type ProductRow } from "../ui/product-combobox";
 import { Button } from "../ui/button";
 import { NumericAmountInput } from "../ui/numeric-amount-input";
 import { InventoryModalShell } from "./modals/modal-shell";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type Warehouse = { id: string; name: string };
 
@@ -53,11 +54,7 @@ function newLine(): LineRow {
 }
 
 function todayDateInput(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return todayBakuYmd();
 }
 
 function fieldErrorClass(hasError: boolean) {

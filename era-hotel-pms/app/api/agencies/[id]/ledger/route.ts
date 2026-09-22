@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getAgencyLedger } from '@/lib/services/agency-ledger.service';
@@ -15,7 +16,7 @@ export async function GET(
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const { id } = await params;
     const url = new URL(request.url);
-    const fromStr = url.searchParams.get('from') ?? new Date().toISOString().slice(0, 10);
+    const fromStr = url.searchParams.get('from') ?? todayBakuYmd();
     const toStr = url.searchParams.get('to') ?? fromStr;
     const from = new Date(fromStr);
     const to = new Date(toStr);

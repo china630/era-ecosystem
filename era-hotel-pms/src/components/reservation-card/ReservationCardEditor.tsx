@@ -13,6 +13,8 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay, bakuTimeLabel } from '@era/satellite-kit/time';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
@@ -76,14 +78,11 @@ function mergeDateTime(date: string, time: string): string | undefined {
 
 function timeFromIso(iso?: string): string {
   if (!iso) return '14:00';
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return bakuTimeLabel(iso);
 }
 
 function addDaysIso(iso: string, days: number): string {
-  const d = new Date(`${iso}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return addHotelDays(iso, days);
 }
 
 export type ReservationCardEditorProps = {
@@ -1958,7 +1957,7 @@ export function ReservationCardEditor({
             }>).map((c) => (
               <li key={c.id}>
                 {(c.fromRoom?.roomNumber ?? '—')} → {c.toRoom?.roomNumber ?? '—'}{' '}
-                {String(c.effectiveAt).slice(0, 16).replace('T', ' ')}
+                {bakuDateTimeDisplay(c.effectiveAt)}
                 {c.reasonCode ? ` (${c.reasonCode})` : ''}
               </li>
             ))}

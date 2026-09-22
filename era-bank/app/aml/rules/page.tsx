@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   PageHeader,
@@ -121,7 +122,8 @@ function AmlRulesPageInner() {
             {
               key: "updatedAt",
               label: "Updated",
-              render: (row) => row.updatedAt?.slice(0, 19) ?? "—",
+              render: (row) =>
+                row.updatedAt ? bakuDateTimeDisplay(row.updatedAt) : "—",
             },
           ]}
         />

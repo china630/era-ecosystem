@@ -8,6 +8,7 @@ import { apiFetch } from "../../../lib/api-client";
 import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
@@ -79,7 +80,7 @@ function AdvanceReportsPageContent() {
   const [saving, setSaving] = useState(false);
   const [employees, setEmployees] = useState<EmployeeOpt[]>([]);
   const [employeeId, setEmployeeId] = useState("");
-  const [reportDate, setReportDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [reportDate, setReportDate] = useState(() => todayBakuYmd());
   const [currencyCode, setCurrencyCode] = useState("AZN");
   const [purpose, setPurpose] = useState("");
   const [cashOrderId, setCashOrderId] = useState("");
@@ -126,7 +127,7 @@ function AdvanceReportsPageContent() {
   function openCreate() {
     setEditId(null);
     setEmployeeId("");
-    setReportDate(new Date().toISOString().slice(0, 10));
+    setReportDate(todayBakuYmd());
     setCurrencyCode("AZN");
     setPurpose("");
     setCashOrderId("");

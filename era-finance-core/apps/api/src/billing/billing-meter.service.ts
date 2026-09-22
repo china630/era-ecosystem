@@ -14,7 +14,12 @@ import {
   MeterUnitPricing,
   SystemConfigService,
 } from "../system-config/system-config.service";
-import { billingPeriodKeyBaku } from "./baku-billing.util";
+import {
+  billingPeriodKeyBaku,
+  bakuCivilUtcDate,
+  bakuMonthBounds,
+  todayBakuYmd,
+} from "./baku-billing.util";
 import { CreditExceededException } from "./credit-exceeded.exception";
 import type { BillableActionType } from "./billing-rate-card";
 import {
@@ -341,15 +346,8 @@ export class BillingMeterService {
     });
     const amountAzn = Math.max(0, Math.round(spentAzn * 100) / 100);
     const now = new Date();
-    const periodStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-    );
-    const periodEnd = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999),
-    );
-    const dateOnly = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
+    const { from: periodStart, to: periodEnd } = bakuMonthBounds(periodKey);
+    const dateOnly = bakuCivilUtcDate(todayBakuYmd(now));
 
     await this.prisma.subscriptionInvoice.create({
       data: {

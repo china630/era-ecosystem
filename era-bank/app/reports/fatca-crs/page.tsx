@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   PageHeader,
@@ -182,7 +183,8 @@ function FatcaCrsPageInner() {
               {
                 key: "updatedAt",
                 label: "Updated",
-                render: (row) => row.updatedAt?.slice(0, 10) ?? "—",
+                render: (row) =>
+                  row.updatedAt ? bakuDateDisplay(row.updatedAt) : "—",
               },
             ]}
           />

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CatalogField } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
 import {
@@ -834,7 +835,7 @@ export default function TradeCreditGrantsPage() {
                           }`}
                         >
                           <td className={DATA_TABLE_TD_CLASS}>
-                            {row.createdAt.slice(0, 19).replace("T", " ")}
+                            {bakuDateTimeDisplay(row.createdAt)}
                           </td>
                           <td className={`${DATA_TABLE_TD_CLASS} font-mono text-[11px]`}>
                             {row.counterpartyId}
@@ -843,7 +844,7 @@ export default function TradeCreditGrantsPage() {
                             {Number(row.amount).toFixed(2)}
                           </td>
                           <td className={DATA_TABLE_TD_CLASS}>
-                            {row.expiresAt.slice(0, 19).replace("T", " ")}
+                            {bakuDateTimeDisplay(row.expiresAt)}
                           </td>
                           <td className={DATA_TABLE_TD_CLASS}>{statusLabel(row.status)}</td>
                           <td className={DATA_TABLE_TD_CLASS}>

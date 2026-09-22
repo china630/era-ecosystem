@@ -9,7 +9,8 @@
  * Idempotent. Prefer in-place when zero ProgramInstance pins; bump otherwise.
  *
  * Lives in prisma/ so Docker RUN_SEED (COPY prisma) picks it up.
- * Part of `npm run db:seed` after PKG-* templates exist.
+ * Part of `npm run db:seed:demo` only — not droplet entrypoint.
+ * Prefer import wizard program-templates (auto intake on PKG-*) after cutover.
  *
  * Usage:
  *   node prisma/seed-intake-blocks.mjs [--dry-run]

@@ -31,6 +31,10 @@ jobs:
         run: node scripts/lint-token-layers.mjs
       - name: Design token lint unit tests
         run: node --test scripts/__tests__/design-tokens.spec.mjs scripts/__tests__/token-layers.spec.mjs
+      - name: Asia/Baku clock lint (strict)
+        run: npm run lint:baku-clock:strict
+      - name: Asia/Baku clock unit tests
+        run: npm run test:baku-clock
       - name: GHCR path-filter unit tests
         run: node --test scripts/__tests__/ci-changed-ghcr-services.spec.mjs
       - name: Acceptance consistency

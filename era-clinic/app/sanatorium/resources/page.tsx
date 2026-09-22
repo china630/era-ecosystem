@@ -27,6 +27,7 @@ import {
   type ResourceRow,
   type TimeHorizon,
 } from "@/components/sanatorium/ResourceDayMatrix";
+import { bakuDateTimeDisplay, bakuTimeLabel } from "@/lib/baku-day";
 
 function bakuYmd(d = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -325,7 +326,7 @@ export default function SanatoriumResourcesPage() {
                   onClick={() => void confirmMove(s.startsAt, s.resourceId)}
                 >
                   {(s.resourceCode ? `${s.resourceCode} · ` : "") +
-                    new Date(s.startsAt).toLocaleString()}
+                    bakuDateTimeDisplay(s.startsAt)}
                 </button>
               </li>
             ))}
@@ -353,9 +354,9 @@ export default function SanatoriumResourcesPage() {
             </dd>
             <dt className={TEXT_MUTED_CLASS}>{t("detailTime")}</dt>
             <dd>
-              {new Date(detailSlot.time).toLocaleString()}
+              {bakuDateTimeDisplay(detailSlot.time)}
               {detailSlot.endsAt
-                ? ` – ${new Date(detailSlot.endsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                ? ` – ${bakuTimeLabel(detailSlot.endsAt)}`
                 : ""}
             </dd>
             <dt className={TEXT_MUTED_CLASS}>{t("staff")}</dt>

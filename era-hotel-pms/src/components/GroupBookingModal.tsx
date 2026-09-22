@@ -18,6 +18,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { bookingSourceKind, contractsForSource, fksFromSalesContract, isOtaAgency, persistCounterpartyIds } from '@/lib/booking-source-kind';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 type SelectOpt = { id: string; label: string; code?: string; adultCapacity?: number; isOta?: boolean };
 
@@ -53,13 +54,11 @@ type StayLine = {
 };
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 function addDaysIso(iso: string, days: number): string {
-  const d = new Date(`${iso}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return addHotelDays(iso, days);
 }
 
 function nightsBetween(checkIn: string, checkOut: string): number {

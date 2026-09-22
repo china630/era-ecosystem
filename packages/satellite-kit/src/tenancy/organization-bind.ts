@@ -28,6 +28,7 @@ export function createOrganizationBindHandlers(
       expectedEnvKeys: [
         "SATELLITE_EVENT_SERVICE_TOKEN",
         "CLINIC_INTERNAL_SERVICE_TOKEN",
+        "CONTROL_PLANE_SERVICE_TOKEN",
       ],
       authorization: request.headers.get("authorization"),
       xServiceToken: request.headers.get("x-service-token"),

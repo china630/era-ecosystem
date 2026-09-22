@@ -12,6 +12,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateKey, bakuTimeLabel, parseBakuDateTime } from "@/lib/baku-day";
 
 type Practitioner = { code: string; fullName: string };
 type PatientOption = { id: string; refCode: string; fullName: string };
@@ -28,11 +29,17 @@ type Props = {
   prefill?: AppointmentCreatePrefill | null;
 };
 
+/** datetime-local value as Asia/Baku wall clock (not browser local). */
 function toDatetimeLocal(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${bakuDateKey(d)}T${bakuTimeLabel(d)}`;
+}
+
+function fromDatetimeLocal(value: string): string | undefined {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(value.trim());
+  if (!m) return undefined;
+  return parseBakuDateTime(m[1], m[2]).toISOString();
 }
 
 export default function AppointmentCreateModal({ open, onClose, onCreated, prefill }: Props) {
@@ -86,7 +93,7 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
       body: JSON.stringify({
         patientRefId,
         practitionerCode,
-        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+        scheduledAt: scheduledAt ? fromDatetimeLocal(scheduledAt) : undefined,
       }),
     });
     setBusy(false);

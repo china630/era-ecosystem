@@ -1,4 +1,6 @@
-/** Age in full years from a calendar birth date (UTC date parts). */
+import { bakuYmd } from "@era/satellite-kit/time";
+
+/** Age in full years from a calendar birth date vs Asia/Baku “as of”. */
 export function ageYearsFromBirthDate(
   birthDate: Date | string | null | undefined,
   asOf: Date = new Date(),
@@ -6,9 +8,12 @@ export function ageYearsFromBirthDate(
   if (birthDate == null || birthDate === "") return null;
   const d = typeof birthDate === "string" ? new Date(birthDate) : birthDate;
   if (Number.isNaN(d.getTime())) return null;
-  let age = asOf.getUTCFullYear() - d.getUTCFullYear();
-  const monthDelta = asOf.getUTCMonth() - d.getUTCMonth();
-  if (monthDelta < 0 || (monthDelta === 0 && asOf.getUTCDate() < d.getUTCDate())) {
+  const asOfParts = bakuYmd(asOf);
+  const by = d.getUTCFullYear();
+  const bm = d.getUTCMonth() + 1;
+  const bd = d.getUTCDate();
+  let age = asOfParts.y - by;
+  if (asOfParts.m < bm || (asOfParts.m === bm && asOfParts.day < bd)) {
     age -= 1;
   }
   return age < 0 ? null : age;
@@ -30,12 +35,12 @@ export function parseBirthDateInput(value: string | null | undefined): Date | nu
   return d;
 }
 
-export function birthDateToInputValue(birthDate: Date | string | null | undefined): string {
-  if (birthDate == null) return "";
-  const d = typeof birthDate === "string" ? new Date(birthDate) : birthDate;
+export function birthDateToInputValue(value: Date | string | null | undefined): string {
+  if (value == null || value === "") return "";
+  const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return "";
   const y = d.getUTCFullYear();
-  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${mo}-${day}`;
+  return `${y}-${m}-${day}`;
 }

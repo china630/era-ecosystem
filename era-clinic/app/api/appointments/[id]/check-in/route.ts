@@ -1,6 +1,7 @@
 import { jsonOk, jsonError, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 export async function POST(
   _req: Request,
@@ -36,10 +37,9 @@ export async function POST(
         data: { status: "IN_PROGRESS" },
       });
 
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+      const { start: startOfDay, end: endOfDay } = bakuDayBounds(todayBakuYmd());
       const lastTicket = await prisma.queueTicket.findFirst({
-        where: { createdAt: { gte: startOfDay } },
+        where: { createdAt: { gte: startOfDay, lt: endOfDay } },
         orderBy: { queueNumber: "desc" },
         select: { queueNumber: true },
       });

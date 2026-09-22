@@ -25,6 +25,7 @@ import { fetchExchangeRateMock } from "../../../lib/mock-exchange-rates";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { notifyListRefresh } from "../../../lib/list-refresh-bus";
 import { useAuth } from "../../../lib/auth-context";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
   DEFAULT_INVOICE_VAT_RATES,
   VAT_LINE_UNSET,
@@ -215,7 +216,7 @@ export function CreateInvoiceModal({
   } = useForm<InvoiceFormValues>({
     defaultValues: {
       counterpartyId: "",
-      dueDate: new Date().toISOString().slice(0, 10),
+      dueDate: todayBakuYmd(),
       debitAccountCode: "",
       bankAccountId: "",
       currency: "AZN",
@@ -294,7 +295,7 @@ export function CreateInvoiceModal({
     setExtraAttributes({});
     reset({
       counterpartyId: "",
-      dueDate: new Date().toISOString().slice(0, 10),
+      dueDate: todayBakuYmd(),
       debitAccountCode: "",
       bankAccountId: "",
       currency: "AZN",

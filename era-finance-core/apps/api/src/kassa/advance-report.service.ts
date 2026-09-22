@@ -23,6 +23,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
+import { bakuYearStartYmd, todayBakuYmd } from "@era/satellite-kit/time";
 
 type Tx = Prisma.TransactionClient;
 
@@ -573,8 +574,8 @@ export class AdvanceReportService {
     organizationId: string,
     accountCode244: string,
   ): Promise<Decimal> {
-    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
-    const today = new Date().toISOString().slice(0, 10);
+    const yearStart = bakuYearStartYmd();
+    const today = todayBakuYmd();
     const tb = await this.reporting.trialBalance(
       organizationId,
       yearStart,

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PageHeader, showApiError } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { BankDataGrid } from "@/components/BankDataGrid";
 import { formatAznMajor } from "@/lib/bank-lookups";
 
@@ -27,7 +28,7 @@ export default function ExecutiveDashboardPage() {
   const tCommon = useTranslations("common");
   const [rows, setRows] = useState<TrialRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBakuYmd();
 
   useEffect(() => {
     setLoading(true);

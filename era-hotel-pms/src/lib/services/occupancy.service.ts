@@ -1,20 +1,8 @@
+import { bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 const ACTIVE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
-
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function addDays(d: Date, n: number): void {
-  d.setDate(d.getDate() + n);
-}
-
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export interface OccupancyCell {
   date: string;
@@ -52,19 +40,15 @@ export async function getOccupancyGrid(input?: {
   days?: number;
 }): Promise<OccupancyGrid> {
   const days = input?.days ?? 30;
-  const from = startOfDay(input?.from ?? new Date());
+  const fromKey = hotelDateKey(input?.from ?? new Date());
+  const { start: from } = bakuDayBounds(fromKey);
 
   const dates: string[] = [];
-  const dateObjects: Date[] = [];
   for (let i = 0; i < days; i++) {
-    const d = new Date(from);
-    addDays(d, i);
-    dates.push(dateKey(d));
-    dateObjects.push(d);
+    dates.push(addHotelDays(fromKey, i));
   }
 
-  const windowEnd = new Date(from);
-  addDays(windowEnd, days);
+  const windowEnd = bakuDayBounds(addHotelDays(fromKey, days)).start;
 
   const roomTypes = await prisma.roomType.findMany({ orderBy: { code: 'asc' } });
   const reservations = await prisma.reservation.findMany({
@@ -80,9 +64,8 @@ export async function getOccupancyGrid(input?: {
     const typeReservations = reservations.filter((r) => r.roomTypeId === rt.id);
     let totalSoldNights = 0;
 
-    const cells: OccupancyCell[] = dateObjects.map((nightStart, idx) => {
-      const nightEnd = new Date(nightStart);
-      nightEnd.setDate(nightEnd.getDate() + 1);
+    const cells: OccupancyCell[] = dates.map((nightKey) => {
+      const { start: nightStart, end: nightEnd } = bakuDayBounds(nightKey);
 
       const sold = typeReservations.filter((r) =>
         reservationOccupiesNight(r.checkInDate, r.checkOutDate, nightStart, nightEnd),
@@ -93,7 +76,7 @@ export async function getOccupancyGrid(input?: {
       const available = total - sold;
 
       return {
-        date: dates[idx],
+        date: nightKey,
         total,
         sold,
         available,
@@ -113,5 +96,5 @@ export async function getOccupancyGrid(input?: {
     };
   });
 
-  return { from: dateKey(from), days, dates, rows };
+  return { from: fromKey, days, dates, rows };
 }

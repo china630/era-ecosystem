@@ -7,9 +7,11 @@ Headless CBS engine on `:4300`. Service token auth for satellite/BFF calls.
 ```bash
 cd era-bank-core
 cp .env.example .env
+# Set ERA_BANK_ORGANIZATION_ID to a real orch org UUID (never demo-bank-org-001)
 npm install
 npm run db:migrate:deploy
-npm run db:seed
+npm run db:seed              # GL/product factory for bound org
+npm run db:seed:demo         # optional lab customers/treasury
 npm run dev
 ```
 

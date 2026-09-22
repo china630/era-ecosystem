@@ -27,6 +27,7 @@ import {
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
+import { bakuDateDisplay } from "@/lib/baku-day";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -380,7 +381,10 @@ export default function LabOrdersPage() {
       {
         key: "created",
         header: t("colCreated"),
-        render: (order) => labOrderListDate(order)?.toLocaleDateString() ?? "—",
+        render: (order) => {
+          const d = labOrderListDate(order);
+          return d ? bakuDateDisplay(d) : "—";
+        },
       },
       {
         key: "actions",

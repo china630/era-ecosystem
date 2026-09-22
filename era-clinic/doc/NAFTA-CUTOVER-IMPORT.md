@@ -23,30 +23,19 @@ Clinic pack checklist on disk: `NAFTA-ERA-READY/IMPORT-CHECKLIST.md` (mirror: `N
 
 ## Post-deploy on droplet (after clinic image ship)
 
-Do **not** run full `rebuild-derived` only for this wave. Seed catalogs, then re-Apply the Excel books below.
+Do **not** run full `npm run db:seed` or `db:seed:demo` on the droplet (`CLINIC_RUN_SEED` stays **false**). Satellite ICD + base physio/diagnostic **templates** come from the image migrate/seed once (or Connect copy-if-empty into the org overlay). Org overlay (Nafta aliases, `PKG-NAFTA-INTAKE`, prices, intake blocks) comes from the **import wizard** — not from post-deploy seed scripts. See ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).
 
-1. **Diagnostic catalog** (base + Nafta overlay → `PKG-NAFTA-INTAKE` + USG patches):
+Do **not** run full `rebuild-derived` only for a catalog wave. Re-Apply the Excel books below when clock / nahiye / USG need refresh.
 
-```bash
-cd era-clinic && node prisma/seed-diagnostic-catalog.cjs
-# or explicitly:
-# node prisma/seed-diagnostic-catalog-base.cjs && node prisma/seed-diagnostic-catalog-nafta.cjs
-```
+1. **Verify catalogs (no seed):** `/admin/physio-sites` has base S (copy-if-empty after Sync/login); `/admin/diagnostic-catalog` has base panels; Nafta package / WO aliases appear after wizard Apply (lab-catalog / physio-sites / program-templates), not after `seed-diagnostic-catalog.cjs`.
 
-2. **Physio S catalog** (base 31 S + Nafta WO aliases / type gates):
+2. **Re-Apply `#26` (slots)** — required when rematching. Rewrites `scheduledAt` with Baku `+04:00` and rematches `nahiye` → sites (`replaceSites: true` always). Without this, PLAN/növbəti keep old UTC offsets and empty chips.
 
-```bash
-cd era-clinic && npx tsx prisma/seed-physio-catalog.ts
-# or: npm run db:seed:physio:base && npm run db:seed:physio:nafta
-```
+3. **Re-Apply `#29` (USG diagnostics)** only if intake USM row is still MISSING or USG fields empty — after org diagnostic overlay exists. **Skip leftover diagnoses** (non-USG). **Do not Apply WO CheckUp `#33`/`#34`** for the check-in checklist (those are physio CheckUp / Darsonval).
 
-3. **Verify:** `/admin/physio-sites` ≈ 31; `/admin/diagnostic-catalog` has `PKG-NAFTA-INTAKE`; `GET /api/physio-catalog` → non-empty `sites`.
+4. **Spot checks:** Yağmur — Solyuks zones + two times; cards **2152** / **2019** — intake 4 rows; **2019** USM DONE/ORDERED after `#29`. Punch list: `doc/UAT-SMOKE.md` § Nafta cutover + CLI-49.
 
-4. **Re-Apply `#26` (slots)** — required. Rewrites `scheduledAt` with Baku `+04:00` and rematches `nahiye` → sites (`replaceSites: true` always). Without this, PLAN/növbəti keep old UTC offsets and empty chips.
-
-5. **Re-Apply `#29` (USG diagnostics)** only if intake USM row is still MISSING or USG fields empty — after diagnostic seed. **Skip leftover diagnoses** (non-USG). **Do not Apply WO CheckUp `#33`/`#34`** for the check-in checklist (those are physio CheckUp / Darsonval).
-
-6. **Spot checks:** Yağmur — Solyuks zones + two times; cards **2152** / **2019** — intake 4 rows; **2019** USM DONE/ORDERED after `#29`. Punch list: `doc/UAT-SMOKE.md` § Nafta cutover + CLI-49.
+**Forbidden:** `node prisma/seed-diagnostic-catalog.cjs` / `npx tsx prisma/seed-physio-catalog.ts` / full `db:seed` on production after cutover (wipes or fights bind). Lab ICD is satellite `IcdCode` seed/sync — not Excel WHO.
 
 ---
 
@@ -129,7 +118,7 @@ Lab fields: Word QAN/BİOKİM/SİDİK → ERA `LAB-CBC` / `LAB-BIOCHEM` / `LAB-U
 
 Lab / USG list date: WO patients grid has no analysis column. `#27` `takenAt` is WO `LabResult.resultDate` (file date; present on the API even when the UI hides it). Empty `takenAt` → stay **check-in** (`ClinicalEpisode.openedAt` from `#24`). Import stamps `collectedAt` / `resultDate` / `createdAt` to that clinical day so `/lab-orders` “Tarix” is not the Apply timestamp. Date filters use `collectedAt` (fallback `createdAt`). Re-Apply `#27` (and `#29` for USG) after deploy to backfill already-imported rows.
 
-`#29` diagnostics = WO **Müayinə Anketi** blocks (not ICD). Map **questionnaire name only** (do not sniff `Qeyd`): `USM` → `USG-ABD` (Nafta tam abdomen + pelvis fields), `Tiroid`/`Qalxanabənzər…` → `USG-THYROID`, `Süd vəzilərin us` → `USG-BREAST`, `dopler` → `USG-DOPPLER`, `səthi toxuma` → `USG-SOFT`. Parser fills organ fields into `resultJson`; raw `Qeyd` stays in `resultText` and is stored as `sourceNote` on Apply. Re-seed `node era-clinic/prisma/seed-diagnostic-catalog.cjs` so `USG-ABD` has kidney/pelvis + `sourceNote` fields (droplet stub `USG` / 0 fields cannot hold parsed lines). Then Apply `#29`. Do not Apply leftover diagnoses (non-USG notes).
+`#29` diagnostics = WO **Müayinə Anketi** blocks (not ICD). Map **questionnaire name only** (do not sniff `Qeyd`): `USM` → `USG-ABD` (Nafta tam abdomen + pelvis fields), `Tiroid`/`Qalxanabənzər…` → `USG-THYROID`, `Süd vəzilərin us` → `USG-BREAST`, `dopler` → `USG-DOPPLER`, `səthi toxuma` → `USG-SOFT`. Parser fills organ fields into `resultJson`; raw `Qeyd` stays in `resultText` and is stored as `sourceNote` on Apply. Ensure org diagnostic overlay has `USG-ABD` fields (import / Connect copy — **not** post-deploy `seed-diagnostic-catalog.cjs`). Then Apply `#29`. Do not Apply leftover diagnoses (non-USG notes).
 
 **İlkin diaqnostik prosedurlar (check-in checklist)** is **not** WO CheckUp catalogs (`CheckUp/get-all` = physio «Check up starter» with Darsonval). Source = card `slices.diagnostics` / `GET /api/PatientDiagnostic/patient/{id}` group «İlkin diaqnostik prosedurlar (Check-up)» — four lines → package `PKG-NAFTA-INTAKE` (`VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO`, `CARDIO-ECG`, `USG-ABD`). Rebuild report only: `node era-clinic/scripts/nafta-cutover/rebuild-intake.cjs` (optional `--xlsx`). Apply `#29` closes the USM checklist row when `USG-ABD` exists. Episode `programCode` stays the physio/rate program — do not set it to the intake package name. Live open episode instantiates missing ECG/USG orders (idempotent **on that episode**; no physio FIFO). **CLI-55:** intake idempotency is per-episode (`clinicalEpisodeId` on Visit/LabOrder).
 
@@ -175,7 +164,7 @@ Re-upload of the same `externalRef` updates, does not duplicate. `#24` finds the
 
 ## Seed catalog vs WO cutover (master-data duplicates)
 
-If `db:seed` (`SVC-*` / `CAB-*`) ran **before** wizard `#19`/`#20`, master-data shows two catalogs. Seed owns names and encoding. WO `#26` owns historical slot times (`scheduledAt`). Do **not** wipe slots.
+If kitchen-sink `db:seed:demo` (`SVC-*` / `CAB-*`) ran **before** wizard `#19`/`#20`, master-data can show two catalogs. Satellite `db:seed` does **not** write procedure/room rows. WO `#26` owns historical slot times (`scheduledAt`). Do **not** wipe slots.
 
 1. Dry-run: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts`
 2. Apply: `npx tsx scripts/nafta-cutover/merge-seed-wo-catalog.ts --apply`
@@ -202,12 +191,7 @@ node era-clinic/scripts/nafta-cutover/build-era-ready.cjs --domain=hr
 
 WO free-text `nahiye` is **not** dropped on cutover. Canon: [physio-site-canon.md](./physio-site-canon.md) §6.
 
-**Before Apply `#26` (required):** seed physio S catalog so chips are not dropped:
-
-```bash
-cd era-clinic && npx tsx prisma/seed-physio-catalog.ts
-# base then Nafta overlay (same as npm run db:seed:physio)
-```
+**Before Apply `#26` (required):** org overlay must have physio S rows (Sync/login copy-if-empty, or catalog GET). Do **not** run `seed-physio-catalog.ts` on the droplet.
 
 Check: `/admin/physio-sites` ≈ 31 zones; `GET /api/physio-catalog` returns non-empty `sites`. Empty catalog → UI shows «catalog not seeded» (not SEARCHABLE «No matches»). Then **re-Apply `#26`** with `replaceSites: true` so `nahiye` is rematched against DB rows. Spot: Yağmur Cəfərli — naftalan `Tam` / Solyuks `Belinə`/`Başına` show chips; Qeyd keeps residue only.
 

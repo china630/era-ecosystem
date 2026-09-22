@@ -3,7 +3,7 @@
     "loginFailed": "Login failed",
     "organizationIdLabel": "Organization code (ERA ID)",
     "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
-    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
+    "organizationIdHint": "",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -37,13 +37,12 @@
     "settings": "Settings"
   },
   "login": {
-    "title": "ERA Logistics",
-    "subtitle": "Sign in to your account",
+    "title": "Sign in",
+    "subtitle": "",
     "login": "Login",
     "password": "Password",
     "submit": "Sign in",
-    "busy": "…",
-    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+    "busy": "…"
   },
   "home": {
     "loading": "Loading…",

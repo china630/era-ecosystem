@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { bakuCivilUtcDate, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import {
   CHIP_GROUP_CLASS,
   CatalogField,
@@ -175,15 +176,9 @@ const emptyWalkIn = (): WalkInForm => ({
   programCode: "",
 });
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function daysRemaining(endsOn: string): number {
-  const end = new Date(endsOn);
-  end.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const end = bakuCivilUtcDate(endsOn);
+  const today = bakuCivilUtcDate(todayBakuYmd());
   return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86_400_000));
 }
 
@@ -209,7 +204,7 @@ export default function SanatoriumPage() {
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [patientCardId, setPatientCardId] = useState<string | null>(null);
-  const [chartDate, setChartDate] = useState(todayIso());
+  const [chartDate, setChartDate] = useState(todayBakuYmd());
   const [complaint, setComplaint] = useState("");
   const [icdCodeId, setIcdCodeId] = useState("");
   const [diagnosisNote, setDiagnosisNote] = useState("");
@@ -218,7 +213,7 @@ export default function SanatoriumPage() {
   const [labCatalogItems, setLabCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
   const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [programCode, setProgramCode] = useState("");
-  const [programStartsOn, setProgramStartsOn] = useState(todayIso());
+  const [programStartsOn, setProgramStartsOn] = useState(todayBakuYmd());
   const searchParams = useSearchParams();
   const deepLinkHandled = useRef(false);
   const [msg, setMsg] = useState("");
@@ -339,12 +334,10 @@ export default function SanatoriumPage() {
   }, []);
 
   const loadSchedule = useCallback(async (episodeId: string, date: string) => {
-    const day = new Date(`${date}T00:00:00`);
-    const next = new Date(day);
-    next.setDate(next.getDate() + 1);
+    const { start, end } = bakuDayBounds(date);
     const qs = new URLSearchParams({
-      from: day.toISOString(),
-      to: next.toISOString(),
+      from: start.toISOString(),
+      to: end.toISOString(),
       locale,
     });
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/schedule?${qs}`);
@@ -691,7 +684,7 @@ export default function SanatoriumPage() {
   async function rescheduleProcedure() {
     if (!rescheduleOrderId) return;
     setBusy(true);
-    const scheduledAt = new Date(`${chartDate}T${rescheduleTime}:00`).toISOString();
+    const scheduledAt = parseBakuDateTime(chartDate, `${rescheduleTime}:00`).toISOString();
     const res = await fetch(`/api/procedures/${rescheduleOrderId}/reschedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -724,9 +717,7 @@ export default function SanatoriumPage() {
     setBusy(true);
     setPaidSameDayWarn(null);
     try {
-      const scheduledAt = new Date(
-        `${chartDate}T${paidSameDayTime}:00`,
-      ).toISOString();
+      const scheduledAt = parseBakuDateTime(chartDate, `${paidSameDayTime}:00`).toISOString();
       const res = await fetch("/api/procedures", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1457,10 +1448,7 @@ export default function SanatoriumPage() {
                   {scheduleOrders.map((o) => (
                     <tr key={o.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {new Date(o.scheduledAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {bakuTimeLabel(o.scheduledAt)}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{o.procedureName}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{statusLabel(o.status)}</td>
@@ -1480,9 +1468,7 @@ export default function SanatoriumPage() {
                               aria-label={t("reschedule")}
                               onClick={() => {
                                 setRescheduleOrderId(o.id);
-                                setRescheduleTime(
-                                  new Date(o.scheduledAt).toISOString().slice(11, 16),
-                                );
+                                setRescheduleTime(bakuTimeLabel(o.scheduledAt));
                               }}
                             >
                               <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
@@ -1707,7 +1693,7 @@ export default function SanatoriumPage() {
             onSubmit={() =>
               void postAction("complete-checkup", {
                 programCode: programCode || selected?.programCode || undefined,
-                startsOn: new Date(`${programStartsOn}T09:00:00`).toISOString(),
+                startsOn: parseBakuDateTime(programStartsOn, "09:00:00").toISOString(),
               })
             }
             busy={busy}

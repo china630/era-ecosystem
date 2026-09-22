@@ -18,11 +18,16 @@ const prisma = new PrismaClient().$extends(
 ) as unknown as PrismaClient;
 
 function seedOrgId(): string {
-  return (
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID required for seed-vnext; demo-org is forbidden",
+    );
+  }
+  return id;
 }
 
 type L10n = { en: string; ru: string; az: string };

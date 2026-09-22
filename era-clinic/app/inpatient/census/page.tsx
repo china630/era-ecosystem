@@ -15,6 +15,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 type CensusRow = {
   admissionId: string;
@@ -74,7 +75,7 @@ export default function InpatientCensusPage() {
       {
         key: "admittedAt",
         header: t("colAdmittedAt"),
-        render: (r) => new Date(r.admittedAt).toLocaleString(),
+        render: (r) => bakuDateTimeDisplay(r.admittedAt),
       },
       {
         key: "actions",

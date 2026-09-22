@@ -15,6 +15,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { ClipboardList, Eye, X } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
 import { Button } from "../../../components/ui/button";
 import {
@@ -188,7 +189,7 @@ export default function InventoryAuditsHistoryPage() {
                                   : r.status}
                       </td>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                        {r.createdAt?.slice(0, 19)?.replace("T", " ") ?? "—"}
+                        {r.createdAt ? bakuDateTimeDisplay(r.createdAt) : "—"}
                       </td>
                       <td className={DATA_TABLE_ACTIONS_TD_CLASS}>
                         <div className="flex items-center justify-end gap-1">

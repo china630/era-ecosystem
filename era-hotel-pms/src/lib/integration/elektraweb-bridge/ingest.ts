@@ -6,7 +6,10 @@ import {
   rowHotelId,
   type BridgeEntityHint,
 } from '@/lib/integration/elektraweb-bridge/classify';
-import { assertHotelIdMatches } from '@/lib/integration/elektraweb-bridge/config';
+import {
+  assertHotelIdMatches,
+  isElektrawebBridgeEnabled,
+} from '@/lib/integration/elektraweb-bridge/config';
 import type { BridgeAuthContext } from '@/lib/integration/elektraweb-bridge/auth';
 import { upsertGuestFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import { upsertReservationFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/upsert-reservation';
@@ -56,7 +59,7 @@ export function getBridgeHealth() {
     ingestCount24h = 0;
   }
   return {
-    enabled: process.env.ELEKTRAWEB_BRIDGE_ENABLED === '1',
+    enabled: isElektrawebBridgeEnabled(),
     lastSuccessAt,
     lastError,
     ingestCount24h,

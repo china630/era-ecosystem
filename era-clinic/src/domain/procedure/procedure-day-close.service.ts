@@ -4,6 +4,7 @@ import {
   bakuDayBounds,
   todayBakuYmd,
 } from "@/domain/ops/day-summary.service";
+import { bakuDateKey, parseBakuDateTime } from "@/lib/baku-day";
 import {
   markProcedureNoShow,
   SYSTEM_ATTENDANCE_ACTOR,
@@ -66,9 +67,11 @@ function isNoShowDue(
   if (autoAfterMin != null && autoAfterMin > 0) {
     return addMinutes(order.scheduledAt, autoAfterMin).getTime() < now.getTime();
   }
-  // EOD: after clinic dayEndHour on the scheduled calendar day.
-  const dayEnd = new Date(order.scheduledAt);
-  dayEnd.setHours(dayEndHour, 0, 0, 0);
+  // EOD: after clinic dayEndHour on the scheduled Baku calendar day.
+  const dayEnd = parseBakuDateTime(
+    bakuDateKey(order.scheduledAt),
+    `${String(dayEndHour).padStart(2, "0")}:00`,
+  );
   return now.getTime() >= dayEnd.getTime();
 }
 

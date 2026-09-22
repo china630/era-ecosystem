@@ -19,9 +19,11 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 type Vehicle = {
   id: string;
@@ -77,7 +79,7 @@ export default function TransfersPage() {
   const [assignVehicleId, setAssignVehicleId] = useState<Record<string, string>>({});
   const [q, setQ] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
-  const [boardDate, setBoardDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [boardDate, setBoardDate] = useState(() => hotelDateKey());
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -133,7 +135,7 @@ export default function TransfersPage() {
       .map(
         (o) =>
           `<tr>
-            <td>${new Date(o.pickupAt).toLocaleString()}</td>
+            <td>${bakuDateTimeDisplay(o.pickupAt)}</td>
             <td>${o.reservation.guest.fullName}</td>
             <td>${o.reservation.room?.roomNumber ?? '—'}</td>
             <td>${o.direction === 'IN' ? 'IN' : 'OUT'}</td>
@@ -256,7 +258,7 @@ export default function TransfersPage() {
         resetLabel={tc('filterReset')}
         onReset={() => {
           setQ('');
-          setBoardDate(new Date().toISOString().slice(0, 10));
+          setBoardDate(hotelDateKey());
         }}
       >
         <DatePicker
@@ -293,7 +295,7 @@ export default function TransfersPage() {
             <tbody>
               {visibleOrders.map((o) => (
                 <tr key={o.id} className="border-b border-[#ECF0F1]">
-                  <td className="py-2 pr-3">{new Date(o.pickupAt).toLocaleString()}</td>
+                  <td className="py-2 pr-3">{bakuDateTimeDisplay(o.pickupAt)}</td>
                   <td className="py-2 pr-3">
                     {o.reservation.guest.fullName} · {o.reservation.room?.roomNumber ?? '—'}
                   </td>

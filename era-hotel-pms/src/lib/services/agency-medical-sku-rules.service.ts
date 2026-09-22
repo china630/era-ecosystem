@@ -49,16 +49,14 @@ export const DEFAULT_AGENCY_SKU_RULES: Array<{
 
 export async function ensureAgencyMedicalSkuRulesSeeded() {
   const orgId = requestOrganizationId();
+  if (!orgId || orgId === "demo-org") {
+    return;
+  }
   const count = await prisma.agencyMedicalSkuRule.count({
-    where: orgId && orgId !== "demo-org" ? { organizationId: orgId } : undefined,
+    where: { organizationId: orgId },
   });
   if (count > 0) return;
-  const organizationId =
-    orgId && orgId !== "demo-org"
-      ? orgId
-      : (
-          await prisma.agency.findFirst({ select: { organizationId: true } })
-        )?.organizationId ?? "demo-org";
+  const organizationId = orgId;
   for (const row of DEFAULT_AGENCY_SKU_RULES) {
     await prisma.agencyMedicalSkuRule.create({
       data: {
@@ -119,7 +117,10 @@ export async function upsertAgencyMedicalSkuRule(input: {
       ? orgId
       : (
           await prisma.agency.findFirst({ select: { organizationId: true } })
-        )?.organizationId ?? "demo-org";
+        )?.organizationId;
+  if (!organizationId || organizationId === "demo-org") {
+    throw new Error("organizationId required (demo-org forbidden)");
+  }
   if (input.id) {
     return prisma.agencyMedicalSkuRule.update({
       where: { id: input.id },

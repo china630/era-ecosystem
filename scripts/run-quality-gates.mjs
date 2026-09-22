@@ -26,5 +26,12 @@ run("satellite raw SQL ban", "node", ["scripts/check-satellite-raw-sql.mjs"]);
 run("integration audit strict", "npm", ["run", "audit:integration:strict"]);
 run("design tokens", "npm", ["run", "lint:design-tokens"]);
 run("token layers", "npm", ["run", "lint:token-layers"]);
+run("clinic seed org ban", "npm", ["run", "lint:clinic-seed-org"]);
+run("satellite seed org ban", "npm", ["run", "lint:satellite-seed-org"]);
+run("satellite install contract", "npm", ["run", "lint:install-contract"]);
+run("baku clock", "node", [
+  "scripts/lint-baku-clock.mjs",
+  ...(strict ? ["--strict"] : []),
+]);
 
 console.log("\nPASS — quality gates");

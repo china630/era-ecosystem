@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../lib/api-client";
 
 type NotificationRow = {
@@ -160,7 +161,7 @@ export function InAppNotificationBell() {
                         {n.message}
                       </p>
                       <div className="mt-1 text-[10px] text-[#7F8C8D]">
-                        {new Date(n.createdAt).toLocaleString()}
+                        {bakuDateTimeDisplay(n.createdAt)}
                       </div>
                     </>
                   );

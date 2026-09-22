@@ -10,6 +10,8 @@ import {
   showApiError,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -24,11 +26,11 @@ type Row = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 function plusDaysIso(n: number) {
-  return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  return addHotelDays(hotelDateKey(), n);
 }
 
 export default function ReservationTimesPage() {
@@ -121,12 +123,12 @@ export default function ReservationTimesPage() {
           {
             key: 'actualIn',
             header: t('actualIn'),
-            render: (r) => r.stay?.actualCheckIn?.slice(0, 16).replace('T', ' ') ?? '—',
+            render: (r) => (r.stay?.actualCheckIn ? bakuDateTimeDisplay(r.stay.actualCheckIn) : '—'),
           },
           {
             key: 'actualOut',
             header: t('actualOut'),
-            render: (r) => r.stay?.actualCheckOut?.slice(0, 16).replace('T', ' ') ?? '—',
+            render: (r) => (r.stay?.actualCheckOut ? bakuDateTimeDisplay(r.stay.actualCheckOut) : '—'),
           },
         ]}
         rows={rows}

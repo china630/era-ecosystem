@@ -46,12 +46,8 @@ services:
     build: !reset null
     image: ${GHCR_IMAGE_PREFIX}/clinic:${IMAGE_TAG}
     environment:
-      # Do not re-set CONTROL_PLANE_SERVICE_TOKEN here: an empty
-      # `${CONTROL_PLANE_SERVICE_TOKEN:-}` overlay blanks the var and leaves
-      # folklore `dev-control-plane-token` on ORCHESTRATOR_INTERNAL, which
-      # then shadows droplet SATELLITE_EVENT_SERVICE_TOKEN (hotel never does this).
-      ERA_IN_DOCKER: "1"
-      CONTROL_PLANE_URL: http://orchestrator:4000
+      # Tokens / CONTROL_PLANE_URL only in base docker-compose.yml — never overlay
+      # *_SERVICE_TOKEN here (empty ${…:-} blanks the base value).
       RUN_SEED: ${CLINIC_RUN_SEED:-false}
 
   retail-pos:

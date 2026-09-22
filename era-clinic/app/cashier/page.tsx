@@ -25,6 +25,7 @@ import {
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { CashierSettleModal } from "@/components/CashierSettleModal";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 type Tab = "queue" | "history" | "overQuota";
 
@@ -513,7 +514,7 @@ export default function CashierPage() {
                         <div className={`text-xs ${TEXT_MUTED_CLASS}`}>{row.patientRef.refCode}</div>
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {row.completedAt ? new Date(row.completedAt).toLocaleString() : "—"}
+                        {row.completedAt ? bakuDateTimeDisplay(row.completedAt) : "—"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.patientOrigin}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
@@ -567,7 +568,7 @@ export default function CashierPage() {
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div className="font-mono text-xs">{r.id.slice(0, 10)}…</div>
                         <div className={`text-xs ${TEXT_MUTED_CLASS}`}>
-                          {new Date(r.createdAt).toLocaleString()}
+                          {bakuDateTimeDisplay(r.createdAt)}
                         </div>
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>

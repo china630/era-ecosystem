@@ -24,6 +24,7 @@ Any change that adds or alters a **feature**, **behavior**, **API/event contract
 | Control-plane / billing | `docs/CONTROL_PLANE_ARCHITECTURE.md` or matching `docs/*.md` |
 | New API route or domain area | App `<app>-module-map.mdc` in `.cursor/rules/` |
 | Dev ports / env vars | `docs/ECOSYSTEM_URLS.md` and app `*-local-dev.mdc` |
+| Calendar day / “today” / wall-clock display | `@era/satellite-kit/time` + [asia-baku-clock.md](../../docs/adr/asia-baku-clock.md); gate `npm run lint:baku-clock` (strict in `run:quality-gates:strict`) |
 | Schema / integration boundary (MDM, hub, workforce) | `npm run audit:integration:strict`; shrink baseline if wave complete — [INTEGRATION_AUDIT_CI.md](../docs/INTEGRATION_AUDIT_CI.md) |
 
 ## Workflow

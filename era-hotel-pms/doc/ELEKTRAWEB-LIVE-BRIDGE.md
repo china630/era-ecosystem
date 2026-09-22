@@ -36,7 +36,7 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 | Extension session | Options: ERA Hotel URL + **orgNo** (ERA ID) + staff login → JWT embeds org + policy hotel id |
 | Every row | `HOTELID` in payload must equal **that org’s** policy hotel id or ingest returns **409** |
 
-Process kill switch only: `ELEKTRAWEB_BRIDGE_ENABLED`. No property ids in env.
+Process kill switch: install env `ELEKTRAWEB_BRIDGE_ENABLED` **or** Sync runtime-config `vendorBridgesEnabled` (process-wide; not a Nafta org field). Per-org inbound/write stay on `ElektrawebBridgePolicy`. No property ids in env.
 
 ### Extension login form
 
@@ -211,7 +211,7 @@ Returns last success timestamp, counts (24h), last error — for FO supervisor /
 
 | Setting | Where |
 |---------|--------|
-| `ELEKTRAWEB_BRIDGE_ENABLED=1` | Process kill switch (503 when off) |
+| `ELEKTRAWEB_BRIDGE_ENABLED=1` / Sync `vendorBridgesEnabled` | Process kill switch (503 when off). Env is install bootstrap; runtime-config can persist it. |
 | inbound / write / hotel id / SPA / walk-in | Super-Admin → Sync → `ElektrawebBridgePolicy` row per org |
 | clinic dual-run + hotel org UUID | Super-Admin clinic cutover card → Sync → clinic `ClinicCutoverPolicy`. Same UUID as this org is valid when hotel PMS is enabled on that MMC (outbox tenant = hotel) |
 | `ELEKTRAWEB_BRIDGE_ALLOWED_ORIGINS` | Optional allowlist of Elektraweb hosts (process) |

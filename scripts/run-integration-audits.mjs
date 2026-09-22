@@ -17,6 +17,7 @@ import { issueKey } from "./audit-lib.mjs";
 import { runDataModelAudit } from "./audit-data-model-integration.mjs";
 import { runMdmIdentityAudit } from "./audit-mdm-identity.mjs";
 import { runReferenceDataAudit } from "./audit-reference-data.mjs";
+import { todayBakuYmd } from "./lib/today-baku-ymd.mjs";
 
 const SCRIPTS_DIR = join(dirname(fileURLToPath(import.meta.url)));
 const DEFAULT_BASELINE = join(SCRIPTS_DIR, "audit-baselines/integration-audit.baseline.json");
@@ -138,7 +139,7 @@ function main() {
   if (args.updateBaseline) {
     const next = {
       version: 1,
-      updatedAt: new Date().toISOString().slice(0, 10),
+      updatedAt: todayBakuYmd(),
       note: "Updated via --update-baseline",
       allowedIssues: report.issues.map((i) => ({
         code: i.code,

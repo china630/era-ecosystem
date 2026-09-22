@@ -1,3 +1,6 @@
+import { bakuDayBounds, bakuYmd } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+
 export type HotelStatusLevel = 'NORMAL' | 'RISK' | 'CRITICAL';
 
 export type MetricTriple = {
@@ -7,29 +10,26 @@ export type MetricTriple = {
 };
 
 export function addDays(d: Date, n: number): Date {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
+  return bakuDayBounds(addHotelDays(hotelDateKey(d), n)).start;
 }
 
 export function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  return bakuDayBounds(hotelDateKey(d)).start;
 }
 
 export function endOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
+  const { end } = bakuDayBounds(hotelDateKey(d));
+  return new Date(end.getTime() - 1);
 }
 
 export function startOfMonth(d: Date): Date {
-  return startOfDay(new Date(d.getFullYear(), d.getMonth(), 1));
+  const { y, m } = bakuYmd(d);
+  return bakuDayBounds(`${y}-${String(m).padStart(2, '0')}-01`).start;
 }
 
 export function startOfYear(d: Date): Date {
-  return startOfDay(new Date(d.getFullYear(), 0, 1));
+  const { y } = bakuYmd(d);
+  return bakuDayBounds(`${y}-01-01`).start;
 }
 
 export function occupancyDeviationPct(fact: number, plan: number): number {

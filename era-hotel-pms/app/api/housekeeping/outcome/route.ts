@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
     if (body.roomId) {
-      const date = body.date ?? new Date().toISOString().slice(0, 10);
+      const date = body.date ?? todayBakuYmd();
       return jsonOk(serialize(await applySheetOutcome(body.roomId, date, body.outcome)));
     }
     if (!body.taskId) throw new Error('taskId or roomId required');

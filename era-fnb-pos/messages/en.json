@@ -262,7 +262,7 @@
     "loginFailed": "Login failed",
     "organizationIdLabel": "Organization code (ERA ID)",
     "organizationIdPlaceholder": "6-digit code (e.g. 104221)",
-    "organizationIdHint": "Required on the shared cloud pool. Ask your manager or copy ERA ID from Control Plane → Super-admin → Organizations. On a dedicated appliance leave blank.",
+    "organizationIdHint": "",
     "footerLegalNavAria": "Legal links and help",
     "footerFaq": "FAQ",
     "footerTerms": "Terms of use",
@@ -281,17 +281,25 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "pinLogin": "Cashier / waiter PIN"
+  },
+  "pin": {
+    "outletId": "Outlet",
+    "pin": "PIN",
+    "submit": "Sign in",
+    "submitBusy": "…",
+    "invalid": "Invalid PIN",
+    "unbound": "PIN is not bound to an outlet — ask the owner",
+    "backToLogin": "Password sign-in"
   },
   "login": {
-    "title": "ERA F&B POS",
+    "title": "Sign in",
     "login": "Login",
     "password": "Password",
     "submit": "Sign in",
-    "demoHint": "Demo: waiter/waiter or manager/manager",
-    "subtitle": "Sign in to your account",
-    "busy": "…",
-    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+    "subtitle": "",
+    "busy": "…"
   },
   "help": {
     "title": "Frequently asked questions",

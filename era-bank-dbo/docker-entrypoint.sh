@@ -12,6 +12,8 @@ if [ -f prisma/schema.prisma ]; then
     npx prisma db push 2>/dev/null || true
   fi
   if [ "$RUN_SEED" = "true" ]; then
+    # Boot seed is no-op; demo Open API key is npm run db:seed:demo only.
+    echo "[entrypoint] RUN_SEED=true → npm run db:seed"
     npm run db:seed 2>/dev/null || true
   fi
 fi

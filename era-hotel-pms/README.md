@@ -49,6 +49,7 @@ Migrations include Wave B FO parity: `20260601120000_wave_b_full` (daily rates, 
 ```bash
 npm install
 npx prisma migrate deploy
+# Reference catalogs (insert-if-missing). Wipe FO demo: npm run db:seed:demo
 npm run db:seed
 ```
 
@@ -68,8 +69,9 @@ npm run dev
 | `npm run build` | Prisma generate + production build |
 | `npm run start` | Production server |
 | `npm run db:migrate` | Prisma migrate dev |
-| `npm run db:seed` | Seed master data + sample reservations |
-| `docker compose up -d` | Postgres + Redis + app (dev) |
+| `npm run db:seed` | Reference catalogs (insert-if-missing; requires org bind) |
+| `npm run db:seed:demo` | Wipe + Nafta FO lab profile (never droplet entrypoint) |
+| `docker compose up -d` | Postgres + Redis + app (dev); `RUN_SEED` default false |
 
 ## Auth (satellite-local RBAC)
 

@@ -9,6 +9,7 @@ import type { CodClearingDto } from "./dto/cod-clearing.dto";
 import type { SupplierMatchDto } from "./dto/supplier-match.dto";
 import type { ExternalPurchaseDto } from "./dto/external-purchase.dto";
 import type { EligibilityCheckDto } from "./dto/eligibility-check.dto";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 @Injectable()
 export class IndustryHandoffsService {
@@ -357,7 +358,7 @@ export class IndustryHandoffsService {
 
     const result = await this.inventory.recordPurchase(organizationId, {
       counterpartyId: dto.counterpartyId,
-      documentDate: new Date().toISOString().slice(0, 10),
+      documentDate: todayBakuYmd(),
       reference: dto.externalRef,
       lines: dto.lines.map((line, i) => ({
         productId: products[i]!.id,

@@ -1,5 +1,6 @@
 "use client";
 
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -50,7 +51,7 @@ export default function ApAgingPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
-  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [asOf, setAsOf] = useState(() => todayBakuYmd());
   const [data, setData] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

@@ -12,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -104,7 +105,7 @@ export default function EventProfitabilityPage() {
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id} className="border-b">
-                <td className="py-2">{new Date(r.eventDate).toLocaleDateString()}</td>
+                <td className="py-2">{bakuDateDisplay(r.eventDate)}</td>
                 <td className="py-2">
                   <Link href={`/banquets/${r.id}`} className="text-[#3498DB] underline">
                     {r.eventName}

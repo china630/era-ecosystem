@@ -18,26 +18,18 @@ import { PricingService } from "../admin/pricing.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { parseToggleModuleMetadata } from "./billing-module-toggle.helpers";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import {
+  bakuCivilUtcDate,
+  bakuDateKey,
+  bakuMonthBounds,
+  billingPeriodKeyBaku,
+} from "./baku-billing.util";
 
 function isModuleActiveInSubscription(active: string[], key: string): boolean {
   if (active.includes(key)) return true;
   if (key === "manufacturing") return active.includes("production");
   if (key === "ifrs_mapping") return active.includes("ifrs");
   return false;
-}
-
-function startOfMonthUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
-}
-
-function endOfMonthUtc(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59, 999));
-}
-
-function billingPeriodLabelUtc(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
 }
 
 @Injectable()
@@ -91,16 +83,9 @@ export class BillingPlatformService {
     }
 
     const paidAt = order.paidAt ?? new Date();
-    const periodStart = startOfMonthUtc(paidAt);
-    const periodEnd = endOfMonthUtc(paidAt);
-    const billingPeriod = billingPeriodLabelUtc(paidAt);
-    const dateOnly = new Date(
-      Date.UTC(
-        paidAt.getUTCFullYear(),
-        paidAt.getUTCMonth(),
-        paidAt.getUTCDate(),
-      ),
-    );
+    const billingPeriod = billingPeriodKeyBaku(paidAt);
+    const { from: periodStart, to: periodEnd } = bakuMonthBounds(billingPeriod);
+    const dateOnly = bakuCivilUtcDate(bakuDateKey(paidAt));
 
     const toggleMeta = parseToggleModuleMetadata(order.metadata);
     const desc =
@@ -377,7 +362,7 @@ export class BillingPlatformService {
       doc.text(`Date: ${invoice.date.toISOString().slice(0, 10)}`);
       if (invoice.periodStart && invoice.periodEnd) {
         doc.text(
-          `Period: ${invoice.periodStart.toISOString().slice(0, 10)} — ${invoice.periodEnd.toISOString().slice(0, 10)}`,
+          `Period: ${bakuDateKey(invoice.periodStart)} — ${bakuDateKey(invoice.periodEnd)}`,
         );
       }
       if (invoice.paymentOrderId) {

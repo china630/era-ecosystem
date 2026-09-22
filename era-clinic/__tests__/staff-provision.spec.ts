@@ -8,6 +8,11 @@ jest.mock("@/lib/auth/ensure-system-clinic-roles", () => ({
   ensureSystemClinicRoles: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock("@/domain/catalog/ensure-clinic-catalog-from-templates", () => ({
+  ensureClinicCatalogFromTemplates: jest.fn().mockResolvedValue(undefined),
+  ensureClinicCatalogIfEmpty: jest.fn().mockResolvedValue({ skipped: true }),
+}));
+
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     role: {

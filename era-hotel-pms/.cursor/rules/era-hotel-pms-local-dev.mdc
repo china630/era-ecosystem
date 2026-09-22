@@ -17,7 +17,9 @@ Next.js App Router: `app/` (UI) + `app/api/` (Route Handlers). Prisma: `prisma/s
 |---------|---------|
 | `npm run dev` | Dev server :3201 |
 | `npm run db:migrate` / `db:push` | Prisma schema |
-| `npm run db:seed` | Demo data |
+| `npm run db:seed` | Reference catalogs (insert-if-missing; requires org bind) |
+| `npm run db:seed:demo` | Wipe + Nafta lab profile (never droplet entrypoint) |
+| `npm run db:seed:reference` | Alias of `db:seed` |
 
 ## Env (satellite)
 

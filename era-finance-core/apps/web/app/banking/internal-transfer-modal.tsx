@@ -16,6 +16,7 @@ import {
 } from "../../lib/design-system";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader } from "@erafinance/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type BankAccount = {
   id: string;
@@ -51,7 +52,7 @@ export function InternalTransferModal({
   const [targetAmount, setTargetAmount] = useState("");
   const [commission, setCommission] = useState("");
   const [depositSource, setDepositSource] = useState<"KASSA" | "FOUNDER">("KASSA");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayBakuYmd());
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {

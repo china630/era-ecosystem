@@ -30,6 +30,7 @@ import {
   type PurchaseLineFormValue,
   type PurchaseLineVatMode,
 } from "./purchase-validation";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type Counterparty = { id: string; name: string; taxId: string };
 
@@ -46,7 +47,7 @@ function newServiceLine(): LineRow {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayBakuYmd();
 }
 
 function fieldErrorClass(hasError: boolean) {

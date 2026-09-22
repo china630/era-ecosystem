@@ -9,6 +9,7 @@ import {
   PurchaseRequestApprovalDecision,
   PurchaseRequestStatus,
 } from "@erafinance/database";
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
 import type { ApprovePurchaseRequestDto } from "./dto/approve-purchase-request.dto";
@@ -100,7 +101,7 @@ export class PurchaseRequestsService {
   }
 
   private async nextNumber(organizationId: string): Promise<string> {
-    const year = new Date().getUTCFullYear();
+    const year = bakuCalendarYear();
     const prefix = `PR-${year}-`;
     const latest = await this.prisma.purchaseRequest.findFirst({
       where: {

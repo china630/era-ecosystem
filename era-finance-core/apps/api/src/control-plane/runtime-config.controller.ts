@@ -85,5 +85,5 @@ export class RuntimeConfigController {
 }
 
 export async function bootFinanceRuntimeConfig(prisma: PrismaService): Promise<void> {
-  await onSatelliteBoot({ prisma });
+  await onSatelliteBoot({ prisma, satelliteKey: "finance_core" });
 }

@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  FORM_FIELD_GROUP_CLASS,
-  FORM_INPUT_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-} from "./design-system";
+import { FORM_INPUT_CLASS } from "./design-system";
+import { AUTH_FIELD_GROUP_CLASS, AUTH_FIELD_LABEL_CLASS } from "./auth-login-card";
 import { readLoginOrgNoPrefill } from "../auth/staff-login-org-storage";
 
 export function useStaffLoginOrgNo(searchParams: {
@@ -49,12 +46,13 @@ export function StaffLoginOrgNoField(props: {
   hostBound: boolean;
   label: string;
   placeholder: string;
-  hint: string;
+  hint?: string;
 }): ReactNode {
   if (props.hostBound) return null;
+  const hint = props.hint?.trim();
   return (
-    <label className={FORM_FIELD_GROUP_CLASS}>
-      <span className={MODAL_FIELD_LABEL_CLASS}>{props.label}</span>
+    <label className={AUTH_FIELD_GROUP_CLASS}>
+      <span className={AUTH_FIELD_LABEL_CLASS}>{props.label}</span>
       <input
         className={`${FORM_INPUT_CLASS} font-mono text-sm`}
         value={props.orgNo}
@@ -66,7 +64,7 @@ export function StaffLoginOrgNoField(props: {
         inputMode="numeric"
         maxLength={6}
       />
-      <span className="mt-1 block text-xs text-[#7F8C8D]">{props.hint}</span>
+      {hint ? <span className="block text-xs text-[#7F8C8D]">{hint}</span> : null}
     </label>
   );
 }

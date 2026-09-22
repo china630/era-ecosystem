@@ -7,11 +7,12 @@ import {
   GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import type { ChannelHealth } from './types';
 
 function formatSyncTime(iso: string | null, neverLabel: string) {
   if (!iso) return neverLabel;
-  return new Date(iso).toLocaleString();
+  return bakuDateTimeDisplay(iso);
 }
 
 export function ChannelOverviewTab({

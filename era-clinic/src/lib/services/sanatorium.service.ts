@@ -18,6 +18,7 @@ import {
   applyStayDemographicsCache,
 } from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
+import { bakuDateKey, bakuDayBounds, parseBakuDateTime } from '@/lib/baku-day';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -868,13 +869,26 @@ export async function createEpisodeLabOrder(
   const patientRefId = episode.patientRefId;
 
   // Fasting labs: schedule collection for next working morning (Asia/Baku ~08:00)
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(8, 0, 0, 0);
-  // Skip Sunday (0)
-  if (tomorrow.getDay() === 0) {
-    tomorrow.setDate(tomorrow.getDate() + 1);
+  let nextYmd = bakuDateKey(new Date(Date.now() + 86_400_000));
+  const BAKU_WEEKDAY: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  for (let i = 0; i < 7; i++) {
+    const { start } = bakuDayBounds(nextYmd);
+    const wd = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Baku",
+      weekday: "short",
+    }).format(start);
+    if (BAKU_WEEKDAY[wd] !== 0) break;
+    nextYmd = bakuDateKey(new Date(start.getTime() + 86_400_000));
   }
+  const tomorrow = parseBakuDateTime(nextYmd, "08:00");
 
   const service = await prisma.diagnosticService.findFirst({
     where: { OR: [{ code: testCode }, { serviceCode: testCode }] },

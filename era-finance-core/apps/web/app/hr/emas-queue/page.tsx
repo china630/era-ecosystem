@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CatalogField } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../../lib/api-client";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -301,7 +302,7 @@ export default function EmasQueuePage() {
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.submittedAt
-                        ? new Date(row.submittedAt).toLocaleString()
+                        ? bakuDateTimeDisplay(row.submittedAt)
                         : "—"}
                       {row.submittedByLabel ||
                       row.submittedByEmail ||

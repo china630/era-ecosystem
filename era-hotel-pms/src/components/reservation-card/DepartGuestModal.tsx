@@ -8,6 +8,8 @@ import {
   Field,
   TEXT_MUTED_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuTimeLabel } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 export function DepartGuestModal({
@@ -33,11 +35,8 @@ export function DepartGuestModal({
 }) {
   const t = useTranslations('reservationCard');
   const tc = useTranslations('common');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [time, setTime] = useState(() => {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  });
+  const [date, setDate] = useState(() => hotelDateKey());
+  const [time, setTime] = useState(() => bakuTimeLabel(new Date()));
   const [folioMode, setFolioMode] = useState<'LEAVE_ON_PRIMARY' | 'CLOSE_PERSONAL'>(
     'LEAVE_ON_PRIMARY',
   );

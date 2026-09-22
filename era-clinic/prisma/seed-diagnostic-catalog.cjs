@@ -1,11 +1,11 @@
 /**
- * Diagnostic catalog: satellite base then Nafta org overlay.
+ * Diagnostic catalog: satellite base templates then Nafta org overlay.
  * Run: node prisma/seed-diagnostic-catalog.cjs
- * ADR: docs/adr/clinic-catalog-base-and-org-overlay-seeds.md
+ * ADR: docs/adr/clinic-catalog-template-overlay.md
  */
 const { PrismaClient } = require("@prisma/client");
 const {
-  seedOrgId,
+  requireSeedOrgId,
   seedDiagnosticBase,
   seedDiagnosticNafta,
 } = require("./seed-diagnostic-catalog-lib.cjs");
@@ -13,8 +13,8 @@ const {
 const prisma = new PrismaClient();
 
 async function main() {
-  const organizationId = seedOrgId();
-  const base = await seedDiagnosticBase(prisma, organizationId);
+  const base = await seedDiagnosticBase(prisma);
+  const organizationId = requireSeedOrgId();
   const nafta = await seedDiagnosticNafta(prisma, organizationId);
   console.log(
     "[seed-diagnostic-catalog] org=" +

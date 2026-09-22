@@ -17,6 +17,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -154,7 +155,7 @@ export default function AuditPage() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{new Date(row.createdAt).toLocaleString()}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.createdAt)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{row.action}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{row.entityType}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{row.entityId}</td>

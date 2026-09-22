@@ -23,16 +23,16 @@ Clinic runs on SHARED topology: catalogs remain **org-scoped rows** (`organizati
 3. **Seed commands (org A — copy universal into the org, then overlay)**  
    - `db:seed:physio:base` → `db:seed:physio:nafta` (wrapper `db:seed:physio` runs both).  
    - `db:seed:diagnostic-catalog:base` → `:nafta` (wrapper `db:seed:diagnostic-catalog` runs both).  
-   - Target org: `ERA_SATELLITE_ORGANIZATION_ID` / `ORGANIZATION_ID` / `demo-org`.
+   - Target org: `ERA_SATELLITE_ORGANIZATION_ID` / `ORGANIZATION_ID` (never `demo-org`). See [satellite-seed-hygiene.md](./satellite-seed-hygiene.md).
 
 4. **Matcher** loads **merged** catalog (base zones + Nafta overlay). Coverage CLI / golden tests use the same merge helper so aliases are not duplicated by hand in a third file.
 
-5. **Out of scope:** moving PhysioSite / DiagnosticService to satellite-global tables (no `organizationId`). ICD-10 remains the only intentional global clinical reference in clinic DB.
+5. **Superseded for table shape:** unscoped **template** tables + org overlay + Connect copy-if-empty are decided in [clinic-catalog-template-overlay.md](./clinic-catalog-template-overlay.md). Base vs Nafta **JSON** layers above still apply. ICD-10 remains an unscoped clinical reference (`IcdCode`).
 
 ## Consequences
 
 - A second org on the same SHARED clinic DB gets base without Nafta WO noise unless its overlay is applied.  
-- Droplet ops: base then Nafta overlay (or the wrappers), then re-Apply `#23` / `#31` as before.  
-- SatAdmin can still edit either layer’s rows after seed; JSON is bootstrap only.  
-- Diagnostic SKU codes follow `{FAMILY}-{ENGLISH_SLUG}` in `diagnostic-lab-catalog.json`. `seed-diagnostic-catalog` remaps live rows from `catalog-code-canon.map.json` (e.g. `ECG-12` → `CARDIO-ECG`) before upsert so old codes are not duplicated. Do not run full `db:seed` on production to pick this up — `npm run db:seed:diagnostic-catalog` (and intake-blocks if needed) is enough.  
-- Nafta commercial prices: annotated Chingiz tariff → `chingiz-tariff-prices.json`, merged into `era-prices.json` (Import Nafta / `load-nafta-prices`). Collapsed aliases keep the **higher** list price. Do not Sync from Finance on the droplet (empty catalog stubs).
+- Droplet ops: `CLINIC_RUN_SEED=false`; templates via migrate/`db:seed`; org overlay via Connect copy-if-empty + import wizard. Do **not** run `db:seed:diagnostic-catalog` on production.  
+- SatAdmin can still edit overlay rows after copy; JSON is bootstrap into **templates** only.  
+- Diagnostic SKU codes follow `{FAMILY}-{ENGLISH_SLUG}` in `diagnostic-lab-catalog.json`. Canon remap runs on Nafta overlay seed (`applyCatalogCodeCanon`) for existing org rows.  
+- Nafta commercial prices: annotated Chingiz tariff → `chingiz-tariff-prices.json`, merged into `era-prices.json` (Import Nafta / `load-nafta-prices` in `db:seed:demo` only). Collapsed aliases keep the **higher** list price. Do not Sync from Finance on the droplet (empty catalog stubs).

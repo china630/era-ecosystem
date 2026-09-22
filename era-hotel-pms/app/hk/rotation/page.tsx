@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type Row = {
@@ -12,7 +13,7 @@ type Row = {
 
 export default function HkRotationPage() {
   const t = useTranslations('housekeeping');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => hotelDateKey());
   const [rows, setRows] = useState<Row[]>([]);
   const [drag, setDrag] = useState<string | null>(null);
 

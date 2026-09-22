@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsDataTable, OpsModalShell, useOpsModal } from "@/components/ops";
 import { OpsError, OpsResult, StatusBadge } from "@/components/ops-ui";
 
@@ -83,7 +84,7 @@ function FxDealsPageInner() {
           baseAmountMinor: String(baseMinor),
           quoteAmountMinor: String(Math.round(baseMinor * rate)),
           rate,
-          valueDate: new Date().toISOString(),
+          valueDate: todayBakuYmd(),
           idempotencyKey: `fx-ui-${Date.now()}`,
         }),
       });

@@ -17,7 +17,7 @@
     "openApi": "API"
   },
   "login": {
-    "title": "Daxil ol",
+    "title": "Giriş",
     "retailTab": "Fərdi",
     "corporateTab": "Korporativ",
     "finLabel": "FIN",
@@ -25,10 +25,15 @@
     "otpRequest": "OTP göndər",
     "otpVerify": "Təsdiqlə",
     "otpCode": "OTP kodu",
-    "asanLogin": "ASAN İmza (stub)",
+    "asanLogin": "ASAN İmza",
     "asanComplete": "ASAN təsdiqi",
-    "devHint": "Dev OTP: 123456",
-    "asanStubBadge": "ASAN İmza / SİMA stub rejimindədir — canlı dövlət imzası deyil (canlı = sertifikasiya)."
+    "finPlaceholder": "7 simvol",
+    "voenPlaceholder": "10 rəqəm",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status"
   },
   "dashboard": {
     "title": "Əsas",

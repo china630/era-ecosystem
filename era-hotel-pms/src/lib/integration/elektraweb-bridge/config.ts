@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   enterSatelliteTenant,
+  getRuntimeConfigMemory,
   resolveSatelliteTenantOrgId,
   satelliteOrganizationId,
 } from "@era/satellite-kit";
@@ -22,8 +23,10 @@ export type ElektrawebBridgePolicyRow = {
   walkinResNameId: string | null;
 };
 
-/** Pool-wide kill switch — not a per-org Nafta id. */
+/** Pool-wide kill switch — runtime-config `vendorBridgesEnabled`, else install env. */
 export function isElektrawebBridgeEnabled(): boolean {
+  const fromMem = getRuntimeConfigMemory().vendorBridgesEnabled;
+  if (typeof fromMem === "boolean") return fromMem;
   return process.env.ELEKTRAWEB_BRIDGE_ENABLED === "1";
 }
 

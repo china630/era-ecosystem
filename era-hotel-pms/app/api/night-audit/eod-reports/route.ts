@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
         400,
       );
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     const date = url.searchParams.get('date') ?? today;
     return jsonOk(serialize(await getEodReport(parsed.data as EodReportType, date)));
   } catch (err) {

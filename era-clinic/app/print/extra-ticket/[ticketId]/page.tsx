@@ -5,6 +5,7 @@ import { loadExtraTicketPrint } from "@/domain/procedure/extra-ticket.service";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
+import { todayBakuYmd } from "@/lib/baku-day";
 
 type Props = {
   params: Promise<{ ticketId: string }>;
@@ -39,7 +40,7 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
     nationality: first.patientRef.nationality,
     roomNumber: null,
     doctorName: null,
-    date: new Date().toISOString().slice(0, 10),
+    date: todayBakuYmd(),
   };
 
   return (

@@ -15,6 +15,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type AuditLogRow = {
   kind: "audit_log";
@@ -154,7 +155,7 @@ export default function AuditHubTimelinePage() {
                 {items.map((row) => (
                   <tr key={`${row.kind}-${row.id}`} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-xs`}>
-                      {row.createdAt?.replace("T", " ").slice(0, 19) ?? "—"}
+                      {row.createdAt ? bakuDateTimeDisplay(row.createdAt) : "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-xs`}>{row.kind}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>

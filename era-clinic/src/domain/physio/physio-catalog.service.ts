@@ -54,6 +54,10 @@ export type PhysioListItemInput = {
 };
 
 export async function listPhysioSites(opts?: { q?: string; activeOnly?: boolean }) {
+  const { ensureClinicCatalogIfEmpty } = await import(
+    "@/domain/catalog/ensure-clinic-catalog-from-templates"
+  );
+  await ensureClinicCatalogIfEmpty(prisma, orgId());
   const q = opts?.q?.trim();
   return prisma.physioSite.findMany({
     where: {

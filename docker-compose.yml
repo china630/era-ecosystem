@@ -4,6 +4,13 @@
 
 name: era-ecosystem
 
+# Shared control-plane bootstrap for industry satellites (values unchanged — DRY only).
+x-satellite-control-plane-env: &satellite-control-plane-env
+  ERA_IN_DOCKER: "1"
+  ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
+  CONTROL_PLANE_URL: http://orchestrator:4000
+  SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -252,8 +259,8 @@ services:
     container_name: era-hotel-pms
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${HOTEL_DB:-era_hotel_pms}?schema=public
       REDIS_URL: redis://redis:6379/2
       PORT: "3201"
@@ -267,8 +274,6 @@ services:
       AUTH_COOKIE_NAME: ${HOTEL_AUTH_COOKIE_NAME:-era_hotel_session}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}}
       MDM_INTERNAL_SERVICE_TOKEN: ${MDM_INTERNAL_SERVICE_TOKEN:-${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-}}}}
       ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-}}}
@@ -278,6 +283,8 @@ services:
       PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
       # Process kill switch for Elektraweb live bridge (HOT-06). Per-org ids live on ElektrawebBridgePolicy.
       ELEKTRAWEB_BRIDGE_ENABLED: ${ELEKTRAWEB_BRIDGE_ENABLED:-0}
+      # First empty lab: HOTEL_RUN_SEED=true once (db:seed = reference insert-if-missing, never wipe)
+      RUN_SEED: ${HOTEL_RUN_SEED:-false}
     ports:
       - "3201:3201"
     depends_on:
@@ -298,8 +305,8 @@ services:
     container_name: era-fnb-pos
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FNB_POS_DB:-era_fnb_pos}?schema=public
       REDIS_URL: redis://redis:6379/3
       PORT: "3202"
@@ -311,12 +318,12 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       AUTH_COOKIE_NAME: ${FNB_AUTH_COOKIE_NAME:-era_fnb_session}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_FB_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-shirinov.chingiz@gmail.com}
       PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: ${PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD:-}
+      # First empty lab: FNB_RUN_SEED=true once (db:seed = reference; wipe only via db:seed:demo)
+      RUN_SEED: ${FNB_RUN_SEED:-false}
     ports:
       - "3202:3202"
     depends_on:
@@ -341,13 +348,11 @@ services:
     container_name: era-retail-pos
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${RETAIL_POS_DB:-era_retail_pos}?schema=public
       PORT: "3204"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_RETAIL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -371,13 +376,11 @@ services:
     container_name: era-logistics
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${LOGISTICS_DB:-era_logistics}?schema=public
       PORT: "3205"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -401,13 +404,11 @@ services:
     container_name: era-construction
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CONSTRUCTION_DB:-era_construction}?schema=public
       PORT: "3206"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -431,13 +432,11 @@ services:
     container_name: era-crm
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CRM_DB:-era_crm}?schema=public
       PORT: "3207"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -461,13 +460,11 @@ services:
     container_name: era-auto-service
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${AUTO_SERVICE_DB:-era_auto_service}?schema=public
       PORT: "3208"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -491,13 +488,11 @@ services:
     container_name: era-wholesale
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${WHOLESALE_DB:-era_wholesale}?schema=public
       PORT: "3209"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
@@ -521,8 +516,8 @@ services:
     container_name: era-clinic
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CLINIC_DB:-era_clinic}?schema=public
       PORT: "3203"
       HOSTNAME: 0.0.0.0
@@ -530,9 +525,7 @@ services:
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       CONTROL_PLANE_URL: http://orchestrator:4000
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}}
       MDM_INTERNAL_SERVICE_TOKEN: ${MDM_INTERNAL_SERVICE_TOKEN:-${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-}}}}
       ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}}}
@@ -566,7 +559,8 @@ services:
       API_PORT: "4300"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${BANK_CORE_DB:-era_bank_core}?schema=public
       REDIS_URL: redis://redis:6379/5
-      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
+      # Set after orch bind — never default demo-bank-org-001 (ghost tenant)
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-}
       BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       CONTROL_PLANE_URL: http://orchestrator:4000
@@ -577,7 +571,8 @@ services:
       # Shared with era-bank-dbo for customer JWT + channel session signing
       BANK_DBO_JWT_SECRET: ${BANK_DBO_JWT_SECRET:-${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}}
       DEV_OTP_CODE: ${DEV_OTP_CODE:-123456}
-      RUN_SEED: ${BANK_CORE_RUN_SEED:-true}
+      # Do not re-seed on every recreate. First empty lab: BANK_CORE_RUN_SEED=true once (needs real org)
+      RUN_SEED: ${BANK_CORE_RUN_SEED:-false}
     ports:
       - "${BANK_CORE_API_PUBLISH_PORT:-4300}:4300"
     depends_on:
@@ -598,24 +593,23 @@ services:
     container_name: era-bank
     restart: unless-stopped
     environment:
+      <<: *satellite-control-plane-env
       NODE_ENV: production
-      ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${BANK_SATELLITE_DB:-era_bank}?schema=public
       PORT: "3210"
       HOSTNAME: 0.0.0.0
       ERA_BANK_CORE_URL: http://bank-core:4300
       BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
-      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
-      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-demo-bank-org-001}}
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       CONTROL_PLANE_URL: http://orchestrator:4000
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
-      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_KEY: industry_banking
       ERA_LOGIN_POOL_HOSTS: bank.era-365.online
-      RUN_SEED: ${BANK_RUN_SEED:-true}
+      # First empty lab: BANK_RUN_SEED=true once after bind
+      RUN_SEED: ${BANK_RUN_SEED:-false}
     ports:
       - "${BANK_SATELLITE_PUBLISH_PORT:-3210}:3210"
     depends_on:
@@ -645,12 +639,13 @@ services:
       HOSTNAME: 0.0.0.0
       ERA_BANK_CORE_URL: http://bank-core:4300
       BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
-      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-}
       BANK_DBO_JWT_SECRET: ${BANK_DBO_JWT_SECRET:-${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}}
       DEV_OTP_CODE: ${DEV_OTP_CODE:-123456}
       ERA_SATELLITE_KEY: banking_dbo
       ERA_LOGIN_POOL_HOSTS: dbo.era-365.online
-      RUN_SEED: ${BANK_DBO_RUN_SEED:-true}
+      # Demo Open API key is db:seed:demo only — never rotate on every up
+      RUN_SEED: ${BANK_DBO_RUN_SEED:-false}
     ports:
       - "${BANK_DBO_PUBLISH_PORT:-3211}:3211"
     depends_on:

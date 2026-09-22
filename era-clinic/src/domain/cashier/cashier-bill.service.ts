@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds } from "@/lib/baku-day";
 import {
   resolveBillingTarget,
   type BillingTargetKind,
@@ -191,12 +192,10 @@ export async function listCashierQueue(filters: QueueFilters = {}) {
 
   const createdAt: { gte?: Date; lt?: Date } = {};
   if (filters.dateFrom) {
-    createdAt.gte = new Date(`${filters.dateFrom}T00:00:00.000Z`);
+    createdAt.gte = bakuDayBounds(filters.dateFrom).start;
   }
   if (filters.dateTo) {
-    const end = new Date(`${filters.dateTo}T00:00:00.000Z`);
-    end.setUTCDate(end.getUTCDate() + 1);
-    createdAt.lt = end;
+    createdAt.lt = bakuDayBounds(filters.dateTo).end;
   }
 
   const visits = await prisma.visit.findMany({

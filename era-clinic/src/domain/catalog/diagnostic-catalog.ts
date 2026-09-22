@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import type {
   CatalogAnalyteDef,
   CatalogFieldDef,
@@ -32,12 +33,17 @@ type DiagnosticCatalog = {
   groups: DiagnosticCatalogGroup[];
 };
 
-let cached: DiagnosticCatalog | null = null;
-let inflight: Promise<DiagnosticCatalog> | null = null;
+let cachedByOrg = new Map<string, DiagnosticCatalog>();
+let inflightByOrg = new Map<string, Promise<DiagnosticCatalog>>();
 
-export function invalidateDiagnosticCatalogCache(): void {
-  cached = null;
-  inflight = null;
+export function invalidateDiagnosticCatalogCache(organizationId?: string): void {
+  if (organizationId) {
+    cachedByOrg.delete(organizationId);
+    inflightByOrg.delete(organizationId);
+    return;
+  }
+  cachedByOrg = new Map();
+  inflightByOrg = new Map();
 }
 
 function ensureGroup(
@@ -56,10 +62,10 @@ function ensureGroup(
   return g;
 }
 
-async function loadDiagnosticCatalogFromDb(): Promise<DiagnosticCatalog> {
+async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<DiagnosticCatalog> {
   const [modalities, metaFieldRows] = await Promise.all([
     prisma.modality.findMany({
-      where: { active: true },
+      where: { organizationId, active: true },
       orderBy: { sortOrder: "asc" },
       include: {
         services: {
@@ -163,17 +169,30 @@ async function loadDiagnosticCatalogFromDb(): Promise<DiagnosticCatalog> {
   };
 }
 
-export async function getDiagnosticCatalog(): Promise<DiagnosticCatalog> {
-  if (cached) return cached;
+export async function getDiagnosticCatalog(
+  organizationId?: string,
+): Promise<DiagnosticCatalog> {
+  const orgId = (organizationId ?? requestOrganizationId()).trim();
+  if (!orgId) {
+    throw new Error("organizationId required for getDiagnosticCatalog");
+  }
+  const hit = cachedByOrg.get(orgId);
+  if (hit) return hit;
+  const { ensureClinicCatalogIfEmpty } = await import(
+    "@/domain/catalog/ensure-clinic-catalog-from-templates"
+  );
+  await ensureClinicCatalogIfEmpty(prisma, orgId);
+  let inflight = inflightByOrg.get(orgId);
   if (!inflight) {
-    inflight = loadDiagnosticCatalogFromDb()
+    inflight = loadDiagnosticCatalogFromDb(orgId)
       .then((result) => {
-        cached = result;
+        cachedByOrg.set(orgId, result);
         return result;
       })
       .finally(() => {
-        inflight = null;
+        inflightByOrg.delete(orgId);
       });
+    inflightByOrg.set(orgId, inflight);
   }
   return inflight;
 }

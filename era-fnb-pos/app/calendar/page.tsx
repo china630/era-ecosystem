@@ -1,5 +1,6 @@
 "use client";
 
+import { todayBakuYmd, bakuTimeLabel } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
@@ -34,7 +35,7 @@ export default function CalendarPage() {
   const tc = useTranslations("common");
   const [tables, setTables] = useState<Table[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayBakuYmd);
   const [tableId, setTableId] = useState("");
   const [startAt, setStartAt] = useState("19:00");
   const [endAt, setEndAt] = useState("21:00");
@@ -140,7 +141,7 @@ export default function CalendarPage() {
               <tr key={b.id} className="border-t border-[#D5DADF]">
                 <td className="px-4 py-2">{b.table.code}</td>
                 <td className="px-4 py-2">
-                  {b.startAt.slice(11, 16)}–{b.endAt.slice(11, 16)}
+                  {bakuTimeLabel(b.startAt)}–{bakuTimeLabel(b.endAt)}
                 </td>
                 <td className="px-4 py-2">{b.guestName ?? tc("emDash")}</td>
                 <td className="px-4 py-2">{b.partySize}</td>

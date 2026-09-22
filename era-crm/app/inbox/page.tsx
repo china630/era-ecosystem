@@ -16,6 +16,7 @@ import {
 
 const threadFormId = "new-thread-form";
 import { PageHeader } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type InboxThread = {
   id: string;
@@ -141,7 +142,7 @@ export default function InboxPage() {
                       <p className="mt-1 text-[#7F8C8D]">{thread.preview}</p>
                     )}
                     <div className="mt-1 text-[11px] text-[#7F8C8D]">
-                      {new Date(thread.lastMessageAt).toLocaleString()}
+                      {bakuDateTimeDisplay(thread.lastMessageAt)}
                       {thread.lead && ` · ${t("linked")}: ${thread.lead.title}`}
                     </div>
                   </div>

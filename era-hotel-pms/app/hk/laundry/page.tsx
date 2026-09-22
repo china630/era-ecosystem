@@ -10,6 +10,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 
 type Item = { id: string; code: string; name: string; washPrice: number; ironPrice: number };
 type Stay = {
@@ -186,7 +187,7 @@ export default function HkLaundryPage() {
           <li key={tk.id} className="mb-2 flex flex-wrap items-center gap-2">
             <span>
               {tk.guestName} · {tk.status}
-              {tk.dueAt ? ` · due ${tk.dueAt.slice(0, 16)}` : ''}
+              {tk.dueAt ? ` · due ${bakuDateTimeDisplay(tk.dueAt)}` : ''}
               {tk.folioChargeId ? ` · folio ${tk.folioChargeId.slice(0, 8)}` : ''}
             </span>
             {tk.status === 'IN_PLANT' ? (

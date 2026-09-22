@@ -22,6 +22,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -543,7 +544,7 @@ export default function IntegrationAdminPage() {
               })
               .map((l) => (
                 <tr key={l.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{new Date(l.createdAt).toLocaleString()}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(l.createdAt)}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} max-w-[10rem] truncate`}>
                     {l.eventType.replace('SATELLITE_HOTEL_', '')}
                   </td>

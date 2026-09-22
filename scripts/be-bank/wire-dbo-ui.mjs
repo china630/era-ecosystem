@@ -264,6 +264,7 @@ write(
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { addBakuDays, parseBakuDateTime, todayBakuYmd } from "@era/satellite-kit/time";
 
 type Row = {
   id: string;
@@ -282,7 +283,7 @@ export default function StandingOrdersPage() {
     fromAccountId: "",
     toIban: "",
     amountMinor: "",
-    nextRunAt: new Date(Date.now() + 86400000).toISOString(),
+    nextRunAt: parseBakuDateTime(addBakuDays(todayBakuYmd(), 1), "09:00:00").toISOString(),
   });
 
   async function load() {

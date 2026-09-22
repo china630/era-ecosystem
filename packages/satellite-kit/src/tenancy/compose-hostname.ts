@@ -59,3 +59,27 @@ export function rewriteComposeHostnameForHost(url: string): string {
   if (!parsed.port) parsed.port = mappedPort;
   return parsed.origin.replace(/\/$/, "");
 }
+
+/** Traefik / loopback orch URLs are not reachable as the event bus from inside Compose. */
+export function isPublicOrchestratorUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url.trim());
+    if (parsed.protocol === "https:") return true;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.endsWith("era-365.online") ||
+      host === "localhost" ||
+      host === "127.0.0.1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Inside Docker, never use public/loopback orch for S2S — compose DNS only. */
+export function preferInClusterOrchestratorUrl(url: string): string {
+  const rewritten = rewriteComposeHostnameForHost(url);
+  if (!isRunningInsideDocker()) return rewritten;
+  if (isPublicOrchestratorUrl(rewritten)) return "http://orchestrator:4000";
+  return rewritten;
+}

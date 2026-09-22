@@ -202,9 +202,10 @@ export default nextConfig;
     `${base}/.env.example`,
     `DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/${s.db}?schema=public
 PORT=${s.port}
-ORCHESTRATOR_EVENT_URL=http://localhost:4100
+ORCHESTRATOR_EVENT_URL=http://127.0.0.1:4000
 SATELLITE_EVENT_SERVICE_TOKEN=dev-satellite-event-token
-ERA_SATELLITE_ORGANIZATION_ID=demo-org
+# Leave unset so Sync/DB bind wins. Never demo-org.
+# ERA_SATELLITE_ORGANIZATION_ID=
 `,
   );
 

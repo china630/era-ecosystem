@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type Cell = {
@@ -17,11 +18,10 @@ const DEPTS = ['ROOMS', 'PUBLIC_AREA', 'LAUNDRY'];
 export default function HkRosterPage() {
   const t = useTranslations('housekeeping');
   const [weekStart, setWeekStart] = useState(() => {
-    const d = new Date();
-    const day = d.getUTCDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setUTCDate(d.getUTCDate() + diff);
-    return d.toISOString().slice(0, 10);
+    const today = hotelDateKey();
+    const dow = parseHotelNoon(today).getUTCDay();
+    const diff = dow === 0 ? -6 : 1 - dow;
+    return addHotelDays(today, diff);
   });
   const [cells, setCells] = useState<Cell[]>([]);
   const [order, setOrder] = useState<string[]>([]);
@@ -42,7 +42,7 @@ export default function HkRosterPage() {
       if (!ids.includes(c.housekeeper.id)) ids.push(c.housekeeper.id);
     }
     setOrder(ids);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = hotelDateKey();
     const rot = await fetch(`/api/housekeeping/rotation?date=${today}`);
     if (rot.ok) {
       const list = await rot.json();

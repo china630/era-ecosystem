@@ -10,6 +10,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -101,7 +102,7 @@ export default function BanquetCalendarPage() {
               <tr key={b.id} className="border-b">
                 <td className="py-2">{b.banquetEvent.eventName}</td>
                 <td className="py-2">{b.saloon?.name ?? b.label ?? '—'}</td>
-                <td className="py-2">{new Date(b.startAt).toLocaleString()}</td>
+                <td className="py-2">{bakuDateTimeDisplay(b.startAt)}</td>
                 <td className="py-2">{b.banquetEvent.pax}</td>
                 <td className="py-2">{b.banquetEvent.status}</td>
               </tr>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bakuDateKey, bakuTimeLabel, parseBakuDateTime } from "@era/satellite-kit/time";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { appointmentCreateDenied } from "@/lib/appointment-gates";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
@@ -29,10 +30,10 @@ export async function POST(req: Request) {
     const denied = appointmentCreateDenied(body);
     if (denied) return jsonError(denied, 400);
     let scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : new Date();
-    const iso = scheduledAt.toISOString().slice(0, 10);
+    const iso = bakuDateKey(scheduledAt);
     const snappedIso = await nextServiceAppointmentDay(iso);
     if (snappedIso !== iso) {
-      scheduledAt = new Date(`${snappedIso}T${scheduledAt.toISOString().slice(11, 19)}.000Z`);
+      scheduledAt = parseBakuDateTime(snappedIso, bakuTimeLabel(scheduledAt));
     }
     const appointment = await prisma.appointment.create({
       data: {

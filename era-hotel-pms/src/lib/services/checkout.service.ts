@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
@@ -146,7 +147,7 @@ export async function checkoutReservation(
       await issueFolioInvoice(f.id).catch((e) => console.error('CL invoice issue failed', e));
     }
     if (completed.agencyId) {
-      const asOf = new Date().toISOString().slice(0, 10);
+      const asOf = todayBakuYmd();
       const { dispatchCityLedgerSnapshot } = await import('@/lib/integration/event-dispatcher');
       await dispatchCityLedgerSnapshot(completed.agencyId, asOf).catch((e) =>
         console.error('CL snapshot failed', e),

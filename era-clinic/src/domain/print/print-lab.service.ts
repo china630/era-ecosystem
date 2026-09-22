@@ -3,6 +3,7 @@ import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import { formatNameAndCode } from "@/lib/display-code";
+import { bakuDateKey } from "@/lib/baku-day";
 
 export type PrintLabRow = {
   no: number;
@@ -73,7 +74,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     nationality: order.patientRef?.nationality ?? null,
     roomNumber: episode?.roomNumber ?? null,
     doctorName: null,
-    date: (order.completedAt ?? order.publishedAt ?? order.createdAt).toISOString().slice(0, 10),
+    date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.createdAt),
   };
 
   const titleParts: string[] = [];

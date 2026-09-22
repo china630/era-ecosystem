@@ -15,6 +15,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 
 type Booking = {
   id: string;
@@ -140,8 +141,8 @@ export default function TourDeparturePage() {
       <PageHeader title={dep.agenda || t('title')} subtitle={`${dep.date.slice(0, 10)} · ${dep.status}`} />
       <section className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
         <p>
-          {t('pickup')}: {new Date(dep.pickupAt).toLocaleString()} → {t('return')}:{' '}
-          {new Date(dep.returnAt).toLocaleString()}
+          {t('pickup')}: {bakuDateTimeDisplay(dep.pickupAt)} → {t('return')}:{' '}
+          {bakuDateTimeDisplay(dep.returnAt)}
         </p>
         <p>
           {t('meetingPoint')}: {dep.meetingPoint || '—'} · {t('guide')}: {dep.guideName || '—'}

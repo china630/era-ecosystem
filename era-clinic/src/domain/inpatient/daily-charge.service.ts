@@ -1,16 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { SATELLITE_CLINIC_WARD_DAY_CHARGE } from "@era/contracts";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
-
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
+import { bakuCivilUtcDate, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
 
 export async function postDailyWardCharges(chargeDate: Date = new Date()) {
-  const day = startOfDay(chargeDate);
-  const dayIso = day.toISOString().slice(0, 10);
+  const dayIso = bakuDateKey(chargeDate);
+  const { start: day } = bakuDayBounds(dayIso);
+  const chargeDay = bakuCivilUtcDate(dayIso);
 
   const admissions = await prisma.inpatientAdmission.findMany({
     where: {
@@ -20,7 +16,7 @@ export async function postDailyWardCharges(chargeDate: Date = new Date()) {
     },
     include: {
       patient: true,
-      dailyCharges: { where: { chargeDate: day }, take: 1 },
+      dailyCharges: { where: { chargeDate: chargeDay }, take: 1 },
       assignments: {
         where: { dischargedAt: null },
         take: 1,
@@ -60,7 +56,7 @@ export async function postDailyWardCharges(chargeDate: Date = new Date()) {
     await prisma.inpatientDailyCharge.create({
       data: {
         admissionId: admission.id,
-        chargeDate: day,
+        chargeDate: chargeDay,
       },
     });
 

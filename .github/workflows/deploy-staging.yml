@@ -59,17 +59,6 @@ jobs:
         with:
           ref: ${{ steps.sha.outputs.value }}
 
-      - name: Resolve image tag
-        id: tag
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
-          else
-            short=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
-            branch="${{ github.event.workflow_run.head_branch }}"
-            echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Resolve deploy scope
         id: scope
         env:
@@ -80,6 +69,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "value=${{ inputs.scope }}" >> "$GITHUB_OUTPUT"
             echo "services=" >> "$GITHUB_OUTPUT"
+            echo "image_tag_mode=sha" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           mkdir -p /tmp/deploy-scope
@@ -90,16 +80,36 @@ jobs:
           SKIP=false
           DEPLOY_SCOPE=all
           DEPLOY_SERVICES=
+          IMAGE_TAG_MODE=sha
           while IFS= read -r line || [ -n "$line" ]; do
             case "$line" in
               SKIP=*) SKIP="${line#SKIP=}" ;;
               DEPLOY_SCOPE=*) DEPLOY_SCOPE="${line#DEPLOY_SCOPE=}" ;;
               DEPLOY_SERVICES=*) DEPLOY_SERVICES="${line#DEPLOY_SERVICES=}" ;;
+              IMAGE_TAG_MODE=*) IMAGE_TAG_MODE="${line#IMAGE_TAG_MODE=}" ;;
             esac
           done < /tmp/deploy-scope/deploy-scope.env
           echo "skip=${SKIP:-false}" >> "$GITHUB_OUTPUT"
           echo "value=${DEPLOY_SCOPE:-all}" >> "$GITHUB_OUTPUT"
           echo "services=${DEPLOY_SERVICES:-}" >> "$GITHUB_OUTPUT"
+          echo "image_tag_mode=${IMAGE_TAG_MODE:-sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # deployScope=all without a full image rebuild must pull floating
+          # branch tags (dev / master). Unbuilt services 404 at branch-<sha>.
+          branch="${{ github.event.workflow_run.head_branch }}"
+          if [ "${{ steps.scope.outputs.image_tag_mode }}" = "floating" ]; then
+            echo "value=${branch}" >> "$GITHUB_OUTPUT"
+          else
+            short=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+            echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
+          fi
 
       # Write .env on the runner and scp it — do not pass the file through SSH envs
       # (huge ERA_ENV_B64 was logged and can truncate sibling vars like the GHCR token).

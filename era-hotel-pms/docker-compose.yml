@@ -44,7 +44,9 @@ services:
       EXTERNAL_HTTP_TIMEOUT_MS: "10000"
       EXTERNAL_RETRY_MAX: "3"
       HOTEL_PROPERTY_CODE: NAFTA-SANATORIUM-001
-      RUN_SEED: "true"
+      # RUN_SEED via HOTEL_RUN_SEED=true → reference seed only (insert-if-missing).
+      # Wipe/demo: host npm run db:seed:demo — never entrypoint.
+      RUN_SEED: ${HOTEL_RUN_SEED:-false}
       NODE_ENV: development
     volumes:
       - .:/app

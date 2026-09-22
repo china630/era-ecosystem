@@ -12,7 +12,7 @@ description: >-
 
 ```bash
 npm run check:acceptance
-npm run run:quality-gates
+npm run run:quality-gates   # includes lint:baku-clock
 ```
 
 **Before git push / «шип + пуш»** (quality-gates + scoped app tests — skill `era-git-ship`):
@@ -36,6 +36,7 @@ npm run ship:prepush:strict
 | Satellite raw SQL | `check:satellite-raw-sql` | `$queryRaw` / `$executeRaw` in satellite runtime (no tenant filter) |
 | Integration | `audit:integration:strict` | MDM/hub/workforce contract drift |
 | Design tokens | `lint:design-tokens`, `lint:token-layers` | Token layer violations |
+| Baku clock | `lint:baku-clock` | UTC “today”, `toLocale*` without TZ, `setHours(0)`, `TZ=` env |
 | Ship pre-push | `npm run ship:prepush` | Same as `run:quality-gates` plus scoped test/build for touched `era-*` (finance NAS + integration). See skill `era-git-ship`. |
 
 ## Agent rules

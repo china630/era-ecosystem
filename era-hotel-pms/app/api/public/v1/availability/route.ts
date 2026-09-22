@@ -8,6 +8,7 @@ import {
   resolveIbeTenant,
   searchIbeAvailability,
 } from '@/lib/channel/ibe.service';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
 export async function OPTIONS(req: Request) {
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
     const { origins, organizationId } = await resolveIbeTenant(req);
     await requireHotelModule('hotel_distribution', organizationId);
     const url = new URL(req.url);
-    const from = url.searchParams.get('from') ?? new Date().toISOString().slice(0, 10);
+    const from = url.searchParams.get('from') ?? todayBakuYmd();
     const nights = Number(url.searchParams.get('nights') ?? '1');
     const adults = Number(url.searchParams.get('adults') ?? '1');
     const children = Number(url.searchParams.get('children') ?? '0');

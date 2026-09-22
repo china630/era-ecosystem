@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { MODAL_INPUT_CLASS } from "@era/satellite-kit/ui";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 
 type OpenShift = {
   id: string;
@@ -142,7 +143,7 @@ export default function PosShiftPanel() {
               {t("openStatus", {
                 outlet: shift.outlet.code,
                 cash: Number(shift.openingCash).toFixed(2),
-                time: new Date(shift.openedAt).toLocaleTimeString(),
+                time: bakuTimeLabel(shift.openedAt),
               })}
               {shift.fiscalDeviceId
                 ? ` · KKM ${shift.fiscalDeviceId.slice(0, 8)}`

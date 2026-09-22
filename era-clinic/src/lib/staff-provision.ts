@@ -11,6 +11,7 @@ import {
   resolveSystemRoleAlias,
 } from "@/lib/clinic-roles";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
+import { ensureClinicCatalogFromTemplates } from "@/domain/catalog/ensure-clinic-catalog-from-templates";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 function latinize(value: string): string {
@@ -129,6 +130,7 @@ async function resolveProvisionRole(
   satelliteRole: string,
 ) {
   await ensureSystemClinicRoles(prisma, organizationId);
+  await ensureClinicCatalogFromTemplates(prisma, organizationId);
   const code = resolveSystemRoleAlias(satelliteRole);
   const role = await prisma.role.findFirst({
     where: { organizationId, code },

@@ -16,10 +16,16 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 const PREFIX = "DEMO-WEEK";
-const ORG =
+const ORG_RAW =
   process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
   process.env.ERA_CLINIC_ORGANIZATION_ID?.trim() ||
-  "demo-clinic-org";
+  "";
+if (!ORG_RAW || ORG_RAW === "demo-org" || ORG_RAW === "demo-clinic-org") {
+  throw new Error(
+    "ERA_SATELLITE_ORGANIZATION_ID required for load-sanatorium-week; demo-org / demo-clinic-org forbidden",
+  );
+}
+const ORG = ORG_RAW;
 
 const DEFAULT_DURATION_MIN = 15;
 const SLOT_MINUTES = 5;

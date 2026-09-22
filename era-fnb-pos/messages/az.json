@@ -4,14 +4,12 @@
     "description": "Restoran zalı, sifarişlər və KDS"
   },
   "login": {
-    "title": "ERA F&B POS",
+    "title": "Giriş",
     "login": "Giriş",
     "password": "Şifrə",
     "submit": "Daxil ol",
-    "demoHint": "Demo: waiter/waiter və ya manager/manager",
-    "subtitle": "Hesabınıza daxil olun",
-    "busy": "…",
-    "ssoHint": "Və ya ERA Finance / Orchestrator SSO"
+    "subtitle": "",
+    "busy": "…"
   },
   "nav": {
     "dashboard": "İcmal",
@@ -248,7 +246,7 @@
     "loginFailed": "Giriş uğursuz oldu",
     "organizationIdLabel": "Təşkilat kodu (ERA ID)",
     "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
-    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz.",
+    "organizationIdHint": "",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",
@@ -267,7 +265,17 @@
     "localeToggleAria": "Dil",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "pinLogin": "Kassir / ofisiant PIN"
+  },
+  "pin": {
+    "outletId": "Outlet",
+    "pin": "PIN",
+    "submit": "Daxil ol",
+    "submitBusy": "…",
+    "invalid": "PIN yanlışdır",
+    "unbound": "PIN outlet-ə bağlı deyil — sahibdən soruşun",
+    "backToLogin": "Şifrə ilə giriş"
   },
   "cutoverImport": {
     "title": "Elektraweb import",

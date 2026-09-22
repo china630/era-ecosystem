@@ -4,6 +4,7 @@ import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
 import type { FolioType, PaymentMethod, Reservation } from '@prisma/client';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { getPropertyCode } from '@/lib/services/hotel.service';
@@ -385,7 +386,20 @@ export async function publishEvent(
       return { dispatched: true, correlationId: envelope.correlationId, attempts: 0 };
     }
     await logOutboundEvent(envelope, 'PENDING', 0);
-    const gateway = await publishToOrchestratorGateway(contractEvent);
+    let gateway: { ok: boolean; status?: number; error?: string };
+    try {
+      gateway = await publishToOrchestratorGateway(contractEvent);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Orchestrator gateway failed';
+      appendFailedLog(envelope, msg);
+      await logOutboundEvent(envelope, 'FAILED', 1, msg);
+      return {
+        dispatched: false,
+        correlationId: envelope.correlationId,
+        error: msg,
+        attempts: 1,
+      };
+    }
     if (gateway.ok) {
       await markIdempotency(envelope.correlationId);
       await logOutboundEvent(envelope, 'SENT', 1);
@@ -518,7 +532,7 @@ export async function buildInvoiceIssuedEvent(
     doc.folio.type === 'COMPANY' ? 'company' : res.agencyId ? 'agency' : 'guest';
   const payload: InvoiceIssuedPayload = {
     invoiceNumber: doc.invoiceNumber ?? doc.id,
-    issueDate: new Date().toISOString().slice(0, 10),
+    issueDate: todayBakuYmd(),
     counterpartyType,
     counterpartyTaxId: doc.counterpartyVoen ?? res.guest.voen,
     reservationId: doc.reservationId,

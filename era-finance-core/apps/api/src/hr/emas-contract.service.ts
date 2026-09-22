@@ -22,6 +22,7 @@ import {
   shouldEnqueueEmasManual,
   type EmasMode,
 } from "./emas-mode";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 export { EMAS_FIELD_MAPPING_VERSION };
 
@@ -474,7 +475,7 @@ export class EmasContractService {
       positionTitle: dto.positionTitle ?? prefill.positionTitle,
       departmentName: dto.departmentName ?? prefill.departmentName,
       salaryGrossAzn: dto.salaryGrossAzn ?? prefill.salaryGrossAzn,
-      effectiveDate: dto.effectiveDate ?? new Date().toISOString().slice(0, 10),
+      effectiveDate: dto.effectiveDate ?? todayBakuYmd(),
     });
 
     return this.pushEvent(
@@ -504,7 +505,7 @@ export class EmasContractService {
       finCode: prefill.finCode,
       salaryGrossAzn: prefill.salaryGrossAzn,
       terminationDate:
-        dto.terminationDate ?? new Date().toISOString().slice(0, 10),
+        dto.terminationDate ?? todayBakuYmd(),
       reason: dto.reason ?? null,
     });
 

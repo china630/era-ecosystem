@@ -27,11 +27,16 @@ const adminRoleCode =
 const fullName = process.env.ECOSYSTEM_DEMO_FULL_NAME ?? "Platform Super Admin";
 
 function seedOrgId(): string {
-  return (
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID required; demo-org is forbidden",
+    );
+  }
+  return id;
 }
 
 function resolveLogins(): string[] {

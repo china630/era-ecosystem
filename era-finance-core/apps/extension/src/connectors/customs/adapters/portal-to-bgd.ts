@@ -25,7 +25,12 @@ function voenFromText(raw: string): string | null {
  * Map open BGD page DOM → flat prefill (legacy / header-only).
  */
 export function mapDomToPrefill(doc: Document): CustomsDeclarationPrefill {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baku",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
   return {
     bgdNumber: textStr(doc, CUSTOMS_SELECTORS.bgdNumber, `BGD-WIDGET-${Date.now()}`),
     bgdDate: textStr(doc, CUSTOMS_SELECTORS.bgdDate, today),

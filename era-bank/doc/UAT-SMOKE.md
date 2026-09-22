@@ -7,8 +7,8 @@ Operational satellite UI/BFF for `era-bank-core`. Engine must be running on `:43
 ## Prerequisites
 
 ```bash
-# Terminal 1 — engine
-cd era-bank-core && npm install && npm run db:seed && npm run dev
+# Terminal 1 — engine (set ERA_BANK_ORGANIZATION_ID after bind)
+cd era-bank-core && npm install && npm run db:seed && npm run db:seed:demo && npm run dev
 
 # Terminal 2 — ops UI
 cd era-bank
@@ -16,16 +16,18 @@ cp .env.example .env
 npm install
 npx prisma db push
 npm run db:seed
+npm run db:seed:demo
 npm run dev
 ```
 
-Set `ERA_BANK_CORE_URL=http://localhost:4300` in `era-bank/.env`.
+Set `ERA_BANK_CORE_URL=http://localhost:4300` and a real `ERA_BANK_ORGANIZATION_ID` in `era-bank/.env` (never `demo-bank-org-001`). Compose defaults `BANK_*_RUN_SEED=false`.
 
 ## Platform
 
 - [ ] `GET /api/health` → 200 `{ status: "ok", service: "era-bank" }`
 - [ ] `/login` loads; `teller-a` / `demo1234` → `/dashboard` (appliance: no ERA ID. SHARED pool: 6-digit org code / `{orgNo}.bank.era-365.online`)
 - [ ] EOD lock banner hidden when no RUNNING EOD
+- [ ] **Clock (Asia/Baku):** `/admin/eod` default business date and EOD lock poll use `todayBakuYmd()` — not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the picker already shows the new Baku day when Node `TZ=UTC`.
 - [ ] Logout → `/login`
 - [ ] `/api/entitlements` returns `banking_*` flags; nav hides inactive modules
 
@@ -123,6 +125,6 @@ Field UAT open → COVERAGE **SCREEN** (not SHOW / not SHIPPED).
 
 ```bash
 docker build -t era-bank ./era-bank
-docker run -p 3210:3210 --env-file era-bank/.env -e RUN_SEED=true era-bank
+docker run -p 3210:3210 --env-file era-bank/.env era-bank
 curl -s http://localhost:3210/api/health
 ```

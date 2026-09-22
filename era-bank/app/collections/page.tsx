@@ -9,6 +9,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { BankDataGrid } from "@/components/BankDataGrid";
 import { OpsModalShell, useOpsModal } from "@/components/ops";
 import { StatusBadge } from "@/components/ops-ui";
@@ -135,7 +136,7 @@ export default function CollectionsPage() {
                   onClick={() =>
                     void act(String(r.id), "ptp", {
                       amountMinor: String(r.outstandingMinor ?? "0"),
-                      dueDate: new Date().toISOString(),
+                      dueDate: todayBakuYmd(),
                     })
                   }
                 >

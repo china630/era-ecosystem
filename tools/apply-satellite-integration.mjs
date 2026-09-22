@@ -336,9 +336,10 @@ export default function Page() {
   for (const line of [
     "AUTH_JWT_SECRET=change-me-min-16-chars",
     "ERA_SSO_SHARED_SECRET=dev-sso-shared-secret",
-    "ORCHESTRATOR_URL=http://localhost:4100",
+    "ORCHESTRATOR_URL=http://127.0.0.1:4000",
     "SATELLITE_EVENT_SERVICE_TOKEN=dev-satellite-event-token",
-    "ERA_SATELLITE_ORGANIZATION_ID=demo-org",
+    // Leave unset — Sync/bind supplies org. Never invent demo-org.
+    "# ERA_SATELLITE_ORGANIZATION_ID=",
   ]) {
     const key = line.split("=")[0];
     if (!env.includes(key + "=")) env += (env.endsWith("\n") || !env ? "" : "\n") + line + "\n";

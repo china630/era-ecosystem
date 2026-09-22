@@ -12,10 +12,12 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface Reservation {
   id: string;
@@ -96,7 +98,7 @@ export default function OperationsPage() {
     const res = await fetch('/api/reservations?status=CONFIRMED');
     if (!res.ok) return;
     const all: Reservation[] = await res.json();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = hotelDateKey();
     setNoShows(all.filter((r) => !r.room && r.checkInDate.slice(0, 10) < today));
   }, []);
 
@@ -284,7 +286,7 @@ export default function OperationsPage() {
               {t('openShiftDetail', {
                 cashier: status.openShift.cashier,
                 register: status.openShift.registerId,
-                time: new Date(status.openShift.openedAt).toLocaleString(),
+                time: bakuDateTimeDisplay(status.openShift.openedAt),
               })}
             </div>
           ) : (
@@ -389,7 +391,7 @@ export default function OperationsPage() {
           <ul className="space-y-2 text-[13px] text-[#7F8C8D]">
             {runs.map((r) => (
               <li key={r.id}>
-                {r.businessDay.date.slice(0, 10)} — {r.status} ({new Date(r.createdAt).toLocaleString()})
+                {r.businessDay.date.slice(0, 10)} — {r.status} ({bakuDateTimeDisplay(r.createdAt)})
               </li>
             ))}
           </ul>

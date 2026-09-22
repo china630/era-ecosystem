@@ -8,23 +8,38 @@ function cuidLike() {
   return `icd_${randomBytes(12).toString("hex")}`;
 }
 
+/**
+ * Load WHO ICD-10 into unscoped IcdCode.
+ * If any rows exist, skip (never wipe diagnoses). Force only with ERA_ICD10_RELOAD=1
+ * when diagnosis tables are empty (or NODE_ENV !== production).
+ */
 async function loadIcd10(prisma = new PrismaClient(), opts = {}) {
-  const own = prisma === undefined;
   const client = prisma;
   const { rows, version } = generateIcd10Catalog();
   const stats = catalogStats(rows);
   const existing = await client.icdCode.count();
   const force = Boolean(opts.force || process.env.ERA_ICD10_RELOAD === "1");
 
-  if (existing > 1000 && !force) {
+  if (existing > 0 && !force) {
     console.log("ICD-10 already loaded", JSON.stringify({ existing, version, skip: true }));
     return { skipped: true, existing, version, stats };
   }
 
-  if (existing > 0) {
-    await client.admissionDiagnosis.deleteMany();
-    await client.visitDiagnosis.deleteMany();
-    await client.clinicalDiagnosis.deleteMany();
+  if (existing > 0 && force) {
+    const [clinical, visit, admission] = await Promise.all([
+      client.clinicalDiagnosis.count(),
+      client.visitDiagnosis.count(),
+      client.admissionDiagnosis.count(),
+    ]);
+    const dxTotal = clinical + visit + admission;
+    const isProd = process.env.NODE_ENV === "production";
+    if (dxTotal > 0 || isProd) {
+      const err = new Error(
+        `ERA_ICD10_RELOAD refused: diagnoses=${dxTotal} NODE_ENV=${process.env.NODE_ENV ?? ""} — clear diagnoses in non-prod first`,
+      );
+      console.error(err.message);
+      throw err;
+    }
     await client.icdCode.deleteMany();
   }
 
@@ -34,9 +49,13 @@ async function loadIcd10(prisma = new PrismaClient(), opts = {}) {
     await client.icdCode.createMany({ data: slice });
   }
 
-  await client.tenant.updateMany({
-    data: { icd10Version: version, icd10SyncedAt: new Date() },
-  });
+  try {
+    await client.tenant.updateMany({
+      data: { icd10Version: version, icd10SyncedAt: new Date() },
+    });
+  } catch {
+    /* Tenant may be empty on satellite-only seed */
+  }
 
   const loaded = await client.icdCode.count();
   console.log("ICD-10 loaded", JSON.stringify({ loaded, version, stats }));

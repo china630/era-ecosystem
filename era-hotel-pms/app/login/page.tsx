@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import {
   AuthLoginCard,
   buildAuthLoginLabels,
@@ -11,16 +11,15 @@ import {
   persistLoginOrgNo,
   useStaffLoginOrgNo,
   StaffLoginOrgNoField,
-} from '@era/satellite-kit/ui';
-import type { Locale } from '@era/i18n-common';
+} from "@era/satellite-kit/ui";
+import type { Locale } from "@era/i18n-common";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const t = useTranslations('auth');
-  const tMeta = useTranslations('meta');
+  const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
-  const [loginId, setLoginId] = useState('reception');
-  const [password, setPassword] = useState('reception123');
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const { orgNo, setOrgNo, hostBound } = useStaffLoginOrgNo(searchParams);
 
@@ -34,18 +33,18 @@ function LoginForm() {
       };
       const org = orgNo.trim();
       if (org) payload.orgNo = org;
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
       if (!res.ok) {
-        showApiError(data, t('loginFailed'));
+        const j = await res.json().catch(() => ({}));
+        showApiError(j, tAuth("loginFailed"));
         return;
       }
       if (org) persistLoginOrgNo(org);
-      const from = searchParams.get('from') || '/';
+      const from = searchParams.get("from") || "/";
       assignNoStoreRedirect(from);
     } finally {
       setBusy(false);
@@ -55,28 +54,20 @@ function LoginForm() {
   return (
     <AuthLoginCard
       locale={locale}
-      labels={{
-        ...buildAuthLoginLabels(t),
-        loginTitle: tMeta('title'),
-        submitLogin: t('signIn'),
-        submitBusy: t('signingIn'),
-      }}
+      labels={buildAuthLoginLabels(tAuth)}
       loginId={loginId}
       password={password}
       onLoginIdChange={setLoginId}
       onPasswordChange={setPassword}
       onSubmit={onSubmit}
       busy={busy}
-      subtitle={t('signInHint')}
-      ssoHint={t('demoHint')}
       formExtras={
         <StaffLoginOrgNoField
           orgNo={orgNo}
           onOrgNoChange={setOrgNo}
           hostBound={hostBound}
-          label={t('organizationIdLabel')}
-          placeholder={t('organizationIdPlaceholder')}
-          hint={t('organizationIdHint')}
+          label={tAuth("organizationIdLabel")}
+          placeholder={tAuth("organizationIdPlaceholder")}
         />
       }
     />
@@ -84,10 +75,15 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const tc = useTranslations('common');
-
+  const tc = useTranslations("common");
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#EBEDF0] p-8 text-[#7F8C8D]">{tc('loading')}</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#EBEDF0] p-8 text-[#7F8C8D]">
+          {tc("loading")}
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

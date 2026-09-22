@@ -54,7 +54,8 @@ jobs:
             plan=$(node scripts/ci-changed-ghcr-services.mjs --files-from /tmp/changed-files.txt)
           fi
           echo "$plan"
-          skip=$(echo "$plan" | jq -r '.skip')
+          skip=$(echo "$plan" | jq -r '.skipImages // .skip')
+          deploy_skip=$(echo "$plan" | jq -r '.deploySkip // .skip')
           rebuild=$(echo "$plan" | jq -r '.rebuildPackages')
           echo "skip=${skip}" >> "$GITHUB_OUTPUT"
           echo "rebuild_packages=${rebuild}" >> "$GITHUB_OUTPUT"
@@ -62,9 +63,10 @@ jobs:
           echo "deploy_services=$(echo "$plan" | jq -r '.deployServices')" >> "$GITHUB_OUTPUT"
           echo "matrix=$(echo "$plan" | jq -c '.matrix')" >> "$GITHUB_OUTPUT"
           {
-            echo "SKIP=${skip}"
+            echo "SKIP=${deploy_skip}"
             echo "DEPLOY_SCOPE=$(echo "$plan" | jq -r '.deployScope')"
             echo "DEPLOY_SERVICES=$(echo "$plan" | jq -r '.deployServices')"
+            echo "IMAGE_TAG_MODE=$(echo "$plan" | jq -r '.imageTagMode // "sha"')"
           } > deploy-scope.env
 
       - uses: actions/upload-artifact@v4

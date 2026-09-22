@@ -18,6 +18,7 @@ import {
 } from "../../../lib/design-system";
 import { Button } from "../../ui/button";
 import { InventoryModalFooter, InventoryModalShell } from "./modal-shell";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type WarehouseRow = { id: string; name: string; inventoryAccountCode?: string };
 
@@ -75,10 +76,7 @@ export function AuditModal({
     auditRef.current = audit;
   }, [audit]);
 
-  const dateStr = useMemo(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  }, []);
+  const dateStr = useMemo(() => todayBakuYmd(), []);
 
   const loadWarehouses = useCallback(async () => {
     if (!token) return;

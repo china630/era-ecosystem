@@ -16,7 +16,8 @@ Next.js: `app/` + `app/api/`. Prisma: `prisma/schema.prisma`. Domain doc: `doc/0
 | Command | Purpose |
 |---------|---------|
 | `npm run dev` | Dev server :3202 |
-| `npm run db:migrate` / `db:seed` | Schema + demo outlets/menu |
+| `npm run db:migrate` / `db:seed` | Schema + no-op seed |
+| `npm run db:seed:demo` | Lab waiter/outlet/menu (requires `ERA_SATELLITE_ORGANIZATION_ID`) |
 
 ## Env
 

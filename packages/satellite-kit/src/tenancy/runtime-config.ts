@@ -65,6 +65,8 @@ const runtimeBodySchema = z.object({
   platformSuperAdminEmails: z.array(z.string().email()).max(50).optional(),
   ssoSharedSecret: z.string().min(16).max(512).optional(),
   satelliteEventServiceToken: z.string().min(8).max(512).optional(),
+  /** Process-wide Elektraweb (and later other vendor) bridge kill. */
+  vendorBridgesEnabled: z.boolean().optional(),
   activeModules: z.array(z.string().min(1).max(120)).max(500).optional(),
   hotelModules: z.record(z.boolean()).optional(),
   deploymentTopology: z.enum(["SHARED", "DEDICATED", "ONPREM"]).optional(),
@@ -124,6 +126,7 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       expectedEnvKeys: [
         "SATELLITE_EVENT_SERVICE_TOKEN",
         "CLINIC_INTERNAL_SERVICE_TOKEN",
+        "CONTROL_PLANE_SERVICE_TOKEN",
       ],
       authorization: request.headers.get("authorization"),
       xServiceToken: request.headers.get("x-service-token"),
@@ -171,6 +174,7 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       platformSuperAdminEmails: body.platformSuperAdminEmails,
       ssoSharedSecret: body.ssoSharedSecret,
       satelliteEventServiceToken: body.satelliteEventServiceToken,
+      vendorBridgesEnabled: body.vendorBridgesEnabled,
       activeModules: body.activeModules,
       hotelModules: body.hotelModules,
       deploymentTopology: body.deploymentTopology,

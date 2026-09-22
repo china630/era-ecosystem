@@ -12,7 +12,6 @@
   "nav.travelAgencies": { "az": "Səyahət agentlikləri" },
   "nav.childMatrix": { "az": "Uşaq matrisi" },
   "auth.login": { "az": "Daxil ol" },
-  "auth.demoHint": { "az": "Demo: admin / admin123 · reception / reception123 · manager / manager123" },
   "auth.footerStatus": { "az": "Status" },
   "auth.email": { "ru": "Электронная почта" },
   "common.status": { "az": "Vəziyyət" },

@@ -4,8 +4,10 @@ import {
   rewriteComposeHostnameForHost,
   resolveOrchestratorBaseUrl,
   resolveControlPlaneBearerToken,
+  resolveSatelliteEventServiceToken,
 } from "./resolve-orchestrator-url";
-import { resetRuntimeConfigMemoryForTests } from "./runtime-config-memory";
+import { resetRuntimeConfigMemoryForTests, setRuntimeConfigMemory } from "./runtime-config-memory";
+import { recaptureInstallSatelliteEventToken } from "./install-s2s-env";
 
 afterEach(() => {
   delete process.env.ERA_IN_DOCKER;
@@ -43,10 +45,16 @@ describe("rewriteComposeHostnameForHost", () => {
 });
 
 describe("resolveOrchestratorBaseUrl", () => {
-  it("rewrites env compose URL when running on the host", () => {
+    it("rewrites env compose URL when running on the host", () => {
     process.env.ERA_IN_DOCKER = "0";
     process.env.ORCHESTRATOR_EVENT_URL = "http://orchestrator:4000";
     assert.equal(resolveOrchestratorBaseUrl(), "http://127.0.0.1:4000");
+  });
+
+  it("rewrites public Traefik orch URL to compose DNS inside Docker", () => {
+    process.env.ERA_IN_DOCKER = "1";
+    process.env.ORCHESTRATOR_EVENT_URL = "https://api.era-365.online";
+    assert.equal(resolveOrchestratorBaseUrl(), "http://orchestrator:4000");
   });
 });
 
@@ -61,6 +69,7 @@ describe("resolveControlPlaneBearerToken", () => {
     process.env.CONTROL_PLANE_SERVICE_TOKEN = "";
     process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN = "dev-control-plane-token";
     process.env.SATELLITE_EVENT_SERVICE_TOKEN = "prod-event-secret";
+    recaptureInstallSatelliteEventToken();
     assert.equal(resolveControlPlaneBearerToken(), "prod-event-secret");
   });
 
@@ -68,6 +77,24 @@ describe("resolveControlPlaneBearerToken", () => {
     process.env.CONTROL_PLANE_SERVICE_TOKEN = "dev-control-plane-token";
     delete process.env.ORCHESTRATOR_INTERNAL_SERVICE_TOKEN;
     delete process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+    recaptureInstallSatelliteEventToken();
     assert.equal(resolveControlPlaneBearerToken(), "dev-control-plane-token");
+  });
+});
+
+describe("resolveSatelliteEventServiceToken", () => {
+  afterEach(() => {
+    delete process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+    resetRuntimeConfigMemoryForTests();
+    recaptureInstallSatelliteEventToken();
+  });
+
+  it("prefers install env over folklore runtime-config memory", () => {
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN = "install-real-token";
+    recaptureInstallSatelliteEventToken();
+    setRuntimeConfigMemory({
+      satelliteEventServiceToken: "change-me-satellite-event-token",
+    });
+    assert.equal(resolveSatelliteEventServiceToken(), "install-real-token");
   });
 });

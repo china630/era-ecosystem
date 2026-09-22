@@ -4,16 +4,21 @@ import type { FormEvent, ReactNode } from "react";
 import type { Locale } from "@era/i18n-common";
 import {
   CARD_CONTAINER_CLASS,
-  FORM_STACK_CLASS,
   LINK_ACCENT_CLASS,
   MODAL_FOOTER_PRIMARY_CLASS,
 } from "./design-system";
 import { SatelliteLocaleToggle } from "./satellite-locale-toggle";
 import { AuthPageHeader } from "./auth-page-header";
+import { PublicLegalFooter } from "./legal-footer";
+import { orchPublicHref } from "../platform/orch-web-url";
+import {
+  AUTH_FORM_STACK_CLASS,
+} from "./auth-login-card";
 
 export type AuthPublicShellProps = {
   locale: Locale;
   title: string;
+  /** @deprecated Ignored — product copy must not sit between header and fields. */
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
@@ -31,7 +36,6 @@ export type AuthPublicShellProps = {
 export function AuthPublicShell({
   locale,
   title,
-  subtitle,
   children,
   footer,
   showLocaleToggle = true,
@@ -52,9 +56,6 @@ export function AuthPublicShell({
         ) : (
           <h1 className="mb-6 text-2xl font-semibold text-[#34495E]">{title}</h1>
         )}
-        {subtitle ? (
-          <p className="mb-4 text-sm text-[#7F8C8D]">{subtitle}</p>
-        ) : null}
         {children}
         {footer}
       </div>
@@ -67,6 +68,7 @@ export { LINK_ACCENT_CLASS };
 export type AuthRegisterCardProps = {
   locale: Locale;
   title: string;
+  /** @deprecated Ignored by AuthPublicShell. */
   subtitle?: string;
   fields: ReactNode;
   onSubmit: (e: FormEvent) => void;
@@ -82,13 +84,21 @@ export type AuthRegisterCardProps = {
     ru?: string;
     en?: string;
   };
+  legalLabels?: {
+    navAria: string;
+    faq: string;
+    terms: string;
+    privacy: string;
+    status: string;
+  };
+  legalAppPrefix?: string;
+  faqHref?: string;
 };
 
 /** Registration card — same DESIGN.md shell as AuthLoginCard. */
 export function AuthRegisterCard({
   locale,
   title,
-  subtitle,
   fields,
   onSubmit,
   busy = false,
@@ -98,13 +108,29 @@ export function AuthRegisterCard({
   footer,
   showLocaleToggle = true,
   localeLabels,
+  legalLabels,
+  legalAppPrefix = "ERA",
+  faqHref,
 }: AuthRegisterCardProps) {
+  const faqUrl = faqHref ?? orchPublicHref("/help");
   return (
     <AuthPublicShell
       locale={locale}
       title={title}
-      subtitle={subtitle}
-      footer={footer}
+      footer={
+        <>
+          {footer}
+          {legalLabels ? (
+            <PublicLegalFooter
+              locale={locale}
+              faqHref={faqUrl}
+              appPrefix={legalAppPrefix}
+              showFaq={false}
+              labels={legalLabels}
+            />
+          ) : null}
+        </>
+      }
       showLocaleToggle={showLocaleToggle}
       localeLabels={localeLabels}
     >
@@ -113,12 +139,12 @@ export function AuthRegisterCard({
           {error}
         </p>
       ) : null}
-      <form onSubmit={onSubmit} className={FORM_STACK_CLASS}>
+      <form onSubmit={onSubmit} className={AUTH_FORM_STACK_CLASS}>
         {fields}
         <button
           type="submit"
           disabled={busy}
-          className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full`}
+          className={`${MODAL_FOOTER_PRIMARY_CLASS} mt-1 w-full`}
         >
           {busy ? submitBusyLabel : submitLabel}
         </button>

@@ -18,6 +18,7 @@ import { canCloseAccountingPeriod } from "../lib/role-utils";
 import { ledgerQueryParam, useLedger } from "../lib/ledger-context";
 import { MoneyAzn } from "../lib/money-azn";
 import { EmptyState } from "../components/empty-state";
+import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -82,14 +83,11 @@ type DashboardPayload = {
   topCreditors: { counterpartyId: string; name: string; balance: string }[];
 };
 
-function utcDayKeys(last = 29): string[] {
+function bakuDayKeys(last = 29): string[] {
   const out: string[] = [];
-  const t = new Date();
+  const today = todayBakuYmd();
   for (let i = last; i >= 0; i--) {
-    const d = new Date(
-      Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() - i),
-    );
-    out.push(d.toISOString().slice(0, 10));
+    out.push(addBakuDays(today, -i));
   }
   return out;
 }
@@ -298,7 +296,7 @@ export function DashboardWidgets() {
   }, [loadFx, loadClosePrompt, ready, token, ledgerReady, ledgerType]);
 
   const chartData = useMemo(() => {
-    const keys = utcDayKeys(29);
+    const keys = bakuDayKeys(29);
     const map = new Map(
       (data?.revenueByDay ?? []).map((r) => [r.date, Number(r.amount)]),
     );

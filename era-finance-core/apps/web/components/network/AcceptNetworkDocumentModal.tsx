@@ -1,5 +1,6 @@
 "use client";
 
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -30,7 +31,7 @@ export function AcceptNetworkDocumentModal({
   const { t } = useTranslation();
   const [debitRole, setDebitRole] = useState<string>("MISC_OPERATING_EXPENSE");
   const [claimsVat, setClaimsVat] = useState(true);
-  const [postingDate, setPostingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [postingDate, setPostingDate] = useState(() => todayBakuYmd());
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
