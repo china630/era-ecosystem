@@ -7,6 +7,10 @@ RUN apk add --no-cache python3 make g++ openssl
 
 WORKDIR /workspace
 
+COPY packages/era-contracts ./packages/era-contracts
+COPY packages/era-storage ./packages/era-storage
+COPY packages/i18n-common ./packages/i18n-common
+COPY packages/era-fiscal ./packages/era-fiscal
 COPY packages/satellite-kit ./packages/satellite-kit
 
 COPY era-finance-core/packages/database/package.json ./era-finance-core/packages/database/
@@ -25,8 +29,11 @@ COPY era-data-hub/apps/api ./era-data-hub/apps/api
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 
-WORKDIR /workspace/packages/satellite-kit
-RUN npm install && npm run build
+RUN cd /workspace/packages/i18n-common && npm install && npm run build \
+  && cd /workspace/packages/era-contracts && npm install --include=dev && npm run build \
+  && cd /workspace/packages/era-storage && npm install && npm run build \
+  && cd /workspace/packages/era-fiscal && npm install && npm run build \
+  && cd /workspace/packages/satellite-kit && npm install && npm run build
 
 WORKDIR /workspace/era-data-hub
 RUN npm install 2>/dev/null || true
