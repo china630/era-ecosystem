@@ -20,7 +20,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -468,10 +468,7 @@ export default function WorkforceRosterPage() {
 
       <div className={CARD_CONTAINER_CLASS}>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        {loading ? (
-          <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-        ) : (
-          <>
+        <>
             <h2 className="mb-2 text-sm font-semibold">{t("gridHeading")}</h2>
             <p className="mb-2 text-xs text-[var(--era-muted)]">{t("gridHint")}</p>
             <div className={`${DATA_TABLE_VIEWPORT_CLASS} mb-6 overflow-x-auto`}>
@@ -487,7 +484,26 @@ export default function WorkforceRosterPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {previewRows.map((row) => (
+                  {loading ? (
+                    <tr className={DATA_TABLE_TR_CLASS}>
+                      <td
+                        className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                        colSpan={lastDay + 1}
+                      >
+                        {tCommon("loading")}
+                      </td>
+                    </tr>
+                  ) : previewRows.length === 0 ? (
+                    <tr className={DATA_TABLE_TR_CLASS}>
+                      <td
+                        className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                        colSpan={lastDay + 1}
+                      >
+                        {t("rosterEmpty")}
+                      </td>
+                    </tr>
+                  ) : (
+                  previewRows.map((row) => (
                     <tr key={row.employmentId} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {empLabel(row.employmentId)}
@@ -497,7 +513,7 @@ export default function WorkforceRosterPage() {
                           cell.type == null
                             ? "·"
                             : cell.type === "OFF"
-                              ? "Off"
+                              ? t("slotOff")
                               : cell.shiftTypeCode ?? "W";
                         return (
                           <td key={cell.day} className={DATA_TABLE_TD_CLASS} style={{ padding: 2 }}>
@@ -524,7 +540,8 @@ export default function WorkforceRosterPage() {
                         );
                       })}
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -547,7 +564,17 @@ export default function WorkforceRosterPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAssignments.map((row) => (
+                  {filteredAssignments.length === 0 ? (
+                    <tr className={DATA_TABLE_TR_CLASS}>
+                      <td
+                        className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                        colSpan={5}
+                      >
+                        {t("assignmentsEmpty")}
+                      </td>
+                    </tr>
+                  ) : (
+                  filteredAssignments.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.employmentId
@@ -565,20 +592,20 @@ export default function WorkforceRosterPage() {
                         {row.cycle?.code ?? "—"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {String(row.effectiveFrom).slice(0, 10)}
+                        {bakuDateDisplay(row.effectiveFrom)}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.effectiveTo
-                          ? String(row.effectiveTo).slice(0, 10)
+                          ? bakuDateDisplay(row.effectiveTo)
                           : "—"}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
-          </>
-        )}
+        </>
       </div>
 
       <ModalShell
@@ -666,6 +693,16 @@ export default function WorkforceRosterPage() {
         open={overrideOpen}
         onClose={() => setOverrideOpen(false)}
         title={t("addOverride")}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setOverrideOpen(false)}
+            onSubmit={() => void saveOverride()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
       >
         <div className="space-y-3">
           <CatalogField
@@ -709,23 +746,6 @@ export default function WorkforceRosterPage() {
             </>
           )}
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setOverrideOpen(false)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void saveOverride()}
-            >
-              {tCommon("save")}
-            </button>
-          </div>
         </div>
       </ModalShell>
 

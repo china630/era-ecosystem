@@ -5,13 +5,8 @@ import { useTranslations } from "next-intl";
 import { Pencil, Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
+  LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -143,75 +138,84 @@ export default function WorkforceShiftTypesPage() {
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("shiftsTitle")}
-        subtitle={t("shiftsHint")}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void ensureDefaults()}
-            >
-              {t("seedDefaults")}
-            </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              {t("addShift")}
-            </button>
-          </div>
-        }
-      />
-      <WorkforceShiftsSubnav />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("shiftsTitle")}
+          subtitle={t("shiftsHint")}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => void ensureDefaults()}
+              >
+                {t("seedDefaults")}
+              </button>
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                {t("addShift")}
+              </button>
+            </div>
+          }
+        />
+      </div>
+      <div className="shrink-0">
+        <WorkforceShiftsSubnav />
+      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-      ) : (
-        <section className={CARD_CONTAINER_CLASS}>
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colWindow")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHours")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                </tr>
-              </thead>
-              <tbody>
-                {types.map((row) => (
-                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {fmtMinutes(row.startMinute)}–{fmtMinutes(row.endMinute)}
-                      {row.isNight ? ` (${t("night")})` : ""}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {String(row.defaultHours)}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        title={t("editShift")}
-                        aria-label={t("editShift")}
-                        onClick={() => openEdit(row)}
-                      >
-                        <Pencil className="h-4 w-4" aria-hidden />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "code", header: t("colCode") },
+            { key: "name", header: t("colName") },
+            {
+              key: "window",
+              header: t("colWindow"),
+              render: (row) => (
+                <>
+                  {fmtMinutes(row.startMinute)}–{fmtMinutes(row.endMinute)}
+                  {row.isNight ? ` (${t("night")})` : ""}
+                </>
+              ),
+            },
+            {
+              key: "hours",
+              header: t("colHours"),
+              render: (row) => String(row.defaultHours),
+            },
+            {
+              key: "actions",
+              header: "",
+              className: "w-12",
+              render: (row) => (
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  title={t("editShift")}
+                  aria-label={t("editShift")}
+                  onClick={() => openEdit(row)}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
+              ),
+            },
+          ]}
+          rows={types}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("shiftsEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
+      </div>
 
       <ModalShell
         open={open}

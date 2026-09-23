@@ -10,8 +10,9 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -164,118 +165,134 @@ export default function WorkforceSecurityAuditPage() {
   if (!ready) return null;
 
   return (
-    <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <p className="mb-4 text-sm">
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader className="!mb-0" title={t("title")} subtitle={t("subtitle")} />
+      </div>
+      <p className="mb-0 shrink-0 text-sm">
         <Link href="/workspace/workforce/security" className="text-[#2980B9] hover:underline">
           ← {t("back")}
         </Link>
       </p>
-      <EraListFilterBar
-        className="mb-4"
-        resetLabel={tCommon("filterReset")}
-        onReset={() => {
-          setAction("");
-          setGlobalPersonId("");
-          setHoldingId("");
-        }}
-      >
-        <CatalogField
-          kind="CLOSED_MEDIUM"
-          label={t("filterAction")}
-          value={action}
-          onChange={(next) => setAction(String(next))}
-          options={actionOptions}
-          emptyLabel={t("actionAny")}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("filterPerson")}
-          value={globalPersonId}
-          onChange={(next) => setGlobalPersonId(String(next))}
-          options={personOptions}
-          emptyLabel={t("personAny")}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("filterHolding")}
-          value={holdingId}
-          onChange={(next) => setHoldingId(String(next))}
-          options={holdingOptions}
-          emptyLabel={t("holdingAny")}
-        />
-      </EraListFilterBar>
-      <div className={DATA_TABLE_VIEWPORT_CLASS}>
-        <table className={DATA_TABLE_CLASS}>
-          <thead>
-            <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTime")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAction")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActor")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEntity")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEmployment")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paged.map((row) => {
-              const actorEmail = row.actorUserId
-                ? actors[row.actorUserId]?.email
-                : null;
-              const personName = row.globalPersonId
-                ? persons[row.globalPersonId]?.displayName
-                : null;
-              return (
-                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {bakuDateTimeDisplay(row.createdAt)}
-                  </td>
-                  <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>
-                    {t(`action.${row.action}` as "action.HIRE", {
-                      defaultValue: row.action,
-                    })}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {actorEmail ?? "—"}
-                  </td>
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setAction("");
+              setGlobalPersonId("");
+              setHoldingId("");
+            }}
+          >
+            <CatalogField
+              kind="CLOSED_MEDIUM"
+              label={t("filterAction")}
+              value={action}
+              onChange={(next) => setAction(String(next))}
+              options={actionOptions}
+              emptyLabel={t("actionAny")}
+            />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("filterPerson")}
+              value={globalPersonId}
+              onChange={(next) => setGlobalPersonId(String(next))}
+              options={personOptions}
+              emptyLabel={t("personAny")}
+            />
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("filterHolding")}
+              value={holdingId}
+              onChange={(next) => setHoldingId(String(next))}
+              options={holdingOptions}
+              emptyLabel={t("holdingAny")}
+            />
+          </EraListFilterBar>
+        }
+        table={
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTime")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colAction")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActor")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEntity")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEmployment")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
                   <td
-                    className={DATA_TABLE_TD_CLASS}
-                    title={`${row.entityType} / ${row.entityId}`}
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={6}
                   >
-                    {row.entityType}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {personName ??
-                      (row.globalPersonId ? tCommon("unnamedPerson") : "—")}
-                  </td>
-                  <td
-                    className={DATA_TABLE_TD_CLASS}
-                    title={row.cpEmploymentId ?? undefined}
-                  >
-                    —
+                    {loading ? tCommon("loading") : t("empty")}
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {total === 0 && !loading ? (
-          <p className="px-4 py-4 text-sm text-[#7F8C8D]">{t("empty")}</p>
-        ) : null}
-        <ListPaginationFooter
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          labels={{
-            rowsPerPage: tCommon("paginationRowsPerPage"),
-            pageOf: tCommon("paginationPageOf"),
-            prev: tCommon("paginationPrev"),
-            next: tCommon("paginationNext"),
-          }}
-        />
-      </div>
-    </>
+              ) : (
+                paged.map((row) => {
+                  const actorEmail = row.actorUserId
+                    ? actors[row.actorUserId]?.email
+                    : null;
+                  const personName = row.globalPersonId
+                    ? persons[row.globalPersonId]?.displayName
+                    : null;
+                  return (
+                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {bakuDateTimeDisplay(row.createdAt)}
+                      </td>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>
+                        {t(`action.${row.action}` as "action.HIRE", {
+                          defaultValue: row.action,
+                        })}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {actorEmail ?? "—"}
+                      </td>
+                      <td
+                        className={DATA_TABLE_TD_CLASS}
+                        title={`${row.entityType} / ${row.entityId}`}
+                      >
+                        {row.entityType}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {personName ??
+                          (row.globalPersonId ? tCommon("unnamedPerson") : "—")}
+                      </td>
+                      <td
+                        className={DATA_TABLE_TD_CLASS}
+                        title={row.cpEmploymentId ?? undefined}
+                      >
+                        —
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        }
+      />
+    </div>
   );
 }

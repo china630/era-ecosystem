@@ -239,7 +239,7 @@ const uiRu: PricingStorefrontUiCopy = {
     },
     hotel_sanatorium: {
       name: "Hotel Sanatorium",
-      moduleLine: "Resort + Medical & Sanatorium (XOR с clinic sanatorium)",
+      moduleLine: "Resort + Medical & Sanatorium. Санаторная карта клиники — отдельный SKU.",
     },
     banking_retail: {
       name: "Banking Retail (Sandbox / Pilot)",
@@ -270,7 +270,7 @@ const uiRu: PricingStorefrontUiCopy = {
   },
   industriesTitle: "Отраслевые спутники",
   industriesIntro:
-    "Gate 29 AZN (банк — 99) открывает приложение и 1 единицу ёмкости. Операционные ядра (hotel_core, EMR) — отдельные SKU. Hotel Sanatorium и clinic_sanatorium_clinical не совмещаются.",
+    "Gate 29 AZN (банк — 99) открывает приложение. У большинства вертикалей 1 единица ёмкости в Gate. Клиника считает кабинеты и койки на модулях EMR / санаторий / стационар.",
   industryCapacityTemplate: "В Gate: {{included}} {{unit}}, далее {{price}} за единицу.",
   bankingSandboxNote:
     "Цены CBS — Sandbox / Pilot. Промышленный контур (AzeriCard / AZIPS) — Custom Quote, setup от 25 000 AZN.",
@@ -288,8 +288,9 @@ const uiRu: PricingStorefrontUiCopy = {
     },
     industry_clinic: {
       title: "Clinic",
-      intro: "EMR 29, лаборатория 29, санаторная карта 29, страховка 39. Расписание и касса — в Gate.",
-      gateLabel: "Clinic Gate (приложение + 1 кабинет)",
+      intro:
+        "EMR 39 (5 кабинетов), лаборатория 29, санаторий 99 (5 кабинетов), пост 19, стационар 39 (5 коек), телемедицина 39, страховка 39. Сверхлимит 19 AZN. Комнаты считаются один раз.",
+      gateLabel: "Clinic Gate (приложение, без квоты кабинетов)",
       capacityUnit: "кабинет",
     },
     industry_fnb_pos: {
@@ -344,7 +345,7 @@ const uiRu: PricingStorefrontUiCopy = {
   industryModuleNames: {
     clinic_registry_emr: "EMR / протоколы визита",
     clinic_lab: "Лаборатория",
-    clinic_sanatorium_clinical: "Санаторная клиническая карта",
+    clinic_sanatorium: "Санаторная клиническая карта",
     clinic_insurance: "Страхование / ДМС",
     clinic_inpatient: "Стационар / койки",
     clinic_telehealth: "Телемедицина",
@@ -529,7 +530,7 @@ const uiAz: PricingStorefrontUiCopy = {
     },
     hotel_sanatorium: {
       name: "Hotel Sanatorium",
-      moduleLine: "Resort + Tibbi & Sanatoriya (clinic sanatorium ilə XOR)",
+      moduleLine: "Resort + Tibbi & Sanatoriya. Klinik sanatoriya kartı ayrıca SKU-dur.",
     },
     banking_retail: {
       name: "Banking Retail (Sandbox / Pilot)",
@@ -560,7 +561,7 @@ const uiAz: PricingStorefrontUiCopy = {
   },
   industriesTitle: "Sənaye peykləri",
   industriesIntro:
-    "Gate 29 AZN (bank — 99) tətbiqi və 1 tutum vahidini açır. Əməliyyat nüvələri ayrıca SKU-dur. Hotel Sanatorium və clinic_sanatorium_clinical birlikdə olmur.",
+    "Gate 29 AZN (bank — 99) tətbiqi açır. Əksər vertikallarda Gate-də 1 tutum vahidi var. Klinika kabinet və çarpayıları EMR / sanatoriya / stasionar modullarında sayır.",
   industryCapacityTemplate: "Gate-də: {{included}} {{unit}}, sonra vahid {{price}}.",
   bankingSandboxNote:
     "CBS qiymətləri Sandbox / Pilot-dur. İstehsal konturu (AzeriCard / AZIPS) — Custom Quote, setup 25 000 AZN-dən.",
@@ -578,8 +579,9 @@ const uiAz: PricingStorefrontUiCopy = {
     },
     industry_clinic: {
       title: "Clinic",
-      intro: "EMR 29, laboratoriya 29, sanatoriya xəritəsi 29, sığorta 39. Cədvəl və kassa Gate-dədir.",
-      gateLabel: "Clinic Gate (tətbiq + 1 kabinet)",
+      intro:
+        "EMR 39 (5 kabinet), laboratoriya 29, sanatoriya 99 (5 kabinet), post 19, stasionar 39 (5 çarpayı), telehealth 39, sığorta 39. Limitdən artıq 19 AZN. Otaqlar bir dəfə sayılır.",
+      gateLabel: "Clinic Gate (tətbiq, kabinet kvotası yoxdur)",
       capacityUnit: "kabinet",
     },
     industry_fnb_pos: {
@@ -634,7 +636,7 @@ const uiAz: PricingStorefrontUiCopy = {
   industryModuleNames: {
     clinic_registry_emr: "EMR / vizit protokolları",
     clinic_lab: "Laboratoriya",
-    clinic_sanatorium_clinical: "Sanatoriya klinik xəritəsi",
+    clinic_sanatorium: "Sanatoriya klinik xəritəsi",
     clinic_insurance: "Sığorta / DMS",
     clinic_inpatient: "Stasionar / çarpayı",
     clinic_telehealth: "Telehealth",

@@ -1,7 +1,5 @@
 import {
   applyCatalogMutex,
-  bundleConflictsWithModules,
-  HOTEL_SANATORIUM_BUNDLE_NAME,
   isClinicFeatureEntitled,
   isPassThroughCatalogModuleKeyExtended,
 } from "@era365/database";
@@ -51,28 +49,33 @@ describe("pricing catalog freeze", () => {
     expect(pro).not.toContain("platform_workforce_base");
   });
 
-  it("grants EMR children from clinic_registry_emr", () => {
+  it("keeps EMR as a single commercial key without retired children", () => {
     const keys = applyCatalogMutex(["clinic_registry_emr"]);
-    expect(keys).toEqual(
-      expect.arrayContaining([
-        "clinic_registry_emr",
-        "clinic_patients",
-        "clinic_visit",
-        "clinic_ehr",
-        "clinic_reschedule",
-      ]),
-    );
-    expect(isClinicFeatureEntitled(keys, "clinic_patients")).toBe(true);
+    expect(keys).toEqual(["clinic_registry_emr"]);
+    expect(isClinicFeatureEntitled(keys, "clinic_patients")).toBe(false);
+    expect(isClinicFeatureEntitled(keys, "clinic_registry_emr")).toBe(true);
   });
 
-  it("blocks Hotel Sanatorium bundle with clinic sanatorium SKU", () => {
-    expect(
-      bundleConflictsWithModules(
-        HOTEL_SANATORIUM_BUNDLE_NAME,
-        ["hotel_medical_sanatorium", "hotel_core"],
-        ["clinic_sanatorium_clinical"],
-      ),
-    ).toBe(true);
+  it("does not treat inpatient beds as sanatorium entitlement", () => {
+    expect(isClinicFeatureEntitled(["clinic_inpatient"], "clinic_sanatorium")).toBe(
+      false,
+    );
+    expect(applyCatalogMutex(["clinic_inpatient"])).toEqual(["clinic_inpatient"]);
+  });
+
+  it("keeps hotel medical and clinic sanatorium together", () => {
+    const keys = applyCatalogMutex([
+      "hotel_medical_sanatorium",
+      "clinic_sanatorium",
+      "hotel_core",
+    ]);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "hotel_medical_sanatorium",
+        "clinic_sanatorium",
+        "hotel_core",
+      ]),
+    );
   });
 
   it("prices Hotel City bundle at 113.40 AZN", () => {

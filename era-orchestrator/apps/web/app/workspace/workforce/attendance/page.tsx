@@ -4,14 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
+  ListPaginationFooter,
   ModalFooter,
   ModalShell,
   DatePicker,
@@ -21,6 +22,7 @@ import {
 } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
+import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
   isWorkforceGate403,
   workforceFetch as wfFetch,
@@ -49,7 +51,7 @@ export default function WorkforceAttendancePunchesPage() {
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [punchFilter, setPunchFilter] = useState("UNMAPPED");
+  const [punchFilter, setPunchFilter] = useState("");
 
   const [idModal, setIdModal] = useState(false);
   const [personRef, setPersonRef] = useState("");
@@ -201,63 +203,73 @@ export default function WorkforceAttendancePunchesPage() {
     await load();
   }
 
+  const { page, pageSize, setPage, setPageSize, paged, total } =
+    useListPagination(punches);
+
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => {
-                setRebuildMsg(null);
-                setRebuildOpen(true);
-              }}
-            >
-              {t("rebuildTitle")}
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => {
-                setCsvMsg(null);
-                setCsvOpen(true);
-              }}
-            >
-              {t("csvTitle")}
-            </button>
-          </div>
-        }
-      />
-      <WorkforceAttendanceSubnav />
-      {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
-
-      <EraListFilterBar
-        className="mb-3"
-        resetLabel={tCommon("filterReset")}
-        onReset={() => setPunchFilter("UNMAPPED")}
-      >
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("punchFilter")}
-          value={punchFilter}
-          onChange={(v) => setPunchFilter(String(v))}
-          options={[
-            { value: "UNMAPPED", label: t("statusUnmapped") },
-            { value: "OPEN", label: t("statusOpen") },
-            { value: "MAPPED", label: t("statusMapped") },
-            { value: "PAIRED", label: t("statusPaired") },
-          ]}
-          emptyLabel={t("filterAll")}
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  setRebuildMsg(null);
+                  setRebuildOpen(true);
+                }}
+              >
+                {t("rebuildTitle")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  setCsvMsg(null);
+                  setCsvOpen(true);
+                }}
+              >
+                {t("csvTitle")}
+              </button>
+            </div>
+          }
         />
-      </EraListFilterBar>
-      <section className={CARD_CONTAINER_CLASS}>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+      </div>
+      <div className="shrink-0">
+        <WorkforceAttendanceSubnav />
+      </div>
+      {error ? <p className="shrink-0 text-sm text-[var(--era-danger)]">{error}</p> : null}
+
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => setPunchFilter("")}
+          >
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("punchFilter")}
+              value={punchFilter}
+              onChange={(v) => setPunchFilter(String(v))}
+              options={[
+                { value: "UNMAPPED", label: t("statusUnmapped") },
+                { value: "OPEN", label: t("statusOpen") },
+                { value: "MAPPED", label: t("statusMapped") },
+                { value: "PAIRED", label: t("statusPaired") },
+              ]}
+              emptyLabel={t("filterAll")}
+            />
+          </EraListFilterBar>
+        }
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -270,94 +282,114 @@ export default function WorkforceAttendancePunchesPage() {
               </tr>
             </thead>
             <tbody>
-              {punches.map((p) => (
-                <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {bakuDateTimeDisplay(p.occurredAt)}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{p.personRef}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{p.direction}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {p.status === "UNMAPPED"
-                      ? t("statusUnmapped")
-                      : p.status === "OPEN"
-                        ? t("statusOpen")
-                        : p.status === "MAPPED"
-                          ? t("statusMapped")
-                          : p.status === "PAIRED"
-                            ? t("statusPaired")
-                            : p.status}
-                    {p.placeMismatch ? ` · ${t("placeMismatch")}` : ""}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {p.place?.name ?? "—"}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {p.status === "UNMAPPED" ? (
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => {
-                          setPersonRef(p.personRef);
-                          setIdModal(true);
-                        }}
-                      >
-                        {t("mapPerson")}
-                      </button>
-                    ) : null}
+              {paged.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={6}
+                  >
+                    {loading ? tCommon("loading") : t("emptyPunches")}
                   </td>
                 </tr>
-              ))}
-              {!loading && punches.length === 0 ? (
-                <tr>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
-                    {t("emptyPunches")}
-                  </td>
-                </tr>
-              ) : null}
+              ) : (
+                paged.map((p) => (
+                  <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {bakuDateTimeDisplay(p.occurredAt)}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{p.personRef}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {p.direction === "IN"
+                        ? t("dirIn")
+                        : p.direction === "OUT"
+                          ? t("dirOut")
+                          : p.direction}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {p.status === "UNMAPPED"
+                        ? t("statusUnmapped")
+                        : p.status === "OPEN"
+                          ? t("statusOpen")
+                          : p.status === "MAPPED"
+                            ? t("statusMapped")
+                            : p.status === "PAIRED"
+                              ? t("statusPaired")
+                              : p.status}
+                      {p.placeMismatch ? ` · ${t("placeMismatch")}` : ""}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {p.place?.name ?? "—"}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {p.status === "UNMAPPED" ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          onClick={() => {
+                            setPersonRef(p.personRef);
+                            setIdModal(true);
+                          }}
+                        >
+                          {t("mapPerson")}
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        </div>
-      </section>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        }
+      />
 
       {idModal ? (
         <ModalShell
+          open
           title={t("addIdentity")}
           onClose={() => setIdModal(false)}
+          closeLabel={tCommon("close")}
+          footer={
+            <ModalFooter
+              onCancel={() => setIdModal(false)}
+              onSubmit={() => void saveIdentity()}
+              busy={busy}
+              submitDisabled={!personRef.trim() || !employmentId}
+              cancelLabel={tCommon("cancel")}
+              submitLabel={tCommon("save")}
+            />
+          }
         >
-          <div className="space-y-3">
-            <label className="block text-sm">
-              {t("colPersonRef")}
-              <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                value={personRef}
-                onChange={(e) => setPersonRef(e.target.value)}
-              />
-            </label>
+          <div className="grid gap-3">
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("colPersonRef")}
+              value={personRef}
+              onChange={(v) => setPersonRef(String(v))}
+              options={[]}
+            />
             <CatalogField
               kind="ENTITY_REF"
               label={t("colEmployment")}
               value={employmentId}
               onChange={(v) => setEmploymentId(String(v))}
               options={empOptions}
+              emptyLabel={tCommon("select")}
             />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setIdModal(false)}
-              >
-                {tCommon("cancel")}
-              </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy}
-                onClick={() => void saveIdentity()}
-              >
-                {tCommon("save")}
-              </button>
-            </div>
           </div>
         </ModalShell>
       ) : null}

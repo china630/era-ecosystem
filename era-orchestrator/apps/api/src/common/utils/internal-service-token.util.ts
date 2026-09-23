@@ -81,3 +81,14 @@ export function maskPhone(phone: string | null | undefined): string | null {
   if (digits.length < 4) return "***";
   return `***${digits.slice(-2)}`;
 }
+
+export function maskEmail(email: string | null | undefined): string | null {
+  if (!email?.trim()) return null;
+  const trimmed = email.trim();
+  const at = trimmed.lastIndexOf("@");
+  if (at <= 0) return "***";
+  const local = trimmed.slice(0, at);
+  const domain = trimmed.slice(at);
+  const keep = local.slice(0, 1);
+  return `${keep}***${domain}`;
+}

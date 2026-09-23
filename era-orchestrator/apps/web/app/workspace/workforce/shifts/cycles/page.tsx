@@ -5,13 +5,8 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
+  LIST_PAGE_SHELL_CLASS,
   DatePicker,
   ModalFooter,
   ModalShell,
@@ -124,46 +119,44 @@ export default function WorkforceShiftCyclesPage() {
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("cyclesHeading")}
-        subtitle={t("shiftsHint")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addCycle")}
-          </button>
-        }
-      />
-      <WorkforceShiftsSubnav />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("cyclesHeading")}
+          subtitle={t("cyclesHint")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addCycle")}
+            </button>
+          }
+        />
+      </div>
+      <div className="shrink-0">
+        <WorkforceShiftsSubnav />
+      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-      ) : (
-        <section className={CARD_CONTAINER_CLASS}>
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTape")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cycleSummaries.map((row) => (
-                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.tape}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "code", header: t("colCode") },
+            { key: "name", header: t("colName") },
+            { key: "tape", header: t("colTape") },
+          ]}
+          rows={cycleSummaries}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("cyclesEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
+      </div>
 
       <ModalShell
         open={open}

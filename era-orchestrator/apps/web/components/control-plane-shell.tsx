@@ -109,7 +109,7 @@ export function ControlPlaneShell({ children }: { children: React.ReactNode }) {
         />
       }
     >
-      <main className={APP_MAIN_CONTENT_CLASS}>
+      <main className={`${APP_MAIN_CONTENT_CLASS} flex min-h-0 min-w-0 flex-1 flex-col overflow-auto`}>
         {children}
       </main>
     </EraAppShellLayout>

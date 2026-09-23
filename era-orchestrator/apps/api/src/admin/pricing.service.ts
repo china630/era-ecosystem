@@ -71,15 +71,38 @@ export class PricingService implements OnModuleInit {
   }
 
   /**
-   * Пустая `pricing_modules` → `seedPricingModuleIfEmpty`; иначе только БД (v12.7).
+   * Пустая `pricing_modules` → seed; иначе дописывает недостающие ключи и
+   * выравнивает каталог. Сбой синка логируется и не роняет чтение или toggle:
+   * публичный прайс этот метод не вызывает.
    */
   async ensurePricingModulesFromDatabase(): Promise<void> {
-    await seedPricingModuleIfEmpty(this.prisma);
-    await ensureMissingPricingModules(this.prisma);
-    await syncPricingModuleCatalog(this.prisma);
-    await this.systemConfig.syncMeterCatalogCanon();
-    await seedPricingBundleDefaultsIfEmpty(this.prisma);
-    await ensureMissingPricingBundles(this.prisma);
+    const skipped = (step: string, e: unknown) => {
+      const message = e instanceof Error ? e.message : String(e);
+      console.warn(`Pricing catalog ${step} skipped: ${message}`);
+    };
+    // Seed's own sync must not block inserts of keys that are not in the table yet.
+    try {
+      await seedPricingModuleIfEmpty(this.prisma);
+    } catch (e) {
+      skipped("seed", e);
+    }
+    try {
+      await ensureMissingPricingModules(this.prisma);
+    } catch (e) {
+      skipped("insert", e);
+    }
+    try {
+      await syncPricingModuleCatalog(this.prisma);
+    } catch (e) {
+      skipped("sync", e);
+    }
+    try {
+      await this.systemConfig.syncMeterCatalogCanon();
+      await seedPricingBundleDefaultsIfEmpty(this.prisma);
+      await ensureMissingPricingBundles(this.prisma);
+    } catch (e) {
+      skipped("bundle", e);
+    }
   }
 
   /**

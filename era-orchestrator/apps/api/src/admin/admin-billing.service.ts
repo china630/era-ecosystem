@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Prisma, TariffTier } from "@era365/database";
+import { inferSatelliteKeyFromModuleKey, Prisma, TariffTier } from "@era365/database";
 import type { TierQuotas } from "../constants/quotas";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
@@ -260,13 +260,40 @@ export class AdminBillingService {
     };
   }
 
+  /** Prices, meters, and bundles already stored. Does not seed or sync the catalog. */
+  private async readBillingSnapshot() {
+    const [
+      foundationMonthlyAzn,
+      yearlyDiscountPercent,
+      quotaPricing,
+      meterUnitPricing,
+      tierSpendCeilings,
+      pricingBundleRows,
+    ] = await Promise.all([
+      this.systemConfig.getFoundationMonthlyAzn(),
+      this.systemConfig.getYearlyDiscountPercent(),
+      this.systemConfig.getQuotaUnitPricing(),
+      this.systemConfig.getMeterUnitPricing(),
+      this.getTierSpendCeilings(),
+      this.prisma.pricingBundle.findMany({ orderBy: { updatedAt: "desc" } }),
+    ]);
+    return {
+      foundationMonthlyAzn,
+      yearlyDiscountPercent,
+      quotaPricing,
+      meterUnitPricing,
+      tierSpendCeilings,
+      pricingBundles: pricingBundleRows.map(serializePricingBundle),
+    };
+  }
+
   /**
-   * Read-only marketing snapshot: no JWT, no org secrets.
+   * Read-only marketing snapshot: no JWT, no org secrets, no catalog sync.
    * Omits module/bundle UUIDs and trial quota JSON from bundles.
+   * Sync runs on API bootstrap and super-admin `getBillingConfig`, not here.
    */
   async getPublicPricingSnapshot() {
-    const config = await this.getBillingConfig();
-    await this.pricing.ensurePricingModulesFromDatabase();
+    const config = await this.readBillingSnapshot();
     const catalogRows = await this.prisma.pricingModule.findMany({
       orderBy: { sortOrder: "asc" },
       select: {
@@ -284,7 +311,7 @@ export class AdminBillingService {
       pricePerMonth: Number(m.pricePerMonth),
       sortOrder: m.sortOrder,
       isPremium: m.isPremium,
-      satelliteKey: m.satelliteKey ?? null,
+      satelliteKey: m.satelliteKey ?? inferSatelliteKeyFromModuleKey(m.key),
     }));
     const pricingBundles = config.pricingBundles
       .filter((b) => !b.archivedAt)

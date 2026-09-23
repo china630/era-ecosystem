@@ -5,13 +5,8 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
+  LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -139,58 +134,62 @@ export default function WorkforceBrigadesPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("brigadesHeading")}
-        subtitle={t("shiftsHint")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateBrigade}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addBrigade")}
-          </button>
-        }
-      />
-      <WorkforceShiftsSubnav />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("brigadesHeading")}
+          subtitle={t("brigadesHint")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateBrigade}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addBrigade")}
+            </button>
+          }
+        />
+      </div>
+      <div className="shrink-0">
+        <WorkforceShiftsSubnav />
+      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-      ) : (
-        <section className={CARD_CONTAINER_CLASS}>
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colMembers")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                </tr>
-              </thead>
-              <tbody>
-                {brigades.map((row) => (
-                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {row._count?.members ?? row.members?.length ?? 0}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => openEditBrigade(row)}
-                      >
-                        {tCommon("edit")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "code", header: t("colCode") },
+            { key: "name", header: t("colName") },
+            {
+              key: "members",
+              header: t("colMembers"),
+              render: (row) => String(row._count?.members ?? row.members?.length ?? 0),
+            },
+            {
+              key: "actions",
+              header: "",
+              className: "w-24",
+              render: (row) => (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => openEditBrigade(row)}
+                >
+                  {tCommon("edit")}
+                </button>
+              ),
+            },
+          ]}
+          rows={brigades}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("brigadesEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
+      </div>
 
       <ModalShell
         open={brigadeOpen}
