@@ -7,6 +7,8 @@ RUN apk add --no-cache python3 make g++ openssl
 
 WORKDIR /workspace
 
+COPY packages/satellite-kit ./packages/satellite-kit
+
 COPY era-finance-core/packages/database/package.json ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/prisma.config.ts ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/tsconfig.chart.json ./era-finance-core/packages/database/
@@ -22,6 +24,9 @@ COPY era-data-hub/packages/database ./era-data-hub/packages/database
 COPY era-data-hub/apps/api ./era-data-hub/apps/api
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+
+WORKDIR /workspace/packages/satellite-kit
+RUN npm install && npm run build
 
 WORKDIR /workspace/era-data-hub
 RUN npm install 2>/dev/null || true
@@ -44,8 +49,11 @@ RUN apk add --no-cache openssl wget \
   && adduser --system --uid 1001 nestjs
 
 COPY --from=builder --chown=nestjs:nodejs /workspace/era-data-hub /app
-# file: dependency — symlink target is outside /app in builder; materialize for runtime
+# file: dependencies — symlink targets are outside /app in builder; materialize for runtime
 COPY --from=builder --chown=nestjs:nodejs /workspace/era-finance-core/packages/database /app/node_modules/@erafinance/database
+COPY --from=builder --chown=nestjs:nodejs /workspace/packages/satellite-kit /packages/satellite-kit
+RUN mkdir -p /app/node_modules/@era \
+  && ln -sfn /packages/satellite-kit /app/node_modules/@era/satellite-kit
 ENV DATA_HUB_FINANCE_CATALOG_ROOT=/app/packages/database/catalog
 
 USER nestjs
