@@ -10,6 +10,7 @@ import {
   resolveEntitlementActiveModules,
   isHotelModuleActive,
   isClinicModuleActive,
+  resolveClinicModuleForPathname,
   resolveHotelModuleKey,
   IndustryModuleInactiveError,
   runCronForEachTenant,
@@ -42,8 +43,27 @@ describe("industry module key aliases", () => {
   it("checks clinic module presence", () => {
     assert.equal(isClinicModuleActive(["clinic_lab"], "clinic_lab"), true);
     assert.equal(isClinicModuleActive(["clinic_lab"], "clinic_inpatient"), false);
-    assert.equal(isClinicModuleActive(["clinic_registry_emr"], "clinic_patients"), true);
-    assert.equal(isClinicModuleActive(["clinic_inpatient"], "clinic_sanatorium_clinical"), true);
+    assert.equal(isClinicModuleActive(["clinic_registry_emr"], "clinic_registry_emr"), true);
+    assert.equal(isClinicModuleActive(["clinic_inpatient"], "clinic_sanatorium"), false);
+  });
+
+  it("maps paid clinic routes and leaves schedule on the gate", () => {
+    assert.equal(resolveClinicModuleForPathname("/api/patients"), "clinic_registry_emr");
+    assert.equal(
+      resolveClinicModuleForPathname("/api/appointments/apt_1/reschedule"),
+      "clinic_registry_emr",
+    );
+    assert.equal(resolveClinicModuleForPathname("/api/appointments"), null);
+    assert.equal(resolveClinicModuleForPathname("/api/lab/import"), "clinic_lab");
+    assert.equal(resolveClinicModuleForPathname("/api/insurance/check"), "clinic_insurance");
+    assert.equal(
+      resolveClinicModuleForPathname("/api/sanatorium/nurse-roster"),
+      "clinic_nurse_roster",
+    );
+    assert.equal(resolveClinicModuleForPathname("/api/sanatorium/episodes"), "clinic_sanatorium");
+    assert.equal(resolveClinicModuleForPathname("/api/admin/wards"), "clinic_inpatient");
+    assert.equal(resolveClinicModuleForPathname("/api/admin/catalog"), null);
+    assert.equal(resolveClinicModuleForPathname("/portal"), "platform_portal");
   });
 });
 

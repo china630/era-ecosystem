@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { verifyGuestIdentityToken, verifyGuestQrToken } from "@era/satellite-kit";
+import {
+  IndustryModuleInactiveError,
+  requireSatelliteModule,
+  satelliteOrganizationId,
+  verifyGuestIdentityToken,
+  verifyGuestQrToken,
+} from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
@@ -38,9 +44,35 @@ export async function GET(request: Request) {
   const { identity } = resolved;
   const patients = await prisma.patientRef.findMany({
     where: { globalPersonId: identity.globalPersonId },
-    select: { id: true },
+    select: { id: true, organizationId: true },
   });
-  const patientIds = patients.map((p) => p.id);
+  const orgIds = [
+    ...new Set(patients.map((p) => p.organizationId?.trim()).filter((id): id is string => Boolean(id))),
+  ];
+  if (orgIds.length === 0) {
+    try {
+      const bound = satelliteOrganizationId();
+      if (bound) orgIds.push(bound);
+    } catch {
+      /* SHARED without a bind — fail closed below */
+    }
+  }
+  const entitledOrgs: string[] = [];
+  for (const organizationId of orgIds) {
+    try {
+      await requireSatelliteModule("platform_portal", { organizationId });
+      entitledOrgs.push(organizationId);
+    } catch (err) {
+      if (!(err instanceof IndustryModuleInactiveError)) throw err;
+    }
+  }
+  if (entitledOrgs.length === 0) {
+    return NextResponse.json({ error: "portal_module_inactive" }, { status: 403 });
+  }
+  const entitled = new Set(entitledOrgs);
+  const patientIds = patients
+    .filter((p) => entitled.has(p.organizationId))
+    .map((p) => p.id);
   if (patientIds.length === 0) {
     return NextResponse.json({
       globalPersonId: identity.globalPersonId,

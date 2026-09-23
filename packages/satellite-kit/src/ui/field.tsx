@@ -110,7 +110,7 @@ export function FieldSelect({
     >
       <select
         id={selectId}
-        className={`${MODAL_INPUT_CLASS} ${fieldWidthClass(preset)} ${selectClassName ?? ""}`.trim()}
+        className={`${MODAL_INPUT_CLASS} min-w-0 ${fieldWidthClass(preset)} ${selectClassName ?? ""}`.trim()}
         {...selectProps}
       >
         {children}
