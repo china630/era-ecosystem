@@ -399,13 +399,13 @@ function CatalogCombobox({
       htmlFor={id}
       className={className}
     >
-      <div className="relative">
+      <div className="relative min-w-0 max-w-full">
         <input
           ref={inputRef}
           id={id}
           name={name}
           disabled={disabled}
-          className={`${MODAL_INPUT_CLASS} ${fieldWidthClass(widthPreset)}`.trim()}
+          className={`${MODAL_INPUT_CLASS} min-w-0 max-w-full ${fieldWidthClass(widthPreset)}`.trim()}
           value={open ? query : selectedLabel}
           placeholder="…"
           autoComplete="off"

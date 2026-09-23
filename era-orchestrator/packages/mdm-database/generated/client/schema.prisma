@@ -88,6 +88,8 @@ model GlobalNaturalPerson {
   /// Denormalized: firstName + middleName + lastName (given + patronymic + surname).
   fullNameCipher     String?               @map("full_name_cipher")
   phoneCipher        String?               @map("phone_cipher")
+  /// Contact email (not platform User.email). Cipher like phone.
+  emailCipher        String?               @map("email_cipher")
   /// ISO 3166-1 alpha-2 citizenship (not ethnicity). Do not store OTHER.
   nationality        String?               @default("AZ")
   /// SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.

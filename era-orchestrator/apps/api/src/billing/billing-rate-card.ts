@@ -10,7 +10,9 @@ export type BillableActionType =
   | "INVOICE_CREATED"
   | "TRADE_CREDIT_BUYER"
   | "TRADE_CREDIT_ENRICH"
-  | "POS_STATION_MONTHLY";
+  | "POS_STATION_MONTHLY"
+  | "CLINIC_ROOM_MONTHLY"
+  | "CLINIC_BED_MONTHLY";
 
 import { TariffTier } from "@era365/database";
 

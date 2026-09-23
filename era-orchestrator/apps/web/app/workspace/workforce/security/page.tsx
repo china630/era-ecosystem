@@ -12,8 +12,9 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -292,29 +293,29 @@ export default function WorkforceSecurityMatrixPage() {
     positions.length === 0 ? t("noPositions") : t("noFilterMatch");
 
   return (
-    <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className="space-y-4">
-          <div className={`${CARD_CONTAINER_CLASS} flex items-center gap-4 p-4`}>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EBF5FB]">
-              <Users className="h-5 w-5 text-[#2980B9]" aria-hidden />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader className="!mb-0" title={t("title")} subtitle={t("subtitle")} />
+      </div>
+      <div className={`${CARD_CONTAINER_CLASS} flex shrink-0 items-center gap-4 p-4`}>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EBF5FB]">
+          <Users className="h-5 w-5 text-[#2980B9]" aria-hidden />
+        </span>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-[#95A5A6]">{t("seatsTitle")}</p>
+          <p className="mt-0.5 text-lg font-semibold tabular-nums text-[#34495E]">
+            {seatUsed}
+            <span className="text-sm font-normal text-[#7F8C8D]">
+              {" "}
+              / {seatLimit ?? "∞"}
             </span>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-[#95A5A6]">{t("seatsTitle")}</p>
-              <p className="mt-0.5 text-lg font-semibold tabular-nums text-[#34495E]">
-                {seatUsed}
-                <span className="text-sm font-normal text-[#7F8C8D]">
-                  {" "}
-                  / {seatLimit ?? "∞"}
-                </span>
-              </p>
-            </div>
-          </div>
-
+          </p>
+        </div>
+      </div>
+      <EraListWorkspace
+        filter={
           <EraListFilterBar
+            className="!mb-0"
             resetLabel={tCommon("filterReset")}
             onReset={() => {
               setFilterText("");
@@ -381,95 +382,94 @@ export default function WorkforceSecurityMatrixPage() {
               emptyLabel={t("filterAll")}
             />
           </EraListFilterBar>
-
-          <section className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
-            <div className="border-b border-[#EBEDF0] px-4 py-3">
-              <h2 className="text-sm font-semibold text-[#34495E]">{t("matrixTitle")}</h2>
-              <p className="text-xs text-[#7F8C8D]">{t("matrixHint")}</p>
-            </div>
+        }
+        toolbar={
+          <div>
+            <h2 className="text-sm font-semibold text-[#34495E]">{t("matrixTitle")}</h2>
+            <p className="text-xs text-[#7F8C8D]">{t("matrixHint")}</p>
             {matrixError ? (
-              <p className="border-b border-[#EBEDF0] px-4 py-2 text-[13px] text-[#C0392B]">
-                {matrixError}
-              </p>
+              <p className="mt-1 text-[13px] text-[#C0392B]">{matrixError}</p>
             ) : null}
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
-                    {WORKFORCE_UI_SATELLITES.map((s) => (
-                      <th key={s.key} className={DATA_TABLE_TH_LEFT_CLASS}>
-                        {satelliteLabel(s.key)}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {total === 0 ? (
-                    <tr className={DATA_TABLE_TR_CLASS}>
-                      <td
-                        colSpan={WORKFORCE_UI_SATELLITES.length + 1}
-                        className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}
-                      >
-                        {emptyMessage}
-                      </td>
-                    </tr>
-                  ) : (
-                    paged.map((p) => (
-                      <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
-                        <td className={DATA_TABLE_TD_CLASS}>
-                          <span className="font-medium text-[#34495E]">{p.name}</span>
-                          {p.orgUnit?.name ? (
-                            <span className="ml-1 text-[#7F8C8D]">({p.orgUnit.name})</span>
-                          ) : null}
+          </div>
+        }
+        table={
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
+                {WORKFORCE_UI_SATELLITES.map((s) => (
+                  <th key={s.key} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {satelliteLabel(s.key)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {total === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    colSpan={WORKFORCE_UI_SATELLITES.length + 1}
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                  >
+                    {loading ? t("loading") : emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                paged.map((p) => (
+                  <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <span className="font-medium text-[#34495E]">{p.name}</span>
+                      {p.orgUnit?.name ? (
+                        <span className="ml-1 text-[#7F8C8D]">({p.orgUnit.name})</span>
+                      ) : null}
+                    </td>
+                    {WORKFORCE_UI_SATELLITES.map((s) => {
+                      const cellKey = `${p.id}:${s.key}`;
+                      const tmpl = templateByCell.get(cellKey);
+                      const current = tmpl?.satelliteRole ?? "";
+                      const cellBusy = busyCell === cellKey;
+                      return (
+                        <td key={s.key} className={DATA_TABLE_TD_CLASS}>
+                          <select
+                            className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px] focus:border-[#2980B9] focus:outline-none disabled:opacity-50"
+                            value={current}
+                            disabled={cellBusy || busyCell !== null}
+                            onChange={(e) =>
+                              void onMatrixChange(p.id, s.key, e.target.value)
+                            }
+                          >
+                            <option value="">{t("noAccess")}</option>
+                            {rolesForSatellite(s.key).map((r) => (
+                              <option key={r} value={r}>
+                                {humanizeSatelliteRole(r)}
+                              </option>
+                            ))}
+                          </select>
                         </td>
-                        {WORKFORCE_UI_SATELLITES.map((s) => {
-                          const cellKey = `${p.id}:${s.key}`;
-                          const tmpl = templateByCell.get(cellKey);
-                          const current = tmpl?.satelliteRole ?? "";
-                          const cellBusy = busyCell === cellKey;
-                          return (
-                            <td key={s.key} className={DATA_TABLE_TD_CLASS}>
-                              <select
-                                className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px] focus:border-[#2980B9] focus:outline-none disabled:opacity-50"
-                                value={current}
-                                disabled={cellBusy || busyCell !== null}
-                                onChange={(e) =>
-                                  void onMatrixChange(p.id, s.key, e.target.value)
-                                }
-                              >
-                                <option value="">{t("noAccess")}</option>
-                                {rolesForSatellite(s.key).map((r) => (
-                                  <option key={r} value={r}>
-                                    {humanizeSatelliteRole(r)}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              <ListPaginationFooter
-                page={page}
-                pageSize={pageSize}
-                total={total}
-                onPageChange={setPage}
-                onPageSizeChange={setPageSize}
-                labels={{
-                  rowsPerPage: tCommon("paginationRowsPerPage"),
-                  pageOf: tCommon("paginationPageOf"),
-                  prev: tCommon("paginationPrev"),
-                  next: tCommon("paginationNext"),
-                }}
-              />
-            </div>
-          </section>
-        </div>
-      )}
-    </>
+                      );
+                    })}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        }
+      />
+    </div>
   );
 }

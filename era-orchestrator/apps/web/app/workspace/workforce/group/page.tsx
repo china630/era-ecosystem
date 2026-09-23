@@ -13,9 +13,10 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
@@ -218,79 +219,27 @@ export default function WorkforceGroupPage() {
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("hint")}
-        actions={
-          <Link
-            href="/workspace/workforce/employments"
-            className={SECONDARY_BUTTON_CLASS}
-          >
-            {t("openOrgEmployments")}
-          </Link>
-        }
-      />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("hint")}
+          actions={
+            <Link
+              href="/workspace/workforce/employments"
+              className={SECONDARY_BUTTON_CLASS}
+            >
+              {t("openOrgEmployments")}
+            </Link>
+          }
+        />
+      </div>
 
-      <EraListFilterBar
-        resetLabel={tCommon("filterReset")}
-        onReset={() => {
-          setFilterOrgId("");
-          setStatus("");
-          setQ("");
-          setPage(1);
-        }}
-      >
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("holding")}
-          value={holdingId}
-          onChange={(v) => {
-            setHoldingId(String(v));
-            setFilterOrgId("");
-            setVisibleOrgs([]);
-            setItems([]);
-          }}
-          options={holdingOptions}
-          emptyLabel={tCommon("select")}
-          disabled={filtersOff}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("filterOrg")}
-          value={filterOrgId}
-          onChange={(v) => setFilterOrgId(String(v))}
-          options={orgOptions}
-          disabled={filtersOff}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("status")}
-          value={status}
-          onChange={(v) => setStatus(String(v))}
-          options={[
-            { value: "ACTIVE", label: t("statusActive") },
-            { value: "TERMINATED", label: t("statusTerminated") },
-          ]}
-          emptyLabel={t("statusAll")}
-          disabled={filtersOff}
-        />
-        <CatalogField
-          kind="FREE_TEXT"
-          label={t("search")}
-          value={q}
-          onChange={(v) => setQ(String(v))}
-          options={[]}
-          disabled={filtersOff}
-        />
-      </EraListFilterBar>
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
 
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-
-      {!holdingsReady || loading ? (
-        <p className="text-sm text-[#7F8C8D]">{tCommon("loading")}</p>
-      ) : holdings.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-6`}>
+      {holdingsReady && holdings.length === 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-6`}>
           <p className="text-sm text-[#34495E]">
             {holdingsFailed ? t("holdingsLoadFailed") : t("noHoldings")}
           </p>
@@ -302,101 +251,173 @@ export default function WorkforceGroupPage() {
             {t("openHoldings")}
           </Link>
         </div>
-      ) : items.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>
-          {filtersActive ? t("emptyFiltered") : t("empty")}
-          <p className="mt-2 text-xs">{t("mutateHint")}</p>
-        </div>
       ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFirms")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => {
-                const profile = persons[row.globalPersonId];
-                const cardHref = `/workspace/workforce/group/persons/${row.globalPersonId}?holdingId=${holdingId}`;
-                const name =
-                  row.displayName?.trim() ||
-                  (profile?.accessDenied
-                    ? t("maskedPerson")
-                    : tCommon("unnamedPerson"));
-                return (
-                  <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <Link
-                        href={cardHref}
-                        className="text-[#2980B9] hover:underline"
-                      >
-                        {name}
-                      </Link>
-                    </td>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
-                      {profile?.accessDenied
-                        ? "—"
-                        : (profile?.finMasked ?? "—")}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <ul className="m-0 grid list-none gap-1 p-0">
-                        {row.employments.map((e) => (
-                          <li key={e.employmentId} className="text-[13px] leading-snug">
-                            <span className="text-[#34495E]">{e.orgName}</span>
-                            {e.position?.name ? (
-                              <span className="text-[#7F8C8D]">
-                                {" · "}
-                                {e.position.name}
-                              </span>
-                            ) : null}
-                            <span className="text-[#7F8C8D]">
-                              {" · "}
-                              {formatStatus(e.status)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <Link
-                        href={cardHref}
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        title={t("openCard")}
-                        aria-label={t("openCard")}
-                      >
-                        <SquareArrowOutUpRight
-                          className="h-4 w-4 text-[#2980B9]"
-                          aria-hidden
-                        />
-                      </Link>
+        <EraListWorkspace
+          filter={
+            <EraListFilterBar
+              className="!mb-0"
+              resetLabel={tCommon("filterReset")}
+              onReset={() => {
+                setFilterOrgId("");
+                setStatus("");
+                setQ("");
+                setPage(1);
+              }}
+            >
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("holding")}
+                value={holdingId}
+                onChange={(v) => {
+                  setHoldingId(String(v));
+                  setFilterOrgId("");
+                  setVisibleOrgs([]);
+                  setItems([]);
+                }}
+                options={holdingOptions}
+                emptyLabel={tCommon("select")}
+                disabled={filtersOff}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("filterOrg")}
+                value={filterOrgId}
+                onChange={(v) => setFilterOrgId(String(v))}
+                options={orgOptions}
+                disabled={filtersOff}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("status")}
+                value={status}
+                onChange={(v) => setStatus(String(v))}
+                options={[
+                  { value: "ACTIVE", label: t("statusActive") },
+                  { value: "TERMINATED", label: t("statusTerminated") },
+                ]}
+                emptyLabel={t("statusAll")}
+                disabled={filtersOff}
+              />
+              <CatalogField
+                kind="FREE_TEXT"
+                label={t("search")}
+                value={q}
+                onChange={(v) => setQ(String(v))}
+                options={[]}
+                disabled={filtersOff}
+              />
+            </EraListFilterBar>
+          }
+          table={
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFirms")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr className={DATA_TABLE_TR_CLASS}>
+                    <td
+                      className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                      colSpan={4}
+                    >
+                      {!holdingsReady || loading
+                        ? tCommon("loading")
+                        : filtersActive
+                          ? t("emptyFiltered")
+                          : t("empty")}
+                      {holdingsReady && !loading ? (
+                        <p className="mt-2 text-xs">{t("mutateHint")}</p>
+                      ) : null}
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <ListPaginationFooter
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onPageSizeChange={(n) => {
-              setPageSize(n);
-              setPage(1);
-            }}
-            labels={{
-              rowsPerPage: tCommon("paginationRowsPerPage"),
-              pageOf: tCommon("paginationPageOf"),
-              prev: tCommon("paginationPrev"),
-              next: tCommon("paginationNext"),
-            }}
-          />
-        </div>
+                ) : (
+                  items.map((row) => {
+                    const profile = persons[row.globalPersonId];
+                    const cardHref = `/workspace/workforce/group/persons/${row.globalPersonId}?holdingId=${holdingId}`;
+                    const name =
+                      row.displayName?.trim() ||
+                      (profile?.accessDenied
+                        ? t("maskedPerson")
+                        : tCommon("unnamedPerson"));
+                    return (
+                      <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <Link
+                            href={cardHref}
+                            className="text-[#2980B9] hover:underline"
+                          >
+                            {name}
+                          </Link>
+                        </td>
+                        <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
+                          {profile?.accessDenied
+                            ? "—"
+                            : (profile?.finMasked ?? "—")}
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <ul className="m-0 grid list-none gap-1 p-0">
+                            {row.employments.map((e) => (
+                              <li key={e.employmentId} className="text-[13px] leading-snug">
+                                <span className="text-[#34495E]">{e.orgName}</span>
+                                {e.position?.name ? (
+                                  <span className="text-[#7F8C8D]">
+                                    {" · "}
+                                    {e.position.name}
+                                  </span>
+                                ) : null}
+                                <span className="text-[#7F8C8D]">
+                                  {" · "}
+                                  {formatStatus(e.status)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <Link
+                            href={cardHref}
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("openCard")}
+                            aria-label={t("openCard")}
+                          >
+                            <SquareArrowOutUpRight
+                              className="h-4 w-4 text-[#2980B9]"
+                              aria-hidden
+                            />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          }
+          footer={
+            <ListPaginationFooter
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={(n) => {
+                setPageSize(n);
+                setPage(1);
+              }}
+              labels={{
+                rowsPerPage: tCommon("paginationRowsPerPage"),
+                pageOf: tCommon("paginationPageOf"),
+                prev: tCommon("paginationPrev"),
+                next: tCommon("paginationNext"),
+              }}
+            />
+          }
+        />
       )}
-    </>
+    </div>
   );
 }

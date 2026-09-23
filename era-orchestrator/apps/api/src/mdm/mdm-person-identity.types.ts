@@ -12,6 +12,8 @@ export type ResolvePersonInput = {
   middleName?: string;
   lastName?: string;
   phone?: string;
+  /** Contact email (MDM person, not CP User.email). */
+  email?: string;
   /** ISO 3166-1 alpha-2 citizenship. OTHER/garbage ignored on write. */
   nationality?: string;
   /** Update this person when already linked (hotel/clinic card edit without re-entering FIN). */

@@ -53,7 +53,7 @@ export const MODAL_FULL_CLASS =
 export const MODAL_CLOSE_BUTTON_CLASS =
   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#7F8C8D] transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/30";
 
-export const MODAL_FOOTER_ACTIONS_CLASS = "mt-6 flex justify-end gap-2";
+export const MODAL_FOOTER_ACTIONS_CLASS = "mt-4 flex justify-end gap-2";
 
 export const MODAL_FOOTER_BUTTON_CLASS =
   "inline-flex h-9 min-h-9 shrink-0 items-center justify-center rounded-lg px-4 text-[13px] font-semibold disabled:opacity-50 disabled:pointer-events-none";
@@ -140,7 +140,7 @@ export const SIDEBAR_LINK_CLASS =
 export const SIDEBAR_LINK_ACTIVE_CLASS =
   "flex items-center gap-2 rounded-lg bg-[#2980B9]/10 px-3 py-2 text-[13px] font-semibold text-[#2980B9]";
 
-export const FORM_FIELD_GROUP_CLASS = "space-y-1.5";
+export const FORM_FIELD_GROUP_CLASS = "min-w-0 space-y-1.5";
 
 /** Public auth forms (login / register) — extra gap so submit is not flush to the last field. */
 export const FORM_STACK_CLASS = "space-y-5";

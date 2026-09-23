@@ -31,12 +31,21 @@ export class MdmController {
   @Post("persons/lookup-by-fin")
   lookupByFin(
     @Body()
-    body: { fin: string; requesterOrgId?: string; purpose?: string },
+    body: {
+      fin: string;
+      requesterOrgId?: string;
+      organizationId?: string;
+      purpose?: string;
+    },
     @Headers("authorization") auth?: string,
     @Headers("x-service-token") xToken?: string,
   ) {
     this.guard(auth, xToken);
-    return this.mdm.lookupNaturalPersonByFin(body);
+    return this.mdm.lookupNaturalPersonByFin({
+      fin: body.fin,
+      requesterOrgId: body.requesterOrgId ?? body.organizationId,
+      purpose: body.purpose,
+    });
   }
 
   @Post("persons/resolve")

@@ -21,6 +21,19 @@ class ReportPosStationsDto {
   billableStationCount!: number;
 }
 
+class ReportClinicCapacityDto {
+  @IsString()
+  organizationId!: string;
+
+  @IsInt()
+  @Min(0)
+  roomCount!: number;
+
+  @IsInt()
+  @Min(0)
+  bedCount!: number;
+}
+
 /**
  * Satellites report ERA till/register count (not KKM devices).
  * Authorization: Bearer SATELLITE_EVENT_SERVICE_TOKEN.
@@ -44,6 +57,24 @@ export class CapacityInternalController {
       body.organizationId,
       body.satelliteKey,
       body.billableStationCount,
+    );
+  }
+
+  @Post("clinic")
+  async reportClinicCapacity(
+    @Body() body: ReportClinicCapacityDto,
+    @Headers("authorization") authorization?: string,
+    @Headers("x-service-token") xServiceToken?: string,
+  ) {
+    const expected = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
+    const token = extractServiceToken(authorization, xServiceToken);
+    if (!expected || !token || token !== expected) {
+      throw new ForbiddenException("Invalid service token");
+    }
+    return this.quota.assertClinicCapacityOverage(
+      body.organizationId,
+      body.roomCount,
+      body.bedCount,
     );
   }
 }

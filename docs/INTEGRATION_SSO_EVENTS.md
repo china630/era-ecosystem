@@ -271,7 +271,7 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 
 ## MDM natural-person identity (internal API)
 
-**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Person core stores **name parts** (`firstName` / `middleName` / `lastName` ciphers + denorm `fullName`), **`sex`** (`MALE` \| `FEMALE` \| `UNKNOWN`; no OTHER), **`birthDate`**, and **`nationality`** as ISO citizenship. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) including gender/DOB cache — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md). Canon: [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
+**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Person core stores **name parts** (`firstName` / `middleName` / `lastName` ciphers + denorm `fullName`), **`sex`** (`MALE` \| `FEMALE` \| `UNKNOWN`; no OTHER), **`birthDate`**, **`nationality`** as ISO citizenship, and contact ciphers **`phone`** / **`email`**. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) including gender/DOB cache — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md). Canon: [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
 
 **Auth:** `Authorization: Bearer` with `MDM_INTERNAL_SERVICE_TOKEN` (alias `SATELLITE_EVENT_SERVICE_TOKEN` in some apps).
 

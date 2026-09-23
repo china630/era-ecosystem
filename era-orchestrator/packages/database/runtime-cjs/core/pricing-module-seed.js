@@ -353,55 +353,9 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         isPremium: false,
         satelliteKey: "industry_hotel_pms",
     },
-    // Clinic modules (MODULES_CATALOG M0–M14) — default free
-    {
-        key: "clinic_shell",
-        name: "M0 Platform shell, SSO",
-        pricePerMonth: 0,
-        sortOrder: 200,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_patients",
-        name: "M1 Patient registry",
-        pricePerMonth: 0,
-        sortOrder: 201,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_schedule",
-        name: "M2 Practitioners, rooms, schedule",
-        pricePerMonth: 0,
-        sortOrder: 202,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_appointments",
-        name: "M3 Appointment & check-in",
-        pricePerMonth: 0,
-        sortOrder: 203,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_visit",
-        name: "M4 Visit card & clinical services",
-        pricePerMonth: 0,
-        sortOrder: 204,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
     {
         key: "clinic_lab",
-        name: "M5 Laboratory orders & results",
+        name: "Laboratory",
         pricePerMonth: 29,
         sortOrder: 205,
         isPremium: false,
@@ -409,62 +363,8 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         trialEligibleInTrial: true,
     },
     {
-        key: "clinic_service_catalog",
-        name: "M6 Service catalog cache",
-        pricePerMonth: 0,
-        sortOrder: 206,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_notifications",
-        name: "M7 Notifications (SMS/email)",
-        pricePerMonth: 0,
-        sortOrder: 207,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: false,
-    },
-    {
-        key: "clinic_portal",
-        name: "M8 Patient portal",
-        pricePerMonth: 0,
-        sortOrder: 208,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_reschedule",
-        name: "M9 Multi-room drag reschedule",
-        pricePerMonth: 0,
-        sortOrder: 209,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_ehr",
-        name: "M10 EHR templates / CPOE lite",
-        pricePerMonth: 0,
-        sortOrder: 210,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
-        key: "clinic_lis_import",
-        name: "M11 LIS analyzer import",
-        pricePerMonth: 0,
-        sortOrder: 211,
-        isPremium: false,
-        satelliteKey: "industry_clinic",
-        trialEligibleInTrial: true,
-    },
-    {
         key: "clinic_insurance",
-        name: "M12 Insurance / DMS eligibility",
+        name: "Insurance / DMS eligibility",
         pricePerMonth: 39,
         sortOrder: 212,
         isPremium: false,
@@ -473,8 +373,8 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
     },
     {
         key: "clinic_inpatient",
-        name: "M13 Inpatient / bed management",
-        pricePerMonth: 19,
+        name: "Inpatient / bed management",
+        pricePerMonth: 39,
         sortOrder: 213,
         isPremium: false,
         satelliteKey: "industry_clinic",
@@ -482,8 +382,8 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
     },
     {
         key: "clinic_telehealth",
-        name: "M14 Telehealth + patient portal",
-        pricePerMonth: 19,
+        name: "Telehealth",
+        pricePerMonth: 39,
         sortOrder: 214,
         isPremium: false,
         satelliteKey: "industry_clinic",
@@ -660,15 +560,15 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
     {
         key: "clinic_registry_emr",
         name: "EMR / visit protocols",
-        pricePerMonth: 29,
+        pricePerMonth: 39,
         sortOrder: 216,
         satelliteKey: "industry_clinic",
         trialEligibleInTrial: true,
     },
     {
-        key: "clinic_sanatorium_clinical",
-        name: "Sanatorium clinical chart",
-        pricePerMonth: 29,
+        key: "clinic_sanatorium",
+        name: "Sanatorium chart",
+        pricePerMonth: 99,
         sortOrder: 217,
         satelliteKey: "industry_clinic",
         trialEligibleInTrial: true,
@@ -932,9 +832,90 @@ async function ensureMissingPricingModules(prisma) {
         }
     }
 }
+function sameModuleSet(a, b) {
+    if (a.length !== b.length)
+        return false;
+    const right = new Set(b);
+    return a.every((k) => right.has(k));
+}
+function rewriteCustomConfigModules(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw))
+        return null;
+    if (!Array.isArray(raw.modules))
+        return null;
+    const modules = raw.modules.filter((m) => typeof m === "string");
+    const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(modules);
+    if (sameModuleSet(modules, next))
+        return null;
+    return { ...raw, modules: next };
+}
+async function rewriteClinicEntitlementArrays(prisma) {
+    const retired = [...pricing_catalog_canon_1.RETIRED_CLINIC_MODULE_KEYS];
+    const orgs = await prisma.organization.findMany({
+        where: { activeModules: { hasSome: retired } },
+        select: { id: true, activeModules: true },
+    });
+    for (const row of orgs) {
+        const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(row.activeModules);
+        await prisma.organization.update({
+            where: { id: row.id },
+            data: { activeModules: next },
+        });
+    }
+    const subs = await prisma.organizationSubscription.findMany({
+        where: { activeModules: { hasSome: retired } },
+        select: { id: true, activeModules: true },
+    });
+    for (const row of subs) {
+        const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(row.activeModules);
+        await prisma.organizationSubscription.update({
+            where: { id: row.id },
+            data: { activeModules: next },
+        });
+    }
+    const configured = await prisma.organizationSubscription.findMany({
+        select: { id: true, customConfig: true },
+    });
+    for (const row of configured) {
+        const customConfig = rewriteCustomConfigModules(row.customConfig);
+        if (!customConfig)
+            continue;
+        await prisma.organizationSubscription.update({
+            where: { id: row.id },
+            data: { customConfig },
+        });
+    }
+    const bills = await prisma.tenantBilling.findMany({
+        where: { activeModules: { hasSome: retired } },
+        select: { organizationId: true, activeModules: true },
+    });
+    for (const row of bills) {
+        const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(row.activeModules);
+        await prisma.tenantBilling.update({
+            where: { organizationId: row.organizationId },
+            data: { activeModules: next },
+        });
+    }
+    const bundles = await prisma.pricingBundle.findMany({
+        select: { id: true, moduleKeys: true },
+    });
+    for (const row of bundles) {
+        if (!Array.isArray(row.moduleKeys))
+            continue;
+        const keys = row.moduleKeys.filter((m) => typeof m === "string");
+        const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(keys);
+        if (sameModuleSet(keys, next))
+            continue;
+        await prisma.pricingBundle.update({
+            where: { id: row.id },
+            data: { moduleKeys: next },
+        });
+    }
+}
 /** Align existing catalog rows to freeze defaults (price, name, premium, satellite). */
 async function syncPricingModuleCatalog(prisma) {
     await ensureSatellites(prisma);
+    await rewriteClinicEntitlementArrays(prisma);
     for (const m of exports.PRICING_MODULE_SEED_DEFAULTS) {
         const data = moduleSeedData(m);
         await prisma.pricingModule.upsert({
@@ -951,4 +932,7 @@ async function syncPricingModuleCatalog(prisma) {
             },
         });
     }
+    await prisma.pricingModule.deleteMany({
+        where: { key: { in: [...pricing_catalog_canon_1.RETIRED_CLINIC_MODULE_KEYS] } },
+    });
 }

@@ -112,6 +112,66 @@ export class QuotaService {
     return { overageUnits };
   }
 
+  /**
+   * Clinic Room / Bed overage (CLINIC_MODULE_CAPACITY). Rooms bill once —
+   * sanatorium wins over EMR. Beds only when clinic_inpatient is on.
+   */
+  async assertClinicCapacityOverage(
+    organizationId: string,
+    roomCount: number,
+    bedCount: number,
+  ): Promise<{
+    roomOverage: number;
+    bedOverage: number;
+    roomModule: "clinic_sanatorium" | "clinic_registry_emr" | null;
+  }> {
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (!orgId) {
+      return { roomOverage: 0, bedOverage: 0, roomModule: null };
+    }
+    const sub = await this.prisma.organizationSubscription.findUnique({
+      where: { organizationId: orgId },
+      select: { activeModules: true },
+    });
+    let mods = sub?.activeModules ?? [];
+    if (mods.length === 0) {
+      const org = await this.prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { activeModules: true },
+      });
+      mods = org?.activeModules ?? [];
+    }
+    const { clinicBedOverageUnits, clinicRoomOverageUnits } = await import(
+      "./clinic-capacity"
+    );
+    const room = clinicRoomOverageUnits(roomCount, mods);
+    const bedOverage = clinicBedOverageUnits(bedCount, mods);
+    if (room.overageUnits > 0) {
+      await this.billingMeter.recordMonthlyOverageGauge(
+        organizationId,
+        "CLINIC_ROOM_MONTHLY",
+        room.overageUnits,
+      );
+    }
+    if (bedOverage > 0) {
+      await this.billingMeter.recordMonthlyOverageGauge(
+        organizationId,
+        "CLINIC_BED_MONTHLY",
+        bedOverage,
+      );
+    }
+    if (room.overageUnits > 0 || bedOverage > 0) {
+      this.logger.log(
+        `Clinic capacity overage rooms=${room.overageUnits} (${room.moduleKey ?? "none"}) beds=${bedOverage} org=${organizationId}`,
+      );
+    }
+    return {
+      roomOverage: room.overageUnits,
+      bedOverage,
+      roomModule: room.moduleKey,
+    };
+  }
+
   async getQuotaSnapshot(organizationId: string) {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return null;

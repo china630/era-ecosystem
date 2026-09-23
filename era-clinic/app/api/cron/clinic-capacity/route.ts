@@ -1,26 +1,22 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { closeIdleWalkInEpisodes } from "@/lib/services/sanatorium.service";
 import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
+import { reportClinicRoomBedCapacity } from "@/lib/report-clinic-capacity";
 import { runCronForEachTenant } from "@era/satellite-kit";
 
-/**
- * Weekly idle walk-in close (CLI-55).
- * Bearer PLATFORM_CRON_SECRET — same tenant loop as other clinic crons.
- */
+/** Bearer PLATFORM_CRON_SECRET — reports Room/Bed gauges once per Baku month. */
 export async function POST(req: Request) {
   try {
     const gate = await runCronForEachTenant(
       {
         satelliteKey: "industry_clinic",
-        moduleKey: "clinic_sanatorium",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "PLATFORM_CRON_SECRET",
         listOrganizationIds: listCronOrganizationIdsFromDb,
         fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
       },
       async (organizationId) => {
-        const result = await closeIdleWalkInEpisodes();
-        return { organizationId, ...result };
+        const counts = await reportClinicRoomBedCapacity(organizationId);
+        return { organizationId, ...counts };
       },
     );
     if (!gate.ok) {

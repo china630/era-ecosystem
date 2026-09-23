@@ -11,14 +11,15 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
@@ -313,8 +314,8 @@ export default function WorkforceSecurityGrantsPage() {
     setGrantOpen(true);
   }
 
-  async function onGrantSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onGrantSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (
       busy ||
       !grantForm.employmentId ||
@@ -369,22 +370,23 @@ export default function WorkforceSecurityGrantsPage() {
   const emptyMessage = grants.length === 0 ? t("noGrants") : t("noFilterMatch");
 
   return (
-    <>
-      <PageHeader
-        title={t("grantsPageTitle")}
-        subtitle={t("grantsPageSubtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openGrantModal}>
-            {t("grantCreate")}
-          </button>
-        }
-      />
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("grantsPageTitle")}
+          subtitle={t("grantsPageSubtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openGrantModal}>
+              {t("grantCreate")}
+            </button>
+          }
+        />
+      </div>
+      <EraListWorkspace
+        filter={
           <EraListFilterBar
-            className="mb-4"
+            className="!mb-0"
             resetLabel={tCommon("filterReset")}
             onReset={() => {
               setFilterText("");
@@ -460,90 +462,110 @@ export default function WorkforceSecurityGrantsPage() {
               options={statusOptions}
             />
           </EraListFilterBar>
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEmployment")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRole")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colReason")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colActions")}</th>
+        }
+        table={
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEmployment")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRole")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colReason")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colActions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredGrants.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    colSpan={5}
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                  >
+                    {loading ? t("loading") : emptyMessage}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredGrants.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
-                      {emptyMessage}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredGrants.map((g) => (
-                    <tr key={g.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{employmentLabel(g.employmentId)}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{satelliteLabel(g.satelliteKey)}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{humanizeSatelliteRole(g.satelliteRole)}</td>
-                      <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{g.reason}</td>
-                      <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                        {!g.revokedAt ? (
+              ) : (
+                filteredGrants.map((g) => (
+                  <tr key={g.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>{employmentLabel(g.employmentId)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{satelliteLabel(g.satelliteKey)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{humanizeSatelliteRole(g.satelliteRole)}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{g.reason}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
+                      {!g.revokedAt ? (
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          title={t("grantRevoke")}
+                          aria-label={t("grantRevoke")}
+                          disabled={busy}
+                          onClick={() => void onRevokeGrant(g.id)}
+                        >
+                          <Ban className="h-4 w-4 text-[#C0392B]" aria-hidden />
+                        </button>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-[#95A5A6]">{t("grantRevoked")}</span>
                           <button
                             type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
-                            title={t("grantRevoke")}
-                            aria-label={t("grantRevoke")}
+                            title={t("grantRestore")}
+                            aria-label={t("grantRestore")}
                             disabled={busy}
-                            onClick={() => void onRevokeGrant(g.id)}
+                            onClick={() => void onRestoreGrant(g.id)}
                           >
-                            <Ban className="h-4 w-4 text-[#C0392B]" aria-hidden />
+                            <RotateCcw className="h-4 w-4 text-[#27AE60]" aria-hidden />
                           </button>
-                        ) : (
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-[#95A5A6]">{t("grantRevoked")}</span>
-                            <button
-                              type="button"
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              title={t("grantRestore")}
-                              aria-label={t("grantRestore")}
-                              disabled={busy}
-                              onClick={() => void onRestoreGrant(g.id)}
-                            >
-                              <RotateCcw className="h-4 w-4 text-[#27AE60]" aria-hidden />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-            <ListPaginationFooter
-              page={page}
-              pageSize={pageSize}
-              total={
-                filterOrgUnitId || filterPositionId || filterRole
-                  ? filteredGrants.length
-                  : grantsTotal
-              }
-              onPageChange={setPage}
-              onPageSizeChange={setPageSize}
-              labels={{
-                rowsPerPage: tCommon("paginationRowsPerPage"),
-                pageOf: tCommon("paginationPageOf"),
-                prev: tCommon("paginationPrev"),
-                next: tCommon("paginationNext"),
-              }}
-            />
-          </div>
-        </>
-      )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={
+              filterOrgUnitId || filterPositionId || filterRole
+                ? filteredGrants.length
+                : grantsTotal
+            }
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        }
+      />
 
       <ModalShell
         open={grantOpen}
         title={t("grantModalTitle")}
         onClose={() => setGrantOpen(false)}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setGrantOpen(false)}
+            onSubmit={() => void onGrantSubmit()}
+            busy={busy}
+            submitDisabled={
+              !grantForm.employmentId ||
+              !grantForm.satelliteKey ||
+              !grantForm.satelliteRole ||
+              !grantForm.reason.trim()
+            }
+            cancelLabel={t("grantCancel")}
+            submitLabel={t("grantSubmit")}
+          />
+        }
       >
         <form onSubmit={onGrantSubmit} className="grid gap-3">
           <CatalogField
@@ -598,20 +620,8 @@ export default function WorkforceSecurityGrantsPage() {
           {modalError ? (
             <p className="text-[13px] text-[#C0392B]">{modalError}</p>
           ) : null}
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setGrantOpen(false)}
-            >
-              {t("grantCancel")}
-            </button>
-            <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
-              {t("grantSubmit")}
-            </button>
-          </div>
         </form>
       </ModalShell>
-    </>
+    </div>
   );
 }

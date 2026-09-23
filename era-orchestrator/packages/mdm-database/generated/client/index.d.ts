@@ -1729,6 +1729,7 @@ export namespace Prisma {
     lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    emailCipher: string | null
     nationality: string | null
     sex: $Enums.PersonSex | null
     birthDate: Date | null
@@ -1747,6 +1748,7 @@ export namespace Prisma {
     lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    emailCipher: string | null
     nationality: string | null
     sex: $Enums.PersonSex | null
     birthDate: Date | null
@@ -1765,6 +1767,7 @@ export namespace Prisma {
     lastNameCipher: number
     fullNameCipher: number
     phoneCipher: number
+    emailCipher: number
     nationality: number
     sex: number
     birthDate: number
@@ -1785,6 +1788,7 @@ export namespace Prisma {
     lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    emailCipher?: true
     nationality?: true
     sex?: true
     birthDate?: true
@@ -1803,6 +1807,7 @@ export namespace Prisma {
     lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    emailCipher?: true
     nationality?: true
     sex?: true
     birthDate?: true
@@ -1821,6 +1826,7 @@ export namespace Prisma {
     lastNameCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    emailCipher?: true
     nationality?: true
     sex?: true
     birthDate?: true
@@ -1912,6 +1918,7 @@ export namespace Prisma {
     lastNameCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    emailCipher: string | null
     nationality: string | null
     sex: $Enums.PersonSex
     birthDate: Date | null
@@ -1947,6 +1954,7 @@ export namespace Prisma {
     lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    emailCipher?: boolean
     nationality?: boolean
     sex?: boolean
     birthDate?: boolean
@@ -1974,6 +1982,7 @@ export namespace Prisma {
     lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    emailCipher?: boolean
     nationality?: boolean
     sex?: boolean
     birthDate?: boolean
@@ -1993,6 +2002,7 @@ export namespace Prisma {
     lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    emailCipher?: boolean
     nationality?: boolean
     sex?: boolean
     birthDate?: boolean
@@ -2012,6 +2022,7 @@ export namespace Prisma {
     lastNameCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    emailCipher?: boolean
     nationality?: boolean
     sex?: boolean
     birthDate?: boolean
@@ -2021,7 +2032,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "firstNameCipher" | "middleNameCipher" | "lastNameCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "sex" | "birthDate" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
+  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "firstNameCipher" | "middleNameCipher" | "lastNameCipher" | "fullNameCipher" | "phoneCipher" | "emailCipher" | "nationality" | "sex" | "birthDate" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
   export type GlobalNaturalPersonInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     identifiers?: boolean | GlobalNaturalPerson$identifiersArgs<ExtArgs>
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
@@ -2076,6 +2087,10 @@ export namespace Prisma {
        */
       fullNameCipher: string | null
       phoneCipher: string | null
+      /**
+       * Contact email (not platform User.email). Cipher like phone.
+       */
+      emailCipher: string | null
       /**
        * ISO 3166-1 alpha-2 citizenship (not ethnicity). Do not store OTHER.
        */
@@ -2528,6 +2543,7 @@ export namespace Prisma {
     readonly lastNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly fullNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly phoneCipher: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly emailCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly nationality: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly sex: FieldRef<"GlobalNaturalPerson", 'PersonSex'>
     readonly birthDate: FieldRef<"GlobalNaturalPerson", 'DateTime'>
@@ -10767,6 +10783,7 @@ export namespace Prisma {
     lastNameCipher: 'lastNameCipher',
     fullNameCipher: 'fullNameCipher',
     phoneCipher: 'phoneCipher',
+    emailCipher: 'emailCipher',
     nationality: 'nationality',
     sex: 'sex',
     birthDate: 'birthDate',
@@ -11093,6 +11110,7 @@ export namespace Prisma {
     lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    emailCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
     birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
@@ -11119,6 +11137,7 @@ export namespace Prisma {
     lastNameCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
+    emailCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
     sex?: SortOrder
     birthDate?: SortOrderInput | SortOrder
@@ -11148,6 +11167,7 @@ export namespace Prisma {
     lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    emailCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
     birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
@@ -11174,6 +11194,7 @@ export namespace Prisma {
     lastNameCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
+    emailCipher?: SortOrderInput | SortOrder
     nationality?: SortOrderInput | SortOrder
     sex?: SortOrder
     birthDate?: SortOrderInput | SortOrder
@@ -11198,6 +11219,7 @@ export namespace Prisma {
     lastNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    emailCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     sex?: EnumPersonSexWithAggregatesFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
     birthDate?: DateTimeNullableWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string | null
@@ -11691,6 +11713,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -11716,6 +11739,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -11741,6 +11765,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11766,6 +11791,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11791,6 +11817,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -11809,6 +11836,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11826,6 +11854,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12506,6 +12535,7 @@ export namespace Prisma {
     lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    emailCipher?: SortOrder
     nationality?: SortOrder
     sex?: SortOrder
     birthDate?: SortOrder
@@ -12524,6 +12554,7 @@ export namespace Prisma {
     lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    emailCipher?: SortOrder
     nationality?: SortOrder
     sex?: SortOrder
     birthDate?: SortOrder
@@ -12542,6 +12573,7 @@ export namespace Prisma {
     lastNameCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    emailCipher?: SortOrder
     nationality?: SortOrder
     sex?: SortOrder
     birthDate?: SortOrder
@@ -14002,6 +14034,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14026,6 +14059,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14055,6 +14089,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14079,6 +14114,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14305,6 +14341,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14329,6 +14366,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14372,6 +14410,7 @@ export namespace Prisma {
     lastNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    emailCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     sex?: EnumPersonSexFilter<"GlobalNaturalPerson"> | $Enums.PersonSex
     birthDate?: DateTimeNullableFilter<"GlobalNaturalPerson"> | Date | string | null
@@ -14390,6 +14429,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14414,6 +14454,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14454,6 +14495,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14478,6 +14520,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14502,6 +14545,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14526,6 +14570,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14566,6 +14611,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14590,6 +14636,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14614,6 +14661,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14638,6 +14686,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14678,6 +14727,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14702,6 +14752,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14726,6 +14777,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14750,6 +14802,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14790,6 +14843,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14814,6 +14868,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14838,6 +14893,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14862,6 +14918,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14902,6 +14959,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14926,6 +14984,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14950,6 +15009,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -14974,6 +15034,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -15014,6 +15075,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15038,6 +15100,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15108,6 +15171,7 @@ export namespace Prisma {
     lastNameCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    emailCipher?: string | null
     nationality?: string | null
     sex?: $Enums.PersonSex
     birthDate?: Date | string | null
@@ -15263,6 +15327,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15287,6 +15352,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15311,6 +15377,7 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

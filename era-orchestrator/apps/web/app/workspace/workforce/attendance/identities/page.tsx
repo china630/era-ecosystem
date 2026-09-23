@@ -5,18 +5,12 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
+  LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import {
@@ -126,59 +120,58 @@ export default function WorkforceAttendanceIdentitiesPage() {
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("identitiesTitle")}
-        subtitle={t("subtitle")}
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setPersonRef("");
-              setEmploymentId("");
-              setIdModal(true);
-            }}
-          >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addIdentity")}
-          </button>
-        }
-      />
-      <WorkforceAttendanceSubnav />
-      {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("identitiesTitle")}
+          subtitle={t("identitiesHint")}
+          actions={
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => {
+                setPersonRef("");
+                setEmploymentId("");
+                setIdModal(true);
+              }}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addIdentity")}
+            </button>
+          }
+        />
+      </div>
+      <div className="shrink-0">
+        <WorkforceAttendanceSubnav />
+      </div>
+      {error ? <p className="shrink-0 text-sm text-[var(--era-danger)]">{error}</p> : null}
 
-      <section className={CARD_CONTAINER_CLASS}>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPersonRef")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colEmployment")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {identities.map((row) => (
-                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.personRef}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {empOptions.find((o) => o.value === row.employmentId)?.label ??
-                      row.employment?.position?.name ??
-                      row.employmentId}
-                  </td>
-                </tr>
-              ))}
-              {!loading && identities.length === 0 ? (
-                <tr>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
-                    —
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "personRef", header: t("colPersonRef") },
+            {
+              key: "employment",
+              header: t("colEmployment"),
+              render: (row) =>
+                empOptions.find((o) => o.value === row.employmentId)?.label ??
+                row.employment?.position?.name ??
+                tCommon("unnamedPerson"),
+            },
+          ]}
+          rows={identities}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("identitiesEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
+      </div>
 
       {idModal ? (
         <ModalShell

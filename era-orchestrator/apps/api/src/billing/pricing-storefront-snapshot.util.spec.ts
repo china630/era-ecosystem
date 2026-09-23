@@ -93,6 +93,8 @@ describe("enrichPublicPricingStorefront catalog freeze", () => {
     const clinic = out.industryGroups.find((g) => g.satelliteKey === "industry_clinic");
     expect(clinic?.gate?.pricePerMonth).toBe(29);
     expect(clinic?.modules.map((m) => m.key).sort()).toEqual(["clinic_lab", "clinic_registry_emr"]);
+    expect(clinic?.capacity).toBeNull();
+    expect(out.capacityDrivers.find((d) => d.satelliteKey === "industry_clinic")).toBeUndefined();
   });
 
   it("exposes hotel room capacity driver from catalog freeze", () => {

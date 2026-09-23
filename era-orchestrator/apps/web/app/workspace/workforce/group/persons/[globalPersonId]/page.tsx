@@ -16,6 +16,7 @@ import {
   buildFinanceHandoffUrl,
   ensureFreshOrchAccessToken,
 } from "../../../../../../lib/open-finance";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -260,7 +261,7 @@ export default function WorkforceGroupPersonPage() {
                       <div>
                         <dt className="inline text-[#7F8C8D]">{t("hireDate")}: </dt>
                         <dd className="inline">
-                          {String(e.hireDate).slice(0, 10)}
+                          {bakuDateDisplay(e.hireDate)}
                         </dd>
                       </div>
                     </dl>

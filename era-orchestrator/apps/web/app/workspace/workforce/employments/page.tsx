@@ -25,10 +25,11 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   DEFAULT_LIST_PAGE_SIZE,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -38,7 +39,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -126,6 +127,35 @@ function displayStaffLogin(emp: EmploymentRow): string {
   return emp.satelliteStaffLogin?.trim() || staffLoginFromEmploymentId(emp.id);
 }
 
+function latinizeLoginToken(raw: string): string {
+  const az: Record<string, string> = {
+    ə: "e",
+    ı: "i",
+    ö: "o",
+    ü: "u",
+    ç: "c",
+    ş: "s",
+    ğ: "g",
+  };
+  return raw
+    .toLowerCase()
+    .replace(/[əıöüçşğ]/g, (ch) => az[ch] ?? ch)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function suggestStaffLogin(lastName: string, firstName: string): string {
+  const last = latinizeLoginToken(lastName);
+  const first = latinizeLoginToken(firstName);
+  if (last && first) return `${last}.${first}`.slice(0, 64);
+  return (last || first).slice(0, 64);
+}
+
+function looksMaskedContact(value: string | null | undefined): boolean {
+  return Boolean(value?.includes("*"));
+}
+
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 const BLOOD_VALUES = [
   "A_POS",
@@ -150,7 +180,10 @@ const AGE_BUCKETS = [
 
 const FIELD_INPUT_CLASS =
   "mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]";
-const ZONE_CLASS = "grid gap-3 rounded-lg border border-[#D5DADF] p-3";
+const ZONE_CLASS = "grid min-w-0 gap-3 rounded-lg border border-[#D5DADF] p-3";
+const ROW3_CLASS = "grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3";
+const ROW2_CLASS = "grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2";
+const REQ_STAR = <span className="text-[#E74C3C]"> *</span>;
 
 function bloodLabel(code: string): string {
   const map: Record<string, string> = {
@@ -257,8 +290,11 @@ export default function WorkforceEmploymentsPage() {
   const [hireLogin, setHireLogin] = useState("");
   const [hirePin, setHirePin] = useState("");
   const [hirePhone, setHirePhone] = useState("");
+  const [hireEmail, setHireEmail] = useState("");
   const [hireAddress, setHireAddress] = useState("");
   const [hireGrantAccess, setHireGrantAccess] = useState(false);
+  const [hireLoginDirty, setHireLoginDirty] = useState(false);
+  const [mdmSearchBusy, setMdmSearchBusy] = useState(false);
   const [orderBridge, setOrderBridge] = useState<PersonnelOrderRef | null>(null);
   const [orderBridgeBusy, setOrderBridgeBusy] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<
@@ -281,15 +317,44 @@ export default function WorkforceEmploymentsPage() {
   const [cardSex, setCardSex] = useState("");
   const [cardBirthDate, setCardBirthDate] = useState("");
   const [cardPhone, setCardPhone] = useState("");
+  const [cardEmail, setCardEmail] = useState("");
   const [cardBlood, setCardBlood] = useState("");
   const [cardAddress, setCardAddress] = useState("");
   const [cardFinMasked, setCardFinMasked] = useState("");
   const [cardPhoneMasked, setCardPhoneMasked] = useState("");
+  const [cardEmailMasked, setCardEmailMasked] = useState("");
   const [cardGrantAccess, setCardGrantAccess] = useState(false);
   const [cardLogin, setCardLogin] = useState("");
   const [cardPin, setCardPin] = useState("");
+  const [cardLoginDirty, setCardLoginDirty] = useState(false);
   const [cardSatelliteKeys, setCardSatelliteKeys] = useState<string[]>([]);
   const [cardOrders, setCardOrders] = useState<PersonnelOrderRef[]>([]);
+
+  useEffect(() => {
+    if (!hireOpen || !hireGrantAccess || hireLoginDirty) return;
+    const suggested = suggestStaffLogin(resolveLastName, resolveFirstName);
+    if (suggested) setHireLogin(suggested);
+  }, [
+    hireOpen,
+    hireGrantAccess,
+    hireLoginDirty,
+    resolveFirstName,
+    resolveLastName,
+  ]);
+
+  useEffect(() => {
+    if (!cardOpen || !cardGrantAccess || cardLoginDirty) return;
+    if (actionEmp?.satelliteStaffLogin?.trim()) return;
+    const suggested = suggestStaffLogin(cardLastName, cardFirstName);
+    if (suggested) setCardLogin(suggested);
+  }, [
+    cardOpen,
+    cardGrantAccess,
+    cardLoginDirty,
+    cardFirstName,
+    cardLastName,
+    actionEmp,
+  ]);
 
   const [filterText, setFilterText] = useState("");
   const debouncedFilterText = useDebouncedValue(filterText, 300);
@@ -522,8 +587,10 @@ export default function WorkforceEmploymentsPage() {
     setHireLogin("");
     setHirePin("");
     setHirePhone("");
+    setHireEmail("");
     setHireAddress("");
     setHireGrantAccess(false);
+    setHireLoginDirty(false);
     setModalError(null);
     setHireOpen(true);
   }
@@ -546,8 +613,10 @@ export default function WorkforceEmploymentsPage() {
     setHireLogin("");
     setHirePin("");
     setHirePhone("");
+    setHireEmail("");
     setHireAddress("");
     setHireGrantAccess(false);
+    setHireLoginDirty(false);
     setModalError(null);
     setHireOpen(true);
     const opsRes = await mdmWorkforceFetch(`${personId}/ops-profile`);
@@ -580,6 +649,82 @@ export default function WorkforceEmploymentsPage() {
     } else {
       setResolvedLabel(tCommon("unnamedPerson"));
     }
+  }
+
+  type MdmLookupHit = {
+    found: boolean;
+    masked?: boolean;
+    globalPersonId?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    fullName?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    sex?: string | null;
+    birthDate?: string | null;
+  };
+
+  function applyLookupHit(hit: MdmLookupHit) {
+    if (!hit.found || !hit.globalPersonId) return;
+    setGlobalPersonId(hit.globalPersonId);
+    if (hit.masked) {
+      setResolvedLabel(t("maskedPerson"));
+      return;
+    }
+    if (hit.firstName) setResolveFirstName(hit.firstName);
+    if (hit.middleName) setResolveMiddleName(hit.middleName);
+    if (hit.lastName) setResolveLastName(hit.lastName);
+    if (hit.sex && hit.sex !== "UNKNOWN") setResolveSex(hit.sex);
+    if (hit.birthDate) setResolveBirthDate(String(hit.birthDate).slice(0, 10));
+    if (hit.phone && !looksMaskedContact(hit.phone)) setHirePhone(hit.phone);
+    if (hit.email && !looksMaskedContact(hit.email)) setHireEmail(hit.email);
+    const label =
+      [hit.firstName, hit.lastName].filter(Boolean).join(" ").trim() ||
+      hit.fullName?.trim() ||
+      tCommon("unnamedPerson");
+    setResolvedLabel(label);
+  }
+
+  async function searchMdmByFin() {
+    const fin = resolveFin.trim().toUpperCase();
+    if (!fin) {
+      setModalError(t("mdmFinRequired"));
+      return;
+    }
+    setMdmSearchBusy(true);
+    setModalError(null);
+    setResolvedLabel(null);
+    const first = await mdmWorkforceFetch("lookup-by-fin", {
+      method: "POST",
+      body: JSON.stringify({ fin, purpose: "workforce_hire" }),
+    });
+    if (!first.ok) {
+      setModalError(await describeWorkforceError(first));
+      setMdmSearchBusy(false);
+      return;
+    }
+    let hit = (await first.json()) as MdmLookupHit;
+    if (!hit.found) {
+      setGlobalPersonId("");
+      setHireFinMasked(null);
+      setResolvedLabel(t("mdmNotFound"));
+      setMdmSearchBusy(false);
+      return;
+    }
+    if (hit.globalPersonId && hit.masked) {
+      await mdmWorkforceFetch(`${hit.globalPersonId}/access-grant`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const again = await mdmWorkforceFetch("lookup-by-fin", {
+        method: "POST",
+        body: JSON.stringify({ fin, purpose: "workforce_hire" }),
+      });
+      if (again.ok) hit = (await again.json()) as MdmLookupHit;
+    }
+    applyLookupHit(hit);
+    setMdmSearchBusy(false);
   }
 
   // Consume ?hire=1&globalPersonId= / ?employmentId= / ?login=1 once rows are ready.
@@ -673,6 +818,10 @@ export default function WorkforceEmploymentsPage() {
     if (!resolveFirstName.trim() || !resolveLastName.trim()) return;
     if (!resolveSex || resolveSex === "UNKNOWN") {
       setModalError(t("selectSex"));
+      return;
+    }
+    if (!resolveBirthDate.trim()) {
+      setModalError(t("birthDateRequired"));
       return;
     }
     if (!hirePhone.trim()) {
@@ -776,6 +925,7 @@ export default function WorkforceEmploymentsPage() {
         sex: resolveSex || undefined,
         birthDate: resolveBirthDate || undefined,
         phone: hirePhone.trim() || undefined,
+        email: hireEmail.trim() || undefined,
       }),
     });
     if (!resolveRes.ok) {
@@ -962,15 +1112,18 @@ export default function WorkforceEmploymentsPage() {
     setCardSex(person?.sex && person.sex !== "UNKNOWN" ? person.sex : "");
     setCardBirthDate(person?.birthDate ?? "");
     setCardPhone("");
+    setCardEmail("");
     setCardBlood("");
     setCardAddress("");
     setCardFinMasked(person?.finMasked ?? "");
     setCardPhoneMasked("");
+    setCardEmailMasked("");
     const existingKeys = (emp.roleBindings ?? []).map((b) => b.satelliteKey);
     setCardSatelliteKeys(existingKeys);
     setCardGrantAccess(existingKeys.length > 0);
     setCardLogin(displayStaffLogin(emp));
     setCardPin("");
+    setCardLoginDirty(Boolean(emp.satelliteStaffLogin?.trim()));
     setCardOrders([]);
 
     const [opsRes, hrRes, ordersRes] = await Promise.all([
@@ -988,6 +1141,7 @@ export default function WorkforceEmploymentsPage() {
         sex?: string | null;
         birthDate?: string | null;
         phoneMasked?: string | null;
+        emailMasked?: string | null;
         primaryIdentifierMasked?: string | null;
       };
       if (ops.firstName || ops.lastName) {
@@ -1021,6 +1175,7 @@ export default function WorkforceEmploymentsPage() {
       if (ops.sex) setCardSex(ops.sex);
       if (ops.birthDate) setCardBirthDate(ops.birthDate);
       if (ops.phoneMasked) setCardPhoneMasked(ops.phoneMasked);
+      if (ops.emailMasked) setCardEmailMasked(ops.emailMasked);
       if (ops.primaryIdentifierMasked) setCardFinMasked(ops.primaryIdentifierMasked);
     }
     if (hrRes.ok) {
@@ -1058,6 +1213,18 @@ export default function WorkforceEmploymentsPage() {
   async function saveEmployeeCard(e: React.FormEvent) {
     e.preventDefault();
     if (!actionEmp || !cardFirstName.trim() || !cardLastName.trim()) return;
+    if (!cardSex || cardSex === "UNKNOWN") {
+      setModalError(t("selectSex"));
+      return;
+    }
+    if (!cardBirthDate.trim()) {
+      setModalError(t("birthDateRequired"));
+      return;
+    }
+    if (!cardPhone.trim() && !cardPhoneMasked) {
+      setModalError(t("phoneRequired"));
+      return;
+    }
     const accessKeys = cardGrantAccess ? cardSatelliteKeys : [];
     if (accessKeys.length > 0 && !cardPin.trim()) {
       const hadBindings = (actionEmp.roleBindings?.length ?? 0) > 0;
@@ -1089,6 +1256,7 @@ export default function WorkforceEmploymentsPage() {
         sex: cardSex || undefined,
         birthDate: cardBirthDate || undefined,
         phone: cardPhone.trim() || undefined,
+        email: cardEmail.trim() || undefined,
       }),
     });
     if (!resolveRes.ok) {
@@ -1174,20 +1342,23 @@ export default function WorkforceEmploymentsPage() {
   }
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openHire}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addEmployee")}
-          </button>
-        }
-      />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openHire}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addEmployee")}
+            </button>
+          }
+        />
+      </div>
 
       {needsBootstrap ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-4`}>
           <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
           <button
             type="button"
@@ -1201,7 +1372,7 @@ export default function WorkforceEmploymentsPage() {
       ) : null}
 
       {dualVoenBanner ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-start justify-between gap-3 p-4`}>
+        <div className={`${CARD_CONTAINER_CLASS} flex shrink-0 flex-wrap items-start justify-between gap-3 p-4`}>
           <p className="text-sm text-[#34495E]">
             {t("dualVoenBanner", { orgs: dualVoenBanner.orgNames.join(", ") })}{" "}
             {dualVoenBanner.holdingId ? (
@@ -1225,7 +1396,12 @@ export default function WorkforceEmploymentsPage() {
         </div>
       ) : null}
 
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+
+      <EraListWorkspace
+        filter={
       <EraListFilterBar
+        className="!mb-0"
         onReset={() => {
           setFilterText("");
           setFilterOrgUnitId("");
@@ -1307,16 +1483,8 @@ export default function WorkforceEmploymentsPage() {
           emptyLabel={t("filterAll")}
         />
       </EraListFilterBar>
-
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : pagedRows.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>
-          {t("empty")}
-        </div>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        }
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -1332,7 +1500,17 @@ export default function WorkforceEmploymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {pagedRows.map((r) => {
+              {pagedRows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={9}
+                  >
+                    {loading ? t("loading") : t("empty")}
+                  </td>
+                </tr>
+              ) : (
+              pagedRows.map((r) => {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
                 const canReprovision =
                   r.status !== "TERMINATED" && hasBindings;
@@ -1360,7 +1538,11 @@ export default function WorkforceEmploymentsPage() {
                       {formatSex(persons[r.globalPersonId]?.sex)}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
-                      {persons[r.globalPersonId]?.birthDate ?? "—"}
+                      {persons[r.globalPersonId]?.birthDate
+                        ? bakuDateDisplay(
+                            persons[r.globalPersonId]!.birthDate as string,
+                          )
+                        : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {r.orgUnit?.name ?? "—"}
@@ -1369,7 +1551,7 @@ export default function WorkforceEmploymentsPage() {
                       {r.position?.name ?? "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
-                      {String(r.hireDate).slice(0, 10)}
+                      {bakuDateDisplay(r.hireDate)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex flex-col gap-1">
@@ -1487,9 +1669,12 @@ export default function WorkforceEmploymentsPage() {
                     </td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -1503,13 +1688,13 @@ export default function WorkforceEmploymentsPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
 
       <ModalShell
         open={hireOpen}
         title={t("hireTitle")}
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-5xl"
         onClose={() => !busy && setHireOpen(false)}
         closeLabel={tCommon("close")}
         footer={
@@ -1522,6 +1707,8 @@ export default function WorkforceEmploymentsPage() {
               !positionId ||
               !resolveFirstName.trim() ||
               !resolveLastName.trim() ||
+              !resolveSex ||
+              !resolveBirthDate.trim() ||
               !hirePhone.trim() ||
               (hireGrantAccess && satelliteKeys.length > 0 && !hirePin.trim())
             }
@@ -1539,18 +1726,35 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneIdentity")}
             </legend>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("resolveFin")}
-              <input
-                className={FIELD_INPUT_CLASS}
-                value={resolveFin}
-                onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
-                autoComplete="off"
-              />
-            </label>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-[13px] font-medium text-[#34495E]">
+            <div className="flex min-w-0 items-end gap-2">
+              <label className="block min-w-0 flex-1 text-[13px] font-medium text-[#34495E]">
+                {t("resolveFin")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={resolveFin}
+                  onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
+                  autoComplete="off"
+                />
+              </label>
+              <button
+                type="button"
+                className={`${SECONDARY_BUTTON_CLASS} mb-0 shrink-0`}
+                disabled={busy || mdmSearchBusy}
+                onClick={() => void searchMdmByFin()}
+              >
+                {mdmSearchBusy ? t("busy") : t("resolvePerson")}
+              </button>
+            </div>
+            {resolvedLabel ? (
+              <p className="text-xs text-[#27AE60]">{resolvedLabel}</p>
+            ) : null}
+            {hireFinMasked ? (
+              <p className="font-mono text-xs text-[#7F8C8D]">{hireFinMasked}</p>
+            ) : null}
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldFirstName")}
+                {REQ_STAR}
                 <input
                   className={FIELD_INPUT_CLASS}
                   value={resolveFirstName}
@@ -1558,7 +1762,7 @@ export default function WorkforceEmploymentsPage() {
                   required
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldMiddleName")}
                 <input
                   className={FIELD_INPUT_CLASS}
@@ -1566,8 +1770,9 @@ export default function WorkforceEmploymentsPage() {
                   onChange={(e) => setResolveMiddleName(e.target.value)}
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldLastName")}
+                {REQ_STAR}
                 <input
                   className={FIELD_INPUT_CLASS}
                   value={resolveLastName}
@@ -1576,9 +1781,11 @@ export default function WorkforceEmploymentsPage() {
                 />
               </label>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className={ROW3_CLASS}>
               <CatalogField
                 kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
                 label={t("fieldSex")}
                 value={resolveSex}
                 onChange={(next) => setResolveSex(String(next))}
@@ -1592,28 +1799,28 @@ export default function WorkforceEmploymentsPage() {
                 onChange={setResolveBirthDate}
                 placeholder={tCommon("datePlaceholder")}
                 fluid
+                required
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("fieldBloodGroup")}
+                value={resolveBlood}
+                onChange={(next) => setResolveBlood(String(next))}
+                options={bloodOptions}
+                emptyLabel={t("bloodOptional")}
               />
             </div>
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t("fieldBloodGroup")}
-              value={resolveBlood}
-              onChange={(next) => setResolveBlood(String(next))}
-              options={bloodOptions}
-              emptyLabel={t("bloodOptional")}
-              hint={t("bloodOptionalHint")}
-            />
-            {resolvedLabel ? (
-              <p className="text-xs text-[#27AE60]">{resolvedLabel}</p>
-            ) : null}
           </fieldset>
 
           <fieldset className={ZONE_CLASS}>
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneContacts")}
             </legend>
-            <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
               {t("fieldPhone")}
+              {REQ_STAR}
               <input
                 className={FIELD_INPUT_CLASS}
                 value={hirePhone}
@@ -1622,12 +1829,21 @@ export default function WorkforceEmploymentsPage() {
                 required
               />
             </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
               {t("fieldAddress")}
               <input
                 className={FIELD_INPUT_CLASS}
                 value={hireAddress}
                 onChange={(e) => setHireAddress(e.target.value)}
+              />
+            </label>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldEmail")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                type="email"
+                value={hireEmail}
+                onChange={(e) => setHireEmail(e.target.value)}
               />
             </label>
           </fieldset>
@@ -1636,40 +1852,46 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneEmployment")}
             </legend>
-            <CatalogField
-              kind="ENTITY_REF"
-              label={t("orgUnit")}
-              value={orgUnitId}
-              onChange={(next) => {
-                setOrgUnitId(String(next));
-                setPositionId("");
-              }}
-              options={orgUnitOptions}
-              required
-              emptyLabel={t("selectOrgUnit")}
-              disabled={orgUnits.length === 0}
-            />
-            <CatalogField
-              kind="ENTITY_REF"
-              label={t("position")}
-              value={positionId}
-              onChange={(next) => setPositionId(String(next))}
-              options={filteredPositions.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-              required
-              emptyLabel={t("selectPosition")}
-              disabled={filteredPositions.length === 0}
-            />
-            <DatePicker
-              label={t("hireDate")}
-              value={hireDate}
-              onChange={setHireDate}
-              placeholder={tCommon("datePlaceholder")}
-              required
-              fluid
-            />
+            <div className={ROW3_CLASS}>
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("orgUnit")}
+                value={orgUnitId}
+                onChange={(next) => {
+                  setOrgUnitId(String(next));
+                  setPositionId("");
+                }}
+                options={orgUnitOptions}
+                required
+                emptyLabel={t("selectOrgUnit")}
+                disabled={orgUnits.length === 0}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("position")}
+                value={positionId}
+                onChange={(next) => setPositionId(String(next))}
+                options={filteredPositions.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
+                required
+                emptyLabel={t("selectPosition")}
+                disabled={filteredPositions.length === 0}
+              />
+              <DatePicker
+                label={t("hireDate")}
+                value={hireDate}
+                onChange={setHireDate}
+                placeholder={tCommon("datePlaceholder")}
+                required
+                fluid
+              />
+            </div>
           </fieldset>
 
           <fieldset className={ZONE_CLASS}>
@@ -1685,47 +1907,31 @@ export default function WorkforceEmploymentsPage() {
                   if (!e.target.checked) {
                     setSatelliteKeys([]);
                     setHirePin("");
+                    setHireLogin("");
+                    setHireLoginDirty(false);
+                  } else {
+                    setHirePin((prev) => prev || "0000");
                   }
                 }}
               />
               {t("grantAccess")}
             </label>
-            <p className="text-xs text-[#7F8C8D]">{t("grantAccessHint")}</p>
             {hireGrantAccess ? (
               <>
-                <p className="text-xs text-[#7F8C8D]">{t("satelliteAccessHint")}</p>
-                <div className="flex flex-wrap gap-4">
-                  {satelliteFilterOptions.map((s) => (
-                    <label
-                      key={s.key}
-                      className="flex items-center gap-2 text-xs text-[#34495E]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={satelliteKeys.includes(s.key)}
-                        onChange={(e) => {
-                          setSatelliteKeys((prev) =>
-                            e.target.checked
-                              ? [...prev, s.key]
-                              : prev.filter((k) => k !== s.key),
-                          );
-                        }}
-                      />
-                      {s.label}
-                    </label>
-                  ))}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block text-[13px] font-medium text-[#34495E]">
+                <div className={ROW2_CLASS}>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                     {t("fieldStaffLogin")}
                     <input
                       className={`${FIELD_INPUT_CLASS} font-mono`}
                       value={hireLogin}
-                      onChange={(e) => setHireLogin(e.target.value)}
+                      onChange={(e) => {
+                        setHireLoginDirty(true);
+                        setHireLogin(e.target.value);
+                      }}
                       placeholder={t("fieldStaffLoginAutoPlaceholder")}
                     />
                   </label>
-                  <label className="block text-[13px] font-medium text-[#34495E]">
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                     {t("fieldStaffPin")}
                     <input
                       className={`${FIELD_INPUT_CLASS} font-mono`}
@@ -1734,12 +1940,34 @@ export default function WorkforceEmploymentsPage() {
                       required={satelliteKeys.length > 0}
                       aria-required={satelliteKeys.length > 0}
                     />
-                    {satelliteKeys.length > 0 ? (
-                      <p className="mt-1 text-xs text-[#7F8C8D]">{t("pinRequired")}</p>
-                    ) : null}
                   </label>
                 </div>
-                <p className="text-xs text-[#7F8C8D]">{t("fieldStaffLoginHint")}</p>
+                <div>
+                  <p className="mb-2 text-[13px] font-medium text-[#34495E]">
+                    {t("satelliteAccess")}
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {satelliteFilterOptions.map((s) => (
+                      <label
+                        key={s.key}
+                        className="flex items-center gap-2 text-xs text-[#34495E]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={satelliteKeys.includes(s.key)}
+                          onChange={(e) => {
+                            setSatelliteKeys((prev) =>
+                              e.target.checked
+                                ? [...prev, s.key]
+                                : prev.filter((k) => k !== s.key),
+                            );
+                          }}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </>
             ) : null}
           </fieldset>
@@ -1793,6 +2021,8 @@ export default function WorkforceEmploymentsPage() {
         >
           <CatalogField
             kind="ENTITY_REF"
+            className="min-w-0"
+            widthPreset="selectWide"
             label={t("orgUnit")}
             value={transferOrgUnitId}
             onChange={(next) => {
@@ -1805,6 +2035,8 @@ export default function WorkforceEmploymentsPage() {
           />
           <CatalogField
             kind="ENTITY_REF"
+            className="min-w-0"
+            widthPreset="selectWide"
             label={t("position")}
             value={transferPositionId}
             onChange={(next) => setTransferPositionId(String(next))}
@@ -1831,7 +2063,7 @@ export default function WorkforceEmploymentsPage() {
       <ModalShell
         open={cardOpen}
         title={t("cardTitle")}
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-5xl"
         onClose={() => !busy && setCardOpen(false)}
         closeLabel={tCommon("close")}
         footer={
@@ -1839,7 +2071,13 @@ export default function WorkforceEmploymentsPage() {
             formId="workforce-card-form"
             onCancel={() => setCardOpen(false)}
             busy={busy}
-            submitDisabled={!cardFirstName.trim() || !cardLastName.trim()}
+            submitDisabled={
+              !cardFirstName.trim() ||
+              !cardLastName.trim() ||
+              !cardSex ||
+              !cardBirthDate.trim() ||
+              (!cardPhone.trim() && !cardPhoneMasked)
+            }
             cancelLabel={tCommon("cancel")}
             submitLabel={busy ? t("busy") : tCommon("save")}
           />
@@ -1854,7 +2092,7 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneIdentity")}
             </legend>
-            <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
               {t("resolveFin")}
               <input
                 className={`${FIELD_INPUT_CLASS} font-mono`}
@@ -1862,9 +2100,10 @@ export default function WorkforceEmploymentsPage() {
                 readOnly
               />
             </label>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-[13px] font-medium text-[#34495E]">
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldFirstName")}
+                {REQ_STAR}
                 <input
                   className={FIELD_INPUT_CLASS}
                   value={cardFirstName}
@@ -1872,7 +2111,7 @@ export default function WorkforceEmploymentsPage() {
                   required
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldMiddleName")}
                 <input
                   className={FIELD_INPUT_CLASS}
@@ -1880,8 +2119,9 @@ export default function WorkforceEmploymentsPage() {
                   onChange={(e) => setCardMiddleName(e.target.value)}
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldLastName")}
+                {REQ_STAR}
                 <input
                   className={FIELD_INPUT_CLASS}
                   value={cardLastName}
@@ -1890,14 +2130,17 @@ export default function WorkforceEmploymentsPage() {
                 />
               </label>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className={ROW3_CLASS}>
               <CatalogField
                 kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
                 label={t("fieldSex")}
                 value={cardSex}
                 onChange={(next) => setCardSex(String(next))}
-                options={sexOptions}
-                emptyLabel={tCommon("select")}
+                options={sexOptions.filter((o) => o.value !== "UNKNOWN")}
+                emptyLabel={t("selectSex")}
+                required
               />
               <DatePicker
                 label={t("fieldBirthDate")}
@@ -1905,37 +2148,52 @@ export default function WorkforceEmploymentsPage() {
                 onChange={setCardBirthDate}
                 placeholder={tCommon("datePlaceholder")}
                 fluid
+                required
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("fieldBloodGroup")}
+                value={cardBlood}
+                onChange={(next) => setCardBlood(String(next))}
+                options={bloodOptions}
+                emptyLabel={tCommon("select")}
               />
             </div>
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t("fieldBloodGroup")}
-              value={cardBlood}
-              onChange={(next) => setCardBlood(String(next))}
-              options={bloodOptions}
-              emptyLabel={tCommon("select")}
-            />
           </fieldset>
 
           <fieldset className={ZONE_CLASS}>
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneContacts")}
             </legend>
-            <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
               {t("fieldPhone")}
+              {REQ_STAR}
               <input
                 className={FIELD_INPUT_CLASS}
                 value={cardPhone}
                 onChange={(e) => setCardPhone(e.target.value)}
                 placeholder={cardPhoneMasked || "+994…"}
+                required={!cardPhoneMasked}
               />
             </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
               {t("fieldAddress")}
               <input
                 className={FIELD_INPUT_CLASS}
                 value={cardAddress}
                 onChange={(e) => setCardAddress(e.target.value)}
+              />
+            </label>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldEmail")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                type="email"
+                value={cardEmail}
+                onChange={(e) => setCardEmail(e.target.value)}
+                placeholder={cardEmailMasked || undefined}
               />
             </label>
           </fieldset>
@@ -1944,20 +2202,31 @@ export default function WorkforceEmploymentsPage() {
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
               {t("zoneEmployment")}
             </legend>
-            <p className="text-xs text-[#7F8C8D]">{t("jobReadonlyHint")}</p>
-            <div className="grid gap-1 text-[13px] text-[#34495E]">
-              <p>
-                <span className="text-[#7F8C8D]">{t("hireDate")}: </span>
-                {actionEmp ? String(actionEmp.hireDate).slice(0, 10) : "—"}
-              </p>
-              <p>
-                <span className="text-[#7F8C8D]">{t("orgUnit")}: </span>
-                {actionEmp?.orgUnit?.name ?? "—"}
-              </p>
-              <p>
-                <span className="text-[#7F8C8D]">{t("position")}: </span>
-                {actionEmp?.position?.name ?? "—"}
-              </p>
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("orgUnit")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp?.orgUnit?.name ?? "—"}
+                  readOnly
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("position")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp?.position?.name ?? "—"}
+                  readOnly
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("hireDate")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp ? String(actionEmp.hireDate).slice(0, 10) : "—"}
+                  readOnly
+                />
+              </label>
             </div>
             {actionEmp?.status === "ACTIVE" ? (
               <button
@@ -1984,6 +2253,8 @@ export default function WorkforceEmploymentsPage() {
                   if (!e.target.checked) {
                     setCardSatelliteKeys([]);
                     setCardPin("");
+                  } else if ((actionEmp?.roleBindings?.length ?? 0) === 0) {
+                    setCardPin((prev) => prev || "0000");
                   }
                 }}
               />
@@ -1991,45 +2262,57 @@ export default function WorkforceEmploymentsPage() {
             </label>
             {cardGrantAccess && actionEmp?.status === "ACTIVE" ? (
               <>
-                <div className="flex flex-wrap gap-4">
-                  {satelliteFilterOptions.map((s) => (
-                    <label
-                      key={s.key}
-                      className="flex items-center gap-2 text-xs text-[#34495E]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={cardSatelliteKeys.includes(s.key)}
-                        onChange={(e) => {
-                          setCardSatelliteKeys((prev) =>
-                            e.target.checked
-                              ? [...prev, s.key]
-                              : prev.filter((k) => k !== s.key),
-                          );
-                        }}
-                      />
-                      {s.label}
-                    </label>
-                  ))}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block text-[13px] font-medium text-[#34495E]">
+                <div className={ROW2_CLASS}>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                     {t("fieldStaffLogin")}
                     <input
                       className={`${FIELD_INPUT_CLASS} font-mono`}
                       value={cardLogin}
-                      onChange={(e) => setCardLogin(e.target.value)}
+                      onChange={(e) => {
+                        setCardLoginDirty(true);
+                        setCardLogin(e.target.value);
+                      }}
                     />
                   </label>
-                  <label className="block text-[13px] font-medium text-[#34495E]">
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                     {t("fieldStaffPin")}
                     <input
                       className={`${FIELD_INPUT_CLASS} font-mono`}
                       value={cardPin}
                       onChange={(e) => setCardPin(e.target.value)}
-                      placeholder={t("pinKeepHint")}
+                      placeholder={
+                        (actionEmp?.roleBindings?.length ?? 0) > 0
+                          ? t("pinKeepHint")
+                          : "0000"
+                      }
                     />
                   </label>
+                </div>
+                <div>
+                  <p className="mb-2 text-[13px] font-medium text-[#34495E]">
+                    {t("satelliteAccess")}
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {satelliteFilterOptions.map((s) => (
+                      <label
+                        key={s.key}
+                        className="flex items-center gap-2 text-xs text-[#34495E]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={cardSatelliteKeys.includes(s.key)}
+                          onChange={(e) => {
+                            setCardSatelliteKeys((prev) =>
+                              e.target.checked
+                                ? [...prev, s.key]
+                                : prev.filter((k) => k !== s.key),
+                            );
+                          }}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </>
             ) : null}
@@ -2370,6 +2653,6 @@ export default function WorkforceEmploymentsPage() {
           else void submitReprovision(next.emp);
         }}
       />
-    </>
+    </div>
   );
 }

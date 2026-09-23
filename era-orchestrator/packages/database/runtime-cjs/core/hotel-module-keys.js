@@ -70,26 +70,15 @@ exports.BANKING_PRICING_MODULE_KEYS = [
     "banking_pension",
     "banking_psa",
 ];
-/** Clinic modules (MODULES_CATALOG M0–M14). */
+/** Clinic paid modules (gate `industry_clinic` is separate). */
 exports.CLINIC_PRICING_MODULE_KEYS = [
-    "clinic_shell",
-    "clinic_patients",
-    "clinic_schedule",
-    "clinic_appointments",
-    "clinic_visit",
+    "clinic_registry_emr",
     "clinic_lab",
-    "clinic_service_catalog",
-    "clinic_notifications",
-    "clinic_portal",
-    "clinic_reschedule",
-    "clinic_ehr",
-    "clinic_lis_import",
-    "clinic_insurance",
+    "clinic_sanatorium",
+    "clinic_nurse_roster",
     "clinic_inpatient",
     "clinic_telehealth",
-    "clinic_nurse_roster",
-    "clinic_registry_emr",
-    "clinic_sanatorium_clinical",
+    "clinic_insurance",
 ];
 /** Resolve canonical hotel module key (handles legacy slugs). */
 function resolveHotelModuleKey(moduleKey) {

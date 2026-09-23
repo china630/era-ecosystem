@@ -68,7 +68,6 @@ export async function POST(request: Request) {
   const gate = await runCronForEachTenant(
     {
       satelliteKey: "industry_clinic",
-      moduleKey: "clinic_appointments",
       authorization,
       cronSecretEnv: "CLINIC_BRIDGE_SECRET",
       listOrganizationIds: listCronOrganizationIdsFromDb,
