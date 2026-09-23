@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { SquareArrowOutUpRight } from "lucide-react";
 import {
   CatalogField,
   CARD_CONTAINER_CLASS,
@@ -18,13 +19,14 @@ import {
   ListPaginationFooter,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
-import { useAuth } from "../../../../lib/auth-context";
 import { orchFetch } from "../../../../lib/orch-api";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
+  parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
@@ -36,7 +38,6 @@ type EmpRow = {
   orgName: string;
   employmentId: string;
   status: string;
-  staffCode: string;
   hireDate: string;
   orgUnit?: { name: string } | null;
   position?: { name: string } | null;
@@ -46,15 +47,20 @@ type PersonRow = {
   displayName: string | null;
   employments: EmpRow[];
 };
+type PersonProfile = {
+  displayName?: string | null;
+  finMasked?: string | null;
+  accessDenied?: boolean;
+};
 
 export default function WorkforceGroupPage() {
   const { ready, token } = useRequireAuth();
-  const { memberships } = useAuth();
   const t = useTranslations("workforceGroup");
   const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
 
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [holdingsReady, setHoldingsReady] = useState(false);
   const [holdingId, setHoldingId] = useState(
     () => searchParams.get("holdingId") ?? "",
   );
@@ -64,18 +70,45 @@ export default function WorkforceGroupPage() {
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
   const [items, setItems] = useState<PersonRow[]>([]);
+  const [persons, setPersons] = useState<Record<string, PersonProfile>>({});
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [holdingsFailed, setHoldingsFailed] = useState(false);
+  const skipPagedFetch = useRef(false);
+
+  const filtersOff = holdings.length === 0;
+
+  function formatStatus(code: string): string {
+    if (code === "ACTIVE") return t("statusActive");
+    if (code === "TERMINATED") return t("statusTerminated");
+    return code;
+  }
+
+  function mapDirectoryError(err: { status: number; code?: string; message: string }): string {
+    if (err.code === "HOLDING_HR_FORBIDDEN") return t("forbidden");
+    if (err.code === "HOLDING_HR_NO_STANDALONE") return t("noStandalone");
+    if (err.code === "HOLDING_HR_ORG_NOT_VISIBLE") return t("orgNotVisible");
+    if (err.status === 404) return t("holdingNotFound");
+    return err.message || t("loadError");
+  }
 
   const loadHoldings = useCallback(async () => {
     if (!token) return;
     const res = await orchFetch("/v1/holdings", { token });
-    if (!res.ok) return;
+    if (!res.ok) {
+      setHoldings([]);
+      setHoldingId("");
+      setHoldingsFailed(true);
+      setHoldingsReady(true);
+      setLoading(false);
+      return;
+    }
     const list = (await res.json()) as Holding[];
+    setHoldingsFailed(false);
     setHoldings(list);
     const fromUrl = searchParams.get("holdingId");
     setHoldingId((prev) => {
@@ -83,65 +116,86 @@ export default function WorkforceGroupPage() {
       if (fromUrl && list.some((h) => h.id === fromUrl)) return fromUrl;
       return list[0]?.id || "";
     });
-  }, [token, searchParams]);
+    setHoldingsReady(true);
+    if (list.length === 0) setLoading(false);
+  }, [token, searchParams, t]);
 
-  const loadDirectory = useCallback(async () => {
-    if (!holdingId) {
-      setItems([]);
-      setTotal(0);
+  const loadDirectory = useCallback(
+    async (pageToLoad: number) => {
+      if (!holdingId) {
+        setItems([]);
+        setPersons({});
+        setTotal(0);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      const qs = new URLSearchParams({
+        holdingId,
+        page: String(pageToLoad),
+        pageSize: String(pageSize),
+      });
+      if (filterOrgId) qs.set("organizationId", filterOrgId);
+      if (status) qs.set("status", status);
+      if (debouncedQ.trim()) qs.set("q", debouncedQ.trim());
+      const res = await wfFetch(`holding-directory?${qs}`);
+      if (await isWorkforceGate403(res)) {
+        setNotEntitled(true);
+        setLoading(false);
+        return;
+      }
+      setNotEntitled(false);
+      if (!res.ok) {
+        setError(mapDirectoryError(await parseWorkforceApiError(res)));
+        setItems([]);
+        setPersons({});
+        setVisibleOrgs([]);
+        setLoading(false);
+        return;
+      }
+      const body = await res.json();
+      setItems(body.items ?? []);
+      setPersons(body.persons ?? {});
+      setTotal(body.total ?? 0);
+      setVisibleOrgs(body.visibleOrgs ?? []);
       setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const qs = new URLSearchParams({
-      holdingId,
-      page: String(page),
-      pageSize: String(pageSize),
-    });
-    if (filterOrgId) qs.set("organizationId", filterOrgId);
-    if (status) qs.set("status", status);
-    if (debouncedQ.trim()) qs.set("q", debouncedQ.trim());
-    const res = await wfFetch(`holding-directory?${qs}`);
-    if (await isWorkforceGate403(res)) {
-      setNotEntitled(true);
-      setLoading(false);
-      return;
-    }
-    setNotEntitled(false);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      const code = body?.code as string | undefined;
-      setError(
-        code === "HOLDING_HR_FORBIDDEN"
-          ? t("forbidden")
-          : typeof body?.message === "string"
-            ? body.message
-            : t("loadError"),
-      );
-      setItems([]);
-      setVisibleOrgs([]);
-      setLoading(false);
-      return;
-    }
-    const body = await res.json();
-    setItems(body.items ?? []);
-    setTotal(body.total ?? 0);
-    setVisibleOrgs(body.visibleOrgs ?? []);
-    setLoading(false);
-  }, [holdingId, page, pageSize, filterOrgId, status, debouncedQ, t]);
+    },
+    [holdingId, pageSize, filterOrgId, status, debouncedQ, t],
+  );
 
   useEffect(() => {
     if (ready) void loadHoldings();
   }, [ready, loadHoldings]);
 
   useEffect(() => {
-    setPage(1);
-  }, [debouncedQ, filterOrgId, status, holdingId, pageSize]);
+    if (!holdingId || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("holdingId") === holdingId) return;
+    url.searchParams.set("holdingId", holdingId);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }, [holdingId]);
 
   useEffect(() => {
-    if (ready && holdingId) void loadDirectory();
-  }, [ready, holdingId, loadDirectory]);
+    if (page !== 1) skipPagedFetch.current = true;
+    setPage(1);
+    if (!ready || !holdingsReady) return;
+    if (!holdingId) {
+      setLoading(false);
+      return;
+    }
+    void loadDirectory(1);
+  }, [ready, holdingsReady, holdingId, filterOrgId, status, debouncedQ, pageSize, loadDirectory]);
+
+  useEffect(() => {
+    if (page === 1) return;
+    if (skipPagedFetch.current) {
+      skipPagedFetch.current = false;
+      return;
+    }
+    if (!ready || !holdingsReady || !holdingId) return;
+    void loadDirectory(page);
+  }, [page, ready, holdingsReady, holdingId, loadDirectory]);
 
   const holdingOptions = useMemo(
     () => holdings.map((h) => ({ value: h.id, label: h.name })),
@@ -158,12 +212,26 @@ export default function WorkforceGroupPage() {
     [visibleOrgs, t],
   );
 
+  const filtersActive = Boolean(filterOrgId || status || q.trim());
+
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader title={t("title")} subtitle={t("hint")} />
+    <>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("hint")}
+        actions={
+          <Link
+            href="/workspace/workforce/employments"
+            className={SECONDARY_BUTTON_CLASS}
+          >
+            {t("openOrgEmployments")}
+          </Link>
+        }
+      />
+
       <EraListFilterBar
         resetLabel={tCommon("filterReset")}
         onReset={() => {
@@ -180,9 +248,12 @@ export default function WorkforceGroupPage() {
           onChange={(v) => {
             setHoldingId(String(v));
             setFilterOrgId("");
+            setVisibleOrgs([]);
+            setItems([]);
           }}
           options={holdingOptions}
           emptyLabel={tCommon("select")}
+          disabled={filtersOff}
         />
         <CatalogField
           kind="ENTITY_REF"
@@ -190,6 +261,7 @@ export default function WorkforceGroupPage() {
           value={filterOrgId}
           onChange={(v) => setFilterOrgId(String(v))}
           options={orgOptions}
+          disabled={filtersOff}
         />
         <CatalogField
           kind="CLOSED_SMALL"
@@ -201,6 +273,7 @@ export default function WorkforceGroupPage() {
             { value: "TERMINATED", label: t("statusTerminated") },
           ]}
           emptyLabel={t("statusAll")}
+          disabled={filtersOff}
         />
         <CatalogField
           kind="FREE_TEXT"
@@ -208,80 +281,122 @@ export default function WorkforceGroupPage() {
           value={q}
           onChange={(v) => setQ(String(v))}
           options={[]}
+          disabled={filtersOff}
         />
       </EraListFilterBar>
-      <div className={CARD_CONTAINER_CLASS}>
-        {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
-        {!holdingId && holdings.length === 0 ? (
-          <p className="text-sm text-[var(--era-muted)]">{t("noHoldings")}</p>
-        ) : null}
-        {loading ? (
-          <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-        ) : (
-          <>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFirms")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((row) => (
-                    <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.displayName?.trim() || tCommon("unnamedPerson")}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.employments
-                          .map(
-                            (e) =>
-                              `${e.orgName} (${e.status}${e.position?.name ? ` · ${e.position.name}` : ""})`,
-                          )
-                          .join(" · ")}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        <Link
-                          className="text-sm underline"
-                          href={`/workspace/workforce/group/persons/${row.globalPersonId}?holdingId=${holdingId}`}
-                        >
-                          {t("openCard")}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <ListPaginationFooter
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={setPage}
-              onPageSizeChange={(n) => {
-                setPageSize(n);
-                setPage(1);
-              }}
-              labels={{
-                rowsPerPage: tCommon("paginationRowsPerPage"),
-                pageOf: tCommon("paginationPageOf"),
-                prev: tCommon("paginationPrev"),
-                next: tCommon("paginationNext"),
-              }}
-            />
-          </>
-        )}
-        {memberships.length > 0 ? (
-          <p className="mt-3 text-xs text-[var(--era-muted)]">{t("mutateHint")}</p>
-        ) : null}
-        <div className="mt-3">
-          <Link href="/workspace/workforce/employments" className={SECONDARY_BUTTON_CLASS}>
-            {t("openOrgEmployments")}
+
+      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
+
+      {!holdingsReady || loading ? (
+        <p className="text-sm text-[#7F8C8D]">{tCommon("loading")}</p>
+      ) : holdings.length === 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} p-6`}>
+          <p className="text-sm text-[#34495E]">
+            {holdingsFailed ? t("holdingsLoadFailed") : t("noHoldings")}
+          </p>
+          <p className="mt-2 text-sm text-[#7F8C8D]">{t("noHoldingsHint")}</p>
+          <Link
+            href="/holdings"
+            className={`${SECONDARY_BUTTON_CLASS} mt-4 inline-flex`}
+          >
+            {t("openHoldings")}
           </Link>
         </div>
-      </div>
-    </div>
+      ) : items.length === 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>
+          {filtersActive ? t("emptyFiltered") : t("empty")}
+          <p className="mt-2 text-xs">{t("mutateHint")}</p>
+        </div>
+      ) : (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFirms")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((row) => {
+                const profile = persons[row.globalPersonId];
+                const cardHref = `/workspace/workforce/group/persons/${row.globalPersonId}?holdingId=${holdingId}`;
+                const name =
+                  row.displayName?.trim() ||
+                  (profile?.accessDenied
+                    ? t("maskedPerson")
+                    : tCommon("unnamedPerson"));
+                return (
+                  <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <Link
+                        href={cardHref}
+                        className="text-[#2980B9] hover:underline"
+                      >
+                        {name}
+                      </Link>
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
+                      {profile?.accessDenied
+                        ? "—"
+                        : (profile?.finMasked ?? "—")}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <ul className="m-0 grid list-none gap-1 p-0">
+                        {row.employments.map((e) => (
+                          <li key={e.employmentId} className="text-[13px] leading-snug">
+                            <span className="text-[#34495E]">{e.orgName}</span>
+                            {e.position?.name ? (
+                              <span className="text-[#7F8C8D]">
+                                {" · "}
+                                {e.position.name}
+                              </span>
+                            ) : null}
+                            <span className="text-[#7F8C8D]">
+                              {" · "}
+                              {formatStatus(e.status)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <Link
+                        href={cardHref}
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        title={t("openCard")}
+                        aria-label={t("openCard")}
+                      >
+                        <SquareArrowOutUpRight
+                          className="h-4 w-4 text-[#2980B9]"
+                          aria-hidden
+                        />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        </div>
+      )}
+    </>
   );
 }

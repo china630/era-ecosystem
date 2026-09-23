@@ -104,7 +104,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | FIN-HR-PAY / FA / IA | Finance | payroll / FA / IA | Y | `/payroll`, `/fixed-assets`, `/intangible-assets` | **SCREEN** | UAT-SMOKE UI | |
 | CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | month grid CP master; Finance UI link-only; status gates; not SHOW |
 | CP-WF-ATT-01 | Platform | FaceID / attendance → DRAFT | Y | `/workspace/workforce/attendance` | **SCREEN** | UAT field tablet open; Status=API | device token + rebuild; not SHOW |
-| CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | per-person satellite checkboxes; matrix = position defaults; audit CatalogField + actor/person labels (P1); not SHOW |
+| CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments hire/card + Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | zoned hire/card `max-w-3xl`; grant-access; post-hire order bridge; per-person satellite checkboxes; matrix = position defaults; not SHOW |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
 | HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | FO SHOW rollup unchanged |
