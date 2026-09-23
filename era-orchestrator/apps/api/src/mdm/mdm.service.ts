@@ -50,12 +50,23 @@ import {
 } from "../common/utils/guest-identity.util";
 import {
   assertMatchingServiceToken,
+  maskEmail,
   maskPhone,
 } from "../common/utils/internal-service-token.util";
 import { allocatePublicOrgNumber } from "../organization/public-org-number";
 import * as QRCode from "qrcode";
 
 const FIN_PATTERN = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
+const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeContactEmail(raw?: string | null): string | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  if (!CONTACT_EMAIL_RE.test(trimmed)) {
+    throw new BadRequestException("Invalid email format");
+  }
+  return trimmed.toLowerCase();
+}
 
 function maskIdentifierValue(value: string): string {
   const v = value.trim();
@@ -291,6 +302,7 @@ export class MdmService {
         middleName: null,
         lastName: null,
         phone: null,
+        email: null,
         sex: null,
         birthDate: null,
         masked: true,
@@ -304,9 +316,8 @@ export class MdmService {
       firstName: names.firstName,
       middleName: names.middleName,
       lastName: names.lastName,
-      phone: person.phoneCipher
-        ? maskPhone(decryptText(person.phoneCipher))
-        : null,
+      phone: person.phoneCipher ? decryptText(person.phoneCipher) : null,
+      email: person.emailCipher ? decryptText(person.emailCipher) : null,
       sex: person.sex,
       birthDate: formatPersonBirthDate(person.birthDate),
       masked: false,
@@ -487,12 +498,14 @@ export class MdmService {
     });
 
     const phoneTrim = input.phone?.trim();
+    const emailNorm = normalizeContactEmail(input.email);
     const created = await this.mdm.globalNaturalPerson.create({
       data: {
         finBlindIndex,
         finCipher: finIdent ? encryptText(finIdent.value.trim()) : null,
         ...this.nameCipherWriteData(nameParts),
         phoneCipher: phoneTrim ? encryptText(phoneTrim) : null,
+        emailCipher: emailNorm ? encryptText(emailNorm) : null,
         nationality: nationalityIso,
         personSegment: segment as PersonSegment,
         sex: demo.sex ?? "UNKNOWN",
@@ -558,11 +571,13 @@ export class MdmService {
     );
     const finIdent = identifiers.find((i) => i.type === "AZ_FIN");
     const phoneTrim = input.phone?.trim();
+    const emailNorm = normalizeContactEmail(input.email);
     await this.mdm.globalNaturalPerson.update({
       where: { id: personId },
       data: {
         ...this.nameCipherWriteData(nameParts),
         phoneCipher: phoneTrim ? encryptText(phoneTrim) : undefined,
+        emailCipher: emailNorm ? encryptText(emailNorm) : undefined,
         ...(nationalityIso ? { nationality: nationalityIso } : {}),
         personSegment: segment as PersonSegment,
         ...(demo.sex ? { sex: demo.sex } : {}),
@@ -1377,6 +1392,10 @@ export class MdmService {
       phoneMasked:
         !accessDenied && person.phoneCipher
           ? maskPhone(decryptText(person.phoneCipher))
+          : null,
+      emailMasked:
+        !accessDenied && person.emailCipher
+          ? maskEmail(decryptText(person.emailCipher))
           : null,
       sex: accessDenied ? null : person.sex,
       birthDate: accessDenied ? null : formatPersonBirthDate(person.birthDate),
