@@ -25,11 +25,13 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   DEFAULT_LIST_PAGE_SIZE,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -37,7 +39,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -83,6 +85,14 @@ type EmploymentRow = {
   satelliteStaffPin?: string | null;
 };
 
+type PersonnelOrderRef = {
+  id: string;
+  type: string;
+  status: string;
+  orderNumber: string;
+  employmentId?: string | null;
+};
+
 type ListResponse = {
   items: EmploymentRow[];
   total?: number;
@@ -117,6 +127,35 @@ function displayStaffLogin(emp: EmploymentRow): string {
   return emp.satelliteStaffLogin?.trim() || staffLoginFromEmploymentId(emp.id);
 }
 
+function latinizeLoginToken(raw: string): string {
+  const az: Record<string, string> = {
+    ə: "e",
+    ı: "i",
+    ö: "o",
+    ü: "u",
+    ç: "c",
+    ş: "s",
+    ğ: "g",
+  };
+  return raw
+    .toLowerCase()
+    .replace(/[əıöüçşğ]/g, (ch) => az[ch] ?? ch)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function suggestStaffLogin(lastName: string, firstName: string): string {
+  const last = latinizeLoginToken(lastName);
+  const first = latinizeLoginToken(firstName);
+  if (last && first) return `${last}.${first}`.slice(0, 64);
+  return (last || first).slice(0, 64);
+}
+
+function looksMaskedContact(value: string | null | undefined): boolean {
+  return Boolean(value?.includes("*"));
+}
+
 const SEX_VALUES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 const BLOOD_VALUES = [
   "A_POS",
@@ -139,6 +178,13 @@ const AGE_BUCKETS = [
   "60+",
 ] as const;
 
+const FIELD_INPUT_CLASS =
+  "mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]";
+const ZONE_CLASS = "grid min-w-0 gap-3 rounded-lg border border-[#D5DADF] p-3";
+const ROW3_CLASS = "grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3";
+const ROW2_CLASS = "grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2";
+const REQ_STAR = <span className="text-[#E74C3C]"> *</span>;
+
 function bloodLabel(code: string): string {
   const map: Record<string, string> = {
     A_POS: "A+",
@@ -159,6 +205,7 @@ export default function WorkforceEmploymentsPage() {
   const t = useTranslations("workforceEmployments");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
+  const tOrders = useTranslations("workforceOrders");
 
   const satelliteLabel = useCallback(
     (key: string): string => {
@@ -242,6 +289,14 @@ export default function WorkforceEmploymentsPage() {
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
   const [hireLogin, setHireLogin] = useState("");
   const [hirePin, setHirePin] = useState("");
+  const [hirePhone, setHirePhone] = useState("");
+  const [hireEmail, setHireEmail] = useState("");
+  const [hireAddress, setHireAddress] = useState("");
+  const [hireGrantAccess, setHireGrantAccess] = useState(false);
+  const [hireLoginDirty, setHireLoginDirty] = useState(false);
+  const [mdmSearchBusy, setMdmSearchBusy] = useState(false);
+  const [orderBridge, setOrderBridge] = useState<PersonnelOrderRef | null>(null);
+  const [orderBridgeBusy, setOrderBridgeBusy] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<
     | null
     | { kind: "hireWithoutFin" }
@@ -262,9 +317,44 @@ export default function WorkforceEmploymentsPage() {
   const [cardSex, setCardSex] = useState("");
   const [cardBirthDate, setCardBirthDate] = useState("");
   const [cardPhone, setCardPhone] = useState("");
+  const [cardEmail, setCardEmail] = useState("");
   const [cardBlood, setCardBlood] = useState("");
-  const [cardOrgUnitId, setCardOrgUnitId] = useState("");
-  const [cardPositionId, setCardPositionId] = useState("");
+  const [cardAddress, setCardAddress] = useState("");
+  const [cardFinMasked, setCardFinMasked] = useState("");
+  const [cardPhoneMasked, setCardPhoneMasked] = useState("");
+  const [cardEmailMasked, setCardEmailMasked] = useState("");
+  const [cardGrantAccess, setCardGrantAccess] = useState(false);
+  const [cardLogin, setCardLogin] = useState("");
+  const [cardPin, setCardPin] = useState("");
+  const [cardLoginDirty, setCardLoginDirty] = useState(false);
+  const [cardSatelliteKeys, setCardSatelliteKeys] = useState<string[]>([]);
+  const [cardOrders, setCardOrders] = useState<PersonnelOrderRef[]>([]);
+
+  useEffect(() => {
+    if (!hireOpen || !hireGrantAccess || hireLoginDirty) return;
+    const suggested = suggestStaffLogin(resolveLastName, resolveFirstName);
+    if (suggested) setHireLogin(suggested);
+  }, [
+    hireOpen,
+    hireGrantAccess,
+    hireLoginDirty,
+    resolveFirstName,
+    resolveLastName,
+  ]);
+
+  useEffect(() => {
+    if (!cardOpen || !cardGrantAccess || cardLoginDirty) return;
+    if (actionEmp?.satelliteStaffLogin?.trim()) return;
+    const suggested = suggestStaffLogin(cardLastName, cardFirstName);
+    if (suggested) setCardLogin(suggested);
+  }, [
+    cardOpen,
+    cardGrantAccess,
+    cardLoginDirty,
+    cardFirstName,
+    cardLastName,
+    actionEmp,
+  ]);
 
   const [filterText, setFilterText] = useState("");
   const debouncedFilterText = useDebouncedValue(filterText, 300);
@@ -431,10 +521,6 @@ export default function WorkforceEmploymentsPage() {
     (p) => !filterOrgUnitId || p.orgUnitId === filterOrgUnitId,
   );
 
-  const cardPositionOptions = activePositions.filter(
-    (p) => !cardOrgUnitId || p.orgUnitId === cardOrgUnitId,
-  );
-
   const transferPositionOptions = activePositions.filter(
     (p) => p.orgUnitId === transferOrgUnitId,
   );
@@ -468,6 +554,15 @@ export default function WorkforceEmploymentsPage() {
     return status;
   }
 
+  function openTransfer(emp: EmploymentRow) {
+    setActionEmp(emp);
+    setTransferOrgUnitId(emp.orgUnitId ?? emp.orgUnit?.id ?? "");
+    setTransferPositionId(emp.positionId ?? emp.position?.id ?? "");
+    setModalError(null);
+    setCardOpen(false);
+    setTransferOpen(true);
+  }
+
   async function describeWorkforceError(res: Response): Promise<string> {
     const err = await parseWorkforceApiError(res);
     if (err.code === "LOGIN_TAKEN") return t("loginTaken");
@@ -491,6 +586,11 @@ export default function WorkforceEmploymentsPage() {
     setSatelliteKeys([]);
     setHireLogin("");
     setHirePin("");
+    setHirePhone("");
+    setHireEmail("");
+    setHireAddress("");
+    setHireGrantAccess(false);
+    setHireLoginDirty(false);
     setModalError(null);
     setHireOpen(true);
   }
@@ -512,6 +612,11 @@ export default function WorkforceEmploymentsPage() {
     setSatelliteKeys([]);
     setHireLogin("");
     setHirePin("");
+    setHirePhone("");
+    setHireEmail("");
+    setHireAddress("");
+    setHireGrantAccess(false);
+    setHireLoginDirty(false);
     setModalError(null);
     setHireOpen(true);
     const opsRes = await mdmWorkforceFetch(`${personId}/ops-profile`);
@@ -519,10 +624,18 @@ export default function WorkforceEmploymentsPage() {
       const ops = (await opsRes.json()) as {
         displayName?: string | null;
         firstName?: string | null;
+        middleName?: string | null;
         lastName?: string | null;
+        sex?: string | null;
+        birthDate?: string | null;
         finMasked?: string | null;
         primaryIdentifierMasked?: string | null;
       };
+      if (ops.firstName) setResolveFirstName(ops.firstName);
+      if (ops.middleName) setResolveMiddleName(ops.middleName);
+      if (ops.lastName) setResolveLastName(ops.lastName);
+      if (ops.sex && ops.sex !== "UNKNOWN") setResolveSex(ops.sex);
+      if (ops.birthDate) setResolveBirthDate(ops.birthDate.slice(0, 10));
       const fin =
         ops.finMasked?.trim() ||
         ops.primaryIdentifierMasked?.trim() ||
@@ -536,6 +649,82 @@ export default function WorkforceEmploymentsPage() {
     } else {
       setResolvedLabel(tCommon("unnamedPerson"));
     }
+  }
+
+  type MdmLookupHit = {
+    found: boolean;
+    masked?: boolean;
+    globalPersonId?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    fullName?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    sex?: string | null;
+    birthDate?: string | null;
+  };
+
+  function applyLookupHit(hit: MdmLookupHit) {
+    if (!hit.found || !hit.globalPersonId) return;
+    setGlobalPersonId(hit.globalPersonId);
+    if (hit.masked) {
+      setResolvedLabel(t("maskedPerson"));
+      return;
+    }
+    if (hit.firstName) setResolveFirstName(hit.firstName);
+    if (hit.middleName) setResolveMiddleName(hit.middleName);
+    if (hit.lastName) setResolveLastName(hit.lastName);
+    if (hit.sex && hit.sex !== "UNKNOWN") setResolveSex(hit.sex);
+    if (hit.birthDate) setResolveBirthDate(String(hit.birthDate).slice(0, 10));
+    if (hit.phone && !looksMaskedContact(hit.phone)) setHirePhone(hit.phone);
+    if (hit.email && !looksMaskedContact(hit.email)) setHireEmail(hit.email);
+    const label =
+      [hit.firstName, hit.lastName].filter(Boolean).join(" ").trim() ||
+      hit.fullName?.trim() ||
+      tCommon("unnamedPerson");
+    setResolvedLabel(label);
+  }
+
+  async function searchMdmByFin() {
+    const fin = resolveFin.trim().toUpperCase();
+    if (!fin) {
+      setModalError(t("mdmFinRequired"));
+      return;
+    }
+    setMdmSearchBusy(true);
+    setModalError(null);
+    setResolvedLabel(null);
+    const first = await mdmWorkforceFetch("lookup-by-fin", {
+      method: "POST",
+      body: JSON.stringify({ fin, purpose: "workforce_hire" }),
+    });
+    if (!first.ok) {
+      setModalError(await describeWorkforceError(first));
+      setMdmSearchBusy(false);
+      return;
+    }
+    let hit = (await first.json()) as MdmLookupHit;
+    if (!hit.found) {
+      setGlobalPersonId("");
+      setHireFinMasked(null);
+      setResolvedLabel(t("mdmNotFound"));
+      setMdmSearchBusy(false);
+      return;
+    }
+    if (hit.globalPersonId && hit.masked) {
+      await mdmWorkforceFetch(`${hit.globalPersonId}/access-grant`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const again = await mdmWorkforceFetch("lookup-by-fin", {
+        method: "POST",
+        body: JSON.stringify({ fin, purpose: "workforce_hire" }),
+      });
+      if (again.ok) hit = (await again.json()) as MdmLookupHit;
+    }
+    applyLookupHit(hit);
+    setMdmSearchBusy(false);
   }
 
   // Consume ?hire=1&globalPersonId= / ?employmentId= / ?login=1 once rows are ready.
@@ -561,7 +750,7 @@ export default function WorkforceEmploymentsPage() {
     if (loginFlag === "1" && emp.status !== "TERMINATED") {
       setLoginEmp(emp);
       setLoginEditLogin(displayStaffLogin(emp));
-      setLoginEditPin(emp.satelliteStaffPin?.trim() || "");
+      setLoginEditPin("");
       setLoginEditSatelliteKeys([
         ...new Set(
           (emp.roleBindings ?? [])
@@ -577,63 +766,6 @@ export default function WorkforceEmploymentsPage() {
     void openEmployeeCard(emp);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-shot deep-link
   }, [ready, loading, rows, searchParams]);
-
-  async function onResolvePerson() {
-    if (
-      busy ||
-      !resolveFin.trim() ||
-      !resolveFirstName.trim() ||
-      !resolveLastName.trim()
-    ) {
-      return;
-    }
-    setBusy(true);
-    setModalError(null);
-    const res = await mdmWorkforceFetch("workforce-resolve", {
-      method: "POST",
-      body: JSON.stringify({
-        fin: resolveFin.trim(),
-        firstName: resolveFirstName.trim(),
-        middleName: resolveMiddleName.trim() || undefined,
-        lastName: resolveLastName.trim(),
-        sex: resolveSex || undefined,
-        birthDate: resolveBirthDate || undefined,
-      }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      setModalError(await res.text());
-      return;
-    }
-    const data = (await res.json()) as {
-      globalPersonId: string;
-      opsProfile?: {
-        displayName?: string | null;
-        primaryIdentifierMasked?: string | null;
-      };
-    };
-    setGlobalPersonId(data.globalPersonId);
-    setResolvedLabel(
-      data.opsProfile?.displayName
-        ? `${data.opsProfile.displayName} (${data.opsProfile.primaryIdentifierMasked ?? "—"})`
-        : tCommon("unnamedPerson"),
-    );
-    const fin = data.opsProfile?.primaryIdentifierMasked?.trim();
-    setHireFinMasked(fin && fin !== "—" ? fin : resolveFin.trim() || null);
-
-    if (resolveBlood && resolveBlood !== "UNKNOWN") {
-      const hrRes = await mdmWorkforceFetch(
-        `${data.globalPersonId}/hr-profile`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ bloodGroup: resolveBlood }),
-        },
-      );
-      if (!hrRes.ok) {
-        setModalError(await hrRes.text());
-      }
-    }
-  }
 
   async function applyDualVoenFromCard(
     gpid: string,
@@ -682,8 +814,22 @@ export default function WorkforceEmploymentsPage() {
 
   async function onHire(e: React.FormEvent) {
     e.preventDefault();
-    if (busy || !globalPersonId.trim() || !orgUnitId || !positionId) return;
-    if (satelliteKeys.length > 0 && !hirePin.trim()) {
+    if (busy || !orgUnitId || !positionId) return;
+    if (!resolveFirstName.trim() || !resolveLastName.trim()) return;
+    if (!resolveSex || resolveSex === "UNKNOWN") {
+      setModalError(t("selectSex"));
+      return;
+    }
+    if (!resolveBirthDate.trim()) {
+      setModalError(t("birthDateRequired"));
+      return;
+    }
+    if (!hirePhone.trim()) {
+      setModalError(t("phoneRequired"));
+      return;
+    }
+    const accessKeys = hireGrantAccess ? satelliteKeys : [];
+    if (accessKeys.length > 0 && !hirePin.trim()) {
       setModalError(t("pinRequired"));
       return;
     }
@@ -695,10 +841,109 @@ export default function WorkforceEmploymentsPage() {
     await submitHire();
   }
 
+  function parsePersonnelOrderRef(raw: unknown): PersonnelOrderRef | null {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw as Partial<PersonnelOrderRef>;
+    if (!o.id || !o.orderNumber) return null;
+    return {
+      id: String(o.id),
+      type: String(o.type ?? ""),
+      status: String(o.status ?? "DRAFT"),
+      orderNumber: String(o.orderNumber),
+      employmentId: o.employmentId ? String(o.employmentId) : null,
+    };
+  }
+
+  async function issueOrder(id: string) {
+    setOrderBridgeBusy(true);
+    const res = await workforceFetch(`personnel-orders/${id}/issue`, {
+      method: "POST",
+    });
+    setOrderBridgeBusy(false);
+    if (!res.ok) {
+      setModalError(await describeWorkforceError(res));
+      return;
+    }
+    const data = (await res.json()) as PersonnelOrderRef;
+    setOrderBridge((prev) =>
+      prev && prev.id === id
+        ? { ...prev, status: data.status ?? "ISSUED" }
+        : prev,
+    );
+    setCardOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: data.status ?? "ISSUED" } : o)),
+    );
+  }
+
+  async function downloadOrderPdf(id: string) {
+    setOrderBridgeBusy(true);
+    const res = await workforceFetch(`personnel-orders/${id}/pdf`);
+    setOrderBridgeBusy(false);
+    if (!res.ok) {
+      setModalError(await describeWorkforceError(res));
+      return;
+    }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `personnel-order-${id.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function patchHrProfile(
+    personId: string,
+    blood: string,
+    address: string,
+  ) {
+    const body: {
+      bloodGroup: string;
+      addresses?: Array<{ kind: string; line: string }>;
+    } = { bloodGroup: blood || "UNKNOWN" };
+    if (address.trim()) {
+      body.addresses = [{ kind: "ACTUAL", line: address.trim() }];
+    }
+    return mdmWorkforceFetch(`${personId}/hr-profile`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
+
   async function submitHire() {
-    const hiredGpid = globalPersonId.trim();
+    const accessKeys = hireGrantAccess ? satelliteKeys : [];
     setBusy(true);
     setModalError(null);
+
+    const resolveRes = await mdmWorkforceFetch("workforce-resolve", {
+      method: "POST",
+      body: JSON.stringify({
+        ...(globalPersonId.trim() ? { globalPersonId: globalPersonId.trim() } : {}),
+        fin: resolveFin.trim() || undefined,
+        firstName: resolveFirstName.trim(),
+        middleName: resolveMiddleName.trim() || undefined,
+        lastName: resolveLastName.trim(),
+        sex: resolveSex || undefined,
+        birthDate: resolveBirthDate || undefined,
+        phone: hirePhone.trim() || undefined,
+        email: hireEmail.trim() || undefined,
+      }),
+    });
+    if (!resolveRes.ok) {
+      setModalError(await describeWorkforceError(resolveRes));
+      setBusy(false);
+      return;
+    }
+    const resolved = (await resolveRes.json()) as { globalPersonId: string };
+    const hiredGpid = resolved.globalPersonId;
+    setGlobalPersonId(hiredGpid);
+
+    const hrRes = await patchHrProfile(hiredGpid, resolveBlood, hireAddress);
+    if (!hrRes.ok) {
+      setModalError(await describeWorkforceError(hrRes));
+      setBusy(false);
+      return;
+    }
+
     const res = await workforceFetch("employments/hire", {
       method: "POST",
       body: JSON.stringify({
@@ -706,9 +951,11 @@ export default function WorkforceEmploymentsPage() {
         hireDate,
         orgUnitId,
         positionId,
-        satelliteKeys,
-        ...(hireLogin.trim() ? { login: hireLogin.trim().toLowerCase() } : {}),
-        ...(hirePin.trim() ? { pin: hirePin.trim() } : {}),
+        satelliteKeys: accessKeys,
+        ...(hireGrantAccess && hireLogin.trim()
+          ? { login: hireLogin.trim().toLowerCase() }
+          : {}),
+        ...(hireGrantAccess && hirePin.trim() ? { pin: hirePin.trim() } : {}),
       }),
     });
     if (!res.ok) {
@@ -716,13 +963,25 @@ export default function WorkforceEmploymentsPage() {
       setBusy(false);
       return;
     }
-    setGlobalPersonId("");
-    setSatelliteKeys([]);
-    setHireLogin("");
-    setHirePin("");
+    const hired = (await res.json()) as {
+      employment?: { id: string };
+      personnelOrder?: unknown;
+    };
+    const order =
+      parsePersonnelOrderRef(hired.personnelOrder) ??
+      (hired.employment?.id
+        ? {
+            id: "",
+            type: "HIRE",
+            status: "DRAFT",
+            orderNumber: "",
+            employmentId: hired.employment.id,
+          }
+        : null);
     setHireOpen(false);
     await load();
     void checkDualVoenAfterHire(hiredGpid);
+    if (order) setOrderBridge(order);
     setBusy(false);
   }
 
@@ -741,7 +1000,10 @@ export default function WorkforceEmploymentsPage() {
       setError(await res.text());
       return;
     }
+    const body = (await res.json()) as { personnelOrder?: unknown };
+    const order = parsePersonnelOrderRef(body.personnelOrder);
     await load();
+    if (order) setOrderBridge(order);
   }
 
   async function reprovisionEmployment(
@@ -784,6 +1046,7 @@ export default function WorkforceEmploymentsPage() {
     if (!res.ok) {
       const msg = await describeWorkforceError(res);
       if (loginOpen) setLoginModalError(msg);
+      else if (cardOpen) setModalError(msg);
       else setError(msg);
       return;
     }
@@ -795,7 +1058,8 @@ export default function WorkforceEmploymentsPage() {
     e.preventDefault();
     if (!loginEmp || busy) return;
     const hasSatellites = loginEditSatelliteKeys.length > 0;
-    if (hasSatellites && !loginEditPin.trim()) {
+    const hadBindings = (loginEmp.roleBindings?.length ?? 0) > 0;
+    if (hasSatellites && !loginEditPin.trim() && !hadBindings) {
       setLoginModalError(t("pinRequired"));
       return;
     }
@@ -825,12 +1089,15 @@ export default function WorkforceEmploymentsPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      setModalError(await res.text());
+      setModalError(await describeWorkforceError(res));
       return;
     }
+    const body = (await res.json()) as { personnelOrder?: unknown };
+    const order = parsePersonnelOrderRef(body.personnelOrder);
     setTransferOpen(false);
     setActionEmp(null);
     await load();
+    if (order) setOrderBridge(order);
   }
 
   async function openEmployeeCard(emp: EmploymentRow) {
@@ -845,13 +1112,24 @@ export default function WorkforceEmploymentsPage() {
     setCardSex(person?.sex && person.sex !== "UNKNOWN" ? person.sex : "");
     setCardBirthDate(person?.birthDate ?? "");
     setCardPhone("");
+    setCardEmail("");
     setCardBlood("");
-    setCardOrgUnitId(emp.orgUnitId ?? emp.orgUnit?.id ?? "");
-    setCardPositionId(emp.positionId ?? emp.position?.id ?? "");
+    setCardAddress("");
+    setCardFinMasked(person?.finMasked ?? "");
+    setCardPhoneMasked("");
+    setCardEmailMasked("");
+    const existingKeys = (emp.roleBindings ?? []).map((b) => b.satelliteKey);
+    setCardSatelliteKeys(existingKeys);
+    setCardGrantAccess(existingKeys.length > 0);
+    setCardLogin(displayStaffLogin(emp));
+    setCardPin("");
+    setCardLoginDirty(Boolean(emp.satelliteStaffLogin?.trim()));
+    setCardOrders([]);
 
-    const [opsRes, hrRes] = await Promise.all([
+    const [opsRes, hrRes, ordersRes] = await Promise.all([
       mdmWorkforceFetch(`${emp.globalPersonId}/ops-profile`),
       mdmWorkforceFetch(`${emp.globalPersonId}/hr-profile`),
+      workforceFetch(`personnel-orders?employmentId=${encodeURIComponent(emp.id)}`),
     ]);
     setBusy(false);
     if (opsRes.ok) {
@@ -863,6 +1141,8 @@ export default function WorkforceEmploymentsPage() {
         sex?: string | null;
         birthDate?: string | null;
         phoneMasked?: string | null;
+        emailMasked?: string | null;
+        primaryIdentifierMasked?: string | null;
       };
       if (ops.firstName || ops.lastName) {
         const scrambled =
@@ -894,25 +1174,75 @@ export default function WorkforceEmploymentsPage() {
       }
       if (ops.sex) setCardSex(ops.sex);
       if (ops.birthDate) setCardBirthDate(ops.birthDate);
-      // phoneMasked is display-only; leave editable phone empty unless user re-enters
-      if (ops.phoneMasked) setCardPhone("");
+      if (ops.phoneMasked) setCardPhoneMasked(ops.phoneMasked);
+      if (ops.emailMasked) setCardEmailMasked(ops.emailMasked);
+      if (ops.primaryIdentifierMasked) setCardFinMasked(ops.primaryIdentifierMasked);
     }
     if (hrRes.ok) {
       const hr = (await hrRes.json()) as {
         accessDenied?: boolean;
-        hrProfile?: { bloodGroup?: string | null } | null;
+        hrProfile?: {
+          bloodGroup?: string | null;
+          addresses?: Array<{ kind?: string; line?: string | null }>;
+        } | null;
       };
-      if (!hr.accessDenied && hr.hrProfile?.bloodGroup) {
-        setCardBlood(hr.hrProfile.bloodGroup);
+      if (!hr.accessDenied && hr.hrProfile) {
+        if (hr.hrProfile.bloodGroup) setCardBlood(hr.hrProfile.bloodGroup);
+        const addr =
+          hr.hrProfile.addresses?.find((a) => a.kind === "ACTUAL" && a.line) ??
+          hr.hrProfile.addresses?.find((a) => a.line);
+        if (addr?.line) setCardAddress(addr.line);
       }
     } else if (!opsRes.ok) {
       setModalError(await hrRes.text().catch(() => t("cardLoadFailed")));
+    }
+    if (ordersRes.ok) {
+      const data = (await ordersRes.json()) as { items?: PersonnelOrderRef[] };
+      setCardOrders(
+        (data.items ?? []).map((o) => ({
+          id: o.id,
+          type: o.type,
+          status: o.status,
+          orderNumber: o.orderNumber,
+          employmentId: o.employmentId ?? emp.id,
+        })),
+      );
     }
   }
 
   async function saveEmployeeCard(e: React.FormEvent) {
     e.preventDefault();
     if (!actionEmp || !cardFirstName.trim() || !cardLastName.trim()) return;
+    if (!cardSex || cardSex === "UNKNOWN") {
+      setModalError(t("selectSex"));
+      return;
+    }
+    if (!cardBirthDate.trim()) {
+      setModalError(t("birthDateRequired"));
+      return;
+    }
+    if (!cardPhone.trim() && !cardPhoneMasked) {
+      setModalError(t("phoneRequired"));
+      return;
+    }
+    const accessKeys = cardGrantAccess ? cardSatelliteKeys : [];
+    if (accessKeys.length > 0 && !cardPin.trim()) {
+      const hadBindings = (actionEmp.roleBindings?.length ?? 0) > 0;
+      if (!hadBindings) {
+        setModalError(t("pinRequired"));
+        return;
+      }
+    }
+    const existingKeys = [...(actionEmp.roleBindings ?? []).map((b) => b.satelliteKey)].sort();
+    const nextKeys = [...accessKeys].sort();
+    const loginChanged =
+      cardGrantAccess &&
+      cardLogin.trim().toLowerCase() !== displayStaffLogin(actionEmp).toLowerCase();
+    const accessChanged =
+      existingKeys.join(",") !== nextKeys.join(",") ||
+      loginChanged ||
+      Boolean(cardPin.trim());
+
     setBusy(true);
     setModalError(null);
 
@@ -926,51 +1256,33 @@ export default function WorkforceEmploymentsPage() {
         sex: cardSex || undefined,
         birthDate: cardBirthDate || undefined,
         phone: cardPhone.trim() || undefined,
+        email: cardEmail.trim() || undefined,
       }),
     });
     if (!resolveRes.ok) {
-      setModalError(await resolveRes.text());
+      setModalError(await describeWorkforceError(resolveRes));
       setBusy(false);
       return;
     }
 
-    const hrRes = await mdmWorkforceFetch(
-      `${actionEmp.globalPersonId}/hr-profile`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({
-          bloodGroup: cardBlood || "UNKNOWN",
-        }),
-      },
+    const hrRes = await patchHrProfile(
+      actionEmp.globalPersonId,
+      cardBlood,
+      cardAddress,
     );
     if (!hrRes.ok) {
-      setModalError(await hrRes.text());
+      setModalError(await describeWorkforceError(hrRes));
       setBusy(false);
       return;
     }
 
-    const nextOrg = cardOrgUnitId;
-    const nextPos = cardPositionId;
-    const curOrg = actionEmp.orgUnitId ?? actionEmp.orgUnit?.id ?? "";
-    const curPos = actionEmp.positionId ?? actionEmp.position?.id ?? "";
-    if (
-      actionEmp.status === "ACTIVE" &&
-      nextOrg &&
-      nextPos &&
-      (nextOrg !== curOrg || nextPos !== curPos)
-    ) {
-      const transferRes = await workforceFetch(
-        `employments/${actionEmp.id}/transfer`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            orgUnitId: nextOrg,
-            positionId: nextPos,
-          }),
-        },
-      );
-      if (!transferRes.ok) {
-        setModalError(await transferRes.text());
+    if (actionEmp.status === "ACTIVE" && accessChanged) {
+      const ok = await submitReprovision(actionEmp, {
+        login: cardGrantAccess ? cardLogin : undefined,
+        pin: cardGrantAccess && cardPin.trim() ? cardPin : undefined,
+        satelliteKeys: accessKeys,
+      });
+      if (!ok) {
         setBusy(false);
         return;
       }
@@ -1030,20 +1342,23 @@ export default function WorkforceEmploymentsPage() {
   }
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openHire}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addEmployee")}
-          </button>
-        }
-      />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openHire}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addEmployee")}
+            </button>
+          }
+        />
+      </div>
 
       {needsBootstrap ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-4`}>
           <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
           <button
             type="button"
@@ -1057,7 +1372,7 @@ export default function WorkforceEmploymentsPage() {
       ) : null}
 
       {dualVoenBanner ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-start justify-between gap-3 p-4`}>
+        <div className={`${CARD_CONTAINER_CLASS} flex shrink-0 flex-wrap items-start justify-between gap-3 p-4`}>
           <p className="text-sm text-[#34495E]">
             {t("dualVoenBanner", { orgs: dualVoenBanner.orgNames.join(", ") })}{" "}
             {dualVoenBanner.holdingId ? (
@@ -1081,7 +1396,12 @@ export default function WorkforceEmploymentsPage() {
         </div>
       ) : null}
 
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+
+      <EraListWorkspace
+        filter={
       <EraListFilterBar
+        className="!mb-0"
         onReset={() => {
           setFilterText("");
           setFilterOrgUnitId("");
@@ -1163,16 +1483,8 @@ export default function WorkforceEmploymentsPage() {
           emptyLabel={t("filterAll")}
         />
       </EraListFilterBar>
-
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : pagedRows.length === 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-[#7F8C8D]`}>
-          {t("empty")}
-        </div>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        }
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -1188,7 +1500,17 @@ export default function WorkforceEmploymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {pagedRows.map((r) => {
+              {pagedRows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={9}
+                  >
+                    {loading ? t("loading") : t("empty")}
+                  </td>
+                </tr>
+              ) : (
+              pagedRows.map((r) => {
                 const hasBindings = (r.roleBindings?.length ?? 0) > 0;
                 const canReprovision =
                   r.status !== "TERMINATED" && hasBindings;
@@ -1216,7 +1538,11 @@ export default function WorkforceEmploymentsPage() {
                       {formatSex(persons[r.globalPersonId]?.sex)}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
-                      {persons[r.globalPersonId]?.birthDate ?? "—"}
+                      {persons[r.globalPersonId]?.birthDate
+                        ? bakuDateDisplay(
+                            persons[r.globalPersonId]!.birthDate as string,
+                          )
+                        : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {r.orgUnit?.name ?? "—"}
@@ -1225,7 +1551,7 @@ export default function WorkforceEmploymentsPage() {
                       {r.position?.name ?? "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
-                      {String(r.hireDate).slice(0, 10)}
+                      {bakuDateDisplay(r.hireDate)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex flex-col gap-1">
@@ -1260,17 +1586,7 @@ export default function WorkforceEmploymentsPage() {
                           title={t("transfer")}
                           aria-label={t("transfer")}
                           disabled={busy || r.status === "TERMINATED"}
-                          onClick={() => {
-                            setActionEmp(r);
-                            setTransferOrgUnitId(
-                              r.orgUnitId ?? r.orgUnit?.id ?? "",
-                            );
-                            setTransferPositionId(
-                              r.positionId ?? r.position?.id ?? "",
-                            );
-                            setModalError(null);
-                            setTransferOpen(true);
-                          }}
+                          onClick={() => openTransfer(r)}
                         >
                           <ArrowRightLeft
                             className="h-4 w-4 text-[#2980B9]"
@@ -1320,7 +1636,7 @@ export default function WorkforceEmploymentsPage() {
                                   setMoreMenuId(null);
                                   setLoginEmp(r);
                                   setLoginEditLogin(displayStaffLogin(r));
-                                  setLoginEditPin(r.satelliteStaffPin?.trim() || "");
+                                  setLoginEditPin("");
                                   setLoginEditSatelliteKeys([
                                     ...new Set(
                                       (r.roleBindings ?? [])
@@ -1353,9 +1669,12 @@ export default function WorkforceEmploymentsPage() {
                     </td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -1369,242 +1688,341 @@ export default function WorkforceEmploymentsPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
 
       <ModalShell
         open={hireOpen}
         title={t("hireTitle")}
-        subtitle={t("hireSubtitle")}
+        maxWidthClass="max-w-5xl"
         onClose={() => !busy && setHireOpen(false)}
         closeLabel={tCommon("close")}
-      >
-        <form onSubmit={(e) => void onHire(e)} className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldFirstName")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveFirstName}
-                onChange={(e) => setResolveFirstName(e.target.value)}
-                required
-              />
-            </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldMiddleName")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveMiddleName}
-                onChange={(e) => setResolveMiddleName(e.target.value)}
-              />
-            </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldLastName")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveLastName}
-                onChange={(e) => setResolveLastName(e.target.value)}
-                required
-              />
-            </label>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("resolveFin")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={resolveFin}
-                onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
-              />
-            </label>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t("fieldSex")}
-              value={resolveSex}
-              onChange={(next) => setResolveSex(String(next))}
-              options={sexOptions.filter((o) => o.value !== "UNKNOWN")}
-              emptyLabel={t("selectSex")}
-              required
-            />
-            <DatePicker
-              label={t("fieldBirthDate")}
-              value={resolveBirthDate}
-              onChange={setResolveBirthDate}
-              placeholder={tCommon("datePlaceholder")}
-              fluid
-            />
-          </div>
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("fieldBloodGroup")}
-            value={resolveBlood}
-            onChange={(next) => setResolveBlood(String(next))}
-            options={bloodOptions}
-            emptyLabel={t("bloodOptional")}
-            hint={t("bloodOptionalHint")}
-          />
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={
-              busy ||
-              !resolveFin.trim() ||
+        footer={
+          <ModalFooter
+            formId="workforce-hire-form"
+            onCancel={() => setHireOpen(false)}
+            busy={busy}
+            submitDisabled={
+              !orgUnitId ||
+              !positionId ||
               !resolveFirstName.trim() ||
-              !resolveLastName.trim()
+              !resolveLastName.trim() ||
+              !resolveSex ||
+              !resolveBirthDate.trim() ||
+              !hirePhone.trim() ||
+              (hireGrantAccess && satelliteKeys.length > 0 && !hirePin.trim())
             }
-            onClick={() => void onResolvePerson()}
-          >
-            {t("resolvePerson")}
-          </button>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("globalPersonId")}
-            <input
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
-              value={globalPersonId}
-              readOnly
-              placeholder={t("resolveFirst")}
-              required
-            />
-            {resolvedLabel ? (
-              <span className="mt-1 block text-xs text-[#27AE60]">
-                {resolvedLabel}
-              </span>
-            ) : null}
-          </label>
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("orgUnit")}
-            value={orgUnitId}
-            onChange={(next) => {
-              setOrgUnitId(String(next));
-              setPositionId("");
-            }}
-            options={orgUnitOptions}
-            required
-            emptyLabel={t("selectOrgUnit")}
-            disabled={orgUnits.length === 0}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={busy ? t("busy") : t("hire")}
           />
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("position")}
-            value={positionId}
-            onChange={(next) => setPositionId(String(next))}
-            options={filteredPositions.map((p) => ({
-              value: p.id,
-              label: p.name,
-            }))}
-            required
-            emptyLabel={t("selectPosition")}
-            disabled={filteredPositions.length === 0}
-          />
-          <DatePicker
-            label={t("hireDate")}
-            value={hireDate}
-            onChange={setHireDate}
-            placeholder={tCommon("datePlaceholder")}
-            required
-            fluid
-          />
-          <fieldset className="rounded-lg border border-[#D5DADF] p-3">
-            <legend className="px-1 text-xs font-medium text-[#34495E]">
-              {t("satelliteAccess")}
+        }
+      >
+        <form
+          id="workforce-hire-form"
+          onSubmit={(e) => void onHire(e)}
+          className="grid gap-4"
+        >
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneIdentity")}
             </legend>
-            <p className="mb-2 text-xs text-[#7F8C8D]">
-              {t("satelliteAccessHint")}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              {satelliteFilterOptions.map((s) => (
-                <label
-                  key={s.key}
-                  className="flex items-center gap-2 text-xs text-[#34495E]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={satelliteKeys.includes(s.key)}
-                    onChange={(e) => {
-                      setSatelliteKeys((prev) =>
-                        e.target.checked
-                          ? [...prev, s.key]
-                          : prev.filter((k) => k !== s.key),
-                      );
-                    }}
-                  />
-                  {s.label}
-                </label>
-              ))}
+            <div className="flex min-w-0 items-end gap-2">
+              <label className="block min-w-0 flex-1 text-[13px] font-medium text-[#34495E]">
+                {t("resolveFin")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={resolveFin}
+                  onChange={(e) => setResolveFin(e.target.value.toUpperCase())}
+                  autoComplete="off"
+                />
+              </label>
+              <button
+                type="button"
+                className={`${SECONDARY_BUTTON_CLASS} mb-0 shrink-0`}
+                disabled={busy || mdmSearchBusy}
+                onClick={() => void searchMdmByFin()}
+              >
+                {mdmSearchBusy ? t("busy") : t("resolvePerson")}
+              </button>
+            </div>
+            {resolvedLabel ? (
+              <p className="text-xs text-[#27AE60]">{resolvedLabel}</p>
+            ) : null}
+            {hireFinMasked ? (
+              <p className="font-mono text-xs text-[#7F8C8D]">{hireFinMasked}</p>
+            ) : null}
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("fieldFirstName")}
+                {REQ_STAR}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={resolveFirstName}
+                  onChange={(e) => setResolveFirstName(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("fieldMiddleName")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={resolveMiddleName}
+                  onChange={(e) => setResolveMiddleName(e.target.value)}
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("fieldLastName")}
+                {REQ_STAR}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={resolveLastName}
+                  onChange={(e) => setResolveLastName(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
+            <div className={ROW3_CLASS}>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("fieldSex")}
+                value={resolveSex}
+                onChange={(next) => setResolveSex(String(next))}
+                options={sexOptions.filter((o) => o.value !== "UNKNOWN")}
+                emptyLabel={t("selectSex")}
+                required
+              />
+              <DatePicker
+                label={t("fieldBirthDate")}
+                value={resolveBirthDate}
+                onChange={setResolveBirthDate}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+                required
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("fieldBloodGroup")}
+                value={resolveBlood}
+                onChange={(next) => setResolveBlood(String(next))}
+                options={bloodOptions}
+                emptyLabel={t("bloodOptional")}
+              />
             </div>
           </fieldset>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldStaffLogin")}
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneContacts")}
+            </legend>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldPhone")}
+              {REQ_STAR}
               <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
-                value={hireLogin}
-                onChange={(e) => setHireLogin(e.target.value)}
-                placeholder={t("fieldStaffLoginAutoPlaceholder")}
+                className={FIELD_INPUT_CLASS}
+                value={hirePhone}
+                onChange={(e) => setHirePhone(e.target.value)}
+                placeholder="+994…"
+                required
               />
             </label>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldStaffPin")}
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldAddress")}
               <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[13px]"
-                value={hirePin}
-                onChange={(e) => setHirePin(e.target.value)}
-                required={satelliteKeys.length > 0}
-                aria-required={satelliteKeys.length > 0}
+                className={FIELD_INPUT_CLASS}
+                value={hireAddress}
+                onChange={(e) => setHireAddress(e.target.value)}
               />
-              {satelliteKeys.length > 0 ? (
-                <p className="mt-1 text-xs text-[#7F8C8D]">{t("pinRequired")}</p>
-              ) : null}
             </label>
-          </div>
-          <p className="text-xs text-[#7F8C8D]">{t("fieldStaffLoginHint")}</p>
-          <p className="text-xs text-[#7F8C8D]">{t("mdmHint")}</p>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldEmail")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                type="email"
+                value={hireEmail}
+                onChange={(e) => setHireEmail(e.target.value)}
+              />
+            </label>
+          </fieldset>
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneEmployment")}
+            </legend>
+            <div className={ROW3_CLASS}>
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("orgUnit")}
+                value={orgUnitId}
+                onChange={(next) => {
+                  setOrgUnitId(String(next));
+                  setPositionId("");
+                }}
+                options={orgUnitOptions}
+                required
+                emptyLabel={t("selectOrgUnit")}
+                disabled={orgUnits.length === 0}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("position")}
+                value={positionId}
+                onChange={(next) => setPositionId(String(next))}
+                options={filteredPositions.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
+                required
+                emptyLabel={t("selectPosition")}
+                disabled={filteredPositions.length === 0}
+              />
+              <DatePicker
+                label={t("hireDate")}
+                value={hireDate}
+                onChange={setHireDate}
+                placeholder={tCommon("datePlaceholder")}
+                required
+                fluid
+              />
+            </div>
+          </fieldset>
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneAccess")}
+            </legend>
+            <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+              <input
+                type="checkbox"
+                checked={hireGrantAccess}
+                onChange={(e) => {
+                  setHireGrantAccess(e.target.checked);
+                  if (!e.target.checked) {
+                    setSatelliteKeys([]);
+                    setHirePin("");
+                    setHireLogin("");
+                    setHireLoginDirty(false);
+                  } else {
+                    setHirePin((prev) => prev || "0000");
+                  }
+                }}
+              />
+              {t("grantAccess")}
+            </label>
+            {hireGrantAccess ? (
+              <>
+                <div className={ROW2_CLASS}>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                    {t("fieldStaffLogin")}
+                    <input
+                      className={`${FIELD_INPUT_CLASS} font-mono`}
+                      value={hireLogin}
+                      onChange={(e) => {
+                        setHireLoginDirty(true);
+                        setHireLogin(e.target.value);
+                      }}
+                      placeholder={t("fieldStaffLoginAutoPlaceholder")}
+                    />
+                  </label>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                    {t("fieldStaffPin")}
+                    <input
+                      className={`${FIELD_INPUT_CLASS} font-mono`}
+                      value={hirePin}
+                      onChange={(e) => setHirePin(e.target.value)}
+                      required={satelliteKeys.length > 0}
+                      aria-required={satelliteKeys.length > 0}
+                    />
+                  </label>
+                </div>
+                <div>
+                  <p className="mb-2 text-[13px] font-medium text-[#34495E]">
+                    {t("satelliteAccess")}
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {satelliteFilterOptions.map((s) => (
+                      <label
+                        key={s.key}
+                        className="flex items-center gap-2 text-xs text-[#34495E]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={satelliteKeys.includes(s.key)}
+                          onChange={(e) => {
+                            setSatelliteKeys((prev) =>
+                              e.target.checked
+                                ? [...prev, s.key]
+                                : prev.filter((k) => k !== s.key),
+                            );
+                          }}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </fieldset>
           {modalError && hireOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
           ) : null}
-          {!resolveFin.trim() && !hireFinMasked && globalPersonId ? (
+          {!resolveFin.trim() &&
+          !hireFinMasked &&
+          resolveFirstName.trim() &&
+          resolveLastName.trim() ? (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
               {t("hireWithoutFinBanner")}
             </p>
           ) : null}
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setHireOpen(false)}
-              disabled={busy}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="submit"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={
-                busy ||
-                !orgUnitId ||
-                !positionId ||
-                !globalPersonId ||
-                (satelliteKeys.length > 0 && !hirePin.trim())
-              }
-            >
-              {busy ? t("busy") : t("hire")}
-            </button>
-          </div>
         </form>
       </ModalShell>
 
       <ModalShell
         open={transferOpen}
         title={t("transferTitle")}
+        subtitle={
+          actionEmp
+            ? (persons[actionEmp.globalPersonId]?.displayName ??
+              tCommon("unnamedPerson"))
+            : undefined
+        }
         onClose={() => !busy && setTransferOpen(false)}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            formId="workforce-transfer-form"
+            onCancel={() => setTransferOpen(false)}
+            busy={busy}
+            submitDisabled={
+              !transferOrgUnitId ||
+              !transferPositionId ||
+              (transferOrgUnitId ===
+                (actionEmp?.orgUnitId ?? actionEmp?.orgUnit?.id ?? "") &&
+                transferPositionId ===
+                  (actionEmp?.positionId ?? actionEmp?.position?.id ?? ""))
+            }
+            cancelLabel={tCommon("cancel")}
+            submitLabel={t("transfer")}
+          />
+        }
       >
-        <form onSubmit={(e) => void submitTransfer(e)} className="grid gap-3">
+        <form
+          id="workforce-transfer-form"
+          onSubmit={(e) => void submitTransfer(e)}
+          className="grid gap-3"
+        >
           <CatalogField
             kind="ENTITY_REF"
+            className="min-w-0"
+            widthPreset="selectWide"
             label={t("orgUnit")}
             value={transferOrgUnitId}
             onChange={(next) => {
@@ -1617,6 +2035,8 @@ export default function WorkforceEmploymentsPage() {
           />
           <CatalogField
             kind="ENTITY_REF"
+            className="min-w-0"
+            widthPreset="selectWide"
             label={t("position")}
             value={transferPositionId}
             onChange={(next) => setTransferPositionId(String(next))}
@@ -1630,82 +2050,97 @@ export default function WorkforceEmploymentsPage() {
           {modalError && transferOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
           ) : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setTransferOpen(false)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="submit"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-            >
-              {t("transfer")}
-            </button>
-          </div>
+          {actionEmp &&
+          transferOrgUnitId ===
+            (actionEmp.orgUnitId ?? actionEmp.orgUnit?.id ?? "") &&
+          transferPositionId ===
+            (actionEmp.positionId ?? actionEmp.position?.id ?? "") ? (
+            <p className="text-xs text-[#7F8C8D]">{t("transferUnchanged")}</p>
+          ) : null}
         </form>
       </ModalShell>
 
       <ModalShell
         open={cardOpen}
         title={t("cardTitle")}
-        subtitle={t("cardSubtitle")}
+        maxWidthClass="max-w-5xl"
         onClose={() => !busy && setCardOpen(false)}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            formId="workforce-card-form"
+            onCancel={() => setCardOpen(false)}
+            busy={busy}
+            submitDisabled={
+              !cardFirstName.trim() ||
+              !cardLastName.trim() ||
+              !cardSex ||
+              !cardBirthDate.trim() ||
+              (!cardPhone.trim() && !cardPhoneMasked)
+            }
+            cancelLabel={tCommon("cancel")}
+            submitLabel={busy ? t("busy") : tCommon("save")}
+          />
+        }
       >
         <form
+          id="workforce-card-form"
           onSubmit={(e) => void saveEmployeeCard(e)}
           className="grid gap-4"
         >
-          <fieldset className="grid gap-3 rounded-lg border border-[#D5DADF] p-3">
+          <fieldset className={ZONE_CLASS}>
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
-              {t("cardIdentity")}
+              {t("zoneIdentity")}
             </legend>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-[13px] font-medium text-[#34495E]">
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("resolveFin")}
+              <input
+                className={`${FIELD_INPUT_CLASS} font-mono`}
+                value={cardFinMasked}
+                readOnly
+              />
+            </label>
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldFirstName")}
+                {REQ_STAR}
                 <input
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  className={FIELD_INPUT_CLASS}
                   value={cardFirstName}
                   onChange={(e) => setCardFirstName(e.target.value)}
                   required
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldMiddleName")}
                 <input
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  className={FIELD_INPUT_CLASS}
                   value={cardMiddleName}
                   onChange={(e) => setCardMiddleName(e.target.value)}
                 />
               </label>
-              <label className="block text-[13px] font-medium text-[#34495E]">
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
                 {t("fieldLastName")}
+                {REQ_STAR}
                 <input
-                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                  className={FIELD_INPUT_CLASS}
                   value={cardLastName}
                   onChange={(e) => setCardLastName(e.target.value)}
                   required
                 />
               </label>
             </div>
-            <p className="text-xs text-[#7F8C8D]">
-              {t("colFinMasked")}:{" "}
-              {actionEmp
-                ? (persons[actionEmp.globalPersonId]?.finMasked ?? "—")
-                : "—"}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className={ROW3_CLASS}>
               <CatalogField
                 kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
                 label={t("fieldSex")}
                 value={cardSex}
                 onChange={(next) => setCardSex(String(next))}
-                options={sexOptions}
-                emptyLabel={tCommon("select")}
+                options={sexOptions.filter((o) => o.value !== "UNKNOWN")}
+                emptyLabel={t("selectSex")}
+                required
               />
               <DatePicker
                 label={t("fieldBirthDate")}
@@ -1713,92 +2148,299 @@ export default function WorkforceEmploymentsPage() {
                 onChange={setCardBirthDate}
                 placeholder={tCommon("datePlaceholder")}
                 fluid
+                required
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                widthPreset="selectWide"
+                label={t("fieldBloodGroup")}
+                value={cardBlood}
+                onChange={(next) => setCardBlood(String(next))}
+                options={bloodOptions}
+                emptyLabel={tCommon("select")}
               />
             </div>
-            <label className="block text-[13px] font-medium text-[#34495E]">
-              {t("fieldPhone")}
-              <input
-                className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={cardPhone}
-                onChange={(e) => setCardPhone(e.target.value)}
-                placeholder="+994…"
-              />
-            </label>
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t("fieldBloodGroup")}
-              value={cardBlood}
-              onChange={(next) => setCardBlood(String(next))}
-              options={bloodOptions}
-              emptyLabel={tCommon("select")}
-            />
           </fieldset>
 
-          <fieldset className="grid gap-3 rounded-lg border border-[#D5DADF] p-3">
+          <fieldset className={ZONE_CLASS}>
             <legend className="px-1 text-xs font-semibold text-[#34495E]">
-              {t("cardEmployment")}
+              {t("zoneContacts")}
             </legend>
-            <p className="text-xs text-[#7F8C8D]">
-              {t("hireDate")}:{" "}
-              {actionEmp ? String(actionEmp.hireDate).slice(0, 10) : "—"}
-            </p>
-            <CatalogField
-              kind="ENTITY_REF"
-              label={t("orgUnit")}
-              value={cardOrgUnitId}
-              onChange={(next) => {
-                setCardOrgUnitId(String(next));
-                setCardPositionId("");
-              }}
-              options={orgUnitOptions}
-              emptyLabel={t("selectOrgUnit")}
-              disabled={actionEmp?.status === "TERMINATED"}
-            />
-            <CatalogField
-              kind="ENTITY_REF"
-              label={t("position")}
-              value={cardPositionId}
-              onChange={(next) => setCardPositionId(String(next))}
-              options={cardPositionOptions.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-              emptyLabel={t("selectPosition")}
-              disabled={actionEmp?.status === "TERMINATED"}
-            />
-            <p className="text-xs text-[#7F8C8D]">
-              <Link
-                href="/workspace/workforce/security"
-                className="text-[#2980B9] hover:underline"
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldPhone")}
+              {REQ_STAR}
+              <input
+                className={FIELD_INPUT_CLASS}
+                value={cardPhone}
+                onChange={(e) => setCardPhone(e.target.value)}
+                placeholder={cardPhoneMasked || "+994…"}
+                required={!cardPhoneMasked}
+              />
+            </label>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldAddress")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                value={cardAddress}
+                onChange={(e) => setCardAddress(e.target.value)}
+              />
+            </label>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("fieldEmail")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                type="email"
+                value={cardEmail}
+                onChange={(e) => setCardEmail(e.target.value)}
+                placeholder={cardEmailMasked || undefined}
+              />
+            </label>
+          </fieldset>
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneEmployment")}
+            </legend>
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("orgUnit")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp?.orgUnit?.name ?? "—"}
+                  readOnly
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("position")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp?.position?.name ?? "—"}
+                  readOnly
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("hireDate")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={actionEmp ? String(actionEmp.hireDate).slice(0, 10) : "—"}
+                  readOnly
+                />
+              </label>
+            </div>
+            {actionEmp?.status === "ACTIVE" ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => openTransfer(actionEmp)}
               >
-                {t("goSecurity")}
+                {t("transfer")}
+              </button>
+            ) : null}
+          </fieldset>
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneAccess")}
+            </legend>
+            <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+              <input
+                type="checkbox"
+                checked={cardGrantAccess}
+                disabled={actionEmp?.status === "TERMINATED"}
+                onChange={(e) => {
+                  setCardGrantAccess(e.target.checked);
+                  if (!e.target.checked) {
+                    setCardSatelliteKeys([]);
+                    setCardPin("");
+                  } else if ((actionEmp?.roleBindings?.length ?? 0) === 0) {
+                    setCardPin((prev) => prev || "0000");
+                  }
+                }}
+              />
+              {t("grantAccess")}
+            </label>
+            {cardGrantAccess && actionEmp?.status === "ACTIVE" ? (
+              <>
+                <div className={ROW2_CLASS}>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                    {t("fieldStaffLogin")}
+                    <input
+                      className={`${FIELD_INPUT_CLASS} font-mono`}
+                      value={cardLogin}
+                      onChange={(e) => {
+                        setCardLoginDirty(true);
+                        setCardLogin(e.target.value);
+                      }}
+                    />
+                  </label>
+                  <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                    {t("fieldStaffPin")}
+                    <input
+                      className={`${FIELD_INPUT_CLASS} font-mono`}
+                      value={cardPin}
+                      onChange={(e) => setCardPin(e.target.value)}
+                      placeholder={
+                        (actionEmp?.roleBindings?.length ?? 0) > 0
+                          ? t("pinKeepHint")
+                          : "0000"
+                      }
+                    />
+                  </label>
+                </div>
+                <div>
+                  <p className="mb-2 text-[13px] font-medium text-[#34495E]">
+                    {t("satelliteAccess")}
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {satelliteFilterOptions.map((s) => (
+                      <label
+                        key={s.key}
+                        className="flex items-center gap-2 text-xs text-[#34495E]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={cardSatelliteKeys.includes(s.key)}
+                          onChange={(e) => {
+                            setCardSatelliteKeys((prev) =>
+                              e.target.checked
+                                ? [...prev, s.key]
+                                : prev.filter((k) => k !== s.key),
+                            );
+                          }}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </fieldset>
+
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("zoneOrders")}
+            </legend>
+            {cardOrders.length === 0 ? (
+              <p className="text-xs text-[#7F8C8D]">{t("ordersEmpty")}</p>
+            ) : (
+              <ul className="grid gap-2">
+                {cardOrders.map((o) => (
+                  <li
+                    key={o.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-[13px]"
+                  >
+                    <span>
+                      <span className="font-mono">{o.orderNumber}</span>
+                      {" · "}
+                      {tOrders(`type.${o.type}` as "type.HIRE")}
+                      {" · "}
+                      {tOrders(`status.${o.status}` as "status.DRAFT")}
+                    </span>
+                    <span className="flex gap-2">
+                      {o.status === "DRAFT" ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={orderBridgeBusy}
+                          onClick={() => void issueOrder(o.id)}
+                        >
+                          {tOrders("issue")}
+                        </button>
+                      ) : null}
+                      {o.status === "ISSUED" ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={orderBridgeBusy}
+                          onClick={() => void downloadOrderPdf(o.id)}
+                        >
+                          {tOrders("pdf")}
+                        </button>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {actionEmp ? (
+              <Link
+                href={`/workspace/workforce/personnel-orders?employmentId=${actionEmp.id}`}
+                className="text-xs text-[#2980B9] hover:underline"
+              >
+                {t("openOrdersList")}
               </Link>
-              {" — "}
-              {t("cardSatellitesHint")}
-            </p>
+            ) : null}
           </fieldset>
 
           {modalError && cardOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
           ) : null}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setCardOpen(false)}
-              disabled={busy}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              type="submit"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || !cardFirstName.trim() || !cardLastName.trim()}
-            >
-              {busy ? t("busy") : tCommon("save")}
-            </button>
-          </div>
         </form>
+      </ModalShell>
+
+      <ModalShell
+        open={!!orderBridge}
+        title={t("orderBridgeTitle")}
+        onClose={() => setOrderBridge(null)}
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setOrderBridge(null)}
+            cancelLabel={tCommon("close")}
+            submitLabel={
+              orderBridge?.status === "ISSUED" ? tOrders("pdf") : tOrders("issue")
+            }
+            busy={orderBridgeBusy}
+            submitDisabled={!orderBridge?.id}
+            onSubmit={() => {
+              if (!orderBridge?.id) return;
+              if (orderBridge.status === "DRAFT") void issueOrder(orderBridge.id);
+              else void downloadOrderPdf(orderBridge.id);
+            }}
+          />
+        }
+      >
+        {orderBridge ? (
+          <div className="grid gap-3 text-[13px] text-[#34495E]">
+            {orderBridge.id ? (
+              <>
+                <p>
+                  <span className="font-mono text-[15px]">{orderBridge.orderNumber}</span>
+                  {" · "}
+                  {tOrders(`type.${orderBridge.type}` as "type.HIRE")}
+                  {" · "}
+                  {tOrders(`status.${orderBridge.status}` as "status.DRAFT")}
+                </p>
+                <p className="text-xs text-[#7F8C8D]">{t("orderBridgeHint")}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={`/workspace/workforce/personnel-orders?employmentId=${orderBridge.employmentId ?? ""}`}
+                    className={`${SECONDARY_BUTTON_CLASS} inline-flex items-center`}
+                  >
+                    {t("openOrdersList")}
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-[#7F8C8D]">
+                {t("orderDraftMissing")}{" "}
+                {orderBridge.employmentId ? (
+                  <Link
+                    href={`/workspace/workforce/personnel-orders?employmentId=${orderBridge.employmentId}`}
+                    className="text-[#2980B9] hover:underline"
+                  >
+                    {t("openOrdersList")}
+                  </Link>
+                ) : null}
+              </p>
+            )}
+            {modalError && orderBridge ? (
+              <p className="text-sm text-red-700">{modalError}</p>
+            ) : null}
+          </div>
+        ) : null}
       </ModalShell>
 
       <ModalShell
@@ -1813,9 +2455,34 @@ export default function WorkforceEmploymentsPage() {
           setLoginModalError(null);
         }}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            formId="workforce-login-form"
+            onCancel={() => {
+              setLoginOpen(false);
+              setLoginEmp(null);
+              setLoginCopied(false);
+              setOrgCopied(false);
+              setLoginModalError(null);
+            }}
+            busy={busy}
+            submitDisabled={
+              !!loginEmp &&
+              loginEditSatelliteKeys.length > 0 &&
+              !loginEditPin.trim() &&
+              (loginEmp.roleBindings?.length ?? 0) === 0
+            }
+            cancelLabel={tCommon("cancel")}
+            submitLabel={busy ? t("busy") : t("saveLoginAccess")}
+          />
+        }
       >
         {loginEmp ? (
-          <form onSubmit={(e) => void saveLoginAccess(e)} className="space-y-4 text-[13px] text-[#34495E]">
+          <form
+            id="workforce-login-form"
+            onSubmit={(e) => void saveLoginAccess(e)}
+            className="space-y-4 text-[13px] text-[#34495E]"
+          >
             <fieldset className="rounded-lg border border-[#D5DADF] p-3">
               <legend className="px-1 text-[11px] font-medium uppercase tracking-wide text-[#7F8C8D]">
                 {t("satellitesAccess")}
@@ -1913,10 +2580,16 @@ export default function WorkforceEmploymentsPage() {
                 className="block w-full max-w-[10rem] rounded-lg border border-[#D5DADF] px-2 py-1.5 font-mono text-[14px]"
                 value={loginEditPin}
                 onChange={(e) => setLoginEditPin(e.target.value)}
-                required={loginEditSatelliteKeys.length > 0}
+                required={
+                  loginEditSatelliteKeys.length > 0 &&
+                  (loginEmp.roleBindings?.length ?? 0) === 0
+                }
                 disabled={loginEditSatelliteKeys.length === 0}
                 readOnly={loginEditSatelliteKeys.length === 0}
               />
+              {loginEditSatelliteKeys.length > 0 ? (
+                <p className="mt-1 text-[12px] text-[#7F8C8D]">{t("pinKeepHint")}</p>
+              ) : null}
             </label>
             {workspaceOrgNo ? (
               <div>
@@ -1947,32 +2620,6 @@ export default function WorkforceEmploymentsPage() {
             {loginModalError ? (
               <p className="text-[13px] text-[#C0392B]">{loginModalError}</p>
             ) : null}
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={busy}
-                onClick={() => {
-                  setLoginOpen(false);
-                  setLoginEmp(null);
-                  setLoginCopied(false);
-                  setOrgCopied(false);
-                  setLoginModalError(null);
-                }}
-              >
-                {tCommon("cancel")}
-              </button>
-              <button
-                type="submit"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={
-                  busy ||
-                  (loginEditSatelliteKeys.length > 0 && !loginEditPin.trim())
-                }
-              >
-                {busy ? t("busy") : t("saveLoginAccess")}
-              </button>
-            </div>
           </form>
         ) : null}
       </ModalShell>
@@ -2006,6 +2653,6 @@ export default function WorkforceEmploymentsPage() {
           else void submitReprovision(next.emp);
         }}
       />
-    </>
+    </div>
   );
 }

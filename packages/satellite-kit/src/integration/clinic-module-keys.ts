@@ -1,89 +1,77 @@
 /** Clinic submodule keys — synced with orchestrator CLINIC_PRICING_MODULE_KEYS. */
 
 export const CLINIC_PRICING_MODULE_KEYS = [
-  "clinic_shell",
-  "clinic_patients",
-  "clinic_schedule",
-  "clinic_appointments",
-  "clinic_visit",
+  "clinic_registry_emr",
   "clinic_lab",
-  "clinic_service_catalog",
-  "clinic_notifications",
-  "clinic_portal",
-  "clinic_reschedule",
-  "clinic_ehr",
-  "clinic_lis_import",
-  "clinic_insurance",
+  "clinic_sanatorium",
+  "clinic_nurse_roster",
   "clinic_inpatient",
   "clinic_telehealth",
-  "clinic_nurse_roster",
-  "clinic_registry_emr",
-  "clinic_sanatorium_clinical",
+  "clinic_insurance",
 ] as const;
 
 export type ClinicPricingModuleKey = (typeof CLINIC_PRICING_MODULE_KEYS)[number];
-
-const CLINIC_FEATURE_PARENTS: Readonly<Record<string, readonly string[]>> = {
-  clinic_patients: ["clinic_registry_emr"],
-  clinic_visit: ["clinic_registry_emr"],
-  clinic_ehr: ["clinic_registry_emr"],
-  clinic_reschedule: ["clinic_registry_emr"],
-  clinic_lis_import: ["clinic_lab"],
-};
 
 export function isClinicModuleActive(
   activeModules: readonly string[],
   moduleKey: string,
 ): boolean {
   const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
-  if (set.has(moduleKey)) return true;
-  for (const parent of CLINIC_FEATURE_PARENTS[moduleKey] ?? []) {
-    if (set.has(parent)) return true;
-  }
-  if (moduleKey === "clinic_sanatorium_clinical" && set.has("clinic_inpatient")) {
-    return true;
-  }
-  return false;
+  return set.has(moduleKey);
 }
 
 /**
- * UI/API path prefix → required clinic module key.
+ * UI/API path prefix → required clinic or platform module key.
+ * Gate-only screens (schedule, appointments, catalog) are omitted — satellite gate is enough.
  * Cron handlers map separately via runCronIfEntitled.
  */
 export const CLINIC_MODULE_BY_ROUTE: Record<string, string> = {
-  "/patients": "clinic_patients",
-  "/api/patients": "clinic_patients",
-  "/appointments": "clinic_appointments",
-  "/api/appointments": "clinic_appointments",
-  "/api/booking": "clinic_appointments",
-  "/schedule": "clinic_schedule",
-  "/api/schedule": "clinic_schedule",
-  "/visits": "clinic_visit",
-  "/api/visits": "clinic_visit",
+  "/patients": "clinic_registry_emr",
+  "/api/patients": "clinic_registry_emr",
+  "/visits": "clinic_registry_emr",
+  "/api/visits": "clinic_registry_emr",
+  "/doctor": "clinic_registry_emr",
+  "/ehr": "clinic_registry_emr",
+  "/print/visit-exam": "clinic_registry_emr",
+  "/api/reports/diagnoses": "clinic_registry_emr",
+  "/lab-orders": "clinic_lab",
   "/lab": "clinic_lab",
   "/api/lab-orders": "clinic_lab",
-  "/api/lis": "clinic_lis_import",
-  "/catalog": "clinic_service_catalog",
-  "/api/catalog": "clinic_service_catalog",
+  "/api/lab": "clinic_lab",
+  "/api/lis": "clinic_lab",
+  "/api/admin/lis-profiles": "clinic_lab",
+  "/admin/lis-profiles": "clinic_lab",
+  "/print/lab-order": "clinic_lab",
+  "/nurse": "clinic_nurse_roster",
+  "/api/nurse": "clinic_nurse_roster",
   "/sanatorium/nurse-roster": "clinic_nurse_roster",
-  "/sanatorium": "clinic_sanatorium_clinical",
-  "/api/sanatorium": "clinic_sanatorium_clinical",
+  "/api/sanatorium/nurse-roster": "clinic_nurse_roster",
+  "/admin/program-templates": "clinic_sanatorium",
+  "/api/admin/program-templates": "clinic_sanatorium",
+  "/sanatorium": "clinic_sanatorium",
+  "/api/sanatorium": "clinic_sanatorium",
   "/inpatient": "clinic_inpatient",
   "/api/inpatient": "clinic_inpatient",
-  "/portal": "clinic_portal",
+  "/admin/wards": "clinic_inpatient",
+  "/api/admin/wards": "clinic_inpatient",
+  "/api/admin/beds": "clinic_inpatient",
+  "/portal": "platform_portal",
+  "/api/portal": "platform_portal",
   "/telehealth": "clinic_telehealth",
-  "/ehr": "clinic_ehr",
   "/insurance": "clinic_insurance",
-  "/api/cron/procedure-auto-complete": "clinic_appointments",
-  "/api/cron/procedure-no-show-sweep": "clinic_appointments",
-  "/api/cron/episode-walkin-close": "clinic_inpatient",
-  "/api/cron/appointment-reminders": "clinic_notifications",
+  "/api/insurance": "clinic_insurance",
+  "/api/cron/episode-walkin-close": "clinic_sanatorium",
+  "/api/cron/appointment-reminders": "platform_notifications",
   "/api/cron/inpatient-daily-charges": "clinic_inpatient",
-  "/api/cron/catalog-sync": "clinic_service_catalog",
 };
 
+/** Cabinet drag on the appointment board. Creating an appointment stays on the gate. */
+const APPOINTMENT_RESCHEDULE = /^\/api\/appointments\/[^/]+\/reschedule\/?$/;
+
 export function resolveClinicModuleForPathname(pathname: string): string | null {
+  const path = pathname.split("?")[0] ?? pathname;
+  if (APPOINTMENT_RESCHEDULE.test(path)) return "clinic_registry_emr";
   const sorted = Object.keys(CLINIC_MODULE_BY_ROUTE).sort((a, b) => b.length - a.length);
-  const prefix = sorted.find((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const prefix = sorted.find((p) => path === p || path.startsWith(`${p}/`));
   return prefix ? CLINIC_MODULE_BY_ROUTE[prefix]! : null;
 }

@@ -15,7 +15,6 @@ const AUTH_EXEMPT_PREFIXES = [
   "/api/internal",
   "/api/cron",
   "/api/booking",
-  "/api/portal",
   "/api/integration",
   "/login",
   "/sso",

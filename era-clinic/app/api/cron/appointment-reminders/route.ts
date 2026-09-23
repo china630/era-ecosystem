@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const gate = await runCronForEachTenant(
       {
         satelliteKey: "industry_clinic",
-        moduleKey: "clinic_notifications",
+        moduleKey: "platform_notifications",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "PLATFORM_CRON_SECRET",
         listOrganizationIds: listCronOrganizationIdsFromDb,

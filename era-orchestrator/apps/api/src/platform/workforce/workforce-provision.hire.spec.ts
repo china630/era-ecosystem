@@ -95,6 +95,7 @@ describe("WorkforceProvisionService.hire seats", () => {
 
     expect(result.employment.id).toBe("emp1");
     expect(result.bindings).toEqual([]);
+    expect(result.personnelOrder).toBeNull();
     expect(seats.assertSeatAvailable).not.toHaveBeenCalled();
     expect(prisma.workforceSeatAllocation.create).not.toHaveBeenCalled();
     expect(prisma.workforceRoleBinding.create).not.toHaveBeenCalled();

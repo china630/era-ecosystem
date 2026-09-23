@@ -320,30 +320,30 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 
 Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-presets.md) · [CLINIC-FULL-IMPLEMENTATION-PLAN.md](../era-clinic/doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
 
-| Module | Since | Notes | Pricing key |
+| Module | Since | Notes | Access key (no separate list price) |
 |--------|-------|-------|--------------|
-| M0 Shell | — | **DONE** | `clinic_shell` |
-| M1 Patient ref | — | **DONE** | `clinic_patients` |
-| M2 Practitioners / rooms | — | **DONE** | `clinic_schedule` |
-| M3 Appointments | — | **DONE** | `clinic_appointments` |
-| M4 Visit card | — | **DONE** | `clinic_visit` |
+| M0 Shell | — | **DONE** | `industry_clinic` |
+| M1 Patient ref | — | **DONE** | `clinic_registry_emr` |
+| M2 Practitioners / rooms | — | **DONE** | `industry_clinic` |
+| M3 Appointments | — | **DONE** | `industry_clinic` |
+| M4 Visit card | — | **DONE** | `clinic_registry_emr` |
 | M5 Lab (+ critical flag) | v1.0 | Critical flags on results — **DONE** | `clinic_lab` |
-| M6 Price cache | v1.0 | Finance price list — **DONE** | `clinic_service_catalog` |
-| M7 Notifications | v2.0 | → platform pack — **DONE** | `clinic_notifications` |
-| M8 Patient portal | v2.0 | `/portal` session — **DONE** | `clinic_portal` |
-| M9 Multi-room drag schedule | v1.0 | Reschedule API — **DONE** | `clinic_reschedule` |
-| M10 EHR / CPOE lite | v1.1 | visit CPOE — **DONE** | `clinic_ehr` |
-| M11 LIS HL7 import | v1.1 | `/api/lab/import` — **DONE** | `clinic_lis_import` |
+| M6 Price cache | v1.0 | Finance price list — **DONE** | `industry_clinic` |
+| M7 Notifications | v2.0 | platform add-on — **DONE** | `platform_notifications` |
+| M8 Patient portal | v2.0 | `/portal` session — **DONE** | `platform_portal` |
+| M9 Multi-room drag schedule | v1.0 | Reschedule API — **DONE** | `clinic_registry_emr` |
+| M10 EHR / CPOE lite | v1.1 | visit CPOE — **DONE** | `clinic_registry_emr` |
+| M11 LIS HL7 import | v1.1 | `/api/lab/import` — **DONE** | `clinic_lab` |
 | M12 Insurance eligibility | v1.1 | FINANCE proxy — **DONE** | `clinic_insurance` |
 | M13 Inpatient beds | v1.1 | ward-lite stub → preset `inpatient_day` — **PARTIAL** | `clinic_inpatient` |
 | M3e Procedure TTK | — | BOM → Finance inventory — **API** (CLI-47; UAT open) | — |
 | M14 Telehealth + portal | v1.0 | **DONE** | `clinic_telehealth` |
-| K5 Sanatorium bridge | — | **DONE** | — |
+| K5 Sanatorium bridge | — | **DONE** | `clinic_sanatorium` |
 | Presets | 2026-06 | outpatient / sanatorium / inpatient_day / wellness — **PLANNED** | — |
 | Events | — | visit + lab completed | — |
 | Growth | — | DELIVERY K6 | — |
 
-Satellite gate: `industry_clinic` **29 AZN**. Commercial SKUs (2026-09 catalog): EMR `clinic_registry_emr` 29, lab 29, sanatorium chart `clinic_sanatorium_clinical` 29, insurance 39, inpatient/telehealth/nurse roster 19. Gate includes schedule + appointments + cashier. XOR with `hotel_medical_sanatorium` — [ADR era-commercial-catalog](./adr/era-commercial-catalog.md).
+Satellite gate: `industry_clinic` **29 AZN** (app only, no cabinet quota). Paid modules (2026-09-24): `clinic_registry_emr` 39, `clinic_lab` 29, `clinic_sanatorium` 99, `clinic_nurse_roster` 19, `clinic_inpatient` 39, `clinic_telehealth` 39, `clinic_insurance` 39. M1–M11 are screens on those SKUs. Extra `Room` / `Bed` after 5 included: 19 AZN on the institution module (rooms once per org). Sanatorium chart is billed together with hotel `hotel_medical_sanatorium` — [ADR era-commercial-catalog](./adr/era-commercial-catalog.md).
 
 ---
 

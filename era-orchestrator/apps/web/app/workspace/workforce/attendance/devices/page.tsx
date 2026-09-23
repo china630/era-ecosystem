@@ -6,12 +6,8 @@ import { Ban, Plus } from "lucide-react";
 import {
   CatalogField,
   CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
+  LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -114,30 +110,35 @@ export default function WorkforceAttendanceDevicesPage() {
   if (notEntitled) return <WorkforceGate />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("devicesTitle")}
-        subtitle={t("subtitle")}
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setDevName("");
-              setDevPlaceId("");
-              setDevHmac(false);
-              setDeviceModal(true);
-            }}
-          >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addDevice")}
-          </button>
-        }
-      />
-      <WorkforceAttendanceSubnav />
-      {error ? <p className="text-sm text-[var(--era-danger)]">{error}</p> : null}
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("devicesTitle")}
+          subtitle={t("devicesHint")}
+          actions={
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => {
+                setDevName("");
+                setDevPlaceId("");
+                setDevHmac(false);
+                setDeviceModal(true);
+              }}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addDevice")}
+            </button>
+          }
+        />
+      </div>
+      <div className="shrink-0">
+        <WorkforceAttendanceSubnav />
+      </div>
+      {error ? <p className="shrink-0 text-sm text-[var(--era-danger)]">{error}</p> : null}
       {shownToken ? (
-        <div className={`${CARD_CONTAINER_CLASS} space-y-2`}>
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 space-y-2`}>
           <p className="text-sm font-medium">{t("tokenOnce")}</p>
           <code className="block break-all text-xs">{shownToken}</code>
           <button
@@ -150,56 +151,59 @@ export default function WorkforceAttendanceDevicesPage() {
         </div>
       ) : null}
 
-      <section className={CARD_CONTAINER_CLASS}>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPlace")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHmac")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS} />
-              </tr>
-            </thead>
-            <tbody>
-              {devices.map((d) => (
-                <tr key={d.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{d.name}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {d.place?.name ?? "—"}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{d.status}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {d.hmacSecretHash ? t("hmacOn") : t("hmacOff")}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {d.status === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        disabled={busy}
-                        title={t("revoke")}
-                        aria-label={t("revoke")}
-                        onClick={() => void revokeDevice(d.id)}
-                      >
-                        <Ban className="h-4 w-4 text-[#C0392B]" aria-hidden />
-                      </button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-              {!loading && devices.length === 0 ? (
-                <tr>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
-                    {t("emptyDevices")}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "name", header: t("colName") },
+            {
+              key: "place",
+              header: t("colPlace"),
+              render: (row) => row.place?.name ?? "—",
+            },
+            { key: "status", header: t("colStatus"),
+              render: (row) =>
+                row.status === "ACTIVE"
+                  ? t("statusActive")
+                  : row.status === "REVOKED"
+                    ? t("statusRevoked")
+                    : row.status,
+            },
+            {
+              key: "hmac",
+              header: t("colHmac"),
+              render: (row) => (row.hmacSecretHash ? t("hmacOn") : t("hmacOff")),
+            },
+            {
+              key: "actions",
+              header: "",
+              className: "w-12",
+              render: (row) =>
+                row.status === "ACTIVE" ? (
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    disabled={busy}
+                    title={t("revoke")}
+                    aria-label={t("revoke")}
+                    onClick={() => void revokeDevice(row.id)}
+                  >
+                    <Ban className="h-4 w-4 text-[#C0392B]" aria-hidden />
+                  </button>
+                ) : null,
+            },
+          ]}
+          rows={devices}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("devicesEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
+      </div>
 
       {deviceModal ? (
         <ModalShell

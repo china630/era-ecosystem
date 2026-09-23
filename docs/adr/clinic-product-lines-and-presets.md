@@ -120,14 +120,16 @@ Billable keys under `industry_clinic` (orchestrator `pricing_modules`, [ADR era-
 
 | Key | AZN | Feature |
 |-----|-----|---------|
-| Gate `industry_clinic` | 29 | Schedule, cashier, appointments + 1 cabinet |
+| Gate `industry_clinic` | 29 | Schedule, cashier, appointments — no cabinet quota |
+| `clinic_registry_emr` | 39 | Registry, visit, EHR templates, cabinet reschedule; 5 `Room` included |
+| `clinic_lab` | 29 | Lab orders, results, analyzer import |
+| `clinic_sanatorium` | 99 | Sanatorium chart; billed together with `hotel_medical_sanatorium`; 5 `Room` included |
 | `clinic_nurse_roster` | 19 | Nurse / procedure post |
-| `clinic_inpatient` | 19 | Day ward |
-| `clinic_telehealth` | 19 | Telehealth |
-| `clinic_registry_emr` | 29 | EMR / protocols (grants patients/visit/ehr) |
-| `clinic_lab` | 29 | Lab + LIS |
-| `clinic_sanatorium_clinical` | 29 | Sanatorium chart (XOR `hotel_medical_sanatorium`) |
+| `clinic_inpatient` | 39 | Day ward; 5 `Bed` included (wards and equipment are not counted) |
+| `clinic_telehealth` | 39 | Telehealth |
 | `clinic_insurance` | 39 | DMS / OMS registries |
+
+M1–M11 screens stay; they have no separate list price. Extra rooms/beds after the included 5 are 19 AZN on the institution module. Rooms are counted once per org (sanatorium wins over EMR). Portal and appointment reminders are `platform_portal` / `platform_notifications`.
 
 Marketing name “ERA Hospital” = **`industry_clinic` gate + inpatient module pack**, not a new launcher tile.
 
@@ -166,7 +168,7 @@ Same legal entity, outpatient + beds?
   → one era-clinic deployment, presets outpatient + inpatient_day
 
 Sanatorium with hotel stay?
-  → hotel + clinic entitlements, preset sanatorium_clinical, bus events
+  → hotel + clinic entitlements (hotel_medical_sanatorium and clinic_sanatorium together), preset sanatorium_clinical, bus events
 
 SPA only, no EMR?
   → preset wellness

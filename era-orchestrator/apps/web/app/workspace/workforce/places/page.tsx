@@ -5,14 +5,9 @@ import { useTranslations } from "next-intl";
 import { Pencil, Plus } from "lucide-react";
 import {
   CatalogField,
-  CARD_CONTAINER_CLASS,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraDataGrid,
   EraListFilterBar,
+  LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -159,18 +154,22 @@ export default function WorkforcePlacesPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("placesTitle")}
-        subtitle={t("placesHint")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            {t("addPlace")}
-          </button>
-        }
-      />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("placesTitle")}
+          subtitle={t("placesHint")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="h-4 w-4" />
+              {t("addPlace")}
+            </button>
+          }
+        />
+      </div>
       <EraListFilterBar
+        className="!mb-0 shrink-0"
         resetLabel={tCommon("filterReset")}
         onReset={() => setFilterStatus("ACTIVE")}
       >
@@ -184,45 +183,51 @@ export default function WorkforcePlacesPage() {
           options={statusOptions}
         />
       </EraListFilterBar>
-      <div className={CARD_CONTAINER_CLASS}>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        {loading ? (
-          <p className="text-sm text-[var(--era-muted)]">{tCommon("loading")}</p>
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {row.status === "ACTIVE" ? t("statusActive") : t("statusArchived")}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        onClick={() => openEdit(row)}
-                        aria-label={tCommon("edit")}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EraDataGrid
+          layout="fill"
+          columns={[
+            { key: "code", header: t("colCode") },
+            { key: "name", header: t("colName") },
+            {
+              key: "orgUnit",
+              header: t("responsibleUnit"),
+              render: (row) =>
+                units.find((u) => u.id === row.responsibleOrgUnitId)?.name ?? "—",
+            },
+            {
+              key: "status",
+              header: t("colStatus"),
+              render: (row) =>
+                row.status === "ACTIVE" ? t("statusActive") : t("statusArchived"),
+            },
+            {
+              key: "actions",
+              header: "",
+              className: "w-12",
+              render: (row) => (
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  onClick={() => openEdit(row)}
+                  aria-label={tCommon("edit")}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              ),
+            },
+          ]}
+          rows={rows}
+          rowKey={(row) => row.id}
+          emptyMessage={loading ? tCommon("loading") : t("placesEmpty")}
+          paginationLabels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
       </div>
 
       <ModalShell
@@ -272,6 +277,7 @@ export default function WorkforcePlacesPage() {
             value={formOrgUnitId}
             onChange={(v) => setFormOrgUnitId(String(v))}
             options={unitOptions}
+            emptyLabel={tCommon("select")}
           />
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
         </div>

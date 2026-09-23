@@ -289,6 +289,7 @@ export {
   type SatelliteFiscalizeSkipped,
 } from "./integration/satellite-fiscal";
 export { reportPosStationCapacity } from "./integration/report-pos-station-capacity";
+export { reportClinicCapacity } from "./integration/report-clinic-capacity";
 export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,

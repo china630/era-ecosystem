@@ -10,9 +10,10 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -242,59 +243,63 @@ export default function VacationPlansPage() {
   if (gated) return <WorkforceGate onEnabled={() => void load()} />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("create")}
-          </button>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("create")}
+            </button>
+          }
+        />
+      </div>
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setYear(bakuYmd().y);
+              setFilterOrgUnitId("");
+              setFilterStatus("");
+            }}
+          >
+            <label className="text-[13px] font-medium text-[#34495E]">
+              {t("year")}
+              <input
+                type="number"
+                className="mt-1 block w-24 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+              />
+            </label>
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("colOrgUnit")}
+              value={filterOrgUnitId}
+              onChange={(next) => setFilterOrgUnitId(String(next))}
+              options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
+              emptyLabel={t("filterAll")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("colStatus")}
+              value={filterStatus}
+              onChange={(next) => setFilterStatus(String(next))}
+              options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
+                value: v,
+                label: t(`status.${v}` as "status.DRAFT"),
+              }))}
+              emptyLabel={t("filterAll")}
+            />
+          </EraListFilterBar>
         }
-      />
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <EraListFilterBar
-        resetLabel={tCommon("filterReset")}
-        onReset={() => {
-          setYear(bakuYmd().y);
-          setFilterOrgUnitId("");
-          setFilterStatus("");
-        }}
-      >
-        <label className="text-[13px] font-medium text-[#34495E]">
-          {t("year")}
-          <input
-            type="number"
-            className="mt-1 block w-24 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-          />
-        </label>
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("colOrgUnit")}
-          value={filterOrgUnitId}
-          onChange={(next) => setFilterOrgUnitId(String(next))}
-          options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
-          emptyLabel={t("filterAll")}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("colStatus")}
-          value={filterStatus}
-          onChange={(next) => setFilterStatus(String(next))}
-          options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
-            value: v,
-            label: t(`status.${v}` as "status.DRAFT"),
-          }))}
-          emptyLabel={t("filterAll")}
-        />
-      </EraListFilterBar>
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -308,8 +313,11 @@ export default function VacationPlansPage() {
             <tbody>
               {paged.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
-                    {t("empty")}
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={5}
+                  >
+                    {loading ? t("loading") : t("empty")}
                   </td>
                 </tr>
               ) : (
@@ -387,6 +395,8 @@ export default function VacationPlansPage() {
               )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -400,8 +410,8 @@ export default function VacationPlansPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
       <ModalShell
         open={open}
         title={t("createTitle")}

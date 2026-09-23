@@ -71,26 +71,15 @@ export const BANKING_PRICING_MODULE_KEYS = [
   "banking_psa",
 ] as const;
 
-/** Clinic modules (MODULES_CATALOG M0–M14). */
+/** Clinic paid modules (gate `industry_clinic` is separate). */
 export const CLINIC_PRICING_MODULE_KEYS = [
-  "clinic_shell",
-  "clinic_patients",
-  "clinic_schedule",
-  "clinic_appointments",
-  "clinic_visit",
+  "clinic_registry_emr",
   "clinic_lab",
-  "clinic_service_catalog",
-  "clinic_notifications",
-  "clinic_portal",
-  "clinic_reschedule",
-  "clinic_ehr",
-  "clinic_lis_import",
-  "clinic_insurance",
+  "clinic_sanatorium",
+  "clinic_nurse_roster",
   "clinic_inpatient",
   "clinic_telehealth",
-  "clinic_nurse_roster",
-  "clinic_registry_emr",
-  "clinic_sanatorium_clinical",
+  "clinic_insurance",
 ] as const;
 
 export type ClinicPricingModuleKey = (typeof CLINIC_PRICING_MODULE_KEYS)[number];

@@ -9,9 +9,10 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DEFAULT_LIST_PAGE_SIZE,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -196,14 +197,18 @@ export default function WorkforceSecurityBindingsPage() {
       : t("noFilterMatch");
 
   return (
-    <>
-      <PageHeader title={t("bindingsPageTitle")} subtitle={t("bindingsPageSubtitle")} />
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("bindingsPageTitle")}
+          subtitle={t("bindingsPageSubtitle")}
+        />
+      </div>
+      <EraListWorkspace
+        filter={
           <EraListFilterBar
-            className="mb-4"
+            className="!mb-0"
             resetLabel={tCommon("filterReset")}
             onReset={() => {
               setFilterText("");
@@ -271,66 +276,71 @@ export default function WorkforceSecurityBindingsPage() {
               emptyLabel={t("filterAll")}
             />
           </EraListFilterBar>
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRole")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSync")}</th>
+        }
+        table={
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRole")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSync")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={6}
+                  >
+                    {loading ? t("loading") : emptyMessage}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {items.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
-                      {emptyMessage}
+              ) : (
+                items.map((b) => (
+                  <tr key={b.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {persons[b.employment?.globalPersonId ?? ""]?.displayName ??
+                        (persons[b.employment?.globalPersonId ?? ""]?.accessDenied
+                          ? t("maskedPerson")
+                          : tCommon("unnamedPerson"))}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {b.employment?.orgUnit?.name ?? "—"}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {b.employment?.position?.name ?? "—"}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {satelliteLabel(b.satelliteKey)}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {humanizeSatelliteRole(b.satelliteRole)}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {b.provisionState === "FAILED" ? (
+                        <span
+                          className="text-[#C0392B]"
+                          title={b.lastProvisionError ?? undefined}
+                        >
+                          {t("provisionFailed")}
+                        </span>
+                      ) : b.provisionState === "PENDING" ? (
+                        <span className="text-[#7F8C8D]">{t("provisionPending")}</span>
+                      ) : (
+                        <span className="text-[#27AE60]">{t("provisionApplied")}</span>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  items.map((b) => (
-                    <tr key={b.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {persons[b.employment?.globalPersonId ?? ""]?.displayName ??
-                          (persons[b.employment?.globalPersonId ?? ""]?.accessDenied
-                            ? t("maskedPerson")
-                            : tCommon("unnamedPerson"))}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {b.employment?.orgUnit?.name ?? "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {b.employment?.position?.name ?? "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {satelliteLabel(b.satelliteKey)}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {humanizeSatelliteRole(b.satelliteRole)}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {b.provisionState === "FAILED" ? (
-                          <span
-                            className="text-[#C0392B]"
-                            title={b.lastProvisionError ?? undefined}
-                          >
-                            {t("provisionFailed")}
-                          </span>
-                        ) : b.provisionState === "PENDING" ? (
-                          <span className="text-[#7F8C8D]">{t("provisionPending")}</span>
-                        ) : (
-                          <span className="text-[#27AE60]">{t("provisionApplied")}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -344,8 +354,8 @@ export default function WorkforceSecurityBindingsPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </>
-      )}
-    </>
+        }
+      />
+    </div>
   );
 }

@@ -270,8 +270,9 @@ export class WorkforceProvisionService {
       },
     });
 
+    let personnelOrder = null;
     try {
-      await this.personnelOrders.ensureDraftForMutation({
+      personnelOrder = await this.personnelOrders.ensureDraftForMutation({
         organizationId,
         actorUserId,
         employmentId: employment.id,
@@ -286,7 +287,11 @@ export class WorkforceProvisionService {
       );
     }
 
-    return { employment, bindings };
+    return {
+      employment,
+      bindings,
+      personnelOrder: toPersonnelOrderRef(personnelOrder),
+    };
   }
 
   async terminate(organizationId: string, employmentId: string, actorUserId: string) {
@@ -296,8 +301,9 @@ export class WorkforceProvisionService {
     });
     if (!employment) throw new NotFoundException("Employment not found");
     await this.personnelOrders.assertTerminateAllowed(organizationId, employmentId);
+    let personnelOrder = null;
     try {
-      await this.personnelOrders.ensureDraftForMutation({
+      personnelOrder = await this.personnelOrders.ensureDraftForMutation({
         organizationId,
         actorUserId,
         employmentId,
@@ -384,7 +390,7 @@ export class WorkforceProvisionService {
       workforceScopeId: link.workforceScopeId,
     });
 
-    return { ok: true };
+    return { ok: true, personnelOrder: toPersonnelOrderRef(personnelOrder) };
   }
 
   async reprovision(
@@ -740,4 +746,26 @@ export class WorkforceProvisionService {
     }
     return filterEntitledSatellites(entitled, requested);
   }
+}
+
+function toPersonnelOrderRef(
+  row:
+    | {
+        id: string;
+        type: string;
+        status: string;
+        orderNumber: string;
+        employmentId?: string | null;
+      }
+    | null
+    | undefined,
+) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    type: row.type,
+    status: row.status,
+    orderNumber: row.orderNumber,
+    employmentId: row.employmentId ?? null,
+  };
 }

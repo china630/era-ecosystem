@@ -118,9 +118,9 @@ export const landingEcosystemRu: LandingEcosystemCopy = {
           title: "Clinic",
           status: "beta",
           tasks: [
-            "Gate: расписание, приёмы, касса, 1 кабинет",
-            "EMR 29 · лаборатория 29 · санаторий 29",
-            "XOR с hotel_medical_sanatorium",
+            "Gate: расписание, приёмы, касса — без квоты кабинетов",
+            "EMR 39 · лаборатория 29 · санаторий 99",
+            "Санаторий 99 — вместе с hotel_medical_sanatorium; 5 кабинетов в модуле",
           ],
         },
         {
@@ -315,9 +315,9 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
           title: "Clinic",
           status: "beta",
           tasks: [
-            "Gate: cədvəl, qəbul, kassa, 1 kabinet",
-            "EMR 29 · laboratoriya 29 · sanatoriya 29",
-            "hotel_medical_sanatorium ilə XOR",
+            "Gate: cədvəl, qəbul, kassa — kabinet kvotası yoxdur",
+            "EMR 39 · laboratoriya 29 · sanatoriya 99",
+            "Sanatoriya 99 — hotel_medical_sanatorium ilə birlikdə; modulda 5 kabinet",
           ],
         },
         {

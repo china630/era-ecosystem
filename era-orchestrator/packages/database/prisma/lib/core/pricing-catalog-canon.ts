@@ -5,8 +5,6 @@
 
 export const CATALOG_PALETTE_AZN = [19, 29, 39, 99] as const;
 
-export const HOTEL_SANATORIUM_BUNDLE_NAME = "Hotel Sanatorium";
-
 export const DATA_HUB_XOR = [
   "platform_reference_data",
   "platform_datahub_silver",
@@ -31,7 +29,6 @@ export const CATALOG_MUTEX_GROUPS: readonly (readonly string[])[] = [
   ["platform_loyalty", "retail_promotions"],
   ["platform_delivery", "fnb_delivery_hub"],
   ["fnb_qr_menu", "platform_portal"],
-  ["hotel_medical_sanatorium", "clinic_sanatorium_clinical"],
 ];
 
 /** One-shot SKUs — billed at toggle, never on the monthly Foundation run. */
@@ -67,31 +64,57 @@ export function shouldWaiveEraFoundation(org: {
   return !mods.some((m) => m === "nas" || m === "industry_finance");
 }
 
-/** Child feature keys granted when a commercial parent SKU is on (price 0). */
-export const CLINIC_COMMERCIAL_GRANTS: Readonly<Record<string, readonly string[]>> = {
-  clinic_registry_emr: [
-    "clinic_patients",
-    "clinic_visit",
-    "clinic_ehr",
-    "clinic_reschedule",
-  ],
-  clinic_lab: ["clinic_lis_import"],
-};
-
-/** Feature key → commercial parents that also entitle it. */
-export const CLINIC_FEATURE_PARENTS: Readonly<Record<string, readonly string[]>> = {
-  clinic_patients: ["clinic_registry_emr"],
-  clinic_visit: ["clinic_registry_emr"],
-  clinic_ehr: ["clinic_registry_emr"],
-  clinic_reschedule: ["clinic_registry_emr"],
-  clinic_lis_import: ["clinic_lab"],
-};
-
+/** Paid clinic SKUs — one key per process. Gate `industry_clinic` is separate. */
 export const CLINIC_COMMERCIAL_MODULE_KEYS = [
-  "clinic_nurse_roster",
   "clinic_registry_emr",
+  "clinic_lab",
+  "clinic_sanatorium",
+  "clinic_nurse_roster",
+  "clinic_inpatient",
+  "clinic_telehealth",
+  "clinic_insurance",
+] as const;
+
+/** Retired zero-price / renamed clinic keys. Dropped from seed and entitlements. */
+export const RETIRED_CLINIC_MODULE_KEYS = [
+  "clinic_shell",
+  "clinic_schedule",
+  "clinic_appointments",
+  "clinic_service_catalog",
+  "clinic_patients",
+  "clinic_visit",
+  "clinic_ehr",
+  "clinic_reschedule",
+  "clinic_lis_import",
+  "clinic_portal",
+  "clinic_notifications",
   "clinic_sanatorium_clinical",
 ] as const;
+
+const CLINIC_EMR_LEGACY_KEYS = [
+  "clinic_patients",
+  "clinic_visit",
+  "clinic_ehr",
+  "clinic_reschedule",
+] as const;
+
+/** Rewrite stored `activeModules` onto the 7-SKU clinic catalog. */
+export function rewriteClinicActiveModules(modules: readonly string[]): string[] {
+  const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
+  if (set.has("clinic_sanatorium_clinical")) {
+    set.add("clinic_sanatorium");
+  }
+  if (CLINIC_EMR_LEGACY_KEYS.some((k) => set.has(k))) {
+    set.add("clinic_registry_emr");
+  }
+  if (set.has("clinic_lis_import")) {
+    set.add("clinic_lab");
+  }
+  for (const k of RETIRED_CLINIC_MODULE_KEYS) {
+    set.delete(k);
+  }
+  return [...set];
+}
 
 export const INDUSTRY_SUBMODULE_PREFIX_TO_GATE: Readonly<Record<string, string>> = {
   hotel_: "industry_hotel_pms",
@@ -121,7 +144,6 @@ export type CapacityDriverDef = {
 
 export const CAPACITY_DRIVERS: readonly CapacityDriverDef[] = [
   { satelliteKey: "industry_hotel_pms", includedInGate: 5, unitAzn: 4, unit: "room" },
-  { satelliteKey: "industry_clinic", includedInGate: 1, unitAzn: 19, unit: "cabinet" },
   { satelliteKey: "industry_fnb_pos", includedInGate: 1, unitAzn: 19, unit: "pos" },
   { satelliteKey: "industry_retail", includedInGate: 1, unitAzn: 19, unit: "register" },
   { satelliteKey: "industry_auto_service", includedInGate: 1, unitAzn: 19, unit: "bay" },
@@ -133,6 +155,40 @@ export const CAPACITY_DRIVERS: readonly CapacityDriverDef[] = [
 ];
 
 export const OUTLET_OVERAGE_AZN = 19;
+
+export const CLINIC_CAPACITY_INCLUDED = 5;
+export const CLINIC_CAPACITY_UNIT_AZN = 19;
+
+export type ClinicModuleCapacityDef = {
+  moduleKey: string;
+  included: number;
+  unitAzn: number;
+  unit: "room" | "bed";
+};
+
+/** Cabinets (Room) and beds billed on the institution module, not the gate. */
+export const CLINIC_MODULE_CAPACITY: readonly ClinicModuleCapacityDef[] = [
+  { moduleKey: "clinic_registry_emr", included: CLINIC_CAPACITY_INCLUDED, unitAzn: CLINIC_CAPACITY_UNIT_AZN, unit: "room" },
+  { moduleKey: "clinic_sanatorium", included: CLINIC_CAPACITY_INCLUDED, unitAzn: CLINIC_CAPACITY_UNIT_AZN, unit: "room" },
+  { moduleKey: "clinic_inpatient", included: CLINIC_CAPACITY_INCLUDED, unitAzn: CLINIC_CAPACITY_UNIT_AZN, unit: "bed" },
+];
+
+/** One room census per org — sanatorium wins over EMR so Nafta is not billed twice. */
+export function clinicRoomBillableModule(
+  activeModules: readonly string[],
+): "clinic_sanatorium" | "clinic_registry_emr" | null {
+  const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
+  if (set.has("clinic_sanatorium")) return "clinic_sanatorium";
+  if (set.has("clinic_registry_emr")) return "clinic_registry_emr";
+  return null;
+}
+
+export function clinicCapacityOverage(
+  count: number,
+  included = CLINIC_CAPACITY_INCLUDED,
+): number {
+  return Math.max(0, Math.floor(count) - included);
+}
 
 export function isWorkforceHubKey(key: string): boolean {
   return (WORKFORCE_HUB_KEYS as readonly string[]).includes(key);
@@ -158,14 +214,7 @@ export function isClinicFeatureEntitled(
   moduleKey: string,
 ): boolean {
   const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
-  if (set.has(moduleKey)) return true;
-  for (const parent of CLINIC_FEATURE_PARENTS[moduleKey] ?? []) {
-    if (set.has(parent)) return true;
-  }
-  if (moduleKey === "clinic_sanatorium_clinical" && set.has("clinic_inpatient")) {
-    return true;
-  }
-  return false;
+  return set.has(moduleKey);
 }
 
 /**
@@ -206,25 +255,5 @@ export function applyCatalogMutex(modules: readonly string[], prefer?: string): 
     set.add("platform_workforce");
   }
 
-  return expandCommercialClinicGrants([...set]);
-}
-
-export function expandCommercialClinicGrants(modules: readonly string[]): string[] {
-  const set = new Set(modules);
-  for (const [parent, children] of Object.entries(CLINIC_COMMERCIAL_GRANTS)) {
-    if (!set.has(parent)) continue;
-    for (const c of children) set.add(c);
-  }
   return [...set];
-}
-
-/** Hotel Sanatorium bundle must not coexist with clinic sanatorium SKU. */
-export function bundleConflictsWithModules(
-  bundleName: string,
-  bundleModuleKeys: readonly string[],
-  activeModules: readonly string[],
-): boolean {
-  if (bundleName !== HOTEL_SANATORIUM_BUNDLE_NAME) return false;
-  if (!bundleModuleKeys.includes("hotel_medical_sanatorium")) return false;
-  return activeModules.includes("clinic_sanatorium_clinical");
 }

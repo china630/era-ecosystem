@@ -4,7 +4,7 @@
  * commercial clinic SKUs, capacity meters. Entitlement + seed share this file.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OUTLET_OVERAGE_AZN = exports.CAPACITY_DRIVERS = exports.PASS_THROUGH_CATALOG_KEYS = exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = exports.CLINIC_COMMERCIAL_MODULE_KEYS = exports.CLINIC_FEATURE_PARENTS = exports.CLINIC_COMMERCIAL_GRANTS = exports.ONE_SHOT_CATALOG_KEYS = exports.CATALOG_MUTEX_GROUPS = exports.WORKFORCE_HUB_KEYS = exports.WORKFORCE_XOR = exports.DATA_HUB_XOR = exports.HOTEL_SANATORIUM_BUNDLE_NAME = exports.CATALOG_PALETTE_AZN = void 0;
+exports.OUTLET_OVERAGE_AZN = exports.CLINIC_MODULE_CAPACITY = exports.CLINIC_CAPACITY_UNIT_AZN = exports.CLINIC_CAPACITY_INCLUDED = exports.CAPACITY_DRIVERS = exports.PASS_THROUGH_CATALOG_KEYS = exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = exports.CLINIC_COMMERCIAL_MODULE_KEYS = exports.RETIRED_CLINIC_MODULE_KEYS = exports.ONE_SHOT_CATALOG_KEYS = exports.CATALOG_MUTEX_GROUPS = exports.WORKFORCE_HUB_KEYS = exports.WORKFORCE_XOR = exports.DATA_HUB_XOR = exports.CATALOG_PALETTE_AZN = void 0;
 exports.isOneShotCatalogKey = isOneShotCatalogKey;
 exports.isKafeEdition = isKafeEdition;
 exports.shouldWaiveEraFoundation = shouldWaiveEraFoundation;
@@ -13,10 +13,10 @@ exports.inferSatelliteKeyFromModuleKey = inferSatelliteKeyFromModuleKey;
 exports.isPassThroughCatalogModuleKeyExtended = isPassThroughCatalogModuleKeyExtended;
 exports.isClinicFeatureEntitled = isClinicFeatureEntitled;
 exports.applyCatalogMutex = applyCatalogMutex;
-exports.expandCommercialClinicGrants = expandCommercialClinicGrants;
-exports.bundleConflictsWithModules = bundleConflictsWithModules;
+exports.rewriteClinicActiveModules = rewriteClinicActiveModules;
+exports.clinicRoomBillableModule = clinicRoomBillableModule;
+exports.clinicCapacityOverage = clinicCapacityOverage;
 exports.CATALOG_PALETTE_AZN = [19, 29, 39, 99];
-exports.HOTEL_SANATORIUM_BUNDLE_NAME = "Hotel Sanatorium";
 exports.DATA_HUB_XOR = [
     "platform_reference_data",
     "platform_datahub_silver",
@@ -38,9 +38,7 @@ exports.CATALOG_MUTEX_GROUPS = [
     ["platform_loyalty", "retail_promotions"],
     ["platform_delivery", "fnb_delivery_hub"],
     ["fnb_qr_menu", "platform_portal"],
-    ["hotel_medical_sanatorium", "clinic_sanatorium_clinical"],
 ];
-/** One-shot SKUs — billed at toggle, never on the monthly Foundation run. */
 exports.ONE_SHOT_CATALOG_KEYS = ["platform_onsite_visit"];
 function isOneShotCatalogKey(key) {
     return exports.ONE_SHOT_CATALOG_KEYS.includes(key);
@@ -58,36 +56,57 @@ function isKafeEdition(org) {
     }
     return false;
 }
-/** Street Kafe: waive ERA Foundation until NAS / finance satellite is on. */
 function shouldWaiveEraFoundation(org) {
     if (!isKafeEdition(org))
         return false;
     const mods = org.activeModules ?? [];
     return !mods.some((m) => m === "nas" || m === "industry_finance");
 }
-/** Child feature keys granted when a commercial parent SKU is on (price 0). */
-exports.CLINIC_COMMERCIAL_GRANTS = {
-    clinic_registry_emr: [
-        "clinic_patients",
-        "clinic_visit",
-        "clinic_ehr",
-        "clinic_reschedule",
-    ],
-    clinic_lab: ["clinic_lis_import"],
-};
-/** Feature key → commercial parents that also entitle it. */
-exports.CLINIC_FEATURE_PARENTS = {
-    clinic_patients: ["clinic_registry_emr"],
-    clinic_visit: ["clinic_registry_emr"],
-    clinic_ehr: ["clinic_registry_emr"],
-    clinic_reschedule: ["clinic_registry_emr"],
-    clinic_lis_import: ["clinic_lab"],
-};
 exports.CLINIC_COMMERCIAL_MODULE_KEYS = [
-    "clinic_nurse_roster",
     "clinic_registry_emr",
+    "clinic_lab",
+    "clinic_sanatorium",
+    "clinic_nurse_roster",
+    "clinic_inpatient",
+    "clinic_telehealth",
+    "clinic_insurance",
+];
+exports.RETIRED_CLINIC_MODULE_KEYS = [
+    "clinic_shell",
+    "clinic_schedule",
+    "clinic_appointments",
+    "clinic_service_catalog",
+    "clinic_patients",
+    "clinic_visit",
+    "clinic_ehr",
+    "clinic_reschedule",
+    "clinic_lis_import",
+    "clinic_portal",
+    "clinic_notifications",
     "clinic_sanatorium_clinical",
 ];
+const CLINIC_EMR_LEGACY_KEYS = [
+    "clinic_patients",
+    "clinic_visit",
+    "clinic_ehr",
+    "clinic_reschedule",
+];
+function rewriteClinicActiveModules(modules) {
+    const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
+    if (set.has("clinic_sanatorium_clinical")) {
+        set.add("clinic_sanatorium");
+    }
+    if (CLINIC_EMR_LEGACY_KEYS.some((k) => set.has(k))) {
+        set.add("clinic_registry_emr");
+    }
+    if (set.has("clinic_lis_import")) {
+        set.add("clinic_lab");
+    }
+    for (const k of exports.RETIRED_CLINIC_MODULE_KEYS) {
+        set.delete(k);
+    }
+    return [...set];
+}
 exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = {
     hotel_: "industry_hotel_pms",
     clinic_: "industry_clinic",
@@ -107,7 +126,6 @@ exports.PASS_THROUGH_CATALOG_KEYS = [
 ];
 exports.CAPACITY_DRIVERS = [
     { satelliteKey: "industry_hotel_pms", includedInGate: 5, unitAzn: 4, unit: "room" },
-    { satelliteKey: "industry_clinic", includedInGate: 1, unitAzn: 19, unit: "cabinet" },
     { satelliteKey: "industry_fnb_pos", includedInGate: 1, unitAzn: 19, unit: "pos" },
     { satelliteKey: "industry_retail", includedInGate: 1, unitAzn: 19, unit: "register" },
     { satelliteKey: "industry_auto_service", includedInGate: 1, unitAzn: 19, unit: "bay" },
@@ -118,6 +136,24 @@ exports.CAPACITY_DRIVERS = [
     { satelliteKey: "industry_banking", includedInGate: 1, unitAzn: 39, unit: "branch" },
 ];
 exports.OUTLET_OVERAGE_AZN = 19;
+exports.CLINIC_CAPACITY_INCLUDED = 5;
+exports.CLINIC_CAPACITY_UNIT_AZN = 19;
+exports.CLINIC_MODULE_CAPACITY = [
+    { moduleKey: "clinic_registry_emr", included: 5, unitAzn: 19, unit: "room" },
+    { moduleKey: "clinic_sanatorium", included: 5, unitAzn: 19, unit: "room" },
+    { moduleKey: "clinic_inpatient", included: 5, unitAzn: 19, unit: "bed" },
+];
+function clinicRoomBillableModule(activeModules) {
+    const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
+    if (set.has("clinic_sanatorium"))
+        return "clinic_sanatorium";
+    if (set.has("clinic_registry_emr"))
+        return "clinic_registry_emr";
+    return null;
+}
+function clinicCapacityOverage(count, included = exports.CLINIC_CAPACITY_INCLUDED) {
+    return Math.max(0, Math.floor(count) - included);
+}
 function isWorkforceHubKey(key) {
     return exports.WORKFORCE_HUB_KEYS.includes(key);
 }
@@ -139,21 +175,8 @@ function isPassThroughCatalogModuleKeyExtended(moduleKey) {
 }
 function isClinicFeatureEntitled(activeModules, moduleKey) {
     const set = new Set(activeModules.map((m) => m.trim()).filter(Boolean));
-    if (set.has(moduleKey))
-        return true;
-    for (const parent of exports.CLINIC_FEATURE_PARENTS[moduleKey] ?? []) {
-        if (set.has(parent))
-            return true;
-    }
-    if (moduleKey === "clinic_sanatorium_clinical" && set.has("clinic_inpatient")) {
-        return true;
-    }
-    return false;
+    return set.has(moduleKey);
 }
-/**
- * Keep at most one SKU per XOR group. `prefer` wins when present in the group
- * (the slug just enabled). Workforce hub alias: Base/PRO keep `platform_workforce`.
- */
 function applyCatalogMutex(modules, prefer) {
     const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
     for (const group of exports.CATALOG_MUTEX_GROUPS) {
@@ -188,23 +211,5 @@ function applyCatalogMutex(modules, prefer) {
         set.delete("platform_workforce_pro");
         set.add("platform_workforce");
     }
-    return expandCommercialClinicGrants([...set]);
-}
-function expandCommercialClinicGrants(modules) {
-    const set = new Set(modules);
-    for (const [parent, children] of Object.entries(exports.CLINIC_COMMERCIAL_GRANTS)) {
-        if (!set.has(parent))
-            continue;
-        for (const c of children)
-            set.add(c);
-    }
     return [...set];
-}
-/** Hotel Sanatorium bundle must not coexist with clinic sanatorium SKU. */
-function bundleConflictsWithModules(bundleName, bundleModuleKeys, activeModules) {
-    if (bundleName !== exports.HOTEL_SANATORIUM_BUNDLE_NAME)
-        return false;
-    if (!bundleModuleKeys.includes("hotel_medical_sanatorium"))
-        return false;
-    return activeModules.includes("clinic_sanatorium_clinical");
 }

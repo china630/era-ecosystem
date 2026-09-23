@@ -137,7 +137,13 @@ export class WorkforceEmploymentsService {
         organizationId,
         items.map((i) => i.id),
       );
-      return { items, total, page, pageSize, draftOrdersByEmployment };
+      return {
+        items: items.map(omitStaffPin),
+        total,
+        page,
+        pageSize,
+        draftOrdersByEmployment,
+      };
     }
 
     const candidates = await this.prisma.workforceEmployment.findMany({
@@ -199,7 +205,13 @@ export class WorkforceEmploymentsService {
       organizationId,
       items.map((i) => i.id),
     );
-    return { items, total, page, pageSize, draftOrdersByEmployment };
+    return {
+      items: items.map(omitStaffPin),
+      total,
+      page,
+      pageSize,
+      draftOrdersByEmployment,
+    };
   }
 
   async getOne(organizationId: string, id: string) {
@@ -209,7 +221,7 @@ export class WorkforceEmploymentsService {
       include: EMPLOYMENT_INCLUDE,
     });
     if (!row) throw new NotFoundException("Employment not found");
-    return row;
+    return omitStaffPin(row);
   }
 
   async create(
@@ -275,6 +287,12 @@ export class WorkforceEmploymentsService {
     dto: TransferEmploymentDto,
   ) {
     const existing = await this.getOne(organizationId, id);
+    if (
+      dto.orgUnitId === existing.orgUnitId &&
+      dto.positionId === existing.positionId
+    ) {
+      throw new BadRequestException("Org unit and position unchanged");
+    }
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
 
     const unit = await this.prisma.orgUnit.findFirst({
@@ -310,8 +328,9 @@ export class WorkforceEmploymentsService {
       payload: dto as unknown as Record<string, unknown>,
     });
 
+    let personnelOrder = null;
     try {
-      await this.personnelOrders.ensureDraftForMutation({
+      personnelOrder = await this.personnelOrders.ensureDraftForMutation({
         organizationId,
         actorUserId,
         employmentId: id,
@@ -346,7 +365,18 @@ export class WorkforceEmploymentsService {
       },
     });
 
-    return updated;
+    return {
+      ...updated,
+      personnelOrder: personnelOrder
+        ? {
+            id: personnelOrder.id,
+            type: personnelOrder.type,
+            status: personnelOrder.status,
+            orderNumber: personnelOrder.orderNumber,
+            employmentId: personnelOrder.employmentId ?? id,
+          }
+        : null,
+    };
   }
 
   async resolvePersonProfiles(
@@ -401,4 +431,9 @@ export class WorkforceEmploymentsService {
     }
     return out;
   }
+}
+
+function omitStaffPin<T extends { satelliteStaffPin?: string | null }>(row: T) {
+  const { satelliteStaffPin: _pin, ...rest } = row;
+  return rest;
 }

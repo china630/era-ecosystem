@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { BillingStatus, Prisma, TariffTier } from "@era365/database";
+import { BillingStatus, CLINIC_CAPACITY_UNIT_AZN, Prisma, TariffTier } from "@era365/database";
 import { Prisma as ControlPrisma } from "@era365/database";
 import { resolveOrganizationUuid } from "../common/organization-id.util";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
@@ -26,7 +26,9 @@ export type MeterBillableKind =
   | "OCR_PAGE"
   | "TRADE_CREDIT_BUYER"
   | "TRADE_CREDIT_ENRICH"
-  | "POS_STATION_MONTHLY";
+  | "POS_STATION_MONTHLY"
+  | "CLINIC_ROOM_MONTHLY"
+  | "CLINIC_BED_MONTHLY";
 
 const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   USER_MONTHLY: "USER_MONTHLY",
@@ -37,6 +39,8 @@ const KIND_TO_ACTION: Record<MeterBillableKind, BillableActionType> = {
   TRADE_CREDIT_BUYER: "TRADE_CREDIT_BUYER",
   TRADE_CREDIT_ENRICH: "TRADE_CREDIT_ENRICH",
   POS_STATION_MONTHLY: "POS_STATION_MONTHLY",
+  CLINIC_ROOM_MONTHLY: "CLINIC_ROOM_MONTHLY",
+  CLINIC_BED_MONTHLY: "CLINIC_BED_MONTHLY",
 };
 
 @Injectable()
@@ -200,21 +204,26 @@ export class BillingMeterService {
   }
 
   /**
-   * POS stations are a monthly gauge: bill only the delta vs already recorded
-   * POS_STATION_MONTHLY quantity this Baku month (opening a shift twice must not double-charge).
+   * Monthly gauges: bill only the delta vs already recorded quantity this Baku
+   * month (a second report in the same month must not double-charge).
    */
-  async recordPosStationOverageGauge(
+  async recordMonthlyOverageGauge(
     organizationId: string,
+    kind: Extract<
+      MeterBillableKind,
+      "POS_STATION_MONTHLY" | "CLINIC_ROOM_MONTHLY" | "CLINIC_BED_MONTHLY"
+    >,
     overageUnits: number,
   ): Promise<{ billedDelta: number }> {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId || overageUnits <= 0) return { billedDelta: 0 };
     const periodKey = billingPeriodKeyBaku();
     const { from, to } = bakuMonthBounds(periodKey);
+    const actionType = KIND_TO_ACTION[kind];
     const agg = await this.controlPlane.usageMeterEvent.aggregate({
       where: {
         organizationId: orgId,
-        actionType: "POS_STATION_MONTHLY",
+        actionType,
         createdAt: { gte: from, lte: to },
       },
       _sum: { quantity: true },
@@ -222,8 +231,20 @@ export class BillingMeterService {
     const already = Number(agg._sum.quantity ?? 0);
     const delta = Math.max(0, Math.floor(overageUnits) - already);
     if (delta <= 0) return { billedDelta: 0 };
-    await this.recordUsage(organizationId, "POS_STATION_MONTHLY", delta);
+    await this.recordUsage(organizationId, kind, delta);
     return { billedDelta: delta };
+  }
+
+  /** POS stations are a monthly gauge — opening a shift twice must not double-charge. */
+  async recordPosStationOverageGauge(
+    organizationId: string,
+    overageUnits: number,
+  ): Promise<{ billedDelta: number }> {
+    return this.recordMonthlyOverageGauge(
+      organizationId,
+      "POS_STATION_MONTHLY",
+      overageUnits,
+    );
   }
 
   unitPriceFor(kind: MeterBillableKind, unit: MeterUnitPricing): number {
@@ -244,6 +265,9 @@ export class BillingMeterService {
         return unit.pricePerTradeCreditEnrichAzn ?? 2;
       case "POS_STATION_MONTHLY":
         return unit.pricePerPosStationMonthAzn ?? 19;
+      case "CLINIC_ROOM_MONTHLY":
+      case "CLINIC_BED_MONTHLY":
+        return CLINIC_CAPACITY_UNIT_AZN;
       default:
         return 0;
     }

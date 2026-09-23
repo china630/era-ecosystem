@@ -12,9 +12,10 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalShell,
   PageHeader,
@@ -22,7 +23,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
-import { billingPeriodKeyBaku } from "@era/satellite-kit/time";
+import { bakuDateDisplay, billingPeriodKeyBaku } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -302,64 +303,68 @@ export default function WorkforceAbsencesPage() {
   }
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("newAbsence")}
-          </button>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("newAbsence")}
+            </button>
+          }
+        />
+      </div>
+
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setMonth(billingPeriodKeyBaku());
+              setFilterEmploymentId("");
+              setFilterKind("");
+            }}
+          >
+            <label className="text-[13px] font-medium text-[#34495E]">
+              {t("monthFilter")}
+              <input
+                type="month"
+                className="mt-1 block rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+              />
+            </label>
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("filterEmployee")}
+              value={filterEmploymentId}
+              onChange={(next) => setFilterEmploymentId(String(next))}
+              options={employeeFilterOptions.map((o) => ({
+                value: o.id,
+                label: o.label,
+              }))}
+              emptyLabel={t("filterAll")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterKind")}
+              value={filterKind}
+              onChange={(next) => setFilterKind(String(next) as "" | AbsenceKind)}
+              options={ABSENCE_KINDS.map((k) => ({
+                value: k,
+                label: t(`kind.${k}` as "kind.VACATION"),
+              }))}
+              emptyLabel={t("filterAll")}
+            />
+          </EraListFilterBar>
         }
-      />
-
-      <EraListFilterBar
-        resetLabel={tCommon("filterReset")}
-        onReset={() => {
-          setMonth(billingPeriodKeyBaku());
-          setFilterEmploymentId("");
-          setFilterKind("");
-        }}
-      >
-        <label className="text-[13px] font-medium text-[#34495E]">
-          {t("monthFilter")}
-          <input
-            type="month"
-            className="mt-1 block rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-          />
-        </label>
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("filterEmployee")}
-          value={filterEmploymentId}
-          onChange={(next) => setFilterEmploymentId(String(next))}
-          options={employeeFilterOptions.map((o) => ({
-            value: o.id,
-            label: o.label,
-          }))}
-          emptyLabel={t("filterAll")}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("filterKind")}
-          value={filterKind}
-          onChange={(next) => setFilterKind(String(next) as "" | AbsenceKind)}
-          options={ABSENCE_KINDS.map((k) => ({
-            value: k,
-            label: t(`kind.${k}` as "kind.VACATION"),
-          }))}
-          emptyLabel={t("filterAll")}
-        />
-      </EraListFilterBar>
-
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -373,8 +378,11 @@ export default function WorkforceAbsencesPage() {
             <tbody>
               {paged.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
-                    {t("empty")}
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={5}
+                  >
+                    {loading ? t("loading") : t("empty")}
                   </td>
                 </tr>
               ) : (
@@ -392,7 +400,7 @@ export default function WorkforceAbsencesPage() {
                       {t(`kind.${r.kind}` as "kind.VACATION")}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
-                      {String(r.startDate).slice(0, 10)} — {String(r.endDate).slice(0, 10)}
+                      {bakuDateDisplay(r.startDate)} — {bakuDateDisplay(r.endDate)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
@@ -413,6 +421,8 @@ export default function WorkforceAbsencesPage() {
               )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -426,8 +436,8 @@ export default function WorkforceAbsencesPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
 
       <ModalShell
         open={createOpen}
@@ -464,7 +474,13 @@ export default function WorkforceAbsencesPage() {
             onChange={(next) => setFEmploymentId(String(next))}
             options={employments.map((e) => ({
               value: e.id,
-              label: `${personLabel(persons, e.globalPersonId, t("maskedPerson"), tCommon("unnamedPerson"))} (${e.status})`,
+              label: `${personLabel(persons, e.globalPersonId, t("maskedPerson"), tCommon("unnamedPerson"))} (${
+                e.status === "ACTIVE"
+                  ? t("statusActive")
+                  : e.status === "TERMINATED"
+                    ? t("statusTerminated")
+                    : e.status
+              })`,
             }))}
             emptyLabel={tCommon("select")}
           />
@@ -532,7 +548,7 @@ export default function WorkforceAbsencesPage() {
             </p>
             <p className="text-[13px]">
               <span className="font-semibold text-[#34495E]">{t("colPeriod")}: </span>
-              {String(detail.startDate).slice(0, 10)} — {String(detail.endDate).slice(0, 10)}
+              {bakuDateDisplay(detail.startDate)} — {bakuDateDisplay(detail.endDate)}
             </p>
             <p className="text-[13px]">
               <span className="font-semibold text-[#34495E]">{t("colStatus")}: </span>
@@ -607,6 +623,6 @@ export default function WorkforceAbsencesPage() {
           </div>
         )}
       </ModalShell>
-    </>
+    </div>
   );
 }

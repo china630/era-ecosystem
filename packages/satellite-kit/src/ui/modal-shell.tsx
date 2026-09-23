@@ -19,8 +19,8 @@ export function ModalShell({
   footer,
   headerActions,
   maxWidthClass = "max-w-lg",
-  bodyClassName = "mt-4 min-h-0 flex-1 overflow-y-auto",
-  footerClassName = "mt-4 shrink-0 border-t border-[#D5DADF] pt-4",
+  bodyClassName = "mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
+  footerClassName = "shrink-0",
   closeLabel = "Close",
 }: {
   /** When omitted, the shell is open (typical `{show ? <ModalShell>` mounts). */

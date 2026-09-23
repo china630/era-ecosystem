@@ -129,6 +129,7 @@ exports.Prisma.GlobalNaturalPersonScalarFieldEnum = {
   lastNameCipher: 'lastNameCipher',
   fullNameCipher: 'fullNameCipher',
   phoneCipher: 'phoneCipher',
+  emailCipher: 'emailCipher',
   nationality: 'nationality',
   sex: 'sex',
   birthDate: 'birthDate',

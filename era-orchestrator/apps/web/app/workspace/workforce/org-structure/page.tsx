@@ -12,15 +12,17 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   CatalogField,
-  EraListFilterBar,
   Field,
   parseApiError,
 } from "@era/satellite-kit/ui";
@@ -157,8 +159,8 @@ export default function OrgStructurePage() {
     setEditState({ mode: "edit", unit });
   }
 
-  async function saveUnit(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveUnit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!editState || !formName.trim()) return;
     setBusy(true);
     setFormError(null);
@@ -267,28 +269,52 @@ export default function OrgStructurePage() {
   );
 
   return (
-    <>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setImportOpen(true)}
-            >
-              {t("importTitle")}
-            </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              {t("addUnit")}
-            </button>
-          </div>
-        }
-      />
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setImportOpen(true)}
+              >
+                {t("importTitle")}
+              </button>
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                {t("addUnit")}
+              </button>
+            </div>
+          }
+        />
+      </div>
 
+      {error === "bootstrap" ? (
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-4`}>
+          <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
+          <button
+            type="button"
+            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
+            disabled={busy}
+            onClick={() => void bootstrap()}
+          >
+            {t("bootstrap")}
+          </button>
+        </div>
+      ) : null}
+
+      {error && error !== "bootstrap" ? (
+        <p className="shrink-0 text-sm text-red-700">{error}</p>
+      ) : null}
+
+      <EraListWorkspace
+        filter={
       <EraListFilterBar
+        className="!mb-0"
         resetLabel={tCommon("filterReset")}
         onReset={() => {
           setFilterQ("");
@@ -313,29 +339,8 @@ export default function OrgStructurePage() {
           emptyLabel={t("statusAll")}
         />
       </EraListFilterBar>
-
-      {error === "bootstrap" ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
-          <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
-          <button
-            type="button"
-            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
-            disabled={busy}
-            onClick={() => void bootstrap()}
-          >
-            {t("bootstrap")}
-          </button>
-        </div>
-      ) : null}
-
-      {error && error !== "bootstrap" ? (
-        <p className="mb-3 text-sm text-red-700">{error}</p>
-      ) : null}
-
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        }
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -347,7 +352,17 @@ export default function OrgStructurePage() {
               </tr>
             </thead>
             <tbody>
-              {paged.map((u) => (
+              {paged.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={5}
+                  >
+                    {loading ? t("loading") : t("empty")}
+                  </td>
+                </tr>
+              ) : (
+              paged.map((u) => (
                 <tr key={u.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <Link
@@ -358,7 +373,9 @@ export default function OrgStructurePage() {
                     </Link>
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{u.code ?? "—"}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{u.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {u.status === "ACTIVE" ? t("statusActive") : t("statusArchived")}
+                  </td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
                     <Link
                       href={`/workspace/workforce/employments?orgUnitId=${encodeURIComponent(u.id)}`}
@@ -402,9 +419,12 @@ export default function OrgStructurePage() {
                     )}
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -418,62 +438,48 @@ export default function OrgStructurePage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
 
       <ModalShell
         open={editState != null}
         title={editState?.mode === "edit" ? t("editTitle") : t("createTitle")}
         onClose={() => setEditState(null)}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setEditState(null)}
+            onSubmit={() => void saveUnit()}
+            busy={busy}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={tCommon("save")}
+          />
+        }
       >
         <form onSubmit={(e) => void saveUnit(e)} className="grid gap-3">
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fieldName")}
-            <input
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              required
-              autoFocus
-            />
-          </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fieldCode")}
-            <input
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={formCode}
-              onChange={(e) => setFormCode(e.target.value)}
-            />
-          </label>
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("fieldParent")}
-            <select
-              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-              value={formParentId}
-              onChange={(e) => setFormParentId(e.target.value)}
-            >
-              <option value="">{t("rootParent")}</option>
-              {parentOptions.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("fieldName")}
+            value={formName}
+            onChange={(next) => setFormName(String(next))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("fieldCode")}
+            value={formCode}
+            onChange={(next) => setFormCode(String(next))}
+            options={[]}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldParent")}
+            value={formParentId}
+            onChange={(next) => setFormParentId(String(next))}
+            options={parentOptions.map((u) => ({ value: u.id, label: u.name }))}
+            emptyLabel={t("rootParent")}
+          />
           {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setEditState(null)}
-            >
-              {tCommon("cancel")}
-            </button>
-            <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
-              {busy ? tCommon("loading") : tCommon("save")}
-            </button>
-          </div>
         </form>
       </ModalShell>
 
@@ -612,6 +618,6 @@ export default function OrgStructurePage() {
           if (unit) void submitArchiveUnit(unit);
         }}
       />
-    </>
+    </div>
   );
 }

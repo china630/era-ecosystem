@@ -102,9 +102,9 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | FIN-PRC-01 / FIN-AP-01 | Finance | procurement / AP aging | Y | `/procurement/protocols`, `/reporting/ap-aging` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-EQAIME-02 / IN-01 | Finance | EQF + incoming | Y | registry / inbox | **SCREEN** | UAT-SMOKE UI | submit S2S = VENDOR/STUB |
 | FIN-HR-PAY / FA / IA | Finance | payroll / FA / IA | Y | `/payroll`, `/fixed-assets`, `/intangible-assets` | **SCREEN** | UAT-SMOKE UI | |
-| CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | month grid CP master; Finance UI link-only; status gates; not SHOW |
+| CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | kit list chrome; timesheet = payroll fact vs roster plan; month grid CP master; Finance UI link-only; not SHOW |
 | CP-WF-ATT-01 | Platform | FaceID / attendance → DRAFT | Y | `/workspace/workforce/attendance` | **SCREEN** | UAT field tablet open; Status=API | device token + rebuild; not SHOW |
-| CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | per-person satellite checkboxes; matrix = position defaults; audit CatalogField + actor/person labels (P1); not SHOW |
+| CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments hire/card + Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | zoned hire/card `max-w-5xl` + MDM FIN search; grant-access; post-hire order bridge; per-person satellite checkboxes; matrix = position defaults; not SHOW |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
 | HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | FO SHOW rollup unchanged |
@@ -163,10 +163,12 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-09-23 | Platform Workforce lists: EraListWorkspace/EraDataGrid fill + empty row; ModalShell footer stripe removed; roster vs timesheet copy. Class stays **SCREEN** (not SHOW / not SHIPPED). |
+| 2026-09-21 | Platform Workforce UI hygiene: nested shifts/attendance SCREENs; employments server q; modals for import/bulk/materialize; Status=API (not SHOW / not SHIPPED). |
 | 2026-09-20 | BANK-RBAC-01 Bank Variant A ops matrix **SCREEN** (not SHOW); AC-BNK-RBAC out of BE rollup. |
 | 2026-09-18 | FIN-RBAC-01 Finance Wave 5 CP grant doors **SCREEN** (not SHOW); AC-FIN-RBAC out of BE rollup. |
 | 2026-09-18 | P2 density: FIN-EMAS / roster / orders / group dual-VÖEN copy+preview stay **SCREEN** (not SHIPPED); Demo/Pilot unchanged. |
-| 2026-09-21 | Platform Workforce UI hygiene: nested shifts/attendance SCREENs; employments server q; modals for import/bulk/materialize; Status=API (not SHOW / not SHIPPED). |\n| 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
+| 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
 | 2026-09-17 | Platform CP-WF-ATT-01 attendance FaceID **SCREEN** (`/workspace/workforce/attendance`); COVERAGE Status=API until field tablet UAT. |
 | 2026-09-07 | Platform public IA: guest `/` hub + `/satellites/[slug]` + `/pricing` catalog/meters (SCREEN marketing, not SHOW). |
 | 2026-09-07 | HOT-CL-06 + HOT-AGP-04 statement SHOW; company CL SHIPPED with line statement. |

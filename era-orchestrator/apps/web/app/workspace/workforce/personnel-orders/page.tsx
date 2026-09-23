@@ -11,9 +11,10 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -23,7 +24,7 @@ import {
   CARD_CONTAINER_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -407,68 +408,71 @@ export default function PersonnelOrdersPage() {
   if (gated) return <WorkforceGate onEnabled={() => void load()} />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setTplOpen(true)}
-            >
-              {t("templates")}
-            </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              {t("create")}
-            </button>
-          </div>
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setTplOpen(true)}
+              >
+                {t("templates")}
+              </button>
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreate()}>
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                {t("create")}
+              </button>
+            </div>
+          }
+        />
+      </div>
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => {
+              setListType("");
+              setListStatus("");
+              setListEmpId("");
+            }}
+          >
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("colPerson")}
+              value={listEmpId}
+              onChange={(next) => setListEmpId(String(next))}
+              options={empOptions}
+              emptyLabel={tCommon("all")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("colType")}
+              value={listType}
+              onChange={(next) => setListType(String(next))}
+              options={typeOptions}
+              emptyLabel={tCommon("all")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("colStatus")}
+              value={listStatus}
+              onChange={(next) => setListStatus(String(next))}
+              options={ORDER_STATUSES.map((v) => ({
+                value: v,
+                label: t(`status.${v}` as "status.DRAFT"),
+              }))}
+              emptyLabel={tCommon("all")}
+            />
+          </EraListFilterBar>
         }
-      />
-      <EraListFilterBar
-        className="mb-4"
-        resetLabel={tCommon("filterReset")}
-        onReset={() => {
-          setListType("");
-          setListStatus("");
-          setListEmpId("");
-        }}
-      >
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("colPerson")}
-          value={listEmpId}
-          onChange={(next) => setListEmpId(String(next))}
-          options={empOptions}
-          emptyLabel={tCommon("all")}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("colType")}
-          value={listType}
-          onChange={(next) => setListType(String(next))}
-          options={typeOptions}
-          emptyLabel={tCommon("all")}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("colStatus")}
-          value={listStatus}
-          onChange={(next) => setListStatus(String(next))}
-          options={ORDER_STATUSES.map((v) => ({
-            value: v,
-            label: t(`status.${v}` as "status.DRAFT"),
-          }))}
-          emptyLabel={tCommon("all")}
-        />
-      </EraListFilterBar>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -483,8 +487,11 @@ export default function PersonnelOrdersPage() {
             <tbody>
               {paged.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
-                    {t("empty")}
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={6}
+                  >
+                    {loading ? t("loading") : t("empty")}
                   </td>
                 </tr>
               ) : (
@@ -502,7 +509,7 @@ export default function PersonnelOrdersPage() {
                         tCommon("unnamedPerson")}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {String(r.effectiveDate).slice(0, 10)}
+                      {bakuDateDisplay(r.effectiveDate)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
@@ -569,6 +576,8 @@ export default function PersonnelOrdersPage() {
               )}
             </tbody>
           </table>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -582,8 +591,8 @@ export default function PersonnelOrdersPage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
+        }
+      />
       <ModalShell
         open={open}
         title={t("create")}

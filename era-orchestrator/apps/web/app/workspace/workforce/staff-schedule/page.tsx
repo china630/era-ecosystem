@@ -18,8 +18,9 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
@@ -189,43 +190,48 @@ export default function StaffSchedulePage() {
   if (gated) return <WorkforceGate onEnabled={() => void load()} />;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => setOpen(true)}
-          >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("create")}
-          </button>
-        }
-      />
-      <EraListFilterBar
-        resetLabel={tCommon("filterReset")}
-        onReset={() => setFilterStatus("")}
-      >
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("filterStatus")}
-          value={filterStatus}
-          onChange={(next) => setFilterStatus(String(next))}
-          options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
-            value: v,
-            label: t(`status.${v}` as "status.DRAFT"),
-          }))}
-          emptyLabel={tCommon("all")}
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <div className="shrink-0">
+        <PageHeader
+          className="!mb-0"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          actions={
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => setOpen(true)}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("create")}
+            </button>
+          }
         />
-      </EraListFilterBar>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? (
-        <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
-      ) : (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
+      </div>
+      {error ? <p className="shrink-0 text-sm text-red-700">{error}</p> : null}
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => setFilterStatus("")}
+          >
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterStatus")}
+              value={filterStatus}
+              onChange={(next) => setFilterStatus(String(next))}
+              options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
+                value: v,
+                label: t(`status.${v}` as "status.DRAFT"),
+              }))}
+              emptyLabel={tCommon("all")}
+            />
+          </EraListFilterBar>
+        }
+        table={
+          <>
+            <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTitle")}</th>
@@ -237,8 +243,11 @@ export default function StaffSchedulePage() {
             <tbody>
               {paged.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={4}>
-                    {t("empty")}
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                    colSpan={4}
+                  >
+                    {loading ? t("loading") : t("empty")}
                   </td>
                 </tr>
               ) : (
@@ -330,6 +339,44 @@ export default function StaffSchedulePage() {
               )}
             </tbody>
           </table>
+            {expandedId ? (
+              <table className={`${DATA_TABLE_CLASS} mt-4`}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOccupied")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colVacant")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.length === 0 ? (
+                    <tr className={DATA_TABLE_TR_CLASS}>
+                      <td
+                        className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
+                        colSpan={4}
+                      >
+                        {t("snapshotEmpty")}
+                      </td>
+                    </tr>
+                  ) : (
+                    snapshot.map((s) => (
+                    <tr key={s.positionId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{s.name}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{s.orgUnitName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {s.occupied}/{s.totalSlots}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{s.vacant}</td>
+                    </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            ) : null}
+          </>
+        }
+        footer={
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
@@ -343,34 +390,8 @@ export default function StaffSchedulePage() {
               next: tCommon("paginationNext"),
             }}
           />
-        </div>
-      )}
-      {expandedId && snapshot.length > 0 ? (
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOccupied")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colVacant")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {snapshot.map((s) => (
-                <tr key={s.positionId} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.name}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.orgUnitName}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {s.occupied}/{s.totalSlots}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.vacant}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+        }
+      />
       <ModalShell
         open={open}
         title={t("create")}
