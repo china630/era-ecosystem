@@ -1,3 +1,4 @@
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
@@ -57,12 +58,11 @@ export async function GET(request: Request) {
     const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
     if (!outlet) return jsonOk(categories);
 
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
+    const boardDate = bakuCivilUtcDate(todayBakuYmd());
     const boardIds = new Set(
       (
         await prisma.dailyMenuEntry.findMany({
-          where: { outletId: outlet.id, boardDate: date },
+          where: { outletId: outlet.id, boardDate },
           select: { menuItemId: true },
         })
       ).map((e) => e.menuItemId),

@@ -57,7 +57,7 @@ npm run ship:prepush:strict
 
 This runs:
 
-1. `npm run run:quality-gates` (acceptance, satellite raw SQL, integration audit, design tokens).
+1. `npm run run:quality-gates` (acceptance, satellite raw SQL, integration audit, design tokens, **baku clock**).
 2. Rebuild dirty `packages/*` in CI order if the diff touches them.
 3. **Scoped** checks from `git diff origin/dev...HEAD` (+ working tree):
    - each touched `era-hotel-pms` / clinic / … / `era-bank` / `era-bank-dbo`: `prisma generate` (if schema), `npm test`, `npm run build`
@@ -134,7 +134,7 @@ List all: `era-ship.ps1 -ListScopes`
 
 ## Scoped images + deploy (after merge to `dev`)
 
-Path-filter lives in [`scripts/ci-changed-ghcr-services.mjs`](../../../scripts/ci-changed-ghcr-services.mjs). Push to `dev`/`master` rebuilds only touched GHCR services; deploy pulls those compose services (`DEPLOY_SERVICES`), not the whole stack.
+Path-filter lives in [`scripts/ci-changed-ghcr-services.mjs`](../../../scripts/ci-changed-ghcr-services.mjs). Push to `dev`/`master` rebuilds only touched GHCR services; deploy pulls those compose services (`DEPLOY_SERVICES`), not the whole stack — except when compose / install-contract / droplet scripts change: then `deployScope=all` with **floating** `IMAGE_TAG` (`dev`/`master`) so unbuilt services do not 404 at a new sha tag. `docker/scripts/satellite-entrypoint.sh` force-rebuilds all satellite images (copied into `Dockerfile.satellite`).
 
 **CI (`ci.yml`) is not path-filtered.** A hotel-only merge still runs the full test matrix (`finance`, all satellites). That is tests, not a finance image rebuild. Scoped GHCR is `Build and push images` / `Deploy staging` only.
 
@@ -159,7 +159,7 @@ Skill scope → GHCR `services=` / deploy `scope`:
 | `fnb-pos` | `fnb-pos` | `fnb` |
 | `packages` | _(empty = all)_ | `all` |
 
-`workflow_run` **Deploy staging** is read from the **default branch** (`master`). A path-filtered build on `dev` is only safe after this wiring has been merged to `master`; otherwise auto-deploy still uses `scope=all` and 404s missing tags.
+`workflow_run` **Deploy staging** is read from the **default branch** (`master`). A path-filtered build on `dev` is only safe after this wiring (including `IMAGE_TAG_MODE` floating for compose-only) has been merged to `master`.
 
 ## PR → dev → merge
 

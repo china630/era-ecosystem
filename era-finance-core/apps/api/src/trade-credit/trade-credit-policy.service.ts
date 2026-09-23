@@ -12,6 +12,7 @@ import {
   TradeCreditPolicyGroup,
   TradeCreditProposedKind,
 } from "@erafinance/database";
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
@@ -1272,10 +1273,7 @@ export class TradeCreditPolicyService {
 }
 
 function utcToday(): Date {
-  const n = new Date();
-  return new Date(
-    Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()),
-  );
+  return bakuCivilUtcDate(todayBakuYmd());
 }
 
 function daysPastDue(dueDate: Date, todayUtc: Date): number {

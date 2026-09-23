@@ -4,6 +4,7 @@ import {
   resolveOrchestratorBaseUrl,
   resolveSatelliteEventServiceToken,
 } from "../tenancy/resolve-orchestrator-url";
+import { todayBakuYmd } from "../time/baku";
 import type {
   FinanceFxPreviewResult,
   FinanceVoenLookupResult,
@@ -102,7 +103,7 @@ export async function platformFxConvert(
     to: body.to,
     amount: body.amount,
     result: body.result,
-    rateDate: body.rateDate ?? params.date ?? new Date().toISOString().slice(0, 10),
+    rateDate: body.rateDate ?? params.date ?? todayBakuYmd(),
     source: body.source ?? "era-orchestrator-catalog",
     isFallback: body.isFallback ?? false,
   };

@@ -1,3 +1,5 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
@@ -189,9 +191,9 @@ export function normalizeOtaWebhookBody(
       email: guest.email ? String(guest.email) : undefined,
       phone: guest.phone ? String(guest.phone) : undefined,
     },
-    checkInDate: String(payload.checkInDate ?? payload.checkIn ?? new Date().toISOString().slice(0, 10)),
+    checkInDate: String(payload.checkInDate ?? payload.checkIn ?? todayBakuYmd()),
     checkOutDate: String(
-      payload.checkOutDate ?? payload.checkOut ?? new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      payload.checkOutDate ?? payload.checkOut ?? addHotelDays(todayBakuYmd(), 1),
     ),
     otaRoomCode: String(payload.otaRoomCode ?? payload.roomTypeCode ?? 'STD'),
     otaRateCode: payload.otaRateCode ? String(payload.otaRateCode) : undefined,

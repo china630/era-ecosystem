@@ -17,15 +17,12 @@ import {
 } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 function defaultRange() {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
-  };
+  const to = hotelDateKey();
+  const from = addHotelDays(to, -30);
+  return { from, to };
 }
 
 function AnalyticsContent() {

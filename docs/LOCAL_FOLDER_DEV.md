@@ -63,10 +63,12 @@ After changing kit or contracts, rebuild the package and restart the app dev ser
 |------|---------|
 | Full local demo (Orch + Finance + credentials file) | From root: `node tools/bootstrap-local.mjs` or `npm run bootstrap:local` |
 | Finance DB only | `cd era-finance-core && npm run db:bootstrap-local` |
-| Hotel DB only | `cd era-hotel-pms && npx prisma migrate deploy && npm run db:seed` |
+| Hotel DB only | `cd era-hotel-pms && npx prisma migrate deploy && npm run db:seed` (reference; wipe lab: `db:seed:demo`) |
+| F&B DB only | `cd era-fnb-pos && npx prisma migrate deploy && npm run db:seed` (no-op; lab: `db:seed:demo` with org UUID) |
+| Bank CBS | Set `ERA_BANK_ORGANIZATION_ID`; `BANK_*_RUN_SEED=false` by default — see [satellite-seed-hygiene](./adr/satellite-seed-hygiene.md) |
 | Orch DB only | `cd era-orchestrator && npm run db:generate && npx prisma migrate deploy` |
 
-Use bootstrap when you need platform super-admin, demo org, and cross-app SSO smoke. Per-app seed is enough for isolated feature work.
+Use bootstrap when you need platform super-admin and cross-app SSO smoke (PSA scripts require a real `ERA_SATELLITE_ORGANIZATION_ID`). Per-app seed is enough for isolated feature work.
 
 ### Pull real DBs from the droplet (destructive local replace)
 
@@ -125,6 +127,7 @@ Web: http://127.0.0.1:3100 · API: http://127.0.0.1:4100/api/health
 cd era-hotel-pms
 cp .env.example .env.local
 npm install && npx prisma migrate deploy && npm run db:seed && npm run dev
+# First empty lab with wipe/demo users: npm run db:seed:demo (requires ERA_SATELLITE_ORGANIZATION_ID)
 ```
 
 Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the umbrella stack.
@@ -148,6 +151,6 @@ Set `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` when Finance runs in the
 | CP billing / tier bar empty | `CONTROL_PLANE_URL` must point to Orch **:4000** |
 | Hotel Finance links open wrong host | `NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100` |
 | Auth SSO fails locally | Same `ERA_SSO_SHARED_SECRET` across Orch + satellite. Prefer **`127.0.0.1` only** (not mix with `localhost`) — browsers treat them as different hosts, so clinic cookies “vanish”. On Docker Compose, satellites use distinct `AUTH_COOKIE_NAME` (`era_clinic_session`, `era_hotel_session`, …) because cookies are **not** port-scoped. |
-| `Industry module not active: industry_clinic` after clinic rebuild | Clinic used to overlay `CONTROL_PLANE_SERVICE_TOKEN=` empty and keep folklore `dev-control-plane-token` on ORCHESTRATOR_INTERNAL, which **shadowed** droplet `SATELLITE_EVENT_SERVICE_TOKEN`. Hotel never sets that overlay and uses the event token. Kit now skips folklore secrets when a real event token exists. Recreate clinic after this compose/kit change. Do not pin `ERA_SATELLITE_ORGANIZATION_ID=demo-org`. Shared `_era_runtime_config.orchestratorEventUrl` stays `http://orchestrator:4000`. |
+| Industry module not active: industry_clinic after clinic rebuild | Clinic used to overlay `CONTROL_PLANE_SERVICE_TOKEN=` empty and keep folklore `dev-control-plane-token` on ORCHESTRATOR_INTERNAL, which **shadowed** droplet `SATELLITE_EVENT_SERVICE_TOKEN`. Hotel never sets that overlay and uses the event token. Kit now skips folklore secrets when a real event token exists (including stale `_era_runtime_config` `change-me-…` after Sync). Recreate clinic after this compose/kit change. Do not pin `ERA_SATELLITE_ORGANIZATION_ID=demo-org`. Shared `_era_runtime_config.orchestratorEventUrl` stays `http://orchestrator:4000` (`ERA_ORCHESTRATOR_INTERNAL_URL`). |
 | Orch token / SSO launch silently dies | Orch access lives in `localStorage`; stale access JWT without refresh made satellite ticket mint fail. Workspace now refreshes before SSO. Also: do not mix `localhost` vs `127.0.0.1` launch URLs in `satellite_endpoints`. |
 | Finance `Session invalid — use Orchestrator login` | Finance web must proxy `/api` → **:4100** and `/cp` → Orch **:4000**. Set `NEXT_PUBLIC_API_URL=http://127.0.0.1:4100` and `NEXT_PUBLIC_CONTROL_PLANE_URL=http://127.0.0.1:4000`, then restart `finance-web`. SSO users (`sso:no-password`) can also use the Finance login form — the API verifies the password at Orchestrator and runs `cp-provision`. A 500 on `/auth/cp-handoff` is a Finance API provision crash, not a wrong proxy. |

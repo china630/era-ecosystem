@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay, bakuDateKey } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   GHOST_BUTTON_CLASS,
@@ -46,7 +47,7 @@ function toDateInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+  return bakuDateKey(iso);
 }
 
 function fromDateInput(value: string): string {
@@ -270,9 +271,12 @@ export default function OrgSubscriptionAdminPage() {
     }
   }
 
+  const expiryIso = tree?.org.trialExpiresAt ?? tree?.org.expiresAt ?? null;
   const untilLabel = neverExpires
     ? "Perpetual (no expiry)"
-    : (tree?.org.trialExpiresAt ?? tree?.org.expiresAt ?? "—");
+    : expiryIso
+      ? bakuDateDisplay(expiryIso)
+      : "—";
 
   return (
     <div>

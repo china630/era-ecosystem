@@ -1,5 +1,9 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { resolveSatelliteOrganizationId } from "@era/satellite-kit";
+import {
+  isFolkloreS2sToken,
+  resolveSatelliteEventServiceToken,
+  resolveSatelliteOrganizationId,
+} from "@era/satellite-kit";
 import { authenticateBridgeRequest } from "@/lib/integration/elektraweb-bridge/auth";
 import {
   getElektrawebBridgePolicy,
@@ -18,6 +22,9 @@ export async function GET(request: Request) {
         organizationIdConfigured:
           resolveSatelliteOrganizationId({ allowFallback: true }).source !== "fallback",
         policyStore: "ElektrawebBridgePolicy",
+        satelliteEventTokenFolklore: isFolkloreS2sToken(
+          resolveSatelliteEventServiceToken(),
+        ),
       });
     }
 

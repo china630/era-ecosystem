@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 
 type FleetAlert = {
   vehicleId: string;
@@ -65,7 +66,7 @@ export default function FleetPage() {
               <li key={`${a.vehicleId}-${a.type}-${i}`} className="rounded border p-3">
                 <strong>{a.plate}</strong> — {a.type}{" "}
                 <span className="text-[#C0392B]">
-                  {t("expires")} {new Date(a.expiresAt).toLocaleDateString()}
+                  {t("expires")} {bakuDateDisplay(a.expiresAt)}
                 </span>
               </li>
             ))}

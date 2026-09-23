@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const sp = new URL(request.url).searchParams;
     const days = Number(sp.get('days') ?? '7');
-    const from = sp.get('from') ?? new Date().toISOString().slice(0, 10);
+    const from = sp.get('from') ?? todayBakuYmd();
     return jsonOk(serialize(await hkLoadForecast(from, days)));
   } catch (err) {
     return handleRouteError(err);

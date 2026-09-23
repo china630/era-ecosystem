@@ -1,5 +1,7 @@
+import { bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
 
 /**
@@ -33,10 +35,7 @@ export async function resolveLoadBasedAdjustmentPercent(
 
 /** Rough in-house occupancy % for a calendar night (inventory rooms). */
 export async function estimateOccupancyPctForNight(night: Date): Promise<number> {
-  const dayStart = new Date(night);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const { start: dayStart, end: dayEnd } = bakuDayBounds(hotelDateKey(night));
 
   const [sold, capacity] = await Promise.all([
     prisma.reservation.count({

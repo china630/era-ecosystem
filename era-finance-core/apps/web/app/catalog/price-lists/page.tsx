@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -50,7 +51,7 @@ export default function PriceListsPage() {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [currencyCode, setCurrencyCode] = useState("AZN");
-  const [validFrom, setValidFrom] = useState(() => new Date().toISOString().slice(0, 10));
+  const [validFrom, setValidFrom] = useState(() => todayBakuYmd());
   const [validTo, setValidTo] = useState("");
   const [channel, setChannel] = useState("");
   const [lines, setLines] = useState<LineForm[]>([{ productId: "", unitPrice: "" }]);
@@ -89,7 +90,7 @@ export default function PriceListsPage() {
     setEditId(null);
     setName("");
     setCurrencyCode("AZN");
-    setValidFrom(new Date().toISOString().slice(0, 10));
+    setValidFrom(todayBakuYmd());
     setValidTo("");
     setChannel("");
     setLines([{ productId: "", unitPrice: "" }]);

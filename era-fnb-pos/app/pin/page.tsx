@@ -1,22 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { useStaffLoginOrgNo, persistLoginOrgNo } from "@era/satellite-kit/ui";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@era/i18n-common";
+import {
+  AuthPublicShell,
+  AUTH_FIELD_GROUP_CLASS,
+  AUTH_FIELD_LABEL_CLASS,
+  AUTH_FORM_STACK_CLASS,
+  FORM_INPUT_CLASS,
+  LINK_ACCENT_CLASS,
+  MODAL_FOOTER_PRIMARY_CLASS,
+  persistLoginOrgNo,
+  PublicLegalFooter,
+  showApiError,
+  StaffLoginOrgNoField,
+  useStaffLoginOrgNo,
+  orchPublicHref,
+} from "@era/satellite-kit/ui";
 
 function PinForm() {
   const search = useSearchParams();
+  const tAuth = useTranslations("auth");
+  const t = useTranslations("pin");
+  const locale = useLocale() as Locale;
   const [pin, setPin] = useState("");
   const { orgNo, setOrgNo, hostBound } = useStaffLoginOrgNo(search);
   const [outletId, setOutletId] = useState(search.get("outletId") ?? "");
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setError(null);
     try {
       const org = orgNo.trim();
       const res = await fetch("/api/auth/pin", {
@@ -29,14 +45,11 @@ function PinForm() {
         }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        if (body?.error === "PIN_OUTLET_UNBOUND") {
-          setError("PIN not bound to an outlet — ask the owner");
-        } else {
-          setError("Invalid PIN");
-        }
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        showApiError(
+          body,
+          body?.error === "PIN_OUTLET_UNBOUND" ? t("unbound") : t("invalid"),
+        );
         return;
       }
       if (org) persistLoginOrgNo(org);
@@ -47,49 +60,87 @@ function PinForm() {
   }
 
   return (
-    <main className="mx-auto max-w-sm p-6">
-      <h1 className="mb-4 text-xl font-semibold">ERA Kafe PIN</h1>
-      <form onSubmit={(e) => void onSubmit(e)} className="grid gap-3">
-        {hostBound ? null : (
+    <AuthPublicShell
+      locale={locale}
+      title={tAuth("loginTitle")}
+      localeLabels={{
+        groupAria: tAuth("localeToggleAria"),
+        az: tAuth("localeAz"),
+        ru: tAuth("localeRu"),
+        en: tAuth("localeEn"),
+      }}
+      footer={
+        <>
+          <p className="mt-6 text-center text-sm">
+            <a href="/login" className={LINK_ACCENT_CLASS}>
+              {t("backToLogin")}
+            </a>
+          </p>
+          <PublicLegalFooter
+            locale={locale}
+            faqHref={orchPublicHref("/help")}
+            showFaq={false}
+            labels={{
+              navAria: tAuth("footerLegalNavAria"),
+              faq: tAuth("footerFaq"),
+              terms: tAuth("footerTerms"),
+              privacy: tAuth("footerPrivacy"),
+              status: tAuth("footerStatus"),
+            }}
+          />
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className={AUTH_FORM_STACK_CLASS}>
+        <StaffLoginOrgNoField
+          orgNo={orgNo}
+          onOrgNoChange={setOrgNo}
+          hostBound={hostBound}
+          label={tAuth("organizationIdLabel")}
+          placeholder={tAuth("organizationIdPlaceholder")}
+        />
+        <label className={AUTH_FIELD_GROUP_CLASS}>
+          <span className={AUTH_FIELD_LABEL_CLASS}>{t("outletId")}</span>
           <input
-            className="rounded border px-3 py-2 font-mono"
-            placeholder="Organization code (6 digits)"
-            value={orgNo}
-            onChange={(e) => setOrgNo(e.target.value)}
-            inputMode="numeric"
-            maxLength={6}
+            className={FORM_INPUT_CLASS}
+            value={outletId}
+            onChange={(e) => setOutletId(e.target.value)}
             autoComplete="off"
           />
-        )}
-        <input
-          className="rounded border px-3 py-2"
-          placeholder="Outlet ID"
-          value={outletId}
-          onChange={(e) => setOutletId(e.target.value)}
-        />
-        <input
-          className="rounded border px-3 py-2 tracking-[0.4em]"
-          placeholder="PIN"
-          inputMode="numeric"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-        />
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        </label>
+        <label className={AUTH_FIELD_GROUP_CLASS}>
+          <span className={AUTH_FIELD_LABEL_CLASS}>{t("pin")}</span>
+          <input
+            className={`${FORM_INPUT_CLASS} tracking-[0.3em]`}
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            inputMode="numeric"
+            required
+            autoComplete="off"
+          />
+        </label>
         <button
           type="submit"
           disabled={busy}
-          className="rounded bg-[#27AE60] px-3 py-2 text-white"
+          className={`${MODAL_FOOTER_PRIMARY_CLASS} mt-1 w-full`}
         >
-          {busy ? "…" : "Open till"}
+          {busy ? t("submitBusy") : t("submit")}
         </button>
       </form>
-    </main>
+    </AuthPublicShell>
   );
 }
 
 export default function PinPage() {
+  const t = useTranslations("common");
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#EBEDF0] p-8 text-[#7F8C8D]">
+          {t("loading")}
+        </div>
+      }
+    >
       <PinForm />
     </Suspense>
   );

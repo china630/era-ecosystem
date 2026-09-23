@@ -6,6 +6,7 @@ import {
 } from "@era/contracts";
 
 import { assertCapacityBookingAllowed as assertCap } from "@/lib/capacity-booking-gates";
+import { bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
 
 export const DEFAULT_DAILY_PROCEDURE_SLOTS = 1000;
 export const PROCEDURES_PER_GUEST_WEEK = 8;
@@ -44,13 +45,35 @@ export type CapacitySummary = {
   message: string;
 };
 
+const BAKU_WEEKDAY: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function addBakuDays(ymd: string, days: number): string {
+  const { start } = bakuDayBounds(ymd);
+  return bakuDateKey(new Date(start.getTime() + days * 86_400_000));
+}
+
+function bakuWeekday(ymd: string): number {
+  const { start } = bakuDayBounds(ymd);
+  const label = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Baku",
+    weekday: "short",
+  }).format(start);
+  return BAKU_WEEKDAY[label] ?? 1;
+}
+
 function startOfWeek(d: Date): Date {
-  const out = new Date(d);
-  const day = out.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  out.setDate(out.getDate() + diff);
-  out.setHours(0, 0, 0, 0);
-  return out;
+  const ymd = bakuDateKey(d);
+  const dow = bakuWeekday(ymd);
+  const diff = dow === 0 ? -6 : 1 - dow;
+  return bakuDayBounds(addBakuDays(ymd, diff)).start;
 }
 
 function envPct(name: string, fallback: number): number {
@@ -67,10 +90,10 @@ export async function computeSlotInventory(from: Date, to: Date) {
   const resources = await prisma.resource.findMany({ select: { id: true, capacity: true } });
   const capById = new Map(resources.map((r) => [r.id, Math.max(1, r.capacity)]));
 
-  const cursor = new Date(from);
-  cursor.setHours(0, 0, 0, 0);
-  while (cursor < to) {
-    const day = new Date(cursor);
+  let ymd = bakuDateKey(from);
+  const toInstant = to.getTime();
+  while (bakuDayBounds(ymd).start.getTime() < toInstant) {
+    const { start: day } = bakuDayBounds(ymd);
     const calendar = await getResourceCalendar(day);
     for (const row of calendar) {
       const cap = capById.get(row.resourceId) ?? 1;
@@ -79,7 +102,7 @@ export async function computeSlotInventory(from: Date, to: Date) {
         if (slot.occupied) occupiedSlots += 1;
       }
     }
-    cursor.setDate(cursor.getDate() + 1);
+    ymd = addBakuDays(ymd, 1);
   }
   const remainingSlots = Math.max(0, totalSlots - occupiedSlots);
   const remainingPct =
@@ -107,8 +130,9 @@ export async function getCapacitySummary(
   const criticalPct = envPct("CLINIC_CAPACITY_CRITICAL_PCT", 0);
 
   const weekStart = startOfWeek(refDate);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekStartYmd = bakuDateKey(weekStart);
+  const weekEndYmd = addBakuDays(weekStartYmd, 7);
+  const weekEnd = bakuDayBounds(weekEndYmd).start;
 
   const scheduledSlots = await prisma.procedureOrder.count({
     where: {
@@ -134,10 +158,10 @@ export async function getCapacitySummary(
   }
 
   const base = {
-    weekStart: weekStart.toISOString().slice(0, 10),
-    weekEnd: weekEnd.toISOString().slice(0, 10),
-    from: weekStart.toISOString().slice(0, 10),
-    to: weekEnd.toISOString().slice(0, 10),
+    weekStart: weekStartYmd,
+    weekEnd: weekEndYmd,
+    from: weekStartYmd,
+    to: weekEndYmd,
     scheduledSlots,
     dailyCapacitySlots,
     proceduresPerGuestWeek: PROCEDURES_PER_GUEST_WEEK,

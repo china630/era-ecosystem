@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { apiFetch } from "../../../../lib/api-client";
 import { formatMoneyAzn } from "../../../../lib/format-money";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../../components/layout/page-header";
 import { EmptyState } from "../../../../components/empty-state";
 import {
@@ -40,7 +41,7 @@ export default function InvoiceAllocatePage() {
   const [counterpartyId, setCounterpartyId] = useState("");
   const [invoices, setInvoices] = useState<Inv[]>([]);
   const [amount, setAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(() => todayBakuYmd());
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
 

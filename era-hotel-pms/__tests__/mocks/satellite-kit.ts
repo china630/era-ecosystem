@@ -38,6 +38,10 @@ export function resetSatelliteTenantAlsForTests(): void {
   als.organizationId = undefined;
 }
 
+export function getRuntimeConfigMemory(): { vendorBridgesEnabled?: boolean } {
+  return {};
+}
+
 export async function hashPassword(password: string): Promise<string> {
   return `salt:${password}`;
 }

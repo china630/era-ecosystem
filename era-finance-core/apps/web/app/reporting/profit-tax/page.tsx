@@ -1,5 +1,6 @@
 "use client";
 
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -63,8 +64,7 @@ function parseApiErrorBody(data: unknown): string {
 export default function ProfitTaxPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const now = new Date();
-  const [year, setYear] = useState(now.getUTCFullYear() - 1);
+  const [year, setYear] = useState(() => bakuCalendarYear() - 1);
   const [preview, setPreview] = useState<ProfitTaxPreview | null>(null);
   const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([]);
   const [err, setErr] = useState<string | null>(null);

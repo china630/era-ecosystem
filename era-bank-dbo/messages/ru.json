@@ -24,10 +24,15 @@
     "otpRequest": "Отправить OTP",
     "otpVerify": "Подтвердить",
     "otpCode": "Код OTP",
-    "asanLogin": "ASAN İmza (stub)",
-    "asanComplete": "Подтвердить ASAN",
-    "devHint": "Dev OTP: 123456",
-    "asanStubBadge": "ASAN İmza / SİMA в режиме stub — не живая господпись (live = трек сертификации)."
+    "asanLogin": "ASAN İmza",
+    "asanComplete": "Подтверждение ASAN",
+    "finPlaceholder": "7 символов",
+    "voenPlaceholder": "10 цифр",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус"
   },
   "dashboard": {
     "title": "Главная",

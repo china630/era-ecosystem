@@ -27,15 +27,7 @@ import {
   type Slot,
   type TimeHorizon,
 } from "@/components/sanatorium/ResourceDayMatrix";
-
-function bakuYmd(d = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-}
+import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 
 type DetailState = {
   appointmentId: string;
@@ -49,7 +41,7 @@ type DetailState = {
 export default function AppointmentsPage() {
   const t = useTranslations("appointments");
   const tc = useTranslations("common");
-  const [date, setDate] = useState(() => bakuYmd());
+  const [date, setDate] = useState(() => todayBakuYmd());
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [practitionerFilter, setPractitionerFilter] = useState("");
   const debouncedPractitionerFilter = useDebouncedValue(practitionerFilter, 300);
@@ -209,7 +201,7 @@ export default function AppointmentsPage() {
           setPractitionerFilter("");
           setPatientFilter("");
           setTimeHorizon("full");
-          setDate(bakuYmd());
+          setDate(todayBakuYmd());
         }}
       >
         <DatePicker
@@ -336,7 +328,7 @@ export default function AppointmentsPage() {
             {detail.scheduledAt && (
               <p>
                 <span className={TEXT_MUTED_CLASS}>{t("scheduledAt")}: </span>
-                {new Date(detail.scheduledAt).toLocaleString()}
+                {bakuDateTimeDisplay(detail.scheduledAt)}
               </p>
             )}
           </div>

@@ -17,6 +17,7 @@ export const IMPORT_PHASES: ImportPhaseDef[] = [
       "rooms",
       "procedure-requirements",
       "program-templates",
+      "planning-rules",
     ],
   },
   { id: "master", strictOrder: true, entities: ["practitioners"] },

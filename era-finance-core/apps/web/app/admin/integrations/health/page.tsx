@@ -6,6 +6,7 @@ import { EmptyState } from "../../../../components/empty-state";
 import { apiFetch } from "../../../../lib/api-client";
 import { useAuth } from "../../../../lib/auth-context";
 import { useOrgPermissions } from "../../../../lib/use-org-permissions";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -126,7 +127,7 @@ export default function IntegrationsHealthPage() {
                       {row.provider}
                     </td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
-                      {row.lastSync ? new Date(row.lastSync).toLocaleString() : "—"}
+                      {row.lastSync ? bakuDateTimeDisplay(row.lastSync) : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                       {row.latencyMs != null ? `${row.latencyMs} ms` : "—"}

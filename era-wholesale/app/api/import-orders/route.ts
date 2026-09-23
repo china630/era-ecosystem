@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { financeExternalPurchase } from "@era/satellite-kit";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { wholesaleTermDueDate } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
@@ -39,7 +40,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
-    const orderDate = new Date().toISOString().slice(0, 10);
+    const orderDate = todayBakuYmd();
     const dueDate = await wholesaleTermDueDate(orderDate, body.paymentTermDays);
     const created = await prisma.importPurchaseOrder.create({
       data: {

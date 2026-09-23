@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api-client";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -266,7 +267,7 @@ export function EmasS2sPanel({ employeeId, open }: { employeeId: string | null; 
                       <td className={DATA_TABLE_TD_CLASS}>{ev.eventType}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{ev.status}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{ev.emasExternalId ?? "—"}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{String(ev.createdAt).slice(0, 19)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(ev.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

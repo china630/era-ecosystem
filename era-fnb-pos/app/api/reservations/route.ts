@@ -1,3 +1,4 @@
+import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
 import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -15,11 +16,8 @@ export async function GET(request: Request) {
     const denied = denyUnlessAnyPermission(session, HOTEL_READ_RESERVATIONS);
     if (denied) return denied;
     await assertHotelFnbFeature("reservations");
-    const date = new URL(request.url).searchParams.get("date");
-    const dayStart = date ? new Date(`${date}T00:00:00`) : new Date();
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setDate(dayEnd.getDate() + 1);
+    const dateYmd = new URL(request.url).searchParams.get("date") ?? todayBakuYmd();
+    const { start: dayStart, end: dayEnd } = bakuDayBounds(dateYmd);
 
     const rows = await prisma.tableReservation.findMany({
       where: { startAt: { gte: dayStart, lt: dayEnd } },

@@ -1,16 +1,17 @@
+import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 
 function dateRange(from: Date, to: Date) {
-  const start = new Date(from);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(to);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
+  const fromKey = bakuDateKey(from);
+  const toKey = bakuDateKey(to);
+  const { start } = bakuDayBounds(fromKey);
+  const { end } = bakuDayBounds(toKey);
+  return { start, end, fromKey, toKey };
 }
 
 export async function reportBookingSourceRevenue(from: Date, to: Date) {
-  const { start, end } = dateRange(from, to);
+  const { start, end, fromKey, toKey } = dateRange(from, to);
 
   const reservations = await prisma.reservation.findMany({
     where: {
@@ -66,8 +67,8 @@ export async function reportBookingSourceRevenue(from: Date, to: Date) {
   const totalRevenue = rows.reduce((s, r) => s + r.revenue, 0);
 
   return {
-    from: start.toISOString().slice(0, 10),
-    to: end.toISOString().slice(0, 10),
+    from: fromKey,
+    to: toKey,
     totalRevenue,
     rows: rows.map((r) => ({
       ...r,
@@ -77,7 +78,7 @@ export async function reportBookingSourceRevenue(from: Date, to: Date) {
 }
 
 export async function reportCancellationSummary(from: Date, to: Date) {
-  const { start, end } = dateRange(from, to);
+  const { start, end, fromKey, toKey } = dateRange(from, to);
 
   const cancelled = await prisma.reservation.findMany({
     where: {
@@ -101,8 +102,8 @@ export async function reportCancellationSummary(from: Date, to: Date) {
   }
 
   return {
-    from: start.toISOString().slice(0, 10),
-    to: end.toISOString().slice(0, 10),
+    from: fromKey,
+    to: toKey,
     totalCancelled: cancelled.length,
     bySource: [...bySource.values()].sort((a, b) => b.count - a.count),
     items: cancelled.map((r) => ({
@@ -122,7 +123,7 @@ export async function reportCancellationSummary(from: Date, to: Date) {
 }
 
 export async function reportGuestDemographics(from: Date, to: Date) {
-  const { start, end } = dateRange(from, to);
+  const { start, end, fromKey, toKey } = dateRange(from, to);
 
   const reservations = await prisma.reservation.findMany({
     where: {
@@ -149,8 +150,8 @@ export async function reportGuestDemographics(from: Date, to: Date) {
   const totalGuests = reservations.length;
 
   return {
-    from: start.toISOString().slice(0, 10),
-    to: end.toISOString().slice(0, 10),
+    from: fromKey,
+    to: toKey,
     reservationCount: totalGuests,
     adults,
     childBand0_6,

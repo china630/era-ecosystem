@@ -18,6 +18,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -34,7 +36,7 @@ const REPORTS = [
 type ReportKey = (typeof REPORTS)[number];
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 function isReport(v: string): v is ReportKey {
@@ -237,7 +239,7 @@ export default function NightAuditEodReportPage() {
                   return (
                     <tr key={`${r.entryType}-${id}`} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {r.at ? new Date(String(r.at)).toLocaleString() : tc('dash')}
+                        {r.at ? bakuDateTimeDisplay(String(r.at)) : tc('dash')}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {String(r.entryType)}

@@ -29,6 +29,22 @@ export type ResolvedLaunchUrl = {
 };
 
 /** Docker-internal (or local) base URLs for STAFF_* fan-out when no SatelliteEndpoint row. */
+/** Public launcher URLs must not be used for in-cluster fan-out (Traefik hairpin). */
+function isPublicFanoutTrap(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:") return true;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.endsWith("era-365.online") ||
+      host === "localhost" ||
+      host === "127.0.0.1"
+    );
+  } catch {
+    return false;
+  }
+}
+
 const FANOUT_URL_ENV: Record<string, readonly string[]> = {
   industry_clinic: ["CLINIC_API_URL"],
   industry_hotel_pms: ["HOTEL_PMS_API_URL"],
@@ -92,15 +108,20 @@ export class SatelliteEndpointRegistryService {
         organizationId_satelliteKey: { organizationId, satelliteKey },
       },
     });
+    const envFanout = this.fanoutEnvFallback(satelliteKey);
     if (row?.enabled) {
+      let baseUrl = row.baseUrl.replace(/\/$/, "");
+      if (envFanout && isPublicFanoutTrap(baseUrl)) {
+        baseUrl = envFanout.baseUrl;
+      }
       const fromRow = row.secretCipher
         ? decryptText(row.secretCipher) ?? ""
         : "";
       const secret = fromRow || this.fanoutBridgeSecret();
-      return { baseUrl: row.baseUrl.replace(/\/$/, ""), secret };
+      return { baseUrl, secret };
     }
 
-    return this.fanoutEnvFallback(satelliteKey);
+    return envFanout;
   }
 
   /**

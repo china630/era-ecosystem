@@ -4,20 +4,32 @@
     "description": "Əməliyyat bank satelliti"
   },
   "auth": {
-    "loginTitle": "Daxil ol",
-    "loginSubtitle": "Filial əməliyyatları",
-    "loginIdLabel": "İstifadəçi adı",
-    "passwordLabel": "Şifrə",
-    "submitLabel": "Daxil ol",
-    "loginFailed": "Yanlış istifadəçi adı və ya şifrə",
+    "loginTitle": "Giriş",
+    "loginFailed": "Giriş uğursuz oldu",
     "organizationIdLabel": "Təşkilat kodu (ERA ID)",
     "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
-    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz."
+    "organizationIdHint": "",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
   },
   "login": {
-    "subtitle": "Lokal ops girişi — filial əməkdaşları",
-    "ssoHint": "Demo: teller-a / demo1234",
-    "demoHint": "Demo: teller-a / demo1234"
+    "subtitle": ""
   },
   "nav": {
     "dashboard": "İdarə paneli",

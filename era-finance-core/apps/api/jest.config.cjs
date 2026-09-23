@@ -10,6 +10,8 @@ module.exports = {
   roots: ["<rootDir>/src", "<rootDir>/test", "<rootDir>/__tests__"],
   // jose ships ESM-only; kit barrel pulls it — map kit to a CJS stand-in for unit tests.
   moduleNameMapper: {
+    "^@era/satellite-kit/time$":
+      "<rootDir>/../../../packages/satellite-kit/dist/time/baku.js",
     "^@era/satellite-kit$": "<rootDir>/test/helpers/mock-era-satellite-kit.cjs",
   },
 };

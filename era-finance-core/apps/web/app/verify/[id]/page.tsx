@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { publicApiFetch } from "../../../lib/public-api-fetch";
 import { SignatureProviderMark } from "../../../components/signature-provider-mark";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type VerifyPayload = {
   verified: true;
@@ -123,7 +124,7 @@ export default function VerifySignaturePage() {
                   <div className="flex justify-between gap-4">
                     <dt className="text-slate-500">{t("verify.invoiceDate")}</dt>
                     <dd className="text-slate-900">
-                      {data.invoice.issuedAt.slice(0, 10)}
+                      {bakuDateDisplay(data.invoice.issuedAt)}
                     </dd>
                   </div>
                 </>
@@ -131,9 +132,7 @@ export default function VerifySignaturePage() {
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">{t("verify.signedAt")}</dt>
                 <dd className="text-slate-900">
-                  {data.signedAt
-                    ? data.signedAt.slice(0, 19).replace("T", " ")
-                    : "—"}
+                  {data.signedAt ? bakuDateTimeDisplay(data.signedAt) : "—"}
                 </dd>
               </div>
               <div className="flex flex-col items-center gap-3 py-4 border-t border-b border-slate-100">

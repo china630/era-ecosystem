@@ -8,6 +8,7 @@ import {
   GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 const CONSENT_SESSION_KEY = "era_mdm_consent_session";
 
@@ -135,7 +136,7 @@ function PersonAccessPortalInner() {
             </p>
             <p className="mt-1 text-[#7F8C8D]">{r.purpose}</p>
             <p className="mt-1 text-xs text-[#7F8C8D]">
-              {new Date(r.createdAt).toLocaleString()}
+              {bakuDateTimeDisplay(r.createdAt)}
             </p>
             <div className="mt-3 flex gap-2">
               <button

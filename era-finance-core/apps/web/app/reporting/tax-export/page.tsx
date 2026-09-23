@@ -1,5 +1,6 @@
 "use client";
 
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,7 +79,7 @@ export default function TaxExportPage() {
   const { token, ready } = useRequireAuth();
   const now = new Date();
   const [monthPeriod, setMonthPeriod] = useState(now.toISOString().slice(0, 7));
-  const [year, setYear] = useState(now.getUTCFullYear());
+  const [year, setYear] = useState(() => bakuCalendarYear());
   const [quarter, setQuarter] = useState(Math.floor(now.getUTCMonth() / 3) + 1);
   const [taxType, setTaxType] = useState<TaxType>("SIMPLIFIED_TAX");
   const [items, setItems] = useState<TaxDeclarationExport[]>([]);

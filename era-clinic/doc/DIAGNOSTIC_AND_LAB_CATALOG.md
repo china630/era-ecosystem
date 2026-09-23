@@ -2,7 +2,7 @@
 
 **Version:** 1.2.0 (AZ clinic + MediClub/Exonlab routine layer)  
 Source of truth: [`../prisma/seed-data/diagnostic-lab-catalog.json`](../prisma/seed-data/diagnostic-lab-catalog.json)  
-Seed: `prisma/seed-diagnostic-catalog*.cjs` → `Modality`/`DiagnosticService` (live SoT). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md).  
+Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTemplate`). Org overlay (`Modality` / `DiagnosticService`) is copy-if-empty on Connect/login/catalog GET. Nafta overlay: wizard / `db:seed:diagnostic-catalog:nafta` (not droplet boot). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md) and ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).  
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
@@ -51,7 +51,7 @@ Labels: `en` + `ru` + `az` on every title/field/analyte. **Study titles (AZ/RU)*
 Baseline abdomen/kidney/thyroid/breast/pelvic/obstetric/soft/prostate/doppler/MSK/hip-infant  
 **+** retroperitoneal, pleura, salivary/neck, TRUS, BCA Doppler, LL veins, obst T1/T2/T3, folliculometry, liver elastography, orbit, cervical LN
 
-Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** base `diagnostic-lab-catalog.json` + org overlay `nafta/diagnostic-overlay.json`. Seed: `node prisma/seed-diagnostic-catalog.cjs` (base then Nafta). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
+Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** satellite templates from base JSON; Nafta patches via org overlay / import (`db:seed:diagnostic-catalog:nafta` lab only). ADR: [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).
 
 ### X-ray (`XR`)
 Chest, spine, extremity, sinus, abdomen  
@@ -109,7 +109,6 @@ Also: mammography, DXA
 | `PKG-SAN-ADM` | CBC, biochem, urine, ECG, fluoro, sanatorium intake |
 | `PKG-NAFTA-INTAKE` | Nafta check-in checklist: `VISIT-SANATORIUM-INTAKE`, `GYN-OR-URO` (→ GYN/URO by sex), `CARDIO-ECG`, `USG-ABD`. WO source = PatientDiagnostic «İlkin diaqnostik prosedurlar», **not** CheckUp `#33`. Lives in **Nafta overlay** seed, not base catalog. |
 
-Nafta cutover: `USG-ABD` is the Nafta abdomen+pelvis set (liver … ovaries + `sourceNote` for WO Qeyd), not a bare `USG` stub. Same `sourceNote` field on `USG-THYROID` / `USG-BREAST` / `USG-DOPPLER` / `USG-SOFT`. **Layers:** base `diagnostic-lab-catalog.json` + org overlay `nafta/diagnostic-overlay.json`. Seed: `node prisma/seed-diagnostic-catalog.cjs` (base then Nafta). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
 ---
 
 ## 5. Explicitly deferred (P2 / tertiary)

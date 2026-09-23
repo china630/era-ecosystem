@@ -3,12 +3,11 @@ import { Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { catalogModuleKeyToPatch } from "./billing-module-toggle.helpers";
+import { billingPeriodKeyBaku, bakuMonthBounds } from "./baku-billing.util";
 
-/** Last instant of the given UTC month (for module access until end of billing period). */
+/** Last instant of the current Baku billing month (for module access until end of billing period). */
 export function endOfUtcMonth(now = new Date()): Date {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  return new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999));
+  return bakuMonthBounds(billingPeriodKeyBaku(now)).to;
 }
 
 @Injectable()

@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type FuelReport = {
   from: string | null;
@@ -33,13 +34,12 @@ type FuelReport = {
 };
 
 function defaultFrom() {
-  const d = new Date();
-  d.setDate(1);
-  return d.toISOString().slice(0, 10);
+  const t = todayBakuYmd();
+  return `${t.slice(0, 8)}01`;
 }
 
 function defaultTo() {
-  return new Date().toISOString().slice(0, 10);
+  return todayBakuYmd();
 }
 
 export default function FuelReportPage() {

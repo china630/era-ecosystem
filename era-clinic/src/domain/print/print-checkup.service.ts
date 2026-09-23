@@ -4,6 +4,7 @@ import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 import { printSpecialtyForIntakeSlot } from "@/lib/import/nafta-intake-map";
+import { bakuDateKey, todayBakuYmd } from "@/lib/baku-day";
 
 export type PrintCheckupSection = {
   specialty: string;
@@ -130,10 +131,10 @@ export async function buildCheckupPrint(
       nationality: patient.nationality,
       roomNumber: episode?.roomNumber ?? null,
       doctorName: null,
-      date: new Date().toISOString().slice(0, 10),
+      date: todayBakuYmd(),
     },
-    arrival: episode?.openedAt ? episode.openedAt.toISOString().slice(0, 10) : null,
-    departure: episode?.closedAt ? episode.closedAt.toISOString().slice(0, 10) : null,
+    arrival: episode?.openedAt ? bakuDateKey(episode.openedAt) : null,
+    departure: episode?.closedAt ? bakuDateKey(episode.closedAt) : null,
     diagnoses,
     sections,
   };

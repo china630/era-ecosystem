@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { DATA_HUB_XOR } from "@era365/database";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PlatformAuditService } from "../platform-audit.service";
 import { PlatformEntitlementService } from "../platform-entitlement.service";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
@@ -133,7 +134,7 @@ export class CatalogGatewayService {
       to: converted.to,
       amount: converted.amount,
       result: converted.result,
-      rateDate: converted.rateDate ?? params.date ?? new Date().toISOString().slice(0, 10),
+      rateDate: converted.rateDate ?? params.date ?? todayBakuYmd(),
       source: "era-data-hub",
       isFallback: converted.isFallback ?? false,
     };

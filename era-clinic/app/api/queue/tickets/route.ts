@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const createSchema = z.object({
   visitId: z.string(),
@@ -15,10 +16,9 @@ const createSchema = z.object({
 });
 
 async function nextQueueNumber(): Promise<number> {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  const { start: startOfDay, end: endOfDay } = bakuDayBounds(todayBakuYmd());
   const last = await prisma.queueTicket.findFirst({
-    where: { createdAt: { gte: startOfDay } },
+    where: { createdAt: { gte: startOfDay, lt: endOfDay } },
     orderBy: { queueNumber: "desc" },
     select: { queueNumber: true },
   });

@@ -79,17 +79,15 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
 
   describe('empty period date modes', () => {
     it('month_to_closed starts on the 1st through business date', () => {
-      const { from, to } = resolveDateMode('month_to_closed', new Date(2026, 7, 16));
-      expect(from.getDate()).toBe(1);
-      expect(from.getMonth()).toBe(7);
-      expect(to.getDate()).toBe(16);
+      const { from, to } = resolveDateMode('month_to_closed', new Date('2026-08-16T00:00:00.000Z'));
+      expect(from.toISOString().slice(0, 10)).toBe('2026-08-01');
+      expect(to.toISOString().slice(0, 10)).toBe('2026-08-16');
     });
 
     it('year_to_closed starts Jan 1 through business date', () => {
-      const { from, to } = resolveDateMode('year_to_closed', new Date(2026, 7, 16));
-      expect(from.getMonth()).toBe(0);
-      expect(from.getDate()).toBe(1);
-      expect(to.getMonth()).toBe(7);
+      const { from, to } = resolveDateMode('year_to_closed', new Date('2026-08-16T00:00:00.000Z'));
+      expect(from.toISOString().slice(0, 10)).toBe('2026-01-01');
+      expect(to.toISOString().slice(0, 10)).toBe('2026-08-16');
     });
   });
 });

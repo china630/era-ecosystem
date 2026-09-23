@@ -17,6 +17,7 @@ import {
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 type CatalogRow = {
   id: string;
@@ -166,7 +167,7 @@ export default function CatalogAdminPage() {
         header: t("lastSync"),
         render: (row) => (
           <span className={isStale(row.syncedAt) ? "text-amber-700" : undefined}>
-            {new Date(row.syncedAt).toLocaleString()}
+            {bakuDateTimeDisplay(row.syncedAt)}
           </span>
         ),
       },
@@ -240,7 +241,7 @@ export default function CatalogAdminPage() {
         <p
           className={`mb-3 text-[13px] ${isStale(latestSync.toISOString()) ? "text-amber-700" : TEXT_MUTED_CLASS}`}
         >
-          {t("lastSync")}: {latestSync.toLocaleString()}
+          {t("lastSync")}: {bakuDateTimeDisplay(latestSync)}
           {isStale(latestSync.toISOString()) ? ` · ${t("stale")}` : ""}
         </p>
       ) : null}

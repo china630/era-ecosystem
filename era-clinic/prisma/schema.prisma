@@ -733,6 +733,68 @@ model DiagnosticMetaField {
   sortOrder  Int      @default(0) @map("sort_order")
 }
 
+/// Satellite-level diagnostic modality template (no organizationId). ADR clinic-catalog-template-overlay.
+model ModalityTemplate {
+  id        String                     @id @default(cuid())
+  code      String                     @unique
+  kind      String
+  titleEn   String                     @map("title_en")
+  titleRu   String                     @map("title_ru")
+  titleAz   String                     @map("title_az")
+  sortOrder Int                        @default(0) @map("sort_order")
+  active    Boolean                    @default(true)
+  services  DiagnosticServiceTemplate[]
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+
+  @@map("modality_template")
+}
+
+/// Satellite-level diagnostic / lab / visit / package service template.
+model DiagnosticServiceTemplate {
+  id           String                    @id @default(cuid())
+  code         String                    @unique
+  modalityId   String                    @map("modality_id")
+  modality     ModalityTemplate          @relation(fields: [modalityId], references: [id], onDelete: Cascade)
+  category     String                    @default("")
+  kind         String
+  titleEn      String                    @map("title_en")
+  titleRu      String                    @map("title_ru")
+  titleAz      String                    @map("title_az")
+  serviceCode  String                    @map("service_code")
+  fieldsJson   String?                   @map("fields_json") @db.Text
+  includesJson String?                   @map("includes_json") @db.Text
+  sortOrder    Int                       @default(0) @map("sort_order")
+  active       Boolean                   @default(true)
+  analytes     DiagnosticAnalyteTemplate[]
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@index([modalityId])
+  @@index([kind])
+  @@map("diagnostic_service_template")
+}
+
+model DiagnosticAnalyteTemplate {
+  id        String                  @id @default(cuid())
+  serviceId String                  @map("service_id")
+  service   DiagnosticServiceTemplate @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  code      String
+  unit      String?
+  labelEn   String                  @map("label_en")
+  labelRu   String                  @map("label_ru")
+  labelAz   String                  @map("label_az")
+  refMin    String?                 @map("ref_min")
+  refMax    String?                 @map("ref_max")
+  section   String?
+  valueType AnalyteValueType        @default(NUMERIC) @map("value_type")
+  sortOrder Int                     @default(0) @map("sort_order")
+
+  @@unique([serviceId, code])
+  @@index([serviceId])
+  @@map("diagnostic_analyte_template")
+}
+
 model LabOrderItem {
   id                  String             @id @default(cuid())
   labOrderId          String             @map("lab_order_id")
@@ -991,6 +1053,47 @@ model PhysioSite {
   @@unique([organizationId, code])
   @@index([organizationId, active, sortOrder])
   @@map("physio_site")
+}
+
+/// Satellite-level physio site S template (no organizationId). ADR clinic-catalog-template-overlay.
+model PhysioSiteTemplate {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  kind        String
+  prikaz817   Int?     @map("prikaz_817")
+  laterality  Boolean  @default(false)
+  titleAz     String   @map("title_az")
+  titleRu     String   @map("title_ru")
+  titleEn     String   @map("title_en")
+  titleLa     String   @map("title_la")
+  boundary    String?  @db.Text
+  coarse      String[]
+  anatomyJson String?  @map("anatomy_json") @db.Text
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([active, sortOrder])
+  @@map("physio_site_template")
+}
+
+/// Satellite-level physio list (device program / substance) template.
+model PhysioListItemTemplate {
+  id        String         @id @default(cuid())
+  listKind  PhysioListKind @map("list_kind")
+  code      String
+  titleAz   String         @map("title_az")
+  titleRu   String         @map("title_ru")
+  titleEn   String         @map("title_en")
+  active    Boolean        @default(true)
+  sortOrder Int            @default(0) @map("sort_order")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@unique([listKind, code])
+  @@index([listKind, active])
+  @@map("physio_list_item_template")
 }
 
 model PhysioSiteAlias {

@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:seed:demo": "npx tsx prisma/seed-demo.ts",
     "test": "jest --ci --passWithNoTests"
   },
   "dependencies": {

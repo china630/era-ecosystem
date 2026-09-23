@@ -1,5 +1,6 @@
 "use client";
 
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -45,7 +46,7 @@ export function PayPurchaseModal({
 }) {
   const { t } = useTranslation();
   const [amount, setAmount] = useState(defaultAmount ?? "");
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(() => todayBakuYmd());
   const [moneyOptions, setMoneyOptions] = useState<MoneyOption[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [debitCode, setDebitCode] = useState("");

@@ -13,6 +13,7 @@ import {
   ListPaginationFooter,
   PageHeader,
 } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 type AuditRow = {
   id: string;
@@ -58,7 +59,7 @@ export default function ClinicAuditPage() {
           <tbody>
             {pagedRows.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS}>{new Date(r.createdAt).toLocaleString()}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(r.createdAt)}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
                   {r.entityType} / {r.entityId.slice(0, 8)}
                 </td>

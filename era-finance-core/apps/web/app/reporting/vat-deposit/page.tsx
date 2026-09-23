@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
 import { EmptyState } from "../../../components/empty-state";
@@ -403,7 +404,7 @@ function VatDepositPageInner() {
                 movements.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {new Date(row.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(row.createdAt)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.kind}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>

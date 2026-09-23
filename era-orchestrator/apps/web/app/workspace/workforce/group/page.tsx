@@ -182,6 +182,7 @@ export default function WorkforceGroupPage() {
             setFilterOrgId("");
           }}
           options={holdingOptions}
+          emptyLabel={tCommon("select")}
         />
         <CatalogField
           kind="ENTITY_REF"
@@ -231,7 +232,7 @@ export default function WorkforceGroupPage() {
                   {items.map((row) => (
                     <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {row.displayName ?? row.globalPersonId.slice(0, 8)}
+                        {row.displayName?.trim() || tCommon("unnamedPerson")}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.employments

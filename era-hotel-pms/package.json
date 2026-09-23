@@ -13,9 +13,10 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx prisma/seed-reference.ts",
     "db:seed:demo": "tsx prisma/seed.ts",
     "db:seed:reference": "tsx prisma/seed-reference.ts",
+    "db:seed:wipe": "tsx prisma/seed.ts",
     "build:docs": "node scripts/build-nafta-docs.js",
     "analyze:manifest": "node scripts/analyze-manifest.js",
     "license:excel": "node scripts/nafta-license-excel.js",
@@ -27,7 +28,7 @@
     "test:e2e": "playwright test"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed-reference.ts"
   },
   "dependencies": {
     "@era/contracts": "file:../packages/era-contracts",

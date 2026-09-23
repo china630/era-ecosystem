@@ -1,5 +1,6 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { listCityLedgerSummary } from '@/lib/services/agency-ledger.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
@@ -10,8 +11,8 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const params = new URL(request.url).searchParams;
-    const from = new Date(params.get('from') ?? new Date().toISOString().slice(0, 10));
-    const to = new Date(params.get('to') ?? new Date().toISOString().slice(0, 10));
+    const from = new Date(params.get('from') ?? todayBakuYmd());
+    const to = new Date(params.get('to') ?? todayBakuYmd());
     to.setHours(23, 59, 59, 999);
     const kind = (params.get('kind') ?? 'ALL').toUpperCase();
     const scoped = kind === 'COMPANY' || kind === 'AGENCY' ? kind : 'ALL';

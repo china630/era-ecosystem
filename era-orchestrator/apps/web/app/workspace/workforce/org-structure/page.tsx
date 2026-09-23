@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Archive, Pencil, Plus } from "lucide-react";
 import {
@@ -19,6 +19,9 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  CatalogField,
+  EraListFilterBar,
+  Field,
   parseApiError,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -91,6 +94,8 @@ export default function OrgStructurePage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importBusy, setImportBusy] = useState<"dry" | "apply" | null>(null);
   const [archiveUnit, setArchiveUnit] = useState<OrgUnit | null>(null);
+  const [filterQ, setFilterQ] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -236,8 +241,20 @@ export default function OrgStructurePage() {
     await load();
   }
 
+  const filtered = useMemo(() => {
+    const q = filterQ.trim().toLowerCase();
+    return items.filter((u) => {
+      if (filterStatus && u.status !== filterStatus) return false;
+      if (!q) return true;
+      return (
+        u.name.toLowerCase().includes(q) ||
+        (u.code ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [items, filterQ, filterStatus]);
+
   const { page, pageSize, setPage, setPageSize, paged, total } =
-    useListPagination(items);
+    useListPagination(filtered);
 
   if (!ready) return null;
 
@@ -270,6 +287,32 @@ export default function OrgStructurePage() {
           </div>
         }
       />
+
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => {
+          setFilterQ("");
+          setFilterStatus("");
+        }}
+      >
+        <Field
+          label={t("filterSearch")}
+          preset="shortText"
+          value={filterQ}
+          onChange={(e) => setFilterQ(e.target.value)}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colStatus")}
+          value={filterStatus}
+          onChange={(next) => setFilterStatus(String(next))}
+          options={[
+            { value: "ACTIVE", label: t("statusActive") },
+            { value: "ARCHIVED", label: t("statusArchived") },
+          ]}
+          emptyLabel={t("statusAll")}
+        />
+      </EraListFilterBar>
 
       {error === "bootstrap" ? (
         <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>

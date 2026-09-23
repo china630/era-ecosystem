@@ -15,6 +15,7 @@ import {
   CityLedgerStatementGrid,
   type ClStatementLine,
 } from '@/components/CityLedgerStatementGrid';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -55,7 +56,7 @@ interface SummaryRow {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function CompanyLedgerPage() {

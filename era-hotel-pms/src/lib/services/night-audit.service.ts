@@ -1,3 +1,5 @@
+import { bakuDayBounds } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -30,14 +32,11 @@ export async function getNightAuditStatus() {
     ? await resolveSettlementPolicy(orgId)
     : { pendingSettlementNaPolicy: 'BLOCK' as const };
 
-  const dayStart = new Date(currentBiz);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(currentBiz);
-  dayEnd.setHours(23, 59, 59, 999);
+  const { start: dayStart, end: dayEnd } = bakuDayBounds(hotelDateKey(currentBiz));
   const unassignedArrivals = await prisma.reservation.count({
     where: {
       status: { in: ['CONFIRMED', 'OPTION'] },
-      checkInDate: { gte: dayStart, lte: dayEnd },
+      checkInDate: { gte: dayStart, lt: dayEnd },
       roomId: null,
     },
   });
@@ -118,15 +117,12 @@ export async function runNightAudit() {
     const inHouseCount = await prisma.reservation.count({ where: { status: 'IN_HOUSE' } });
     steps.push(`Step 2: In-house reservations: ${inHouseCount}`);
 
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
+    const { start: dayStart, end: dayEnd } = bakuDayBounds(hotelDateKey(date));
 
     const unassignedArrivals = await prisma.reservation.findMany({
       where: {
         status: { in: ['CONFIRMED', 'OPTION'] },
-        checkInDate: { gte: dayStart, lte: dayEnd },
+        checkInDate: { gte: dayStart, lt: dayEnd },
         roomId: null,
       },
       select: { id: true, guest: { select: { fullName: true } } },
@@ -175,7 +171,7 @@ export async function runNightAudit() {
       select: { amount: true, qty: true },
     });
     const dayPays = await prisma.folioPayment.findMany({
-      where: { createdAt: { gte: dayStart, lt: new Date(dayEnd.getTime() + 1) } },
+      where: { createdAt: { gte: dayStart, lt: dayEnd } },
       select: { amount: true, kind: true },
     });
     const trialCharges = dayCharges.reduce(
@@ -265,7 +261,7 @@ export async function runNightAudit() {
     });
 
     const payments = await prisma.folioPayment.findMany({
-      where: { createdAt: { gte: date, lt: new Date(date.getTime() + 86400000) } },
+      where: { createdAt: { gte: dayStart, lt: dayEnd } },
     });
     const paymentByMethod = new Map<string, number>();
     for (const p of payments) {

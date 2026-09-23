@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type EodLockContextValue = {
   locked: boolean;
@@ -20,7 +21,7 @@ export function EodLockProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     let cancelled = false;
 
     async function poll() {

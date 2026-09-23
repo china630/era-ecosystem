@@ -10,6 +10,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
 
 export default function QuickExpensePage() {
@@ -17,7 +18,7 @@ export default function QuickExpensePage() {
   const { token, ready } = useRequireAuth();
   const { organizationId: orgId } = useAuth();
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayBakuYmd());
   const [description, setDescription] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>(

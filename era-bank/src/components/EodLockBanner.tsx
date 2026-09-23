@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 export function EodLockBanner() {
   const [locked, setLocked] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     let cancelled = false;
 
     async function poll() {

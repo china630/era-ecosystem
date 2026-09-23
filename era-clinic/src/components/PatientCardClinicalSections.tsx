@@ -17,7 +17,7 @@ import {
 } from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
-import { bakuDateTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeLabel, addBakuDays, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
@@ -219,9 +219,7 @@ export function PatientCardClinicalSections({
 
   const fromIso = useMemo(() => {
     if (period === "all") return undefined;
-    const d = new Date();
-    d.setDate(d.getDate() - Number(period));
-    return d.toISOString();
+    return bakuDayBounds(addBakuDays(todayBakuYmd(), -Number(period))).start.toISOString();
   }, [period]);
 
   const loadHistory = useCallback(

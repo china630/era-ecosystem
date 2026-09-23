@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateDisplay, todayBakuYmd, addBakuDays } from "@era/satellite-kit/time";
 import { Field, CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
@@ -173,8 +174,8 @@ export function AccountDetailModal({
   const [account, setAccount] = useState<AccountDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<DetailTab>("overview");
-  const today = new Date().toISOString().slice(0, 10);
-  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const today = todayBakuYmd();
+  const monthAgo = addBakuDays(today, -30);
   const [from, setFrom] = useState(monthAgo);
   const [to, setTo] = useState(today);
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -394,7 +395,9 @@ export function AccountDetailModal({
               <tbody>
                 {movements.map((r) => (
                   <tr key={r.id} className="border-b">
-                    <td className="px-3 py-2">{r.createdAt?.slice(0, 10) ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      {r.createdAt ? bakuDateDisplay(r.createdAt) : "—"}
+                    </td>
                     <td className="px-3 py-2">{r.transaction?.reference ?? "—"}</td>
                     <td className="px-3 py-2">{r.transaction?.type ?? "—"}</td>
                     <td className="px-3 py-2">{formatAznMinor(r.debitMinor)}</td>

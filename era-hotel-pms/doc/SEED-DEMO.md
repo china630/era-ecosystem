@@ -1,18 +1,21 @@
 # Demo data (Front Office)
 
-Run after migrations:
+Wipe + Nafta FO lab profile. Requires a real `ERA_SATELLITE_ORGANIZATION_ID` (never `demo-org`).
+
+**Not boot seed.** Default `npm run db:seed` is reference catalogs only (insert-if-missing). See ADR [satellite-seed-hygiene](../../docs/adr/satellite-seed-hygiene.md).
 
 ```powershell
 cd era-hotel-pms
 # Password: see tmp/era-local-credentials.md (often change-me-strong-password, not era_dev_password)
 $env:DATABASE_URL="postgresql://era:change-me-strong-password@localhost:5432/era_hotel_pms?schema=public"
-npm run db:seed
+$env:ERA_SATELLITE_ORGANIZATION_ID="<bound-org-uuid>"
+npm run db:seed:demo
 ```
 
-Docker:
+Docker (lab only — not droplet entrypoint):
 
 ```powershell
-docker exec -e DATABASE_URL="postgresql://era:era_dev_password@postgres:5432/era_hotel_pms?schema=public" era-hotel-pms npx tsx prisma/seed.ts
+docker exec -e DATABASE_URL="postgresql://era:era_dev_password@postgres:5432/era_hotel_pms?schema=public" -e ERA_SATELLITE_ORGANIZATION_ID="<bound-org-uuid>" era-hotel-pms npm run db:seed:demo
 ```
 
 ## Stay time policy
@@ -54,7 +57,7 @@ Optional denser dataset for UAT volume (wipes guests/reservations/folios first).
 docker exec -e DATABASE_URL="postgresql://era:era_dev_password@postgres:5432/era_hotel_pms?schema=public" era-hotel-pms node prisma/load-nafta-transactions.cjs
 ```
 
-For clean arrow/turnover demos prefer `npm run db:seed` (FO demo chains). Use the volume loader only when you need headcount, not when validating room-plan shapes.
+For clean arrow/turnover demos prefer `npm run db:seed:demo` (FO demo chains). Use the volume loader only when you need headcount, not when validating room-plan shapes.
 
 Logins: `admin` / `admin123`, `reception` / `reception123`, `manager` / `manager123`.
 

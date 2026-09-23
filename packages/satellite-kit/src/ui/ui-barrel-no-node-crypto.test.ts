@@ -13,5 +13,10 @@ describe("ui barrel stays browser-safe", () => {
     );
     assert.equal(barrel.includes("password.js"), false);
     assert.equal(barrel.includes("staff-login-org-storage"), true);
+    assert.equal(
+      barrel.includes("time/baku"),
+      false,
+      "ui/index must not import @era/satellite-kit/time (clients import the time subpath)",
+    );
   });
 });

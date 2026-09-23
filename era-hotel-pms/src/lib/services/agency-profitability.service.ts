@@ -1,12 +1,13 @@
+import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 
 function dateRange(from: Date, to: Date) {
-  const start = new Date(from);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(to);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
+  const fromKey = bakuDateKey(from);
+  const toKey = bakuDateKey(to);
+  const { start } = bakuDayBounds(fromKey);
+  const { end } = bakuDayBounds(toKey);
+  return { start, end, fromKey, toKey };
 }
 
 export type AgencyProfitRow = {
@@ -26,7 +27,7 @@ export type AgencyProfitRow = {
 };
 
 export async function reportAgencyProfitability(from: Date, to: Date) {
-  const { start, end } = dateRange(from, to);
+  const { start, end, fromKey, toKey } = dateRange(from, to);
 
   const allInRange = await prisma.reservation.findMany({
     where: {
@@ -114,8 +115,8 @@ export async function reportAgencyProfitability(from: Date, to: Date) {
     .sort((a, b) => b.revenue - a.revenue);
 
   return {
-    from: start.toISOString(),
-    to: end.toISOString(),
+    from: fromKey,
+    to: toKey,
     totalRevenue: rows.reduce((s, r) => s + r.revenue, 0),
     rows,
   };

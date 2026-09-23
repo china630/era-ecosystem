@@ -8,6 +8,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { batchEmployeePersonMap } from "./employee-person.util";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 export type ActiveListRow = {
   employeeId: string;
@@ -169,7 +170,7 @@ export class ActiveListService {
 
     const raw = await wb.xlsx.writeBuffer();
     const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(new Uint8Array(raw));
-    const day = new Date().toISOString().slice(0, 10);
+    const day = todayBakuYmd();
     return { buffer, filename: `active-list-${day}.xlsx` };
   }
 }

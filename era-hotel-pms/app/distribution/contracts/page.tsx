@@ -26,6 +26,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -510,8 +511,8 @@ export default function SalesContractsPage() {
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{c.ratePlan.code}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(c.validFrom).toLocaleDateString()} —{' '}
-                    {c.validTo ? new Date(c.validTo).toLocaleDateString() : '∞'}
+                    {bakuDateDisplay(c.validFrom)} —{' '}
+                    {c.validTo ? bakuDateDisplay(c.validTo) : '∞'}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{c.allotments.length}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{c.status}</td>
@@ -799,9 +800,9 @@ export default function SalesContractsPage() {
           <div className="space-y-4">
             <p className="text-xs text-[#7F8C8D]">
               {t('allotmentSeasonNote', {
-                from: new Date(managedLive.validFrom).toLocaleDateString(),
+                from: bakuDateDisplay(managedLive.validFrom),
                 to: managedLive.validTo
-                  ? new Date(managedLive.validTo).toLocaleDateString()
+                  ? bakuDateDisplay(managedLive.validTo)
                   : '∞',
               })}
             </p>
@@ -825,8 +826,8 @@ export default function SalesContractsPage() {
                           {a.roomType.code} — {a.roomType.name}
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>
-                          {new Date(a.validFrom).toLocaleDateString()} —{' '}
-                          {new Date(a.validTo).toLocaleDateString()}
+                          {bakuDateDisplay(a.validFrom)} —{' '}
+                          {bakuDateDisplay(a.validTo)}
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>{a.nightlyQuota}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{a.releaseDays ?? 0}</td>

@@ -11,6 +11,7 @@ import {
 import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-code";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { fillPatientPageDemographicsFromMdm } from "@/domain/patient/mdm-demographics-cache";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN or passport with issuing country") {
@@ -98,8 +99,7 @@ function withDerivedDemographics<T extends { birthDate?: Date | null }>(row: T) 
  */
 function birthDateRangeForAge(ageMin?: number, ageMax?: number): { gte?: Date; lte?: Date } | undefined {
   if (ageMin == null && ageMax == null) return undefined;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = bakuDayBounds(todayBakuYmd()).start;
   const out: { gte?: Date; lte?: Date } = {};
   if (ageMax != null) {
     const oldest = new Date(today);

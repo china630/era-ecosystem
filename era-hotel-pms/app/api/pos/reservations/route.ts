@@ -1,3 +1,4 @@
+import { bakuDayBounds, todayBakuYmd } from '@era/satellite-kit/time';
 /** @deprecated Table reservations UI lives in era-fnb-pos. */
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
@@ -22,12 +23,9 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const url = new URL(request.url);
-    const dateStr = url.searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
-    const from = new Date(dateStr);
-    from.setHours(0, 0, 0, 0);
-    const to = new Date(from);
-    to.setDate(to.getDate() + 1);
-    return jsonOk(serialize(await listPosReservations(from, to)));
+    const dateStr = url.searchParams.get('date') ?? todayBakuYmd();
+    const { start, end } = bakuDayBounds(dateStr);
+    return jsonOk(serialize(await listPosReservations(start, end)));
   } catch (err) {
     return handleRouteError(err);
   }

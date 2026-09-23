@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type HkTask = {
@@ -25,7 +26,7 @@ export default function HkMobilePage() {
   const [maidId, setMaidId] = useState('');
 
   const load = useCallback(async () => {
-    const date = new Date().toISOString().slice(0, 10);
+    const date = hotelDateKey();
     const [tRes, rRes] = await Promise.all([
       fetch('/api/housekeeping/tasks'),
       fetch(`/api/housekeeping/rotation?date=${date}`),

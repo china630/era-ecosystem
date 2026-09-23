@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { OpRiskEventStatus } from "@era/bank-core-database";
+import { addBakuDays, bakuCivilUtcDate } from "@era/satellite-kit/time";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import {
@@ -19,12 +20,15 @@ export class IrrbbService {
       where: {
         bankOrgId: this.bankOrg.bankOrgId,
         ...(asOfDate
-          ? {
-              asOfDate: {
-                gte: new Date(asOfDate.toISOString().slice(0, 10)),
-                lt: new Date(new Date(asOfDate).getTime() + 86400000),
-              },
-            }
+          ? (() => {
+              const ymd = asOfDate.toISOString().slice(0, 10);
+              return {
+                asOfDate: {
+                  gte: bakuCivilUtcDate(ymd),
+                  lt: bakuCivilUtcDate(addBakuDays(ymd, 1)),
+                },
+              };
+            })()
           : {}),
       },
       orderBy: { bucketKey: "asc" },

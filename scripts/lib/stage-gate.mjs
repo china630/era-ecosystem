@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { todayBakuYmd } from "./today-baku-ymd.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -27,7 +28,7 @@ export function runStageGate(opts) {
     "",
     `- Product: ${opts.product}`,
     `- Wave: ${wave}`,
-    `- Date: ${new Date().toISOString().slice(0, 10)}`,
+    `- Date: ${todayBakuYmd()}`,
     `- Result: scaffold-gate-pass (pending checks below)`,
     "",
     "## Checks",

@@ -36,6 +36,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV ERA_IN_DOCKER=1
 
 RUN apk add --no-cache openssl wget \
   && addgroup --system --gid 1001 nodejs \

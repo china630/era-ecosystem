@@ -17,6 +17,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -197,7 +198,7 @@ export default function ProceduresPage() {
             <tbody>
               {visibleAppointments.map((a) => (
                 <tr key={a.id} className="border-b border-[#ECF0F1]">
-                  <td className="py-2 pr-3">{new Date(a.startAt).toLocaleString()}</td>
+                  <td className="py-2 pr-3">{bakuDateTimeDisplay(a.startAt)}</td>
                   <td className="py-2 pr-3">
                     {a.reservation.guest.fullName} · {a.reservation.room?.roomNumber ?? '—'}
                   </td>

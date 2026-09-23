@@ -82,7 +82,7 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 | Lab lifecycle | K2 | yes | yes | — | OK | **OK** |
 | Inpatient M13 | PRD | yes | yes | assign modal | ward master free-text | **SHIPPED** `/admin/wards` edit/delete |
 | Executive K-14 | PRD | yes | yes filters | — | client bypass | **SHIPPED** API-driven |
-| Docker demo seed | ops | — | — | — | missing | **SHIPPED** `RUN_SEED` |
+| Docker demo seed | ops | — | — | — | missing | **API** `db:seed:demo` opt-in; droplet `CLINIC_RUN_SEED=false` |
 | HL7 LIS prod | deferred | stub | — | — | external | **STUB** |
 
 ---

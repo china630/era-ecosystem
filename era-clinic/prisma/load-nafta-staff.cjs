@@ -16,11 +16,16 @@ function hash(pw) {
 }
 
 function seedOrgId() {
-  return (
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID required for load-nafta-staff; demo-org is forbidden",
+    );
+  }
+  return id;
 }
 
 function isEmptyPermissionsJson(json) {

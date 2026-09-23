@@ -1,34 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
-import { az as azLocale, ru as ruLocale } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { bakuDateDisplay, bakuYmd } from "@era/satellite-kit/time";
 import { LINK_ACCENT_CLASS } from "../lib/design-system";
-import { uiLangRuAz } from "../lib/i18n/ui-lang";
 import { useSubscription } from "../lib/subscription-context";
 
-function displayLocale(lang: string) {
-  return uiLangRuAz(lang) === "ru" ? ruLocale : azLocale;
+function firstDayOfNextBakuMonth(at: Date): string {
+  const { y, m } = bakuYmd(at);
+  const nextM = m === 12 ? 1 : m + 1;
+  const nextY = m === 12 ? y + 1 : y;
+  return `${nextY}-${String(nextM).padStart(2, "0")}-01`;
 }
 
-function firstDayOfNextMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
-}
-
-function formatBannerDate(date: Date, lang: string): string {
-  return format(date, "d MMMM", { locale: displayLocale(lang) });
-}
-
-function isNextCalendarMonth(after: Date, before: Date): boolean {
-  const diff =
-    (after.getFullYear() - before.getFullYear()) * 12 +
-    (after.getMonth() - before.getMonth());
+function isNextBakuCalendarMonth(after: Date, before: Date): boolean {
+  const a = bakuYmd(after);
+  const b = bakuYmd(before);
+  const diff = (a.y - b.y) * 12 + (a.m - b.m);
   return diff === 1;
 }
 
 export function TrialBanner() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { ready, effectiveSnapshot: snapshot } = useSubscription();
 
   if (!ready || !snapshot) return null;
@@ -44,13 +38,13 @@ export function TrialBanner() {
     hasExpired &&
     snapshot.billingStatus === "ACTIVE" &&
     expiresAt != null &&
-    isNextCalendarMonth(now, expiresAt);
+    isNextBakuCalendarMonth(now, expiresAt);
 
   if (hasFutureTrial && expiresAt) {
     return (
       <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
         {t("trialBanner.demoUntilPaidStart", {
-          date: formatBannerDate(firstDayOfNextMonth(expiresAt), i18n.language),
+          date: bakuDateDisplay(firstDayOfNextBakuMonth(expiresAt)),
         })}
       </div>
     );
@@ -60,7 +54,7 @@ export function TrialBanner() {
     return (
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] text-blue-900">
         {t("trialBanner.postpaidFirstInvoiceAt", {
-          date: formatBannerDate(firstDayOfNextMonth(now), i18n.language),
+          date: bakuDateDisplay(firstDayOfNextBakuMonth(now)),
         })}
       </div>
     );

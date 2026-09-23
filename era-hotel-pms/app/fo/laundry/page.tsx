@@ -13,6 +13,7 @@ import {
   showSuccess,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
+import { bakuDateKey, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 
 type Ticket = {
@@ -65,7 +66,8 @@ export default function FoLaundryPage() {
       if (g && !tk.guestName.toLowerCase().includes(g)) return false;
       const room = (tk.roomNumber ?? '').toLowerCase();
       if (r && !room.includes(r)) return false;
-      const day = (tk.dueAt ?? tk.createdAt ?? '').slice(0, 10);
+      const instant = tk.dueAt ?? tk.createdAt;
+      const day = instant ? bakuDateKey(instant) : '';
       if (from && day && day < from) return false;
       if (to && day && day > to) return false;
       return true;
@@ -155,13 +157,12 @@ export default function FoLaundryPage() {
           {
             key: 'due',
             header: t('laundryDue'),
-            render: (tk) => (tk.dueAt ? tk.dueAt.slice(0, 16).replace('T', ' ') : '—'),
+            render: (tk) => (tk.dueAt ? bakuDateTimeDisplay(tk.dueAt) : '—'),
           },
           {
             key: 'created',
             header: t('laundryCreated'),
-            render: (tk) =>
-              tk.createdAt ? tk.createdAt.slice(0, 16).replace('T', ' ') : '—',
+            render: (tk) => (tk.createdAt ? bakuDateTimeDisplay(tk.createdAt) : '—'),
           },
           {
             key: 'folio',

@@ -14,6 +14,7 @@ import { EmptyState } from "../../../components/empty-state";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { RecipeModal } from "../../../components/manufacturing/recipe-modal";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -177,7 +178,7 @@ function ManufacturingRecipesContent() {
                       : "—"}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{row._count?.lines ?? 0}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.updatedAt.slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.updatedAt)}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                     <div className="flex justify-end gap-1">
                       <button

@@ -11,6 +11,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../../lib/design-system";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../../components/layout/page-header";
 import { AuditActionChip } from "../../../../components/admin/audit-action-chip";
 import { AuditDiffModal } from "../../../../components/admin/audit-diff-modal";
@@ -230,7 +231,7 @@ export default function AdminSecurityAuditLogPage() {
                 }}
               >
                 <td className="px-3 py-2 whitespace-nowrap text-[#34495E]">
-                  {new Date(r.createdAt).toLocaleString()}
+                  {bakuDateTimeDisplay(r.createdAt)}
                 </td>
                 <td className="px-3 py-2 text-[#34495E]">
                   {r.actorDisplayName ?? r.userId ?? "—"}

@@ -42,6 +42,7 @@ import { DatePicker } from "../../../../components/ui/date-picker";
 import { NumericAmountInput } from "../../../../components/ui/numeric-amount-input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../components/ui/select";
 import type { SupportedCurrency } from "../../../../lib/currencies";
+import { billingPeriodKeyBaku, todayBakuYmd } from "@era/satellite-kit/time";
 
 type CashOrderKind = "KMO" | "KXO";
 type CashOrderStatus = "DRAFT" | "POSTED" | "CANCELLED";
@@ -144,12 +145,11 @@ function CashAccountSelect({
 }
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayBakuYmd();
 }
 
 function defaultYearMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return billingPeriodKeyBaku();
 }
 
 /** `ym` = `YYYY-MM` (локальный календарь). */

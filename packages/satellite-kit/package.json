@@ -66,13 +66,17 @@
       "types": "./dist/integration/person-name.d.ts",
       "default": "./dist/integration/person-name.js"
     },
+    "./time": {
+      "types": "./dist/time/baku.d.ts",
+      "default": "./dist/time/baku.js"
+    },
     "./tailwind-content": "./tailwind-content.js",
     "./icd10/generate": "./icd10/generate-icd10.cjs"
   },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/tenancy/login-org-no-persist.test.js dist/tenancy/login-hostname-memory.test.js dist/tenancy/era-org-subdomain.test.js dist/auth/login-user.test.js dist/auth/resolve-login-org.test.js dist/auth/staff-login-org.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js dist/ui/ui-barrel-no-node-crypto.test.js dist/extra-fields/extra-attributes.test.js dist/list-views/saved-list-view.test.js dist/print/print-snapshot.test.js"
+    "test": "npm run build && node --test --test-concurrency=1 dist/time/baku.test.js dist/tenancy/organization-bind-core.test.js dist/tenancy/satellite-tenant-extension.test.js dist/tenancy/satellite-tenant-context.test.js dist/tenancy/login-org-no-persist.test.js dist/tenancy/login-hostname-memory.test.js dist/tenancy/era-org-subdomain.test.js dist/tenancy/resolve-orchestrator-url.test.js dist/tenancy/folklore-s2s-token.test.js dist/tenancy/runtime-config-memory.test.js dist/tenancy/runtime-config-core.test.js dist/tenancy/desired-state-pull.test.js dist/auth/assert-service-token.test.js dist/auth/login-user.test.js dist/auth/resolve-login-org.test.js dist/auth/staff-login-org.test.js dist/integration/org-entitlement-gate.test.js dist/integration/person-name.test.js dist/placement/slice-export.test.js dist/ui/paginated-list.test.js dist/ui/ui-barrel-no-node-crypto.test.js dist/extra-fields/extra-attributes.test.js dist/list-views/saved-list-view.test.js dist/print/print-snapshot.test.js"
   },
   "dependencies": {
     "@era/contracts": "file:../era-contracts",

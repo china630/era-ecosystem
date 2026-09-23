@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { getReportBySlug, type ReportDef } from '@/lib/reports/catalog';
 import { ReportFilterBar } from '@/components/reports/ReportFilterBar';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface ReportData {
   rows?: Record<string, unknown>[];
@@ -28,10 +29,10 @@ export default function ReportSlugPage() {
     fetch('/api/business-date')
       .then((r) => r.json())
       .then((d) => {
-        const bd = d.businessDate ?? d.date ?? new Date().toISOString().slice(0, 10);
+        const bd = d.businessDate ?? d.date ?? hotelDateKey();
         setBusinessDate(typeof bd === 'string' ? bd.slice(0, 10) : bd);
       })
-      .catch(() => setBusinessDate(new Date().toISOString().slice(0, 10)));
+      .catch(() => setBusinessDate(hotelDateKey()));
   }, []);
 
   const fetchData = useCallback(

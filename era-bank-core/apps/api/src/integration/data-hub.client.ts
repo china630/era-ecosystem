@@ -3,6 +3,7 @@ import { join } from "path";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
+import { bakuDateKey } from "@era/satellite-kit/time";
 
 type SnapshotFxRow = { code: string; rate: number; rateDate?: string };
 type SnapshotCalendarDay = {
@@ -122,17 +123,7 @@ export class DataHubClient {
   }
 
   private isoDateBaku(d: Date): string {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Baku",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(d);
-    const y = parts.find((p) => p.type === "year")?.value;
-    const m = parts.find((p) => p.type === "month")?.value;
-    const day = parts.find((p) => p.type === "day")?.value;
-    if (!y || !m || !day) return d.toISOString().slice(0, 10);
-    return `${y}-${m}-${day}`;
+    return bakuDateKey(d);
   }
 
   private snapshotRate(currency: string, asOf: Date): number | null {

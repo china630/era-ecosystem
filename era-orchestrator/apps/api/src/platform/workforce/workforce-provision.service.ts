@@ -19,6 +19,7 @@ import {
   WorkforceEmploymentStatus,
   WorkforcePersonnelOrderType,
 } from "@era365/database";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { randomUUID } from "crypto";
 import { MdmService } from "../../mdm/mdm.service";
 import { composePersonFullName } from "../../mdm/mdm-person-name";
@@ -301,7 +302,7 @@ export class WorkforceProvisionService {
         actorUserId,
         employmentId,
         type: WorkforcePersonnelOrderType.TERMINATE,
-        effectiveDate: new Date().toISOString().slice(0, 10),
+        effectiveDate: todayBakuYmd(),
       });
     } catch (err) {
       console.warn(

@@ -27,6 +27,7 @@ import {
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { Button } from "../../ui/button";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type Warehouse = { id: string; name: string };
 type Product = { id: string; name: string; sku: string; isService?: boolean };
@@ -50,7 +51,7 @@ export function PhysicalAdjustmentModal({
   const [products, setProducts] = useState<Product[]>([]);
   const [stockRows, setStockRows] = useState<StockRow[]>([]);
   const [warehouseId, setWarehouseId] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayBakuYmd());
   const [docType, setDocType] = useState<(typeof DOC_TYPES)[number]>("WRITE_OFF");
   const [reason, setReason] = useState("");
   const [lines, setLines] = useState<Line[]>([{ productId: "", actualQty: "0" }]);
@@ -69,7 +70,7 @@ export function PhysicalAdjustmentModal({
   }, [stockRows]);
 
   const resetForm = useCallback(() => {
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(todayBakuYmd());
     setDocType("WRITE_OFF");
     setReason("");
     setLines([{ productId: "", actualQty: "0" }]);

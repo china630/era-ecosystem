@@ -5,15 +5,12 @@ import { serialize } from '@/lib/serialize';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { bakuDayBounds, todayBakuYmd } from '@era/satellite-kit/time';
 import {
   listNightAuditReservationUpdates,
   reservationUpdatesToCsv,
   type UpdateActionKind,
 } from '@/lib/services/night-audit-updates.service';
-
-function dayStart(iso: string) {
-  return new Date(`${iso}T00:00:00.000Z`);
-}
 
 const actionSchema = z.enum(['ALL', 'CANCEL', 'EXTEND', 'NOTE', 'OTHER']);
 
@@ -22,9 +19,9 @@ export async function GET(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const url = new URL(request.url);
-    const today = new Date().toISOString().slice(0, 10);
-    const from = dayStart(url.searchParams.get('from') ?? today);
-    const to = dayStart(url.searchParams.get('to') ?? today);
+    const today = todayBakuYmd();
+    const from = bakuDayBounds(url.searchParams.get('from') ?? today).start;
+    const to = bakuDayBounds(url.searchParams.get('to') ?? today).start;
     const action = actionSchema.parse(url.searchParams.get('action') ?? 'ALL') as UpdateActionKind;
     const rows = await listNightAuditReservationUpdates({ from, to, action });
     if (url.searchParams.get('format') === 'csv') {

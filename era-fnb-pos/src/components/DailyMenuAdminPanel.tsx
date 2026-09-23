@@ -1,5 +1,6 @@
 'use client';
 
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Field, FieldRow } from '@era/satellite-kit/ui';
@@ -10,7 +11,7 @@ export default function DailyMenuAdminPanel() {
   const t = useTranslations('admin.dailyMenu');
   const tc = useTranslations('common');
 
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayBakuYmd);
   const [allItems, setAllItems] = useState<MenuItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState<string | null>(null);
@@ -58,8 +59,8 @@ export default function DailyMenuAdminPanel() {
   async function copyYesterday() {
     setMsg(null);
     try {
-      const y = new Date(date);
-      y.setDate(y.getDate() - 1);
+      const y = bakuCivilUtcDate(date);
+      y.setUTCDate(y.getUTCDate() - 1);
       const res = await fetch('/api/admin/daily-menu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -18,6 +18,7 @@ import {
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 
 type ProtocolRow = {
   id: string;
@@ -42,9 +43,7 @@ export default function ProcurementProtocolsPage() {
   const [number, setNumber] = useState("");
   const [title, setTitle] = useState("");
   const [procedureType, setProcedureType] = useState("TENDER");
-  const [protocolDate, setProtocolDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [protocolDate, setProtocolDate] = useState(() => todayBakuYmd());
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {

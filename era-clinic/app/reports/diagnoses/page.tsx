@@ -17,6 +17,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 type Row = {
   code: string;
@@ -29,14 +30,9 @@ type Row = {
   practitioners: string[];
 };
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function monthAgoIso() {
-  const d = new Date();
-  d.setDate(d.getDate() - 30);
-  return d.toISOString().slice(0, 10);
+  const { start } = bakuDayBounds(todayBakuYmd());
+  return bakuDateKey(new Date(start.getTime() - 30 * 86_400_000));
 }
 
 export default function DiagnosisReportPage() {
@@ -44,7 +40,7 @@ export default function DiagnosisReportPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const [from, setFrom] = useState(monthAgoIso());
-  const [to, setTo] = useState(todayIso());
+  const [to, setTo] = useState(todayBakuYmd());
   const [source, setSource] = useState("all");
   const [chapter, setChapter] = useState("");
   const [chapters, setChapters] = useState<Array<{ code: string; title: string }>>([]);

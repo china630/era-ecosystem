@@ -20,6 +20,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 type BarPlan = { id: string; code: string; name: string };
 type RoomType = { id: string; code: string; name: string };
@@ -50,12 +51,8 @@ export default function BarCalendarPage() {
   const [ratePlanId, setRatePlanId] = useState('');
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rates, setRates] = useState<BarRate[]>([]);
-  const [from, setFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [to, setTo] = useState(() => {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() + 14);
-    return d.toISOString().slice(0, 10);
-  });
+  const [from, setFrom] = useState(hotelDateKey());
+  const [to, setTo] = useState(() => addHotelDays(hotelDateKey(), 14));
   const [fillRoomTypeId, setFillRoomTypeId] = useState('');
   const [fillAmount, setFillAmount] = useState('');
   const [busy, setBusy] = useState(false);
@@ -241,11 +238,9 @@ export default function BarCalendarPage() {
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
-          const today = new Date().toISOString().slice(0, 10);
-          const end = new Date();
-          end.setUTCDate(end.getUTCDate() + 14);
+          const today = hotelDateKey();
           setFrom(today);
-          setTo(end.toISOString().slice(0, 10));
+          setTo(addHotelDays(today, 14));
         }}
         actionsExtra={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>

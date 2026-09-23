@@ -1,4 +1,8 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   PlatformCustomDomainKind,
@@ -7,6 +11,7 @@ import {
 import {
   FINANCE_CORE_SATELLITE_KEY,
   INDUSTRY_SATELLITE_KEYS,
+  isKnownSatelliteKey,
 } from "../subscription/satellite-keys.constants";
 import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteEndpointRegistryService } from "../satellite-events/satellite-endpoint-registry.service";
@@ -15,6 +20,46 @@ import { decryptText } from "../security/pii-crypto.util";
 
 const BIND_PATH = "/api/internal/v1/organization/bind";
 const RUNTIME_CONFIG_PATH = "/api/internal/v1/runtime-config";
+
+/** Keep in sync with `@era/satellite-kit` `isFolkloreS2sToken`. */
+export function isComposeFolkloreSecret(value: string | undefined | null): boolean {
+  const t = typeof value === "string" ? value.trim() : "";
+  if (!t) return true;
+  if (t === "dev-control-plane-token" || t === "dev-satellite-event-token") return true;
+  return t.toLowerCase().startsWith("change-me");
+}
+
+/** In-cluster event ingest URL — never Traefik public HTTPS when ERA_IN_DOCKER=1. */
+export function resolveSatelliteEventUrl(opts: {
+  internalUrl?: string;
+  eventPublicUrl?: string;
+  orchPublic?: string;
+  inDocker: boolean;
+}): string {
+  const internal = opts.internalUrl?.trim();
+  if (internal && !(opts.inDocker && isPublicOrchEventUrl(internal))) {
+    return internal.replace(/\/$/, "");
+  }
+  if (opts.inDocker) return "http://orchestrator:4000";
+  const eventPublic = opts.eventPublicUrl?.trim();
+  if (eventPublic) return eventPublic.replace(/\/$/, "");
+  return (opts.orchPublic ?? "").replace(/\/$/, "");
+}
+
+function isPublicOrchEventUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:") return true;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.endsWith("era-365.online") ||
+      host === "localhost" ||
+      host === "127.0.0.1"
+    );
+  } catch {
+    return false;
+  }
+}
 
 const DEPT_NAME_HINTS: Record<string, RegExp> = {
   industry_fnb_pos: /f\s*&\s*b|fnb|food|resto|кафе|ресторан|общепит/i,
@@ -125,6 +170,54 @@ export class SatelliteOrgBindSyncService {
     return { organizationId: orgId, results };
   }
 
+  /**
+   * Satellite pull (Wave 6): same payload as Sync POST runtime-config.
+   * Requires an enabled SatelliteEndpoint row — env fan-out alone is not enough
+   * (cluster-wide Bearer must not read arbitrary orgs).
+   */
+  async getDesiredState(opts: {
+    organizationId: string;
+    satelliteKey: string;
+  }): Promise<{
+    organizationId: string;
+    satelliteKey: string;
+    generatedAt: string;
+    config: Record<string, unknown>;
+  }> {
+    const organizationId = opts.organizationId.trim();
+    const satelliteKey = opts.satelliteKey.trim();
+    if (!isKnownSatelliteKey(satelliteKey) && satelliteKey !== "banking_dbo") {
+      throw new NotFoundException("Unknown satelliteKey");
+    }
+
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true },
+    });
+    if (!org) throw new NotFoundException("Organization not found");
+
+    const endpoint = await this.prisma.satelliteEndpoint.findUnique({
+      where: {
+        organizationId_satelliteKey: { organizationId, satelliteKey },
+      },
+      select: { enabled: true },
+    });
+    if (!endpoint?.enabled) {
+      throw new NotFoundException(
+        "No enabled SatelliteEndpoint for organizationId + satelliteKey",
+      );
+    }
+
+    const config = await this.buildRuntimeConfigPayload(organizationId);
+    config.updatedBy = "orchestrator-desired-state";
+    return {
+      organizationId,
+      satelliteKey,
+      generatedAt: new Date().toISOString(),
+      config,
+    };
+  }
+
   private isIndustryKey(key: string): boolean {
     return (INDUSTRY_SATELLITE_KEYS as readonly string[]).includes(key);
   }
@@ -147,18 +240,21 @@ export class SatelliteOrgBindSyncService {
     return parentOrgId;
   }
 
-  private async runtimeConfigPayload(
+  /** Shared builder for Sync push and desired-state pull (folklore secrets omitted). */
+  async buildRuntimeConfigPayload(
     organizationId: string,
   ): Promise<Record<string, unknown>> {
     const orchPublic =
       this.config.get<string>("ERA_PUBLIC_ORCHESTRATOR_URL")?.trim() ||
       this.config.get<string>("ORCHESTRATOR_PUBLIC_URL")?.trim() ||
       "";
-    const eventUrl =
-      this.config.get<string>("ORCHESTRATOR_EVENT_PUBLIC_URL")?.trim() ||
-      this.config.get<string>("ERA_ORCHESTRATOR_INTERNAL_URL")?.trim() ||
-      orchPublic ||
-      "";
+    const inDocker = process.env.ERA_IN_DOCKER === "1";
+    const eventUrl = resolveSatelliteEventUrl({
+      internalUrl: this.config.get<string>("ERA_ORCHESTRATOR_INTERNAL_URL"),
+      eventPublicUrl: this.config.get<string>("ORCHESTRATOR_EVENT_PUBLIC_URL"),
+      orchPublic,
+      inDocker,
+    });
     const psa =
       this.config.get<string>("PLATFORM_SUPER_ADMIN_EMAILS")?.trim() || "";
     const sso =
@@ -182,8 +278,18 @@ export class SatelliteOrgBindSyncService {
         ),
       ];
     }
-    if (sso.length >= 16) body.ssoSharedSecret = sso;
-    if (eventToken) body.satelliteEventServiceToken = eventToken;
+    if (sso.length >= 16 && !isComposeFolkloreSecret(sso)) {
+      body.ssoSharedSecret = sso;
+    }
+    if (eventToken && !isComposeFolkloreSecret(eventToken)) {
+      body.satelliteEventServiceToken = eventToken;
+    }
+    const vendorBridge = this.config.get<string>("ELEKTRAWEB_BRIDGE_ENABLED")?.trim();
+    if (vendorBridge === "1" || vendorBridge === "true") {
+      body.vendorBridgesEnabled = true;
+    } else if (vendorBridge === "0" || vendorBridge === "false") {
+      body.vendorBridgesEnabled = false;
+    }
 
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
@@ -348,7 +454,7 @@ export class SatelliteOrgBindSyncService {
       target,
       token,
       RUNTIME_CONFIG_PATH,
-      await this.runtimeConfigPayload(target.organizationId),
+      await this.buildRuntimeConfigPayload(target.organizationId),
       "RuntimeConfig",
     );
     return {

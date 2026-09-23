@@ -36,7 +36,7 @@ export class ListWorkforceTimesheetQueryDto {
   page?: number;
 
   @ApiPropertyOptional({
-    example: 40,
+    example: 25,
     description: "Employments per page (max 100) for ~240 headcount grids",
   })
   @IsOptional()
@@ -45,6 +45,16 @@ export class ListWorkforceTimesheetQueryDto {
   @Min(1)
   @Max(100)
   pageSize?: number;
+
+  @ApiPropertyOptional({ description: "Filter ACTIVE roster by org unit" })
+  @IsOptional()
+  @IsUUID()
+  orgUnitId?: string;
+
+  @ApiPropertyOptional({ description: "Filter ACTIVE roster by employment" })
+  @IsOptional()
+  @IsUUID()
+  employmentId?: string;
 }
 
 export class WorkforceTimesheetBatchItemDto {

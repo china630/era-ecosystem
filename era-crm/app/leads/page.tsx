@@ -18,7 +18,7 @@ import {
   PageHeader,
   type CatalogOption,
 } from "@era/satellite-kit/ui";
-
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 type Agent = {
   id: string;
   fullName: string;
@@ -584,7 +584,7 @@ function LeadsPipelineContent() {
                     )}
                     {lead.nextContactAt && (
                       <div className="text-[11px] text-[#E67E22]">
-                        {t("next")}: {new Date(lead.nextContactAt).toLocaleString()}
+                        {t("next")}: {bakuDateTimeDisplay(lead.nextContactAt)}
                       </div>
                     )}
                     {lead.stage !== "WON" && lead.stage !== "LOST" && (

@@ -8,6 +8,8 @@ import {
   isoDateToDisplay,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { resolveDateMode, resolvePreset, type PeriodPreset } from '@/lib/reports/period';
 
 type ReportDateMode = 'business_date' | 'month_to_closed' | 'year_to_closed' | 'range';
@@ -33,15 +35,11 @@ const PRESET_TO_RESOLVE: Record<Exclude<PresetChoice, 'customRange'>, PeriodPres
 };
 
 function isoToLocalDate(iso: string): Date {
-  // Treat iso date as local date to avoid tz shifting.
-  return new Date(`${iso}T00:00:00`);
+  return bakuCivilUtcDate(iso);
 }
 
 function localDateToIsoDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return hotelDateKey(d);
 }
 
 export function ReportFilterBar({

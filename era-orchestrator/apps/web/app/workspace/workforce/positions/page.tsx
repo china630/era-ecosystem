@@ -112,7 +112,7 @@ export default function PositionsPage() {
   }, [ready, user?.organizationId, load]);
 
   function openCreate() {
-    setFormOrgUnitId(filterOrgUnitId || units[0]?.id || "");
+    setFormOrgUnitId("");
     setFormName("");
     setFormCode("");
     setFormSlots(1);
@@ -357,7 +357,7 @@ export default function PositionsPage() {
             onChange={(next) => setFormOrgUnitId(String(next))}
             options={unitOptions}
             required
-            emptyLabel={null}
+            emptyLabel={tCommon("select")}
             disabled={editState?.mode === "edit"}
           />
           <label className="block text-[13px] font-medium text-[#34495E]">

@@ -8,6 +8,7 @@ import {
   validatePatientConsecutiveGap,
 } from "@/lib/treatment-planner.service";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 
 const LUNCH_END_HOUR = 14;
 
@@ -43,7 +44,7 @@ export async function rescheduleProcedureOrder(
 
   let slotStart = await nextWorkSlot(new Date(scheduledAt));
   if (order.procedureType && !order.procedureType.afterLunchAllowed) {
-    if (slotStart.getHours() >= LUNCH_END_HOUR) {
+    if (bakuHourMinute(slotStart).hour >= LUNCH_END_HOUR) {
       throw new Error("Procedure cannot be scheduled after lunch");
     }
   }
@@ -76,10 +77,7 @@ export async function rescheduleProcedureOrder(
     }
   }
 
-  const sameDayStart = new Date(slotStart);
-  sameDayStart.setHours(0, 0, 0, 0);
-  const sameDayEnd = new Date(sameDayStart);
-  sameDayEnd.setDate(sameDayEnd.getDate() + 1);
+  const { start: sameDayStart, end: sameDayEnd } = bakuDayBounds(bakuDateKey(slotStart));
 
   const sameDayOrders = await prisma.procedureOrder.findMany({
     where: {
@@ -146,10 +144,8 @@ export async function rescheduleProcedureOrder(
 
 export async function getResourceCalendar(date: Date, opts?: { procedureCode?: string }) {
   const { schedulingSlotMinutes } = await getSchedulingSettings();
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayYmd = bakuDateKey(date);
+  const { start: dayStart, end: dayEnd } = bakuDayBounds(dayYmd);
 
   const schedulingCodes = new Set(
     (
@@ -211,8 +207,10 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
     for (let h = 9; h < 17; h++) {
       for (let m = 0; m < 60; m += schedulingSlotMinutes) {
         if (h === 13 && m < 60) continue;
-        const slotStart = new Date(dayStart);
-        slotStart.setHours(h, m, 0, 0);
+        const slotStart = parseBakuDateTime(
+          dayYmd,
+          `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+        );
         const slotEnd = addMinutes(slotStart, schedulingSlotMinutes);
         const hit = resourceBookings.find(
           (b) => b.startsAt < slotEnd && b.endsAt > slotStart,

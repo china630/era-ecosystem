@@ -26,6 +26,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { formatMoneyAzn } from "../../../lib/format-money";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 
 type OrderRow = {
   id: string;
@@ -185,7 +186,7 @@ function ManufacturingOrdersContent() {
                 return (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {row.createdAt.slice(0, 10)}
+                      {bakuDateDisplay(row.createdAt)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.recipeName}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.warehouseName}</td>

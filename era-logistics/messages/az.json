@@ -4,13 +4,12 @@
     "description": "Nəqliyyat və logistika peyk modulu"
   },
   "login": {
-    "title": "ERA Logistics",
-    "subtitle": "Hesabınızla daxil olun",
-    "login": "Login",
+    "title": "Giriş",
+    "subtitle": "",
+    "login": "Ləqəb",
     "password": "Şifrə",
     "submit": "Daxil ol",
-    "busy": "Daxil olunur…",
-    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+    "busy": "Daxil olunur…"
   },
   "home": {
     "loading": "Yüklənir…",
@@ -143,7 +142,7 @@
     "loginFailed": "Giriş uğursuz oldu",
     "organizationIdLabel": "Təşkilat kodu (ERA ID)",
     "organizationIdPlaceholder": "6 rəqəm (məs. 104221)",
-    "organizationIdHint": "Bulud shared pool-da mütləqdir. Kodu menecerdən və ya Control Plane → Super-admin → Organizations bölməsindən götürün. Dedicated appliance-də boş buraxa bilərsiniz.",
+    "organizationIdHint": "",
     "footerLegalNavAria": "Hüquqi keçidlər və kömək",
     "footerFaq": "FAQ",
     "footerTerms": "İstifadə şərtləri",

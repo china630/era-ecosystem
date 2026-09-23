@@ -9,6 +9,12 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@era/satellite-kit/time": [
+        "../../../packages/satellite-kit/dist/time/baku"
+      ]
+    },
     "strictNullChecks": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

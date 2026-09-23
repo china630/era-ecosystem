@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiBaseUrl, apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   DATA_TABLE_CLASS,
@@ -227,7 +228,7 @@ export default function StatformsPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{row.period}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {new Date(row.createdAt).toLocaleString()}
+                      {bakuDateTimeDisplay(row.createdAt)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <a

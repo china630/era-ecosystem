@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InvoiceStatus, Prisma } from "@erafinance/database";
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 import { PrismaService } from "../../prisma/prisma.service";
 import { TaxLimitService } from "../tax-limit.service";
 import { anonymizeCouncilPayload } from "./council-pii.util";
@@ -22,7 +23,7 @@ export class CouncilSnapshotBuilderService {
     target: CouncilTargetRef,
     riskAuditId?: string | null,
   ): Promise<CouncilSnapshot> {
-    const year = new Date().getUTCFullYear();
+    const year = bakuCalendarYear();
     const turnover = await this.taxLimits.getCurrentYearTurnover(organizationId);
     const vatMonitor = await this.taxLimits.getVatThresholdMonitorSnapshot(
       organizationId,

@@ -15,6 +15,7 @@ import {
   DatePicker,
   EraListFilterBar,
   ListPaginationFooter,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -22,6 +23,7 @@ import {
   CARD_CONTAINER_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -69,11 +71,9 @@ export default function PersonnelOrdersPage() {
   const [tplOpen, setTplOpen] = useState(false);
   const [employments, setEmployments] = useState<EmploymentOpt[]>([]);
   const [employmentId, setEmploymentId] = useState("");
-  const [type, setType] = useState("HIRE");
-  const [locale, setLocale] = useState("az");
-  const [effectiveDate, setEffectiveDate] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
+  const [type, setType] = useState("");
+  const [locale, setLocale] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState(() => todayBakuYmd());
   const [leaveStart, setLeaveStart] = useState("");
   const [leaveEnd, setLeaveEnd] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,6 +89,7 @@ export default function PersonnelOrdersPage() {
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
   const [listType, setListType] = useState(orderTypeFilter);
   const [listStatus, setListStatus] = useState("");
+  const [listEmpId, setListEmpId] = useState(filterEmploymentId);
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
 
   const { page, pageSize, setPage, setPageSize, paged, total } =
@@ -109,9 +110,9 @@ export default function PersonnelOrdersPage() {
     () =>
       employments.map((e) => ({
         value: e.id,
-        label: persons[e.globalPersonId]?.displayName ?? e.globalPersonId.slice(0, 8),
+        label: persons[e.globalPersonId]?.displayName ?? tCommon("unnamedPerson"),
       })),
-    [employments, persons],
+    [employments, persons, tCommon],
   );
 
   const typeOptions = useMemo(
@@ -136,7 +137,7 @@ export default function PersonnelOrdersPage() {
     setLoading(true);
     setError(null);
     const qs = new URLSearchParams();
-    if (filterEmploymentId) qs.set("employmentId", filterEmploymentId);
+    if (listEmpId) qs.set("employmentId", listEmpId);
     if (listType) qs.set("type", listType);
     if (listStatus) qs.set("status", listStatus);
     const q = qs.toString();
@@ -166,7 +167,7 @@ export default function PersonnelOrdersPage() {
       if (data.persons) setPersons(data.persons);
     }
     setLoading(false);
-  }, [t, filterEmploymentId, listType, listStatus]);
+  }, [t, filterEmploymentId, listEmpId, listType, listStatus]);
 
   const loadSettings = useCallback(async () => {
     const res = await workforceFetch("personnel-orders/settings");
@@ -183,6 +184,15 @@ export default function PersonnelOrdersPage() {
     if (ready) {
       void load();
       void loadSettings();
+      void workforceFetch("employments?status=ACTIVE").then(async (empRes) => {
+        if (!empRes.ok) return;
+        const e = (await empRes.json()) as {
+          items?: EmploymentOpt[];
+          persons?: Record<string, { displayName: string | null }>;
+        };
+        setEmployments(e.items ?? []);
+        if (e.persons) setPersons((p) => ({ ...p, ...e.persons }));
+      });
     }
   }, [ready, load, loadSettings]);
 
@@ -217,6 +227,11 @@ export default function PersonnelOrdersPage() {
   }, [filterEmploymentId, autoPdf, orderTypeFilter]);
 
   async function openCreate() {
+    setEmploymentId("");
+    setType("");
+    setLocale("");
+    setLeaveStart("");
+    setLeaveEnd("");
     setOpen(true);
     const empRes = await workforceFetch("employments?status=ACTIVE");
     if (empRes.ok) {
@@ -226,11 +241,11 @@ export default function PersonnelOrdersPage() {
       };
       setEmployments(e.items ?? []);
       if (e.persons) setPersons(e.persons);
-      if (e.items?.[0]) setEmploymentId(e.items[0].id);
     }
   }
 
   async function createOrder() {
+    if (!employmentId || !type || !locale) return;
     setBusy(true);
     setError(null);
     try {
@@ -418,8 +433,17 @@ export default function PersonnelOrdersPage() {
         onReset={() => {
           setListType("");
           setListStatus("");
+          setListEmpId("");
         }}
       >
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("colPerson")}
+          value={listEmpId}
+          onChange={(next) => setListEmpId(String(next))}
+          options={empOptions}
+          emptyLabel={tCommon("all")}
+        />
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("colType")}
@@ -466,7 +490,7 @@ export default function PersonnelOrdersPage() {
               ) : (
                 paged.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.orderNumber ?? r.id.slice(0, 8)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.orderNumber ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`type.${r.type}` as "type.HIRE")}
                     </td>
@@ -475,7 +499,7 @@ export default function PersonnelOrdersPage() {
                         (r.employment?.globalPersonId
                           ? persons[r.employment.globalPersonId]?.displayName
                           : null) ??
-                        r.employmentId.slice(0, 8)}
+                        tCommon("unnamedPerson")}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {String(r.effectiveDate).slice(0, 10)}
@@ -565,6 +589,16 @@ export default function PersonnelOrdersPage() {
         title={t("create")}
         onClose={() => setOpen(false)}
         closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setOpen(false)}
+            onSubmit={() => void createOrder()}
+            busy={busy}
+            submitDisabled={!employmentId || !type || !locale}
+            cancelLabel={tCommon("cancel")}
+            submitLabel={t("create")}
+          />
+        }
       >
         <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
           <CatalogField
@@ -573,6 +607,7 @@ export default function PersonnelOrdersPage() {
             value={employmentId}
             onChange={(next) => setEmploymentId(String(next))}
             options={empOptions}
+            emptyLabel={tCommon("select")}
           />
           <CatalogField
             kind="CLOSED_SMALL"
@@ -580,6 +615,7 @@ export default function PersonnelOrdersPage() {
             value={type}
             onChange={(next) => setType(String(next))}
             options={typeOptions}
+            emptyLabel={tCommon("select")}
           />
           <CatalogField
             kind="CLOSED_SMALL"
@@ -587,6 +623,7 @@ export default function PersonnelOrdersPage() {
             value={locale}
             onChange={(next) => setLocale(String(next))}
             options={localeOptions}
+            emptyLabel={tCommon("select")}
           />
           <DatePicker
             label={t("colDate")}
@@ -613,14 +650,6 @@ export default function PersonnelOrdersPage() {
               />
             </>
           ) : null}
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={busy || !employmentId}
-            onClick={() => void createOrder()}
-          >
-            {t("create")}
-          </button>
         </form>
       </ModalShell>
       <ModalShell

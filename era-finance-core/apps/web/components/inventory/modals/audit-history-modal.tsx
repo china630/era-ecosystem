@@ -10,6 +10,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { EmptyState } from "../../empty-state";
 import { InventoryModalFooter, InventoryModalShell } from "./modal-shell";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type AuditRow = {
   id: string;
@@ -130,7 +131,7 @@ export function AuditHistoryModal({
                               : r.status}
                   </td>
                   <td className="whitespace-nowrap p-2 text-slate-600">
-                    {r.createdAt?.slice(0, 19)?.replace("T", " ") ?? t("common.emptyValue")}
+                    {r.createdAt ? bakuDateTimeDisplay(r.createdAt) : t("common.emptyValue")}
                   </td>
                   <td className="p-2 text-right">
                     <Link

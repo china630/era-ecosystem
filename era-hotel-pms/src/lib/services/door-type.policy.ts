@@ -1,3 +1,6 @@
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+
 export function physicalTypeAllowedForDoor(opts: {
   chargedRoomTypeId: string;
   givenRoomTypeId: string | null | undefined;
@@ -33,11 +36,11 @@ export function scaleLinesToSell(
 }
 
 export function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return hotelDateKey(d);
 }
 
 export function dateOnlyUtc(d: Date): Date {
-  return new Date(`${isoDate(d)}T00:00:00.000Z`);
+  return bakuCivilUtcDate(hotelDateKey(d));
 }
 
 /** Even split with remainder qapiks on the last night. */

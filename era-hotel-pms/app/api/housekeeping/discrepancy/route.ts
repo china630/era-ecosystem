@@ -1,3 +1,4 @@
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
@@ -11,9 +12,9 @@ export async function GET(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
-    const date = new URL(request.url).searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
+    const date = new URL(request.url).searchParams.get('date') ?? todayBakuYmd();
     const rows = await prisma.hkDiscrepancy.findMany({
-      where: { workDate: new Date(`${date}T00:00:00.000Z`) },
+      where: { workDate: bakuCivilUtcDate(date) },
       orderBy: { createdAt: 'desc' },
     });
     const escalations = await escalateVisitFlags(date);

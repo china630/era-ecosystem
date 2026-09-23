@@ -1,6 +1,6 @@
 /**
  * Physio catalog seed helpers (no CLI side effects).
- * ADR: docs/adr/clinic-catalog-base-and-org-overlay-seeds.md
+ * ADR: docs/adr/clinic-catalog-template-overlay.md
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -13,13 +13,25 @@ import {
   type PhysioZoneSeedJson,
 } from "../src/domain/physio/physio-seed-map";
 import { inferPhysioTypeGate } from "../src/domain/physio/physio-type-gate";
+import { ensureClinicCatalogFromTemplates } from "../src/domain/catalog/ensure-clinic-catalog-from-templates";
 
-export function seedOrgId(): string {
-  return (
+/** Org overlay / Nafta seeds only — never demo-org. */
+export function requireSeedOrgId(): string {
+  const id =
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
     process.env.ORGANIZATION_ID?.trim() ||
-    "demo-org"
-  );
+    "";
+  if (!id || id === "demo-org") {
+    throw new Error(
+      "ERA_SATELLITE_ORGANIZATION_ID (or ORGANIZATION_ID) required for org overlay seed; demo-org is forbidden",
+    );
+  }
+  return id;
+}
+
+/** @deprecated use requireSeedOrgId — kept for call sites that expect seedOrgId name */
+export function seedOrgId(): string {
+  return requireSeedOrgId();
 }
 
 function loadJson<T>(...parts: string[]): T {
@@ -39,20 +51,17 @@ function uniqueAliases(raw: string[] | undefined): string[] {
   return out;
 }
 
-export async function seedPhysioBase(
-  prisma: PrismaClient,
-  organizationId = seedOrgId(),
-) {
+/** Satellite base → unscoped PhysioSiteTemplate / PhysioListItemTemplate. */
+export async function seedPhysioBase(prisma: PrismaClient) {
   const zonesFile = loadJson<{ zones: PhysioZoneSeedJson[] }>("base", "physio-zones-s.json");
   const listsFile = loadJson<{ items: PhysioListItemSeedJson[] }>("base", "physio-list-items.json");
   const { sites, skippedAliases } = mapPhysioZoneSeeds(zonesFile.zones ?? []);
   const listItems = mapPhysioListSeeds(listsFile.items ?? []);
 
   for (const site of sites) {
-    await prisma.physioSite.upsert({
-      where: { organizationId_code: { organizationId, code: site.code } },
+    await prisma.physioSiteTemplate.upsert({
+      where: { code: site.code },
       create: {
-        organizationId,
         code: site.code,
         kind: site.kind,
         prikaz817: site.prikaz817,
@@ -84,16 +93,9 @@ export async function seedPhysioBase(
 
   for (const item of listItems) {
     const listKind = item.listKind as PhysioListKind;
-    await prisma.physioListItem.upsert({
-      where: {
-        organizationId_listKind_code: {
-          organizationId,
-          listKind,
-          code: item.code,
-        },
-      },
+    await prisma.physioListItemTemplate.upsert({
+      where: { listKind_code: { listKind, code: item.code } },
       create: {
-        organizationId,
         listKind,
         code: item.code,
         titleAz: item.titleAz,
@@ -111,7 +113,6 @@ export async function seedPhysioBase(
   }
 
   return {
-    organizationId,
     layer: "base" as const,
     sites: sites.length,
     listItems: listItems.length,
@@ -119,10 +120,16 @@ export async function seedPhysioBase(
   };
 }
 
+/**
+ * Nafta org overlay (aliases + type gates). Requires bound org.
+ * Ensures org overlay rows exist via copy-if-empty before applying aliases.
+ */
 export async function seedPhysioNafta(
   prisma: PrismaClient,
-  organizationId = seedOrgId(),
+  organizationId = requireSeedOrgId(),
 ) {
+  await ensureClinicCatalogFromTemplates(prisma, organizationId);
+
   const zonesOverlay = loadJson<{
     siteAliases?: Array<{ code: string; woAliases?: string[] }>;
   }>("nafta", "physio-zones-overlay.json");
@@ -137,7 +144,7 @@ export async function seedPhysioNafta(
       where: { organizationId_code: { organizationId, code } },
     });
     if (!site) {
-      console.warn(`[seed-physio-nafta] missing base site ${code} — run base seed first`);
+      console.warn(`[seed-physio-nafta] missing base site ${code} — run db:seed templates first`);
       continue;
     }
     const aliases = uniqueAliases(entry.woAliases);

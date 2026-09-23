@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { bakuDayBounds } from "@/lib/baku-day";
 import { formatIcdLabel, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
 
 export async function listDiagnosisReport(input: {
@@ -9,8 +10,8 @@ export async function listDiagnosisReport(input: {
   locale?: string;
 }) {
   const locale = normalizeIcdLocale(input.locale);
-  const from = new Date(`${input.fromYmd}T00:00:00+04:00`);
-  const to = new Date(`${input.toYmd}T23:59:59.999+04:00`);
+  const { start: from } = bakuDayBounds(input.fromYmd);
+  const { end: to } = bakuDayBounds(input.toYmd);
   const chapter = input.chapter?.trim() || undefined;
   const source = input.source ?? "all";
 
@@ -20,7 +21,7 @@ export async function listDiagnosisReport(input: {
     source === "all" || source === "episode"
       ? prisma.clinicalDiagnosis.findMany({
           where: {
-            recordedAt: { gte: from, lte: to },
+            recordedAt: { gte: from, lt: to },
             ...(icdFilter ? { icdCode: icdFilter } : {}),
           },
           include: { icdCode: true },
@@ -29,7 +30,7 @@ export async function listDiagnosisReport(input: {
     source === "all" || source === "visit"
       ? prisma.visitDiagnosis.findMany({
           where: {
-            recordedAt: { gte: from, lte: to },
+            recordedAt: { gte: from, lt: to },
             ...(icdFilter ? { icdCode: icdFilter } : {}),
           },
           include: {
@@ -41,7 +42,7 @@ export async function listDiagnosisReport(input: {
     source === "all" || source === "admission"
       ? prisma.admissionDiagnosis.findMany({
           where: {
-            recordedAt: { gte: from, lte: to },
+            recordedAt: { gte: from, lt: to },
             ...(icdFilter ? { icdCode: icdFilter } : {}),
           },
           include: { icdCode: true },

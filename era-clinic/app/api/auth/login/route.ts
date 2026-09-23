@@ -54,6 +54,10 @@ export async function POST(request: Request) {
       "@/lib/auth/ensure-system-clinic-roles"
     );
     await ensureSystemClinicRoles(prisma, organizationId);
+    const { ensureClinicCatalogIfEmpty } = await import(
+      "@/domain/catalog/ensure-clinic-catalog-from-templates"
+    );
+    await ensureClinicCatalogIfEmpty(prisma, organizationId);
 
     const permissions = await permissionsForUser(user.id);
     const token = await signSatelliteSession({

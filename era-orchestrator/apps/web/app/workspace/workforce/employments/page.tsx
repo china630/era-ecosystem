@@ -37,6 +37,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -232,9 +233,7 @@ export default function WorkforceEmploymentsPage() {
   const [positionId, setPositionId] = useState("");
   const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
   const [positions, setPositions] = useState<PositionOpt[]>([]);
-  const [hireDate, setHireDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [hireDate, setHireDate] = useState(() => todayBakuYmd());
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
@@ -488,7 +487,7 @@ export default function WorkforceEmploymentsPage() {
     setResolvedLabel(null);
     setHireFinMasked(null);
     setPositionId("");
-    setHireDate(new Date().toISOString().slice(0, 10));
+    setHireDate(todayBakuYmd());
     setSatelliteKeys([]);
     setHireLogin("");
     setHirePin("");
@@ -509,7 +508,7 @@ export default function WorkforceEmploymentsPage() {
     setResolvedLabel(null);
     setHireFinMasked(null);
     setPositionId("");
-    setHireDate(new Date().toISOString().slice(0, 10));
+    setHireDate(todayBakuYmd());
     setSatelliteKeys([]);
     setHireLogin("");
     setHirePin("");
@@ -532,10 +531,10 @@ export default function WorkforceEmploymentsPage() {
       const label =
         ops.displayName?.trim() ||
         [ops.firstName, ops.lastName].filter(Boolean).join(" ").trim() ||
-        personId.slice(0, 8);
+        tCommon("unnamedPerson");
       setResolvedLabel(label);
     } else {
-      setResolvedLabel(personId.slice(0, 8));
+      setResolvedLabel(tCommon("unnamedPerson"));
     }
   }
 
@@ -617,7 +616,7 @@ export default function WorkforceEmploymentsPage() {
     setResolvedLabel(
       data.opsProfile?.displayName
         ? `${data.opsProfile.displayName} (${data.opsProfile.primaryIdentifierMasked ?? "—"})`
-        : data.globalPersonId.slice(0, 8),
+        : tCommon("unnamedPerson"),
     );
     const fin = data.opsProfile?.primaryIdentifierMasked?.trim();
     setHireFinMasked(fin && fin !== "—" ? fin : resolveFin.trim() || null);
@@ -1208,7 +1207,7 @@ export default function WorkforceEmploymentsPage() {
                       {persons[r.globalPersonId]?.displayName ??
                         (persons[r.globalPersonId]?.accessDenied
                           ? t("maskedPerson")
-                          : r.globalPersonId.slice(0, 8))}
+                          : tCommon("unnamedPerson"))}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
                       {persons[r.globalPersonId]?.finMasked ?? "—"}
@@ -1706,7 +1705,7 @@ export default function WorkforceEmploymentsPage() {
                 value={cardSex}
                 onChange={(next) => setCardSex(String(next))}
                 options={sexOptions}
-                emptyLabel={null}
+                emptyLabel={tCommon("select")}
               />
               <DatePicker
                 label={t("fieldBirthDate")}
@@ -1731,7 +1730,7 @@ export default function WorkforceEmploymentsPage() {
               value={cardBlood}
               onChange={(next) => setCardBlood(String(next))}
               options={bloodOptions}
-              emptyLabel={null}
+              emptyLabel={tCommon("select")}
             />
           </fieldset>
 

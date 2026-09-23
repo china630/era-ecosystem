@@ -22,7 +22,21 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { createSatelliteTenantExtension } from "@era/satellite-kit/tenancy";
 
-const bankOrgId = process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001";
+const bankOrgId = (() => {
+  const id =
+    process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    "";
+  if (!id || id === "demo-org" || id === "demo-bank-org-001") {
+    throw new Error(
+      "ERA_BANK_ORGANIZATION_ID (or ERA_SATELLITE_ORGANIZATION_ID) required for bank-core seed; demo-bank-org-001 is forbidden",
+    );
+  }
+  return id;
+})();
+
+const seedDemo =
+  process.argv.includes("--demo") || process.env.ERA_BANK_SEED_DEMO === "1";
 
 function loginHash(identifier: string) {
   return createHash("sha256").update(identifier.trim().toUpperCase()).digest("hex");
@@ -267,6 +281,7 @@ async function main() {
       });
     }
 
+    if (seedDemo) {
     const liabilityGl = await prisma.glAccount.findFirst({
       where: { bankOrgId, code: "2200101" },
     });
@@ -462,6 +477,11 @@ async function main() {
         },
       });
       console.info("[bank-core:seed] treasury nostro: AZ21DEMO00000000009999 (1000000.00 AZN cached)");
+    }
+    } else {
+      console.info(
+        "[bank-core:seed] skipped demo customers/treasury (pass --demo or ERA_BANK_SEED_DEMO=1)",
+      );
     }
 
     const quoteDay = new Date(now.toISOString().slice(0, 10));

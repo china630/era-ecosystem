@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { CARD_CONTAINER_CLASS } from "@era/satellite-kit/ui";
 import { OpsDataTable } from "@/components/ops";
 import { OpsError } from "@/components/ops-ui";
@@ -130,7 +131,8 @@ export default function LiquidityGapPage() {
             {
               key: "createdAt",
               label: "Created",
-              render: (row) => row.createdAt?.slice(0, 19) ?? "—",
+              render: (row) =>
+                row.createdAt ? bakuDateTimeDisplay(row.createdAt) : "—",
             },
           ]}
         />

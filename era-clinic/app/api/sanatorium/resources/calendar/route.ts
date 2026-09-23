@@ -1,6 +1,7 @@
 import { jsonOk, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getResourceDayMatrix } from "@/domain/procedure/procedure-inventory.service";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 export async function GET(request: Request) {
   try {
@@ -9,8 +10,8 @@ export async function GET(request: Request) {
     if (denied) return denied;
 
     const url = new URL(request.url);
-    const dateParam = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
-    const date = new Date(`${dateParam}T00:00:00+04:00`);
+    const dateParam = url.searchParams.get("date") ?? todayBakuYmd();
+    const { start: date } = bakuDayBounds(dateParam);
     return jsonOk(await getResourceDayMatrix(date));
   } catch (err) {
     return handleRouteError(err);

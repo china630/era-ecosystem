@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { useTranslations } from "next-intl";
+import { bakuTimeLabel } from "@/lib/baku-day";
 
 type ProcOrder = {
   id: string;
@@ -15,10 +16,6 @@ type ProcOrder = {
   checkInOpen?: boolean;
   checkInDeadline?: string;
 };
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 export default function CheckInPage() {
   const t = useTranslations("common");
@@ -143,7 +140,7 @@ export default function CheckInPage() {
               ) : (
                 orders.map((o) => (
                   <tr key={o.id} className="border-t">
-                    <td className="py-2 pr-2">{formatTime(o.scheduledAt)}</td>
+                    <td className="py-2 pr-2">{bakuTimeLabel(o.scheduledAt)}</td>
                     <td className="py-2 pr-2">
                       <button
                         type="button"

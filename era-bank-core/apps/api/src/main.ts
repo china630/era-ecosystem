@@ -45,7 +45,10 @@ async function bootstrap() {
   try {
     const prisma = app.get(PrismaService);
     const { onSatelliteBoot } = await import("@era/satellite-kit");
-    const result = await onSatelliteBoot({ prisma: prisma as never });
+    const result = await onSatelliteBoot({
+      prisma: prisma as never,
+      satelliteKey: "industry_banking",
+    });
     if (result.organizationId) {
       logger.log(
         `organization bind hydrated source=${result.source} org=${result.organizationId}`,

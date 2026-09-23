@@ -19,6 +19,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
@@ -204,7 +205,7 @@ export default function BanquetsPage() {
             <tbody>
               {visibleEvents.map((ev) => (
                 <tr key={ev.id} className="border-b border-[#ECF0F1]">
-                  <td className="py-2 pr-3">{new Date(ev.eventDate).toLocaleDateString()}</td>
+                  <td className="py-2 pr-3">{bakuDateDisplay(ev.eventDate)}</td>
                   <td className="py-2 pr-3">{ev.eventName}</td>
                   <td className="py-2 pr-3">{ev.saloon.name}</td>
                   <td className="py-2 pr-3">{ev.pax}</td>

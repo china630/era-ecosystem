@@ -16,6 +16,7 @@ import {
 
 const visitFormId = "log-visit-form";
 import { PageHeader } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type LeadOption = { id: string; title: string; contactRef: string };
 
@@ -138,7 +139,7 @@ export default function VisitsPage() {
                   <div className="font-medium">{visit.lead.title}</div>
                   <div className="text-[#7F8C8D]">
                     {visit.lead.contactRef} ·{" "}
-                    {new Date(visit.visitedAt).toLocaleString()}
+                    {bakuDateTimeDisplay(visit.visitedAt)}
                   </div>
                   {visit.addressLabel && (
                     <p className="text-[#7F8C8D]">{visit.addressLabel}</p>

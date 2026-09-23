@@ -25,7 +25,7 @@ git push -u origin feature/my-change
 
 | Workflow | Trigger | Role |
 |----------|---------|------|
-| [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
+| [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, token + Baku clock lints, orchestrator/finance tests, satellite build+jest |
 | [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Path-filter: rebuild only changed GHCR services (`scripts/ci-changed-ghcr-services.mjs`). `packages/` or `docker/Dockerfile.satellite` still rebuilds **all**. Manual `services` can limit to e.g. `orchestrator,finance-core,finance-web` |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
 | [`design-regression.yml`](../.github/workflows/design-regression.yml) | Cron 02:00 UTC, manual | Bootstrap hotel+clinic; Playwright **smoke** (structure only). Pixel snapshots are local (`npm run test:design-regression:update`) |
@@ -78,10 +78,20 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 After each successful [`build-images.yml`](../.github/workflows/build-images.yml) run on **`dev` or `master`**, [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) SSHs to the droplet and:
 
 1. Checks out the build commit  
-2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=<branch>-<sha>`  
+2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG` (see tag modes below)  
 3. `docker login` GHCR → `compose pull` (only services listed in the build artifact, or all) → `migrate-all.sh` → `up -d`  
 
+**`IMAGE_TAG` modes** (from path-filter artifact `IMAGE_TAG_MODE`):
+
+| Situation | Mode | Tag written to droplet `.env` |
+|-----------|------|-------------------------------|
+| Touched app images only (`deployScope=custom`) | `sha` | `<branch>-<short-sha>` |
+| Full rebuild (`packages/`, Dockerfile.satellite, entrypoint, …) | `sha` | `<branch>-<short-sha>` (all images exist) |
+| Compose / install-contract / deploy script only, or app **plus** compose (`deployScope=all` without full rebuild) | `floating` | `dev` or `master` — pull current floating tags; unbuilt services do not 404 |
+
 Docs-only pushes skip image build and skip droplet SSH.
+
+**Compose / contract path-filter:** `docker-compose.yml`, `docker-compose.prod.yml`, `config/satellite-install-contract.yaml`, `docker/scripts/deploy-droplet.sh`, `docker/scripts/migrate-all.sh` → `skipImages` + `deployScope=all` + floating tag. `docker/scripts/satellite-entrypoint.sh` → force **all** image rebuilds (copied into every satellite image).
 
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
 Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
@@ -89,7 +99,7 @@ Production stays **manual** (`deploy-production.yml`).
 
 `ENV_FILE` is base64-packed on the runner and decoded on the droplet — do **not** expand a multi-line secret into the SSH `script:` body when `script_stop: true` (appleboy injects exit checks between lines and corrupts `.env`).
 
-`workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master` **in the same wave**. Until `deploy-staging.yml` is on `master`, a path-filtered image build on `dev` must not run: auto-deploy would still `pull` every service at the new `IMAGE_TAG` and 404.
+`workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master` **in the same wave**. Until `deploy-staging.yml` is on `master`, a path-filtered image build on `dev` must not run: auto-deploy would still use an outdated scope/tag policy.
 
 ## GitHub secrets (staging / production)
 
@@ -109,7 +119,7 @@ Environment **`staging`** (and **`production`** for prod):
 - **Shared packages** ([`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh)): `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit`. Runs in `packages`, `orchestrator`, `satellite`, and **`finance`** jobs (`@era/contracts`, `@era/storage` need `dist/`; not committed).
 - **Finance unit tests**: before Jest, [`scripts/ci-prepare-finance-api-tests.sh`](../scripts/ci-prepare-finance-api-tests.sh) builds `@erafinance/api-contracts` (`dist/`) and installs `@prisma/client` + `@prisma/client-runtime-utils` only under `era-orchestrator/packages/database` (for the committed generated client). Do **not** run `prisma generate` there — avoids a second generated client in the finance tree.
 - **Data Hub** depends on `@erafinance/database` via `file:../../../era-finance-core/packages/database`. CI runs [`scripts/ci-prepare-finance-database.sh`](../scripts/ci-prepare-finance-database.sh) before `npm ci` in `era-data-hub`, so `prisma` exists when npm links the package.
-- **GHCR satellite images** use shared [`docker/scripts/docker-migrate-deploy.mjs`](../docker/scripts/docker-migrate-deploy.mjs) (copied in `docker/Dockerfile.satellite`). Empty satellite DBs (no init migration, first SQL is `ALTER`) are **baselined** from `prisma/baseline.sql` (generated at image build via `prisma migrate diff --from-empty`) and every migration folder is stamped applied. [`migrate-all.sh`](../docker/scripts/migrate-all.sh) starts Postgres first, always `compose run --no-deps` (not exec into a stale container), and bind-mounts a host-generated baseline so Nightly works even before new `:master` images. Do not call `npx prisma` in the runner entrypoint — there is no Prisma CLI and npx hangs downloading. **Data Hub** image: `era-data-hub/Dockerfile` installs `@erafinance/database` with `npm install --ignore-scripts`, then `prisma generate` + `build:chart` (needs `prisma.config.ts`, `tsconfig.chart.json`, and `index.js` — not `index.ts`).
+- **GHCR satellite images** use shared [`docker/scripts/docker-migrate-deploy.mjs`](../docker/scripts/docker-migrate-deploy.mjs) (copied in `docker/Dockerfile.satellite`). Empty satellite DBs (no init migration, first SQL is `ALTER`) are **baselined** from `prisma/baseline.sql` (generated at image build via `prisma migrate diff --from-empty`) and every migration folder is stamped applied. [`migrate-all.sh`](../docker/scripts/migrate-all.sh) starts Postgres first, always `compose run --no-deps` (not exec into a stale container), and bind-mounts a host-generated baseline so Nightly works even before new `:master` images. Do not call `npx prisma` in the runner entrypoint — there is no Prisma CLI and npx hangs downloading. **Data Hub** image: `era-data-hub/Dockerfile` copies and builds shared packages (`era-contracts` → `i18n-common` → `era-storage` → `era-fiscal` → `satellite-kit`) so Nest can resolve `@era/satellite-kit/time`, then installs `@erafinance/database` with `npm install --ignore-scripts`, then `prisma generate` + `build:chart` (needs `prisma.config.ts`, `tsconfig.chart.json`, and `index.js` — not `index.ts`). Runtime symlinks kit into `/app/node_modules/@era/satellite-kit`.
 
 ## Related docs
 

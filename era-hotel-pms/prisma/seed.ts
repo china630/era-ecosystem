@@ -1,5 +1,9 @@
+/**
+ * WIPE demo seed — deletes ops data then loads Nafta lab profile.
+ * Never run from entrypoint / RUN_SEED. Use: npm run db:seed:demo
+ * Requires a real ERA_SATELLITE_ORGANIZATION_ID (demo-org forbidden).
+ */
 import { Prisma, PrismaClient, PaymentMethod } from '@prisma/client';
-import { satelliteOrganizationId } from '@era/satellite-kit/orchestrator-gateway';
 import { createSatelliteTenantExtension } from '@era/satellite-kit/tenancy';
 import { ROLE_CODES } from '../src/lib/auth/permissions';
 import { ensureSystemHotelRoles } from '../src/lib/auth/ensure-system-hotel-roles';
@@ -14,8 +18,22 @@ const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
 ) as unknown as PrismaClient;
 
+function requireSeedOrgId(): string {
+  const id =
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    process.env.ORGANIZATION_ID?.trim() ||
+    '';
+  if (!id || id === 'demo-org' || id === 'demo-clinic-org' || id === 'demo-bank-org-001') {
+    throw new Error(
+      'ERA_SATELLITE_ORGANIZATION_ID required for hotel db:seed:demo; demo-org is forbidden',
+    );
+  }
+  return id;
+}
+
 async function main() {
-  const organizationId = satelliteOrganizationId();
+  const organizationId = requireSeedOrgId();
+  process.env.ERA_SATELLITE_ORGANIZATION_ID = organizationId;
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
   await prisma.recipeLine.deleteMany();

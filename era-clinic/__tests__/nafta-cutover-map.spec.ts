@@ -309,6 +309,7 @@ describe("nafta cutover column map", () => {
       "rooms",
       "procedure-requirements",
       "program-templates",
+      "planning-rules",
     ]);
     expect(IMPORT_PHASES[0].entities).not.toContain("hizmet-extras");
     expect(IMPORT_PHASES.find((p: { id: string }) => p.id === "clinical").entities).toEqual([

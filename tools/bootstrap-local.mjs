@@ -120,16 +120,19 @@ function satelliteOrgEnv(dir) {
     "era-fnb-pos":
       process.env.ERA_FB_ORGANIZATION_ID?.trim() || "nafta-sanatorium-org",
     "era-bank":
-      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "",
     "era-bank-dbo":
-      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "",
     "era-bank-core":
-      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "demo-bank-org-001",
+      process.env.ERA_BANK_ORGANIZATION_ID?.trim() || "",
   };
   const organizationId =
     byDir[dir] ||
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-    "demo-org";
+    "";
+  if (!organizationId) {
+    return {};
+  }
   return { ERA_SATELLITE_ORGANIZATION_ID: organizationId };
 }
 
@@ -282,7 +285,9 @@ async function main() {
         );
         runOptional(`${dir} seed`, "npm run db:seed", satRoot, {
           ...env,
-          ERA_BANK_ORGANIZATION_ID: process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001",
+          ...(process.env.ERA_BANK_ORGANIZATION_ID
+            ? { ERA_BANK_ORGANIZATION_ID: process.env.ERA_BANK_ORGANIZATION_ID }
+            : {}),
         });
       } else {
         runOptional(`${dir} db push`, prismaCli(satRoot, "db push"), satRoot, env);

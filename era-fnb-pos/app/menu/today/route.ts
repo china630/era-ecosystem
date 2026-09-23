@@ -1,3 +1,4 @@
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -5,23 +6,23 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const outletCode = url.searchParams.get("outlet") ?? "RESTAURANT";
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
+  const dateYmd = todayBakuYmd();
+  const boardDate = bakuCivilUtcDate(dateYmd);
 
   const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
   if (!outlet) {
-    return NextResponse.json({ outletCode, date: date.toISOString().slice(0, 10), items: [] });
+    return NextResponse.json({ outletCode, date: dateYmd, items: [] });
   }
 
   const entries = await prisma.dailyMenuEntry.findMany({
-    where: { outletId: outlet.id, boardDate: date },
+    where: { outletId: outlet.id, boardDate },
     include: { menuItem: true },
     orderBy: [{ sortOrder: "asc" }],
   });
 
   return NextResponse.json({
     outletCode,
-    date: date.toISOString().slice(0, 10),
+    date: dateYmd,
     items: entries.map((e) => ({
       plu: e.menuItem.plu,
       name: e.menuItem.name,

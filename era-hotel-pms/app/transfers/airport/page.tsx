@@ -9,6 +9,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import Link from 'next/link';
 
@@ -79,7 +80,7 @@ export default function AirportTransferPage() {
         columns={[
           { key: 'guest', header: tc('guest'), render: (r) => r.reservation.guest.fullName },
           { key: 'flight', header: 'Flight', render: (r) => r.flightNo ?? '—' },
-          { key: 'pickup', header: 'Pickup', render: (r) => r.pickupAt.slice(0, 16) },
+          { key: 'pickup', header: 'Pickup', render: (r) => bakuDateTimeDisplay(r.pickupAt) },
           { key: 'status', header: tc('status') },
         ]}
         rows={filtered}

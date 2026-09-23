@@ -13,6 +13,7 @@ import {
   MODAL_INPUT_CLASS,
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 
 type LifecycleEvent = {
   id: string;
@@ -160,7 +161,7 @@ export function FixedAssetLifecyclePanel({
               {String(e.amount)}
               {e.portion != null ? ` · ${String(e.portion)}` : ""}
               {" · "}
-              {String(e.createdAt).slice(0, 10)}
+              {bakuDateDisplay(e.createdAt)}
               {e.transaction?.reference ? (
                 <>
                   {" · "}

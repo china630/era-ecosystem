@@ -19,7 +19,7 @@ After benchmark:
 
 ```bash
 DATABASE_URL=postgresql://.../era_bank_core \
-ERA_BANK_ORGANIZATION_ID=demo-bank-org-001 \
+ERA_BANK_ORGANIZATION_ID=<bound-org-uuid> \
 node tools/audit/replay-day.mjs 2026-06-14
 ```
 

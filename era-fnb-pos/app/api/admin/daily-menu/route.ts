@@ -1,3 +1,4 @@
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
@@ -8,10 +9,9 @@ import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/requir
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_DAILY_MENU } from "@/lib/auth/read-permission-sets";
 
-function parseBoardDate(raw: string | null): Date {
-  const d = raw ? new Date(raw) : new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+function resolveBoardDate(raw: string | null | undefined): { ymd: string; date: Date } {
+  const ymd = raw?.trim() || todayBakuYmd();
+  return { ymd, date: bakuCivilUtcDate(ymd) };
 }
 
 export async function GET(request: Request) {
@@ -22,10 +22,10 @@ export async function GET(request: Request) {
     if (denied) return denied;
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
-    const date = parseBoardDate(url.searchParams.get("date"));
+    const { ymd, date } = resolveBoardDate(url.searchParams.get("date"));
 
     const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
-    if (!outlet) return jsonOk({ date: date.toISOString().slice(0, 10), entries: [] });
+    if (!outlet) return jsonOk({ date: ymd, entries: [] });
 
     const entries = await prisma.dailyMenuEntry.findMany({
       where: { outletId: outlet.id, boardDate: date },
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     return jsonOk({
       outletCode,
-      date: date.toISOString().slice(0, 10),
+      date: ymd,
       entries: entries.map((e) => ({
         id: e.id,
         menuItemId: e.menuItemId,
@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
     if (denied) return denied;
 
     const body = putSchema.parse(await request.json());
-    const date = parseBoardDate(body.date ?? null);
+    const { date } = resolveBoardDate(body.date);
 
     const outlet = await ensureOutletByCode(body.outletCode);
 
@@ -102,8 +102,8 @@ export async function POST(request: Request) {
     if (denied) return denied;
 
     const body = copySchema.parse(await request.json());
-    const from = parseBoardDate(body.fromDate);
-    const to = parseBoardDate(body.toDate);
+    const { date: from } = resolveBoardDate(body.fromDate);
+    const { date: to } = resolveBoardDate(body.toDate);
 
     const outlet = await prisma.outlet.findFirst({ where: { code: body.outletCode } });
     if (!outlet) return jsonError("Outlet not found", 404);

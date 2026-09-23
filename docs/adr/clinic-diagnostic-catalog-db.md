@@ -15,10 +15,10 @@ esultJson blob. Filtering by modality, paginating with accurate totals, and trea
 
 ### Catalog source of truth
 
-1. Tables Modality, DiagnosticService, DiagnosticAnalyte, DiagnosticMetaField hold the catalog in Postgres.
-2. JSON seed remains the bootstrap source via prisma/seed-diagnostic-catalog.cjs (base `diagnostic-lab-catalog.json` then Nafta `nafta/diagnostic-overlay.json`; see [clinic-catalog-base-and-org-overlay-seeds.md](./clinic-catalog-base-and-org-overlay-seeds.md)).
-3. SatAdmin CRUD at /admin/diagnostic-catalog (API under /api/admin/diagnostic-catalog/*) mutates the DB and invalidates the in-memory catalog cache.
-4. getDiagnosticCatalog() / indCatalogItem() are async DB readers with cache; picker and TemplateResultForm keep the same DTO shape.
+1. Tables Modality, DiagnosticService, DiagnosticAnalyte, DiagnosticMetaField hold the **org overlay** in Postgres. Satellite templates (`ModalityTemplate` / `DiagnosticServiceTemplate`) are unscoped; see [clinic-catalog-template-overlay.md](./clinic-catalog-template-overlay.md).
+2. JSON seed bootstraps **templates** via `db:seed` (`seed-diagnostic-catalog-base.cjs`). Nafta overlay is import / `db:seed:diagnostic-catalog:nafta`, never droplet entrypoint.
+3. SatAdmin CRUD at /admin/diagnostic-catalog (API under /api/admin/diagnostic-catalog/*) mutates the org overlay and invalidates the per-org catalog cache.
+4. getDiagnosticCatalog() / findCatalogItem() are async DB readers with per-org cache; copy-if-empty runs when overlay is empty.
 
 ### Normalized lab order
 

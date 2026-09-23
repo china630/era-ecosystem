@@ -9,6 +9,7 @@ import {
 } from "@/lib/treatment-planner.service";
 import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { bakuDateKey, bakuDayBounds, bakuHourMinute } from "@/lib/baku-day";
 
 function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60_000);
@@ -29,8 +30,8 @@ export async function listAvailableResourceSlots(input: {
   durationMin?: number;
 }) {
   const { schedulingSlotMinutes } = await getSchedulingSettings();
-  const dayStart = new Date(input.date);
-  dayStart.setHours(0, 0, 0, 0);
+  const dayYmd = bakuDateKey(input.date);
+  const { start: dayStart } = bakuDayBounds(dayYmd);
 
   const calendar = await getResourceCalendar(dayStart, {
     procedureCode: input.procedureCode,
@@ -59,7 +60,7 @@ export async function listAvailableResourceSlots(input: {
     for (const slot of row.slots) {
       if (slot.occupied) continue;
       const slotStart = await nextWorkSlot(new Date(slot.time));
-      if (procedureType && !procedureType.afterLunchAllowed && slotStart.getHours() >= LUNCH_END_HOUR) {
+      if (procedureType && !procedureType.afterLunchAllowed && bakuHourMinute(slotStart).hour >= LUNCH_END_HOUR) {
         continue;
       }
       const adjusted = skipLunch(slotStart);
@@ -84,10 +85,7 @@ export async function listAvailableResourceSlots(input: {
         ) {
           continue;
         }
-        const sameDayStart = new Date(adjusted);
-        sameDayStart.setHours(0, 0, 0, 0);
-        const sameDayEnd = new Date(sameDayStart);
-        sameDayEnd.setDate(sameDayEnd.getDate() + 1);
+        const { start: sameDayStart, end: sameDayEnd } = bakuDayBounds(bakuDateKey(adjusted));
         const sameDayOrders = await prisma.procedureOrder.findMany({
           where: {
             patientRefId: input.patientRefId,
@@ -152,7 +150,7 @@ export async function getResourceDayMatrix(date: Date) {
   const byId = new Map(orders.map((o) => [o.id, o]));
 
   return {
-    date: date.toISOString().slice(0, 10),
+    date: bakuDateKey(date),
     resources: calendar.map((r) => ({
       ...r,
       slots: r.slots.map((s) => {

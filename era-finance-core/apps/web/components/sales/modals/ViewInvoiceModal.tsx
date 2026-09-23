@@ -17,6 +17,7 @@ import { CP_PERMISSION, isRestrictedUserRole } from "../../../lib/role-utils";
 import { ActivityPanel } from "../../activity/ActivityPanel";
 import { SignatureProviderMark } from "../../signature-provider-mark";
 import { EntityAuditHistory } from "../../admin/entity-audit-history";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -133,7 +134,7 @@ export function ViewInvoiceModal({
   const [netErr, setNetErr] = useState<string | null>(null);
   const [creditModal, setCreditModal] = useState(false);
   const [creditAmount, setCreditAmount] = useState("");
-  const [creditDate, setCreditDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [creditDate, setCreditDate] = useState(() => todayBakuYmd());
   const [creditReason, setCreditReason] = useState("");
   const [creditOffset, setCreditOffset] = useState<"REVENUE" | "EXPENSE">("REVENUE");
   const [creditBusy, setCreditBusy] = useState(false);
@@ -331,7 +332,7 @@ export function ViewInvoiceModal({
     if (!inv) return;
     const rem = Number(inv.remaining);
     setCreditAmount(String(Number.isFinite(rem) && rem > 0 ? rem : ""));
-    setCreditDate(new Date().toISOString().slice(0, 10));
+    setCreditDate(todayBakuYmd());
     setCreditReason("");
     setCreditOffset("REVENUE");
     setCreditErr(null);

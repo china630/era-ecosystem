@@ -30,9 +30,11 @@
 2. **API (DEDICATED / appliance):** `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` — session cookie. **SHARED:** add `"orgNo": "104221"`.
 3. **PIN floor:** `/pin?org=104221` — posts `{ "pin", "orgNo", "outletId" }`.
 4. `GET /api/menu` — seeded items
-5. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
-6. Manager: `/admin/tables` — create/edit/delete static tables
-7. RBAC Variant A: doors are grants (`api:*` / `screen:*`), not role names. Waiter can fire/pay (hotel); manager required for void/Z — strip void on `/admin/access` → API 403. Kitchen without `screen:admin.menu` cannot open that page. Kitchen also cannot `GET /api/tickets` / `GET /api/menu` (till-read grants).
+5. `GET /api/menu?dailyOnly=true` — board uses **Asia/Baku** civil `@db.Date` (`bakuCivilUtcDate(todayBakuYmd())`), not host midnight / UTC slice
+6. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
+7. Manager: `/admin/tables` — create/edit/delete static tables
+8. Manager: `/admin/daily-menu` (or DailyMenuAdminPanel) — default board date = Asia/Baku today
+9. RBAC Variant A: doors are grants (`api:*` / `screen:*`), not role names. Waiter can fire/pay (hotel); manager required for void/Z — strip void on `/admin/access` → API 403. Kitchen without `screen:admin.menu` cannot open that page. Kitchen also cannot `GET /api/tickets` / `GET /api/menu` (till-read grants).
 
 ## FNB-RBAC-01 — access matrix (SCREEN; not SHIPPED)
 

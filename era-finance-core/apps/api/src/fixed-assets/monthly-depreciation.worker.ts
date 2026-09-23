@@ -12,11 +12,12 @@ import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { PrismaService } from "../prisma/prisma.service";
 import { FixedAssetsService } from "./fixed-assets.service";
 import { MONTHLY_DEPRECIATION_QUEUE } from "./monthly-depreciation.queue";
+import { previousBillingPeriodKeyBaku } from "../billing/baku-billing.util";
 
-function utcPreviousMonth(now: Date): { year: number; month: number } {
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  d.setUTCMonth(d.getUTCMonth() - 1);
-  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+function previousBakuMonth(now: Date): { year: number; month: number } {
+  const key = previousBillingPeriodKeyBaku(now);
+  const [ys, ms] = key.split("-");
+  return { year: Number(ys), month: Number(ms) };
 }
 
 @Injectable()
@@ -61,7 +62,7 @@ export class MonthlyDepreciationWorker implements OnModuleInit, OnModuleDestroy 
     if (job.name !== "monthly_depreciation") {
       return;
     }
-    const period = utcPreviousMonth(new Date());
+    const period = previousBakuMonth(new Date());
     const orgs = await this.prisma.organization.findMany({
       where: { deletedAt: null, isDeleted: false },
       select: { id: true },

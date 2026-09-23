@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getPractitionerDayMatrix } from "@/domain/appointment/appointment-calendar.service";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const querySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -31,9 +32,8 @@ export async function GET(req: Request) {
     const query = querySchema.parse({
       date: url.searchParams.get("date") ?? undefined,
     });
-    const dateParam = query.date ?? new Date().toISOString().slice(0, 10);
-    // Asia/Baku calendar day
-    const day = new Date(`${dateParam}T00:00:00+04:00`);
+    const dateParam = query.date ?? todayBakuYmd();
+    const { start: day } = bakuDayBounds(dateParam);
     const matrix = await getPractitionerDayMatrix(day);
     return jsonOk(matrix);
   } catch (err) {

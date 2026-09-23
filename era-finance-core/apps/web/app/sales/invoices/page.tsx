@@ -22,6 +22,7 @@ import {
   LIST_PAGE_SHELL_CLASS,
 } from "@era/satellite-kit/ui";
 import type { SavedListViewConfig } from "@era/satellite-kit";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { apiFetch } from "../../../lib/api-client";
 import {
   DATA_TABLE_ACTIONS_TD_CLASS,
@@ -535,7 +536,7 @@ export default function InvoicesPage() {
   function openPay(row: Row) {
     setPayForId(row.id);
     setPayAmount(row.remaining ?? "");
-    setPayDate(new Date().toISOString().slice(0, 10));
+    setPayDate(todayBakuYmd());
   }
 
   async function sendEmail(id: string) {

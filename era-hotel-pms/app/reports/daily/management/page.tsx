@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface TabDef {
   key: string;
@@ -27,8 +28,8 @@ export default function DailyManagementPage() {
   useEffect(() => {
     fetch('/api/business-date')
       .then((r) => r.json())
-      .then((d) => setBusinessDate(d.date ?? new Date().toISOString().slice(0, 10)))
-      .catch(() => setBusinessDate(new Date().toISOString().slice(0, 10)));
+      .then((d) => setBusinessDate(d.date ?? hotelDateKey()))
+      .catch(() => setBusinessDate(hotelDateKey()));
   }, []);
 
   const tab = TABS.find((t) => t.key === activeTab)!;

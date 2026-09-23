@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { DatePicker, EraListFilterBar, PageHeader, showApiError } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -23,7 +25,7 @@ type Row = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function FolioJournalPage() {
@@ -98,7 +100,7 @@ export default function FolioJournalPage() {
           {
             key: 'time',
             header: t('colTime'),
-            render: (r) => new Date(r.time).toLocaleString(),
+            render: (r) => bakuDateTimeDisplay(r.time),
           },
           { key: 'guestName', header: t('colGuest'), render: (r) => r.guestName ?? '—' },
           { key: 'roomNumber', header: t('colRoom'), render: (r) => r.roomNumber ?? '—' },

@@ -16,7 +16,6 @@ import type { Locale } from "@era/i18n-common";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const t = useTranslations("login");
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
   const [loginId, setLoginId] = useState("");
@@ -51,26 +50,6 @@ function LoginForm() {
     }
   }
 
-  let subtitle: string | undefined;
-  let ssoHint: string | undefined;
-  try {
-    subtitle = t("subtitle");
-  } catch {
-    subtitle = undefined;
-  }
-  try {
-    ssoHint = t("ssoHint") || t("demoHint");
-  } catch {
-    ssoHint = undefined;
-  }
-
-  let provisionHint: string | undefined;
-  try {
-    provisionHint = t("provisionHint") || undefined;
-  } catch {
-    provisionHint = undefined;
-  }
-
   return (
     <AuthLoginCard
       locale={locale}
@@ -81,10 +60,6 @@ function LoginForm() {
       onPasswordChange={setPassword}
       onSubmit={onSubmit}
       busy={busy}
-      subtitle={subtitle}
-      ssoHint={
-        [ssoHint, provisionHint].filter(Boolean).join(" · ") || undefined
-      }
       formExtras={
         <StaffLoginOrgNoField
           orgNo={orgNo}
@@ -92,7 +67,6 @@ function LoginForm() {
           hostBound={hostBound}
           label={tAuth("organizationIdLabel")}
           placeholder={tAuth("organizationIdPlaceholder")}
-          hint={tAuth("organizationIdHint")}
         />
       }
     />

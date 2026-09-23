@@ -32,6 +32,12 @@ import {
   unmergeClosedYear,
   yearRangeUtc,
 } from "./reporting-period.util";
+import {
+  addBakuDays,
+  bakuDayBounds,
+  bakuEndOfDayUtc,
+  todayBakuYmd,
+} from "@era/satellite-kit/time";
 import { verifyQrPublicBase } from "../common/verify-public-url";
 import { reconciliationDocumentUuid } from "../signature/reconciliation-document-id";
 import {
@@ -81,6 +87,25 @@ function parseClosedPeriodEnd(key: string): Date | null {
 function absDelta(a: Decimal, b: Decimal): Decimal {
   const x = a.sub(b);
   return x.gte(0) ? x : x.neg();
+}
+
+/** asOf for aging/plan reports: Baku civil YMD + day bounds (default = today in Baku). */
+function resolveReportAsOf(asOfIso?: string): {
+  asOfYmd: string;
+  asOfStartMs: number;
+  asOfEnd: Date;
+} {
+  const asOfYmd = asOfIso?.trim() || todayBakuYmd();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(asOfYmd);
+  if (!m) {
+    throw new Error(`Invalid date (expected YYYY-MM-DD): ${asOfYmd}`);
+  }
+  const bounds = bakuDayBounds(asOfYmd);
+  return {
+    asOfYmd,
+    asOfStartMs: bounds.start.getTime(),
+    asOfEnd: bakuEndOfDayUtc(Number(m[1]), Number(m[2]), Number(m[3])),
+  };
 }
 
 @Injectable()
@@ -1192,12 +1217,7 @@ export class ReportingService {
   ) {
     const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
     ledgerType = scope.ledgerType;
-    const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
-    const todayUtc = Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-    );
+    const { asOfYmd, asOfStartMs } = resolveReportAsOf(asOfIso);
 
     const recognizedTransactions = await this.prisma.transaction.findMany({
       where: {
@@ -1255,7 +1275,7 @@ export class ReportingService {
         due.getUTCMonth(),
         due.getUTCDate(),
       );
-      const daysPastDue = Math.max(0, Math.floor((todayUtc - dueUtc) / 86400000));
+      const daysPastDue = Math.max(0, Math.floor((asOfStartMs - dueUtc) / 86400000));
 
       let bucket: keyof Bucket;
       if (daysPastDue <= 30) bucket = "b0_30";
@@ -1319,7 +1339,7 @@ export class ReportingService {
     );
 
     return {
-      asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      asOf: asOfYmd,
       ledgerType,
       accountingBookId: scope.accountingBookId,
       rows,
@@ -2498,13 +2518,7 @@ export class ReportingService {
   ) {
     const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
     ledgerType = scope.ledgerType;
-    const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
-    const todayUtc = Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-    );
-    const asOfEnd = endOfUtcDay(new Date(todayUtc));
+    const { asOfYmd, asOfStartMs, asOfEnd } = resolveReportAsOf(asOfIso);
 
     const supplierPayableCode = await this.posting.resolveAccountCode(
       organizationId,
@@ -2555,7 +2569,7 @@ export class ReportingService {
     });
     if (!acc) {
       return {
-        asOf: new Date(todayUtc).toISOString().slice(0, 10),
+        asOf: asOfYmd,
         ledgerType,
         accountingBookId: scope.accountingBookId,
         rows: [],
@@ -2651,7 +2665,7 @@ export class ReportingService {
       );
       const daysPast = Math.max(
         0,
-        Math.floor((todayUtc - docUtc) / 86400000),
+        Math.floor((asOfStartMs - docUtc) / 86400000),
       );
       let bucket: keyof Bucket;
       if (daysPast <= 30) bucket = "b0_30";
@@ -2708,7 +2722,7 @@ export class ReportingService {
     );
 
     return {
-      asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      asOf: asOfYmd,
       ledgerType,
       accountingBookId: scope.accountingBookId,
       rows,
@@ -2736,16 +2750,8 @@ export class ReportingService {
   ) {
     const scope = await this.resolveBookScope(organizationId, ledgerType, accountingBookId);
     ledgerType = scope.ledgerType;
-    const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
-    const todayUtc = Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-    );
-    const asOfEnd = endOfUtcDay(new Date(todayUtc));
-    const suggestedDefault = new Date(todayUtc + 7 * 86400000)
-      .toISOString()
-      .slice(0, 10);
+    const { asOfYmd, asOfEnd } = resolveReportAsOf(asOfIso);
+    const suggestedDefault = addBakuDays(asOfYmd, 7);
 
     const supplierPayableCode = await this.posting.resolveAccountCode(
       organizationId,
@@ -2761,7 +2767,7 @@ export class ReportingService {
     });
     if (!acc) {
       return {
-        asOf: new Date(todayUtc).toISOString().slice(0, 10),
+        asOf: asOfYmd,
         ledgerType,
         accountingBookId: scope.accountingBookId,
         rows: [],
@@ -2849,7 +2855,7 @@ export class ReportingService {
       .sort((a, b) => a.documentDate.localeCompare(b.documentDate));
 
     return {
-      asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      asOf: asOfYmd,
       ledgerType,
       accountingBookId: scope.accountingBookId,
       rows,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { SimpleCrudPage } from '@/components/wave-b/SimpleCrudPage';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -22,7 +23,7 @@ export default function PromotionCodesPage() {
       buildAddBody={(values) => ({
         code: values.code,
         discountPercent: Number(values.discountPercent),
-        validFrom: new Date().toISOString().slice(0, 10),
+        validFrom: hotelDateKey(),
       })}
       columns={[
         { key: 'code', header: t('code') },

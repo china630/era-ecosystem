@@ -22,6 +22,8 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -105,7 +107,7 @@ type Journal = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return hotelDateKey();
 }
 
 export default function FrontCashTransactionsPage() {
@@ -246,7 +248,7 @@ export default function FrontCashTransactionsPage() {
           <option value="">{t('allShifts')}</option>
           {shifts.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.status} · {s.cashier} · {new Date(s.openedAt).toLocaleString()}
+              {s.status} · {s.cashier} · {bakuDateTimeDisplay(s.openedAt)}
             </option>
           ))}
         </FieldSelect>
@@ -366,7 +368,7 @@ export default function FrontCashTransactionsPage() {
               {payments.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(r.createdAt).toLocaleString()}
+                    {bakuDateTimeDisplay(r.createdAt)}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.guestName ?? tc('dash')}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.roomNumber ?? tc('dash')}</td>
@@ -421,7 +423,7 @@ export default function FrontCashTransactionsPage() {
               {deposits.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {new Date(r.heldAt).toLocaleString()}
+                    {bakuDateTimeDisplay(r.heldAt)}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.guestName}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.roomNumber ?? tc('dash')}</td>

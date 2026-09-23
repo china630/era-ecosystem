@@ -1,6 +1,7 @@
 import { jsonOk, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { listAvailableResourceSlots } from "@/domain/procedure/procedure-inventory.service";
+import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 export async function GET(request: Request) {
   try {
@@ -9,14 +10,14 @@ export async function GET(request: Request) {
     if (denied) return denied;
 
     const url = new URL(request.url);
-    const dateParam = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
+    const dateParam = url.searchParams.get("date") ?? todayBakuYmd();
     const resourceId = url.searchParams.get("resourceId") ?? undefined;
     const procedureCode = url.searchParams.get("procedureCode") ?? undefined;
     const patientRefId = url.searchParams.get("patientRefId") ?? undefined;
     const excludeOrderId = url.searchParams.get("excludeOrderId") ?? undefined;
 
     const slots = await listAvailableResourceSlots({
-      date: new Date(`${dateParam}T00:00:00`),
+      date: bakuDayBounds(dateParam).start,
       resourceId,
       procedureCode,
       patientRefId,

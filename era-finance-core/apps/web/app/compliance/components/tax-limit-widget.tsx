@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
+import { bakuCalendarYear } from "@era/satellite-kit/time";
 
 export type VatThresholdMonitorDto = {
   year: number;
@@ -63,7 +64,7 @@ export function TaxLimitWidget() {
           </h2>
           <p className="mt-1 text-[13px] leading-snug text-[#7F8C8D]">
             {t("compliance.taxLimit.subtitle", {
-              year: data?.year ?? new Date().getFullYear(),
+              year: data?.year ?? bakuCalendarYear(),
             })}
           </p>
         </div>

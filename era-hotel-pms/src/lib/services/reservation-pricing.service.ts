@@ -1,3 +1,5 @@
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
@@ -32,18 +34,16 @@ async function loadChildPricingMatrix(): Promise<ChildPricingRow[]> {
 }
 
 function dateOnly(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  return bakuCivilUtcDate(hotelDateKey(d));
 }
 
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
-  const cur = dateOnly(from);
-  const end = dateOnly(to);
+  let cur = hotelDateKey(from);
+  const end = hotelDateKey(to);
   while (cur < end) {
-    nights.push(new Date(cur));
-    cur.setDate(cur.getDate() + 1);
+    nights.push(bakuCivilUtcDate(cur));
+    cur = addHotelDays(cur, 1);
   }
   return nights;
 }

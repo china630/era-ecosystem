@@ -127,12 +127,12 @@ export default function WorkforceSecurityGrantsPage() {
   const employmentLabel = useCallback(
     (employmentId: string): string => {
       const e = employmentById.get(employmentId);
-      if (!e) return `${employmentId.slice(0, 8)}…`;
+      if (!e) return tCommon("unnamedPerson");
       const name = personName(e.globalPersonId);
       const job = [e.position?.name, e.orgUnit?.name].filter(Boolean).join(" · ");
       return job ? `${name} — ${job}` : name;
     },
-    [employmentById, personName],
+    [employmentById, personName, tCommon],
   );
 
   const employmentOptions = useMemo(

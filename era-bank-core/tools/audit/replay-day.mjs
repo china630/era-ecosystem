@@ -4,13 +4,23 @@
  * Exit 0 only when Σ Dr = Σ Cr and EOD run is COMPLETED (if present).
  */
 import pg from "pg";
+import { todayBakuYmd } from "../../../scripts/lib/today-baku-ymd.mjs";
 
 const url = process.env.DATABASE_URL;
-const bankOrgId = process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001";
-const businessDate = process.argv[2] ?? new Date().toISOString().slice(0, 10);
+const bankOrgId =
+  process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
+  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+  "";
+const businessDate = process.argv[2] ?? todayBakuYmd();
 
 if (!url) {
   console.error("DATABASE_URL required");
+  process.exit(1);
+}
+if (!bankOrgId || bankOrgId === "demo-org" || bankOrgId === "demo-bank-org-001") {
+  console.error(
+    "ERA_BANK_ORGANIZATION_ID required (demo-bank-org-001 / demo-org forbidden)",
+  );
   process.exit(1);
 }
 

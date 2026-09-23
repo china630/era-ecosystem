@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS, PageHeader } from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type LeadDetail = {
   id: string;
@@ -190,7 +191,7 @@ export default function LeadDetailPage() {
               <li key={`${h.changedAt}-${h.toStage}`}>
                 {h.fromStage ?? "—"} → {h.toStage}{" "}
                 <span className="text-[#7F8C8D]">
-                  {new Date(h.changedAt).toLocaleString()}
+                  {bakuDateTimeDisplay(h.changedAt)}
                 </span>
               </li>
             ))}
@@ -207,7 +208,7 @@ export default function LeadDetailPage() {
             ) : (
               lead.visits.map((v) => (
                 <li key={v.id}>
-                  {new Date(v.visitedAt).toLocaleString()} — {v.notes ?? "—"}
+                  {bakuDateTimeDisplay(v.visitedAt)} — {v.notes ?? "—"}
                 </li>
               ))
             )}

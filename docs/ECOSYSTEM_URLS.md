@@ -179,11 +179,11 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 
 | Class | Variables | Role |
 |-------|-----------|------|
-| **Required at install** | Orchestrator base URL (`CONTROL_PLANE_URL` / `ORCHESTRATOR_URL` / `ORCHESTRATOR_INTERNAL_URL`), handshake token (`SATELLITE_EVENT_SERVICE_TOKEN` or Finance `CONTROL_PLANE_SERVICE_TOKEN`), `DATABASE_URL`, Redis URL (where used), listen `PORT` | First boot + Sync fan-out only |
-| **Optional / emergency** | `ERA_SATELLITE_ORGANIZATION_ID` (or bank alias), `ERA_SSO_SHARED_SECRET`, event token override | Prefer Super-admin **Sync** bind + runtime-config. SHARED ops HTTP must not treat this as the request tenant — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) |
-| **After first Sync** | `CONTROL_PLANE_URL` / orch URL in compose may stay as bootstrap; live readers prefer kit runtime-config memory (`orchestratorEventUrl`, tokens, SSO, PSA, `deploymentTopology`, `edition`) | Do not treat compose as SoR for desired state |
+| **Required at install** | Orchestrator base URL (`CONTROL_PLANE_URL` / `ORCHESTRATOR_URL` / `ORCHESTRATOR_INTERNAL_URL` → **orch API `:4000`**, never finance `:4100`), handshake token (`SATELLITE_EVENT_SERVICE_TOKEN` or Finance `CONTROL_PLANE_SERVICE_TOKEN`), `DATABASE_URL`, Redis URL (where used), listen `PORT`, optional `*_RUN_SEED` (default **false** on droplet) | Host compose / `.env` bootstrap only |
+| **Optional / emergency** | `ERA_SATELLITE_ORGANIZATION_ID` (or bank alias) — leave unset until bind; **never** `demo-org` / `demo-bank-org-001` | Prefer Super-admin **Sync** bind + runtime-config. SHARED ops HTTP must not treat this as the request tenant — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) |
+| **After first Sync** | Org UUID, SSO, event token, edition live in `_era_organization_bind` / runtime-config; compose may keep DNS/ports/tokens | Do not treat compose as SoR for desired state |
 
-`CONTROL_PLANE_URL` = **install bootstrap** for Finance Nest (and industry env fallback). After Sync, `@era/satellite-kit` `resolveOrchestratorBaseUrl()` prefers runtime-config memory.
+`CONTROL_PLANE_URL` = **install bootstrap** for Finance Nest (and industry env fallback). After Sync, `@era/satellite-kit` `resolveOrchestratorBaseUrl()` prefers runtime-config memory. Orchestrator Sync uses `ERA_ORCHESTRATOR_INTERNAL_URL` (`http://orchestrator:4000`) for satellite event ingest, not the public API host. Inventory + CI: [`config/satellite-install-contract.yaml`](../config/satellite-install-contract.yaml) · bind ADR: [satellite-organization-bind.md](./adr/satellite-organization-bind.md).
 
 | Role | Variable | Example (prod) |
 |------|----------|----------------|
@@ -217,7 +217,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
 | Finance CBAR ingest | `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` | `true` — finance no longer runs CBAR HTTP/cron (hub SoR) |
 | Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. Prefer Sync bind + `satelliteOrganizationId()` over baking org UUID into compose. |
-| Industry desired-state (Sync) | orch → `POST …/organization/bind` + `POST …/runtime-config` | SSO / PSA / event URL+token / `activeModules` / optional `deploymentTopology` + `edition`; env = bootstrap override. See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
+| Industry desired-state (Sync + pull) | orch → `POST …/organization/bind` + `POST …/runtime-config`; satellite → `GET /v1/internal/satellites/desired-state` | SSO / PSA / event URL+token / `activeModules` / optional `deploymentTopology` + `edition`; env = bootstrap. Boot pull default on when `ERA_IN_DOCKER=1` (`ERA_DESIRED_STATE_PULL`, `ERA_DESIRED_STATE_POLL_MS`). See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
 | Satellite entitlement snapshot | `SATELLITE_EVENT_SERVICE_TOKEN` (hotel pattern). `CONTROL_PLANE_SERVICE_TOKEN` optional alias. | Must not inject folklore `dev-control-plane-token` when a real event token exists — that 401s snapshot → `Industry module not active`. |
 | Finance → Orchestrator S2S | `CONTROL_PLANE_SERVICE_TOKEN` (alias `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); URL via kit `resolveOrchestratorBaseUrl` (memory → `CONTROL_PLANE_URL` / `ORCHESTRATOR_*` bootstrap) | Same token value on orch + finance. Health reports configured booleans only. |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |

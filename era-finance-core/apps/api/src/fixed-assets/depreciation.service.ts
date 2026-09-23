@@ -10,6 +10,7 @@ import {
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { billingPeriodKeyBaku } from "@era/satellite-kit/time";
 import { monthRangeUtc } from "../reporting/reporting-period.util";
 import { roundMoney2 } from "./decimal-round";
 import {
@@ -518,9 +519,8 @@ export class DepreciationService {
       throw new BadRequestException("Computed depreciation amount is zero");
     }
 
-    const now = new Date();
-    const y = now.getUTCFullYear();
-    const m = now.getUTCMonth() + 1;
+    const key = billingPeriodKeyBaku();
+    const [y, m] = key.split("-").map(Number);
     const { end } = monthRangeUtc(y, m);
 
     const [depreciationExpenseCode, accumulatedDepreciationCode] = await Promise.all([

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { TOOLBAR_MONTH_INPUT_CLASS } from "../../lib/form-styles";
 import {
   CARD_CONTAINER_CLASS,
@@ -42,6 +43,7 @@ import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { OrganizationBankAccountModal } from "../../components/settings/organization-bank-account-modal";
 import { SubscriptionPaywall } from "../../components/subscription-paywall";
+import { billingPeriodKeyBaku, todayBakuYmd } from "@era/satellite-kit/time";
 
 type AccountSegment = "CASH" | "BANK";
 
@@ -115,7 +117,7 @@ function BankingQuickExpenseModal({
   const [amount, setAmount] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
   const [bankOptions, setBankOptions] = useState<NasBankAccountOption[]>([]);
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayBakuYmd());
   const [cfId, setCfId] = useState("");
   const [desc, setDesc] = useState("");
   const [busy, setBusy] = useState(false);
@@ -359,8 +361,7 @@ function sourceLabelKey(origin: string): string {
 }
 
 function defaultYearMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return billingPeriodKeyBaku();
 }
 
 /** `ym` = `YYYY-MM` (Р»РѕРєР°Р»СЊРЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ). */
@@ -650,7 +651,7 @@ function BankingUnifiedRegistry({
               <span className="text-right">
                 {t("banking.lastSync")}:{" "}
                 {syncStatus.lastSyncAt
-                  ? new Date(syncStatus.lastSyncAt).toLocaleString()
+                  ? bakuDateTimeDisplay(syncStatus.lastSyncAt)
                   : t("banking.syncNever")}
                 {syncStatus.lastSyncStatus === "ok" ? (
                   <span className="ml-2 font-semibold text-emerald-700">{t("banking.syncOk")}</span>
@@ -695,7 +696,7 @@ function BankingUnifiedRegistry({
                 drafts.map((r) => (
                   <tr key={`draft-${r.id}`} className={`${DATA_TABLE_TR_CLASS} align-top bg-amber-50/40`}>
                     <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                      {String(r.createdAt).slice(0, 10)}
+                      {bakuDateDisplay(r.createdAt)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-950">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   MODAL_INPUT_CLASS,
@@ -101,7 +102,7 @@ export default function SuperAdminChannexVendorPage() {
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <p className="text-sm text-[#34495E]">
           Key configured: <strong>{cfg?.hasApiKey ? "yes" : "no"}</strong>
-          {cfg?.updatedAt ? ` · updated ${cfg.updatedAt}` : ""}
+          {cfg?.updatedAt ? ` · updated ${bakuDateTimeDisplay(cfg.updatedAt)}` : ""}
         </p>
         <label className="block text-sm text-[#34495E]">
           API base

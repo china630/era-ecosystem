@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "next/navigation";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type GrantMeta = {
   id: string;
@@ -104,7 +105,7 @@ export default function BuyerGrantDetailPage() {
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-neutral-500">{t("buyer.grantExpires")}</dt>
-                <dd className="text-neutral-900">{grant.expiresAt}</dd>
+                <dd className="text-neutral-900">{bakuDateTimeDisplay(grant.expiresAt)}</dd>
               </div>
             </dl>
           </section>

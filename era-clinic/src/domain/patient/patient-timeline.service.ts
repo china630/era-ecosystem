@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
-import { bakuDateKey } from "@/lib/baku-day";
+import { bakuDateKey, bakuTimeLabel } from "@/lib/baku-day";
 
 export { bakuDateKey } from "@/lib/baku-day";
 
@@ -48,18 +48,6 @@ export type PatientTimelineDay = {
   labelHint: string;
   events: PatientTimelineEvent[];
 };
-
-const BAKU_TZ = "Asia/Baku";
-
-function bakuTimeLabel(isoOrDate: Date | string): string {
-  const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: BAKU_TZ,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(d);
-}
 
 export type TimelineAppointmentInput = {
   id: string;

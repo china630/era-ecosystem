@@ -12,6 +12,7 @@ import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { detectSchedulingConflict } from "@/lib/scheduling.service";
 import { isWithinShift } from "@/domain/appointment/practitioner-schedule.service";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 const createSchema = z
   .object({
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
           recipient: phone,
           sourceEntityType: "appointment",
           sourceEntityId: appointment.id,
-          body: `Appointment confirmed ${scheduledAt.toISOString().slice(0, 16)} with ${practitioner.fullName}`,
+          body: `Appointment confirmed ${bakuDateTimeDisplay(scheduledAt)} with ${practitioner.fullName}`,
           payload: { appointmentId: appointment.id, scheduledAt: scheduledAt.toISOString() },
         },
         { organizationId },

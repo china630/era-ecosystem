@@ -22,6 +22,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
+import { billingPeriodKeyBaku } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -77,11 +78,12 @@ function personLabel(
   persons: ListResponse["persons"],
   globalPersonId: string,
   masked: string,
+  unnamed: string,
 ): string {
   const p = persons[globalPersonId];
-  if (!p) return globalPersonId.slice(0, 8);
-  if (p.displayName) return p.displayName;
-  return p.accessDenied ? masked : globalPersonId.slice(0, 8);
+  if (!p) return unnamed;
+  if (p.displayName?.trim()) return p.displayName.trim();
+  return p.accessDenied ? masked : unnamed;
 }
 
 export default function WorkforceAbsencesPage() {
@@ -96,12 +98,12 @@ export default function WorkforceAbsencesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notEntitled, setNotEntitled] = useState(false);
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(() => billingPeriodKeyBaku());
 
   const [createOpen, setCreateOpen] = useState(false);
   const [employments, setEmployments] = useState<EmploymentRow[]>([]);
   const [fEmploymentId, setFEmploymentId] = useState("");
-  const [fKind, setFKind] = useState<AbsenceKind>("VACATION");
+  const [fKind, setFKind] = useState<"" | AbsenceKind>("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
   const [fNote, setFNote] = useState("");
@@ -198,7 +200,8 @@ export default function WorkforceAbsencesPage() {
   }, [ready, user?.organizationId, detailId, loadDetail]);
 
   async function openCreate() {
-    setFKind("VACATION");
+    setFKind("");
+    setFEmploymentId("");
     setFStart("");
     setFEnd("");
     setFNote("");
@@ -213,12 +216,11 @@ export default function WorkforceAbsencesPage() {
       const items = data.items ?? [];
       setEmployments(items);
       if (data.persons) setPersons((p) => ({ ...p, ...data.persons }));
-      if (items[0]) setFEmploymentId(items[0].id);
     }
   }
 
   async function submitAbsence(submit: boolean) {
-    if (busy || !fEmploymentId || !fStart || !fEnd) return;
+    if (busy || !fEmploymentId || !fKind || !fStart || !fEnd) return;
     setBusy(true);
     setFormError(null);
     const res = await workforceFetch("absences", {
@@ -265,11 +267,16 @@ export default function WorkforceAbsencesPage() {
       if (seen.has(r.employmentId)) continue;
       seen.set(
         r.employmentId,
-        personLabel(persons, r.employment.globalPersonId, t("maskedPerson")),
+        personLabel(
+          persons,
+          r.employment.globalPersonId,
+          t("maskedPerson"),
+          tCommon("unnamedPerson"),
+        ),
       );
     }
     return [...seen.entries()].map(([id, label]) => ({ id, label }));
-  }, [rows, persons, t]);
+  }, [rows, persons, t, tCommon]);
 
   const filteredRows = useMemo(
     () =>
@@ -310,7 +317,7 @@ export default function WorkforceAbsencesPage() {
       <EraListFilterBar
         resetLabel={tCommon("filterReset")}
         onReset={() => {
-          setMonth(new Date().toISOString().slice(0, 7));
+          setMonth(billingPeriodKeyBaku());
           setFilterEmploymentId("");
           setFilterKind("");
         }}
@@ -374,7 +381,12 @@ export default function WorkforceAbsencesPage() {
                 paged.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {personLabel(persons, r.employment.globalPersonId, t("maskedPerson"))}
+                      {personLabel(
+                        persons,
+                        r.employment.globalPersonId,
+                        t("maskedPerson"),
+                        tCommon("unnamedPerson"),
+                      )}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`kind.${r.kind}` as "kind.VACATION")}
@@ -423,6 +435,26 @@ export default function WorkforceAbsencesPage() {
         subtitle={t("newSubtitle")}
         onClose={() => setCreateOpen(false)}
         closeLabel={tCommon("close")}
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={busy || !fEmploymentId || !fKind || !fStart || !fEnd}
+              onClick={() => void submitAbsence(false)}
+            >
+              {t("saveDraft")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={busy || !fEmploymentId || !fKind || !fStart || !fEnd}
+              onClick={() => void submitAbsence(true)}
+            >
+              {busy ? t("busy") : t("submit")}
+            </button>
+          </div>
+        }
       >
         <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
           <CatalogField
@@ -432,8 +464,9 @@ export default function WorkforceAbsencesPage() {
             onChange={(next) => setFEmploymentId(String(next))}
             options={employments.map((e) => ({
               value: e.id,
-              label: `${personLabel(persons, e.globalPersonId, e.id.slice(0, 8))} (${e.status})`,
+              label: `${personLabel(persons, e.globalPersonId, t("maskedPerson"), tCommon("unnamedPerson"))} (${e.status})`,
             }))}
+            emptyLabel={tCommon("select")}
           />
           <CatalogField
             kind="CLOSED_SMALL"
@@ -444,25 +477,24 @@ export default function WorkforceAbsencesPage() {
               value: k,
               label: t(`kind.${k}` as "kind.VACATION"),
             }))}
+            emptyLabel={tCommon("select")}
           />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DatePicker
-              label={t("fieldFrom")}
-              value={fStart}
-              onChange={setFStart}
-              placeholder={tCommon("datePlaceholder")}
-              required
-              fluid
-            />
-            <DatePicker
-              label={t("fieldTo")}
-              value={fEnd}
-              onChange={setFEnd}
-              placeholder={tCommon("datePlaceholder")}
-              required
-              fluid
-            />
-          </div>
+          <DatePicker
+            label={t("fieldFrom")}
+            value={fStart}
+            onChange={setFStart}
+            placeholder={tCommon("datePlaceholder")}
+            required
+            fluid
+          />
+          <DatePicker
+            label={t("fieldTo")}
+            value={fEnd}
+            onChange={setFEnd}
+            placeholder={tCommon("datePlaceholder")}
+            required
+            fluid
+          />
           <label className="block text-[13px] font-medium text-[#34495E]">
             {t("fieldNote")}
             <textarea
@@ -473,31 +505,13 @@ export default function WorkforceAbsencesPage() {
             />
           </label>
           {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
-          <div className="flex flex-wrap justify-end gap-2 pt-1">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void submitAbsence(false)}
-            >
-              {t("saveDraft")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void submitAbsence(true)}
-            >
-              {busy ? t("busy") : t("submit")}
-            </button>
-          </div>
         </form>
       </ModalShell>
 
       <ModalShell
         open={Boolean(detailId)}
         title={t("detailTitle")}
-        subtitle={detailId ? `#${detailId.slice(0, 8)}` : ""}
+        subtitle=""
         onClose={() => setDetailId(null)}
         closeLabel={tCommon("close")}
       >

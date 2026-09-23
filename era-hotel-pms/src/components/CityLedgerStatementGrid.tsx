@@ -1,5 +1,6 @@
 'use client';
 
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 
 export type ClStatementLine = {
@@ -55,7 +56,7 @@ export function CityLedgerStatementGrid({
         {
           key: 'businessDate',
           header: labels.date,
-          render: (r) => r.businessDate ?? String(r.at).slice(0, 10),
+          render: (r) => r.businessDate ?? bakuDateDisplay(r.at),
         },
         {
           key: 'kind',

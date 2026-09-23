@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
+import { addBakuDays, bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 import {
   buildEntitlementSnapshot,
   findCurrentProgramTemplate,
@@ -23,9 +24,11 @@ export async function instantiateProgramFromTemplate(input: {
   const checkOut =
     input.checkOutDate ??
     (() => {
-      const d = new Date(input.startsOn);
-      d.setDate(d.getDate() + template.durationDays);
-      return d;
+      const startYmd = bakuDateKey(input.startsOn);
+      const { hour, minute } = bakuHourMinute(input.startsOn);
+      const hh = String(hour).padStart(2, "0");
+      const mm = String(minute).padStart(2, "0");
+      return parseBakuDateTime(addBakuDays(startYmd, template.durationDays), `${hh}:${mm}`);
     })();
   const nights =
     input.nights ??

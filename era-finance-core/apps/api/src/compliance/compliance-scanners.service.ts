@@ -7,6 +7,7 @@ import {
   RiskAuditType,
   RiskSeverity,
 } from "@erafinance/database";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   FRAUD_LARGE_CASH_WITHDRAWAL_AZN,
@@ -113,7 +114,7 @@ export class FraudPatternsScanner {
 
       if (!bigCash) continue;
 
-      const dayBucket = new Date().toISOString().slice(0, 10);
+      const dayBucket = todayBakuYmd();
       return {
         dedupeKey: `fraud_password_then_cash_${userId}_${dayBucket}`,
         type: RiskAuditType.FRAUD,

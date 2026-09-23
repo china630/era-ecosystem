@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { createReservation } from '@/lib/services/reservation.service';
 import type { BookingFolioMode, PaymentMethod } from '@prisma/client';
@@ -125,7 +126,7 @@ export async function createGroupBookingWithStays(input: {
   if (!input.name?.trim()) throw new Error('Booking name is required');
   const code =
     input.code?.trim() ||
-    `GRP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    `GRP-${todayBakuYmd().replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
   const group = await prisma.reservationGroup.create({
     data: {
@@ -184,7 +185,7 @@ export async function ensureBookingGroupForReservation(reservationId: string): P
   if (!res) throw new Error('Reservation not found');
   if (res.groupId) return res.groupId;
 
-  const code = `GRP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random()
+  const code = `GRP-${todayBakuYmd().replace(/-/g, '')}-${Math.random()
     .toString(36)
     .slice(2, 6)
     .toUpperCase()}`;

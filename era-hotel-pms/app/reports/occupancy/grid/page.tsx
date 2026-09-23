@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EraListFilterBar, DatePicker, PageHeader } from '@era/satellite-kit/ui';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface OccupancyCell {
   date: string;
@@ -29,7 +30,7 @@ interface OccupancyGrid {
 export default function OccupancyGridPage() {
   const t = useTranslations('reports');
   const tc = useTranslations('common');
-  const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10));
+  const [from, setFrom] = useState(() => hotelDateKey());
   const [days, setDays] = useState(14);
   const [grid, setGrid] = useState<OccupancyGrid | null>(null);
   const [error, setError] = useState<string | null>(null);

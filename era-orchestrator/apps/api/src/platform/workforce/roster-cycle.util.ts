@@ -5,14 +5,7 @@
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-export function bakuYmd(d: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-}
+export { bakuDateKey as bakuYmd } from "@era/satellite-kit/time";
 
 export function utcFromYmd(ymd: string): Date {
   const [y, m, d] = ymd.split("-").map((x) => Number(x));
