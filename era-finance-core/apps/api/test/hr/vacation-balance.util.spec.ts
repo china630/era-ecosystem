@@ -3,6 +3,7 @@ import {
   computeVacationBalance,
   elapsedDaysSinceHire,
   inclusiveCalendarDays,
+  initialVacationForOpening,
 } from "../../src/hr/vacation-balance.util";
 
 const D = Prisma.Decimal;
@@ -42,6 +43,26 @@ describe("vacation-balance.util", () => {
       usedLaborLeaveDays: new D(0),
     });
     expect(bal.toFixed(2)).toBe("21.00");
+  });
+
+  it("initialVacationForOpening: asOf balance matches the file figure", () => {
+    const hire = new Date(Date.UTC(2024, 0, 1));
+    const asOf = new Date(Date.UTC(2026, 8, 1));
+    const balanceDays = 12;
+    const initial = initialVacationForOpening({
+      hireDate: hire,
+      asOf,
+      balanceDays,
+      baseVacationDaysPerYear: 21,
+    });
+    const bal = computeVacationBalance({
+      hireDate: hire,
+      asOf,
+      initialVacationDays: initial,
+      baseVacationDaysPerYear: 21,
+      usedLaborLeaveDays: new D(0),
+    });
+    expect(bal.toFixed(2)).toBe("12.00");
   });
 
   it("computeVacationBalance: subtracts LABOR_LEAVE days", () => {

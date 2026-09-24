@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-24
 
 ---
 
@@ -49,7 +49,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-RBAC-01 | Configurable role×screen matrix (Variant A) + custom roles | ADR clinic-domain-permissions-and-rbac | Y full staff+admin API catalog; system seed `ensureSystemClinicRoles` (login/SSO/access/provision); clone/delete custom roles; `PATCH` staffKind; `GET/PATCH /api/admin/users` assign; refresh-permissions; `scope:*.all`; provision unknown role fails; valid `[]` honored; page inventory fail-closed | Y hide screen → API 403; doctor without scope → assigned rows only; FO via `api:procedures.fo_manager` only; empty matrix → no template fallback | Y `/admin/access` create/clone/staffKind + user role assign; CLINIC_ADMIN matrix binds screens + scope | — | — | SCREEN | Not SHIPPED — AC-CLI-RBAC 🟡 until field UAT; Phase A + custom roles/seed/assign; Reset defaults after upgrade if matrix customized |
 | CP-WF-HUB-01 | CP Workforce hub end-to-end (hire, org, absence, security) | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | Plan E clean cutover |
 | CP-WF-EXP-01 | Workforce CSV export (roster, absences, timesheet) | ADR F1 | Y | — | — | Y `/workspace/workforce/export` | — | SHIPPED | No FIN in default CSV |
-| CP-WF-IMP-01 | Workforce CSV/xlsx import (roster, absences, org-structure) | ADR F1 | Y dry-run + apply | — | — | Y `/workspace/workforce/export` + `/workspace/workforce/org-structure` | — | SHIPPED | xlsx or CSV; empty satellites = no seat; org-structure before roster |
+| CP-WF-IMP-01 | Workforce CSV/xlsx import (roster, absences, org-structure) | ADR F1 | Y dry-run + apply | — | — | Y `/workspace/workforce/export` + `/workspace/workforce/org-structure` | — | SHIPPED | generic three files; Evrostar pack is CP-WF-MIG-01, not this row |
+| CP-WF-MIG-01 | Evrostar workforce migration wizard | [cp-workforce-migration-center](./adr/cp-workforce-migration-center.md) | Y preview/apply/skip | — | — | Y `/workspace/workforce/migration` | — | API | SCREEN; not SHIPPED / not ga |
 | CP-WF-SEAT-01 | Unified seat licensing + Security Admin widget | ADR F4 | Y | — | — | Y `/workspace/workforce/security` | — | SHIPPED | One seat per person; empty hire satellites = headcount, not a seat |
 | CLI-02 | Rooms master | PRD M2 | Y | — | Y | — | — | SHIPPED | — |
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
@@ -129,7 +130,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | payroll fact (not roster plan); org-unit+employee filters; hide future days (Baku); today pink; weekend tint; fullscreen; no UAT-SMOKE / not SHIPPED |
 | CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | CP-WF-GROUP-01 | Holding-federated HR (two VÖEN scopes, no merged tree) | ADR evrostar-workforce-pilot | Y | — | — | Y `/workspace/workforce/group` | — | API | directory `q` = FIN index + name (no UUID); EraListFilterBar; empty vs loading split; stacked org rows; VIEWER alone 403; not SHIPPED (no UAT-SMOKE) |
-| CP-WF-ROSTER-01 | Labor roster (shift type/cycle/place/assignment → timesheet) | ADR evrostar-workforce-pilot | Y | — | — | Y `/workspace/workforce/{places,shifts,shifts/cycles,shifts/brigades,roster}` | — | API | shift **plan** vs timesheet payroll **fact**; nested shifts IA; catalog EraDataGrid + roster canvas; materialize modal; not SHIPPED (no UAT-SMOKE); not HK/nurse duty |
+| CP-WF-ROSTER-01 | Labor roster (shift type/cycle/place/assignment → timesheet) | ADR evrostar-workforce-pilot + [cp-workforce-brigade-membership](./adr/cp-workforce-brigade-membership.md) | Y | — | — | Y `/workspace/workforce/{places,shifts,shifts/cycles,shifts/brigades,roster}` | — | API | shift **plan** vs timesheet payroll **fact**; dated brigade membership **API** + brigades UI **SCREEN** (transfer/history); not SHIPPED; not HK/nurse duty |
 | CP-WF-ORD-02 | Personnel order templates + LEAVE_ANNUAL + ISSUED snapshot | ADR evrostar-workforce-pilot | Y | — | — | Y `/workspace/workforce/personnel-orders` | — | API | templates+terminate policy in modal; icon row actions; not SHIPPED (no UAT three blanks) |
 | CP-WF-ATT-01 | FaceID / attendance punches → DRAFT timesheet | ADR evrostar-workforce-pilot | Y | — | — | Y `/workspace/workforce/attendance` (+ `/devices`, `/identities`) | — | API | nested IA; punch filter default **all**; i18n direction/device status; rebuild/CSV modals; not SHIPPED (no field tablet UAT) |
 | FIN-BOOK-MGMT-01 | NAS ops freeze + MGMT labor delta (no MGMT pay) | ADR evrostar-workforce-pilot + runbook wave-5 | N | Y | Y `/hr/mgmt-labor-delta` | Y | — | API | Wave 5 + P0 UI screen; OWNER/ADMIN/DIRECTOR; not SHIPPED / not ga |
@@ -491,7 +492,7 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin + provision-sync | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Matrix ACTIVE positions + optimistic save; org-unit filter parses `{ items }`; grants/bindings/employments **server page**; bindings person column + `provisionState`; overview = summary only |
 | CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | one hire modal (identity/contacts/employment/access); satellites only if grant-access; empty = employment without satellite login; draft order returned for Issue/PDF; hotel+clinic staff-provision **ensure** Role row when missing |
 | CP-WF-GROUP-01 | Holding-federated HR view | ADR evrostar-workforce-pilot | `GET holding-directory` + `GET persons/:id/employments?holdingId=` + audit `?holdingId=` | — | — | Y `/workspace/workforce/group` | — | API until UAT-SMOKE; write path stays org JWT switcher |
-| CP-WF-ROSTER-01 | Labor roster → DRAFT timesheet | ADR evrostar-workforce-pilot | places / shift-types / cycles / brigades / assignments / day-overrides + `GET roster/preview` + `POST …/timesheets/:id/materialize-roster` (+ sync absences) | — | — | Y `/workspace/workforce/{places,shifts,roster}` | — | shift **plan** (roster) vs timesheet **fact**; API until UAT-SMOKE; grid + `preserveManual`; org JWT isolation |
+| CP-WF-ROSTER-01 | Labor roster → DRAFT timesheet | ADR evrostar-workforce-pilot + [cp-workforce-brigade-membership](./adr/cp-workforce-brigade-membership.md) | places / shift-types / cycles / brigades / assignments / day-overrides + `POST brigades/transfers\|leaves` + `GET brigades/:id/members` + `GET brigade-memberships` + `GET roster/preview` + `POST …/timesheets/:id/materialize-roster` (+ sync absences) | — | — | Y `/workspace/workforce/{places,shifts,shifts/brigades,roster}` | — | shift **plan** vs timesheet **fact**; dated membership API + SCREEN; API until UAT-SMOKE |
 | CP-WF-ORD-02 | Order templates + leave annual | ADR evrostar-workforce-pilot | `LEAVE_ANNUAL` + templates + contextJson + cancel + PDF audit | — | — | Y `/workspace/workforce/personnel-orders` | — | API until UAT three blanks; S2S vacationDaysBalance |
 | CP-WF-ATT-01 | Attendance punches → DRAFT | ADR evrostar-workforce-pilot | `POST …/attendance/punches` (att_ device) + devices/identities/rebuild/import-csv | — | — | Y `/workspace/workforce/attendance` | — | API until field tablet UAT; lab curl/CSV OK |
 
@@ -531,6 +532,10 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-24 | CP-WF-MIG-01 wizard landed (9 steps + Finance opening). Status **API** + UI **SCREEN**; not SHIPPED / not ga. CP-WF-IMP-01 unchanged. |
+| 2026-09-24 | ADR [cp-workforce-migration-center](./adr/cp-workforce-migration-center.md): CP-WF-MIG-01 wizard (not built). CP-WF-IMP-01 stays the generic importer. |
+| 2026-09-24 | CP-WF-ROSTER-01 dated brigade membership landed (intervals + transfers/leaves + as-of materialize + brigades SCREEN). Status stays **API** (not SHIPPED / not ga). |
+| 2026-09-24 | ADR [cp-workforce-brigade-membership](./adr/cp-workforce-brigade-membership.md): dated membership + transfer editor accepted. CP-WF-ROSTER-01 stays **API**. |
 | 2026-09-23 | CP workforce lists: kit fill lists; punch filter default all; i18n statuses/direction; Baku date display; roster empty grid. CP-WF-* stay **API**. |
 | 2026-09-23 | CP-WF-EMP-01: hire/card row layout `max-w-5xl`; FIN MDM search button; person `emailCipher`; PIN default **0000 in the field** when grant-access (editable). Status stays **API**. |
 | 2026-09-23 | CP-WF-GROUP-01: holdings fetch fail vs empty; error codes; URL holdingId; filter/page fetch race; person card loads without holdingId; no staffCode UUID; status i18n; FIN + empty/loading. Status stays **API**. |

@@ -21,7 +21,9 @@ HR defines places, shift types/cycles, brigades and dated assignments, then mate
 
 2. **Shifts** — `/workspace/workforce/shifts`  
    Click **Seed default types & cycles** (or rely on first list load). Confirm types `E`, `N`, `OFFICE`, `H24` and cycles `FIVE_TWO` (5/2), `TWO_TWO` (2/2), `TWENTY_FOUR_FORTY_EIGHT` (24/48).  
-   Create a brigade **with members** (MULTI) and note its code.
+   Create a brigade (code + name). On `/workspace/workforce/shifts/brigades` use **Transfer** with `effectiveFrom` (Baku) — do not MULTI-save the whole set.
+
+2a. **3→4 brigades from the 1st** — create empty brigade D. Transfer selected people from A/B/C to D with `effectiveFrom` = first of next month (cap +31 Baku days). Current-month preview/materialize must stay on A/B/C until that day.
 
 3. **Assignments** — `/workspace/workforce/roster`  
    Assign one employment (or the brigade) to `SITE_A` + `FIVE_TWO` with `effectiveFrom` = first of month.  

@@ -71,3 +71,4 @@ Mutate roles: OWNER / ADMIN / ACCOUNTANT. SKU off → **402** `TRADE_CREDIT_REQU
 | `/hr/mgmt-labor-delta` | `GET/POST /api/hr/mgmt-labor-delta?year=&month=` — OWNER/ADMIN/DIRECTOR; MGMT JE only (not pay/XML) |
 | `/hr/timesheet` | CP-master link-only when `platform_workforce` |
 | `/payroll` | payroll runs; contract salary 0 banner |
+| S2S CP migration | `GET /internal/v1/workforce/employees/by-cp-employment`; `POST /internal/v1/workforce/employees/opening` (service token, `hr_full`) — salary / internalRate / inverted vacation opening |

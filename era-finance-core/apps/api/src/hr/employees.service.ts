@@ -41,6 +41,12 @@ import {
   type EmployeePersonDisplay,
 } from "./employee-person.util";
 import type { ResolvePersonInput } from "../orchestrator/orchestrator-mdm-client.service";
+import {
+  computeVacationBalance,
+  extraDaysFromSeniority,
+  initialVacationForOpening,
+  utcDayStart,
+} from "./vacation-balance.util";
 
 const Decimal = Prisma.Decimal;
 
@@ -882,6 +888,115 @@ export class EmployeesService {
       updated,
       skipped: ids.length - updated - missingIds.length,
       missingIds,
+    };
+  }
+
+  /**
+   * S2S opening stamp for CP migration (salary + invert vacation so as-of matches the file).
+   * Does not change used labor-leave days (those stay Finance-local).
+   */
+  async applyWorkforceOpening(
+    organizationId: string,
+    cpEmploymentId: string,
+    dto: {
+      salary?: number;
+      internalRate?: number | null;
+      balanceDays?: number;
+      baseVacationDaysPerYear?: number;
+      asOfDate?: string;
+    },
+  ): Promise<{
+    salary: number | null;
+    internalRate: number | null;
+    initialVacationDays: number;
+    vacationDaysBalance: number | null;
+    baseVacationDaysPerYear: number;
+  }> {
+    const emp = await this.prisma.employee.findFirst({
+      where: {
+        organizationId,
+        cpEmploymentId,
+        deletedAt: null,
+      },
+    });
+    if (!emp) {
+      throw new NotFoundException("Finance employee mirror not found");
+    }
+    const data: Prisma.EmployeeUpdateInput = {};
+    if (dto.salary != null && dto.salary > 0) {
+      const parts = resolveSalaryParts({ salary: dto.salary });
+      if (parts) {
+        data.salary = parts.salary;
+        data.tariffSalary = parts.tariffSalary;
+        data.supplementSalary = parts.supplementSalary;
+      }
+    }
+    if (dto.internalRate !== undefined) {
+      data.internalRate =
+        dto.internalRate == null ? null : new Decimal(dto.internalRate);
+    }
+    if (dto.balanceDays != null && dto.asOfDate) {
+      const asOfRaw = dto.asOfDate.trim().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(asOfRaw)) {
+        throw new BadRequestException("asOfDate must be YYYY-MM-DD");
+      }
+      const asOf = utcDayStart(new Date(`${asOfRaw}T00:00:00.000Z`));
+      const base =
+        dto.baseVacationDaysPerYear != null && dto.baseVacationDaysPerYear > 0
+          ? Math.round(dto.baseVacationDaysPerYear)
+          : emp.baseVacationDaysPerYear;
+      data.baseVacationDaysPerYear = base;
+      const seniorityRules = await this.prisma.vacationSeniorityRule.findMany({
+        where: { organizationId },
+        select: { yearsFrom: true, extraDays: true },
+      });
+      const seniorityExtraDaysPerYear = extraDaysFromSeniority(
+        emp.hireDate,
+        asOf,
+        seniorityRules,
+      );
+      const initial = initialVacationForOpening({
+        hireDate: emp.hireDate,
+        asOf,
+        balanceDays: dto.balanceDays,
+        baseVacationDaysPerYear: base,
+        seniorityExtraDaysPerYear,
+      });
+      data.initialVacationDays = initial;
+      data.vacationDaysBalance = computeVacationBalance({
+        hireDate: emp.hireDate,
+        asOf,
+        initialVacationDays: initial,
+        baseVacationDaysPerYear: base,
+        usedLaborLeaveDays: new Decimal(0),
+        seniorityExtraDaysPerYear,
+      });
+    } else if (dto.baseVacationDaysPerYear != null && dto.baseVacationDaysPerYear > 0) {
+      data.baseVacationDaysPerYear = Math.round(dto.baseVacationDaysPerYear);
+    }
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException("opening requires salary, internalRate, or vacation fields");
+    }
+    const updated = await this.prisma.employee.update({
+      where: { id: emp.id },
+      data,
+      select: {
+        salary: true,
+        internalRate: true,
+        initialVacationDays: true,
+        vacationDaysBalance: true,
+        baseVacationDaysPerYear: true,
+      },
+    });
+    return {
+      salary: updated.salary != null ? Number(updated.salary) : null,
+      internalRate: updated.internalRate != null ? Number(updated.internalRate) : null,
+      initialVacationDays: Number(updated.initialVacationDays),
+      vacationDaysBalance:
+        updated.vacationDaysBalance != null
+          ? Number(updated.vacationDaysBalance)
+          : null,
+      baseVacationDaysPerYear: updated.baseVacationDaysPerYear,
     };
   }
 
