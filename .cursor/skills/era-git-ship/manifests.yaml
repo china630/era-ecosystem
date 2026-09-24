@@ -1,5 +1,5 @@
 # ERA git-ship path manifests — used by era-ship.ps1 and era-git-ship SKILL.md
-# Match: path prefix or exact file; first matching wave bucket wins (full wave order).
+# Match: longest path prefix wins (MDM under era-orchestrator/packages/mdm-database/ is not orch).
 
 full_wave_order:
   - orchestrator
@@ -170,6 +170,7 @@ never_commit:
   - .env.local
   - "**/.env"
   - .cursor/
+  # Exception (code, not YAML): tracked `.cursor/rules/` and `.cursor/skills/` are shippable.
   - node_modules/
   - "**/npm-cache/"
   - test-results/

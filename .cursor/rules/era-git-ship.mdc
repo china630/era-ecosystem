@@ -30,6 +30,7 @@ When the user asks for **git commit + PR workflow**, read and follow:
 - Never push directly to `dev` or `master` — branch protection requires PR.
 - Require `gh auth` before PR/merge. If `gh auth status` fails, bootstrap `GH_TOKEN` from git credential (see `docs/GH_CLI_SETUP.md`) — same token as `git push`, not a new login.
 - PowerShell: use `era-ship.ps1` from `.cursor/skills/era-git-ship/scripts/`.
-- **Before `git push` / `-PublishDev`:** `npm run ship:prepush` (quality-gates + scoped `test`/`build`). Not before each commit. Docker/Prisma health is not a substitute. On FAIL: fix, new commit, do not push. Never `-SkipGates` unless the user said so.
+- **Before `git push` / `-PublishDev`:** `npm run ship:prepush` (quality-gates + scoped `test`/`build`). Not before each commit. Docker/Prisma health is not a substitute. On FAIL: fix, new commit, do not push. **PASS + dirty tree:** commit generate/build output, clear `ERA_SHIP_GATES_DONE`, re-run gates; never push while porcelain remains except `never_commit`. Never `-SkipGates` unless the user said so.
+- Merge PRs by **number** from `gh pr create` URL. Do not `gh pr view` with no args. `dev`→`master`: retry `gh pr merge <n>` if protection still has queued checks; do not treat stale `checks --watch` green as mergeable.
 
 Path buckets: `.cursor/skills/era-git-ship/manifests.yaml`

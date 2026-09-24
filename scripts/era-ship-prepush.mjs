@@ -22,12 +22,58 @@ const qualityOnly = argv.includes("--quality-only");
 const baseIdx = argv.indexOf("--base");
 const baseArg = baseIdx >= 0 ? argv[baseIdx + 1] : "";
 
+function porcelainPaths() {
+  const files = [];
+  for (const line of gitLines(["status", "--porcelain"])) {
+    if (line.length < 4) continue;
+    let rest = line.slice(3);
+    if (rest.startsWith('"') && rest.endsWith('"')) rest = rest.slice(1, -1);
+    if (rest.includes(" -> ")) rest = rest.split(" -> ").pop();
+    files.push(rest.replace(/\\/g, "/"));
+  }
+  return files;
+}
+
+function isNeverCommitPath(p) {
+  const n = p.replace(/\\/g, "/").replace(/^\.\//, "");
+  if (n.startsWith(".cursor/rules/") || n.startsWith(".cursor/skills/")) return false;
+  if (n === ".env" || n.endsWith("/.env")) return true;
+  const prefixes = [
+    "docker-data/",
+    ".env.local",
+    ".cursor/",
+    "node_modules/",
+    "test-results/",
+    "tmp/",
+    "tools/__pycache__/",
+    "data/",
+  ];
+  for (const pre of prefixes) {
+    if (pre === ".env.local" && (n === ".env.local" || n.endsWith("/.env.local"))) return true;
+    if (n === pre.replace(/\/$/, "") || n.startsWith(pre)) return true;
+  }
+  if (n.includes("/node_modules/") || n.includes("/npm-cache/")) return true;
+  return false;
+}
+
+function assertWorkingTreeShipClean() {
+  const dirty = porcelainPaths().filter((f) => !isNeverCommitPath(f));
+  if (dirty.length === 0) return;
+  console.error(
+    `FAIL: working tree dirty after ship gates (${dirty.length} files). ` +
+      `Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run. Do not push.`,
+  );
+  for (const f of dirty.slice(0, 20)) console.error(`  ${f}`);
+  process.exit(1);
+}
+
 if (process.env.ERA_SHIP_SKIP_GATES === "1") {
   console.warn("ERA_SHIP_SKIP_GATES=1 — skipping local ship gates.");
   process.exit(0);
 }
 if (process.env.ERA_SHIP_GATES_DONE === "1") {
   console.log("ERA_SHIP_GATES_DONE=1 — gates already ran in this ship session.");
+  assertWorkingTreeShipClean();
   process.exit(0);
 }
 
@@ -72,6 +118,7 @@ function collectFiles(base) {
   const specs = [];
   if (base) specs.push(["diff", "--name-only", `${base}...HEAD`]);
   specs.push(["diff", "--name-only"], ["diff", "--cached", "--name-only"]);
+  specs.push(["ls-files", "--others", "--exclude-standard"]);
   for (const args of specs) {
     for (const f of gitLines(args)) set.add(f);
   }
@@ -144,6 +191,7 @@ run(
 
 if (qualityOnly) {
   console.log("\nPASS — quality gates (--quality-only, no scoped app tests)");
+  assertWorkingTreeShipClean();
   process.exit(0);
 }
 
@@ -187,4 +235,5 @@ for (const dir of SATELLITE_DIRS) {
 }
 
 console.log("\nPASS — local ship gates");
+assertWorkingTreeShipClean();
 process.exit(0);
