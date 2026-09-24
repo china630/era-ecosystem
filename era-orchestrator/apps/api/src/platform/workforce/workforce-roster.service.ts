@@ -384,7 +384,6 @@ export class WorkforceRosterService {
         employment: {
           select: {
             id: true,
-            staffCode: true,
             globalPersonId: true,
             status: true,
           },
@@ -431,7 +430,6 @@ export class WorkforceRosterService {
         employment: {
           select: {
             id: true,
-            staffCode: true,
             globalPersonId: true,
             status: true,
           },
@@ -483,7 +481,7 @@ export class WorkforceRosterService {
           brigade: { select: { id: true, code: true, name: true } },
           leftToBrigade: { select: { id: true, code: true, name: true } },
           employment: {
-            select: { id: true, staffCode: true, globalPersonId: true },
+            select: { id: true, globalPersonId: true },
           },
         },
         orderBy: [{ effectiveFrom: "desc" }, { createdAt: "desc" }],
@@ -495,7 +493,7 @@ export class WorkforceRosterService {
       items: rows.map((m) => ({
         id: m.id,
         employmentId: m.employmentId,
-        staffCode: m.employment.staffCode,
+        staffCode: staffCodeFromEmployment(m.employmentId),
         globalPersonId: m.employment.globalPersonId,
         brigade: m.brigade,
         leftToBrigade: m.leftToBrigade,
@@ -1574,7 +1572,6 @@ export class WorkforceRosterService {
     effectiveFrom: Date;
     effectiveTo: Date | null;
     employment: {
-      staffCode: string | null;
       globalPersonId: string | null;
       status?: string;
     };
@@ -1584,7 +1581,7 @@ export class WorkforceRosterService {
       employmentId: m.employmentId,
       effectiveFrom: isoDayUtc(m.effectiveFrom),
       effectiveTo: m.effectiveTo ? isoDayUtc(m.effectiveTo) : null,
-      staffCode: m.employment.staffCode,
+      staffCode: staffCodeFromEmployment(m.employmentId),
       globalPersonId: m.employment.globalPersonId,
       status: m.employment.status,
     };

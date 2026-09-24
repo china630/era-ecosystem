@@ -153,7 +153,7 @@ export class WorkforceRosterController {
     summary:
       "Person × day labor plan preview (read-only; place/orgUnit filters). Does not write timesheet.",
   })
-  preview(
+  async preview(
     @OrganizationId() organizationId: string,
     @Query("year") yearRaw?: string,
     @Query("month") monthRaw?: string,
