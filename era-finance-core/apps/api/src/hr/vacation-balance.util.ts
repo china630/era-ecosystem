@@ -75,3 +75,22 @@ export function computeVacationBalance(params: {
     .sub(params.usedLaborLeaveDays);
   return roundDays2(raw);
 }
+
+/**
+ * Invert the vacation formula so `computeVacationBalance` on `asOf` equals `balanceDays`
+ * when used days stay 0 (CP leave history is not mirrored into Finance).
+ * `initial = balanceDays − accrued(hire → asOf)`.
+ */
+export function initialVacationForOpening(params: {
+  hireDate: Date;
+  asOf: Date;
+  balanceDays: number;
+  baseVacationDaysPerYear: number;
+  seniorityExtraDaysPerYear?: number;
+}): Prisma.Decimal {
+  const base =
+    params.baseVacationDaysPerYear + (params.seniorityExtraDaysPerYear ?? 0);
+  const elapsed = elapsedDaysSinceHire(params.hireDate, params.asOf);
+  const accrued = new Decimal(elapsed).div(365).mul(base);
+  return roundDays2(new Decimal(params.balanceDays).sub(accrued));
+}

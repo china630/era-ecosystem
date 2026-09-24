@@ -1,5 +1,6 @@
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -9,6 +10,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -198,8 +200,13 @@ export class CreateWorkforceBrigadeDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(200)
   @IsUUID("4", { each: true })
   employmentIds?: string[];
+
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  effectiveFrom?: string;
 }
 
 export class UpdateWorkforceBrigadeDto {
@@ -208,11 +215,70 @@ export class UpdateWorkforceBrigadeDto {
   @MinLength(1)
   @MaxLength(255)
   name?: string;
+}
+
+export class TransferWorkforceBrigadeMembersDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(200)
+  @IsUUID("4", { each: true })
+  employmentIds!: string[];
+
+  @IsUUID()
+  toBrigadeId!: string;
+
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  effectiveFrom!: string;
 
   @IsOptional()
+  @IsUUID()
+  fromBrigadeId?: string;
+}
+
+export class LeaveWorkforceBrigadeMembersDto {
   @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(200)
   @IsUUID("4", { each: true })
-  employmentIds?: string[];
+  employmentIds!: string[];
+
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  effectiveFrom!: string;
+
+  @IsOptional()
+  @IsUUID()
+  fromBrigadeId?: string;
+}
+
+export class ListBrigadeMembershipsQueryDto {
+  @IsOptional()
+  @IsUUID()
+  employmentId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  brigadeId?: string;
+
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  from?: string;
+
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
 }
 
 export class CreateWorkforceShiftAssignmentDto {

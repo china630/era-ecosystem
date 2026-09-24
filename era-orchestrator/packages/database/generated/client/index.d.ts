@@ -185,7 +185,7 @@ export type WorkforceShiftCycleSlot = $Result.DefaultSelection<Prisma.$Workforce
 export type WorkforceBrigade = $Result.DefaultSelection<Prisma.$WorkforceBrigadePayload>
 /**
  * Model WorkforceBrigadeMember
- * 
+ * Dated crew membership (ADR cp-workforce-brigade-membership). Open = effectiveTo null.
  */
 export type WorkforceBrigadeMember = $Result.DefaultSelection<Prisma.$WorkforceBrigadeMemberPayload>
 /**
@@ -218,6 +218,11 @@ export type WorkforcePersonnelOrderTemplate = $Result.DefaultSelection<Prisma.$W
  * Printable kadr order (hire/transfer/terminate/leave) — document workflow over operational employment changes.
  */
 export type WorkforcePersonnelOrder = $Result.DefaultSelection<Prisma.$WorkforcePersonnelOrderPayload>
+/**
+ * Model WorkforceMigrationStep
+ * Per-org wizard progress for CP-WF-MIG-01 (applied or skipped).
+ */
+export type WorkforceMigrationStep = $Result.DefaultSelection<Prisma.$WorkforceMigrationStepPayload>
 /**
  * Model StaffScheduleRevision
  * Approved snapshot of ştat cədvəli (positions × occupied/vacant slots).
@@ -1727,6 +1732,16 @@ export class PrismaClient<
   get workforcePersonnelOrder(): Prisma.WorkforcePersonnelOrderDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.workforceMigrationStep`: Exposes CRUD operations for the **WorkforceMigrationStep** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceMigrationSteps
+    * const workforceMigrationSteps = await prisma.workforceMigrationStep.findMany()
+    * ```
+    */
+  get workforceMigrationStep(): Prisma.WorkforceMigrationStepDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.staffScheduleRevision`: Exposes CRUD operations for the **StaffScheduleRevision** model.
     * Example usage:
     * ```ts
@@ -2670,6 +2685,7 @@ export namespace Prisma {
     WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
     WorkforcePersonnelOrderTemplate: 'WorkforcePersonnelOrderTemplate',
     WorkforcePersonnelOrder: 'WorkforcePersonnelOrder',
+    WorkforceMigrationStep: 'WorkforceMigrationStep',
     StaffScheduleRevision: 'StaffScheduleRevision',
     WorkforceAuditLog: 'WorkforceAuditLog',
     PricingBundle: 'PricingBundle',
@@ -2732,7 +2748,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -5767,6 +5783,80 @@ export namespace Prisma {
           count: {
             args: Prisma.WorkforcePersonnelOrderCountArgs<ExtArgs>
             result: $Utils.Optional<WorkforcePersonnelOrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceMigrationStep: {
+        payload: Prisma.$WorkforceMigrationStepPayload<ExtArgs>
+        fields: Prisma.WorkforceMigrationStepFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceMigrationStepFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceMigrationStepFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceMigrationStepFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceMigrationStepFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceMigrationStepFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceMigrationStepCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceMigrationStepCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceMigrationStepCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceMigrationStepDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          update: {
+            args: Prisma.WorkforceMigrationStepUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceMigrationStepDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceMigrationStepUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceMigrationStepUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceMigrationStepUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceMigrationStepPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceMigrationStepAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceMigrationStep>
+          }
+          groupBy: {
+            args: Prisma.WorkforceMigrationStepGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceMigrationStepGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceMigrationStepCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceMigrationStepCountAggregateOutputType> | number
           }
         }
       }
@@ -9397,6 +9487,7 @@ export namespace Prisma {
     workforceVacationPlanLine?: WorkforceVacationPlanLineOmit
     workforcePersonnelOrderTemplate?: WorkforcePersonnelOrderTemplateOmit
     workforcePersonnelOrder?: WorkforcePersonnelOrderOmit
+    workforceMigrationStep?: WorkforceMigrationStepOmit
     staffScheduleRevision?: StaffScheduleRevisionOmit
     workforceAuditLog?: WorkforceAuditLogOmit
     pricingBundle?: PricingBundleOmit
@@ -10176,11 +10267,13 @@ export namespace Prisma {
 
   export type WorkforceBrigadeCountOutputType = {
     members: number
+    memberExits: number
     assignments: number
   }
 
   export type WorkforceBrigadeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     members?: boolean | WorkforceBrigadeCountOutputTypeCountMembersArgs
+    memberExits?: boolean | WorkforceBrigadeCountOutputTypeCountMemberExitsArgs
     assignments?: boolean | WorkforceBrigadeCountOutputTypeCountAssignmentsArgs
   }
 
@@ -10199,6 +10292,13 @@ export namespace Prisma {
    * WorkforceBrigadeCountOutputType without action
    */
   export type WorkforceBrigadeCountOutputTypeCountMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceBrigadeMemberWhereInput
+  }
+
+  /**
+   * WorkforceBrigadeCountOutputType without action
+   */
+  export type WorkforceBrigadeCountOutputTypeCountMemberExitsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceBrigadeMemberWhereInput
   }
 
@@ -10407,6 +10507,7 @@ export namespace Prisma {
     workforceAttendanceDevices: number
     workforceAttendanceIdentities: number
     workforceAttendancePunches: number
+    workforceMigrationSteps: number
     orgUnitCommercialLinks: number
     clinicCutoverAsHotel: number
     fiscalHardwareDevices: number
@@ -10453,6 +10554,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: boolean | OrganizationCountOutputTypeCountWorkforceAttendanceDevicesArgs
     workforceAttendanceIdentities?: boolean | OrganizationCountOutputTypeCountWorkforceAttendanceIdentitiesArgs
     workforceAttendancePunches?: boolean | OrganizationCountOutputTypeCountWorkforceAttendancePunchesArgs
+    workforceMigrationSteps?: boolean | OrganizationCountOutputTypeCountWorkforceMigrationStepsArgs
     orgUnitCommercialLinks?: boolean | OrganizationCountOutputTypeCountOrgUnitCommercialLinksArgs
     clinicCutoverAsHotel?: boolean | OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs
     fiscalHardwareDevices?: boolean | OrganizationCountOutputTypeCountFiscalHardwareDevicesArgs
@@ -10729,6 +10831,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountWorkforceAttendancePunchesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceAttendancePunchWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountWorkforceMigrationStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceMigrationStepWhereInput
   }
 
   /**
@@ -38276,6 +38385,8 @@ export namespace Prisma {
     rejectedByUserId: string | null
     cancelledByUserId: string | null
     rejectionReason: string | null
+    source: string | null
+    sourceRef: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -38298,6 +38409,8 @@ export namespace Prisma {
     rejectedByUserId: string | null
     cancelledByUserId: string | null
     rejectionReason: string | null
+    source: string | null
+    sourceRef: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -38320,6 +38433,8 @@ export namespace Prisma {
     rejectedByUserId: number
     cancelledByUserId: number
     rejectionReason: number
+    source: number
+    sourceRef: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -38344,6 +38459,8 @@ export namespace Prisma {
     rejectedByUserId?: true
     cancelledByUserId?: true
     rejectionReason?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -38366,6 +38483,8 @@ export namespace Prisma {
     rejectedByUserId?: true
     cancelledByUserId?: true
     rejectionReason?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -38388,6 +38507,8 @@ export namespace Prisma {
     rejectedByUserId?: true
     cancelledByUserId?: true
     rejectionReason?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -38483,6 +38604,8 @@ export namespace Prisma {
     rejectedByUserId: string | null
     cancelledByUserId: string | null
     rejectionReason: string | null
+    source: string
+    sourceRef: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceAbsenceCountAggregateOutputType | null
@@ -38522,6 +38645,8 @@ export namespace Prisma {
     rejectedByUserId?: boolean
     cancelledByUserId?: boolean
     rejectionReason?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -38545,6 +38670,8 @@ export namespace Prisma {
     rejectedByUserId?: boolean
     cancelledByUserId?: boolean
     rejectionReason?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -38568,6 +38695,8 @@ export namespace Prisma {
     rejectedByUserId?: boolean
     cancelledByUserId?: boolean
     rejectionReason?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -38591,11 +38720,13 @@ export namespace Prisma {
     rejectedByUserId?: boolean
     cancelledByUserId?: boolean
     rejectionReason?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceAbsenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "kind" | "startDate" | "endDate" | "note" | "status" | "submittedAt" | "approvedAt" | "rejectedAt" | "cancelledAt" | "submittedByUserId" | "approvedByUserId" | "rejectedByUserId" | "cancelledByUserId" | "rejectionReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAbsence"]>
+  export type WorkforceAbsenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "kind" | "startDate" | "endDate" | "note" | "status" | "submittedAt" | "approvedAt" | "rejectedAt" | "cancelledAt" | "submittedByUserId" | "approvedByUserId" | "rejectedByUserId" | "cancelledByUserId" | "rejectionReason" | "source" | "sourceRef" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAbsence"]>
   export type WorkforceAbsenceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
@@ -38629,6 +38760,11 @@ export namespace Prisma {
       rejectedByUserId: string | null
       cancelledByUserId: string | null
       rejectionReason: string | null
+      /**
+       * Origin: manual (default) or import (migration wizard). Not a lifecycle status.
+       */
+      source: string
+      sourceRef: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceAbsence"]>
@@ -39072,6 +39208,8 @@ export namespace Prisma {
     readonly rejectedByUserId: FieldRef<"WorkforceAbsence", 'String'>
     readonly cancelledByUserId: FieldRef<"WorkforceAbsence", 'String'>
     readonly rejectionReason: FieldRef<"WorkforceAbsence", 'String'>
+    readonly source: FieldRef<"WorkforceAbsence", 'String'>
+    readonly sourceRef: FieldRef<"WorkforceAbsence", 'String'>
     readonly createdAt: FieldRef<"WorkforceAbsence", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceAbsence", 'DateTime'>
   }
@@ -50340,6 +50478,7 @@ export namespace Prisma {
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     members?: boolean | WorkforceBrigade$membersArgs<ExtArgs>
+    memberExits?: boolean | WorkforceBrigade$memberExitsArgs<ExtArgs>
     assignments?: boolean | WorkforceBrigade$assignmentsArgs<ExtArgs>
     _count?: boolean | WorkforceBrigadeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceBrigade"]>
@@ -50377,6 +50516,7 @@ export namespace Prisma {
   export type WorkforceBrigadeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     members?: boolean | WorkforceBrigade$membersArgs<ExtArgs>
+    memberExits?: boolean | WorkforceBrigade$memberExitsArgs<ExtArgs>
     assignments?: boolean | WorkforceBrigade$assignmentsArgs<ExtArgs>
     _count?: boolean | WorkforceBrigadeCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -50392,6 +50532,7 @@ export namespace Prisma {
     objects: {
       organization: Prisma.$OrganizationPayload<ExtArgs>
       members: Prisma.$WorkforceBrigadeMemberPayload<ExtArgs>[]
+      memberExits: Prisma.$WorkforceBrigadeMemberPayload<ExtArgs>[]
       assignments: Prisma.$WorkforceShiftAssignmentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -50797,6 +50938,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     members<T extends WorkforceBrigade$membersArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceBrigade$membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceBrigadeMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    memberExits<T extends WorkforceBrigade$memberExitsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceBrigade$memberExitsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceBrigadeMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     assignments<T extends WorkforceBrigade$assignmentsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceBrigade$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceShiftAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -51258,6 +51400,30 @@ export namespace Prisma {
   }
 
   /**
+   * WorkforceBrigade.memberExits
+   */
+  export type WorkforceBrigade$memberExitsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceBrigadeMember
+     */
+    select?: WorkforceBrigadeMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceBrigadeMember
+     */
+    omit?: WorkforceBrigadeMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceBrigadeMemberInclude<ExtArgs> | null
+    where?: WorkforceBrigadeMemberWhereInput
+    orderBy?: WorkforceBrigadeMemberOrderByWithRelationInput | WorkforceBrigadeMemberOrderByWithRelationInput[]
+    cursor?: WorkforceBrigadeMemberWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceBrigadeMemberScalarFieldEnum | WorkforceBrigadeMemberScalarFieldEnum[]
+  }
+
+  /**
    * WorkforceBrigade.assignments
    */
   export type WorkforceBrigade$assignmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -51315,6 +51481,9 @@ export namespace Prisma {
     organizationId: string | null
     brigadeId: string | null
     employmentId: string | null
+    effectiveFrom: Date | null
+    effectiveTo: Date | null
+    leftToBrigadeId: string | null
     createdAt: Date | null
   }
 
@@ -51323,6 +51492,9 @@ export namespace Prisma {
     organizationId: string | null
     brigadeId: string | null
     employmentId: string | null
+    effectiveFrom: Date | null
+    effectiveTo: Date | null
+    leftToBrigadeId: string | null
     createdAt: Date | null
   }
 
@@ -51331,6 +51503,9 @@ export namespace Prisma {
     organizationId: number
     brigadeId: number
     employmentId: number
+    effectiveFrom: number
+    effectiveTo: number
+    leftToBrigadeId: number
     createdAt: number
     _all: number
   }
@@ -51341,6 +51516,9 @@ export namespace Prisma {
     organizationId?: true
     brigadeId?: true
     employmentId?: true
+    effectiveFrom?: true
+    effectiveTo?: true
+    leftToBrigadeId?: true
     createdAt?: true
   }
 
@@ -51349,6 +51527,9 @@ export namespace Prisma {
     organizationId?: true
     brigadeId?: true
     employmentId?: true
+    effectiveFrom?: true
+    effectiveTo?: true
+    leftToBrigadeId?: true
     createdAt?: true
   }
 
@@ -51357,6 +51538,9 @@ export namespace Prisma {
     organizationId?: true
     brigadeId?: true
     employmentId?: true
+    effectiveFrom?: true
+    effectiveTo?: true
+    leftToBrigadeId?: true
     createdAt?: true
     _all?: true
   }
@@ -51438,6 +51622,9 @@ export namespace Prisma {
     organizationId: string
     brigadeId: string
     employmentId: string
+    effectiveFrom: Date
+    effectiveTo: Date | null
+    leftToBrigadeId: string | null
     createdAt: Date
     _count: WorkforceBrigadeMemberCountAggregateOutputType | null
     _min: WorkforceBrigadeMemberMinAggregateOutputType | null
@@ -51463,8 +51650,12 @@ export namespace Prisma {
     organizationId?: boolean
     brigadeId?: boolean
     employmentId?: boolean
+    effectiveFrom?: boolean
+    effectiveTo?: boolean
+    leftToBrigadeId?: boolean
     createdAt?: boolean
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceBrigadeMember"]>
 
@@ -51473,8 +51664,12 @@ export namespace Prisma {
     organizationId?: boolean
     brigadeId?: boolean
     employmentId?: boolean
+    effectiveFrom?: boolean
+    effectiveTo?: boolean
+    leftToBrigadeId?: boolean
     createdAt?: boolean
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceBrigadeMember"]>
 
@@ -51483,8 +51678,12 @@ export namespace Prisma {
     organizationId?: boolean
     brigadeId?: boolean
     employmentId?: boolean
+    effectiveFrom?: boolean
+    effectiveTo?: boolean
+    leftToBrigadeId?: boolean
     createdAt?: boolean
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceBrigadeMember"]>
 
@@ -51493,20 +51692,26 @@ export namespace Prisma {
     organizationId?: boolean
     brigadeId?: boolean
     employmentId?: boolean
+    effectiveFrom?: boolean
+    effectiveTo?: boolean
+    leftToBrigadeId?: boolean
     createdAt?: boolean
   }
 
-  export type WorkforceBrigadeMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "brigadeId" | "employmentId" | "createdAt", ExtArgs["result"]["workforceBrigadeMember"]>
+  export type WorkforceBrigadeMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "brigadeId" | "employmentId" | "effectiveFrom" | "effectiveTo" | "leftToBrigadeId" | "createdAt", ExtArgs["result"]["workforceBrigadeMember"]>
   export type WorkforceBrigadeMemberInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
   export type WorkforceBrigadeMemberIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
   export type WorkforceBrigadeMemberIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     brigade?: boolean | WorkforceBrigadeDefaultArgs<ExtArgs>
+    leftToBrigade?: boolean | WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
 
@@ -51514,6 +51719,7 @@ export namespace Prisma {
     name: "WorkforceBrigadeMember"
     objects: {
       brigade: Prisma.$WorkforceBrigadePayload<ExtArgs>
+      leftToBrigade: Prisma.$WorkforceBrigadePayload<ExtArgs> | null
       employment: Prisma.$WorkforceEmploymentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -51521,6 +51727,9 @@ export namespace Prisma {
       organizationId: string
       brigadeId: string
       employmentId: string
+      effectiveFrom: Date
+      effectiveTo: Date | null
+      leftToBrigadeId: string | null
       createdAt: Date
     }, ExtArgs["result"]["workforceBrigadeMember"]>
     composites: {}
@@ -51917,6 +52126,7 @@ export namespace Prisma {
   export interface Prisma__WorkforceBrigadeMemberClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     brigade<T extends WorkforceBrigadeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceBrigadeDefaultArgs<ExtArgs>>): Prisma__WorkforceBrigadeClient<$Result.GetResult<Prisma.$WorkforceBrigadePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    leftToBrigade<T extends WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs>>): Prisma__WorkforceBrigadeClient<$Result.GetResult<Prisma.$WorkforceBrigadePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     employment<T extends WorkforceEmploymentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmploymentDefaultArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -51951,6 +52161,9 @@ export namespace Prisma {
     readonly organizationId: FieldRef<"WorkforceBrigadeMember", 'String'>
     readonly brigadeId: FieldRef<"WorkforceBrigadeMember", 'String'>
     readonly employmentId: FieldRef<"WorkforceBrigadeMember", 'String'>
+    readonly effectiveFrom: FieldRef<"WorkforceBrigadeMember", 'DateTime'>
+    readonly effectiveTo: FieldRef<"WorkforceBrigadeMember", 'DateTime'>
+    readonly leftToBrigadeId: FieldRef<"WorkforceBrigadeMember", 'String'>
     readonly createdAt: FieldRef<"WorkforceBrigadeMember", 'DateTime'>
   }
     
@@ -52350,6 +52563,25 @@ export namespace Prisma {
      * Limit how many WorkforceBrigadeMembers to delete.
      */
     limit?: number
+  }
+
+  /**
+   * WorkforceBrigadeMember.leftToBrigade
+   */
+  export type WorkforceBrigadeMember$leftToBrigadeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceBrigade
+     */
+    select?: WorkforceBrigadeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceBrigade
+     */
+    omit?: WorkforceBrigadeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceBrigadeInclude<ExtArgs> | null
+    where?: WorkforceBrigadeWhereInput
   }
 
   /**
@@ -58272,6 +58504,8 @@ export namespace Prisma {
     issuedAt: Date | null
     cancelledByUserId: string | null
     cancelledAt: Date | null
+    source: string | null
+    sourceRef: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -58295,6 +58529,8 @@ export namespace Prisma {
     issuedAt: Date | null
     cancelledByUserId: string | null
     cancelledAt: Date | null
+    source: string | null
+    sourceRef: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -58319,6 +58555,8 @@ export namespace Prisma {
     issuedAt: number
     cancelledByUserId: number
     cancelledAt: number
+    source: number
+    sourceRef: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -58354,6 +58592,8 @@ export namespace Prisma {
     issuedAt?: true
     cancelledByUserId?: true
     cancelledAt?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -58377,6 +58617,8 @@ export namespace Prisma {
     issuedAt?: true
     cancelledByUserId?: true
     cancelledAt?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -58401,6 +58643,8 @@ export namespace Prisma {
     issuedAt?: true
     cancelledByUserId?: true
     cancelledAt?: true
+    source?: true
+    sourceRef?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -58512,6 +58756,8 @@ export namespace Prisma {
     issuedAt: Date | null
     cancelledByUserId: string | null
     cancelledAt: Date | null
+    source: string
+    sourceRef: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforcePersonnelOrderCountAggregateOutputType | null
@@ -58555,6 +58801,8 @@ export namespace Prisma {
     issuedAt?: boolean
     cancelledByUserId?: boolean
     cancelledAt?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -58581,6 +58829,8 @@ export namespace Prisma {
     issuedAt?: boolean
     cancelledByUserId?: boolean
     cancelledAt?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -58607,6 +58857,8 @@ export namespace Prisma {
     issuedAt?: boolean
     cancelledByUserId?: boolean
     cancelledAt?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -58633,11 +58885,13 @@ export namespace Prisma {
     issuedAt?: boolean
     cancelledByUserId?: boolean
     cancelledAt?: boolean
+    source?: boolean
+    sourceRef?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforcePersonnelOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "employmentId" | "organizationId" | "type" | "status" | "orderNumber" | "sequenceYear" | "sequenceSeq" | "effectiveDate" | "note" | "locale" | "contextJson" | "personDisplayName" | "documentStorageKey" | "issuedByUserId" | "issuedAt" | "cancelledByUserId" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePersonnelOrder"]>
+  export type WorkforcePersonnelOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "employmentId" | "organizationId" | "type" | "status" | "orderNumber" | "sequenceYear" | "sequenceSeq" | "effectiveDate" | "note" | "locale" | "contextJson" | "personDisplayName" | "documentStorageKey" | "issuedByUserId" | "issuedAt" | "cancelledByUserId" | "cancelledAt" | "source" | "sourceRef" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePersonnelOrder"]>
   export type WorkforcePersonnelOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -58686,6 +58940,11 @@ export namespace Prisma {
       issuedAt: Date | null
       cancelledByUserId: string | null
       cancelledAt: Date | null
+      /**
+       * Origin: manual (default) or import. ISSUED imported rows skip live sequence.
+       */
+      source: string
+      sourceRef: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforcePersonnelOrder"]>
@@ -59132,6 +59391,8 @@ export namespace Prisma {
     readonly issuedAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
     readonly cancelledByUserId: FieldRef<"WorkforcePersonnelOrder", 'String'>
     readonly cancelledAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
+    readonly source: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly sourceRef: FieldRef<"WorkforcePersonnelOrder", 'String'>
     readonly createdAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
   }
@@ -59550,6 +59811,1091 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceMigrationStep
+   */
+
+  export type AggregateWorkforceMigrationStep = {
+    _count: WorkforceMigrationStepCountAggregateOutputType | null
+    _min: WorkforceMigrationStepMinAggregateOutputType | null
+    _max: WorkforceMigrationStepMaxAggregateOutputType | null
+  }
+
+  export type WorkforceMigrationStepMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    stepId: string | null
+    status: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceMigrationStepMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    stepId: string | null
+    status: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceMigrationStepCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    stepId: number
+    status: number
+    summaryJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceMigrationStepMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    stepId?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceMigrationStepMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    stepId?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceMigrationStepCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    stepId?: true
+    status?: true
+    summaryJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceMigrationStepAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceMigrationStep to aggregate.
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceMigrationSteps to fetch.
+     */
+    orderBy?: WorkforceMigrationStepOrderByWithRelationInput | WorkforceMigrationStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceMigrationStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceMigrationSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceMigrationSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceMigrationSteps
+    **/
+    _count?: true | WorkforceMigrationStepCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceMigrationStepMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceMigrationStepMaxAggregateInputType
+  }
+
+  export type GetWorkforceMigrationStepAggregateType<T extends WorkforceMigrationStepAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceMigrationStep]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceMigrationStep[P]>
+      : GetScalarType<T[P], AggregateWorkforceMigrationStep[P]>
+  }
+
+
+
+
+  export type WorkforceMigrationStepGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceMigrationStepWhereInput
+    orderBy?: WorkforceMigrationStepOrderByWithAggregationInput | WorkforceMigrationStepOrderByWithAggregationInput[]
+    by: WorkforceMigrationStepScalarFieldEnum[] | WorkforceMigrationStepScalarFieldEnum
+    having?: WorkforceMigrationStepScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceMigrationStepCountAggregateInputType | true
+    _min?: WorkforceMigrationStepMinAggregateInputType
+    _max?: WorkforceMigrationStepMaxAggregateInputType
+  }
+
+  export type WorkforceMigrationStepGroupByOutputType = {
+    id: string
+    organizationId: string
+    stepId: string
+    status: string
+    summaryJson: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceMigrationStepCountAggregateOutputType | null
+    _min: WorkforceMigrationStepMinAggregateOutputType | null
+    _max: WorkforceMigrationStepMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceMigrationStepGroupByPayload<T extends WorkforceMigrationStepGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceMigrationStepGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceMigrationStepGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceMigrationStepGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceMigrationStepGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceMigrationStepSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    stepId?: boolean
+    status?: boolean
+    summaryJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceMigrationStep"]>
+
+  export type WorkforceMigrationStepSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    stepId?: boolean
+    status?: boolean
+    summaryJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceMigrationStep"]>
+
+  export type WorkforceMigrationStepSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    stepId?: boolean
+    status?: boolean
+    summaryJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceMigrationStep"]>
+
+  export type WorkforceMigrationStepSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    stepId?: boolean
+    status?: boolean
+    summaryJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceMigrationStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "stepId" | "status" | "summaryJson" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceMigrationStep"]>
+  export type WorkforceMigrationStepInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceMigrationStepIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceMigrationStepIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceMigrationStepPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceMigrationStep"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      stepId: string
+      status: string
+      summaryJson: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceMigrationStep"]>
+    composites: {}
+  }
+
+  type WorkforceMigrationStepGetPayload<S extends boolean | null | undefined | WorkforceMigrationStepDefaultArgs> = $Result.GetResult<Prisma.$WorkforceMigrationStepPayload, S>
+
+  type WorkforceMigrationStepCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceMigrationStepFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceMigrationStepCountAggregateInputType | true
+    }
+
+  export interface WorkforceMigrationStepDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceMigrationStep'], meta: { name: 'WorkforceMigrationStep' } }
+    /**
+     * Find zero or one WorkforceMigrationStep that matches the filter.
+     * @param {WorkforceMigrationStepFindUniqueArgs} args - Arguments to find a WorkforceMigrationStep
+     * @example
+     * // Get one WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceMigrationStepFindUniqueArgs>(args: SelectSubset<T, WorkforceMigrationStepFindUniqueArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceMigrationStep that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceMigrationStepFindUniqueOrThrowArgs} args - Arguments to find a WorkforceMigrationStep
+     * @example
+     * // Get one WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceMigrationStepFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceMigrationStepFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceMigrationStep that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepFindFirstArgs} args - Arguments to find a WorkforceMigrationStep
+     * @example
+     * // Get one WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceMigrationStepFindFirstArgs>(args?: SelectSubset<T, WorkforceMigrationStepFindFirstArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceMigrationStep that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepFindFirstOrThrowArgs} args - Arguments to find a WorkforceMigrationStep
+     * @example
+     * // Get one WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceMigrationStepFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceMigrationStepFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceMigrationSteps that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceMigrationSteps
+     * const workforceMigrationSteps = await prisma.workforceMigrationStep.findMany()
+     * 
+     * // Get first 10 WorkforceMigrationSteps
+     * const workforceMigrationSteps = await prisma.workforceMigrationStep.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceMigrationStepWithIdOnly = await prisma.workforceMigrationStep.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceMigrationStepFindManyArgs>(args?: SelectSubset<T, WorkforceMigrationStepFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceMigrationStep.
+     * @param {WorkforceMigrationStepCreateArgs} args - Arguments to create a WorkforceMigrationStep.
+     * @example
+     * // Create one WorkforceMigrationStep
+     * const WorkforceMigrationStep = await prisma.workforceMigrationStep.create({
+     *   data: {
+     *     // ... data to create a WorkforceMigrationStep
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceMigrationStepCreateArgs>(args: SelectSubset<T, WorkforceMigrationStepCreateArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceMigrationSteps.
+     * @param {WorkforceMigrationStepCreateManyArgs} args - Arguments to create many WorkforceMigrationSteps.
+     * @example
+     * // Create many WorkforceMigrationSteps
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceMigrationStepCreateManyArgs>(args?: SelectSubset<T, WorkforceMigrationStepCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceMigrationSteps and returns the data saved in the database.
+     * @param {WorkforceMigrationStepCreateManyAndReturnArgs} args - Arguments to create many WorkforceMigrationSteps.
+     * @example
+     * // Create many WorkforceMigrationSteps
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceMigrationSteps and only return the `id`
+     * const workforceMigrationStepWithIdOnly = await prisma.workforceMigrationStep.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceMigrationStepCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceMigrationStepCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceMigrationStep.
+     * @param {WorkforceMigrationStepDeleteArgs} args - Arguments to delete one WorkforceMigrationStep.
+     * @example
+     * // Delete one WorkforceMigrationStep
+     * const WorkforceMigrationStep = await prisma.workforceMigrationStep.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceMigrationStep
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceMigrationStepDeleteArgs>(args: SelectSubset<T, WorkforceMigrationStepDeleteArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceMigrationStep.
+     * @param {WorkforceMigrationStepUpdateArgs} args - Arguments to update one WorkforceMigrationStep.
+     * @example
+     * // Update one WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceMigrationStepUpdateArgs>(args: SelectSubset<T, WorkforceMigrationStepUpdateArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceMigrationSteps.
+     * @param {WorkforceMigrationStepDeleteManyArgs} args - Arguments to filter WorkforceMigrationSteps to delete.
+     * @example
+     * // Delete a few WorkforceMigrationSteps
+     * const { count } = await prisma.workforceMigrationStep.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceMigrationStepDeleteManyArgs>(args?: SelectSubset<T, WorkforceMigrationStepDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceMigrationSteps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceMigrationSteps
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceMigrationStepUpdateManyArgs>(args: SelectSubset<T, WorkforceMigrationStepUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceMigrationSteps and returns the data updated in the database.
+     * @param {WorkforceMigrationStepUpdateManyAndReturnArgs} args - Arguments to update many WorkforceMigrationSteps.
+     * @example
+     * // Update many WorkforceMigrationSteps
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceMigrationSteps and only return the `id`
+     * const workforceMigrationStepWithIdOnly = await prisma.workforceMigrationStep.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceMigrationStepUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceMigrationStepUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceMigrationStep.
+     * @param {WorkforceMigrationStepUpsertArgs} args - Arguments to update or create a WorkforceMigrationStep.
+     * @example
+     * // Update or create a WorkforceMigrationStep
+     * const workforceMigrationStep = await prisma.workforceMigrationStep.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceMigrationStep
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceMigrationStep we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceMigrationStepUpsertArgs>(args: SelectSubset<T, WorkforceMigrationStepUpsertArgs<ExtArgs>>): Prisma__WorkforceMigrationStepClient<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceMigrationSteps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepCountArgs} args - Arguments to filter WorkforceMigrationSteps to count.
+     * @example
+     * // Count the number of WorkforceMigrationSteps
+     * const count = await prisma.workforceMigrationStep.count({
+     *   where: {
+     *     // ... the filter for the WorkforceMigrationSteps we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceMigrationStepCountArgs>(
+      args?: Subset<T, WorkforceMigrationStepCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceMigrationStepCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceMigrationStep.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceMigrationStepAggregateArgs>(args: Subset<T, WorkforceMigrationStepAggregateArgs>): Prisma.PrismaPromise<GetWorkforceMigrationStepAggregateType<T>>
+
+    /**
+     * Group by WorkforceMigrationStep.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceMigrationStepGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceMigrationStepGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceMigrationStepGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceMigrationStepGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceMigrationStepGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceMigrationStepGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceMigrationStep model
+   */
+  readonly fields: WorkforceMigrationStepFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceMigrationStep.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceMigrationStepClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceMigrationStep model
+   */
+  interface WorkforceMigrationStepFieldRefs {
+    readonly id: FieldRef<"WorkforceMigrationStep", 'String'>
+    readonly organizationId: FieldRef<"WorkforceMigrationStep", 'String'>
+    readonly stepId: FieldRef<"WorkforceMigrationStep", 'String'>
+    readonly status: FieldRef<"WorkforceMigrationStep", 'String'>
+    readonly summaryJson: FieldRef<"WorkforceMigrationStep", 'Json'>
+    readonly createdAt: FieldRef<"WorkforceMigrationStep", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceMigrationStep", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceMigrationStep findUnique
+   */
+  export type WorkforceMigrationStepFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceMigrationStep to fetch.
+     */
+    where: WorkforceMigrationStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceMigrationStep findUniqueOrThrow
+   */
+  export type WorkforceMigrationStepFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceMigrationStep to fetch.
+     */
+    where: WorkforceMigrationStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceMigrationStep findFirst
+   */
+  export type WorkforceMigrationStepFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceMigrationStep to fetch.
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceMigrationSteps to fetch.
+     */
+    orderBy?: WorkforceMigrationStepOrderByWithRelationInput | WorkforceMigrationStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceMigrationSteps.
+     */
+    cursor?: WorkforceMigrationStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceMigrationSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceMigrationSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceMigrationSteps.
+     */
+    distinct?: WorkforceMigrationStepScalarFieldEnum | WorkforceMigrationStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceMigrationStep findFirstOrThrow
+   */
+  export type WorkforceMigrationStepFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceMigrationStep to fetch.
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceMigrationSteps to fetch.
+     */
+    orderBy?: WorkforceMigrationStepOrderByWithRelationInput | WorkforceMigrationStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceMigrationSteps.
+     */
+    cursor?: WorkforceMigrationStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceMigrationSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceMigrationSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceMigrationSteps.
+     */
+    distinct?: WorkforceMigrationStepScalarFieldEnum | WorkforceMigrationStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceMigrationStep findMany
+   */
+  export type WorkforceMigrationStepFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceMigrationSteps to fetch.
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceMigrationSteps to fetch.
+     */
+    orderBy?: WorkforceMigrationStepOrderByWithRelationInput | WorkforceMigrationStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceMigrationSteps.
+     */
+    cursor?: WorkforceMigrationStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceMigrationSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceMigrationSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceMigrationSteps.
+     */
+    distinct?: WorkforceMigrationStepScalarFieldEnum | WorkforceMigrationStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceMigrationStep create
+   */
+  export type WorkforceMigrationStepCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceMigrationStep.
+     */
+    data: XOR<WorkforceMigrationStepCreateInput, WorkforceMigrationStepUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceMigrationStep createMany
+   */
+  export type WorkforceMigrationStepCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceMigrationSteps.
+     */
+    data: WorkforceMigrationStepCreateManyInput | WorkforceMigrationStepCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceMigrationStep createManyAndReturn
+   */
+  export type WorkforceMigrationStepCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceMigrationSteps.
+     */
+    data: WorkforceMigrationStepCreateManyInput | WorkforceMigrationStepCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceMigrationStep update
+   */
+  export type WorkforceMigrationStepUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceMigrationStep.
+     */
+    data: XOR<WorkforceMigrationStepUpdateInput, WorkforceMigrationStepUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceMigrationStep to update.
+     */
+    where: WorkforceMigrationStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceMigrationStep updateMany
+   */
+  export type WorkforceMigrationStepUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceMigrationSteps.
+     */
+    data: XOR<WorkforceMigrationStepUpdateManyMutationInput, WorkforceMigrationStepUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceMigrationSteps to update
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * Limit how many WorkforceMigrationSteps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceMigrationStep updateManyAndReturn
+   */
+  export type WorkforceMigrationStepUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceMigrationSteps.
+     */
+    data: XOR<WorkforceMigrationStepUpdateManyMutationInput, WorkforceMigrationStepUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceMigrationSteps to update
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * Limit how many WorkforceMigrationSteps to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceMigrationStep upsert
+   */
+  export type WorkforceMigrationStepUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceMigrationStep to update in case it exists.
+     */
+    where: WorkforceMigrationStepWhereUniqueInput
+    /**
+     * In case the WorkforceMigrationStep found by the `where` argument doesn't exist, create a new WorkforceMigrationStep with this data.
+     */
+    create: XOR<WorkforceMigrationStepCreateInput, WorkforceMigrationStepUncheckedCreateInput>
+    /**
+     * In case the WorkforceMigrationStep was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceMigrationStepUpdateInput, WorkforceMigrationStepUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceMigrationStep delete
+   */
+  export type WorkforceMigrationStepDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceMigrationStep to delete.
+     */
+    where: WorkforceMigrationStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceMigrationStep deleteMany
+   */
+  export type WorkforceMigrationStepDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceMigrationSteps to delete
+     */
+    where?: WorkforceMigrationStepWhereInput
+    /**
+     * Limit how many WorkforceMigrationSteps to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceMigrationStep without action
+   */
+  export type WorkforceMigrationStepDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
   }
 
 
@@ -69941,6 +71287,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: boolean | Organization$workforceAttendanceDevicesArgs<ExtArgs>
     workforceAttendanceIdentities?: boolean | Organization$workforceAttendanceIdentitiesArgs<ExtArgs>
     workforceAttendancePunches?: boolean | Organization$workforceAttendancePunchesArgs<ExtArgs>
+    workforceMigrationSteps?: boolean | Organization$workforceMigrationStepsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -70091,6 +71438,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: boolean | Organization$workforceAttendanceDevicesArgs<ExtArgs>
     workforceAttendanceIdentities?: boolean | Organization$workforceAttendanceIdentitiesArgs<ExtArgs>
     workforceAttendancePunches?: boolean | Organization$workforceAttendancePunchesArgs<ExtArgs>
+    workforceMigrationSteps?: boolean | Organization$workforceMigrationStepsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -70156,6 +71504,7 @@ export namespace Prisma {
       workforceAttendanceDevices: Prisma.$WorkforceAttendanceDevicePayload<ExtArgs>[]
       workforceAttendanceIdentities: Prisma.$WorkforceAttendanceIdentityPayload<ExtArgs>[]
       workforceAttendancePunches: Prisma.$WorkforceAttendancePunchPayload<ExtArgs>[]
+      workforceMigrationSteps: Prisma.$WorkforceMigrationStepPayload<ExtArgs>[]
       orgUnitCommercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
       elektrawebBridgePolicy: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs> | null
       clinicCutoverPolicy: Prisma.$ClinicCutoverPolicyPayload<ExtArgs> | null
@@ -70637,6 +71986,7 @@ export namespace Prisma {
     workforceAttendanceDevices<T extends Organization$workforceAttendanceDevicesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAttendanceDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAttendanceDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceAttendanceIdentities<T extends Organization$workforceAttendanceIdentitiesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAttendanceIdentitiesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAttendanceIdentityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceAttendancePunches<T extends Organization$workforceAttendancePunchesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAttendancePunchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAttendancePunchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workforceMigrationSteps<T extends Organization$workforceMigrationStepsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceMigrationStepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     orgUnitCommercialLinks<T extends Organization$orgUnitCommercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$orgUnitCommercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     elektrawebBridgePolicy<T extends Organization$elektrawebBridgePolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$elektrawebBridgePolicyArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     clinicCutoverPolicy<T extends Organization$clinicCutoverPolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverPolicyArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -72009,6 +73359,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforceAttendancePunchScalarFieldEnum | WorkforceAttendancePunchScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.workforceMigrationSteps
+   */
+  export type Organization$workforceMigrationStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceMigrationStep
+     */
+    select?: WorkforceMigrationStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceMigrationStep
+     */
+    omit?: WorkforceMigrationStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceMigrationStepInclude<ExtArgs> | null
+    where?: WorkforceMigrationStepWhereInput
+    orderBy?: WorkforceMigrationStepOrderByWithRelationInput | WorkforceMigrationStepOrderByWithRelationInput[]
+    cursor?: WorkforceMigrationStepWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceMigrationStepScalarFieldEnum | WorkforceMigrationStepScalarFieldEnum[]
   }
 
   /**
@@ -114822,6 +116196,8 @@ export namespace Prisma {
     rejectedByUserId: 'rejectedByUserId',
     cancelledByUserId: 'cancelledByUserId',
     rejectionReason: 'rejectionReason',
+    source: 'source',
+    sourceRef: 'sourceRef',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -114983,6 +116359,9 @@ export namespace Prisma {
     organizationId: 'organizationId',
     brigadeId: 'brigadeId',
     employmentId: 'employmentId',
+    effectiveFrom: 'effectiveFrom',
+    effectiveTo: 'effectiveTo',
+    leftToBrigadeId: 'leftToBrigadeId',
     createdAt: 'createdAt'
   };
 
@@ -115090,11 +116469,26 @@ export namespace Prisma {
     issuedAt: 'issuedAt',
     cancelledByUserId: 'cancelledByUserId',
     cancelledAt: 'cancelledAt',
+    source: 'source',
+    sourceRef: 'sourceRef',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type WorkforcePersonnelOrderScalarFieldEnum = (typeof WorkforcePersonnelOrderScalarFieldEnum)[keyof typeof WorkforcePersonnelOrderScalarFieldEnum]
+
+
+  export const WorkforceMigrationStepScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    stepId: 'stepId',
+    status: 'status',
+    summaryJson: 'summaryJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceMigrationStepScalarFieldEnum = (typeof WorkforceMigrationStepScalarFieldEnum)[keyof typeof WorkforceMigrationStepScalarFieldEnum]
 
 
   export const StaffScheduleRevisionScalarFieldEnum: {
@@ -118647,6 +120041,8 @@ export namespace Prisma {
     rejectedByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    source?: StringFilter<"WorkforceAbsence"> | string
+    sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -118670,6 +120066,8 @@ export namespace Prisma {
     rejectedByUserId?: SortOrderInput | SortOrder
     cancelledByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     employment?: WorkforceEmploymentOrderByWithRelationInput
@@ -118696,6 +120094,8 @@ export namespace Prisma {
     rejectedByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    source?: StringFilter<"WorkforceAbsence"> | string
+    sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -118719,6 +120119,8 @@ export namespace Prisma {
     rejectedByUserId?: SortOrderInput | SortOrder
     cancelledByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceAbsenceCountOrderByAggregateInput
@@ -118747,6 +120149,8 @@ export namespace Prisma {
     rejectedByUserId?: UuidNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
     cancelledByUserId?: UuidNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
+    source?: StringWithAggregatesFilter<"WorkforceAbsence"> | string
+    sourceRef?: StringNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAbsence"> | Date | string
   }
@@ -119521,6 +120925,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"WorkforceBrigade"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     members?: WorkforceBrigadeMemberListRelationFilter
+    memberExits?: WorkforceBrigadeMemberListRelationFilter
     assignments?: WorkforceShiftAssignmentListRelationFilter
   }
 
@@ -119533,6 +120938,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
     members?: WorkforceBrigadeMemberOrderByRelationAggregateInput
+    memberExits?: WorkforceBrigadeMemberOrderByRelationAggregateInput
     assignments?: WorkforceShiftAssignmentOrderByRelationAggregateInput
   }
 
@@ -119549,6 +120955,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"WorkforceBrigade"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     members?: WorkforceBrigadeMemberListRelationFilter
+    memberExits?: WorkforceBrigadeMemberListRelationFilter
     assignments?: WorkforceShiftAssignmentListRelationFilter
   }, "id" | "organizationId_code">
 
@@ -119584,8 +120991,12 @@ export namespace Prisma {
     organizationId?: UuidFilter<"WorkforceBrigadeMember"> | string
     brigadeId?: UuidFilter<"WorkforceBrigadeMember"> | string
     employmentId?: UuidFilter<"WorkforceBrigadeMember"> | string
+    effectiveFrom?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
+    effectiveTo?: DateTimeNullableFilter<"WorkforceBrigadeMember"> | Date | string | null
+    leftToBrigadeId?: UuidNullableFilter<"WorkforceBrigadeMember"> | string | null
     createdAt?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
     brigade?: XOR<WorkforceBrigadeScalarRelationFilter, WorkforceBrigadeWhereInput>
+    leftToBrigade?: XOR<WorkforceBrigadeNullableScalarRelationFilter, WorkforceBrigadeWhereInput> | null
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
   }
 
@@ -119594,30 +121005,40 @@ export namespace Prisma {
     organizationId?: SortOrder
     brigadeId?: SortOrder
     employmentId?: SortOrder
+    effectiveFrom?: SortOrder
+    effectiveTo?: SortOrderInput | SortOrder
+    leftToBrigadeId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     brigade?: WorkforceBrigadeOrderByWithRelationInput
+    leftToBrigade?: WorkforceBrigadeOrderByWithRelationInput
     employment?: WorkforceEmploymentOrderByWithRelationInput
   }
 
   export type WorkforceBrigadeMemberWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    brigadeId_employmentId?: WorkforceBrigadeMemberBrigadeIdEmploymentIdCompoundUniqueInput
     AND?: WorkforceBrigadeMemberWhereInput | WorkforceBrigadeMemberWhereInput[]
     OR?: WorkforceBrigadeMemberWhereInput[]
     NOT?: WorkforceBrigadeMemberWhereInput | WorkforceBrigadeMemberWhereInput[]
     organizationId?: UuidFilter<"WorkforceBrigadeMember"> | string
     brigadeId?: UuidFilter<"WorkforceBrigadeMember"> | string
     employmentId?: UuidFilter<"WorkforceBrigadeMember"> | string
+    effectiveFrom?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
+    effectiveTo?: DateTimeNullableFilter<"WorkforceBrigadeMember"> | Date | string | null
+    leftToBrigadeId?: UuidNullableFilter<"WorkforceBrigadeMember"> | string | null
     createdAt?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
     brigade?: XOR<WorkforceBrigadeScalarRelationFilter, WorkforceBrigadeWhereInput>
+    leftToBrigade?: XOR<WorkforceBrigadeNullableScalarRelationFilter, WorkforceBrigadeWhereInput> | null
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
-  }, "id" | "brigadeId_employmentId">
+  }, "id">
 
   export type WorkforceBrigadeMemberOrderByWithAggregationInput = {
     id?: SortOrder
     organizationId?: SortOrder
     brigadeId?: SortOrder
     employmentId?: SortOrder
+    effectiveFrom?: SortOrder
+    effectiveTo?: SortOrderInput | SortOrder
+    leftToBrigadeId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: WorkforceBrigadeMemberCountOrderByAggregateInput
     _max?: WorkforceBrigadeMemberMaxOrderByAggregateInput
@@ -119632,6 +121053,9 @@ export namespace Prisma {
     organizationId?: UuidWithAggregatesFilter<"WorkforceBrigadeMember"> | string
     brigadeId?: UuidWithAggregatesFilter<"WorkforceBrigadeMember"> | string
     employmentId?: UuidWithAggregatesFilter<"WorkforceBrigadeMember"> | string
+    effectiveFrom?: DateTimeWithAggregatesFilter<"WorkforceBrigadeMember"> | Date | string
+    effectiveTo?: DateTimeNullableWithAggregatesFilter<"WorkforceBrigadeMember"> | Date | string | null
+    leftToBrigadeId?: UuidNullableWithAggregatesFilter<"WorkforceBrigadeMember"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceBrigadeMember"> | Date | string
   }
 
@@ -120096,6 +121520,8 @@ export namespace Prisma {
     issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
     cancelledAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    source?: StringFilter<"WorkforcePersonnelOrder"> | string
+    sourceRef?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
     createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
@@ -120122,6 +121548,8 @@ export namespace Prisma {
     issuedAt?: SortOrderInput | SortOrder
     cancelledByUserId?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workforceScope?: WorkforceScopeOrderByWithRelationInput
@@ -120153,6 +121581,8 @@ export namespace Prisma {
     issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
     cancelledAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    source?: StringFilter<"WorkforcePersonnelOrder"> | string
+    sourceRef?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
     createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
@@ -120179,6 +121609,8 @@ export namespace Prisma {
     issuedAt?: SortOrderInput | SortOrder
     cancelledByUserId?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforcePersonnelOrderCountOrderByAggregateInput
@@ -120211,8 +121643,76 @@ export namespace Prisma {
     issuedAt?: DateTimeNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string | null
     cancelledByUserId?: UuidNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | string | null
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    source?: StringWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    sourceRef?: StringNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string
+  }
+
+  export type WorkforceMigrationStepWhereInput = {
+    AND?: WorkforceMigrationStepWhereInput | WorkforceMigrationStepWhereInput[]
+    OR?: WorkforceMigrationStepWhereInput[]
+    NOT?: WorkforceMigrationStepWhereInput | WorkforceMigrationStepWhereInput[]
+    id?: UuidFilter<"WorkforceMigrationStep"> | string
+    organizationId?: UuidFilter<"WorkforceMigrationStep"> | string
+    stepId?: StringFilter<"WorkforceMigrationStep"> | string
+    status?: StringFilter<"WorkforceMigrationStep"> | string
+    summaryJson?: JsonFilter<"WorkforceMigrationStep">
+    createdAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type WorkforceMigrationStepOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    stepId?: SortOrder
+    status?: SortOrder
+    summaryJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type WorkforceMigrationStepWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_stepId?: WorkforceMigrationStepOrganizationIdStepIdCompoundUniqueInput
+    AND?: WorkforceMigrationStepWhereInput | WorkforceMigrationStepWhereInput[]
+    OR?: WorkforceMigrationStepWhereInput[]
+    NOT?: WorkforceMigrationStepWhereInput | WorkforceMigrationStepWhereInput[]
+    organizationId?: UuidFilter<"WorkforceMigrationStep"> | string
+    stepId?: StringFilter<"WorkforceMigrationStep"> | string
+    status?: StringFilter<"WorkforceMigrationStep"> | string
+    summaryJson?: JsonFilter<"WorkforceMigrationStep">
+    createdAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_stepId">
+
+  export type WorkforceMigrationStepOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    stepId?: SortOrder
+    status?: SortOrder
+    summaryJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceMigrationStepCountOrderByAggregateInput
+    _max?: WorkforceMigrationStepMaxOrderByAggregateInput
+    _min?: WorkforceMigrationStepMinOrderByAggregateInput
+  }
+
+  export type WorkforceMigrationStepScalarWhereWithAggregatesInput = {
+    AND?: WorkforceMigrationStepScalarWhereWithAggregatesInput | WorkforceMigrationStepScalarWhereWithAggregatesInput[]
+    OR?: WorkforceMigrationStepScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceMigrationStepScalarWhereWithAggregatesInput | WorkforceMigrationStepScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceMigrationStep"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforceMigrationStep"> | string
+    stepId?: StringWithAggregatesFilter<"WorkforceMigrationStep"> | string
+    status?: StringWithAggregatesFilter<"WorkforceMigrationStep"> | string
+    summaryJson?: JsonWithAggregatesFilter<"WorkforceMigrationStep">
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceMigrationStep"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceMigrationStep"> | Date | string
   }
 
   export type StaffScheduleRevisionWhereInput = {
@@ -120946,6 +122446,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceListRelationFilter
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityListRelationFilter
     workforceAttendancePunches?: WorkforceAttendancePunchListRelationFilter
+    workforceMigrationSteps?: WorkforceMigrationStepListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -121025,6 +122526,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceOrderByRelationAggregateInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityOrderByRelationAggregateInput
     workforceAttendancePunches?: WorkforceAttendancePunchOrderByRelationAggregateInput
+    workforceMigrationSteps?: WorkforceMigrationStepOrderByRelationAggregateInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOrderByWithRelationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyOrderByWithRelationInput
@@ -121107,6 +122609,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceListRelationFilter
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityListRelationFilter
     workforceAttendancePunches?: WorkforceAttendancePunchListRelationFilter
+    workforceMigrationSteps?: WorkforceMigrationStepListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -126192,6 +127695,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutAbsencesInput
@@ -126215,6 +127720,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -126236,6 +127743,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutAbsencesNestedInput
@@ -126259,6 +127768,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -126281,6 +127792,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -126302,6 +127815,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -126324,6 +127839,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -127129,6 +128646,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceBrigadesInput
     members?: WorkforceBrigadeMemberCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentCreateNestedManyWithoutBrigadeInput
   }
 
@@ -127140,6 +128658,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutBrigadeInput
   }
 
@@ -127151,6 +128670,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceBrigadesNestedInput
     members?: WorkforceBrigadeMemberUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUpdateManyWithoutLeftToBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -127162,6 +128682,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -127194,8 +128715,11 @@ export namespace Prisma {
   export type WorkforceBrigadeMemberCreateInput = {
     id?: string
     organizationId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
     createdAt?: Date | string
     brigade: WorkforceBrigadeCreateNestedOneWithoutMembersInput
+    leftToBrigade?: WorkforceBrigadeCreateNestedOneWithoutMemberExitsInput
     employment: WorkforceEmploymentCreateNestedOneWithoutBrigadeMembershipsInput
   }
 
@@ -127204,14 +128728,20 @@ export namespace Prisma {
     organizationId: string
     brigadeId: string
     employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
     createdAt?: Date | string
   }
 
   export type WorkforceBrigadeMemberUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     brigade?: WorkforceBrigadeUpdateOneRequiredWithoutMembersNestedInput
+    leftToBrigade?: WorkforceBrigadeUpdateOneWithoutMemberExitsNestedInput
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutBrigadeMembershipsNestedInput
   }
 
@@ -127220,6 +128750,9 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     brigadeId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127228,12 +128761,17 @@ export namespace Prisma {
     organizationId: string
     brigadeId: string
     employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
     createdAt?: Date | string
   }
 
   export type WorkforceBrigadeMemberUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127242,6 +128780,9 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     brigadeId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127716,6 +129257,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutPersonnelOrdersInput
@@ -127742,6 +129285,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -127764,6 +129309,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutPersonnelOrdersNestedInput
@@ -127790,6 +129337,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -127814,6 +129363,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -127836,6 +129387,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -127860,6 +129413,77 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceMigrationStepCreateInput = {
+    id?: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceMigrationStepsInput
+  }
+
+  export type WorkforceMigrationStepUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceMigrationStepUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceMigrationStepsNestedInput
+  }
+
+  export type WorkforceMigrationStepUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceMigrationStepCreateManyInput = {
+    id?: string
+    organizationId: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceMigrationStepUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceMigrationStepUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -128671,6 +130295,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -128750,6 +130375,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -128823,6 +130449,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -128902,6 +130529,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -134103,6 +135731,8 @@ export namespace Prisma {
     rejectedByUserId?: SortOrder
     cancelledByUserId?: SortOrder
     rejectionReason?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -134125,6 +135755,8 @@ export namespace Prisma {
     rejectedByUserId?: SortOrder
     cancelledByUserId?: SortOrder
     rejectionReason?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -134147,6 +135779,8 @@ export namespace Prisma {
     rejectedByUserId?: SortOrder
     cancelledByUserId?: SortOrder
     rejectionReason?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -134824,9 +136458,9 @@ export namespace Prisma {
     isNot?: WorkforceBrigadeWhereInput
   }
 
-  export type WorkforceBrigadeMemberBrigadeIdEmploymentIdCompoundUniqueInput = {
-    brigadeId: string
-    employmentId: string
+  export type WorkforceBrigadeNullableScalarRelationFilter = {
+    is?: WorkforceBrigadeWhereInput | null
+    isNot?: WorkforceBrigadeWhereInput | null
   }
 
   export type WorkforceBrigadeMemberCountOrderByAggregateInput = {
@@ -134834,6 +136468,9 @@ export namespace Prisma {
     organizationId?: SortOrder
     brigadeId?: SortOrder
     employmentId?: SortOrder
+    effectiveFrom?: SortOrder
+    effectiveTo?: SortOrder
+    leftToBrigadeId?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -134842,6 +136479,9 @@ export namespace Prisma {
     organizationId?: SortOrder
     brigadeId?: SortOrder
     employmentId?: SortOrder
+    effectiveFrom?: SortOrder
+    effectiveTo?: SortOrder
+    leftToBrigadeId?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -134850,12 +136490,10 @@ export namespace Prisma {
     organizationId?: SortOrder
     brigadeId?: SortOrder
     employmentId?: SortOrder
+    effectiveFrom?: SortOrder
+    effectiveTo?: SortOrder
+    leftToBrigadeId?: SortOrder
     createdAt?: SortOrder
-  }
-
-  export type WorkforceBrigadeNullableScalarRelationFilter = {
-    is?: WorkforceBrigadeWhereInput | null
-    isNot?: WorkforceBrigadeWhereInput | null
   }
 
   export type WorkforceShiftAssignmentCountOrderByAggregateInput = {
@@ -135230,6 +136868,8 @@ export namespace Prisma {
     issuedAt?: SortOrder
     cancelledByUserId?: SortOrder
     cancelledAt?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -135258,6 +136898,8 @@ export namespace Prisma {
     issuedAt?: SortOrder
     cancelledByUserId?: SortOrder
     cancelledAt?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -135281,6 +136923,8 @@ export namespace Prisma {
     issuedAt?: SortOrder
     cancelledByUserId?: SortOrder
     cancelledAt?: SortOrder
+    source?: SortOrder
+    sourceRef?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -135298,6 +136942,39 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
+  }
+
+  export type WorkforceMigrationStepOrganizationIdStepIdCompoundUniqueInput = {
+    organizationId: string
+    stepId: string
+  }
+
+  export type WorkforceMigrationStepCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    stepId?: SortOrder
+    status?: SortOrder
+    summaryJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceMigrationStepMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    stepId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceMigrationStepMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    stepId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type EnumStaffScheduleRevisionStatusFilter<$PrismaModel = never> = {
@@ -135926,6 +137603,12 @@ export namespace Prisma {
     none?: WorkforceBrigadeWhereInput
   }
 
+  export type WorkforceMigrationStepListRelationFilter = {
+    every?: WorkforceMigrationStepWhereInput
+    some?: WorkforceMigrationStepWhereInput
+    none?: WorkforceMigrationStepWhereInput
+  }
+
   export type ElektrawebBridgePolicyNullableScalarRelationFilter = {
     is?: ElektrawebBridgePolicyWhereInput | null
     isNot?: ElektrawebBridgePolicyWhereInput | null
@@ -136082,6 +137765,10 @@ export namespace Prisma {
   }
 
   export type WorkforceBrigadeOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceMigrationStepOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -140893,6 +142580,13 @@ export namespace Prisma {
     connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
   }
 
+  export type WorkforceBrigadeMemberCreateNestedManyWithoutLeftToBrigadeInput = {
+    create?: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput> | WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput[] | WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput[]
+    connectOrCreate?: WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput | WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput[]
+    createMany?: WorkforceBrigadeMemberCreateManyLeftToBrigadeInputEnvelope
+    connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+  }
+
   export type WorkforceShiftAssignmentCreateNestedManyWithoutBrigadeInput = {
     create?: XOR<WorkforceShiftAssignmentCreateWithoutBrigadeInput, WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput> | WorkforceShiftAssignmentCreateWithoutBrigadeInput[] | WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput[]
     connectOrCreate?: WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput | WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput[]
@@ -140904,6 +142598,13 @@ export namespace Prisma {
     create?: XOR<WorkforceBrigadeMemberCreateWithoutBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutBrigadeInput> | WorkforceBrigadeMemberCreateWithoutBrigadeInput[] | WorkforceBrigadeMemberUncheckedCreateWithoutBrigadeInput[]
     connectOrCreate?: WorkforceBrigadeMemberCreateOrConnectWithoutBrigadeInput | WorkforceBrigadeMemberCreateOrConnectWithoutBrigadeInput[]
     createMany?: WorkforceBrigadeMemberCreateManyBrigadeInputEnvelope
+    connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+  }
+
+  export type WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutLeftToBrigadeInput = {
+    create?: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput> | WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput[] | WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput[]
+    connectOrCreate?: WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput | WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput[]
+    createMany?: WorkforceBrigadeMemberCreateManyLeftToBrigadeInputEnvelope
     connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
   }
 
@@ -140936,6 +142637,20 @@ export namespace Prisma {
     deleteMany?: WorkforceBrigadeMemberScalarWhereInput | WorkforceBrigadeMemberScalarWhereInput[]
   }
 
+  export type WorkforceBrigadeMemberUpdateManyWithoutLeftToBrigadeNestedInput = {
+    create?: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput> | WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput[] | WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput[]
+    connectOrCreate?: WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput | WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput[]
+    upsert?: WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutLeftToBrigadeInput[]
+    createMany?: WorkforceBrigadeMemberCreateManyLeftToBrigadeInputEnvelope
+    set?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    disconnect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    delete?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    update?: WorkforceBrigadeMemberUpdateWithWhereUniqueWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpdateWithWhereUniqueWithoutLeftToBrigadeInput[]
+    updateMany?: WorkforceBrigadeMemberUpdateManyWithWhereWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpdateManyWithWhereWithoutLeftToBrigadeInput[]
+    deleteMany?: WorkforceBrigadeMemberScalarWhereInput | WorkforceBrigadeMemberScalarWhereInput[]
+  }
+
   export type WorkforceShiftAssignmentUpdateManyWithoutBrigadeNestedInput = {
     create?: XOR<WorkforceShiftAssignmentCreateWithoutBrigadeInput, WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput> | WorkforceShiftAssignmentCreateWithoutBrigadeInput[] | WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput[]
     connectOrCreate?: WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput | WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput[]
@@ -140964,6 +142679,20 @@ export namespace Prisma {
     deleteMany?: WorkforceBrigadeMemberScalarWhereInput | WorkforceBrigadeMemberScalarWhereInput[]
   }
 
+  export type WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeNestedInput = {
+    create?: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput> | WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput[] | WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput[]
+    connectOrCreate?: WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput | WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput[]
+    upsert?: WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutLeftToBrigadeInput[]
+    createMany?: WorkforceBrigadeMemberCreateManyLeftToBrigadeInputEnvelope
+    set?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    disconnect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    delete?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    connect?: WorkforceBrigadeMemberWhereUniqueInput | WorkforceBrigadeMemberWhereUniqueInput[]
+    update?: WorkforceBrigadeMemberUpdateWithWhereUniqueWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpdateWithWhereUniqueWithoutLeftToBrigadeInput[]
+    updateMany?: WorkforceBrigadeMemberUpdateManyWithWhereWithoutLeftToBrigadeInput | WorkforceBrigadeMemberUpdateManyWithWhereWithoutLeftToBrigadeInput[]
+    deleteMany?: WorkforceBrigadeMemberScalarWhereInput | WorkforceBrigadeMemberScalarWhereInput[]
+  }
+
   export type WorkforceShiftAssignmentUncheckedUpdateManyWithoutBrigadeNestedInput = {
     create?: XOR<WorkforceShiftAssignmentCreateWithoutBrigadeInput, WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput> | WorkforceShiftAssignmentCreateWithoutBrigadeInput[] | WorkforceShiftAssignmentUncheckedCreateWithoutBrigadeInput[]
     connectOrCreate?: WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput | WorkforceShiftAssignmentCreateOrConnectWithoutBrigadeInput[]
@@ -140984,6 +142713,12 @@ export namespace Prisma {
     connect?: WorkforceBrigadeWhereUniqueInput
   }
 
+  export type WorkforceBrigadeCreateNestedOneWithoutMemberExitsInput = {
+    create?: XOR<WorkforceBrigadeCreateWithoutMemberExitsInput, WorkforceBrigadeUncheckedCreateWithoutMemberExitsInput>
+    connectOrCreate?: WorkforceBrigadeCreateOrConnectWithoutMemberExitsInput
+    connect?: WorkforceBrigadeWhereUniqueInput
+  }
+
   export type WorkforceEmploymentCreateNestedOneWithoutBrigadeMembershipsInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutBrigadeMembershipsInput, WorkforceEmploymentUncheckedCreateWithoutBrigadeMembershipsInput>
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutBrigadeMembershipsInput
@@ -140996,6 +142731,16 @@ export namespace Prisma {
     upsert?: WorkforceBrigadeUpsertWithoutMembersInput
     connect?: WorkforceBrigadeWhereUniqueInput
     update?: XOR<XOR<WorkforceBrigadeUpdateToOneWithWhereWithoutMembersInput, WorkforceBrigadeUpdateWithoutMembersInput>, WorkforceBrigadeUncheckedUpdateWithoutMembersInput>
+  }
+
+  export type WorkforceBrigadeUpdateOneWithoutMemberExitsNestedInput = {
+    create?: XOR<WorkforceBrigadeCreateWithoutMemberExitsInput, WorkforceBrigadeUncheckedCreateWithoutMemberExitsInput>
+    connectOrCreate?: WorkforceBrigadeCreateOrConnectWithoutMemberExitsInput
+    upsert?: WorkforceBrigadeUpsertWithoutMemberExitsInput
+    disconnect?: WorkforceBrigadeWhereInput | boolean
+    delete?: WorkforceBrigadeWhereInput | boolean
+    connect?: WorkforceBrigadeWhereUniqueInput
+    update?: XOR<XOR<WorkforceBrigadeUpdateToOneWithWhereWithoutMemberExitsInput, WorkforceBrigadeUpdateWithoutMemberExitsInput>, WorkforceBrigadeUncheckedUpdateWithoutMemberExitsInput>
   }
 
   export type WorkforceEmploymentUpdateOneRequiredWithoutBrigadeMembershipsNestedInput = {
@@ -141282,6 +143027,20 @@ export namespace Prisma {
     upsert?: WorkforceEmploymentUpsertWithoutPersonnelOrdersInput
     connect?: WorkforceEmploymentWhereUniqueInput
     update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutPersonnelOrdersInput, WorkforceEmploymentUpdateWithoutPersonnelOrdersInput>, WorkforceEmploymentUncheckedUpdateWithoutPersonnelOrdersInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutWorkforceMigrationStepsInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceMigrationStepsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceMigrationStepsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceMigrationStepsInput
+    upsert?: OrganizationUpsertWithoutWorkforceMigrationStepsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceMigrationStepsInput, OrganizationUpdateWithoutWorkforceMigrationStepsInput>, OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput>
   }
 
   export type WorkforceScopeCreateNestedOneWithoutStaffScheduleRevisionsInput = {
@@ -141825,6 +143584,13 @@ export namespace Prisma {
     connect?: WorkforceAttendancePunchWhereUniqueInput | WorkforceAttendancePunchWhereUniqueInput[]
   }
 
+  export type WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput> | WorkforceMigrationStepCreateWithoutOrganizationInput[] | WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
+    connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+  }
+
   export type OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<OrgUnitCommercialLinkCreateWithoutOrganizationInput, OrgUnitCommercialLinkUncheckedCreateWithoutOrganizationInput> | OrgUnitCommercialLinkCreateWithoutOrganizationInput[] | OrgUnitCommercialLinkUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: OrgUnitCommercialLinkCreateOrConnectWithoutOrganizationInput | OrgUnitCommercialLinkCreateOrConnectWithoutOrganizationInput[]
@@ -142160,6 +143926,13 @@ export namespace Prisma {
     connectOrCreate?: WorkforceAttendancePunchCreateOrConnectWithoutOrganizationInput | WorkforceAttendancePunchCreateOrConnectWithoutOrganizationInput[]
     createMany?: WorkforceAttendancePunchCreateManyOrganizationInputEnvelope
     connect?: WorkforceAttendancePunchWhereUniqueInput | WorkforceAttendancePunchWhereUniqueInput[]
+  }
+
+  export type WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput> | WorkforceMigrationStepCreateWithoutOrganizationInput[] | WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
+    connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -142763,6 +144536,20 @@ export namespace Prisma {
     update?: WorkforceAttendancePunchUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceAttendancePunchUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceAttendancePunchUpdateManyWithWhereWithoutOrganizationInput | WorkforceAttendancePunchUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceAttendancePunchScalarWhereInput | WorkforceAttendancePunchScalarWhereInput[]
+  }
+
+  export type WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput> | WorkforceMigrationStepCreateWithoutOrganizationInput[] | WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceMigrationStepUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
+    set?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    disconnect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    delete?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    update?: WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput | WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput = {
@@ -143425,6 +145212,20 @@ export namespace Prisma {
     update?: WorkforceAttendancePunchUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceAttendancePunchUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceAttendancePunchUpdateManyWithWhereWithoutOrganizationInput | WorkforceAttendancePunchUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceAttendancePunchScalarWhereInput | WorkforceAttendancePunchScalarWhereInput[]
+  }
+
+  export type WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput> | WorkforceMigrationStepCreateWithoutOrganizationInput[] | WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceMigrationStepUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
+    set?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    disconnect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    delete?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+    update?: WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput | WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -146437,6 +148238,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -146515,6 +148317,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -146603,6 +148406,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -146681,6 +148485,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -146991,6 +148796,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -147069,6 +148875,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -147200,6 +149007,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -147278,6 +149086,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -147350,6 +149159,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -147428,6 +149238,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -147516,6 +149327,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -147594,6 +149406,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -147981,6 +149794,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -148059,6 +149873,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -148174,6 +149989,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -148252,6 +150068,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -148357,6 +150174,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -148435,6 +150253,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -148550,6 +150369,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -148628,6 +150448,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -148733,6 +150554,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -148811,6 +150633,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -148899,6 +150722,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -148977,6 +150801,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -149049,6 +150874,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -149127,6 +150953,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -149215,6 +151042,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -149293,6 +151121,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -149535,6 +151364,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutPersonnelOrdersInput
@@ -149559,6 +151390,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -149812,6 +151645,8 @@ export namespace Prisma {
     issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
     cancelledAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    source?: StringFilter<"WorkforcePersonnelOrder"> | string
+    sourceRef?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
     createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
   }
@@ -150597,6 +152432,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -150675,6 +152511,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -150839,6 +152676,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -150917,6 +152755,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -151997,6 +153836,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -152075,6 +153915,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -152212,6 +154053,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -152233,6 +154076,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -152478,6 +154323,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutPersonnelOrdersInput
@@ -152502,6 +154349,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -152519,14 +154368,20 @@ export namespace Prisma {
   export type WorkforceBrigadeMemberCreateWithoutEmploymentInput = {
     id?: string
     organizationId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
     createdAt?: Date | string
     brigade: WorkforceBrigadeCreateNestedOneWithoutMembersInput
+    leftToBrigade?: WorkforceBrigadeCreateNestedOneWithoutMemberExitsInput
   }
 
   export type WorkforceBrigadeMemberUncheckedCreateWithoutEmploymentInput = {
     id?: string
     organizationId: string
     brigadeId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
     createdAt?: Date | string
   }
 
@@ -152751,6 +154606,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -152829,6 +154685,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -152999,6 +154856,8 @@ export namespace Prisma {
     rejectedByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     cancelledByUserId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    source?: StringFilter<"WorkforceAbsence"> | string
+    sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
   }
@@ -153198,6 +155057,9 @@ export namespace Prisma {
     organizationId?: UuidFilter<"WorkforceBrigadeMember"> | string
     brigadeId?: UuidFilter<"WorkforceBrigadeMember"> | string
     employmentId?: UuidFilter<"WorkforceBrigadeMember"> | string
+    effectiveFrom?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
+    effectiveTo?: DateTimeNullableFilter<"WorkforceBrigadeMember"> | Date | string | null
+    leftToBrigadeId?: UuidNullableFilter<"WorkforceBrigadeMember"> | string | null
     createdAt?: DateTimeFilter<"WorkforceBrigadeMember"> | Date | string
   }
 
@@ -153528,6 +155390,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -153606,6 +155469,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -153734,6 +155598,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -153812,6 +155677,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -154092,6 +155958,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -154170,6 +156037,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -154451,6 +156319,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -154529,6 +156398,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -154731,6 +156601,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -154809,6 +156680,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -154974,6 +156846,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -155052,6 +156925,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -155179,6 +157053,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -155257,6 +157132,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -155410,6 +157286,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -155488,6 +157365,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -155631,6 +157509,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -155709,6 +157588,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -155928,6 +157808,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -156006,6 +157887,7 @@ export namespace Prisma {
     workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -156227,6 +158109,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -156305,6 +158188,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -156451,6 +158335,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -156529,6 +158414,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -156644,6 +158530,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -156722,6 +158609,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -156868,6 +158756,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -156946,6 +158835,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -157186,6 +159076,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -157264,6 +159155,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -157282,7 +159174,10 @@ export namespace Prisma {
   export type WorkforceBrigadeMemberCreateWithoutBrigadeInput = {
     id?: string
     organizationId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
     createdAt?: Date | string
+    leftToBrigade?: WorkforceBrigadeCreateNestedOneWithoutMemberExitsInput
     employment: WorkforceEmploymentCreateNestedOneWithoutBrigadeMembershipsInput
   }
 
@@ -157290,6 +159185,9 @@ export namespace Prisma {
     id?: string
     organizationId: string
     employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
     createdAt?: Date | string
   }
 
@@ -157300,6 +159198,36 @@ export namespace Prisma {
 
   export type WorkforceBrigadeMemberCreateManyBrigadeInputEnvelope = {
     data: WorkforceBrigadeMemberCreateManyBrigadeInput | WorkforceBrigadeMemberCreateManyBrigadeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput = {
+    id?: string
+    organizationId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    createdAt?: Date | string
+    brigade: WorkforceBrigadeCreateNestedOneWithoutMembersInput
+    employment: WorkforceEmploymentCreateNestedOneWithoutBrigadeMembershipsInput
+  }
+
+  export type WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput = {
+    id?: string
+    organizationId: string
+    brigadeId: string
+    employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceBrigadeMemberCreateOrConnectWithoutLeftToBrigadeInput = {
+    where: WorkforceBrigadeMemberWhereUniqueInput
+    create: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput>
+  }
+
+  export type WorkforceBrigadeMemberCreateManyLeftToBrigadeInputEnvelope = {
+    data: WorkforceBrigadeMemberCreateManyLeftToBrigadeInput | WorkforceBrigadeMemberCreateManyLeftToBrigadeInput[]
     skipDuplicates?: boolean
   }
 
@@ -157410,6 +159338,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -157488,6 +159417,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -157514,6 +159444,22 @@ export namespace Prisma {
     data: XOR<WorkforceBrigadeMemberUpdateManyMutationInput, WorkforceBrigadeMemberUncheckedUpdateManyWithoutBrigadeInput>
   }
 
+  export type WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutLeftToBrigadeInput = {
+    where: WorkforceBrigadeMemberWhereUniqueInput
+    update: XOR<WorkforceBrigadeMemberUpdateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedUpdateWithoutLeftToBrigadeInput>
+    create: XOR<WorkforceBrigadeMemberCreateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedCreateWithoutLeftToBrigadeInput>
+  }
+
+  export type WorkforceBrigadeMemberUpdateWithWhereUniqueWithoutLeftToBrigadeInput = {
+    where: WorkforceBrigadeMemberWhereUniqueInput
+    data: XOR<WorkforceBrigadeMemberUpdateWithoutLeftToBrigadeInput, WorkforceBrigadeMemberUncheckedUpdateWithoutLeftToBrigadeInput>
+  }
+
+  export type WorkforceBrigadeMemberUpdateManyWithWhereWithoutLeftToBrigadeInput = {
+    where: WorkforceBrigadeMemberScalarWhereInput
+    data: XOR<WorkforceBrigadeMemberUpdateManyMutationInput, WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeInput>
+  }
+
   export type WorkforceShiftAssignmentUpsertWithWhereUniqueWithoutBrigadeInput = {
     where: WorkforceShiftAssignmentWhereUniqueInput
     update: XOR<WorkforceShiftAssignmentUpdateWithoutBrigadeInput, WorkforceShiftAssignmentUncheckedUpdateWithoutBrigadeInput>
@@ -157537,6 +159483,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceBrigadesInput
+    memberExits?: WorkforceBrigadeMemberCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentCreateNestedManyWithoutBrigadeInput
   }
 
@@ -157547,12 +159494,40 @@ export namespace Prisma {
     name: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    memberExits?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutBrigadeInput
   }
 
   export type WorkforceBrigadeCreateOrConnectWithoutMembersInput = {
     where: WorkforceBrigadeWhereUniqueInput
     create: XOR<WorkforceBrigadeCreateWithoutMembersInput, WorkforceBrigadeUncheckedCreateWithoutMembersInput>
+  }
+
+  export type WorkforceBrigadeCreateWithoutMemberExitsInput = {
+    id?: string
+    code: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceBrigadesInput
+    members?: WorkforceBrigadeMemberCreateNestedManyWithoutBrigadeInput
+    assignments?: WorkforceShiftAssignmentCreateNestedManyWithoutBrigadeInput
+  }
+
+  export type WorkforceBrigadeUncheckedCreateWithoutMemberExitsInput = {
+    id?: string
+    organizationId: string
+    code: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutBrigadeInput
+    assignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutBrigadeInput
+  }
+
+  export type WorkforceBrigadeCreateOrConnectWithoutMemberExitsInput = {
+    where: WorkforceBrigadeWhereUniqueInput
+    create: XOR<WorkforceBrigadeCreateWithoutMemberExitsInput, WorkforceBrigadeUncheckedCreateWithoutMemberExitsInput>
   }
 
   export type WorkforceEmploymentCreateWithoutBrigadeMembershipsInput = {
@@ -157638,6 +159613,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceBrigadesNestedInput
+    memberExits?: WorkforceBrigadeMemberUpdateManyWithoutLeftToBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -157648,6 +159624,40 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberExits?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeNestedInput
+    assignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutBrigadeNestedInput
+  }
+
+  export type WorkforceBrigadeUpsertWithoutMemberExitsInput = {
+    update: XOR<WorkforceBrigadeUpdateWithoutMemberExitsInput, WorkforceBrigadeUncheckedUpdateWithoutMemberExitsInput>
+    create: XOR<WorkforceBrigadeCreateWithoutMemberExitsInput, WorkforceBrigadeUncheckedCreateWithoutMemberExitsInput>
+    where?: WorkforceBrigadeWhereInput
+  }
+
+  export type WorkforceBrigadeUpdateToOneWithWhereWithoutMemberExitsInput = {
+    where?: WorkforceBrigadeWhereInput
+    data: XOR<WorkforceBrigadeUpdateWithoutMemberExitsInput, WorkforceBrigadeUncheckedUpdateWithoutMemberExitsInput>
+  }
+
+  export type WorkforceBrigadeUpdateWithoutMemberExitsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceBrigadesNestedInput
+    members?: WorkforceBrigadeMemberUpdateManyWithoutBrigadeNestedInput
+    assignments?: WorkforceShiftAssignmentUpdateManyWithoutBrigadeNestedInput
+  }
+
+  export type WorkforceBrigadeUncheckedUpdateWithoutMemberExitsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -157784,6 +159794,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -157862,6 +159873,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -158010,6 +160022,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceBrigadesInput
     members?: WorkforceBrigadeMemberCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberCreateNestedManyWithoutLeftToBrigadeInput
   }
 
   export type WorkforceBrigadeUncheckedCreateWithoutAssignmentsInput = {
@@ -158020,6 +160033,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutLeftToBrigadeInput
   }
 
   export type WorkforceBrigadeCreateOrConnectWithoutAssignmentsInput = {
@@ -158100,6 +160114,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -158178,6 +160193,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -158350,6 +160366,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceBrigadesNestedInput
     members?: WorkforceBrigadeMemberUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUpdateManyWithoutLeftToBrigadeNestedInput
   }
 
   export type WorkforceBrigadeUncheckedUpdateWithoutAssignmentsInput = {
@@ -158360,6 +160377,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceDayOverridesInput = {
@@ -158424,6 +160442,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -158502,6 +160521,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -158723,6 +160743,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -158801,6 +160822,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -159596,6 +161618,326 @@ export namespace Prisma {
     attendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
+  export type OrganizationCreateWithoutWorkforceMigrationStepsInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceMigrationStepsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput>
+  }
+
+  export type OrganizationUpsertWithoutWorkforceMigrationStepsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceMigrationStepsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceMigrationStepsInput, OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceMigrationStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
   export type WorkforceScopeCreateWithoutStaffScheduleRevisionsInput = {
     id?: string
     anchorOrganizationId: string
@@ -159787,6 +162129,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -159865,6 +162208,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -160034,6 +162378,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -160112,6 +162457,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -161537,6 +163883,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkforceBrigadeMemberCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentCreateNestedManyWithoutBrigadeInput
   }
 
@@ -161547,6 +163894,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutBrigadeInput
+    memberExits?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutLeftToBrigadeInput
     assignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutBrigadeInput
   }
 
@@ -161733,6 +164081,34 @@ export namespace Prisma {
 
   export type WorkforceAttendancePunchCreateManyOrganizationInputEnvelope = {
     data: WorkforceAttendancePunchCreateManyOrganizationInput | WorkforceAttendancePunchCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceMigrationStepCreateWithoutOrganizationInput = {
+    id?: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceMigrationStepWhereUniqueInput
+    create: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceMigrationStepCreateManyOrganizationInputEnvelope = {
+    data: WorkforceMigrationStepCreateManyOrganizationInput | WorkforceMigrationStepCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -161986,6 +164362,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -162064,6 +164441,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -162141,6 +164519,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -162218,6 +164597,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -163369,6 +165749,35 @@ export namespace Prisma {
     data: XOR<WorkforceAttendancePunchUpdateManyMutationInput, WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationInput>
   }
 
+  export type WorkforceMigrationStepUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceMigrationStepWhereUniqueInput
+    update: XOR<WorkforceMigrationStepUpdateWithoutOrganizationInput, WorkforceMigrationStepUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceMigrationStepCreateWithoutOrganizationInput, WorkforceMigrationStepUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceMigrationStepWhereUniqueInput
+    data: XOR<WorkforceMigrationStepUpdateWithoutOrganizationInput, WorkforceMigrationStepUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput = {
+    where: WorkforceMigrationStepScalarWhereInput
+    data: XOR<WorkforceMigrationStepUpdateManyMutationInput, WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceMigrationStepScalarWhereInput = {
+    AND?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
+    OR?: WorkforceMigrationStepScalarWhereInput[]
+    NOT?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
+    id?: UuidFilter<"WorkforceMigrationStep"> | string
+    organizationId?: UuidFilter<"WorkforceMigrationStep"> | string
+    stepId?: StringFilter<"WorkforceMigrationStep"> | string
+    status?: StringFilter<"WorkforceMigrationStep"> | string
+    summaryJson?: JsonFilter<"WorkforceMigrationStep">
+    createdAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
+  }
+
   export type OrgUnitCommercialLinkUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: OrgUnitCommercialLinkWhereUniqueInput
     update: XOR<OrgUnitCommercialLinkUpdateWithoutOrganizationInput, OrgUnitCommercialLinkUncheckedUpdateWithoutOrganizationInput>
@@ -163630,6 +166039,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -163708,6 +166118,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -163925,6 +166336,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -164003,6 +166415,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -164091,6 +166504,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -164169,6 +166583,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -164241,6 +166656,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -164319,6 +166735,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -164396,6 +166813,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -164474,6 +166892,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -164562,6 +166981,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -164640,6 +167060,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -164723,6 +167144,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -164801,6 +167223,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -164873,6 +167296,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -164951,6 +167375,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -165039,6 +167464,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -165117,6 +167543,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -165331,6 +167758,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -165408,6 +167836,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -165744,6 +168173,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -165821,6 +168251,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -166128,6 +168559,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -166206,6 +168638,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -166324,6 +168757,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -166402,6 +168836,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -166529,6 +168964,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -166607,6 +169043,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -166771,6 +169208,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -166849,6 +169287,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -167271,6 +169710,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -167349,6 +169789,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -167476,6 +169917,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -167554,6 +169996,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -167671,6 +170114,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -167749,6 +170193,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -167876,6 +170321,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -167954,6 +170400,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -168071,6 +170518,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -168149,6 +170597,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -168276,6 +170725,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -168354,6 +170804,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -168471,6 +170922,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -168549,6 +171001,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -168683,6 +171136,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -168761,6 +171215,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -168849,6 +171304,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -168927,6 +171383,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -169076,6 +171533,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -169154,6 +171612,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -169320,6 +171779,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -169398,6 +171858,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -169533,6 +171994,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -169611,6 +172073,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -169683,6 +172146,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -169761,6 +172225,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -169888,6 +172353,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -169966,6 +172432,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -170083,6 +172550,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -170161,6 +172629,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -170249,6 +172718,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -170327,6 +172797,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -170399,6 +172870,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -170477,6 +172949,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -170633,6 +173106,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -170711,6 +173185,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -170815,6 +173290,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -170893,6 +173369,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -171042,6 +173519,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -171120,6 +173598,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -171239,6 +173718,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -171317,6 +173797,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -171457,6 +173938,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -171535,6 +174017,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -171671,6 +174154,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -171749,6 +174233,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -171837,6 +174322,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -171915,6 +174401,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -171987,6 +174474,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -172065,6 +174553,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -172153,6 +174642,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -172231,6 +174721,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -172303,6 +174794,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -172381,6 +174873,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -172469,6 +174962,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -172547,6 +175041,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -172619,6 +175114,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -172697,6 +175193,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -172785,6 +175282,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -172863,6 +175361,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -172935,6 +175434,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -173013,6 +175513,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -173101,6 +175602,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -173179,6 +175681,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -173251,6 +175754,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -173329,6 +175833,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -173417,6 +175922,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -173495,6 +176001,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -173641,6 +176148,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -173719,6 +176227,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -173838,6 +176347,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -173916,6 +176426,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -174059,6 +176570,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -174137,6 +176649,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -174256,6 +176769,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -174334,6 +176848,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -174624,6 +177139,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -174886,6 +177403,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutPersonnelOrdersNestedInput
@@ -174910,6 +177429,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -174933,6 +177454,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -175538,6 +178061,8 @@ export namespace Prisma {
     rejectedByUserId?: string | null
     cancelledByUserId?: string | null
     rejectionReason?: string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -175625,6 +178150,8 @@ export namespace Prisma {
     issuedAt?: Date | string | null
     cancelledByUserId?: string | null
     cancelledAt?: Date | string | null
+    source?: string
+    sourceRef?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -175633,6 +178160,9 @@ export namespace Prisma {
     id?: string
     organizationId: string
     brigadeId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
     createdAt?: Date | string
   }
 
@@ -175702,6 +178232,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -175723,6 +178255,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -175744,6 +178278,8 @@ export namespace Prisma {
     rejectedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -175972,6 +178508,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutPersonnelOrdersNestedInput
@@ -175996,6 +178534,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -176019,6 +178559,8 @@ export namespace Prisma {
     issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    source?: StringFieldUpdateOperationsInput | string
+    sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -176026,14 +178568,20 @@ export namespace Prisma {
   export type WorkforceBrigadeMemberUpdateWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     brigade?: WorkforceBrigadeUpdateOneRequiredWithoutMembersNestedInput
+    leftToBrigade?: WorkforceBrigadeUpdateOneWithoutMemberExitsNestedInput
   }
 
   export type WorkforceBrigadeMemberUncheckedUpdateWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
     brigadeId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -176041,6 +178589,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
     brigadeId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -176693,6 +179244,19 @@ export namespace Prisma {
     id?: string
     organizationId: string
     employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
+    leftToBrigadeId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceBrigadeMemberCreateManyLeftToBrigadeInput = {
+    id?: string
+    organizationId: string
+    brigadeId: string
+    employmentId: string
+    effectiveFrom: Date | string
+    effectiveTo?: Date | string | null
     createdAt?: Date | string
   }
 
@@ -176711,7 +179275,10 @@ export namespace Prisma {
   export type WorkforceBrigadeMemberUpdateWithoutBrigadeInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftToBrigade?: WorkforceBrigadeUpdateOneWithoutMemberExitsNestedInput
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutBrigadeMembershipsNestedInput
   }
 
@@ -176719,6 +179286,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -176726,6 +179296,39 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
     employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    leftToBrigadeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceBrigadeMemberUpdateWithoutLeftToBrigadeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    brigade?: WorkforceBrigadeUpdateOneRequiredWithoutMembersNestedInput
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutBrigadeMembershipsNestedInput
+  }
+
+  export type WorkforceBrigadeMemberUncheckedUpdateWithoutLeftToBrigadeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    brigadeId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    brigadeId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    effectiveTo?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -177379,6 +179982,15 @@ export namespace Prisma {
     hoursAttributed?: Decimal | DecimalJsLike | number | string | null
     workDate?: Date | string | null
     createdAt?: Date | string
+  }
+
+  export type WorkforceMigrationStepCreateManyOrganizationInput = {
+    id?: string
+    stepId: string
+    status: string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OrgUnitCommercialLinkCreateManyOrganizationInput = {
@@ -178619,6 +181231,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkforceBrigadeMemberUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUpdateManyWithoutLeftToBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -178629,6 +181242,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutBrigadeNestedInput
+    memberExits?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutLeftToBrigadeNestedInput
     assignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutBrigadeNestedInput
   }
 
@@ -178828,6 +181442,33 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceMigrationStepUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceMigrationStepUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    summaryJson?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrgUnitCommercialLinkUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     linkMode?: EnumOrgCommercialLinkModeFieldUpdateOperationsInput | $Enums.OrgCommercialLinkMode
@@ -178996,6 +181637,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -179073,6 +181715,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -179487,6 +182130,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -179564,6 +182208,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -179771,6 +182416,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -179848,6 +182494,7 @@ export namespace Prisma {
     workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput

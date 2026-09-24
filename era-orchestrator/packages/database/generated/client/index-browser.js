@@ -418,6 +418,8 @@ exports.Prisma.WorkforceAbsenceScalarFieldEnum = {
   rejectedByUserId: 'rejectedByUserId',
   cancelledByUserId: 'cancelledByUserId',
   rejectionReason: 'rejectionReason',
+  source: 'source',
+  sourceRef: 'sourceRef',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -546,6 +548,9 @@ exports.Prisma.WorkforceBrigadeMemberScalarFieldEnum = {
   organizationId: 'organizationId',
   brigadeId: 'brigadeId',
   employmentId: 'employmentId',
+  effectiveFrom: 'effectiveFrom',
+  effectiveTo: 'effectiveTo',
+  leftToBrigadeId: 'leftToBrigadeId',
   createdAt: 'createdAt'
 };
 
@@ -635,6 +640,18 @@ exports.Prisma.WorkforcePersonnelOrderScalarFieldEnum = {
   issuedAt: 'issuedAt',
   cancelledByUserId: 'cancelledByUserId',
   cancelledAt: 'cancelledAt',
+  source: 'source',
+  sourceRef: 'sourceRef',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceMigrationStepScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  stepId: 'stepId',
+  status: 'status',
+  summaryJson: 'summaryJson',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1660,6 +1677,7 @@ exports.Prisma.ModelName = {
   WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
   WorkforcePersonnelOrderTemplate: 'WorkforcePersonnelOrderTemplate',
   WorkforcePersonnelOrder: 'WorkforcePersonnelOrder',
+  WorkforceMigrationStep: 'WorkforceMigrationStep',
   StaffScheduleRevision: 'StaffScheduleRevision',
   WorkforceAuditLog: 'WorkforceAuditLog',
   PricingBundle: 'PricingBundle',

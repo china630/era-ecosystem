@@ -26,6 +26,9 @@ import {
   CreateWorkforceShiftAssignmentDto,
   CreateWorkforceShiftCycleDto,
   CreateWorkforceShiftTypeDto,
+  LeaveWorkforceBrigadeMembersDto,
+  ListBrigadeMembershipsQueryDto,
+  TransferWorkforceBrigadeMembersDto,
   UpdateWorkforceBrigadeDto,
   UpdateWorkforcePlaceDto,
   UpdateWorkforceShiftAssignmentDto,
@@ -33,13 +36,17 @@ import {
   UpdateWorkforceShiftTypeDto,
 } from "./dto/workforce-roster.dto";
 import { WorkforceRosterService } from "./workforce-roster.service";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
 
 @ApiTags("platform-workforce-roster")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
 @UseGuards(PermissionsGuard)
 export class WorkforceRosterController {
-  constructor(private readonly roster: WorkforceRosterService) {}
+  constructor(
+    private readonly roster: WorkforceRosterService,
+    private readonly employments: WorkforceEmploymentsService,
+  ) {}
 
   // Places
   @Get("places")
@@ -146,7 +153,7 @@ export class WorkforceRosterController {
     summary:
       "Person × day labor plan preview (read-only; place/orgUnit filters). Does not write timesheet.",
   })
-  preview(
+  async preview(
     @OrganizationId() organizationId: string,
     @Query("year") yearRaw?: string,
     @Query("month") monthRaw?: string,
@@ -155,17 +162,70 @@ export class WorkforceRosterController {
   ) {
     const year = Number(yearRaw);
     const month = Number(monthRaw);
-    return this.roster.previewMonth(organizationId, year, month, {
+    const body = await this.roster.previewMonth(organizationId, year, month, {
       placeId: placeId?.trim() || undefined,
       orgUnitId: orgUnitId?.trim() || undefined,
     });
+    const personIds = [
+      ...new Set(body.rows.map((r) => r.globalPersonId).filter(Boolean)),
+    ];
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { ...body, persons };
   }
 
-  // Brigades
+  // Brigades — static paths before :id
+  @Post("brigades/transfers")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROSTER)
+  @ApiOperation({ summary: "Transfer or join employments into a brigade as of a Baku day" })
+  transferBrigadeMembers(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: TransferWorkforceBrigadeMembersDto,
+  ) {
+    return this.roster.transferBrigadeMembers(organizationId, user.sub, dto);
+  }
+
+  @Post("brigades/leaves")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROSTER)
+  @ApiOperation({ summary: "Close open brigade membership as of a Baku day (no target crew)" })
+  leaveBrigadeMembers(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: LeaveWorkforceBrigadeMembersDto,
+  ) {
+    return this.roster.leaveBrigadeMembers(organizationId, user.sub, dto);
+  }
+
+  @Get("brigade-memberships")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  @ApiOperation({ summary: "Dated brigade membership history" })
+  listBrigadeMemberships(
+    @OrganizationId() organizationId: string,
+    @Query() query: ListBrigadeMembershipsQueryDto,
+  ) {
+    return this.roster.listBrigadeMemberships(organizationId, query);
+  }
+
   @Get("brigades")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
-  listBrigades(@OrganizationId() organizationId: string) {
-    return this.roster.listBrigades(organizationId);
+  listBrigades(
+    @OrganizationId() organizationId: string,
+    @Query("asOf") asOf?: string,
+  ) {
+    return this.roster.listBrigades(organizationId, asOf);
+  }
+
+  @Get("brigades/:id/members")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  listBrigadeMembers(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @Query("asOf") asOf?: string,
+  ) {
+    return this.roster.listBrigadeMembers(organizationId, id, asOf);
   }
 
   @Post("brigades")

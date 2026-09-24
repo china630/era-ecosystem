@@ -225,7 +225,14 @@ export class WorkforceTimesheetsService {
         for (const emp of chunk) {
           for (let d = 1; d <= lastDay; d++) {
             const workDate = dayDateUtc(year, month, d);
-            if (isoDay(workDate) > todayIso) continue;
+            if (isoDay(workDate) > todayIso) {
+              const existing = existingMap.get(entryKey(emp.id, workDate));
+              if (existing && !isCellImmutable(existing)) {
+                await tx.workforceTimesheetEntry.delete({ where: { id: existing.id } });
+                cellsTouched += 1;
+              }
+              continue;
+            }
             const existing = existingMap.get(entryKey(emp.id, workDate));
             if (isCellImmutable(existing)) continue;
             const type = autofillTypeForDay(workDate);
@@ -305,13 +312,7 @@ export class WorkforceTimesheetsService {
       for (let d = 1; d <= lastDay; d++) {
         const workDate = dayDateUtc(year, month, d);
         const di = isoDay(workDate);
-        if (
-          di < absFrom ||
-          di > absTo ||
-          di < startIso ||
-          di > endIso ||
-          di > todayIso
-        ) {
+        if (di < absFrom || di > absTo || di < startIso || di > endIso) {
           continue;
         }
         covered.add(entryKey(a.employmentId, workDate));
@@ -325,10 +326,16 @@ export class WorkforceTimesheetsService {
     let cellsTouched = 0;
     await this.prisma.$transaction(async (tx) => {
       for (const e of existingRows) {
-        if (!e.lockedFromAbsence) continue;
         if (e.status === WorkforceTimesheetEntryStatus.APPROVED) continue;
         const key = entryKey(e.employmentId, e.workDate);
-        if (covered.has(key)) continue;
+        if (isoDay(e.workDate) > todayIso) {
+          if (!covered.has(key)) {
+            await tx.workforceTimesheetEntry.delete({ where: { id: e.id } });
+            cellsTouched += 1;
+          }
+          continue;
+        }
+        if (!e.lockedFromAbsence || covered.has(key)) continue;
         const type = autofillTypeForDay(e.workDate);
         await tx.workforceTimesheetEntry.update({
           where: { id: e.id },
@@ -350,13 +357,7 @@ export class WorkforceTimesheetsService {
         for (let d = 1; d <= lastDay; d++) {
           const workDate = dayDateUtc(year, month, d);
           const di = isoDay(workDate);
-          if (
-            di < absFrom ||
-            di > absTo ||
-            di < startIso ||
-            di > endIso ||
-            di > todayIso
-          ) {
+          if (di < absFrom || di > absTo || di < startIso || di > endIso) {
             continue;
           }
           const existing = existingRows.find(
@@ -435,6 +436,10 @@ export class WorkforceTimesheetsService {
     });
     for (const e of rows) {
       if (e.timesheet.status === WorkforceTimesheetStatus.APPROVED) continue;
+      if (isoDay(e.workDate) > todayBakuYmd()) {
+        await this.prisma.workforceTimesheetEntry.delete({ where: { id: e.id } });
+        continue;
+      }
       const type = autofillTypeForDay(e.workDate);
       await this.prisma.workforceTimesheetEntry.update({
         where: { id: e.id },
@@ -545,6 +550,14 @@ export class WorkforceTimesheetsService {
     if (ts.status === WorkforceTimesheetStatus.APPROVED) {
       throw new ConflictException("Timesheet already approved");
     }
+    await this.prisma.workforceTimesheetEntry.deleteMany({
+      where: {
+        timesheetId,
+        organizationId,
+        lockedFromAbsence: false,
+        workDate: { gt: parseDateOnly(todayBakuYmd()) },
+      },
+    });
     const entries = await this.prisma.workforceTimesheetEntry.findMany({
       where: { timesheetId, organizationId },
       include: { employment: true },

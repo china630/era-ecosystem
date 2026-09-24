@@ -15,6 +15,8 @@ const DATE_HEADER_KEYS = new Set([
   "birthdate",
   "startdate",
   "enddate",
+  "asofdate",
+  "orderdate",
 ]);
 
 function headerKey(name: string): string {
