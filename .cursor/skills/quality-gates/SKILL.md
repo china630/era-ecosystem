@@ -42,6 +42,6 @@ npm run ship:prepush:strict
 ## Agent rules
 
 - Prefer these scripts over inventing one-off commands.
-- After FAIL: fix or demote Matrix Scaffold to 🟡 — do not greenwash. For ship/push: **do not push** until `npm run ship:prepush` PASS.
+- After FAIL: fix or demote Matrix Scaffold to 🟡 — do not greenwash. For ship/push: **do not push** until `npm run ship:prepush` PASS **and** `git status` is clean except `never_commit` (generate/build leftovers need a new commit + re-run; see `era-git-ship`).
 - Product sell/show status lives in Product-Readiness + `docs/editions/*.yaml`, not MODULES_CATALOG DONE.
 - Docker/Prisma health is local UI/UX only — not a ship gate.

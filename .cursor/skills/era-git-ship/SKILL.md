@@ -34,7 +34,7 @@ Always read [quality-gates](../quality-gates/SKILL.md) before any `git push`.
 
 ## Preconditions
 
-1. **Never commit:** `docker-data/`, `.env`, `.cursor/`, `node_modules/` — see `never_commit` in manifests. Exception: tracked `.cursor/rules/*.mdc` and `.cursor/skills/**` when the user asks to update them.
+1. **Never commit:** `docker-data/`, `.env`, `.cursor/plans/`, `node_modules/` — see `never_commit` in manifests. **Do** commit tracked `.cursor/rules/*.mdc` and `.cursor/skills/**` when the user asked to update them (`-Wave` allows those two prefixes).
 2. **Do not edit** `.cursor/plans/*` unless user explicitly asks.
 3. **Git safety:** follow user git rules — no force push, no skip hooks, commit only when user asks (these triggers **are** explicit commit requests).
 4. **Branch protection:** `dev` and `master` require **PR + CI** — never `git push origin dev` directly.
@@ -68,7 +68,19 @@ This runs:
 
 **On FAIL:** do **not** push. Fix the code, make a **new** commit (no amend unless user git rules allow), re-run `npm run ship:prepush`, then push. Repeat until PASS.
 
-**Does not replace GitHub CI.** After push, wait for Actions green, then `gh pr merge --merge`. Local gates will not catch every Ubuntu-only failure; they catch the class that burned PR #85 (tokens, NAS literals, satellite Jest/`next build`).
+**PASS is not the push gate.** `db:generate` / `prisma generate` / `npm run build` rewrite tracked `generated/` and `runtime-cjs`. After PASS:
+
+1. `git status` — ignore only `never_commit` (`tmp/`, `docker-data/`, `.env`, …).
+2. If anything else is dirty: **new commit** (same wave prefixes), **clear `ERA_SHIP_GATES_DONE`**, re-run `npm run ship:prepush`.
+3. Push / `-PublishDev` only when the tree is clean except `never_commit`.
+
+`ERA_SHIP_GATES_DONE=1` skips re-running tests in the same session, but **`era-ship-prepush.mjs` still fails if the tree is dirty** (so a git hook cannot push generate leftovers). Never set the flag while porcelain remains except `never_commit`. `era-ship.ps1` also throws on a dirty tree.
+
+**Manual `git push` is not a bypass:** the pre-push hook runs the same script. Option B must still end on a clean tree.
+
+**Does not replace GitHub CI.** After push, wait for Actions green, then `gh pr merge --merge` **with the PR number**. Local gates will not catch every Ubuntu-only failure; they catch the class that burned PR #85 (tokens, NAS literals, satellite Jest/`next build`).
+
+**Not in local ship gates (still CI-only):** orchestrator Next `apps/web` production build, finance-web `next build`. A workforce TSX bug can be red on GitHub after local `test:api` PASS.
 
 **Hooks:** `node scripts/install-era-git-hooks.mjs` copies `.githooks/pre-push` → `.git/hooks/pre-push`. `era-ship.ps1 -PublishDev` installs this if missing. Raw `git push` then runs the same script. Do not set `git config` (user rule).
 
@@ -94,8 +106,8 @@ git checkout -b integration/ecosystem-wave-<slug>   # if not already on feature 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -Wave -Subject "ecosystem integration wave" -Body "See COVERAGE_MATRIX and audit scripts."
 
 .cursor/skills/era-git-ship/scripts/era-ship.ps1 -PublishDev -Head (git branch --show-current) -Title "feat: ecosystem integration wave" -Body "Ordered: orchestrator, data-hub, MDM, satellites."
-# PublishDev: ship:prepush → push → PR → wait checks → merge. Does NOT exit on --auto alone.
-# For «на сервер» / scoped ship to droplet, add -WaitStaging (blocks until Build images + Deploy staging).
+# PublishDev: ship:prepush → **clean tree** → push → PR → wait checks → merge. Does NOT exit on --auto alone.
+# Throws if generate/build left a dirty tree. For «на сервер» / scoped ship to droplet, add -WaitStaging.
 
 # After dev PR merged and CI green (and only if user asked for master):
 git checkout dev; git pull origin dev
@@ -114,9 +126,10 @@ Dry-run: add `-DryRun` to any command.
    - **mdm commit:** add `mdm` export; kit mdm exports + `VoenLookupField` in ui index.
    - **rest commit:** remaining kit/orchestrator/session/platform exports.
 5. Skip empty buckets (no matching changed files).
-6. Verify `git status` clean.
-7. **Local ship gates:** `npm run ship:prepush`. FAIL → fix → new commit → re-run. Do not push until PASS.
-8. Push + PR (PublishDev). Wait for **GitHub CI** green, then merge. Then PublishMaster after that CI is green.
+6. Prefer `era-ship.ps1 -Wave` over hand-picked `git add` so MDM (`era-orchestrator/packages/mdm-database/`, `*/src/**/mdm/**`) is not swallowed by the orchestrator prefix. Longest path wins.
+7. **Local ship gates:** `npm run ship:prepush`. FAIL → fix → new commit → re-run.
+8. **Working tree clean** (except `never_commit`). If generate/build dirtied files → new commit → unset `ERA_SHIP_GATES_DONE` → re-run gates. Do **not** push a dirty tree.
+9. Push + PR (PublishDev). Wait for **GitHub CI** green, then merge **that PR number**. Then PublishMaster after that CI is green. Never `gh pr view` without a PR number. Never treat `gh pr checks --watch` SUCCESS on a SHA that already passed on `dev` as enough to merge `dev`→`master` — retry `gh pr merge <n>` until branch protection accepts (queued `packages` / policy), or fail on real red checks.
 
 ## Single scope commit
 
@@ -181,8 +194,10 @@ Manual equivalent:
 
 ```powershell
 gh pr create --base dev --head <branch> --title "..." --body "..."
+# parse /pull/N from the URL
 gh pr checks <n> --watch
 gh pr merge <n> --merge
+# if policy / queued required check: retry merge; do not --admin
 # then wait Build and push images + Deploy staging on the merge SHA
 ```
 
@@ -200,7 +215,9 @@ Only after dev PR merged and checks green:
 ```powershell
 git fetch origin dev master
 gh pr create --base master --head dev --title "release: promote dev — <wave name>"
-gh pr merge --merge
+# capture /pull/N from the URL — do not `gh pr view` with no args
+gh pr merge <N> --merge
+# if "policy prohibits" / required check queued: wait and retry merge; do not --admin
 ```
 
 ## Commit message format
@@ -249,15 +266,16 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 - [ ] Commit 1 orchestrator (if changed)
 - [ ] Commit 2 data-hub (if changed)
 - [ ] Commit 3 mdm (if changed)
-- [ ] Commit 4 rest (remaining)
-- [ ] Working tree clean
+- [ ] Commit 4 rest (remaining — including kit/docs/platform; no leftover porcelain except `never_commit`)
 - [ ] `npm run ship:prepush` PASS (or FAIL → fix → new commit → re-run)
+- [ ] If generate/build dirtied the tree: new commit, clear `ERA_SHIP_GATES_DONE`, re-run gates
+- [ ] Working tree clean except `never_commit` (**this** is the push gate, not PASS alone)
 - [ ] git push -u origin <branch>
 - [ ] gh auth OK
 - [ ] PR → dev created
 - [ ] PR → dev merged (**GitHub CI green** — local gates are not enough)
-- [ ] PR dev → master created
-- [ ] PR → master merged (CI green)
+- [ ] PR dev → master created (explicit PR number)
+- [ ] PR → master merged (CI green on **this** PR; retry merge if protection still queued)
 ```
 
 ## Failure handling
@@ -265,14 +283,20 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 | Error | Action |
 |-------|--------|
 | Local `ship:prepush` FAIL | Fix; **new** commit; re-run gates; do not push |
+| Gates PASS but `git status` dirty | **New** commit of generate/build output; clear `ERA_SHIP_GATES_DONE`; re-run gates; do not push |
 | GitHub CI red after push | Diagnose job logs; fix; **new** commit; push; wait again. No emergency reset. |
 | `gh auth login` required | Stop; user must authenticate; give PR compare URL |
 | `push declined` branch rules | Never push to dev/master directly; use PR |
 | Empty scope bucket | Skip commit for that bucket |
 | `enablePullRequestAutoMerge` rejected | Expected — `PublishDev` waits checks then `gh pr merge` without relying on `--auto` |
+| `gh pr merge` policy / check queued | Wait and retry that PR number; do not `--admin`; do not merge on stale `checks --watch` green |
+| `gh pr view` without PR number | Bug — parse `/pull/N` from `gh pr create` / `gh pr list` |
 | Build images Docker Hub timeout | `-WaitStaging` reruns failed jobs once; if still red, diagnose Actions log |
 | Agent turn ends on open PR | Bug — re-run `-PublishDev` (reuses open PR) or merge + `-WaitStaging`; do not ask user to click merge |
 | Shared index spans waves | Split per "Shared package index splitting" above |
+| Unbucketed files after `-Wave` | Bug — rest must take leftovers; check path slashes / manifests |
+| `ERA_SHIP_GATES_DONE=1` + dirty tree | prepush **FAIL** (hook and `npm run ship:prepush`); commit leftovers |
+| Staging wait matches old success | Script only accepts deploy completed in the last ~12 minutes; if unsure, open Actions |
 | Pre-commit hook fail | Fix issues; **new** commit (never amend unless user rule allows) |
 
 ## Related docs
