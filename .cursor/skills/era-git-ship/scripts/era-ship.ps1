@@ -64,8 +64,10 @@ function Invoke-ShipPrepush {
     Write-Host "==> local ship gates (quality-gates + scoped test/build)"
     node @gateArgs
     if ($LASTEXITCODE -ne 0) {
+        Remove-Item Env:ERA_SHIP_GATES_DONE -ErrorAction SilentlyContinue
         throw "Local ship gates FAILED -- not pushing. Fix, new commit, re-run. Do not skip unless the user explicitly said SkipGates."
     }
+    Assert-WorkingTreeShipClean
     $env:ERA_SHIP_GATES_DONE = "1"
 }
 
@@ -209,6 +211,9 @@ function Test-NeverCommit {
             if ($normPath -eq $suffix -or $normPath.EndsWith("/$suffix") -or $normPath -like "*/$suffix" -or $normPath -like "*/$suffix/*") { return $true }
             continue
         }
+        if ($pat -eq '.cursor/' -or $pat -eq '.cursor') {
+            if ($normPath.StartsWith('.cursor/rules/') -or $normPath.StartsWith('.cursor/skills/')) { continue }
+        }
         if ($normPath -eq $pat.TrimEnd('/') -or $normPath.StartsWith($pat)) { return $true }
     }
     return $false
@@ -221,6 +226,14 @@ function Get-ChangedFiles {
         if ($line -match '^(.+) -> (.+)$') { $files += $Matches[2] } else { $files += $line.Trim('"') }
     }
     $files | Where-Object { -not (Test-NeverCommit $_ $manifest.never_commit) } | Select-Object -Unique
+}
+
+function Assert-WorkingTreeShipClean {
+    $dirty = @(Get-ChangedFiles)
+    if ($dirty.Count -eq 0) { return }
+    Remove-Item Env:ERA_SHIP_GATES_DONE -ErrorAction SilentlyContinue
+    $preview = ($dirty | Select-Object -First 20) -join ', '
+    throw ("Working tree dirty after ship gates ({0} files). Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run ship:prepush. Do not push. Files: {1}" -f $dirty.Count, $preview)
 }
 
 function Test-PathMatch {
@@ -246,18 +259,43 @@ function Resolve-ScopeEntry {
     throw "Unknown scope: $Name"
 }
 
-function Get-ScopeName {
+function Get-BestWaveScope {
     param([string]$File)
+    $norm = ($File -replace '\\', '/').TrimStart('./')
+    $bestName = $null
+    $bestLen = -1
     foreach ($wave in $manifest.full_wave_order) {
         if ($wave -eq 'rest') { continue }
         $entry = $manifest.scopes[$wave]
-        if (Test-PathMatch $File $entry) { return $wave }
+        if (-not $entry) { continue }
+        foreach ($p in @($entry.paths)) {
+            $pat = ($p -replace '\\', '/').Trim()
+            if (-not $pat) { continue }
+            if ($norm -eq $pat.TrimEnd('/') -or $norm.StartsWith($pat)) {
+                if ($pat.Length -gt $bestLen) {
+                    $bestLen = $pat.Length
+                    $bestName = $wave
+                }
+            }
+        }
+        foreach ($g in @($entry.path_globs)) {
+            $pattern = $g -replace '\*\*', '.*' -replace '/', '[\\/]'
+            if ($norm -match $pattern -or $File -match $pattern) {
+                $score = 1000 + $g.Length
+                if ($score -gt $bestLen) {
+                    $bestLen = $score
+                    $bestName = $wave
+                }
+            }
+        }
     }
-    foreach ($satName in $manifest.satellites.Keys) {
-        $dir = $manifest.satellites[$satName].dir
-        if ($File.StartsWith("$dir/")) { return 'rest' }
-    }
+    if ($bestName) { return $bestName }
     return 'rest'
+}
+
+function Get-ScopeName {
+    param([string]$File)
+    Get-BestWaveScope $File
 }
 
 function Stage-ScopeFiles {
@@ -265,7 +303,12 @@ function Stage-ScopeFiles {
     $entry = Resolve-ScopeEntry $ScopeName
     $toStage = @()
     foreach ($f in $Files) {
-        if (Test-PathMatch $f $entry $(if ($manifest.satellites.ContainsKey($ScopeName)) { $manifest.satellites[$ScopeName].dir } else { "" })) {
+        if ($ScopeName -eq 'rest') {
+            if (Test-PathMatch $f $entry $(if ($manifest.satellites.ContainsKey($ScopeName)) { $manifest.satellites[$ScopeName].dir } else { "" })) {
+                $toStage += $f
+            }
+        }
+        elseif ((Get-BestWaveScope $f) -eq $ScopeName) {
             $toStage += $f
         }
     }
@@ -321,15 +364,28 @@ function Ensure-Branch {
 
 function Wait-PrChecksThenMerge {
     param([string]$PrRef)
+    if (-not $PrRef) { throw "Wait-PrChecksThenMerge requires a PR number" }
     Write-Host "Waiting for PR checks to pass ($PrRef)..."
     # Pipe to Out-Host: gh stdout must not enter the function success stream
     # (PowerShell `return` concatenates all success output; that poisoned WaitStaging SHA).
     gh pr checks $PrRef --watch --interval 20 | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "PR checks failed for $PrRef -- not merging." }
     Write-Host "Merging $PrRef..."
-    gh pr merge $PrRef --merge | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw "gh pr merge failed for $PrRef" }
+    $deadline = (Get-Date).AddMinutes(40)
+    $merged = $false
+    while ((Get-Date) -lt $deadline) {
+        $err = gh pr merge $PrRef --merge 2>&1 | Out-String
+        if ($LASTEXITCODE -eq 0) { $merged = $true; break }
+        Write-Host $err.Trim()
+        if ($err -match 'checks failed|not mergeable because of failing') {
+            throw "gh pr merge failed for $PrRef (failing checks)"
+        }
+        Write-Host "Merge blocked (queued protection or stale watch). Retrying $PrRef..."
+        Start-Sleep -Seconds 20
+    }
+    if (-not $merged) { throw "gh pr merge timed out for $PrRef" }
     $sha = (gh pr view $PrRef --json mergeCommit --jq ".mergeCommit.oid").Trim()
+    if (-not $sha) { throw "empty merge SHA for $PrRef" }
     Write-Host "Merged: $sha"
     return $sha
 }
@@ -403,7 +459,8 @@ function Wait-DeployStagingAfterBuild {
         $done = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "success" } | Select-Object -First 1
         if ($done) {
             $created = [datetime]::Parse($done.createdAt).ToUniversalTime()
-            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-45)) {
+            # Do not accept a previous wave's staging success (was 45m and SHA-unrelated).
+            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-12)) {
                 Write-Host ("OK Deploy staging (recent success): {0}" -f $done.url)
                 return
             }
@@ -411,7 +468,7 @@ function Wait-DeployStagingAfterBuild {
         $failed = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "failure" } | Select-Object -First 1
         if ($failed) {
             $created = [datetime]::Parse($failed.createdAt).ToUniversalTime()
-            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-45)) {
+            if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-12)) {
                 throw "Deploy staging failed: $($failed.url)"
             }
         }
@@ -454,7 +511,7 @@ function Invoke-PublishDev {
             $prRef = $Matches[1]
         }
         else {
-            $prRef = gh pr view $HeadBranch --json number --jq ".number"
+            throw "Could not parse PR number from: $prUrl"
         }
     }
 
@@ -529,9 +586,23 @@ function Invoke-PublishMaster {
         Write-Host "[dry-run] gh pr merge --merge (after CI green)"
         return
     }
-    $prUrl = gh pr create --base master --head $HeadBranch --title $title --body "Promote integrated dev branch to master after CI green."
-    Write-Host $prUrl
-    $prRef = gh pr view --json number --jq ".number"
+    $existing = gh pr list --base master --head $HeadBranch --state open --json number,url --jq ".[0]"
+    $prRef = $null
+    if ($existing -and $existing -ne "null") {
+        $prObj = $existing | ConvertFrom-Json
+        $prRef = $prObj.number
+        Write-Host "Reusing open PR #$prRef $($prObj.url)"
+    }
+    else {
+        $prUrl = gh pr create --base master --head $HeadBranch --title $title --body "Promote integrated dev branch to master after CI green."
+        Write-Host $prUrl
+        if ($prUrl -match '/pull/(\d+)') {
+            $prRef = $Matches[1]
+        }
+        else {
+            throw "Could not parse PR number from: $prUrl"
+        }
+    }
     Wait-PrChecksThenMerge -PrRef $prRef | Out-Null
 }
 
@@ -556,22 +627,20 @@ if ($changed.Count -eq 0 -and -not $PublishDev -and -not $PublishMaster -and -no
 
 if ($Wave) {
     $remaining = [System.Collections.Generic.List[string]]::new()
-    foreach ($c in $changed) { [void]$remaining.Add($c) }
+    foreach ($c in $changed) { [void]$remaining.Add(($c -replace '\\', '/')) }
     foreach ($waveName in $manifest.full_wave_order) {
         if ($remaining.Count -eq 0) { break }
         $n = Stage-ScopeFiles -ScopeName $waveName -Files @($remaining)
         if ($n -gt 0) {
-            # Capture staged paths BEFORE commit (index is empty after a successful commit).
-            $stagedBefore = @(git diff --cached --name-only)
+            $stagedBefore = @(git diff --cached --name-only | ForEach-Object { $_ -replace '\\', '/' })
             New-CommitMessage -ScopeName $waveName -Subj $Subject -Bod $Body
             foreach ($s in $stagedBefore) { [void]$remaining.Remove($s) }
-            # Also drop directory placeholders once children were staged
             $dropDirs = @($remaining | Where-Object { $stagedBefore -like "$_/*" })
             foreach ($d in $dropDirs) { [void]$remaining.Remove($d) }
         }
     }
     if ($remaining.Count -gt 0) {
-        Write-Warning "Unbucketed files remain: $($remaining -join ', ')"
+        throw "Unbucketed files remain (fix manifests or path slashes): $($remaining -join ', ')"
     }
 }
 elseif ($Scope) {
