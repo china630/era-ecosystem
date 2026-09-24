@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
@@ -20,7 +20,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { bakuDateDisplay, bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -40,20 +40,6 @@ type Employment = {
   orgUnitId?: string | null;
   orgUnit?: { id: string; name: string } | null;
 };
-type Assignment = {
-  id: string;
-  placeId: string;
-  cycleId: string;
-  employmentId: string | null;
-  brigadeId: string | null;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  place?: Place;
-  cycle?: Cycle;
-  employment?: Employment | null;
-  brigade?: Brigade | null;
-};
-
 type PreviewCell = {
   day: number;
   type: "WORK" | "OFF" | null;
@@ -68,8 +54,39 @@ type PreviewRow = {
   employmentId: string;
   staffCode: string | null;
   orgUnitId: string | null;
+  globalPersonId: string | null;
   cells: PreviewCell[];
 };
+
+type PersonBrief = {
+  displayName?: string | null;
+  accessDenied?: boolean;
+};
+
+async function loadActiveEmployments(): Promise<{
+  items: Employment[];
+  persons: Record<string, PersonBrief>;
+}> {
+  const items: Employment[] = [];
+  const persons: Record<string, PersonBrief> = {};
+  for (let page = 1; page <= 30; page++) {
+    const res = await wfFetch(
+      `employments?status=ACTIVE&pageSize=100&page=${page}`,
+    );
+    if (!res.ok) break;
+    const body = (await res.json()) as {
+      items?: Employment[];
+      total?: number;
+      persons?: Record<string, PersonBrief>;
+    };
+    const chunk = Array.isArray(body) ? (body as Employment[]) : (body.items ?? []);
+    items.push(...chunk);
+    if (!Array.isArray(body) && body.persons) Object.assign(persons, body.persons);
+    const total = !Array.isArray(body) && typeof body.total === "number" ? body.total : items.length;
+    if (chunk.length === 0 || items.length >= total) break;
+  }
+  return { items, persons };
+}
 
 function placeColor(code: string | null | undefined): string {
   if (!code) return "#ECF0F1";
@@ -84,9 +101,9 @@ export default function WorkforceRosterPage() {
   const t = useTranslations("workforceRoster");
   const tCommon = useTranslations("common");
 
-  const bakuNow = bakuYmd();
-  const [year, setYear] = useState(bakuNow.y);
-  const [month, setMonth] = useState(bakuNow.m);
+  const anchorYear = bakuYmd().y;
+  const [year, setYear] = useState(anchorYear);
+  const [month, setMonth] = useState(() => bakuYmd().m);
   const [preserveManual, setPreserveManual] = useState(false);
   const [filterPlaceId, setFilterPlaceId] = useState("");
   const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
@@ -95,10 +112,7 @@ export default function WorkforceRosterPage() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [brigades, setBrigades] = useState<Brigade[]>([]);
   const [employments, setEmployments] = useState<Employment[]>([]);
-  const [persons, setPersons] = useState<
-    Record<string, { displayName?: string | null }>
-  >({});
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [persons, setPersons] = useState<Record<string, PersonBrief>>({});
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
   const [lastDay, setLastDay] = useState(31);
   const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
@@ -143,20 +157,23 @@ export default function WorkforceRosterPage() {
     const body = (await res.json()) as {
       lastDay: number;
       rows: PreviewRow[];
+      persons?: Record<string, PersonBrief>;
     };
     setLastDay(body.lastDay);
     setPreviewRows(body.rows ?? []);
+    if (body.persons) {
+      setPersons((prev) => ({ ...prev, ...body.persons }));
+    }
   }, [year, month, filterPlaceId, filterOrgUnitId]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [pRes, cRes, bRes, aRes, eRes, uRes, tRes] = await Promise.all([
+    const [pRes, cRes, bRes, eRes, uRes, tRes] = await Promise.all([
       wfFetch("places?status=ACTIVE"),
       wfFetch("shift-cycles"),
       wfFetch("brigades"),
-      wfFetch("shift-assignments"),
-      wfFetch("employments?status=ACTIVE&pageSize=200"),
+      loadActiveEmployments(),
       wfFetch("org-units"),
       wfFetch("shift-types"),
     ]);
@@ -169,21 +186,26 @@ export default function WorkforceRosterPage() {
     if (pRes.ok) setPlaces(await pRes.json());
     if (cRes.ok) setCycles(await cRes.json());
     if (bRes.ok) setBrigades(await bRes.json());
-    if (aRes.ok) setAssignments(await aRes.json());
     if (tRes.ok) setShiftTypes(await tRes.json());
-    if (eRes.ok) {
-      const body = await eRes.json();
-      const items = Array.isArray(body) ? body : (body.items ?? []);
-      setEmployments(items);
-      if (!Array.isArray(body) && body.persons) setPersons(body.persons);
+    setEmployments(eRes.items);
+    if (eRes.persons) {
+      setPersons((prev) => ({ ...prev, ...eRes.persons }));
     }
     if (uRes.ok) {
       setUnits(parseOrgUnitItems(await uRes.json()));
     }
-    if (!pRes.ok || !aRes.ok) setError(t("loadError"));
+    if (!pRes.ok) setError(t("loadError"));
     await loadPreview();
     setLoading(false);
   }, [t, loadPreview]);
+
+  useEffect(() => {
+    if (year < anchorYear - 1 || year > anchorYear + 1) {
+      const n = bakuYmd();
+      setYear(n.y);
+      setMonth(n.m);
+    }
+  }, [year, anchorYear]);
 
   useEffect(() => {
     if (ready) void load();
@@ -192,18 +214,6 @@ export default function WorkforceRosterPage() {
   useEffect(() => {
     if (ready && !loading) void loadPreview();
   }, [ready, loading, loadPreview]);
-
-  const filteredAssignments = useMemo(() => {
-    return assignments.filter((a) => {
-      if (filterPlaceId && a.placeId !== filterPlaceId) return false;
-      if (filterOrgUnitId) {
-        const empOu =
-          a.employment?.orgUnitId ?? a.employment?.orgUnit?.id ?? null;
-        if (a.employmentId && empOu && empOu !== filterOrgUnitId) return false;
-      }
-      return true;
-    });
-  }, [assignments, filterPlaceId, filterOrgUnitId]);
 
   async function createAssignment() {
     if (!formPlaceId || !formCycleId || !formFrom) {
@@ -334,11 +344,14 @@ export default function WorkforceRosterPage() {
     label: `${c.code} — ${c.name}`,
   }));
   const empLabel = (empId: string) => {
+    const row = previewRows.find((r) => r.employmentId === empId);
     const emp = employments.find((e) => e.id === empId);
-    const name = emp?.globalPersonId
-      ? persons[emp.globalPersonId]?.displayName?.trim()
-      : "";
-    return name || emp?.staffCode || tCommon("unnamedPerson");
+    const personId = row?.globalPersonId || emp?.globalPersonId || "";
+    const person = personId ? persons[personId] : undefined;
+    const name = person?.displayName?.trim();
+    if (name) return name;
+    if (person?.accessDenied) return t("maskedPerson");
+    return emp?.staffCode || tCommon("unnamedPerson");
   };
   const empOptions = employments.map((e) => ({
     value: e.id,
@@ -357,7 +370,7 @@ export default function WorkforceRosterPage() {
     value: String(i + 1),
     label: String(i + 1),
   }));
-  const yearOptions = [year - 1, year, year + 1].map((y) => ({
+  const yearOptions = [anchorYear - 1, anchorYear, anchorYear + 1].map((y) => ({
     value: String(y),
     label: String(y),
   }));
@@ -539,66 +552,6 @@ export default function WorkforceRosterPage() {
                           </td>
                         );
                       })}
-                    </tr>
-                  ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <h2 className="mb-2 text-sm font-semibold">{t("assignmentsHeading")}</h2>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTarget")}</th>
-                    <th
-                      className={DATA_TABLE_TH_LEFT_CLASS}
-                      title={t("colPlaceTitle")}
-                    >
-                      {t("colPlace")}
-                    </th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCycle")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFrom")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTo")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAssignments.length === 0 ? (
-                    <tr className={DATA_TABLE_TR_CLASS}>
-                      <td
-                        className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                        colSpan={5}
-                      >
-                        {t("assignmentsEmpty")}
-                      </td>
-                    </tr>
-                  ) : (
-                  filteredAssignments.map((row) => (
-                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.employmentId
-                          ? empLabel(row.employmentId)
-                          : row.brigade
-                            ? `${row.brigade.code} (${t("brigade")})`
-                            : "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.place
-                          ? `${row.place.code} — ${row.place.name}`
-                          : "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.cycle?.code ?? "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {bakuDateDisplay(row.effectiveFrom)}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.effectiveTo
-                          ? bakuDateDisplay(row.effectiveTo)
-                          : "—"}
-                      </td>
                     </tr>
                   ))
                   )}

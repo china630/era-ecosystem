@@ -24,6 +24,8 @@ describe("WorkforceTimesheetsService month grid", () => {
       upsert: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
     workforceEmployment: { findMany: jest.fn(), findFirst: jest.fn() },
     workforceAbsence: { findMany: jest.fn() },
@@ -186,6 +188,43 @@ describe("WorkforceTimesheetsService month grid", () => {
     );
   });
 
+  it("syncAbsences deletes future plan cells and keeps a future approved absence", async () => {
+    prisma.workforceTimesheet.findFirst.mockResolvedValue({
+      ...sheet,
+      year: 2099,
+      month: 1,
+    });
+    prisma.workforceAbsence.findMany.mockResolvedValue([
+      {
+        employmentId: EMP,
+        kind: "VACATION",
+        startDate: new Date("2099-01-03T00:00:00.000Z"),
+        endDate: new Date("2099-01-03T00:00:00.000Z"),
+      },
+    ]);
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
+      {
+        id: "stale-work",
+        employmentId: EMP,
+        workDate: new Date("2099-01-02T00:00:00.000Z"),
+        lockedFromAbsence: false,
+        status: WorkforceTimesheetEntryStatus.DRAFT,
+      },
+    ]);
+    await svc.syncAbsences(ORG, TS);
+    expect(prisma.workforceTimesheetEntry.delete).toHaveBeenCalledWith({
+      where: { id: "stale-work" },
+    });
+    expect(prisma.workforceTimesheetEntry.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          type: WorkforceTimesheetEntryType.VACATION,
+          lockedFromAbsence: true,
+        }),
+      }),
+    );
+  });
+
   it("unlockAbsenceRange restores weekday type", async () => {
     prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
       {
@@ -209,6 +248,26 @@ describe("WorkforceTimesheetsService month grid", () => {
         }),
       }),
     );
+  });
+
+  it("unlockAbsenceRange deletes a future locked cell", async () => {
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
+      {
+        id: "fut",
+        workDate: new Date("2099-01-04T00:00:00.000Z"),
+        timesheet: { status: WorkforceTimesheetStatus.DRAFT },
+      },
+    ]);
+    await svc.unlockAbsenceRange(
+      ORG,
+      EMP,
+      new Date("2099-01-04T00:00:00.000Z"),
+      new Date("2099-01-04T00:00:00.000Z"),
+    );
+    expect(prisma.workforceTimesheetEntry.delete).toHaveBeenCalledWith({
+      where: { id: "fut" },
+    });
+    expect(prisma.workforceTimesheetEntry.update).not.toHaveBeenCalled();
   });
 
   it("approveMonth rejects empty timesheet", async () => {

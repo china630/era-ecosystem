@@ -50,7 +50,8 @@ Primitives (closed constructor, not a script DSL):
 2. `ShiftCycle` — repeating pattern (5/2, 2/2, 24/48, custom N-day tape). Closest existing engine: clinic CLI-36.
 3. `Place` — client site / post. **Not** an `OrgUnit`. Optional `responsibleOrgUnitId`.
 4. `ShiftAssignment` — employment or brigade × place × cycle × type, `effectiveFrom` / `effectiveTo` (regime change = new assignment).
-5. Day override — swap / extra / off.
+5. **Brigade membership** (dated, not a snapshot) — employment × brigade × `effectiveFrom` / `effectiveTo`; transfer editor. Canon: [cp-workforce-brigade-membership.md](./cp-workforce-brigade-membership.md). Intervals + transfer API/UI landed; capability remains API / SCREEN (not SHIPPED).
+6. Day override — swap / extra / off.
 
 Materialize into CP `WorkforceTimesheet` DRAFT cells. Approved month remains attendance SoR for Finance (`WORKFORCE_TIMESHEET_APPROVED`). Plan ≠ fact.
 
@@ -126,13 +127,16 @@ Edition / Product-Readiness stay `mvp` until Lab RT + field signoff. Pilot harde
 
 ## Consequences
 
-- CP schema (waves 2–4): places, shift types/cycles, assignments, overrides; order template store; audit action enum.
+- CP schema (waves 2–4): places, shift types/cycles, assignments, overrides; order template store; audit action enum. Brigade **membership intervals** landed — [cp-workforce-brigade-membership.md](./cp-workforce-brigade-membership.md) (API / SCREEN, not SHIPPED).
 - Finance (wave 5): internal rate on employee or payroll profile; MGMT-only labor delta journal; guards so tax and payments cannot select MGMT.
 - Billing: two orgs × (Workforce Premium headcount meter + `hr_full` + NAS + inventory + MGMT extra book).
 - COVERAGE / matrices: planned rows only; no SHIPPED / Pilot / `ga` from this ADR.
+- Company Excel pack loads through a stepped wizard, not CP-WF-IMP-01 — [cp-workforce-migration-center.md](./cp-workforce-migration-center.md) (implementation landed; API + SCREEN, not SHIPPED).
 
 ## Related
 
+- [cp-workforce-brigade-membership.md](./cp-workforce-brigade-membership.md)
+- [cp-workforce-migration-center.md](./cp-workforce-migration-center.md)
 - [workforce-timesheet-construction-bridge.md](./workforce-timesheet-construction-bridge.md)
 - [workforce-compliance-emas-boundary.md](./workforce-compliance-emas-boundary.md)
 - [workforce-seat-licensing.md](./workforce-seat-licensing.md)

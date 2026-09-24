@@ -791,12 +791,16 @@ model WorkforceAbsence {
   rejectedByUserId  String?                @map("rejected_by_user_id") @db.Uuid
   cancelledByUserId String?                @map("cancelled_by_user_id") @db.Uuid
   rejectionReason   String?                @map("rejection_reason")
+  /// Origin: manual (default) or import (migration wizard). Not a lifecycle status.
+  source            String                 @default("manual") @db.VarChar(16)
+  sourceRef         String?                @map("source_ref") @db.VarChar(191)
   createdAt         DateTime               @default(now()) @map("created_at")
   updatedAt         DateTime               @updatedAt @map("updated_at")
   employment        WorkforceEmployment    @relation(fields: [employmentId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, employmentId, startDate])
   @@index([organizationId, status])
+  @@index([organizationId, source, sourceRef])
   @@map("workforce_absences")
 }
 
@@ -991,14 +995,15 @@ model WorkforceShiftCycleSlot {
 }
 
 model WorkforceBrigade {
-  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  code           String       @db.VarChar(64)
-  name           String       @db.VarChar(255)
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  members        WorkforceBrigadeMember[]
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  code           String                     @db.VarChar(64)
+  name           String                     @db.VarChar(255)
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        WorkforceBrigadeMember[]   @relation("BrigadeCurrentMembers")
+  memberExits    WorkforceBrigadeMember[]   @relation("BrigadeMemberLeftTo")
   assignments    WorkforceShiftAssignment[]
 
   @@unique([organizationId, code])
@@ -1006,17 +1011,22 @@ model WorkforceBrigade {
   @@map("workforce_brigades")
 }
 
+/// Dated crew membership (ADR cp-workforce-brigade-membership). Open = effectiveTo null.
 model WorkforceBrigadeMember {
-  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String            @map("organization_id") @db.Uuid
-  brigadeId      String            @map("brigade_id") @db.Uuid
-  employmentId   String            @map("employment_id") @db.Uuid
-  createdAt      DateTime          @default(now()) @map("created_at")
-  brigade        WorkforceBrigade  @relation(fields: [brigadeId], references: [id], onDelete: Cascade)
-  employment     WorkforceEmployment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  id              String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String              @map("organization_id") @db.Uuid
+  brigadeId       String              @map("brigade_id") @db.Uuid
+  employmentId    String              @map("employment_id") @db.Uuid
+  effectiveFrom   DateTime            @map("effective_from") @db.Date
+  effectiveTo     DateTime?           @map("effective_to") @db.Date
+  leftToBrigadeId String?             @map("left_to_brigade_id") @db.Uuid
+  createdAt       DateTime            @default(now()) @map("created_at")
+  brigade         WorkforceBrigade    @relation("BrigadeCurrentMembers", fields: [brigadeId], references: [id], onDelete: Cascade)
+  leftToBrigade   WorkforceBrigade?   @relation("BrigadeMemberLeftTo", fields: [leftToBrigadeId], references: [id], onDelete: SetNull)
+  employment      WorkforceEmployment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
 
-  @@unique([brigadeId, employmentId])
-  @@index([organizationId, employmentId])
+  @@index([organizationId, employmentId, effectiveFrom])
+  @@index([organizationId, brigadeId, effectiveFrom])
   @@map("workforce_brigade_members")
 }
 
@@ -1152,6 +1162,9 @@ model WorkforcePersonnelOrder {
   issuedAt           DateTime?                      @map("issued_at") @db.Timestamptz(6)
   cancelledByUserId  String?                        @map("cancelled_by_user_id") @db.Uuid
   cancelledAt        DateTime?                      @map("cancelled_at") @db.Timestamptz(6)
+  /// Origin: manual (default) or import. ISSUED imported rows skip live sequence.
+  source             String                         @default("manual") @db.VarChar(16)
+  sourceRef          String?                        @map("source_ref") @db.VarChar(191)
   createdAt          DateTime                       @default(now()) @map("created_at")
   updatedAt          DateTime                       @updatedAt @map("updated_at")
   workforceScope     WorkforceScope                 @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
@@ -1161,7 +1174,24 @@ model WorkforcePersonnelOrder {
   @@unique([organizationId, type, sequenceYear, sequenceSeq])
   @@index([workforceScopeId, type, status])
   @@index([employmentId, type, status])
+  @@index([organizationId, source, sourceRef])
   @@map("workforce_personnel_orders")
+}
+
+/// Per-org wizard progress for CP-WF-MIG-01 (applied or skipped).
+model WorkforceMigrationStep {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  stepId         String       @map("step_id") @db.VarChar(32)
+  status         String       @db.VarChar(16)
+  summaryJson    Json         @default("{}") @map("summary_json")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, stepId])
+  @@index([organizationId])
+  @@map("workforce_migration_steps")
 }
 
 /// Approved snapshot of ştat cədvəli (positions × occupied/vacant slots).
@@ -1410,6 +1440,7 @@ model Organization {
   workforceAttendanceDevices WorkforceAttendanceDevice[]
   workforceAttendanceIdentities WorkforceAttendanceIdentity[]
   workforceAttendancePunches WorkforceAttendancePunch[]
+  workforceMigrationSteps    WorkforceMigrationStep[]
   orgUnitCommercialLinks OrgUnitCommercialLink[]
   elektrawebBridgePolicy ElektrawebBridgePolicy?
   clinicCutoverPolicy    ClinicCutoverPolicy?

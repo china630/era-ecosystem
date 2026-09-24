@@ -328,6 +328,8 @@ User JWT composition API: `v1/holdings/*` (create, attach org, members). Web: Or
 
 **Finance S2S (wave 4 leave/salary snapshot):** CP → Finance `GET /internal/v1/workforce/employees/by-cp-employment?organizationId=&cpEmploymentId=` (`FINANCE_INTERNAL_SERVICE_TOKEN`). Returns contract `salary` + `vacationDaysBalance` when `hr_full`; otherwise nulls (template «—»). Client: `finance-workforce-mirror.client.ts`. Not a browser route.
 
+**Finance S2S (CP-WF-MIG-01 opening):** `POST /internal/v1/workforce/employees/opening` (same token, `hr_full`). Body: `organizationId`, `cpEmploymentId`, optional `salary`, `internalRate`, `balanceDays`, `baseVacationDaysPerYear`, `asOfDate`. Vacation `initialVacationDays = balanceDays − accrued(hire → asOf)` so the as-of balance matches the file. Leave history is not mirrored; do not emit `WORKFORCE_ABSENCE_APPROVED`.
+
 **Planned (Evrostar pilot, not in contracts yet):** labor-roster materialize is CP-local until it writes existing timesheet cells (no new satellite event required). Optional later: `WORKFORCE_MGMT_LABOR_DELTA_POSTED` (Finance MGMT book only). ADR: [evrostar-workforce-pilot.md](./adr/evrostar-workforce-pilot.md).
 
 **Attendance punches (wave 6):** Vendor-agnostic HTTP ingest — not a satellite event. `POST /platform/v1/workforce/attendance/punches` with per-device Bearer `att_*` (optional HMAC). Schema: `@era/contracts` `workforceAttendancePunchBatchSchema` (`packages/era-contracts/src/workforce/attendance.ts`). Rebuild pairs IN/OUT → DRAFT timesheet `source=faceid`. See [evrostar-wave-6.md](./runbooks/evrostar-wave-6.md). Do **not** use `SATELLITE_EVENT_SERVICE_TOKEN` on tablet URLs.

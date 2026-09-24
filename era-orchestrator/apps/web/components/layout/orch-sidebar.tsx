@@ -6,18 +6,28 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   CalendarClock,
+  CalendarDays,
+  CalendarOff,
   CircleHelp,
+  ClipboardList,
+  Clock,
   CreditCard,
   Database,
+  Fingerprint,
+  FolderInput,
   Gauge,
   LayoutGrid,
+  MapPin,
+  Network,
   Package,
+  Palmtree,
   PanelLeftClose,
   PanelRightClose,
   Settings,
   Shield,
   ShieldAlert,
   Sparkles,
+  Table2,
   Tags,
   Users,
   Radio,
@@ -178,7 +188,7 @@ export function OrchSidebar({
             href="/workspace/workforce/org-structure"
             label={t("wfOrgStructure")}
             isActive={pathname.startsWith("/workspace/workforce/org-structure")}
-            icon={Building2}
+            icon={Network}
             nested
             onNavClick={onNavClick}
           />
@@ -194,7 +204,7 @@ export function OrchSidebar({
             href="/workspace/workforce/absences"
             label={t("wfAbsences")}
             isActive={pathname.startsWith("/workspace/workforce/absences")}
-            icon={CalendarClock}
+            icon={CalendarOff}
             nested
             onNavClick={onNavClick}
           />
@@ -202,7 +212,7 @@ export function OrchSidebar({
             href="/workspace/workforce/vacation-plans"
             label={t("wfVacationPlans")}
             isActive={pathname.startsWith("/workspace/workforce/vacation-plans")}
-            icon={CalendarClock}
+            icon={Palmtree}
             nested
             onNavClick={onNavClick}
           />
@@ -218,7 +228,7 @@ export function OrchSidebar({
             href="/workspace/workforce/staff-schedule"
             label={t("wfStaffSchedule")}
             isActive={pathname.startsWith("/workspace/workforce/staff-schedule")}
-            icon={Building2}
+            icon={ClipboardList}
             nested
             onNavClick={onNavClick}
           />
@@ -226,7 +236,7 @@ export function OrchSidebar({
             href="/workspace/workforce/places"
             label={t("wfPlaces")}
             isActive={pathname.startsWith("/workspace/workforce/places")}
-            icon={Building2}
+            icon={MapPin}
             nested
             onNavClick={onNavClick}
           />
@@ -234,7 +244,7 @@ export function OrchSidebar({
             href="/workspace/workforce/shifts"
             label={t("wfShifts")}
             isActive={pathname.startsWith("/workspace/workforce/shifts")}
-            icon={CalendarClock}
+            icon={Clock}
             nested
             onNavClick={onNavClick}
           />
@@ -242,7 +252,7 @@ export function OrchSidebar({
             href="/workspace/workforce/roster"
             label={t("wfRoster")}
             isActive={pathname.startsWith("/workspace/workforce/roster")}
-            icon={CalendarClock}
+            icon={CalendarDays}
             nested
             onNavClick={onNavClick}
           />
@@ -250,7 +260,7 @@ export function OrchSidebar({
             href="/workspace/workforce/attendance"
             label={t("wfAttendance")}
             isActive={pathname.startsWith("/workspace/workforce/attendance")}
-            icon={CalendarClock}
+            icon={Fingerprint}
             nested
             onNavClick={onNavClick}
           />
@@ -258,7 +268,7 @@ export function OrchSidebar({
             href="/workspace/workforce/timesheets"
             label={t("wfTimesheets")}
             isActive={pathname.startsWith("/workspace/workforce/timesheets")}
-            icon={CalendarClock}
+            icon={Table2}
             nested
             onNavClick={onNavClick}
           />
@@ -309,6 +319,14 @@ export function OrchSidebar({
             label={t("wfExport")}
             isActive={pathname.startsWith("/workspace/workforce/export")}
             icon={Package}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/migration"
+            label={t("wfMigration")}
+            isActive={pathname.startsWith("/workspace/workforce/migration")}
+            icon={FolderInput}
             nested
             onNavClick={onNavClick}
           />

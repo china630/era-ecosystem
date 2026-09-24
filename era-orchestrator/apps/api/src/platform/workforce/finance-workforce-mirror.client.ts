@@ -74,6 +74,72 @@ export class FinanceWorkforceMirrorClient {
     }
   }
 
+  /**
+   * Write S2S opening (salary / internalRate / inverted vacation). Throws on Finance failure.
+   */
+  async applyEmploymentOpening(
+    organizationId: string,
+    cpEmploymentId: string,
+    body: {
+      salary?: number;
+      internalRate?: number | null;
+      balanceDays?: number;
+      baseVacationDaysPerYear?: number;
+      asOfDate?: string;
+    },
+  ): Promise<{
+    salary: number | null;
+    internalRate: number | null;
+    vacationDaysBalance: number | null;
+  }> {
+    const base = await this.resolveFinanceBaseUrl(organizationId);
+    const token =
+      this.config.get<string>("FINANCE_INTERNAL_SERVICE_TOKEN")?.trim() ?? "";
+    const res = await fetch(`${base}/internal/v1/workforce/employees/opening`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        organizationId,
+        cpEmploymentId,
+        ...body,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      let detail = text.slice(0, 200);
+      try {
+        const parsed = JSON.parse(text) as { message?: unknown };
+        if (typeof parsed.message === "string") detail = parsed.message;
+      } catch {
+        /* keep raw */
+      }
+      throw new Error(
+        `Finance opening failed (${res.status})${detail ? `: ${detail}` : ""}`,
+      );
+    }
+    const json = (await res.json()) as {
+      salary?: number | string | null;
+      internalRate?: number | string | null;
+      vacationDaysBalance?: number | string | null;
+    };
+    return {
+      salary:
+        json.salary == null || json.salary === "" ? null : Number(json.salary),
+      internalRate:
+        json.internalRate == null || json.internalRate === ""
+          ? null
+          : Number(json.internalRate),
+      vacationDaysBalance:
+        json.vacationDaysBalance == null || json.vacationDaysBalance === ""
+          ? null
+          : Number(json.vacationDaysBalance),
+    };
+  }
+
   private async resolveFinanceBaseUrl(organizationId: string): Promise<string> {
     const org = await this.prisma.organization.findFirst({
       where: { id: organizationId },

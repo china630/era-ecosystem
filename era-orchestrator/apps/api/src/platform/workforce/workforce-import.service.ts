@@ -14,6 +14,11 @@ import { WorkforceProvisionService } from "./workforce-provision.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { normalizeDateOnly } from "./workforce-date";
 import { rosterSatelliteKeys } from "./workforce-satellite-keys";
+import {
+  headerIndex,
+  headerIndexContains,
+  parseCsv,
+} from "./workforce-csv.util";
 
 export type ImportRowResult = {
   index: number;
@@ -30,85 +35,6 @@ export type ImportResult = {
 };
 
 const ABSENCE_KINDS = new Set<string>(Object.values(WorkforceAbsenceKind));
-
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let inQuotes = false;
-  const src = text.replace(/^\uFEFF/, "");
-  for (let i = 0; i < src.length; i++) {
-    const ch = src[i];
-    if (inQuotes) {
-      if (ch === '"' && src[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        cell += ch;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (ch === ",") {
-      row.push(cell.trim());
-      cell = "";
-      continue;
-    }
-    if (ch === "\n" || ch === "\r") {
-      if (ch === "\r" && src[i + 1] === "\n") i++;
-      row.push(cell.trim());
-      cell = "";
-      if (row.some((c) => c.length > 0)) rows.push(row);
-      row = [];
-      continue;
-    }
-    cell += ch;
-  }
-  row.push(cell.trim());
-  if (row.some((c) => c.length > 0)) rows.push(row);
-  return rows;
-}
-
-function foldHeader(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/i̇/g, "i")
-    .replace(/ə/g, "e")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ç/g, "c")
-    .replace(/ğ/g, "g")
-    .replace(/ı/g, "i");
-}
-
-function headerIndex(headers: string[], ...names: string[]): number {
-  const lower = headers.map((h) => foldHeader(h));
-  for (const name of names) {
-    const i = lower.indexOf(foldHeader(name));
-    if (i >= 0) return i;
-  }
-  return -1;
-}
-
-function headerIndexContains(headers: string[], ...names: string[]): number {
-  const exact = headerIndex(headers, ...names);
-  if (exact >= 0) return exact;
-  const lower = headers.map((h) => foldHeader(h));
-  for (const name of names) {
-    const n = foldHeader(name);
-    if (n.length < 4) continue;
-    const i = lower.findIndex((h) => h.includes(n));
-    if (i >= 0) return i;
-  }
-  return -1;
-}
 
 function staffCodeFromEmployment(id: string): string {
   return id.replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -430,6 +356,7 @@ export class WorkforceImportService {
     actorUserId: string,
     csvText: string,
     dryRun: boolean,
+    opts?: { skipAudit?: boolean },
   ): Promise<ImportResult> {
     await this.entitlement.assertWorkforceHub(organizationId);
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
@@ -573,13 +500,15 @@ export class WorkforceImportService {
     }
 
     const result = { dryRun, created, skipped, errors, rows: results };
-    await this.logImportApplied(
-      organizationId,
-      actorUserId,
-      "org-structure",
-      result,
-      link.workforceScope?.id ?? link.workforceScopeId,
-    );
+    if (!opts?.skipAudit) {
+      await this.logImportApplied(
+        organizationId,
+        actorUserId,
+        "org-structure",
+        result,
+        link.workforceScope?.id ?? link.workforceScopeId,
+      );
+    }
     return result;
   }
 
