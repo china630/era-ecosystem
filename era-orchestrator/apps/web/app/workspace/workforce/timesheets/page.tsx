@@ -173,11 +173,10 @@ export default function TimesheetsPage() {
     [year, month],
   );
   const todayIso = todayIsoBaku();
-  const visibleLastDay = useMemo(() => {
-    const ym = yearMonth;
+  const editableLastDay = useMemo(() => {
     const todayYm = todayIso.slice(0, 7);
-    if (ym > todayYm) return 0;
-    if (ym < todayYm) return lastDay;
+    if (yearMonth > todayYm) return 0;
+    if (yearMonth < todayYm) return lastDay;
     return Math.min(lastDay, Number(todayIso.slice(8, 10)));
   }, [yearMonth, todayIso, lastDay]);
   const canEdit = timesheet?.status === "DRAFT";
@@ -323,6 +322,7 @@ export default function TimesheetsPage() {
     type: EntryType,
     optimistic?: boolean,
   ) {
+    if (isoDay(year, month, day) > todayIsoBaku()) return;
     const key = `${employmentIdCell}|${isoDay(year, month, day)}`;
     setCellBusyKey(key);
     if (optimistic) {
@@ -388,7 +388,7 @@ export default function TimesheetsPage() {
 
   async function runBatch() {
     if (!batchEmp) return;
-    const maxDay = visibleLastDay || 0;
+    const maxDay = editableLastDay || 0;
     if (maxDay < 1) {
       setError(t("futureLocked"));
       return;
@@ -423,7 +423,7 @@ export default function TimesheetsPage() {
       <button
         type="button"
         className={SECONDARY_BUTTON_CLASS}
-        disabled={busy || !canEdit || !timesheet || visibleLastDay < 1}
+        disabled={busy || !canEdit || !timesheet || editableLastDay < 1}
         onClick={() => setBatchOpen(true)}
       >
         {t("batchTitle")}
@@ -431,7 +431,7 @@ export default function TimesheetsPage() {
       <button
         type="button"
         className={PRIMARY_BUTTON_CLASS}
-        disabled={busy || !canEdit || !timesheet}
+        disabled={busy || !canEdit || !timesheet || editableLastDay < 1}
         onClick={() => setAutofillOpen(true)}
       >
         {t("autofill")}
@@ -558,9 +558,10 @@ export default function TimesheetsPage() {
         </span>
       </div>
       <p className="text-xs text-[#7F8C8D]">{t("legendHint")}</p>
-      {visibleLastDay < 1 ? (
+      {yearMonth > todayIso.slice(0, 7) ? (
         <p className="text-sm text-[#7F8C8D]">{t("futureMonthHint")}</p>
-      ) : (
+      ) : null}
+      {lastDay < 1 ? null : (
         <div
           className={
             fullscreen
@@ -576,9 +577,10 @@ export default function TimesheetsPage() {
                 >
                   {t("colPerson")}
                 </th>
-                {Array.from({ length: visibleLastDay }, (_, i) => i + 1).map((d) => {
+                {Array.from({ length: lastDay }, (_, i) => i + 1).map((d) => {
                   const dayIso = isoDay(year, month, d);
                   const isToday = dayIso === todayIso;
+                  const future = dayIso > todayIso;
                   const weekend = isWeekendUtc(year, month, d);
                   return (
                     <th
@@ -586,9 +588,11 @@ export default function TimesheetsPage() {
                       className={`min-w-[36px] border-l border-[#D5DADF] py-1 text-center text-[11px] font-semibold text-[#34495E] ${
                         isToday
                           ? "bg-[#FDECEC]"
-                          : weekend
-                            ? "bg-[#EEF2F6]"
-                            : "bg-[#F8FAFC]"
+                          : future
+                            ? "bg-[#F4F6F8] text-[#94A3B8]"
+                            : weekend
+                              ? "bg-[#EEF2F6]"
+                              : "bg-[#F8FAFC]"
                       }`}
                     >
                       <div className="text-[10px] font-normal text-[#7F8C8D]">
@@ -613,15 +617,17 @@ export default function TimesheetsPage() {
                       </span>
                     ) : null}
                   </td>
-                  {Array.from({ length: visibleLastDay }, (_, i) => i + 1).map((d) => {
+                  {Array.from({ length: lastDay }, (_, i) => i + 1).map((d) => {
                     const dayIso = isoDay(year, month, d);
                     const isToday = dayIso === todayIso;
+                    const future = dayIso > todayIso;
                     const weekend = isWeekendUtc(year, month, d);
                     const e = entryMap.get(`${emp.id}|${dayIso}`);
-                    const locked = e?.lockedFromAbsence;
+                    const locked = Boolean(e?.lockedFromAbsence);
                     const approved = e?.status === "APPROVED";
-                    const typ = e?.type ?? null;
-                    const src = e?.source ?? "ops_grid";
+                    const futurePlan = future && !locked && !approved;
+                    const typ = futurePlan ? null : (e?.type ?? null);
+                    const src = futurePlan ? "ops_grid" : (e?.source ?? "ops_grid");
                     const srcBadge =
                       src === "faceid"
                         ? t("sourceFaceid")
@@ -633,12 +639,21 @@ export default function TimesheetsPage() {
                     const cellKey = `${emp.id}|${dayIso}`;
                     const cellBusy = cellBusyKey === cellKey;
                     const disabled =
-                      !canEdit || Boolean(locked) || Boolean(approved) || busy || cellBusy;
+                      future ||
+                      !canEdit ||
+                      locked ||
+                      Boolean(approved) ||
+                      busy ||
+                      cellBusy;
                     const tint = isToday
                       ? "bg-[#FDECEC]"
-                      : weekend
-                        ? "bg-[#F4F6F8]"
-                        : "";
+                      : locked || approved
+                        ? ""
+                        : future
+                          ? "bg-[#F8FAFC]"
+                          : weekend
+                            ? "bg-[#F4F6F8]"
+                            : "";
                     return (
                       <td
                         key={d}
@@ -649,11 +664,13 @@ export default function TimesheetsPage() {
                           title={
                             locked
                               ? t("absenceLocked")
-                              : approved
-                                ? t("cellApproved")
-                                : isToday
-                                  ? t("todayHint")
-                                  : [cellCode(typ), srcBadge].filter(Boolean).join(" · ")
+                              : future
+                                ? t("futureLocked")
+                                : approved
+                                  ? t("cellApproved")
+                                  : isToday
+                                    ? t("todayHint")
+                                    : [cellCode(typ), srcBadge].filter(Boolean).join(" · ")
                           }
                           disabled={disabled}
                           onClick={() =>
@@ -662,9 +679,11 @@ export default function TimesheetsPage() {
                           className={`min-h-[32px] w-full px-0.5 py-1 font-bold leading-none ${
                             locked || approved
                               ? "cursor-not-allowed bg-amber-50 text-amber-900"
-                              : canEdit
-                                ? "cursor-pointer hover:bg-[#EAF2F8]"
-                                : "cursor-default"
+                              : future
+                                ? "cursor-not-allowed text-[#94A3B8]"
+                                : canEdit
+                                  ? "cursor-pointer hover:bg-[#EAF2F8]"
+                                  : "cursor-default"
                           }`}
                         >
                           <span className="block">{cellCode(typ)}</span>
@@ -725,7 +744,7 @@ export default function TimesheetsPage() {
             cancelLabel={tCommon("cancel")}
             submitLabel={t("batchApply")}
             busy={busy}
-            submitDisabled={!canEdit || !batchEmp || visibleLastDay < 1}
+            submitDisabled={!canEdit || !batchEmp || editableLastDay < 1}
           />
         }
       >
@@ -743,7 +762,7 @@ export default function TimesheetsPage() {
               <input
                 type="number"
                 min={1}
-                max={visibleLastDay || 1}
+                max={editableLastDay || 1}
                 className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
                 value={batchFrom}
                 onChange={(e) => setBatchFrom(Number(e.target.value))}
@@ -755,7 +774,7 @@ export default function TimesheetsPage() {
               <input
                 type="number"
                 min={1}
-                max={visibleLastDay || 1}
+                max={editableLastDay || 1}
                 className="mt-1 block w-20 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
                 value={batchTo}
                 onChange={(e) => setBatchTo(Number(e.target.value))}

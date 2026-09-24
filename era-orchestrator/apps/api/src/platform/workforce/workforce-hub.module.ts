@@ -58,6 +58,10 @@ import { WorkforceImportController } from "./workforce-import.controller";
 
 import { WorkforceImportService } from "./workforce-import.service";
 
+import { WorkforceMigrationController } from "./workforce-migration.controller";
+
+import { WorkforceMigrationService } from "./workforce-migration.service";
+
 import { WorkforceTimesheetsController } from "./workforce-timesheets.controller";
 
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
@@ -134,6 +138,8 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
 
     WorkforceImportController,
 
+    WorkforceMigrationController,
+
     WorkforceTimesheetsController,
 
     WorkforceRosterController,
@@ -187,6 +193,8 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
     WorkforceExportService,
 
     WorkforceImportService,
+
+    WorkforceMigrationService,
 
     WorkforceTimesheetsService,
 

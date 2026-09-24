@@ -23,7 +23,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
-import { bakuDateDisplay, billingPeriodKeyBaku } from "@era/satellite-kit/time";
+import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
@@ -31,6 +31,38 @@ import {
   workforceFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+
+type PeriodPreset = "toToday" | "thisMonth" | "prev30" | "next30" | "custom";
+
+function monthLastYmd(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return `${ym}-${String(last).padStart(2, "0")}`;
+}
+
+function periodBounds(
+  preset: PeriodPreset,
+  customFrom: string,
+  customTo: string,
+): { dateFrom: string; dateTo: string } {
+  const today = todayBakuYmd();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  if (preset === "thisMonth") {
+    return { dateFrom: monthStart, dateTo: monthLastYmd(today.slice(0, 7)) };
+  }
+  if (preset === "prev30") {
+    return { dateFrom: addBakuDays(today, -29), dateTo: today };
+  }
+  if (preset === "next30") {
+    return { dateFrom: today, dateTo: addBakuDays(today, 29) };
+  }
+  if (preset === "custom") {
+    const from = customFrom || monthStart;
+    const to = customTo || today;
+    return from <= to ? { dateFrom: from, dateTo: to } : { dateFrom: to, dateTo: from };
+  }
+  return { dateFrom: monthStart, dateTo: today };
+}
 
 type AbsenceRow = {
   id: string;
@@ -99,7 +131,11 @@ export default function WorkforceAbsencesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notEntitled, setNotEntitled] = useState(false);
-  const [month, setMonth] = useState(() => billingPeriodKeyBaku());
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("toToday");
+  const [customFrom, setCustomFrom] = useState(
+    () => `${todayBakuYmd().slice(0, 7)}-01`,
+  );
+  const [customTo, setCustomTo] = useState(() => todayBakuYmd());
 
   const [createOpen, setCreateOpen] = useState(false);
   const [employments, setEmployments] = useState<EmploymentRow[]>([]);
@@ -138,14 +174,10 @@ export default function WorkforceAbsencesPage() {
     [pathname, router, searchParams],
   );
 
-  const bounds = useMemo(() => {
-    const [y, m] = month.split("-").map(Number);
-    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    return {
-      dateFrom: `${month}-01`,
-      dateTo: `${month}-${String(last).padStart(2, "0")}`,
-    };
-  }, [month]);
+  const bounds = useMemo(
+    () => periodBounds(periodPreset, customFrom, customTo),
+    [periodPreset, customFrom, customTo],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -291,7 +323,7 @@ export default function WorkforceAbsencesPage() {
 
   const { page, pageSize, setPage, setPageSize, paged, total } = useListPagination(
     filteredRows,
-    `${filterEmploymentId}:${filterKind}:${month}`,
+    `${filterEmploymentId}:${filterKind}:${bounds.dateFrom}:${bounds.dateTo}`,
   );
 
   if (!ready) return null;
@@ -326,20 +358,49 @@ export default function WorkforceAbsencesPage() {
             className="!mb-0"
             resetLabel={tCommon("filterReset")}
             onReset={() => {
-              setMonth(billingPeriodKeyBaku());
+              const today = todayBakuYmd();
+              setPeriodPreset("toToday");
+              setCustomFrom(`${today.slice(0, 7)}-01`);
+              setCustomTo(today);
               setFilterEmploymentId("");
               setFilterKind("");
             }}
           >
-            <label className="text-[13px] font-medium text-[#34495E]">
-              {t("monthFilter")}
-              <input
-                type="month"
-                className="mt-1 block rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-              />
-            </label>
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("periodPreset")}
+              value={periodPreset}
+              onChange={(next) => setPeriodPreset(next as PeriodPreset)}
+              options={[
+                { value: "toToday", label: t("periodToToday") },
+                { value: "thisMonth", label: t("periodThisMonth") },
+                { value: "prev30", label: t("periodPrev30") },
+                { value: "next30", label: t("periodNext30") },
+                { value: "custom", label: t("periodCustom") },
+              ]}
+            />
+            {periodPreset === "custom" ? (
+              <>
+                <DatePicker
+                  label={t("periodFrom")}
+                  value={customFrom}
+                  onChange={setCustomFrom}
+                  placeholder={tCommon("datePlaceholder")}
+                />
+                <DatePicker
+                  label={t("periodTo")}
+                  value={customTo}
+                  onChange={setCustomTo}
+                  placeholder={tCommon("datePlaceholder")}
+                />
+              </>
+            ) : null}
+            <p className="self-end pb-2 text-xs text-[#7F8C8D]">
+              {t("periodWindow", {
+                from: bakuDateDisplay(bounds.dateFrom),
+                to: bakuDateDisplay(bounds.dateTo),
+              })}
+            </p>
             <CatalogField
               kind="ENTITY_REF"
               label={t("filterEmployee")}

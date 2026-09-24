@@ -22,12 +22,33 @@ export type Cycle = {
   slots: CycleSlot[];
 };
 
+export type BrigadeMember = {
+  id?: string;
+  employmentId: string;
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
+  staffCode?: string | null;
+  globalPersonId?: string | null;
+};
+
 export type Brigade = {
   id: string;
   code: string;
   name: string;
-  members?: Array<{ employmentId: string }>;
+  asOf?: string;
+  members?: BrigadeMember[];
   _count?: { members: number };
+};
+
+export type BrigadeMembershipRow = {
+  id: string;
+  employmentId: string;
+  staffCode: string | null;
+  globalPersonId: string | null;
+  brigade: { id: string; code: string; name: string };
+  leftToBrigade: { id: string; code: string; name: string } | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
 };
 
 export type Employment = {

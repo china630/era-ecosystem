@@ -27,6 +27,11 @@ import {
   SEED_SHIFT_TYPES,
 } from "./roster-cycle.util";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
+import {
+  addBakuDays,
+  bakuCivilUtcDate,
+  todayBakuYmd,
+} from "@era/satellite-kit/time";
 import type {
   CreateWorkforceBrigadeDto,
   CreateWorkforceDayOverrideDto,
@@ -35,6 +40,9 @@ import type {
   CreateWorkforceShiftCycleDto,
   CreateWorkforceShiftTypeDto,
   CycleSlotDto,
+  LeaveWorkforceBrigadeMembersDto,
+  ListBrigadeMembershipsQueryDto,
+  TransferWorkforceBrigadeMembersDto,
   UpdateWorkforceBrigadeDto,
   UpdateWorkforcePlaceDto,
   UpdateWorkforceShiftAssignmentDto,
@@ -358,16 +366,146 @@ export class WorkforceRosterService {
 
   // ── Brigades ────────────────────────────────────────────────────────
 
-  async listBrigades(organizationId: string) {
+  async listBrigades(organizationId: string, asOfRaw?: string) {
     await this.entitlement.assertWorkforceHub(organizationId);
-    return this.prisma.workforceBrigade.findMany({
+    const asOf = this.parseYmd(asOfRaw?.trim() || todayBakuYmd());
+    const asOfDate = bakuCivilUtcDate(asOf);
+    const brigades = await this.prisma.workforceBrigade.findMany({
       where: { organizationId },
-      include: {
-        members: { include: { employment: true } },
-        _count: { select: { members: true } },
-      },
-      orderBy: { name: "asc" },
+      orderBy: { code: "asc" },
     });
+    const members = await this.prisma.workforceBrigadeMember.findMany({
+      where: {
+        organizationId,
+        effectiveFrom: { lte: asOfDate },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: asOfDate } }],
+      },
+      include: {
+        employment: {
+          select: {
+            id: true,
+            staffCode: true,
+            globalPersonId: true,
+            status: true,
+          },
+        },
+      },
+    });
+    const byBrigade = new Map<string, typeof members>();
+    for (const m of members) {
+      const list = byBrigade.get(m.brigadeId) ?? [];
+      list.push(m);
+      byBrigade.set(m.brigadeId, list);
+    }
+    return brigades.map((b) => {
+      const roster = byBrigade.get(b.id) ?? [];
+      return {
+        ...b,
+        asOf,
+        members: roster.map((m) => this.serializeMember(m)),
+        _count: { members: roster.length },
+      };
+    });
+  }
+
+  async listBrigadeMembers(
+    organizationId: string,
+    brigadeId: string,
+    asOfRaw?: string,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const brigade = await this.prisma.workforceBrigade.findFirst({
+      where: { id: brigadeId, organizationId },
+    });
+    if (!brigade) throw new NotFoundException("Brigade not found");
+    const asOf = this.parseYmd(asOfRaw?.trim() || todayBakuYmd());
+    const asOfDate = bakuCivilUtcDate(asOf);
+    const members = await this.prisma.workforceBrigadeMember.findMany({
+      where: {
+        organizationId,
+        brigadeId,
+        effectiveFrom: { lte: asOfDate },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: asOfDate } }],
+      },
+      include: {
+        employment: {
+          select: {
+            id: true,
+            staffCode: true,
+            globalPersonId: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { effectiveFrom: "asc" },
+    });
+    return {
+      brigadeId,
+      asOf,
+      items: members.map((m) => this.serializeMember(m)),
+    };
+  }
+
+  async listBrigadeMemberships(
+    organizationId: string,
+    query: ListBrigadeMembershipsQueryDto,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 25;
+    const where: Prisma.WorkforceBrigadeMemberWhereInput = { organizationId };
+    if (query.employmentId) where.employmentId = query.employmentId;
+    if (query.brigadeId) where.brigadeId = query.brigadeId;
+    if (query.from || query.to) {
+      const fromYmd = query.from ? this.parseYmd(query.from) : "0001-01-01";
+      const toYmd = query.to ? this.parseYmd(query.to) : "9999-12-31";
+      if (fromYmd > toYmd) {
+        throw new BadRequestException("from must be on or before to");
+      }
+      const fromDate = bakuCivilUtcDate(fromYmd);
+      const toDate = bakuCivilUtcDate(toYmd);
+      where.AND = [
+        { effectiveFrom: { lte: toDate } },
+        { OR: [{ effectiveTo: null }, { effectiveTo: { gte: fromDate } }] },
+      ];
+    } else {
+      const windowFrom = bakuCivilUtcDate(addBakuDays(todayBakuYmd(), -90));
+      where.OR = [
+        { effectiveTo: null },
+        { effectiveTo: { gte: windowFrom } },
+      ];
+    }
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.workforceBrigadeMember.count({ where }),
+      this.prisma.workforceBrigadeMember.findMany({
+        where,
+        include: {
+          brigade: { select: { id: true, code: true, name: true } },
+          leftToBrigade: { select: { id: true, code: true, name: true } },
+          employment: {
+            select: { id: true, staffCode: true, globalPersonId: true },
+          },
+        },
+        orderBy: [{ effectiveFrom: "desc" }, { createdAt: "desc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return {
+      items: rows.map((m) => ({
+        id: m.id,
+        employmentId: m.employmentId,
+        staffCode: m.employment.staffCode,
+        globalPersonId: m.employment.globalPersonId,
+        brigade: m.brigade,
+        leftToBrigade: m.leftToBrigade,
+        effectiveFrom: isoDayUtc(m.effectiveFrom),
+        effectiveTo: m.effectiveTo ? isoDayUtc(m.effectiveTo) : null,
+      })),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   async createBrigade(
@@ -378,33 +516,46 @@ export class WorkforceRosterService {
     await this.entitlement.assertWorkforceHub(organizationId);
     const employmentIds = [...new Set(dto.employmentIds ?? [])];
     await this.assertEmploymentsInOrg(organizationId, employmentIds);
+    await this.assertEmploymentsActive(organizationId, employmentIds);
+    const fromYmd = this.parseYmd(dto.effectiveFrom?.trim() || todayBakuYmd());
+    this.assertEffectiveFromCap(fromYmd);
     try {
-      const row = await this.prisma.workforceBrigade.create({
-        data: {
-          organizationId,
-          code: dto.code.trim().toUpperCase(),
-          name: dto.name.trim(),
-          members: {
-            create: employmentIds.map((employmentId) => ({
-              organizationId,
-              employmentId,
-            })),
+      const created = await this.prisma.$transaction(async (tx) => {
+        const brigade = await tx.workforceBrigade.create({
+          data: {
+            organizationId,
+            code: dto.code.trim().toUpperCase(),
+            name: dto.name.trim(),
           },
-        },
-        include: {
-          members: true,
-          _count: { select: { members: true } },
-        },
+        });
+        for (const employmentId of employmentIds) {
+          await this.openMembership(tx, {
+            organizationId,
+            employmentId,
+            brigadeId: brigade.id,
+            fromYmd,
+            leftToBrigadeId: null,
+          });
+        }
+        return brigade;
       });
       await this.audit.log({
         organizationId,
         actorUserId,
         action: "ROSTER_BRIGADE_CREATE",
         entityType: "BRIGADE",
-        entityId: row.id,
-        payload: { code: row.code, memberCount: employmentIds.length },
+        entityId: created.id,
+        payload: { code: created.code, memberCount: employmentIds.length },
       });
-      return row;
+      const listed = await this.listBrigades(organizationId, fromYmd);
+      return (
+        listed.find((b) => b.id === created.id) ?? {
+          ...created,
+          asOf: fromYmd,
+          members: [],
+          _count: { members: 0 },
+        }
+      );
     } catch (e) {
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&
@@ -427,33 +578,11 @@ export class WorkforceRosterService {
       where: { id, organizationId },
     });
     if (!existing) throw new NotFoundException("Brigade not found");
-    if (dto.employmentIds) {
-      await this.assertEmploymentsInOrg(organizationId, dto.employmentIds);
-    }
-    const row = await this.prisma.$transaction(async (tx) => {
-      if (dto.employmentIds) {
-        const ids = [...new Set(dto.employmentIds)];
-        await tx.workforceBrigadeMember.deleteMany({ where: { brigadeId: id } });
-        if (ids.length) {
-          await tx.workforceBrigadeMember.createMany({
-            data: ids.map((employmentId) => ({
-              organizationId,
-              brigadeId: id,
-              employmentId,
-            })),
-          });
-        }
-      }
-      return tx.workforceBrigade.update({
-        where: { id },
-        data: {
-          ...(dto.name != null ? { name: dto.name.trim() } : {}),
-        },
-        include: {
-          members: true,
-          _count: { select: { members: true } },
-        },
-      });
+    const updated = await this.prisma.workforceBrigade.update({
+      where: { id },
+      data: {
+        ...(dto.name != null ? { name: dto.name.trim() } : {}),
+      },
     });
     await this.audit.log({
       organizationId,
@@ -461,9 +590,145 @@ export class WorkforceRosterService {
       action: "ROSTER_BRIGADE_UPDATE",
       entityType: "BRIGADE",
       entityId: id,
-      payload: dto as Record<string, unknown>,
+      payload: { name: updated.name },
     });
-    return row;
+    const listed = await this.listBrigades(organizationId);
+    return listed.find((b) => b.id === id) ?? updated;
+  }
+
+  async transferBrigadeMembers(
+    organizationId: string,
+    actorUserId: string,
+    dto: TransferWorkforceBrigadeMembersDto,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const employmentIds = [...new Set(dto.employmentIds)];
+    const fromYmd = this.parseYmd(dto.effectiveFrom);
+    this.assertEffectiveFromCap(fromYmd);
+    await this.assertEmploymentsInOrg(organizationId, employmentIds);
+    await this.assertEmploymentsActive(organizationId, employmentIds);
+    const toBrigade = await this.prisma.workforceBrigade.findFirst({
+      where: { id: dto.toBrigadeId, organizationId },
+    });
+    if (!toBrigade) throw new BadRequestException("Target brigade not found");
+    if (dto.fromBrigadeId) {
+      const fromBrigade = await this.prisma.workforceBrigade.findFirst({
+        where: { id: dto.fromBrigadeId, organizationId },
+      });
+      if (!fromBrigade) {
+        throw new BadRequestException("Source brigade not found");
+      }
+    }
+    await this.assertNoApprovedTimesheetOverlap(
+      organizationId,
+      employmentIds,
+      fromYmd,
+    );
+    const moved: string[] = [];
+    const skipped: string[] = [];
+    await this.prisma.$transaction(async (tx) => {
+      for (const employmentId of employmentIds) {
+        const result = await this.applyTransfer(tx, {
+          organizationId,
+          employmentId,
+          toBrigadeId: dto.toBrigadeId,
+          fromBrigadeId: dto.fromBrigadeId,
+          fromYmd,
+        });
+        if (result === "skipped") skipped.push(employmentId);
+        else moved.push(employmentId);
+      }
+    });
+    const rematerializeSuggested = await this.rematerializeSuggested(
+      organizationId,
+      moved,
+      fromYmd,
+    );
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "ROSTER_BRIGADE_TRANSFER",
+      entityType: "BRIGADE",
+      entityId: dto.toBrigadeId,
+      payload: {
+        count: moved.length,
+        employmentIds: moved,
+        toBrigadeId: dto.toBrigadeId,
+        fromBrigadeId: dto.fromBrigadeId ?? null,
+        effectiveFrom: fromYmd,
+        rematerializeSuggested,
+      },
+    });
+    return {
+      movedCount: moved.length,
+      skippedCount: skipped.length,
+      employmentIds: moved,
+      toBrigadeId: dto.toBrigadeId,
+      effectiveFrom: fromYmd,
+      rematerializeSuggested,
+    };
+  }
+
+  async leaveBrigadeMembers(
+    organizationId: string,
+    actorUserId: string,
+    dto: LeaveWorkforceBrigadeMembersDto,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const employmentIds = [...new Set(dto.employmentIds)];
+    const fromYmd = this.parseYmd(dto.effectiveFrom);
+    this.assertEffectiveFromCap(fromYmd);
+    await this.assertEmploymentsInOrg(organizationId, employmentIds);
+    if (dto.fromBrigadeId) {
+      const fromBrigade = await this.prisma.workforceBrigade.findFirst({
+        where: { id: dto.fromBrigadeId, organizationId },
+      });
+      if (!fromBrigade) {
+        throw new BadRequestException("Source brigade not found");
+      }
+    }
+    await this.assertNoApprovedTimesheetOverlap(
+      organizationId,
+      employmentIds,
+      fromYmd,
+    );
+    const left: string[] = [];
+    await this.prisma.$transaction(async (tx) => {
+      for (const employmentId of employmentIds) {
+        await this.applyLeave(tx, {
+          organizationId,
+          employmentId,
+          fromBrigadeId: dto.fromBrigadeId,
+          fromYmd,
+        });
+        left.push(employmentId);
+      }
+    });
+    const rematerializeSuggested = await this.rematerializeSuggested(
+      organizationId,
+      left,
+      fromYmd,
+    );
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "ROSTER_BRIGADE_LEAVE",
+      entityType: "BRIGADE_MEMBER",
+      entityId: dto.fromBrigadeId ?? left[0] ?? organizationId,
+      payload: {
+        count: left.length,
+        employmentIds: left,
+        fromBrigadeId: dto.fromBrigadeId ?? null,
+        effectiveFrom: fromYmd,
+        rematerializeSuggested,
+      },
+    });
+    return {
+      leftCount: left.length,
+      employmentIds: left,
+      effectiveFrom: fromYmd,
+      rematerializeSuggested,
+    };
   }
 
   // ── Assignments ─────────────────────────────────────────────────────
@@ -1002,6 +1267,7 @@ export class WorkforceRosterService {
     let cellsSkippedManual = 0;
     let cellsSkippedNoPlan = 0;
 
+    const todayIso = todayBakuYmd();
     for (let i = 0; i < employments.length; i += MATERIALIZE_CHUNK) {
       const chunk = employments.slice(i, i + MATERIALIZE_CHUNK);
       await this.prisma.$transaction(async (tx) => {
@@ -1009,6 +1275,13 @@ export class WorkforceRosterService {
           for (let d = 1; d <= lastDay; d++) {
             const workDate = dayDateUtc(year, month, d);
             const ymd = isoDayUtc(workDate);
+            if (ymd > todayIso) {
+              const existing = existingMap.get(entryKey(emp.id, workDate));
+              if (existing && !isCellImmutable(existing)) {
+                await tx.workforceTimesheetEntry.delete({ where: { id: existing.id } });
+              }
+              continue;
+            }
             const key = entryKey(emp.id, workDate);
             const existing = existingMap.get(key);
             if (isCellImmutable(existing)) {
@@ -1114,7 +1387,12 @@ export class WorkforceRosterService {
       effectiveFrom: Date;
       effectiveTo: Date | null;
     }>;
-    brigadeMembers: Array<{ employmentId: string; brigadeId: string }>;
+    brigadeMembers: Array<{
+      employmentId: string;
+      brigadeId: string;
+      effectiveFrom: Date;
+      effectiveTo: Date | null;
+    }>;
     cycles: Array<{
       id: string;
       cycleAnchor: Date;
@@ -1137,12 +1415,12 @@ export class WorkforceRosterService {
     const cycleById = new Map(input.cycles.map((c) => [c.id, c]));
     const typeById = new Map(input.shiftTypes.map((t) => [t.id, t]));
     const placeById = new Map(input.places.map((p) => [p.id, p]));
-    const brigadesByEmployment = new Map<string, string[]>();
-    for (const m of input.brigadeMembers) {
-      const list = brigadesByEmployment.get(m.employmentId) ?? [];
-      list.push(m.brigadeId);
-      brigadesByEmployment.set(m.employmentId, list);
-    }
+    const memberships = input.brigadeMembers.map((m) => ({
+      employmentId: m.employmentId,
+      brigadeId: m.brigadeId,
+      fromYmd: isoDayUtc(m.effectiveFrom),
+      toYmd: m.effectiveTo ? isoDayUtc(m.effectiveTo) : null,
+    }));
     const overrideByKey = new Map(
       input.overrides.map((o) => [entryKey(o.employmentId, o.workDate), o]),
     );
@@ -1159,7 +1437,14 @@ export class WorkforceRosterService {
       });
     };
     const pickAssignment = (employmentId: string, ymd: string) => {
-      const brigadeIds = brigadesByEmployment.get(employmentId) ?? [];
+      const brigadeIds = memberships
+        .filter(
+          (m) =>
+            m.employmentId === employmentId &&
+            m.fromYmd <= ymd &&
+            (m.toYmd == null || ymd <= m.toYmd),
+        )
+        .map((m) => m.brigadeId);
       const candidates = input.assignments.filter((a) => {
         const from = isoDayUtc(a.effectiveFrom);
         const to = a.effectiveTo ? isoDayUtc(a.effectiveTo) : null;
@@ -1239,6 +1524,370 @@ export class WorkforceRosterService {
         );
       }
     }
+  }
+
+  private parseYmd(raw: string): string {
+    const ymd = raw.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+      throw new BadRequestException("Date must be YYYY-MM-DD");
+    }
+    try {
+      bakuCivilUtcDate(ymd);
+    } catch {
+      throw new BadRequestException("Date must be YYYY-MM-DD");
+    }
+    return ymd;
+  }
+
+  private assertEffectiveFromCap(fromYmd: string) {
+    const cap = addBakuDays(todayBakuYmd(), 31);
+    if (fromYmd > cap) {
+      throw new BadRequestException(
+        "effectiveFrom cannot be more than 31 Baku days ahead",
+      );
+    }
+  }
+
+  private monthsInRange(
+    fromYmd: string,
+    toYmd: string,
+  ): Array<{ year: number; month: number }> {
+    const [fy, fm] = fromYmd.split("-").map(Number);
+    const [ty, tm] = toYmd.split("-").map(Number);
+    const out: Array<{ year: number; month: number }> = [];
+    let y = fy;
+    let m = fm;
+    while (y < ty || (y === ty && m <= tm)) {
+      out.push({ year: y, month: m });
+      m += 1;
+      if (m > 12) {
+        m = 1;
+        y += 1;
+      }
+    }
+    return out;
+  }
+
+  private serializeMember(m: {
+    id: string;
+    employmentId: string;
+    effectiveFrom: Date;
+    effectiveTo: Date | null;
+    employment: {
+      staffCode: string | null;
+      globalPersonId: string | null;
+      status?: string;
+    };
+  }) {
+    return {
+      id: m.id,
+      employmentId: m.employmentId,
+      effectiveFrom: isoDayUtc(m.effectiveFrom),
+      effectiveTo: m.effectiveTo ? isoDayUtc(m.effectiveTo) : null,
+      staffCode: m.employment.staffCode,
+      globalPersonId: m.employment.globalPersonId,
+      status: m.employment.status,
+    };
+  }
+
+  private intervalOverlaps(
+    aFrom: string,
+    aTo: string | null,
+    bFrom: string,
+    bTo: string | null,
+  ): boolean {
+    const aEnd = aTo ?? "9999-12-31";
+    const bEnd = bTo ?? "9999-12-31";
+    return aFrom <= bEnd && bFrom <= aEnd;
+  }
+
+  private async assertEmploymentsActive(
+    organizationId: string,
+    employmentIds: string[],
+  ) {
+    if (!employmentIds.length) return;
+    const inactive = await this.prisma.workforceEmployment.count({
+      where: {
+        organizationId,
+        id: { in: employmentIds },
+        status: { not: WorkforceEmploymentStatus.ACTIVE },
+      },
+    });
+    if (inactive > 0) {
+      throw new BadRequestException(
+        "One or more employments are not ACTIVE",
+      );
+    }
+  }
+
+  private async assertNoApprovedTimesheetOverlap(
+    organizationId: string,
+    employmentIds: string[],
+    fromYmd: string,
+  ) {
+    const today = todayBakuYmd();
+    if (fromYmd >= today) return;
+    const toYmd = addBakuDays(today, -1);
+    const months = this.monthsInRange(fromYmd, toYmd);
+    if (!months.length) return;
+    const approved = await this.prisma.workforceTimesheet.findMany({
+      where: {
+        organizationId,
+        status: WorkforceTimesheetStatus.APPROVED,
+        OR: months.map(({ year, month }) => ({ year, month })),
+      },
+      select: { id: true },
+    });
+    if (approved.length) {
+      throw new ConflictException(
+        "Cannot backdate brigade membership over an APPROVED timesheet month",
+      );
+    }
+    const approvedCell = await this.prisma.workforceTimesheetEntry.findFirst({
+      where: {
+        organizationId,
+        employmentId: { in: employmentIds },
+        status: WorkforceTimesheetEntryStatus.APPROVED,
+        workDate: {
+          gte: bakuCivilUtcDate(fromYmd),
+          lte: bakuCivilUtcDate(toYmd),
+        },
+      },
+      select: { id: true },
+    });
+    if (approvedCell) {
+      throw new ConflictException(
+        "Cannot backdate brigade membership over an APPROVED timesheet cell",
+      );
+    }
+  }
+
+  private async rematerializeSuggested(
+    organizationId: string,
+    employmentIds: string[],
+    fromYmd: string,
+  ): Promise<boolean> {
+    if (!employmentIds.length) return false;
+    const count = await this.prisma.workforceTimesheetEntry.count({
+      where: {
+        organizationId,
+        employmentId: { in: employmentIds },
+        source: "roster_plan",
+        status: WorkforceTimesheetEntryStatus.DRAFT,
+        workDate: { gte: bakuCivilUtcDate(fromYmd) },
+      },
+    });
+    return count > 0;
+  }
+
+  private async loadOpenMemberships(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    employmentId: string,
+  ) {
+    return tx.workforceBrigadeMember.findMany({
+      where: { organizationId, employmentId, effectiveTo: null },
+    });
+  }
+
+  private async assertNoIntervalOverlap(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    employmentId: string,
+    fromYmd: string,
+    toYmd: string | null,
+    exceptId?: string,
+  ) {
+    const rows = await tx.workforceBrigadeMember.findMany({
+      where: {
+        organizationId,
+        employmentId,
+        ...(exceptId ? { id: { not: exceptId } } : {}),
+      },
+    });
+    for (const row of rows) {
+      const rowFrom = isoDayUtc(row.effectiveFrom);
+      const rowTo = row.effectiveTo ? isoDayUtc(row.effectiveTo) : null;
+      if (this.intervalOverlaps(rowFrom, rowTo, fromYmd, toYmd)) {
+        throw new ConflictException(
+          "Brigade membership interval overlaps an existing interval",
+        );
+      }
+    }
+  }
+
+  private async openMembership(
+    tx: Prisma.TransactionClient,
+    input: {
+      organizationId: string;
+      employmentId: string;
+      brigadeId: string;
+      fromYmd: string;
+      leftToBrigadeId: string | null;
+    },
+  ) {
+    const opens = await this.loadOpenMemberships(
+      tx,
+      input.organizationId,
+      input.employmentId,
+    );
+    if (opens.length > 1) {
+      throw new ConflictException(
+        "Employment has more than one open brigade membership",
+      );
+    }
+    if (opens.length === 1) {
+      throw new ConflictException(
+        "Employment already has an open brigade membership",
+      );
+    }
+    await this.assertNoIntervalOverlap(
+      tx,
+      input.organizationId,
+      input.employmentId,
+      input.fromYmd,
+      null,
+    );
+    try {
+      await tx.workforceBrigadeMember.create({
+        data: {
+          organizationId: input.organizationId,
+          employmentId: input.employmentId,
+          brigadeId: input.brigadeId,
+          effectiveFrom: bakuCivilUtcDate(input.fromYmd),
+          effectiveTo: null,
+          leftToBrigadeId: input.leftToBrigadeId,
+        },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002"
+      ) {
+        throw new ConflictException(
+          "Employment already has an open brigade membership",
+        );
+      }
+      throw e;
+    }
+  }
+
+  private async closeOpenMembership(
+    tx: Prisma.TransactionClient,
+    open: {
+      id: string;
+      employmentId: string;
+      organizationId: string;
+      brigadeId: string;
+      effectiveFrom: Date;
+    },
+    fromYmd: string,
+    leftToBrigadeId: string | null,
+  ) {
+    const openFrom = isoDayUtc(open.effectiveFrom);
+    if (fromYmd <= openFrom) {
+      throw new BadRequestException(
+        "effectiveFrom must be after the open membership start",
+      );
+    }
+    const lastDay = addBakuDays(fromYmd, -1);
+    await tx.workforceBrigadeMember.update({
+      where: { id: open.id },
+      data: {
+        effectiveTo: bakuCivilUtcDate(lastDay),
+        leftToBrigadeId,
+      },
+    });
+  }
+
+  private async applyTransfer(
+    tx: Prisma.TransactionClient,
+    input: {
+      organizationId: string;
+      employmentId: string;
+      toBrigadeId: string;
+      fromBrigadeId?: string;
+      fromYmd: string;
+    },
+  ): Promise<"moved" | "skipped"> {
+    const opens = await this.loadOpenMemberships(
+      tx,
+      input.organizationId,
+      input.employmentId,
+    );
+    if (opens.length > 1) {
+      throw new ConflictException(
+        "Employment has more than one open brigade membership",
+      );
+    }
+    const asOfDate = bakuCivilUtcDate(input.fromYmd);
+    const already = await tx.workforceBrigadeMember.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        employmentId: input.employmentId,
+        brigadeId: input.toBrigadeId,
+        effectiveFrom: { lte: asOfDate },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: asOfDate } }],
+      },
+    });
+    if (already) return "skipped";
+    const open = opens[0];
+    if (input.fromBrigadeId) {
+      if (!open || open.brigadeId !== input.fromBrigadeId) {
+        throw new BadRequestException(
+          "Employment is not an open member of the source brigade",
+        );
+      }
+    }
+    if (open) {
+      await this.closeOpenMembership(
+        tx,
+        open,
+        input.fromYmd,
+        input.toBrigadeId,
+      );
+    }
+    await this.openMembership(tx, {
+      organizationId: input.organizationId,
+      employmentId: input.employmentId,
+      brigadeId: input.toBrigadeId,
+      fromYmd: input.fromYmd,
+      leftToBrigadeId: null,
+    });
+    return "moved";
+  }
+
+  private async applyLeave(
+    tx: Prisma.TransactionClient,
+    input: {
+      organizationId: string;
+      employmentId: string;
+      fromBrigadeId?: string;
+      fromYmd: string;
+    },
+  ) {
+    const opens = await this.loadOpenMemberships(
+      tx,
+      input.organizationId,
+      input.employmentId,
+    );
+    if (opens.length > 1) {
+      throw new ConflictException(
+        "Employment has more than one open brigade membership",
+      );
+    }
+    const open = opens[0];
+    if (!open) {
+      throw new BadRequestException(
+        "Employment has no open brigade membership",
+      );
+    }
+    if (input.fromBrigadeId && open.brigadeId !== input.fromBrigadeId) {
+      throw new BadRequestException(
+        "Employment is not an open member of the source brigade",
+      );
+    }
+    await this.closeOpenMembership(tx, open, input.fromYmd, null);
   }
 
   private async assertEmploymentsInOrg(

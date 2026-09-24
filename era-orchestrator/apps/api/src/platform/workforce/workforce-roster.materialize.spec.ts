@@ -265,6 +265,58 @@ describe("WorkforceRosterService.materializeMonth", () => {
     expect(upsertedDates).not.toContain("2026-01-11");
   });
 
+  it("as-of membership: person in A through month-end, D from the 1st of next month", async () => {
+    const BRIGADE_A = "44444444-4444-4444-8444-444444444444";
+    const BRIGADE_D = "55555555-5555-4555-8555-555555555555";
+    const PLACE_D = "66666666-6666-4666-8666-666666666666";
+    const ASG_D = "77777777-7777-4777-8777-777777777777";
+    prisma.workforceShiftAssignment.findMany.mockResolvedValue([
+      {
+        id: ASG,
+        organizationId: ORG_A,
+        placeId: PLACE,
+        cycleId: CYCLE,
+        employmentId: null,
+        brigadeId: BRIGADE_A,
+        effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
+        effectiveTo: null,
+      },
+      {
+        id: ASG_D,
+        organizationId: ORG_A,
+        placeId: PLACE_D,
+        cycleId: CYCLE,
+        employmentId: null,
+        brigadeId: BRIGADE_D,
+        effectiveFrom: new Date("2026-02-01T00:00:00.000Z"),
+        effectiveTo: null,
+      },
+    ]);
+    prisma.workforceBrigadeMember.findMany.mockResolvedValue([
+      {
+        employmentId: EMP,
+        brigadeId: BRIGADE_A,
+        effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
+        effectiveTo: new Date("2026-01-31T00:00:00.000Z"),
+      },
+      {
+        employmentId: EMP,
+        brigadeId: BRIGADE_D,
+        effectiveFrom: new Date("2026-02-01T00:00:00.000Z"),
+        effectiveTo: null,
+      },
+    ]);
+    prisma.workforcePlace.findMany.mockResolvedValue([
+      { id: PLACE, code: "SITE_A", name: "Site A" },
+      { id: PLACE_D, code: "SITE_D", name: "Site D" },
+    ]);
+    const jan = await svc.previewMonth(ORG_A, 2026, 1);
+    expect(jan.rows[0].cells.find((c) => c.day === 31)?.placeCode).toBe("SITE_A");
+    const feb = await svc.previewMonth(ORG_A, 2026, 2);
+    expect(feb.rows[0].cells.find((c) => c.day === 1)?.placeCode).toBe("SITE_D");
+    expect(jan.rows[0].cells.find((c) => c.day === 15)?.placeCode).toBe("SITE_A");
+  });
+
   it("previewMonth returns person × day plan without writing timesheet", async () => {
     const preview = await svc.previewMonth(ORG_A, 2026, 1);
     expect(preview.lastDay).toBe(31);

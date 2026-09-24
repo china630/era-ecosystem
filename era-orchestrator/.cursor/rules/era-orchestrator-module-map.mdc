@@ -137,10 +137,14 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET /platform/v1/workforce/holding-directory?holdingId=` | Federated HR people (paginate by person); holding ∩ OWNER/HR_MANAGER orgs; STANDALONE only |
 | `GET /platform/v1/workforce/persons/:globalPersonId/employments` | Person card; `holdingId` optional — omit unions OWNER/HR_MANAGER STANDALONE memberships (dual-VÖEN without Holding) |
 | `GET …/security/audit?holdingId=` | Optional union of visible HR org audit rows |
-| `POST …/timesheets/:id/autofill\|sync-absences\|approve` `PATCH …/entries/batch` | weekday WORK / Sat–Sun OFF; reconcile absence locks; skip APPROVED cells; empty month approve → 400; emits `WORKFORCE_TIMESHEET_APPROVED` with row `type` |
-| `GET /platform/v1/workforce/roster/preview?year=&month=&placeId=&orgUnitId=` | Read-only person × day plan grid (colors in UI); no timesheet write |
-| `POST …/timesheets/:id/materialize-roster?preserveManual=` | Labor roster → DRAFT cells (`source=roster_plan`); skip APPROVED / `lockedFromAbsence`; optional keep `ops_grid`; then `syncAbsences` (locks beat overrides) |
-| `GET/POST/PATCH /platform/v1/workforce/places\|shift-types\|shift-cycles\|brigades\|shift-assignments` + `PUT/DELETE day-overrides` + `POST roster/ensure-defaults` | CP-WF-ROSTER-01 labor constructor (org-scoped); Place ≠ OrgUnit; seeds E/N/OFFICE/H24 + 5/2, 2/2, 24/48 |
+| `POST …/timesheets/:id/autofill\|sync-absences\|approve` `PATCH …/entries/batch` | autofill and batch stop at Asia/Baku today; autofill, sync, materialize, and approve drop future cells that are not an absence lock; sync-absences writes APPROVED leave for the whole month including future days; skip APPROVED cells; empty month approve → 400; emits `WORKFORCE_TIMESHEET_APPROVED` with row `type` |
+| `GET /platform/v1/workforce/roster/preview?year=&month=&placeId=&orgUnitId=` | Read-only person × day plan grid plus `persons` display names; no timesheet write |
+| `POST …/timesheets/:id/materialize-roster?preserveManual=` | Labor roster → DRAFT cells (`source=roster_plan`) through Asia/Baku today only; skip APPROVED / `lockedFromAbsence`; optional keep `ops_grid`; then `syncAbsences` (locks beat overrides, including future days) |
+| `GET/POST/PATCH /platform/v1/workforce/places\|shift-types\|shift-cycles\|brigades\|shift-assignments` + `PUT/DELETE day-overrides` + `POST roster/ensure-defaults` | CP-WF-ROSTER-01 labor constructor; PATCH brigades/:id name only (no employmentIds) |
+| `POST /platform/v1/workforce/brigades/transfers` | Dated move/join (`employmentIds`, `toBrigadeId`, `effectiveFrom`, optional `fromBrigadeId`) — [cp-workforce-brigade-membership](../../docs/adr/cp-workforce-brigade-membership.md) |
+| `POST /platform/v1/workforce/brigades/leaves` | Close open membership as of Baku day |
+| `GET /platform/v1/workforce/brigades/:id/members?asOf=` | As-of roster for one brigade |
+| `GET /platform/v1/workforce/brigade-memberships?employmentId=&brigadeId=&from=&to=&page=&pageSize=` | Membership history |
 | `POST /platform/v1/workforce/attendance/punches` | **Public** device ingest (`att_*` Bearer, optional HMAC + Nest `rawBody`) — CP-WF-ATT-01; Zod `@era/contracts` batch |
 | `GET/POST …/attendance/devices\|identities\|punches` + `POST rebuild\|import-csv` | HR admin; rebuild body or `?from&to`; CSV/xlsx; nightly cron Asia/Baku 00:15 |
 | `POST …/timesheets/approve` | **410** `TIMESHEET_USE_MONTH_APPROVE` (cherry-pick retired) |
@@ -157,6 +161,10 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `POST /platform/v1/workforce/import/roster` | `workforce-import.controller.ts` — CSV/xlsx hire (dryRun); empty satellites = headcount; `ADDITIONAL` = second job, no seat |
 | `POST /platform/v1/workforce/import/absences` | `workforce-import.controller.ts` — CSV/xlsx absences (dryRun); `staffCode`/`globalPersonId` |
 | `POST /platform/v1/workforce/import/org-structure` | `workforce-import.controller.ts` — CSV/xlsx units+positions upsert (dryRun); no deletes |
+| `GET /platform/v1/workforce/migration` | `workforce-migration.controller.ts` — nine-step status + prior-step warning |
+| `POST /platform/v1/workforce/migration/:stepId/preview` | dry-run one pack step (CSV/xlsx); year-grid → 400 no write |
+| `POST /platform/v1/workforce/migration/:stepId/apply` | apply one pack step; leave = APPROVED + ISSUED `source=import`; salary/vacation via Finance opening |
+| `POST /platform/v1/workforce/migration/:stepId/skip` | mark skippable step unused; org-structure → 400 |
 | Web `/workspace/workforce/security` | matrix + seats; **ACTIVE positions only**; optimistic cell save (no full reload); client filters (search, org unit `{ items }`, position, satellite, access state); deep-link `?orgUnitId=` / `?positionId=`; SSOT `@/lib/workforce-satellites` |
 | Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active |
 | Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); person column; filters parse org-unit `{ items }` + provisionState |
@@ -165,20 +173,21 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
 | Web `/workspace/workforce/group` (+ `/persons/:id`) | Federated HR directory + person card; mutate via org switch — CP-WF-GROUP-01 |
 | Web `/workspace/workforce/employments` | hire; employee card; Login & access per-person satellite checkboxes (any non-terminated employment); provisionState Sync failed badge + eventual-sync hint; server page/filters (status/org/position/satellite); SSOT `@/lib/workforce-satellites` |
-| Web `/workspace/workforce/absences` (+ `/[id]`) | `apps/web/app/workspace/workforce/absences/` |
+| Web `/workspace/workforce/absences` (+ `/[id]`) | Period presets (month-to-today, this month, ±30 days, custom); overlap filter |
 | Web `/workspace/workforce/vacation-plans` | list/create/submit/approve/reject |
 | Web `/workspace/workforce/personnel-orders` | create/issue/cancel/PDF + HTML templates + terminate gate checkbox (settings PATCH) |
 | Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
-| Web `/workspace/workforce/timesheets` | month grid (click cycle, batch CatalogField, autofill / sync absences / approve) |
+| Web `/workspace/workforce/timesheets` | full-month grid; future cells visible, hand/batch/autofill stop at today; sync absences fills approved leave including future days |
 | Web `/workspace/workforce/places` | labor places CRUD (CatalogField) — CP-WF-ROSTER-01 |
 | Web `/workspace/workforce/shifts` | shift types + seed defaults; local subnav |
 | Web `/workspace/workforce/shifts/cycles` | shift cycles table |
-| Web `/workspace/workforce/shifts/brigades` | brigades CRUD modal |
-| Web `/workspace/workforce/roster` | person×day plan grid (place color) + assignments + day override + materialize (`preserveManual`); sync absences after materialize |
+| Web `/workspace/workforce/shifts/brigades` | as-of roster + transfer/leave modal + membership history (SCREEN, not SHIPPED) — ADR `docs/adr/cp-workforce-brigade-membership.md` |
+| Web `/workspace/workforce/roster` | person×day plan grid (names from preview `persons`) + assignment modal + day override + materialize (`preserveManual`); year opens on the current Baku year |
 | Web `/workspace/workforce/attendance` | punches (UNMAPPED/OPEN queue), rebuild, CSV; local subnav — CP-WF-ATT-01 |
 | Web `/workspace/workforce/attendance/devices` | devices table + add device (token once) |
 | Web `/workspace/workforce/attendance/identities` | personRef → employment identities |
 | Web `/workspace/workforce/export` | export + import roster/absences (xlsx/csv) |
+| Web `/workspace/workforce/migration` | CP-WF-MIG-01 nine-step pack wizard (SCREEN, not SHIPPED) |
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |
 | `PATCH /internal/v1/workforce/employments/:id/finance-link` | `workforce-registry.controller.ts` — Finance hire-mirror write-back (`financeEmployeeId` on `WorkforceEmployment` + assignments); Bearer `CONTROL_PLANE_SERVICE_TOKEN` / internal token |
