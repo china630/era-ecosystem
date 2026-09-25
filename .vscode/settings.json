@@ -8,5 +8,7 @@
       "path": "C:/Program Files/PowerShell/7/pwsh.exe",
       "icon": "terminal-powershell"
     }
-  }
+  },
+  "typescript.tsdk": "era-orchestrator/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }
