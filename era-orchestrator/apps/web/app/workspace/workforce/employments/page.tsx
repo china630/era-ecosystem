@@ -1348,8 +1348,6 @@ export default function WorkforceEmploymentsPage() {
         />
       </div>
 
-      </div>
-
       {dualVoenBanner ? (
         <div className={`${CARD_CONTAINER_CLASS} flex shrink-0 flex-wrap items-start justify-between gap-3 p-4`}>
           <p className="text-sm text-[#34495E]">
