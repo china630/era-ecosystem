@@ -12,7 +12,7 @@ Living snapshot of **code + DELIVERY** readiness (engineering API levels and che
 
 Last updated: 2026-08-17 (topology waves 9–18 — PlacementJob API scaffold; CP-PLACE-01 = API; live SHARED pool open)
 
-> **Deployment topology (2026-08-17 waves 9–18 + SaaS Waves 7/11):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + hotel curated JSON slice lab (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md) · [acceptance/SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md).
+> **Deployment topology (2026-08-17 waves 9–18):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + slice metadata stub (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md).
 
 > **Workforce v3 (orchestrator):** Absence (A), org structure (B), role templates + CP provisioning + Security Admin (C), PII tiers (D), clean cutover (E) — see [COVERAGE_MATRIX CP-WF-*](./COVERAGE_MATRIX.md), master ADR [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md), runbook [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
 
@@ -184,16 +184,15 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 
 ### 2.6 Fiscalization (KKM)
 
-Фискалка привязана к точке B2C-расчёта (не к каждому сателлиту). Сейчас — mock/stub в `@era/fiscal` + env; реального НБК-драйвера нет. Канон (N ККМ/POS на оргу, не env): [ADR era-fiscal-kkm-kit](./adr/era-fiscal-kkm-kit.md). SV7/SV14: [sanatorium-vnext](./adr/sanatorium-vnext.md).
+Фискалка привязана к точке B2C-расчёта (не к каждому сателлиту). Сейчас — три независимых mock/stub-реализации; реального НБК-драйвера нет. План унификации в `@era/fiscal` + правило «без двойной фискализации»: [ADR sanatorium-vnext](./adr/sanatorium-vnext.md) SV7/SV14.
 
 | Capability | Fin | Orch | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |------------|-----|------|-----|-----|-----|-----|-----|-----|------|-----|-----|
-| KKM provider (mock/stub) | N/A | N/A | Stub | Stub | Stub | N/A | N/A | N/A | Stub | Stub | `@era/fiscal` + org devices |
-| Real НБК/КИЗ / Omnitech driver | N/A | N/A | — | — | — | N/A | N/A | N/A | — | — | VENDOR until field cert |
-| Shared `@era/fiscal` | N/A | N/A | Live | Live | Live | N/A | N/A | N/A | Live | Live | `packages/era-fiscal` F0–F5 |
-| ERA POS station meter (+19) | N/A | Live | — | Live | Live | N/A | N/A | N/A | — | — | `POS_STATION_MONTHLY` F6 |
+| KKM provider (mock/stub) | N/A | N/A | Stub | Stub | Stub | N/A | N/A | N/A | Stub | Stub | `@era/fiscal` |
+| Real НБК/КИЗ driver | N/A | N/A | — | — | — | N/A | N/A | N/A | — | — | Future |
+| Shared `@era/fiscal` | N/A | N/A | Live | Live | Live | N/A | N/A | N/A | Live | Live | `packages/era-fiscal` |
 
-**Stub** = device catalog empty or `providerId=mock`. Live vendor = STUB/VENDOR until field cert. Clinic cashier uses `fiscalizeForSatellite`. Kit is not a billed SKU; station overage is `CAPACITY_DRIVERS`.
+**Stub** = `ERA_FISCAL_PROVIDER`/`KKM_DRIVER=mock|nbc|cybernet` (nbc/cybernet stubs). Clinic cashier uses same package; revenue GL remains on visit-complete (settlement-only at pay).
 
 ---
 
