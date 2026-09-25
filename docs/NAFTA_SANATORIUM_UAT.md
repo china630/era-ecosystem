@@ -18,8 +18,6 @@ Extends [QUARTET_UAT.md](./QUARTET_UAT.md) with clinic, pharmacy retail, and **p
 
 Parent flags for departments: `revenueRouting=PARENT`, `fiscalRouting=PARENT`.
 
-This table is **axis A** (`STANDALONE` / `DEPARTMENT`). **Placement** for a Nafta **appliance** droplet is **ONPREM/DEDICATED** (one org per satellite DB), not SHARED. **ERA cloud SaaS** (many orgs in one hotel process) has request tenant + Super-Admin per-org vendor bridges **landed as runtime prep** (Waves 1–11); **selling** the SHARED pool / edition `ga` is still forbidden — [SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md). Env Elektraweb property ids remain appliance-only / forbidden on a multi-org hotel process. Do not read DEPARTMENT as “own VM”. See [deployment-topology.md](./adr/deployment-topology.md) · [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md).
-
 **Mixed F&B:** in-house → room charge → folio; walk-in → **hotel Front Cash pending queue** when `settlementHub=HOTEL_FRONT_CASH` ([ADR unified-settlement-hub](./adr/unified-settlement-hub.md)); else local pay + KKM ([ADR fb-mixed-settlement-routing](./adr/fb-mixed-settlement-routing.md)).
 
 ---
@@ -56,16 +54,16 @@ Quick smoke: `node scripts/quartet-smoke.mjs` · `node era-hotel-pms/scripts/tes
 ## 3. Onboarding (orchestrator UI — UI-first)
 
 1. **Register** owner at `http://127.0.0.1:3000/register` → **`/organizations`**.
-2. **+ Organization** — name + **VÖEN** (10 digits) → **`/workspace`**.
+2. **+ Organization** — name + **VÖEN** (10 digits) → **`/workspace`**. Copy parent UUID → `ERA_HOTEL_ORGANIZATION_ID`.
 3. **Connect satellites** on `/workspace` (Hotel, Clinic, F&B, Finance). Extend trial: `/super-admin/orgs/{orgId}/subscription`.
 4. **Super-admin org hub** — `/super-admin/orgs/{parentOrgId}`:
-   - Copy **parent UUID** from the org page (for `ERA_HOTEL_ORGANIZATION_ID`).
-   - **Create department** (F&B, Clinic) — no second VÖEN; copy UUIDs from the department list.
+   - **Create department** (F&B, Clinic) — no second VÖEN; copy UUIDs from list.
    - **Operating mode** — parent stays `STANDALONE`; departments get `DEPARTMENT` + `PARENT` routing automatically on create.
    - **Satellite endpoints** — set `industry_fnb_pos`, `industry_clinic` base URLs (docker hostnames or localhost ports).
-5. Set `.env` org UUIDs (§2), restart stack.
-6. **Automation (optional):** `ORCH_SUPER_ADMIN_TOKEN=… ERA_HOTEL_ORGANIZATION_ID=… node scripts/nafta-onboard-departments.mjs`
-7. **SSO smoke:** `SSO_ORG_ID=<parent>` · `node scripts/sso-launch-smoke.mjs`
+5. **Owner read-only view** — `/workspace` card **Departments & env UUIDs** (copy for `.env`).
+6. Set `.env` org UUIDs (§2), restart stack.
+7. **Automation (optional):** `ORCH_SUPER_ADMIN_TOKEN=… ERA_HOTEL_ORGANIZATION_ID=… node scripts/nafta-onboard-departments.mjs`
+8. **SSO smoke:** `SSO_ORG_ID=<parent>` · `node scripts/sso-launch-smoke.mjs`
 
 Legacy curl paths remain valid for CI; prefer UI above for onsite UAT.
 
@@ -138,7 +136,7 @@ Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../
 | Guest registry | Full | Guest Cards merged (**7 383**) + MDM passport link |
 | Reservations | **2026+ only** (+ in-house/future at cutover) | FOCP merged; filter `Arrival >= 2026-01-01` or active statuses |
 | Folio charges | **Open / in-house at cutover** + optional 2026 YTD for reconciliation | Folio Transactions merged 2026; **not** 2025 archive |
-| Clinic | Randevular 2026 + WebOnly guests + **live card + calendar API dump** | Excel pack already collected; refresh via `dump-webonly-patient-cards.cjs` + `dump-webonly-clinic-calendar.cjs` → `D:\ERA-BACKUP\NAFTA-START\clinic\dump` (PII, not in git) |
+| Clinic | Randevular 2026 + WebOnly guests | Already collected |
 | Loyalty `visitCount` | Seed from Guest Cards `Repeat Count` | Do not recompute from 2025 folio |
 
 **Point-zero reports to pull from Elektraweb (if available):**
@@ -152,7 +150,7 @@ Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../
 
 After go-live, ERA is source of truth; Elektraweb read-only until decommission.
 
-**Dual-run (optional, ≤ ~2 weeks before hour X):** after Excel bootstrap, keep FO on Elektraweb while mirroring guests / reservations / open folio into ERA via browser extension so clinic can run on ERA. Sanatorium extras still go to EW SPA at issue ticket (not on `COMPLETED`): in-house → guest folio; walk-in → house folio `TIBB AMBULATOR FOLIO` (not ERA hub). Runbook: [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) · [inbound ADR](./adr/hotel-elektraweb-live-bridge.md) · [reverse extras](./adr/hotel-elektraweb-reverse-folio-post.md). During dual-run do not dual-write stays in ERA FO or night-audit-post mirrored medical folios.
+**Dual-run (optional, ≤ ~2 weeks before hour X):** after Excel bootstrap, keep FO on Elektraweb while mirroring guests / reservations / open folio into ERA via browser extension so clinic can run on ERA. Runbook: [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](./adr/hotel-elektraweb-live-bridge.md). During dual-run do not dual-write stays in ERA FO or night-audit-post mirrored medical folios.
 
 Product traceability: [era-hotel-pms/doc/nafta/README.md](../era-hotel-pms/doc/nafta/README.md)
 
@@ -215,7 +213,7 @@ Nafta parent org: **`platform_workforce` + industry modules**; **`hr_full` off**
 
 | Step | Action | Pass |
 |------|--------|------|
-| F1 | Enable `platform_workforce`; bootstrap workforce scope | Tile on `/workspace` while SKU is off; after enable open via sidebar **Kadrlar** (`/workspace/workforce/employments`) |
+| F1 | Enable `platform_workforce`; bootstrap workforce scope | `/workspace` shows Workforce Hub tile |
 | F2 | CP hire + absence (§6 W1–W4) | No Finance container required |
 | F3 | `/workspace/workforce/export` → download roster + absences CSV | Files open in Excel; no FIN column |
 | F4 | Monthly: operator imports CSV into 1C (manual procedure) | Documented in runbook |
@@ -225,27 +223,10 @@ ADR: [workforce-external-payroll-and-1c-export.md](./adr/workforce-external-payr
 
 ---
 
-## 7b. Known gaps (product debt)
-
-| ID | Gap | Impact | Intended fix |
-|----|-----|--------|--------------|
-| **SSO-OWNER-01** | Orch org **OWNER** does not become hotel/clinic/F&B admin on SSO. Non-PSA users land as `Financial_Auditor` (hotel). Elektraweb import / ops admin UI missing for the customer who created the org. | Nafta owner cannot run migration/import without ERA PSA allowlist | Map CP `OWNER`/`ADMIN` → satellite `Hotel_Admin` (or local OWNER); keep `PLATFORM_SUPER_ADMIN_EMAILS` for ERA operators only. See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
-| **PSA-ENV-01** | Historically compose-only `PLATFORM_SUPER_ADMIN_EMAILS` per satellite. **Mitigated (Wave 2):** Super-admin Sync pushes PSA via `…/runtime-config` (env remains override). First boot before Sync still needs compose/env or bind+config. | SSO “works” but import/admin gates stay off until Sync or compose | Run **Sync satellite bindings** after deploy; keep compose PSA as bootstrap fallback. |
-| **TOPO-01** | This appliance is **ONPREM/DEDICATED** (one org per satellite DB), not a SHARED SaaS pool. Demo wipe ≠ production sync. Waves 3–5: SHARED-ready schema + kit filter — still one org in DB. | Do not sell Nafta as multi-tenant SaaS | Topology ladder + mix rules: [deployment-topology.md](./adr/deployment-topology.md) |
-| **TTK-01** | ~~Dummy PROC-*~~ **Mitigated (CLI-47 API):** BOM + Finance write-off warn+post; UAT sign-off open for SHIPPED. | Warehouse tracks cabin consumption when BOM configured | [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) |
-| **CO-EARLY-01** | ~~Checkout did not refund unused nights~~ **Mitigated (HOT-CO-04):** unused nights net of VAT, default CASH; all folios. | Early leave cash now matches Nafta practice | [hotel-early-checkout-unused-nights.md](./adr/hotel-early-checkout-unused-nights.md) |
-
-**Workaround (ops):** set `PLATFORM_SUPER_ADMIN_EMAILS=shirinov.chingiz@gmail.com` (comma-list OK) in droplet `.env`, recreate hotel/clinic/fnb; enter satellite via **workspace SSO** (not local `/login` with orch password).
-
----
-
 ## 8. Related docs
 
 - [QUARTET_UAT.md](./QUARTET_UAT.md) — base quartet smoke
 - [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md)
 - [tenancy-and-outlet-boundaries.md](./adr/tenancy-and-outlet-boundaries.md)
-- [deployment-topology.md](./adr/deployment-topology.md) — SHARED / DEDICATED / ONPREM (Nafta = appliance, not SHARED pool)
-- [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md) — procedure TTK → Finance (CLI-47 STUB)
-- [hotel-early-checkout-unused-nights.md](./adr/hotel-early-checkout-unused-nights.md) — unused nights refund (HOT-CO-04 STUB)
 - [fb-mixed-settlement-routing.md](./adr/fb-mixed-settlement-routing.md)
 - [unified-settlement-hub.md](./adr/unified-settlement-hub.md)

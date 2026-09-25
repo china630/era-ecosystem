@@ -37,7 +37,7 @@ Engine routes exist. Proof is **curl-only stretch**. Canon: no Scaffold ✅ with
 | Retail/corporate DBO screens | AC-DBO-AUTH…3DS (already ✅) |
 | Live ASAN / rails | YC-E3 / YC-E1 — parent Inventory |
 | Full AIS/PIS suite / PFM / H2H | Capability Inventory §10 OUT/PARTIAL |
-| SHARED bank pool | AC-BANK-TENANT — out of rollup; same bar as hotel TENANT (not a special ban) |
+| SHARED bank pool | AC-BANK-TENANT — out of rollup, D8 |
 
 ### Close checklist (all required for Scaffold ✅)
 
