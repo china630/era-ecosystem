@@ -97,12 +97,17 @@ export default function OrgStructurePage() {
   const [importBusy, setImportBusy] = useState<"dry" | "apply" | null>(null);
   const [archiveUnit, setArchiveUnit] = useState<OrgUnit | null>(null);
   const [filterQ, setFilterQ] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ACTIVE");
+  const [operatingMode, setOperatingMode] = useState<string>("STANDALONE");
+  const [scopeId, setScopeId] = useState("");
+  const [linkUnitId, setLinkUnitId] = useState("");
+  const [linkMsg, setLinkMsg] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setItems([]);
     const res = await wfFetch("org-units");
     if (!res.ok) {
       if (await isWorkforceGate403(res)) {
@@ -112,7 +117,18 @@ export default function OrgStructurePage() {
         return;
       }
       if (res.status === 404) {
-        setError("bootstrap");
+        const boot = await wfFetch("scope/bootstrap", { method: "POST", body: "{}" });
+        if (boot.ok) {
+          const retry = await wfFetch("org-units");
+          if (retry.ok) {
+            setNotEntitled(false);
+            const data = (await retry.json()) as { items: OrgUnit[] };
+            setItems(data.items ?? []);
+            setLoading(false);
+            return;
+          }
+        }
+        setError(`${res.status}`);
         setItems([]);
         setLoading(false);
         return;
@@ -124,6 +140,17 @@ export default function OrgStructurePage() {
     setNotEntitled(false);
     const data = (await res.json()) as { items: OrgUnit[] };
     setItems(data.items ?? []);
+    const scopeRes = await wfFetch("scope");
+    if (scopeRes.ok) {
+      const scope = (await scopeRes.json()) as {
+        operatingMode?: string;
+        workforceScopeId?: string;
+        orgUnitId?: string | null;
+      };
+      setOperatingMode(scope.operatingMode ?? "STANDALONE");
+      setScopeId(scope.workforceScopeId ?? "");
+      setLinkUnitId(scope.orgUnitId ?? "");
+    }
     setLoading(false);
   }, []);
 
@@ -131,17 +158,6 @@ export default function OrgStructurePage() {
     if (!ready || !user?.organizationId) return;
     void load();
   }, [ready, user?.organizationId, load]);
-
-  async function bootstrap() {
-    setBusy(true);
-    const res = await wfFetch("scope/bootstrap", { method: "POST", body: "{}" });
-    setBusy(false);
-    if (!res.ok) {
-      setError(await readWfError(res));
-      return;
-    }
-    await load();
-  }
 
   function openCreate() {
     setFormName("");
@@ -243,6 +259,29 @@ export default function OrgStructurePage() {
     await load();
   }
 
+  async function saveCommercialLink() {
+    if (!user?.organizationId || !scopeId) return;
+    setBusy(true);
+    setLinkMsg(null);
+    const res = await wfFetch(
+      `commercial-links/${encodeURIComponent(user.organizationId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          workforceScopeId: scopeId,
+          orgUnitId: linkUnitId.trim() || null,
+          linkMode: linkUnitId.trim() ? "SUBTREE" : "SCOPE_ROOT",
+        }),
+      },
+    );
+    setBusy(false);
+    if (!res.ok) {
+      setError(await readWfError(res));
+      return;
+    }
+    setLinkMsg(t("commercialLinkOk"));
+  }
+
   const filtered = useMemo(() => {
     const q = filterQ.trim().toLowerCase();
     return items.filter((u) => {
@@ -293,22 +332,38 @@ export default function OrgStructurePage() {
         />
       </div>
 
-      {error === "bootstrap" ? (
-        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-4`}>
-          <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
-          <button
-            type="button"
-            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
-            disabled={busy}
-            onClick={() => void bootstrap()}
-          >
-            {t("bootstrap")}
-          </button>
-        </div>
-      ) : null}
-
       {error && error !== "bootstrap" ? (
         <p className="shrink-0 text-sm text-red-700">{error}</p>
+      ) : null}
+
+      {operatingMode === "DEPARTMENT" ? (
+        <div className={`${CARD_CONTAINER_CLASS} shrink-0 space-y-2 p-4`}>
+          <p className="text-sm font-medium text-[#34495E]">{t("commercialLinkTitle")}</p>
+          <p className="text-xs text-[#7F8C8D]">{t("commercialLinkHint")}</p>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[220px] flex-1">
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("commercialLinkUnit")}
+                value={linkUnitId}
+                onChange={(v) => setLinkUnitId(String(v))}
+                options={items
+                  .filter((u) => u.status === "ACTIVE")
+                  .map((u) => ({ value: u.id, label: u.name }))}
+                emptyLabel={t("commercialLinkRoot")}
+              />
+            </div>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={busy || !scopeId}
+              onClick={() => void saveCommercialLink()}
+            >
+              {t("commercialLinkSave")}
+            </button>
+          </div>
+          {linkMsg ? <p className="text-sm text-emerald-700">{linkMsg}</p> : null}
+        </div>
       ) : null}
 
       <EraListWorkspace
@@ -318,7 +373,7 @@ export default function OrgStructurePage() {
         resetLabel={tCommon("filterReset")}
         onReset={() => {
           setFilterQ("");
-          setFilterStatus("");
+          setFilterStatus("ACTIVE");
         }}
       >
         <Field

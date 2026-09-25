@@ -37,6 +37,7 @@ type MigrationStep = {
 type StatusPayload = {
   steps: MigrationStep[];
   priorStepWarning: { stepId: string; message: string } | null;
+  fields?: Record<string, { required: string[]; optional: string[] }>;
 };
 
 type RowResult = {
@@ -69,15 +70,18 @@ function bakuDate(iso: string | null): string {
 }
 
 export default function WorkforceMigrationPage() {
-  const { ready } = useRequireAuth();
+  const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceMigration");
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [selected, setSelected] = useState<string>("org-structure");
   const [files, setFiles] = useState<Record<string, StepFile>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [fileBusy, setFileBusy] = useState(false);
+  const [fileNote, setFileNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplyResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const orgId = user?.organizationId ?? "";
 
   const loadStatus = useCallback(async () => {
     const res = await workforceFetch("migration");
@@ -92,11 +96,17 @@ export default function WorkforceMigrationPage() {
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !orgId) return;
+    setFiles({});
+    setResult(null);
+    setError(null);
+    setFileNote(null);
+    setSelected("org-structure");
+    setStatus(null);
     loadStatus().catch((e) => {
       setError(e instanceof Error ? e.message : "Failed to load");
     });
-  }, [ready, loadStatus]);
+  }, [ready, orgId, loadStatus]);
 
   const step = useMemo(
     () => status?.steps.find((s) => s.id === selected) ?? null,
@@ -182,6 +192,7 @@ export default function WorkforceMigrationPage() {
                 setSelected(s.id);
                 setResult(null);
                 setError(null);
+                setFileNote(null);
               }}
               className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm ${
                 selected === s.id ? "bg-slate-50" : ""
@@ -242,26 +253,64 @@ export default function WorkforceMigrationPage() {
                   const file = e.target.files?.[0];
                   e.target.value = "";
                   if (!file || !step) return;
-                  const body = await fileToWorkforceImportBody(file);
-                  setFiles((prev) => ({
-                    ...prev,
-                    [step.id]: { body, name: file.name },
-                  }));
-                  setResult(null);
+                  setFileBusy(true);
+                  setFileNote(t("fileReading", { name: file.name }));
+                  setError(null);
+                  try {
+                    const body = await fileToWorkforceImportBody(file);
+                    const text = body.csv ?? "";
+                    const rowCount = text
+                      ? text.split(/\r?\n/).filter((l) => l.trim()).length
+                      : undefined;
+                    setFiles((prev) => ({
+                      ...prev,
+                      [step.id]: { body, name: file.name },
+                    }));
+                    setResult(null);
+                    setFileNote(
+                      t("fileReady", {
+                        name: file.name,
+                        size: Math.max(1, Math.round(file.size / 1024)),
+                        rows: rowCount ?? "—",
+                      }),
+                    );
+                  } catch (err) {
+                    setFileNote(null);
+                    setError(
+                      err instanceof Error ? err.message : t("fileReadError"),
+                    );
+                  } finally {
+                    setFileBusy(false);
+                  }
                 }}
               />
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
+                disabled={fileBusy}
                 onClick={() => inputRef.current?.click()}
               >
-                {t("chooseFile")}
+                {fileBusy ? t("fileReadingShort") : t("chooseFile")}
               </button>
               <p className="text-xs text-slate-500">
-                {stepFile
-                  ? t("fileSelected", { name: stepFile.name })
-                  : t("fileNone")}
+                {fileNote
+                  ? fileNote
+                  : stepFile
+                    ? t("fileSelected", { name: stepFile.name })
+                    : t("fileNone")}
               </p>
+              {status?.fields?.[step.id] ? (
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  <p>
+                    <span className="font-medium">{t("fieldsRequired")}: </span>
+                    {status.fields[step.id].required.join("; ") || "—"}
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-medium">{t("fieldsOptional")}: </span>
+                    {status.fields[step.id].optional.join("; ") || "—"}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="text-sm text-slate-600">{t("yearGridNoFile")}</p>
@@ -275,7 +324,7 @@ export default function WorkforceMigrationPage() {
                   disabled={Boolean(busy) || (step.needsFile && !stepFile)}
                   onClick={() => run("preview", () => postStep("preview"))}
                 >
-                  {busy === "preview" ? t("working") : t("preview")}
+                  {busy === "preview" ? t("sending") : t("preview")}
                 </button>
                 <button
                   type="button"
@@ -283,7 +332,7 @@ export default function WorkforceMigrationPage() {
                   disabled={Boolean(busy) || (step.needsFile && !stepFile)}
                   onClick={() => run("apply", () => postStep("apply"))}
                 >
-                  {busy === "apply" ? t("working") : t("apply")}
+                  {busy === "apply" ? t("sending") : t("apply")}
                 </button>
               </>
             ) : null}
@@ -328,6 +377,32 @@ export default function WorkforceMigrationPage() {
                       ))}
                   </tbody>
                 </table>
+              ) : null}
+              {result.rows.filter((r) => r.status !== "error").length > 0 ? (
+                <div>
+                  <p className="mb-1 text-xs font-medium text-slate-600">{t("sampleOk")}</p>
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr>
+                        <th className="py-1 pr-3">{t("colRow")}</th>
+                        <th className="py-1">{t("colSample")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.rows
+                        .filter((r) => r.status !== "error")
+                        .slice(0, 8)
+                        .map((r) => (
+                          <tr key={`${r.index}-${r.status}`}>
+                            <td className="py-1 pr-3 align-top">{r.index}</td>
+                            <td className="py-1 text-slate-700">
+                              {r.status}: {r.message}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : null}
             </div>
           ) : null}

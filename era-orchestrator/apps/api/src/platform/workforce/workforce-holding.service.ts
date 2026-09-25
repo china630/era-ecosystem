@@ -56,6 +56,7 @@ export class WorkforceHoldingService {
             id: true,
             name: true,
             operatingMode: true,
+            ownerId: true,
           },
         },
       },
@@ -80,27 +81,44 @@ export class WorkforceHoldingService {
       where: {
         userId,
         organizationId: { in: holdingOrgIds },
-        role: { in: HR_ROLES },
         deletedAt: null,
+        OR: [
+          { role: { in: HR_ROLES } },
+          { organization: { ownerId: userId } },
+        ],
       },
       include: {
         organization: { select: { id: true, name: true, operatingMode: true } },
       },
     });
 
-    if (!memberships.length) {
+    const byId = new Map<string, VisibleHrOrg>();
+    for (const m of memberships) {
+      byId.set(m.organization.id, {
+        organizationId: m.organization.id,
+        organizationName: m.organization.name,
+        operatingMode: m.organization.operatingMode,
+      });
+    }
+    for (const o of holding.organizations) {
+      if (o.operatingMode !== OrgOperatingMode.STANDALONE) continue;
+      if (o.ownerId === userId && !byId.has(o.id)) {
+        byId.set(o.id, {
+          organizationId: o.id,
+          organizationName: o.name,
+          operatingMode: o.operatingMode,
+        });
+      }
+    }
+
+    const orgs = [...byId.values()];
+    if (!orgs.length) {
       throw new ForbiddenException({
         code: "HOLDING_HR_FORBIDDEN",
         message:
           "Federated HR requires OWNER or HR_MANAGER membership on at least one holding organization",
       });
     }
-
-    const orgs: VisibleHrOrg[] = memberships.map((m) => ({
-      organizationId: m.organization.id,
-      organizationName: m.organization.name,
-      operatingMode: m.organization.operatingMode,
-    }));
 
     return {
       holding: { id: holding.id, name: holding.name },
@@ -125,11 +143,17 @@ export class WorkforceHoldingService {
       holdingId,
     );
     const visibleIds = orgs.map((o) => o.organizationId);
-    // Prefer active JWT org when it is in the HR intersection; otherwise first visible.
-    const hubOrgId = visibleIds.includes(activeOrganizationId)
-      ? activeOrganizationId
-      : visibleIds[0]!;
-    await this.entitlement.assertWorkforceHub(hubOrgId);
+    const hubOrder = visibleIds.includes(activeOrganizationId)
+      ? [activeOrganizationId, ...visibleIds.filter((id) => id !== activeOrganizationId)]
+      : visibleIds;
+    let hubOrgId: string | null = null;
+    for (const id of hubOrder) {
+      if (await this.entitlement.hasWorkforceHub(id)) {
+        hubOrgId = id;
+        break;
+      }
+    }
+    await this.entitlement.assertWorkforceHub(hubOrgId ?? hubOrder[0]!);
     const orgFilter = opts?.organizationId?.trim();
     if (orgFilter && !visibleIds.includes(orgFilter)) {
       throw new ForbiddenException({
@@ -229,12 +253,15 @@ export class WorkforceHoldingService {
     const memberships = await this.prisma.organizationMembership.findMany({
       where: {
         userId,
-        role: { in: HR_ROLES },
         deletedAt: null,
         organization: {
           deletedAt: null,
           operatingMode: OrgOperatingMode.STANDALONE,
         },
+        OR: [
+          { role: { in: HR_ROLES } },
+          { organization: { ownerId: userId } },
+        ],
       },
       include: {
         organization: { select: { id: true, name: true, operatingMode: true } },
@@ -265,10 +292,17 @@ export class WorkforceHoldingService {
       ? await this.resolveVisibleHrOrgs(userId, holdingId)
       : await this.resolveVisibleHrOrgsFromMemberships(userId);
     const visibleIds = orgs.map((o) => o.organizationId);
-    const hubOrgId = visibleIds.includes(activeOrganizationId)
-      ? activeOrganizationId
-      : visibleIds[0]!;
-    await this.entitlement.assertWorkforceHub(hubOrgId);
+    const hubOrder = visibleIds.includes(activeOrganizationId)
+      ? [activeOrganizationId, ...visibleIds.filter((id) => id !== activeOrganizationId)]
+      : visibleIds;
+    let hubOrgId: string | null = null;
+    for (const id of hubOrder) {
+      if (await this.entitlement.hasWorkforceHub(id)) {
+        hubOrgId = id;
+        break;
+      }
+    }
+    await this.entitlement.assertWorkforceHub(hubOrgId ?? hubOrder[0]!);
 
     const rows = await this.prisma.workforceEmployment.findMany({
       where: {

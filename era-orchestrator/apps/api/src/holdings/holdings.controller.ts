@@ -40,6 +40,14 @@ export class HoldingsController {
     return this.holdings.getHoldingsTreeForUser(user.sub);
   }
 
+  @Get(":id/member-candidates")
+  listMemberCandidates(
+    @CurrentUser() user: EraJwtPayload,
+    @Param("id") id: string,
+  ) {
+    return this.holdings.listMemberCandidates(user.sub, id);
+  }
+
   @Get(":id/members")
   listMembers(@CurrentUser() user: EraJwtPayload, @Param("id") id: string) {
     return this.holdings.listMembers(user.sub, id);
@@ -51,7 +59,14 @@ export class HoldingsController {
     @Param("id") id: string,
     @Body() dto: AddHoldingMemberDto,
   ) {
-    return this.holdings.addMember(user.sub, id, dto.userId, dto.role);
+    return this.holdings.addMember(
+      user.sub,
+      id,
+      dto.userId,
+      dto.role,
+      dto.email,
+      user.organizationId,
+    );
   }
 
   @Patch(":id/members/:userId")

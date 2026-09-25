@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { OrgOperatingMode, UserRole } from "@era365/database";
+import { OrgOperatingMode } from "@era365/database";
 import { WorkforceHoldingService } from "./workforce-holding.service";
 
 const USER = "11111111-1111-4111-8111-111111111111";
@@ -17,7 +17,10 @@ describe("WorkforceHoldingService", () => {
     organizationMembership: { findMany: jest.fn() },
     workforceEmployment: { findMany: jest.fn() },
   };
-  const entitlement = { assertWorkforceHub: jest.fn() };
+  const entitlement = {
+    assertWorkforceHub: jest.fn(),
+    hasWorkforceHub: jest.fn().mockResolvedValue(true),
+  };
   const employments = {
     resolvePersonProfiles: jest.fn(),
   };
@@ -58,8 +61,18 @@ describe("WorkforceHoldingService", () => {
 
   it("HR only on A: directory does not include B employments", async () => {
     mockHoldingWithOrgs([
-      { id: ORG_A, name: "Evrostar", operatingMode: OrgOperatingMode.STANDALONE },
-      { id: ORG_B, name: "Group", operatingMode: OrgOperatingMode.STANDALONE },
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+      {
+        id: ORG_B,
+        name: "Group",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: "not-the-hr-user",
+      },
     ]);
     prisma.organizationMembership.findMany.mockResolvedValue([
       {
@@ -98,8 +111,18 @@ describe("WorkforceHoldingService", () => {
 
   it("HR on A and B: one person row with two employments on card", async () => {
     mockHoldingWithOrgs([
-      { id: ORG_A, name: "Evrostar", operatingMode: OrgOperatingMode.STANDALONE },
-      { id: ORG_B, name: "Group", operatingMode: OrgOperatingMode.STANDALONE },
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+      {
+        id: ORG_B,
+        name: "Group",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
     ]);
     prisma.organizationMembership.findMany.mockResolvedValue([
       {
@@ -187,6 +210,57 @@ describe("WorkforceHoldingService", () => {
     );
   });
 
+  it("organization ownerId counts as HR even without membership row", async () => {
+    mockHoldingWithOrgs([
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+    ]);
+    prisma.organizationMembership.findMany.mockResolvedValue([]);
+    const { orgs } = await svc.resolveVisibleHrOrgs(USER, HOLDING);
+    expect(orgs.map((o) => o.organizationId)).toEqual([ORG_A]);
+  });
+
+  it("workforce hub may be a holding org other than the JWT org", async () => {
+    mockHoldingWithOrgs([
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+      {
+        id: ORG_B,
+        name: "Group",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+    ]);
+    prisma.organizationMembership.findMany.mockResolvedValue([
+      {
+        organization: {
+          id: ORG_A,
+          name: "Evrostar",
+          operatingMode: OrgOperatingMode.STANDALONE,
+        },
+      },
+      {
+        organization: {
+          id: ORG_B,
+          name: "Group",
+          operatingMode: OrgOperatingMode.STANDALONE,
+        },
+      },
+    ]);
+    prisma.workforceEmployment.findMany.mockResolvedValue([]);
+    entitlement.hasWorkforceHub.mockImplementation(async (id: string) => id === ORG_B);
+    await svc.directory(USER, ORG_A, HOLDING);
+    expect(entitlement.assertWorkforceHub).toHaveBeenCalledWith(ORG_B);
+  });
+
   it("holding not found → 404", async () => {
     prisma.holding.findFirst.mockResolvedValue(null);
     await expect(svc.resolveVisibleHrOrgs(USER, HOLDING)).rejects.toBeInstanceOf(
@@ -224,8 +298,18 @@ describe("WorkforceHoldingService", () => {
 
   it("audit union resolves only HR-visible org ids", async () => {
     mockHoldingWithOrgs([
-      { id: ORG_A, name: "Evrostar", operatingMode: OrgOperatingMode.STANDALONE },
-      { id: ORG_B, name: "Group", operatingMode: OrgOperatingMode.STANDALONE },
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+      {
+        id: ORG_B,
+        name: "Group",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: "not-the-hr-user",
+      },
     ]);
     prisma.organizationMembership.findMany.mockResolvedValue([
       {
@@ -242,7 +326,7 @@ describe("WorkforceHoldingService", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           deletedAt: null,
-          role: { in: [UserRole.OWNER, UserRole.HR_MANAGER] },
+          OR: expect.any(Array),
         }),
       }),
     );
@@ -250,8 +334,18 @@ describe("WorkforceHoldingService", () => {
 
   it("entitlement uses a visible HR org when JWT org is outside intersection", async () => {
     mockHoldingWithOrgs([
-      { id: ORG_A, name: "Evrostar", operatingMode: OrgOperatingMode.STANDALONE },
-      { id: ORG_B, name: "Group", operatingMode: OrgOperatingMode.STANDALONE },
+      {
+        id: ORG_A,
+        name: "Evrostar",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
+      {
+        id: ORG_B,
+        name: "Group",
+        operatingMode: OrgOperatingMode.STANDALONE,
+        ownerId: USER,
+      },
     ]);
     prisma.organizationMembership.findMany.mockResolvedValue([
       {

@@ -80,7 +80,8 @@ RUN printf '%s\n' \
     'const b=require("./runtime-cjs/core/pricing-bundle-seed");' \
     'const k=require("./runtime-cjs/core/pricing-module-keys");' \
     'const h=require("./runtime-cjs/core/hotel-module-keys");' \
-    'module.exports=Object.assign({},c,s,b,k,h);' \
+    'const canon=require("./runtime-cjs/core/pricing-catalog-canon");' \
+    'module.exports=Object.assign({},c,s,b,k,h,canon);' \
     > /app/packages/database/index.cjs \
   && node -e "\
 const fs=require('fs');\
