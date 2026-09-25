@@ -349,6 +349,7 @@ export default function TimesheetsPage() {
             hours: type === "OFF" ? "0" : "8",
             lockedFromAbsence: false,
             status: "DRAFT",
+            source: "ops_grid",
           },
         ];
       });
@@ -690,10 +691,6 @@ export default function TimesheetsPage() {
                           {src === "faceid" ? (
                             <span className="block text-[9px] font-semibold uppercase tracking-wide text-[#0B6E99]">
                               {t("sourceFaceid")}
-                            </span>
-                          ) : src === "roster_plan" ? (
-                            <span className="block text-[9px] font-medium text-[#64748B]">
-                              {t("sourceRoster")}
                             </span>
                           ) : null}
                         </button>

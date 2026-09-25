@@ -19,7 +19,8 @@ const ACTOR = "33333333-3333-4333-8333-333333333333";
 
 describe("WorkforceRosterService.materializeMonth", () => {
   const prisma: any = {
-    workforceTimesheet: { findFirst: jest.fn() },
+    workforceTimesheet: { findFirst: jest.fn(), findUnique: jest.fn() },
+    workforceAbsence: { findMany: jest.fn() },
     workforceEmployment: { findMany: jest.fn(), count: jest.fn() },
     workforceShiftAssignment: { findMany: jest.fn() },
     workforceBrigadeMember: { findMany: jest.fn() },
@@ -368,6 +369,63 @@ describe("WorkforceRosterService.materializeMonth", () => {
     expect(jan5?.type).toBe("WORK");
     expect(jan5?.placeCode).toBe("SITE_A");
     expect(prisma.workforceTimesheetEntry.upsert).not.toHaveBeenCalled();
+  });
+
+  it("previewMonth marks two same-day assignments as a conflict", async () => {
+    const other = "99999999-9999-4999-8999-999999999999";
+    prisma.workforceShiftAssignment.findMany.mockResolvedValue([
+      {
+        id: ASG,
+        organizationId: ORG_A,
+        placeId: PLACE,
+        cycleId: CYCLE,
+        employmentId: EMP,
+        brigadeId: null,
+        effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
+        effectiveTo: null,
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        organizationId: ORG_A,
+        placeId: other,
+        cycleId: CYCLE,
+        employmentId: EMP,
+        brigadeId: null,
+        effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
+        effectiveTo: null,
+      },
+    ]);
+    prisma.workforcePlace.findMany.mockResolvedValue([
+      { id: PLACE, code: "SITE_A", name: "Site A" },
+      { id: other, code: "SITE_B", name: "Site B" },
+    ]);
+    const preview = await svc.previewMonth(ORG_A, 2026, 1);
+    const jan5 = preview.rows[0].cells.find((c) => c.day === 5);
+    expect(jan5?.conflict).toBe(true);
+    expect([...(jan5?.conflictPlaces ?? [])].sort()).toEqual(["SITE_A", "SITE_B"]);
+    expect(jan5?.type).toBe("WORK");
+  });
+
+  it("compareMonth does not treat a copied roster plan as fact", async () => {
+    prisma.workforceTimesheet.findUnique.mockResolvedValue({
+      id: TS,
+      organizationId: ORG_A,
+      year: 2026,
+      month: 1,
+    });
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
+      {
+        employmentId: EMP,
+        workDate: new Date("2026-01-05T00:00:00.000Z"),
+        type: WorkforceTimesheetEntryType.WORK,
+        source: "roster_plan",
+      },
+    ]);
+    prisma.workforceAbsence.findMany.mockResolvedValue([]);
+    const body = await svc.compareMonth(ORG_A, 2026, 1);
+    const jan5 = body.rows.find((r) => r.date === "2026-01-05");
+    expect(jan5?.kind).toBe("no_show");
+    expect(jan5?.fact).toBeNull();
   });
 
   it("upsertOverride EXTRA without placeId is rejected", async () => {

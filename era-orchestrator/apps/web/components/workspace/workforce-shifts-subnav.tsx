@@ -25,6 +25,11 @@ const LINKS = [
     exact: false,
     labelKey: "brigadesHeading" as const,
   },
+  {
+    href: "/workspace/workforce/shifts/assignments",
+    exact: false,
+    labelKey: "assignmentsHeading" as const,
+  },
 ];
 
 function isActive(pathname: string, href: string, exact: boolean): boolean {

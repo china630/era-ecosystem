@@ -15,6 +15,7 @@ import {
   Database,
   Fingerprint,
   FolderInput,
+  GitCompare,
   Gauge,
   LayoutGrid,
   MapPin,
@@ -269,6 +270,14 @@ export function OrchSidebar({
             label={t("wfTimesheets")}
             isActive={pathname.startsWith("/workspace/workforce/timesheets")}
             icon={Table2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/plan-fact"
+            label={t("wfPlanFact")}
+            isActive={pathname.startsWith("/workspace/workforce/plan-fact")}
+            icon={GitCompare}
             nested
             onNavClick={onNavClick}
           />
