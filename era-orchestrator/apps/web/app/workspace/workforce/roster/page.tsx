@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import {
   CatalogField,
+  catalogKindForOptions,
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -19,15 +20,18 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
   parseOrgUnitItems,
+  parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type Place = { id: string; code: string; name: string; status: string };
 type Cycle = { id: string; code: string; name: string };
@@ -56,6 +60,20 @@ type PreviewRow = {
   orgUnitId: string | null;
   globalPersonId: string | null;
   cells: PreviewCell[];
+};
+
+type AssignmentRow = {
+  id: string;
+  placeId: string;
+  cycleId: string;
+  employmentId: string | null;
+  brigadeId: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  place?: { code: string; name: string } | null;
+  cycle?: { code: string; name: string } | null;
+  brigade?: { code: string; name: string } | null;
+  employment?: { id: string; globalPersonId?: string; staffCode?: string | null } | null;
 };
 
 type PersonBrief = {
@@ -88,6 +106,18 @@ async function loadActiveEmployments(): Promise<{
   return { items, persons };
 }
 
+function asRows<T>(raw: unknown): T[] {
+  if (Array.isArray(raw)) return raw as T[];
+  if (raw && typeof raw === "object" && Array.isArray((raw as { items?: T[] }).items)) {
+    return (raw as { items: T[] }).items;
+  }
+  return [];
+}
+
+function ymdOf(value: string | null | undefined): string {
+  return String(value ?? "").slice(0, 10);
+}
+
 function placeColor(code: string | null | undefined): string {
   if (!code) return "#ECF0F1";
   let h = 0;
@@ -104,7 +134,6 @@ export default function WorkforceRosterPage() {
   const anchorYear = bakuYmd().y;
   const [year, setYear] = useState(anchorYear);
   const [month, setMonth] = useState(() => bakuYmd().m);
-  const [preserveManual, setPreserveManual] = useState(false);
   const [filterPlaceId, setFilterPlaceId] = useState("");
   const [filterOrgUnitId, setFilterOrgUnitId] = useState("");
 
@@ -122,6 +151,11 @@ export default function WorkforceRosterPage() {
   const [busy, setBusy] = useState(false);
   const [materializeMsg, setMaterializeMsg] = useState<string | null>(null);
   const [materializeOpen, setMaterializeOpen] = useState(false);
+  const [overwriteFacts, setOverwriteFacts] = useState(false);
+  const [overwriteConfirm, setOverwriteConfirm] = useState(false);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  const [editAssignmentId, setEditAssignmentId] = useState<string | null>(null);
+  const [endAssignment, setEndAssignment] = useState<AssignmentRow | null>(null);
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [targetKind, setTargetKind] = useState<"employment" | "brigade">(
@@ -169,13 +203,14 @@ export default function WorkforceRosterPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [pRes, cRes, bRes, eRes, uRes, tRes] = await Promise.all([
+    const [pRes, cRes, bRes, eRes, uRes, tRes, aRes] = await Promise.all([
       wfFetch("places?status=ACTIVE"),
       wfFetch("shift-cycles"),
       wfFetch("brigades"),
       loadActiveEmployments(),
       wfFetch("org-units"),
       wfFetch("shift-types"),
+      wfFetch("shift-assignments"),
     ]);
     if (await isWorkforceGate403(pRes)) {
       setNotEntitled(true);
@@ -183,10 +218,11 @@ export default function WorkforceRosterPage() {
       return;
     }
     setNotEntitled(false);
-    if (pRes.ok) setPlaces(await pRes.json());
-    if (cRes.ok) setCycles(await cRes.json());
-    if (bRes.ok) setBrigades(await bRes.json());
-    if (tRes.ok) setShiftTypes(await tRes.json());
+    if (pRes.ok) setPlaces(asRows<Place>(await pRes.json()));
+    if (cRes.ok) setCycles(asRows<Cycle>(await cRes.json()));
+    if (bRes.ok) setBrigades(asRows<Brigade>(await bRes.json()));
+    if (tRes.ok) setShiftTypes(asRows(await tRes.json()));
+    if (aRes.ok) setAssignments(asRows<AssignmentRow>(await aRes.json()));
     setEmployments(eRes.items);
     if (eRes.persons) {
       setPersons((prev) => ({ ...prev, ...eRes.persons }));
@@ -220,13 +256,19 @@ export default function WorkforceRosterPage() {
       setFormError(t("requiredFields"));
       return;
     }
-    if (targetKind === "employment" && !formEmploymentId) {
-      setFormError(t("requiredFields"));
+    if (formTo && formTo < formFrom) {
+      setFormError(t("assignmentRange"));
       return;
     }
-    if (targetKind === "brigade" && !formBrigadeId) {
-      setFormError(t("requiredFields"));
-      return;
+    if (!editAssignmentId) {
+      if (targetKind === "employment" && !formEmploymentId) {
+        setFormError(t("requiredFields"));
+        return;
+      }
+      if (targetKind === "brigade" && !formBrigadeId) {
+        setFormError(t("requiredFields"));
+        return;
+      }
     }
     setBusy(true);
     setFormError(null);
@@ -236,19 +278,53 @@ export default function WorkforceRosterPage() {
       effectiveFrom: formFrom,
       effectiveTo: formTo || null,
     };
-    if (targetKind === "employment") body.employmentId = formEmploymentId;
-    else body.brigadeId = formBrigadeId;
-    const res = await wfFetch("shift-assignments", {
-      method: "POST",
+    if (!editAssignmentId) {
+      if (targetKind === "employment") body.employmentId = formEmploymentId;
+      else body.brigadeId = formBrigadeId;
+    }
+    const path = editAssignmentId
+      ? `shift-assignments/${editAssignmentId}`
+      : "shift-assignments";
+    const res = await wfFetch(path, {
+      method: editAssignmentId ? "PATCH" : "POST",
       body: JSON.stringify(body),
     });
     setBusy(false);
     if (!res.ok) {
-      setFormError(t("saveError"));
+      const err = await parseWorkforceApiError(res);
+      setFormError(
+        err.code === "ASSIGNMENT_OVERLAP"
+          ? t("assignmentOverlap")
+          : err.code === "ASSIGNMENT_RANGE"
+            ? t("assignmentRange")
+            : err.message || t("saveError"),
+      );
       return;
     }
     setAssignOpen(false);
+    setEditAssignmentId(null);
     await load();
+    await loadPreview();
+  }
+
+  async function closeAssignment(row: AssignmentRow) {
+    setBusy(true);
+    const from = ymdOf(row.effectiveFrom);
+    const today = todayBakuYmd();
+    const to = today < from ? from : today;
+    const res = await wfFetch(`shift-assignments/${row.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ effectiveTo: to }),
+    });
+    setBusy(false);
+    setEndAssignment(null);
+    if (!res.ok) {
+      const err = await parseWorkforceApiError(res);
+      setError(err.message || t("saveError"));
+      return;
+    }
+    await load();
+    await loadPreview();
   }
 
   async function saveOverride() {
@@ -278,7 +354,8 @@ export default function WorkforceRosterPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      setFormError(t("saveError"));
+      const err = await parseWorkforceApiError(res);
+      setFormError(err.message || t("saveError"));
       return;
     }
     setOverrideOpen(false);
@@ -286,6 +363,15 @@ export default function WorkforceRosterPage() {
   }
 
   async function materialize() {
+    if (overwriteFacts) {
+      setMaterializeOpen(false);
+      setOverwriteConfirm(true);
+      return;
+    }
+    await runMaterialize(false);
+  }
+
+  async function runMaterialize(overwrite: boolean) {
     setBusy(true);
     setMaterializeMsg(null);
     setError(null);
@@ -294,19 +380,26 @@ export default function WorkforceRosterPage() {
     );
     if (!monthRes.ok) {
       setBusy(false);
-      setError(t("materializeError"));
+      const err = await parseWorkforceApiError(monthRes);
+      setError(err.message || t("materializeError"));
       return;
     }
     const sheet = await monthRes.json();
-    const id = sheet.id as string;
-    const qs = preserveManual ? "?preserveManual=true" : "";
+    const id = (sheet?.timesheet?.id ?? sheet?.id) as string | undefined;
+    if (!id) {
+      setBusy(false);
+      setError(t("materializeError"));
+      return;
+    }
+    const qs = overwrite ? "?overwrite=true" : "";
     const res = await wfFetch(`timesheets/${id}/materialize-roster${qs}`, {
       method: "POST",
       body: "{}",
     });
     setBusy(false);
     if (!res.ok) {
-      setError(t("materializeError"));
+      const err = await parseWorkforceApiError(res);
+      setError(err.message || t("materializeError"));
       return;
     }
     const summary = await res.json();
@@ -315,8 +408,9 @@ export default function WorkforceRosterPage() {
         touched: summary.cellsTouched ?? 0,
         locked: summary.cellsSkippedLocked ?? 0,
         manual: summary.cellsSkippedManual ?? 0,
-      }),
+      }) + (summary.absenceSyncFailed ? ` ${t("absenceSyncFailed")}` : ""),
     );
+    setMaterializeOpen(false);
     await loadPreview();
   }
 
@@ -343,10 +437,11 @@ export default function WorkforceRosterPage() {
     value: c.id,
     label: `${c.code} — ${c.name}`,
   }));
-  const empLabel = (empId: string) => {
+  const empLabel = (empId: string, extraPersonId?: string | null) => {
     const row = previewRows.find((r) => r.employmentId === empId);
     const emp = employments.find((e) => e.id === empId);
-    const personId = row?.globalPersonId || emp?.globalPersonId || "";
+    const personId =
+      extraPersonId || row?.globalPersonId || emp?.globalPersonId || "";
     const person = personId ? persons[personId] : undefined;
     const name = person?.displayName?.trim();
     if (name) return name;
@@ -420,13 +515,15 @@ export default function WorkforceRosterPage() {
               type="button"
               className={PRIMARY_BUTTON_CLASS}
               onClick={() => {
+                setEditAssignmentId(null);
                 setFormPlaceId("");
                 setFormCycleId("");
                 setFormEmploymentId("");
                 setFormBrigadeId("");
-                setFormFrom("");
+                setFormFrom(todayBakuYmd());
                 setFormTo("");
                 setFormError(null);
+                setTargetKind("brigade");
                 setAssignOpen(true);
               }}
             >
@@ -462,7 +559,7 @@ export default function WorkforceRosterPage() {
           options={monthOptions}
         />
         <CatalogField
-          kind="ENTITY_REF"
+          kind={catalogKindForOptions(placeOptions.length)}
           label={t("filterPlace")}
           value={filterPlaceId}
           onChange={(v) => setFilterPlaceId(String(v))}
@@ -470,7 +567,7 @@ export default function WorkforceRosterPage() {
           emptyLabel={t("allPlaces")}
         />
         <CatalogField
-          kind="ENTITY_REF"
+          kind={catalogKindForOptions(unitOptions.length)}
           label={t("filterOrgUnit")}
           value={filterOrgUnitId}
           onChange={(v) => setFilterOrgUnitId(String(v))}
@@ -478,6 +575,91 @@ export default function WorkforceRosterPage() {
           emptyLabel={t("allUnits")}
         />
       </EraListFilterBar>
+
+      <div className={CARD_CONTAINER_CLASS}>
+        <h2 className="mb-2 text-sm font-semibold">{t("assignmentsHeading")}</h2>
+        {assignments.length === 0 ? (
+          <p className="text-sm text-[#7F8C8D]">{t("assignmentsEmpty")}</p>
+        ) : (
+          <div className={`${DATA_TABLE_VIEWPORT_CLASS} overflow-x-auto`}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTarget")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPlace")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCycle")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFrom")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colUntil")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((a) => {
+                  const from = ymdOf(a.effectiveFrom);
+                  const toYmd = a.effectiveTo ? ymdOf(a.effectiveTo) : "";
+                  const to = toYmd || "—";
+                  const stillOpen = !toYmd || toYmd > todayBakuYmd();
+                  const target = a.brigade
+                    ? `${a.brigade.code} — ${a.brigade.name}`
+                    : a.employmentId
+                      ? empLabel(a.employmentId, a.employment?.globalPersonId)
+                      : "—";
+                  return (
+                    <tr key={a.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{target}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {a.place ? `${a.place.code} — ${a.place.name}` : "—"}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {a.cycle ? `${a.cycle.code} — ${a.cycle.name}` : "—"}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{from}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{to}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("editAssignment")}
+                            aria-label={t("editAssignment")}
+                            onClick={() => {
+                              setEditAssignmentId(a.id);
+                              setFormPlaceId(a.placeId);
+                              setFormCycleId(a.cycleId);
+                              setFormFrom(from);
+                              setFormTo(toYmd);
+                              setTargetKind(a.brigadeId ? "brigade" : "employment");
+                              setFormBrigadeId(a.brigadeId ?? "");
+                              setFormEmploymentId(a.employmentId ?? "");
+                              setFormError(null);
+                              setAssignOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                          </button>
+                          {stillOpen ? (
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("endAssignment")}
+                            aria-label={t("endAssignment")}
+                            onClick={() => setEndAssignment(a)}
+                          >
+                            <span className="text-sm font-bold text-[#C0392B]" aria-hidden>
+                              ×
+                            </span>
+                          </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div className={CARD_CONTAINER_CLASS}>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -564,7 +746,7 @@ export default function WorkforceRosterPage() {
       <ModalShell
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
-        title={t("addAssignment")}
+        title={editAssignmentId ? t("editAssignment") : t("addAssignment")}
         closeLabel={tCommon("close")}
         footer={
           <ModalFooter
@@ -577,6 +759,8 @@ export default function WorkforceRosterPage() {
         }
       >
         <div className="space-y-3">
+          {editAssignmentId ? null : (
+            <>
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("targetKind")}
@@ -600,7 +784,7 @@ export default function WorkforceRosterPage() {
             />
           ) : (
             <CatalogField
-              kind="ENTITY_REF"
+              kind={catalogKindForOptions(brigadeOptions.length)}
               label={t("brigade")}
               value={formBrigadeId}
               onChange={(v) => setFormBrigadeId(String(v))}
@@ -608,8 +792,10 @@ export default function WorkforceRosterPage() {
               emptyLabel={tCommon("select")}
             />
           )}
+            </>
+          )}
           <CatalogField
-            kind="ENTITY_REF"
+            kind={catalogKindForOptions(placeOptions.length)}
             label={t("colPlace")}
             value={formPlaceId}
             onChange={(v) => setFormPlaceId(String(v))}
@@ -617,7 +803,7 @@ export default function WorkforceRosterPage() {
             emptyLabel={tCommon("select")}
           />
           <CatalogField
-            kind="ENTITY_REF"
+            kind={catalogKindForOptions(cycleOptions.length)}
             label={t("colCycle")}
             value={formCycleId}
             onChange={(v) => setFormCycleId(String(v))}
@@ -732,21 +918,52 @@ export default function WorkforceRosterPage() {
             onChange={(v) => setMonth(Number(v))}
             options={monthOptions}
           />
+          <p className="text-sm text-[#7F8C8D]">{t("materializeHint")}</p>
           <CatalogField
             kind="CLOSED_SMALL"
-            label={t("preserveManual")}
-            value={preserveManual ? "yes" : "no"}
-            onChange={(v) => setPreserveManual(v === "yes")}
+            label={t("overwriteFacts")}
+            value={overwriteFacts ? "yes" : "no"}
+            onChange={(v) => setOverwriteFacts(v === "yes")}
             options={[
-              { value: "no", label: t("preserveNo") },
-              { value: "yes", label: t("preserveYes") },
+              { value: "no", label: t("fillEmptyOnly") },
+              { value: "yes", label: t("overwriteFacts") },
             ]}
+            hint={t("overwriteFactsHint")}
           />
           {materializeMsg ? (
             <p className="text-sm text-[var(--era-muted)]">{materializeMsg}</p>
           ) : null}
         </div>
       </ModalShell>
+      <WorkforceConfirmDialog
+        open={overwriteConfirm}
+        title={t("materialize")}
+        body={t("overwriteConfirm")}
+        confirmLabel={t("materialize")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        onCancel={() => {
+          setOverwriteConfirm(false);
+          setMaterializeOpen(true);
+        }}
+        onConfirm={() => {
+          setOverwriteConfirm(false);
+          void runMaterialize(true);
+        }}
+      />
+      <WorkforceConfirmDialog
+        open={endAssignment !== null}
+        title={t("endAssignment")}
+        body={t("endAssignmentConfirm")}
+        confirmLabel={t("endAssignment")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        onCancel={() => setEndAssignment(null)}
+        onConfirm={() => {
+          const row = endAssignment;
+          if (row) void closeAssignment(row);
+        }}
+      />
     </div>
   );
 }

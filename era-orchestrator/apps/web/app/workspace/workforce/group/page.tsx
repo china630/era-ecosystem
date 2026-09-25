@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { SquareArrowOutUpRight } from "lucide-react";
@@ -18,6 +18,7 @@ import {
   EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
+  ModalShell,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -30,6 +31,7 @@ import {
   parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
+import { GroupPersonCard } from "./group-person-card";
 
 type Holding = {
   id: string;
@@ -86,6 +88,8 @@ export default function WorkforceGroupPage() {
   const [error, setError] = useState<string | null>(null);
   const [holdingsFailed, setHoldingsFailed] = useState(false);
   const skipPagedFetch = useRef(false);
+  const [cardPersonId, setCardPersonId] = useState<string | null>(null);
+  const [cardPersonName, setCardPersonName] = useState("");
 
   const filtersOff = holdings.length === 0;
 
@@ -361,21 +365,25 @@ export default function WorkforceGroupPage() {
                 ) : (
                   items.map((row) => {
                     const profile = persons[row.globalPersonId];
-                    const cardHref = `/workspace/workforce/group/persons/${row.globalPersonId}?holdingId=${holdingId}`;
                     const name =
                       row.displayName?.trim() ||
                       (profile?.accessDenied
                         ? t("maskedPerson")
                         : tCommon("unnamedPerson"));
+                    const openCard = () => {
+                      setCardPersonId(row.globalPersonId);
+                      setCardPersonName(name);
+                    };
                     return (
                       <tr key={row.globalPersonId} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
-                          <Link
-                            href={cardHref}
+                          <button
+                            type="button"
                             className="text-[#2980B9] hover:underline"
+                            onClick={openCard}
                           >
                             {name}
-                          </Link>
+                          </button>
                         </td>
                         <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
                           {profile?.accessDenied
@@ -402,17 +410,18 @@ export default function WorkforceGroupPage() {
                           </ul>
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>
-                          <Link
-                            href={cardHref}
+                          <button
+                            type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
                             title={t("openCard")}
                             aria-label={t("openCard")}
+                            onClick={openCard}
                           >
                             <SquareArrowOutUpRight
                               className="h-4 w-4 text-[#2980B9]"
                               aria-hidden
                             />
-                          </Link>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -441,6 +450,20 @@ export default function WorkforceGroupPage() {
           }
         />
       )}
+      <ModalShell
+        open={cardPersonId !== null}
+        onClose={() => setCardPersonId(null)}
+        title={cardPersonName || t("personCard")}
+        closeLabel={tCommon("close")}
+      >
+        {cardPersonId ? (
+          <GroupPersonCard
+            globalPersonId={cardPersonId}
+            holdingId={holdingId}
+            variant="modal"
+          />
+        ) : null}
+      </ModalShell>
     </div>
   );
 }

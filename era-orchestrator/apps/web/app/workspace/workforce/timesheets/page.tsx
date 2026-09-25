@@ -500,7 +500,7 @@ export default function TimesheetsPage() {
         />
       </label>
       <CatalogField
-        kind="ENTITY_REF"
+        kind={orgFilterOptions.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
         label={t("filterOrgUnit")}
         value={orgUnitId}
         onChange={(next) => {

@@ -171,6 +171,47 @@ describe("WorkforceRosterService.materializeMonth", () => {
     expect(upsertedDates).not.toContain("2026-01-06");
   });
 
+  it("default does not overwrite occupied cells", async () => {
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
+      {
+        employmentId: EMP,
+        workDate: new Date("2026-01-05T00:00:00.000Z"),
+        status: WorkforceTimesheetEntryStatus.DRAFT,
+        lockedFromAbsence: false,
+        source: "ops_grid",
+      },
+    ]);
+    const result = await svc.materializeMonth(ORG_A, TS, ACTOR);
+    expect(result.cellsSkippedManual).toBeGreaterThanOrEqual(1);
+    const upsertedDates = prisma.workforceTimesheetEntry.upsert.mock.calls.map(
+      (c: [{ where: { timesheetId_employmentId_workDate: { workDate: Date } } }]) =>
+        c[0].where.timesheetId_employmentId_workDate.workDate
+          .toISOString()
+          .slice(0, 10),
+    );
+    expect(upsertedDates).not.toContain("2026-01-05");
+  });
+
+  it("overwriteFacts writes over ops_grid and faceid", async () => {
+    prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
+      {
+        employmentId: EMP,
+        workDate: new Date("2026-01-05T00:00:00.000Z"),
+        status: WorkforceTimesheetEntryStatus.DRAFT,
+        lockedFromAbsence: false,
+        source: "faceid",
+      },
+    ]);
+    await svc.materializeMonth(ORG_A, TS, ACTOR, { overwriteFacts: true });
+    const upsertedDates = prisma.workforceTimesheetEntry.upsert.mock.calls.map(
+      (c: [{ where: { timesheetId_employmentId_workDate: { workDate: Date } } }]) =>
+        c[0].where.timesheetId_employmentId_workDate.workDate
+          .toISOString()
+          .slice(0, 10),
+    );
+    expect(upsertedDates).toContain("2026-01-05");
+  });
+
   it("preserveManual skips ops_grid cells", async () => {
     prisma.workforceTimesheetEntry.findMany.mockResolvedValue([
       {
@@ -183,6 +224,7 @@ describe("WorkforceRosterService.materializeMonth", () => {
     ]);
     const result = await svc.materializeMonth(ORG_A, TS, ACTOR, {
       preserveManual: true,
+      overwriteFacts: true,
     });
     expect(result.cellsSkippedManual).toBeGreaterThanOrEqual(1);
     const upsertedDates = prisma.workforceTimesheetEntry.upsert.mock.calls.map(

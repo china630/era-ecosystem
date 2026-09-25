@@ -216,6 +216,7 @@ export function CatalogField({
         onChange={(v) => onChange(v)}
         onQueryChange={onQueryChange}
         serverSearch={serverSearch ?? Boolean(onQueryChange)}
+        emptyLabel={required ? null : emptyLabel}
       />
     );
   }
@@ -263,6 +264,7 @@ function CatalogCombobox({
   onChange,
   onQueryChange,
   serverSearch,
+  emptyLabel,
 }: {
   label: string;
   required?: boolean;
@@ -278,6 +280,7 @@ function CatalogCombobox({
   onChange: (v: string) => void;
   onQueryChange?: (q: string) => void;
   serverSearch?: boolean;
+  emptyLabel?: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -327,7 +330,6 @@ function CatalogCombobox({
     updateCoords();
     const onReposition = () => updateCoords();
     window.addEventListener("resize", onReposition);
-    // Capture scroll from modal body / nested overflow containers
     window.addEventListener("scroll", onReposition, true);
     return () => {
       window.removeEventListener("resize", onReposition);
@@ -349,6 +351,13 @@ function CatalogCombobox({
     onQueryChange?.(next);
   }
 
+  function clearValue() {
+    onChange("");
+    setQuery("");
+    onQueryChange?.("");
+    setOpen(true);
+  }
+
   const list =
     open && !disabled && coords && typeof document !== "undefined"
       ? createPortal(
@@ -364,14 +373,31 @@ function CatalogCombobox({
             }}
             role="listbox"
           >
-            {filtered.length === 0 ? (
+            {emptyLabel ? (
+              <li role="option">
+                <button
+                  type="button"
+                  className="block w-full px-2 py-1.5 text-left text-sm text-[#7F8C8D] hover:bg-[#EBEDF0]"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    clearValue();
+                    setOpen(false);
+                  }}
+                >
+                  {emptyLabel}
+                </button>
+              </li>
+            ) : null}
+            {filtered.length === 0 && query.trim() ? (
               <li className="px-2 py-1.5 text-sm text-[#95A5A6]">No matches</li>
             ) : (
               filtered.map((opt) => (
                 <li key={opt.value} role="option">
                   <button
                     type="button"
-                    className="block w-full px-2 py-1.5 text-left text-sm hover:bg-[#EBEDF0]"
+                    className={`block w-full px-2 py-1.5 text-left text-sm hover:bg-[#EBEDF0] ${
+                      opt.value === value ? "bg-[#EAF2F8] font-medium" : ""
+                    }`}
                     disabled={opt.disabled}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
@@ -405,13 +431,14 @@ function CatalogCombobox({
           id={id}
           name={name}
           disabled={disabled}
-          className={`${MODAL_INPUT_CLASS} min-w-0 max-w-full ${fieldWidthClass(widthPreset)}`.trim()}
+          className={`${MODAL_INPUT_CLASS} min-w-0 max-w-full pr-8 ${fieldWidthClass(widthPreset)}`.trim()}
           value={open ? query : selectedLabel}
           placeholder="…"
           autoComplete="off"
           onFocus={() => {
             setOpen(true);
-            if (!serverSearch) setQuery("");
+            setQuery("");
+            if (serverSearch) onQueryChange?.("");
           }}
           onChange={(e) => {
             handleQueryChange(e.target.value);
@@ -421,6 +448,20 @@ function CatalogCombobox({
             window.setTimeout(() => setOpen(false), 150);
           }}
         />
+        {value && !disabled ? (
+          <button
+            type="button"
+            className="absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-[#C0392B] hover:bg-[#FDEDEC]"
+            aria-label="Clear"
+            title="Clear"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => clearValue()}
+          >
+            <span className="text-sm leading-none" aria-hidden>
+              ×
+            </span>
+          </button>
+        ) : null}
         {list}
       </div>
     </Shell>
