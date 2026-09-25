@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { HoldingAccessRole, UserRole } from "@era365/database";
+import { HoldingAccessRole, InviteStatus, UserRole } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
   CreateHoldingDto,
@@ -154,26 +154,120 @@ export class HoldingsService {
     });
   }
 
+  async listMemberCandidates(ownerUserId: string, holdingId: string) {
+    await this.assertHoldingOwner(ownerUserId, holdingId);
+    const holding = await this.prisma.holding.findFirst({
+      where: { id: holdingId, isDeleted: false },
+      include: { organizations: { where: { deletedAt: null }, select: { id: true } } },
+    });
+    if (!holding) {
+      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
+    }
+    const orgIds = holding.organizations.map((o) => o.id);
+    if (!orgIds.length) return [];
+    const existing = await this.prisma.holdingMembership.findMany({
+      where: { holdingId },
+      select: { userId: true },
+    });
+    const skip = new Set(existing.map((m) => m.userId));
+    skip.add(holding.ownerId);
+    const rows = await this.prisma.organizationMembership.findMany({
+      where: {
+        organizationId: { in: orgIds },
+        deletedAt: null,
+        userId: { notIn: [...skip] },
+      },
+      include: {
+        user: { select: { id: true, email: true } },
+      },
+    });
+    const byUser = new Map<string, { userId: string; email: string }>();
+    for (const row of rows) {
+      if (!byUser.has(row.userId)) {
+        byUser.set(row.userId, { userId: row.user.id, email: row.user.email });
+      }
+    }
+    return [...byUser.values()].sort((a, b) => a.email.localeCompare(b.email));
+  }
+
   async addMember(
     ownerUserId: string,
     holdingId: string,
-    userId: string,
+    userId: string | undefined,
     role: HoldingAccessRole,
+    email?: string,
+    preferredOrganizationId?: string | null,
   ) {
     await this.assertHoldingOwner(ownerUserId, holdingId);
+    let resolvedUserId = userId?.trim() || "";
+    if (!resolvedUserId && email?.trim()) {
+      const normalized = email.trim().toLowerCase();
+      const u = await this.prisma.user.findUnique({
+        where: { email: normalized },
+      });
+      if (!u) {
+        const holdingOrgs = await this.prisma.holding.findUnique({
+          where: { id: holdingId },
+          include: {
+            organizations: {
+              where: { deletedAt: null },
+              select: { id: true },
+            },
+          },
+        });
+        const orgIds = holdingOrgs?.organizations.map((o) => o.id) ?? [];
+        const orgId =
+          (preferredOrganizationId && orgIds.includes(preferredOrganizationId)
+            ? preferredOrganizationId
+            : orgIds[0]) ?? null;
+        if (!orgId) {
+          throw new BadRequestException(
+            "Attach an organization first, then invite this email from that company's team.",
+          );
+        }
+        const pending = await this.prisma.organizationInvite.findFirst({
+          where: {
+            organizationId: orgId,
+            email: normalized,
+            status: InviteStatus.PENDING,
+            deletedAt: null,
+          },
+        });
+        if (!pending) {
+          await this.prisma.organizationInvite.create({
+            data: {
+              organizationId: orgId,
+              email: normalized,
+              role: UserRole.USER,
+              organizationRoleCode: UserRole.USER,
+              invitedByUserId: ownerUserId,
+            },
+          });
+        }
+        return {
+          invited: true,
+          email: normalized,
+          organizationId: orgId,
+        };
+      }
+      resolvedUserId = u.id;
+    }
+    if (!resolvedUserId) {
+      throw new BadRequestException("userId or email is required");
+    }
     const h = await this.prisma.holding.findUniqueOrThrow({
       where: { id: holdingId },
     });
-    if (userId === h.ownerId) {
+    if (resolvedUserId === h.ownerId) {
       throw new BadRequestException(
         "Owner already has full access; use another user",
       );
     }
-    const u = await this.prisma.user.findUnique({ where: { id: userId } });
+    const u = await this.prisma.user.findUnique({ where: { id: resolvedUserId } });
     if (!u) throw new NotFoundException("User not found");
     try {
       return await this.prisma.holdingMembership.create({
-        data: { userId, holdingId, role },
+        data: { userId: resolvedUserId, holdingId, role },
         include: {
           user: {
             select: {

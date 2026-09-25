@@ -99,8 +99,17 @@ export async function isWorkforceGate403(res: Response): Promise<boolean> {
   const body = (await res
     .clone()
     .json()
-    .catch(() => null)) as { code?: string } | null;
-  return body?.code === "PLATFORM_WORKFORCE_REQUIRED";
+    .catch(() => null)) as {
+    code?: string;
+    message?: { code?: string } | string;
+  } | null;
+  if (body?.code === "PLATFORM_WORKFORCE_REQUIRED") return true;
+  const nested = body?.message;
+  return Boolean(
+    nested &&
+      typeof nested === "object" &&
+      nested.code === "PLATFORM_WORKFORCE_REQUIRED",
+  );
 }
 
 /** Enable the platform_workforce module for the current org. Returns true on success. */
@@ -114,7 +123,13 @@ export async function enableWorkforceModule(): Promise<boolean> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
   }).catch(() => null);
-  return Boolean(res?.ok);
+  if (!res?.ok) return false;
+  await fetch("/api/platform/workforce/scope/bootstrap", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: "{}",
+  }).catch(() => null);
+  return true;
 }
 
 /** CSV text or xlsx base64 for workforce import endpoints. */

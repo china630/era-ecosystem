@@ -105,6 +105,13 @@ export function inferCatalogFieldKind(input: {
   return "CLOSED_SMALL";
 }
 
+/** Closed native select for short pick-lists; combobox only when the list is large. */
+export function catalogKindForOptions(optionCount: number): CatalogFieldKind {
+  if (optionCount > 40) return "SEARCHABLE";
+  if (optionCount > 12) return "CLOSED_MEDIUM";
+  return "CLOSED_SMALL";
+}
+
 /** Dev/test helper — throws if plain text is used for a non-FREE_TEXT kind. */
 export function assertCatalogAllowsPlainText(kind: CatalogFieldKind): void {
   const resolved = resolveCatalogControl(kind);

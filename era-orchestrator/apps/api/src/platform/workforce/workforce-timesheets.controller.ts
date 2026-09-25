@@ -106,14 +106,19 @@ export class WorkforceTimesheetsController {
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_TIMESHEET)
   @ApiOperation({
     summary:
-      "Fill DRAFT cells from shift assignments (source=roster_plan). Skips APPROVED and lockedFromAbsence. ?preserveManual=true keeps ops_grid cells. Then syncs approved absences (locks beat overrides).",
+      "Fill empty DRAFT cells from shift assignments (source=roster_plan). Skips APPROVED, absence locks, and occupied cells unless ?overwrite=true. ?preserveManual=true keeps ops_grid/faceid even when overwriting. Then syncs approved absences.",
   })
   async materializeRoster(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: EraJwtPayload,
     @Query("preserveManual") preserveManualRaw?: string,
+    @Query("overwrite") overwriteRaw?: string,
   ) {
+    const overwriteFacts =
+      overwriteRaw === "1" ||
+      overwriteRaw === "true" ||
+      overwriteRaw === "TRUE";
     const preserveManual =
       preserveManualRaw === "1" ||
       preserveManualRaw === "true" ||
@@ -122,10 +127,13 @@ export class WorkforceTimesheetsController {
       organizationId,
       id,
       user.sub,
-      { preserveManual },
+      { preserveManual, overwriteFacts },
     );
-    // Absence locks beat day overrides / cycle plan (plan § materialize).
-    await this.timesheets.syncAbsences(organizationId, id, user.sub);
+    try {
+      await this.timesheets.syncAbsences(organizationId, id, user.sub);
+    } catch {
+      return { ...summary, absenceSyncFailed: true };
+    }
     return summary;
   }
 

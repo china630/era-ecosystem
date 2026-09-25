@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Archive } from "lucide-react";
 import {
   CatalogField,
   EraDataGrid,
   EraListFilterBar,
+  EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   ModalFooter,
   ModalShell,
@@ -18,9 +19,11 @@ import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
   parseOrgUnitItems,
+  parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
+import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type PlaceRow = {
   id: string;
@@ -52,6 +55,7 @@ export default function WorkforcePlacesPage() {
   const [formOrgUnitId, setFormOrgUnitId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
+  const [archiveRow, setArchiveRow] = useState<PlaceRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -144,6 +148,26 @@ export default function WorkforcePlacesPage() {
     await load();
   }
 
+  async function archivePlace(row: PlaceRow) {
+    setBusy(true);
+    const res = await wfFetch(`places/${row.id}/archive`, {
+      method: "POST",
+      body: "{}",
+    });
+    setBusy(false);
+    setArchiveRow(null);
+    if (!res.ok) {
+      const err = await parseWorkforceApiError(res);
+      setError(
+        /assignment/i.test(err.message)
+          ? t("archivePlaceInUse")
+          : err.message?.trim() || t("archivePlaceFailed"),
+      );
+      return;
+    }
+    await load();
+  }
+
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
@@ -168,67 +192,87 @@ export default function WorkforcePlacesPage() {
           }
         />
       </div>
-      <EraListFilterBar
-        className="!mb-0 shrink-0"
-        resetLabel={tCommon("filterReset")}
-        onReset={() => setFilterStatus("ACTIVE")}
-      >
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("filterStatus")}
-          value={filterStatus}
-          onChange={(next) =>
-            setFilterStatus(Array.isArray(next) ? (next[0] ?? "") : next)
-          }
-          options={statusOptions}
-        />
-      </EraListFilterBar>
       {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
-      <div className="flex min-h-0 flex-1 flex-col">
-        <EraDataGrid
-          layout="fill"
-          columns={[
-            { key: "code", header: t("colCode") },
-            { key: "name", header: t("colName") },
-            {
-              key: "orgUnit",
-              header: t("responsibleUnit"),
-              render: (row) =>
-                units.find((u) => u.id === row.responsibleOrgUnitId)?.name ?? "—",
-            },
-            {
-              key: "status",
-              header: t("colStatus"),
-              render: (row) =>
-                row.status === "ACTIVE" ? t("statusActive") : t("statusArchived"),
-            },
-            {
-              key: "actions",
-              header: "",
-              className: "w-12",
-              render: (row) => (
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  onClick={() => openEdit(row)}
-                  aria-label={tCommon("edit")}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              ),
-            },
-          ]}
-          rows={rows}
-          rowKey={(row) => row.id}
-          emptyMessage={loading ? tCommon("loading") : t("placesEmpty")}
-          paginationLabels={{
-            rowsPerPage: tCommon("paginationRowsPerPage"),
-            pageOf: tCommon("paginationPageOf"),
-            prev: tCommon("paginationPrev"),
-            next: tCommon("paginationNext"),
-          }}
-        />
-      </div>
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            className="!mb-0"
+            resetLabel={tCommon("filterReset")}
+            onReset={() => setFilterStatus("ACTIVE")}
+          >
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterStatus")}
+              value={filterStatus}
+              onChange={(next) =>
+                setFilterStatus(Array.isArray(next) ? (next[0] ?? "") : next)
+              }
+              options={statusOptions}
+              emptyLabel={t("statusAll")}
+            />
+          </EraListFilterBar>
+        }
+        tableShell={false}
+        table={
+          <EraDataGrid
+            layout="fill"
+            columns={[
+              { key: "code", header: t("colCode") },
+              { key: "name", header: t("colName") },
+              {
+                key: "orgUnit",
+                header: t("responsibleUnit"),
+                render: (row) =>
+                  units.find((u) => u.id === row.responsibleOrgUnitId)?.name ?? "—",
+              },
+              {
+                key: "status",
+                header: t("colStatus"),
+                render: (row) =>
+                  row.status === "ACTIVE" ? t("statusActive") : t("statusArchived"),
+              },
+              {
+                key: "actions",
+                header: "",
+                className: "w-20",
+                render: (row) => (
+                  <div className="flex justify-end gap-1">
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      onClick={() => openEdit(row)}
+                      aria-label={tCommon("edit")}
+                      title={tCommon("edit")}
+                    >
+                      <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                    </button>
+                    {row.status === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        onClick={() => setArchiveRow(row)}
+                        aria-label={t("archivePlace")}
+                        title={t("archivePlace")}
+                      >
+                        <Archive className="h-4 w-4 text-[#C0392B]" aria-hidden />
+                      </button>
+                    ) : null}
+                  </div>
+                ),
+              },
+            ]}
+            rows={rows}
+            rowKey={(row) => row.id}
+            emptyMessage={loading ? tCommon("loading") : t("placesEmpty")}
+            paginationLabels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        }
+      />
 
       <ModalShell
         open={editState != null}
@@ -272,7 +316,7 @@ export default function WorkforcePlacesPage() {
             />
           ) : null}
           <CatalogField
-            kind="ENTITY_REF"
+            kind={unitOptions.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
             label={t("responsibleUnit")}
             value={formOrgUnitId}
             onChange={(v) => setFormOrgUnitId(String(v))}
@@ -282,6 +326,19 @@ export default function WorkforcePlacesPage() {
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
         </div>
       </ModalShell>
+      <WorkforceConfirmDialog
+        open={archiveRow !== null}
+        title={t("archivePlace")}
+        body={t("archivePlaceConfirm", { name: archiveRow?.name ?? "" })}
+        confirmLabel={t("archivePlace")}
+        cancelLabel={tCommon("cancel")}
+        busy={busy}
+        onCancel={() => setArchiveRow(null)}
+        onConfirm={() => {
+          const row = archiveRow;
+          if (row) void archivePlace(row);
+        }}
+      />
     </div>
   );
 }

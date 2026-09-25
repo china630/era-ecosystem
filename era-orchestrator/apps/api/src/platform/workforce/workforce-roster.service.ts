@@ -80,6 +80,17 @@ function isCellImmutable(existing: {
   return existing.status === WorkforceTimesheetEntryStatus.APPROVED;
 }
 
+function assignmentRangesOverlap(
+  fromA: string,
+  toA: string | null,
+  fromB: string,
+  toB: string | null,
+): boolean {
+  const endA = toA ?? "9999-12-31";
+  const endB = toB ?? "9999-12-31";
+  return fromA <= endB && fromB <= endA;
+}
+
 @Injectable()
 export class WorkforceRosterService {
   constructor(
@@ -167,6 +178,29 @@ export class WorkforceRosterService {
       payload: dto as Record<string, unknown>,
     });
     return row;
+  }
+
+  async archivePlace(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const existing = await this.prisma.workforcePlace.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException("Place not found");
+    const assigned = await this.prisma.workforceShiftAssignment.count({
+      where: { placeId: id, organizationId },
+    });
+    if (assigned > 0) {
+      throw new BadRequestException(
+        "Cannot archive a place that is used on shift assignments",
+      );
+    }
+    return this.updatePlace(organizationId, id, actorUserId, {
+      status: WorkforcePlaceStatus.ARCHIVED,
+    });
   }
 
   // ── Shift types ─────────────────────────────────────────────────────
@@ -768,6 +802,12 @@ export class WorkforceRosterService {
       });
       if (!b) throw new BadRequestException("Brigade not found in organization");
     }
+    await this.assertAssignmentNoOverlap(organizationId, {
+      employmentId: dto.employmentId ?? null,
+      brigadeId: dto.brigadeId ?? null,
+      effectiveFrom: dto.effectiveFrom,
+      effectiveTo: dto.effectiveTo ?? null,
+    });
     const row = await this.prisma.workforceShiftAssignment.create({
       data: {
         organizationId,
@@ -814,6 +854,25 @@ export class WorkforceRosterService {
         dto.cycleId ?? existing.cycleId,
       );
     }
+    const nextFrom = dto.effectiveFrom
+      ? dto.effectiveFrom
+      : isoDayUtc(existing.effectiveFrom);
+    const nextTo =
+      dto.effectiveTo !== undefined
+        ? dto.effectiveTo
+        : existing.effectiveTo
+          ? isoDayUtc(existing.effectiveTo)
+          : null;
+    await this.assertAssignmentNoOverlap(
+      organizationId,
+      {
+        employmentId: existing.employmentId,
+        brigadeId: existing.brigadeId,
+        effectiveFrom: nextFrom,
+        effectiveTo: nextTo,
+      },
+      existing.id,
+    );
     const row = await this.prisma.workforceShiftAssignment.update({
       where: { id },
       data: {
@@ -1184,7 +1243,7 @@ export class WorkforceRosterService {
     organizationId: string,
     timesheetId: string,
     actorUserId: string,
-    opts?: { preserveManual?: boolean },
+    opts?: { preserveManual?: boolean; overwriteFacts?: boolean },
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
     const ts = await this.prisma.workforceTimesheet.findFirst({
@@ -1200,6 +1259,7 @@ export class WorkforceRosterService {
 
     const { year, month } = ts;
     const { lastDay } = monthBoundsUtc(year, month);
+    const overwriteFacts = opts?.overwriteFacts === true;
     const preserveManual = opts?.preserveManual === true;
 
     const employments = await this.prisma.workforceEmployment.findMany({
@@ -1274,10 +1334,6 @@ export class WorkforceRosterService {
             const workDate = dayDateUtc(year, month, d);
             const ymd = isoDayUtc(workDate);
             if (ymd > todayIso) {
-              const existing = existingMap.get(entryKey(emp.id, workDate));
-              if (existing && !isCellImmutable(existing)) {
-                await tx.workforceTimesheetEntry.delete({ where: { id: existing.id } });
-              }
               continue;
             }
             const key = entryKey(emp.id, workDate);
@@ -1286,10 +1342,14 @@ export class WorkforceRosterService {
               cellsSkippedLocked += 1;
               continue;
             }
+            if (existing && !overwriteFacts) {
+              cellsSkippedManual += 1;
+              continue;
+            }
             if (
               preserveManual &&
               existing &&
-              existing.source === "ops_grid"
+              (existing.source === "ops_grid" || existing.source === "faceid")
             ) {
               cellsSkippedManual += 1;
               continue;
@@ -1917,5 +1977,47 @@ export class WorkforceRosterService {
     ]);
     if (!place) throw new BadRequestException("Place not found in organization");
     if (!cycle) throw new BadRequestException("Cycle not found in organization");
+  }
+
+  private async assertAssignmentNoOverlap(
+    organizationId: string,
+    input: {
+      employmentId: string | null;
+      brigadeId: string | null;
+      effectiveFrom: string;
+      effectiveTo: string | null;
+    },
+    excludeId?: string,
+  ) {
+    const from = this.parseYmd(input.effectiveFrom);
+    const to = input.effectiveTo ? this.parseYmd(input.effectiveTo) : null;
+    if (to && to < from) {
+      throw new BadRequestException({
+        code: "ASSIGNMENT_RANGE",
+        message: "effectiveTo cannot be before effectiveFrom",
+      });
+    }
+    const others = await this.prisma.workforceShiftAssignment.findMany({
+      where: {
+        organizationId,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+        ...(input.employmentId
+          ? { employmentId: input.employmentId }
+          : input.brigadeId
+            ? { brigadeId: input.brigadeId }
+            : { id: { in: [] } }),
+      },
+    });
+    for (const o of others) {
+      const oFrom = isoDayUtc(o.effectiveFrom);
+      const oTo = o.effectiveTo ? isoDayUtc(o.effectiveTo) : null;
+      if (assignmentRangesOverlap(from, to, oFrom, oTo)) {
+        throw new ConflictException({
+          code: "ASSIGNMENT_OVERLAP",
+          message:
+            "This brigade or person already has a shift assignment overlapping these dates",
+        });
+      }
+    }
   }
 }

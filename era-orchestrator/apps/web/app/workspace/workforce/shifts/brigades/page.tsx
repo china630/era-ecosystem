@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Users } from "lucide-react";
 import {
   CatalogField,
   DATA_TABLE_CLASS,
@@ -12,8 +12,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DatePicker,
   EraDataGrid,
-  EraListFilterBar,
-  EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   ModalFooter,
@@ -21,6 +19,7 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
@@ -79,6 +78,7 @@ export default function WorkforceBrigadesPage() {
   const [histPageSize, setHistPageSize] = useState(25);
   const [filterBrigadeId, setFilterBrigadeId] = useState("");
   const [filterEmploymentId, setFilterEmploymentId] = useState("");
+  const [cardId, setCardId] = useState<string | null>(null);
 
   const personLabel = useCallback(
     (employmentId: string, globalPersonId?: string | null, staffCode?: string | null) => {
@@ -206,7 +206,15 @@ export default function WorkforceBrigadesPage() {
     setBrigadeOpen(true);
   }
 
+  function openCard(row: Brigade) {
+    setCardId(row.id);
+    setFilterBrigadeId(row.id);
+    setFilterEmploymentId("");
+    setHistPage(1);
+  }
+
   function openTransfer(row?: Brigade) {
+    setCardId(null);
     setFromBrigadeId(row?.id ?? "");
     setToBrigadeId("");
     setTransferIds([]);
@@ -284,6 +292,8 @@ export default function WorkforceBrigadesPage() {
       }));
   }, [fromBrigadeId, brigades, employments, personLabel]);
 
+  const cardBrigade = brigades.find((b) => b.id === cardId) ?? null;
+
   if (!ready) return null;
   if (notEntitled) return <WorkforceGate />;
 
@@ -309,7 +319,7 @@ export default function WorkforceBrigadesPage() {
       {error ? <p className="shrink-0 text-sm text-red-600">{error}</p> : null}
       {notice ? <p className="shrink-0 text-sm text-amber-800">{notice}</p> : null}
 
-      <div className="flex min-h-0 flex-[1.2] flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <EraDataGrid
           layout="fill"
           columns={[
@@ -318,32 +328,32 @@ export default function WorkforceBrigadesPage() {
             {
               key: "members",
               header: t("colMembers"),
-              render: (row) => {
-                const names = (row.members ?? []).map((m) =>
-                  personLabel(m.employmentId, m.globalPersonId, m.staffCode),
-                );
-                return names.length ? names.join(", ") : "—";
-              },
+              className: "w-24",
+              render: (row) => String((row.members ?? []).length),
             },
             {
               key: "actions",
               header: "",
-              className: "w-48",
+              className: "w-24",
               render: (row) => (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex justify-end gap-1">
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    onClick={() => openTransfer(row)}
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    onClick={() => openCard(row)}
+                    aria-label={t("colMembers")}
+                    title={t("colMembers")}
                   >
-                    {t("transfer")}
+                    <Users className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    className={TABLE_ROW_ICON_BTN_CLASS}
                     onClick={() => openEditBrigade(row)}
+                    aria-label={tCommon("edit")}
+                    title={tCommon("edit")}
                   >
-                    {tCommon("edit")}
+                    <Pencil className="h-4 w-4" />
                   </button>
                 </div>
               ),
@@ -361,116 +371,117 @@ export default function WorkforceBrigadesPage() {
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0">
-          <h2 className="text-sm font-semibold text-[#2C3E50]">{t("historyHeading")}</h2>
-          <p className="text-xs text-[#7F8C8D]">{t("historyHint")}</p>
-        </div>
-        <EraListWorkspace
-          filter={
-            <EraListFilterBar
-              className="!mb-0"
-              resetLabel={tCommon("filterReset")}
-              onReset={() => {
-                setFilterBrigadeId("");
-                setFilterEmploymentId("");
-                setHistPage(1);
-              }}
-            >
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("brigade")}
-                value={filterBrigadeId}
-                onChange={(v) => {
-                  setFilterBrigadeId(String(v));
-                  setHistPage(1);
-                }}
-                options={brigadeOptions}
-                emptyLabel={t("allBrigades")}
-              />
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("employment")}
-                value={filterEmploymentId}
-                onChange={(v) => {
-                  setFilterEmploymentId(String(v));
-                  setHistPage(1);
-                }}
-                options={employments.map((e) => ({
-                  value: e.id,
-                  label: personLabel(e.id, e.globalPersonId, e.staffCode),
-                }))}
-                emptyLabel={t("allPeople")}
-              />
-            </EraListFilterBar>
-          }
-          table={
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("brigade")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFrom")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTo")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colNextBrigade")}</th>
+      <ModalShell
+        open={Boolean(cardId)}
+        onClose={() => {
+          setCardId(null);
+          setFilterBrigadeId("");
+        }}
+        title={
+          cardBrigade
+            ? `${cardBrigade.code} · ${cardBrigade.name}`
+            : t("brigadesHeading")
+        }
+        closeLabel={tCommon("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => {
+              setCardId(null);
+              setFilterBrigadeId("");
+            }}
+            onSubmit={() => {
+              if (cardBrigade) openTransfer(cardBrigade);
+            }}
+            cancelLabel={tCommon("close")}
+            submitLabel={t("transfer")}
+          />
+        }
+      >
+        <div className="space-y-4">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(cardBrigade?.members ?? []).length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} py-6 text-center text-[#7F8C8D]`}>
+                    {t("brigadesEmpty")}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {histItems.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td
-                      className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                      colSpan={5}
-                    >
-                      {loading ? tCommon("loading") : t("historyEmpty")}
+              ) : (
+                (cardBrigade?.members ?? []).map((m) => (
+                  <tr key={m.employmentId} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {personLabel(m.employmentId, m.globalPersonId, m.staffCode)}
                     </td>
                   </tr>
-                ) : (
-                  histItems.map((row) => (
-                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {personLabel(row.employmentId, row.globalPersonId, row.staffCode)}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.brigade.code} · {row.brigade.name}
-                      </td>
-                      <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
-                        {bakuDateDisplay(row.effectiveFrom)}
-                      </td>
-                      <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
-                        {row.effectiveTo ? bakuDateDisplay(row.effectiveTo) : t("openEnded")}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.leftToBrigade
-                          ? `${row.leftToBrigade.code} · ${row.leftToBrigade.name}`
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          }
-          footer={
-            <ListPaginationFooter
-              page={histPage}
-              pageSize={histPageSize}
-              total={histTotal}
-              onPageChange={setHistPage}
-              onPageSizeChange={(size) => {
-                setHistPageSize(size);
-                setHistPage(1);
-              }}
-              labels={{
-                rowsPerPage: tCommon("paginationRowsPerPage"),
-                pageOf: tCommon("paginationPageOf"),
-                prev: tCommon("paginationPrev"),
-                next: tCommon("paginationNext"),
-              }}
-            />
-          }
-        />
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+          <h3 className="text-sm font-semibold text-[#2C3E50]">{t("historyHeading")}</h3>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFrom")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTo")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colNextBrigade")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {histItems.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td
+                    className={`${DATA_TABLE_TD_CLASS} py-6 text-center text-[#7F8C8D]`}
+                    colSpan={4}
+                  >
+                    {t("historyEmpty")}
+                  </td>
+                </tr>
+              ) : (
+                histItems.map((row) => (
+                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {personLabel(row.employmentId, row.globalPersonId, row.staffCode)}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
+                      {bakuDateDisplay(row.effectiveFrom)}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
+                      {row.effectiveTo ? bakuDateDisplay(row.effectiveTo) : t("openEnded")}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.leftToBrigade
+                        ? `${row.leftToBrigade.code} · ${row.leftToBrigade.name}`
+                        : "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          <ListPaginationFooter
+            page={histPage}
+            pageSize={histPageSize}
+            total={histTotal}
+            onPageChange={setHistPage}
+            onPageSizeChange={(size) => {
+              setHistPageSize(size);
+              setHistPage(1);
+            }}
+            labels={{
+              rowsPerPage: tCommon("paginationRowsPerPage"),
+              pageOf: tCommon("paginationPageOf"),
+              prev: tCommon("paginationPrev"),
+              next: tCommon("paginationNext"),
+            }}
+          />
+        </div>
+      </ModalShell>
 
       <ModalShell
         open={brigadeOpen}

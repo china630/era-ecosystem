@@ -24,27 +24,21 @@
 
 ## UI (short)
 
-**UI class rollup:** SHOW — HOT-06 extension write remains **HEADLESS** (SPA Insert field-open). Super-Admin per-org EW policy **SHOW** (Wave 6 lab). Clinic Issue-ticket is clinic **SHOW** (Wave 6), not Hotel SHOW rollup. — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+**UI class rollup:** SHOW — HOT-06 Elektraweb bridge is **HEADLESS** (extension) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
 
 | Surface | Path | Level |
 |---------|------|-------|
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations` | ✅ |
-| Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN — N lanes + EW palette; out of FO SHOW rollup until UAT-SMOKE §30 |
+| Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30) |
 | Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history | SCREEN (out of FO SHOW until UAT-SMOKE §35) |
-| Reservation card IA (HOT-BOOK-04) | header snapshot + Stay window/Room/Pax/Rate/Billing | SCREEN (ADR D3; out of FO SHOW until UAT) |
-| Card right pane density (HOT-BOOK-06…09) | Guests / Rate Grid / Folio empty / Notes feed | SCREEN (UAT §45–§48 open; out of FO SHOW) |
-| Depart / Move / Swap (HOT-FO-05/06/07) | Guests ⋮ + StaysBar Swap | SCREEN (UAT §43/§44 open) |
-| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/front-cash/agency-ledger`, `/front-cash/company-ledger`, `/front-cash/transactions` | ✅ |
+| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
-| Agency portal (extranet) | `/agency/*` + `/agency/ledger` + FO `/fo/agency-inbox` | SCREEN / 🟡 book+inbox; CL statement SHOW (HOT-AGP-04) |
+| Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
-| Role access matrix (HOT-RBAC-01) | `/settings/access` | 🟡 SCREEN (Variant A seed+clone; UAT open → not SHOW) |
 | Nafta HK deepen | `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open) |
 | Management reports catalog / nightly ZIP | `/reports/*` hubs + nightly pack + cubes (HOT-RPT W1–W3) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
-| Composed package sell (HOT-PKG-03 / Wave D) | `/folio/[id]` packageCompose breakdown | 🟡 SCREEN (API on COVERAGE until UAT §40; not SHIPPED) |
-| Per-pax medical stay (HOT-PKG-04 / Wave E) | check-in fan-out + FO pax SKU | 🟡 API (UAT §41; not SHIPPED; share rooms unchanged) |
 
 Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.  
 HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW rollup only if Demo-TE not refreshed; does not claim GA.

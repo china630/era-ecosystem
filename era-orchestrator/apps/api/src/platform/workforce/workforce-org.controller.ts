@@ -42,7 +42,21 @@ export class WorkforceOrgController {
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
   @ApiOperation({ summary: "Resolve workforce scope for commercial org" })
   getScope(@OrganizationId() organizationId: string) {
-    return this.scope.resolveScopeForCommercialOrg(organizationId);
+    return this.scopeWithOrg(organizationId);
+  }
+
+  private async scopeWithOrg(organizationId: string) {
+    const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { operatingMode: true, parentOrgId: true, name: true },
+    });
+    return {
+      ...link,
+      operatingMode: org?.operatingMode ?? "STANDALONE",
+      parentOrgId: org?.parentOrgId ?? null,
+      organizationName: org?.name ?? null,
+    };
   }
 
   @Post("scope/bootstrap")

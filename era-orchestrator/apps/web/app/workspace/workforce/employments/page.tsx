@@ -283,9 +283,8 @@ export default function WorkforceEmploymentsPage() {
   const [hireDate, setHireDate] = useState(() => todayBakuYmd());
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
-  const [needsBootstrap, setNeedsBootstrap] = useState(false);
-  const [notEntitled, setNotEntitled] = useState(false);
   const [enabling, setEnabling] = useState(false);
+  const [notEntitled, setNotEntitled] = useState(false);
   const [satelliteKeys, setSatelliteKeys] = useState<string[]>([]);
   const [hireLogin, setHireLogin] = useState("");
   const [hirePin, setHirePin] = useState("");
@@ -418,11 +417,17 @@ export default function WorkforceEmploymentsPage() {
       workforceFetch("positions"),
     ]);
     if (unitRes.status === 404) {
-      setNeedsBootstrap(true);
-      setOrgUnits([]);
+      await workforceFetch("scope/bootstrap", { method: "POST", body: "{}" });
+      const retry = await workforceFetch("org-units");
+      if (!retry.ok) {
+        setOrgUnits([]);
+        return;
+      }
+      const u = (await retry.json()) as { items: OrgUnitOpt[] };
+      const active = (u.items ?? []).filter((x) => x.status === "ACTIVE");
+      setOrgUnits(active);
       return;
     }
-    setNeedsBootstrap(false);
     if (unitRes.ok) {
       const u = (await unitRes.json()) as { items: OrgUnitOpt[] };
       const active = (u.items ?? []).filter((x) => x.status === "ACTIVE");
@@ -493,20 +498,6 @@ export default function WorkforceEmploymentsPage() {
     if (!ready || !user?.organizationId) return;
     void load();
   }, [ready, user?.organizationId, load]);
-
-  async function bootstrapScope() {
-    setBusy(true);
-    const res = await workforceFetch("scope/bootstrap", {
-      method: "POST",
-      body: "{}",
-    });
-    setBusy(false);
-    if (!res.ok) {
-      setError(await res.text());
-      return;
-    }
-    await load();
-  }
 
   const activePositions = useMemo(
     () => positions.filter((p) => (p.status ?? "ACTIVE") === "ACTIVE"),
@@ -1356,20 +1347,6 @@ export default function WorkforceEmploymentsPage() {
           }
         />
       </div>
-
-      {needsBootstrap ? (
-        <div className={`${CARD_CONTAINER_CLASS} shrink-0 p-4`}>
-          <p className="text-sm text-[#34495E]">{t("bootstrapHint")}</p>
-          <button
-            type="button"
-            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
-            disabled={busy}
-            onClick={() => void bootstrapScope()}
-          >
-            {t("bootstrap")}
-          </button>
-        </div>
-      ) : null}
 
       {dualVoenBanner ? (
         <div className={`${CARD_CONTAINER_CLASS} flex shrink-0 flex-wrap items-start justify-between gap-3 p-4`}>
