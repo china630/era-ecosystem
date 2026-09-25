@@ -27,6 +27,7 @@ export class WorkforceOrgUnitsService {
 
   async list(organizationId: string, flat = true) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+    await this.retireEmptyPlaceholderUnits(link.workforceScopeId);
     const units = await this.prisma.orgUnit.findMany({
       where: { workforceScopeId: link.workforceScopeId },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -205,6 +206,29 @@ export class WorkforceOrgUnitsService {
           select: { parentId: true },
         });
       cur = node?.parentId ?? null;
+    }
+  }
+
+  /** Bootstrap used to create a dummy HQ unit; hide it once real units exist or it has no roster. */
+  private async retireEmptyPlaceholderUnits(workforceScopeId: string) {
+    const placeholders = await this.prisma.orgUnit.findMany({
+      where: {
+        workforceScopeId,
+        status: OrgUnitStatus.ACTIVE,
+        OR: [
+          { code: "HQ" },
+          { name: "Headquarters" },
+          { name: "HQ" },
+        ],
+      },
+      include: { _count: { select: { employments: true, positions: true } } },
+    });
+    for (const u of placeholders) {
+      if (u._count.employments > 0 || u._count.positions > 0) continue;
+      await this.prisma.orgUnit.update({
+        where: { id: u.id },
+        data: { status: OrgUnitStatus.ARCHIVED },
+      });
     }
   }
 

@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsEnum,
   IsIn,
   IsNotEmpty,
@@ -7,6 +8,7 @@ import {
   IsUUID,
   Length,
   MaxLength,
+  ValidateIf,
 } from "class-validator";
 import { HoldingAccessRole } from "@era365/database";
 
@@ -38,8 +40,13 @@ export class UpdateHoldingDto {
 }
 
 export class AddHoldingMemberDto {
+  @ValidateIf((o: AddHoldingMemberDto) => !o.email)
   @IsUUID()
-  userId!: string;
+  userId?: string;
+
+  @ValidateIf((o: AddHoldingMemberDto) => !o.userId)
+  @IsEmail()
+  email?: string;
 
   @IsEnum(HoldingAccessRole)
   role!: HoldingAccessRole;

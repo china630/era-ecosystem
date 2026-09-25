@@ -169,6 +169,29 @@ export class WorkforceRosterService {
     return row;
   }
 
+  async archivePlace(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const existing = await this.prisma.workforcePlace.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException("Place not found");
+    const assigned = await this.prisma.workforceShiftAssignment.count({
+      where: { placeId: id, organizationId },
+    });
+    if (assigned > 0) {
+      throw new BadRequestException(
+        "Cannot archive a place that is used on shift assignments",
+      );
+    }
+    return this.updatePlace(organizationId, id, actorUserId, {
+      status: WorkforcePlaceStatus.ARCHIVED,
+    });
+  }
+
   // ── Shift types ─────────────────────────────────────────────────────
 
   async listShiftTypes(organizationId: string) {

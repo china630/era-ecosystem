@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrgCommercialLinkMode, OrgUnitStatus } from "@era365/database";
+import { OrgCommercialLinkMode } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 
@@ -16,13 +16,23 @@ export class WorkforceScopeService {
 
   async resolveScopeForCommercialOrg(organizationId: string) {
     await this.entitlement.assertWorkforceHub(organizationId);
-    const link = await this.prisma.orgUnitCommercialLink.findUnique({
+    let link = await this.prisma.orgUnitCommercialLink.findUnique({
       where: { organizationId },
       include: {
         workforceScope: true,
         orgUnit: true,
       },
     });
+    if (!link) {
+      await this.bootstrap(organizationId);
+      link = await this.prisma.orgUnitCommercialLink.findUnique({
+        where: { organizationId },
+        include: {
+          workforceScope: true,
+          orgUnit: true,
+        },
+      });
+    }
     if (!link) {
       throw new NotFoundException(
         "Workforce scope not bootstrapped for this organization",
@@ -33,7 +43,7 @@ export class WorkforceScopeService {
 
   async bootstrap(
     organizationId: string,
-    actorUserId: string,
+    _actorUserId?: string,
     displayName?: string,
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
@@ -53,7 +63,7 @@ export class WorkforceScopeService {
     });
     if (existing) {
       await this.ensureCommercialLink(organizationId, existing.id);
-      return { scope: existing, created: false };
+      return { scope: existing, created: false, rootOrgUnitId: null };
     }
 
     const scopeName = displayName?.trim() || anchor.name || "Workforce";
@@ -62,14 +72,6 @@ export class WorkforceScopeService {
         data: {
           anchorOrganizationId: anchorId,
           name: scopeName,
-        },
-      });
-      const root = await tx.orgUnit.create({
-        data: {
-          workforceScopeId: scope.id,
-          name: "Headquarters",
-          code: "HQ",
-          status: OrgUnitStatus.ACTIVE,
         },
       });
       await tx.orgUnitCommercialLink.create({
@@ -90,10 +92,10 @@ export class WorkforceScopeService {
           update: {},
         });
       }
-      return { scope, root };
+      return { scope };
     });
 
-    return { scope: result.scope, rootOrgUnitId: result.root.id, created: true };
+    return { scope: result.scope, rootOrgUnitId: null, created: true };
   }
 
   private async ensureCommercialLink(

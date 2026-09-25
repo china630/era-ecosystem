@@ -38,3 +38,49 @@ export function isMigrationStepId(value: string): value is MigrationStepId {
 
 export const MIGRATION_DETAIL_LIMIT = 200;
 export const MIGRATION_SOURCE = "import";
+
+/** Column contract shown in the migration wizard (aliases in parentheses). */
+export const MIGRATION_FIELDS: Record<
+  MigrationStepId,
+  { required: string[]; optional: string[] }
+> = {
+  "org-structure": {
+    required: ["orgUnit (şöbə / unit)", "position (vəzifə)"],
+    optional: ["totalSlots (ştatvahidi)"],
+  },
+  places: {
+    required: ["place"],
+    optional: ["importReady", "employmentStatus"],
+  },
+  people: {
+    required: ["fin or globalPersonId", "orgUnit", "position", "hireDate"],
+    optional: [
+      "firstName / lastName / fullName",
+      "birthDate",
+      "sex",
+      "importReady",
+      "employmentStatus",
+    ],
+  },
+  brigades: {
+    required: ["fin", "brigade"],
+    optional: ["hireDate", "importReady", "employmentStatus"],
+  },
+  assignments: {
+    required: ["fin", "place", "shiftName or scheduleText (must match cycle code/name)"],
+    optional: ["hireDate", "importReady", "employmentStatus"],
+  },
+  "vacation-balance": {
+    required: ["fin", "balanceDays", "asOfDate"],
+    optional: ["baseVacationDaysPerYear", "employmentStatus"],
+  },
+  "leave-history": {
+    required: ["fin", "kind", "startDate", "endDate"],
+    optional: [],
+  },
+  salary: {
+    required: ["fin", "salary"],
+    optional: [],
+  },
+  "year-grid": { required: [], optional: [] },
+};

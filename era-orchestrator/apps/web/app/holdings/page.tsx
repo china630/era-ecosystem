@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Building2, Plus, Trash2, Unlink } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   FORM_INPUT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
@@ -50,11 +51,12 @@ export default function HoldingsPage() {
 
   const [attachOrgId, setAttachOrgId] = useState("");
   const [memberUserId, setMemberUserId] = useState("");
+  const [memberEmail, setMemberEmail] = useState("");
   const [memberRole, setMemberRole] = useState("VIEWER");
-  const [linkOrgId, setLinkOrgId] = useState("");
-  const [linkScopeId, setLinkScopeId] = useState("");
-  const [linkOrgUnitId, setLinkOrgUnitId] = useState("");
-  const [linkMsg, setLinkMsg] = useState<string | null>(null);
+  const [memberNotice, setMemberNotice] = useState<string | null>(null);
+  const [memberCandidates, setMemberCandidates] = useState<
+    Array<{ userId: string; email: string }>
+  >([]);
 
   const token = getOrchAccessToken();
   const selected = holdings.find((h) => h.id === selectedId) ?? null;
@@ -86,12 +88,22 @@ export default function HoldingsPage() {
 
   const loadMembers = useCallback(async (holdingId: string) => {
     if (!token) return;
-    const res = await orchFetch(`/v1/holdings/${holdingId}/members`, { token });
-    if (!res.ok) {
+    const [memRes, candRes] = await Promise.all([
+      orchFetch(`/v1/holdings/${holdingId}/members`, { token }),
+      orchFetch(`/v1/holdings/${holdingId}/member-candidates`, { token }),
+    ]);
+    if (!memRes.ok) {
       setMembers([]);
-      return;
+    } else {
+      setMembers((await memRes.json()) as HoldingMember[]);
     }
-    setMembers((await res.json()) as HoldingMember[]);
+    if (candRes.ok) {
+      setMemberCandidates(
+        (await candRes.json()) as Array<{ userId: string; email: string }>,
+      );
+    } else {
+      setMemberCandidates([]);
+    }
   }, [token]);
 
   useEffect(() => {
@@ -175,15 +187,19 @@ export default function HoldingsPage() {
   }
 
   async function addMember() {
-    if (!token || !selectedId || !memberUserId.trim() || busy) return;
+    if (!token || !selectedId || busy) return;
+    if (!memberUserId.trim() && !memberEmail.trim()) return;
     setBusy(true);
     setError(null);
+    setMemberNotice(null);
     try {
       const res = await orchFetch(`/v1/holdings/${selectedId}/members`, {
         method: "POST",
         token,
         body: JSON.stringify({
-          userId: memberUserId.trim(),
+          ...(memberUserId.trim()
+            ? { userId: memberUserId.trim() }
+            : { email: memberEmail.trim().toLowerCase() }),
           role: memberRole,
         }),
       });
@@ -191,7 +207,12 @@ export default function HoldingsPage() {
         setError(parseApiError(await res.text().catch(() => null), t("memberFailed")));
         return;
       }
+      const body = (await res.json()) as { invited?: boolean; email?: string };
       setMemberUserId("");
+      setMemberEmail("");
+      if (body.invited) {
+        setMemberNotice(t("memberInvited", { email: body.email ?? memberEmail }));
+      }
       await loadMembers(selectedId);
     } finally {
       setBusy(false);
@@ -233,34 +254,6 @@ export default function HoldingsPage() {
       }
       setSelectedId(null);
       await loadHoldings();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveCommercialLink() {
-    if (!linkOrgId || !linkScopeId.trim()) return;
-    setBusy(true);
-    setError(null);
-    setLinkMsg(null);
-    try {
-      const { workforceFetch } = await import("../../lib/workforce-fetch");
-      const res = await workforceFetch(
-        `commercial-links/${encodeURIComponent(linkOrgId)}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            workforceScopeId: linkScopeId.trim(),
-            orgUnitId: linkOrgUnitId.trim() || null,
-            linkMode: "SCOPE_ROOT",
-          }),
-        },
-      );
-      if (!res.ok) {
-        setError(parseApiError(await res.text().catch(() => null), t("commercialLinkFailed")));
-        return;
-      }
-      setLinkMsg(t("commercialLinkOk"));
     } finally {
       setBusy(false);
     }
@@ -420,6 +413,9 @@ export default function HoldingsPage() {
                   <h3 className="mb-3 font-semibold text-[#34495E]">
                     {t("membersTitle")}
                   </h3>
+                  {memberNotice ? (
+                    <p className="mb-2 text-sm text-emerald-700">{memberNotice}</p>
+                  ) : null}
                   {members.length === 0 ? (
                     <p className="text-sm text-[#7F8C8D]">{t("membersEmpty")}</p>
                   ) : (
@@ -446,32 +442,52 @@ export default function HoldingsPage() {
                     </ul>
                   )}
                   <div className="mt-4 flex flex-wrap items-end gap-2">
+                    <div className="min-w-[200px] flex-1">
+                      <CatalogField
+                        kind="SEARCHABLE"
+                        label={t("memberPick")}
+                        value={memberUserId}
+                        onChange={(v) => {
+                          setMemberUserId(String(v));
+                          setMemberEmail("");
+                        }}
+                        options={memberCandidates.map((c) => ({
+                          value: c.userId,
+                          label: c.email,
+                        }))}
+                        emptyLabel={t("memberPickEmpty")}
+                      />
+                    </div>
                     <label className="min-w-[180px] flex-1">
-                      <span className={MODAL_FIELD_LABEL_CLASS}>{t("memberUserId")}</span>
+                      <span className={MODAL_FIELD_LABEL_CLASS}>{t("memberEmail")}</span>
                       <input
                         className={FORM_INPUT_CLASS}
-                        value={memberUserId}
-                        onChange={(e) => setMemberUserId(e.target.value)}
-                        placeholder="uuid"
+                        type="email"
+                        value={memberEmail}
+                        onChange={(e) => {
+                          setMemberEmail(e.target.value);
+                          setMemberUserId("");
+                        }}
+                        placeholder="name@company.az"
                       />
                     </label>
-                    <label>
-                      <span className={MODAL_FIELD_LABEL_CLASS}>{t("memberRole")}</span>
-                      <select
-                        className={FORM_INPUT_CLASS}
+                    <div className="min-w-[140px]">
+                      <CatalogField
+                        kind="CLOSED_SMALL"
+                        label={t("memberRole")}
                         value={memberRole}
-                        onChange={(e) => setMemberRole(e.target.value)}
-                      >
-                        <option value="VIEWER">VIEWER</option>
-                        <option value="ACCOUNTANT">ACCOUNTANT</option>
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="OWNER">OWNER</option>
-                      </select>
-                    </label>
+                        onChange={(v) => setMemberRole(String(v))}
+                        options={[
+                          { value: "VIEWER", label: t("roleViewer") },
+                          { value: "ACCOUNTANT", label: t("roleAccountant") },
+                          { value: "ADMIN", label: t("roleAdmin") },
+                        ]}
+                      />
+                    </div>
                     <button
                       type="button"
                       className={PRIMARY_BUTTON_CLASS}
-                      disabled={!memberUserId.trim() || busy}
+                      disabled={(!memberUserId.trim() && !memberEmail.trim()) || busy}
                       onClick={() => void addMember()}
                     >
                       {t("addMember")}
@@ -483,48 +499,6 @@ export default function HoldingsPage() {
           ) : null}
         </div>
       )}
-
-      <div className={`${CARD_CONTAINER_CLASS} mt-6 space-y-3 p-4`}>
-        <h2 className="text-sm font-semibold text-[#34495E]">{t("commercialLinkTitle")}</h2>
-        <p className="text-xs text-[#7F8C8D]">{t("commercialLinkHint")}</p>
-        <div className="flex flex-wrap gap-2">
-          <select
-            className={FORM_INPUT_CLASS}
-            value={linkOrgId}
-            onChange={(e) => setLinkOrgId(e.target.value)}
-          >
-            <option value="">{t("commercialLinkPickOrg")}</option>
-            {memberships
-              .filter((m) => m.role === "OWNER" || m.isOwner)
-              .map((m) => (
-                <option key={m.organizationId} value={m.organizationId}>
-                  {m.organizationName ?? m.organizationId}
-                </option>
-              ))}
-          </select>
-          <input
-            className={FORM_INPUT_CLASS}
-            placeholder={t("commercialLinkScope")}
-            value={linkScopeId}
-            onChange={(e) => setLinkScopeId(e.target.value)}
-          />
-          <input
-            className={FORM_INPUT_CLASS}
-            placeholder={t("commercialLinkOrgUnit")}
-            value={linkOrgUnitId}
-            onChange={(e) => setLinkOrgUnitId(e.target.value)}
-          />
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={!linkOrgId || !linkScopeId.trim() || busy}
-            onClick={() => void saveCommercialLink()}
-          >
-            {t("commercialLinkSave")}
-          </button>
-        </div>
-        {linkMsg ? <p className="text-sm text-emerald-700">{linkMsg}</p> : null}
-      </div>
 
       <ModalShell
         open={createOpen}

@@ -84,6 +84,16 @@ export class WorkforceRosterController {
     return this.roster.updatePlace(organizationId, id, user.sub, dto);
   }
 
+  @Post("places/:id/archive")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ROSTER)
+  archivePlace(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+  ) {
+    return this.roster.archivePlace(organizationId, id, user.sub);
+  }
+
   // Shift types
   @Get("shift-types")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)

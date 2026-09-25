@@ -29,6 +29,7 @@ import {
   MIGRATION_DETAIL_LIMIT,
   MIGRATION_SOURCE,
   MIGRATION_STEPS,
+  MIGRATION_FIELDS,
   type MigrationStepId,
   isMigrationStepId,
 } from "./workforce-migration.constants";
@@ -140,6 +141,7 @@ export class WorkforceMigrationService {
 
   async status(organizationId: string) {
     await this.entitlement.assertWorkforceHub(organizationId);
+    await this.scope.resolveScopeForCommercialOrg(organizationId);
     const rows = await this.prisma.workforceMigrationStep.findMany({
       where: { organizationId },
     });
@@ -172,7 +174,7 @@ export class WorkforceMigrationService {
         break;
       }
     }
-    return { steps, priorStepWarning };
+    return { steps, priorStepWarning, fields: MIGRATION_FIELDS };
   }
 
   async preview(

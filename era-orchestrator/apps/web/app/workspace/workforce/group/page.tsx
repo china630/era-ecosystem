@@ -30,9 +30,16 @@ import {
   parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
-import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
 
-type Holding = { id: string; name: string };
+type Holding = {
+  id: string;
+  name: string;
+  organizations?: Array<{
+    id: string;
+    name: string;
+    operatingMode?: string;
+  }>;
+};
 type VisibleOrg = { organizationId: string; organizationName: string };
 type EmpRow = {
   organizationId: string;
@@ -55,7 +62,7 @@ type PersonProfile = {
 };
 
 export default function WorkforceGroupPage() {
-  const { ready, token } = useRequireAuth();
+  const { ready, token, user } = useRequireAuth();
   const t = useTranslations("workforceGroup");
   const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
@@ -76,7 +83,6 @@ export default function WorkforceGroupPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
-  const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [holdingsFailed, setHoldingsFailed] = useState(false);
   const skipPagedFetch = useRef(false);
@@ -97,6 +103,12 @@ export default function WorkforceGroupPage() {
     return err.message || t("loadError");
   }
 
+  function orgsFromHolding(h: Holding | undefined): VisibleOrg[] {
+    return (h?.organizations ?? [])
+      .filter((o) => (o.operatingMode ?? "STANDALONE") === "STANDALONE")
+      .map((o) => ({ organizationId: o.id, organizationName: o.name }));
+  }
+
   const loadHoldings = useCallback(async () => {
     if (!token) return;
     const res = await orchFetch("/v1/holdings", { token });
@@ -113,13 +125,19 @@ export default function WorkforceGroupPage() {
     setHoldings(list);
     const fromUrl = searchParams.get("holdingId");
     setHoldingId((prev) => {
-      if (prev && list.some((h) => h.id === prev)) return prev;
-      if (fromUrl && list.some((h) => h.id === fromUrl)) return fromUrl;
-      return list[0]?.id || "";
+      const next =
+        prev && list.some((h) => h.id === prev)
+          ? prev
+          : fromUrl && list.some((h) => h.id === fromUrl)
+            ? fromUrl
+            : list[0]?.id || "";
+      const selected = list.find((h) => h.id === next);
+      setVisibleOrgs(orgsFromHolding(selected));
+      return next;
     });
     setHoldingsReady(true);
     if (list.length === 0) setLoading(false);
-  }, [token, searchParams, t]);
+  }, [token, searchParams, user?.organizationId]);
 
   const loadDirectory = useCallback(
     async (pageToLoad: number) => {
@@ -142,16 +160,17 @@ export default function WorkforceGroupPage() {
       if (debouncedQ.trim()) qs.set("q", debouncedQ.trim());
       const res = await wfFetch(`holding-directory?${qs}`);
       if (await isWorkforceGate403(res)) {
-        setNotEntitled(true);
+        setError(t("needWorkforce"));
+        setItems([]);
+        setPersons({});
+        setTotal(0);
         setLoading(false);
         return;
       }
-      setNotEntitled(false);
       if (!res.ok) {
         setError(mapDirectoryError(await parseWorkforceApiError(res)));
         setItems([]);
         setPersons({});
-        setVisibleOrgs([]);
         setLoading(false);
         return;
       }
@@ -159,7 +178,9 @@ export default function WorkforceGroupPage() {
       setItems(body.items ?? []);
       setPersons(body.persons ?? {});
       setTotal(body.total ?? 0);
-      setVisibleOrgs(body.visibleOrgs ?? []);
+      if (Array.isArray(body.visibleOrgs) && body.visibleOrgs.length) {
+        setVisibleOrgs(body.visibleOrgs);
+      }
       setLoading(false);
     },
     [holdingId, pageSize, filterOrgId, status, debouncedQ, t],
@@ -216,7 +237,6 @@ export default function WorkforceGroupPage() {
   const filtersActive = Boolean(filterOrgId || status || q.trim());
 
   if (!ready) return null;
-  if (notEntitled) return <WorkforceGate />;
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -269,17 +289,20 @@ export default function WorkforceGroupPage() {
                 label={t("holding")}
                 value={holdingId}
                 onChange={(v) => {
-                  setHoldingId(String(v));
+                  const id = String(v);
+                  setHoldingId(id);
                   setFilterOrgId("");
-                  setVisibleOrgs([]);
                   setItems([]);
+                  setVisibleOrgs(
+                    orgsFromHolding(holdings.find((h) => h.id === id)),
+                  );
                 }}
                 options={holdingOptions}
                 emptyLabel={tCommon("select")}
                 disabled={filtersOff}
               />
               <CatalogField
-                kind="ENTITY_REF"
+                kind={visibleOrgs.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
                 label={t("filterOrg")}
                 value={filterOrgId}
                 onChange={(v) => setFilterOrgId(String(v))}

@@ -23,7 +23,6 @@ import {
   parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../../../lib/workforce-fetch";
-import { WorkforceGate } from "../../../../../../components/workspace/workforce-gate";
 
 type EmpBlock = {
   organizationId: string;
@@ -59,7 +58,6 @@ export default function WorkforceGroupPersonPage() {
   const [hireOrgId, setHireOrgId] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function formatStatus(code: string): string {
@@ -83,11 +81,10 @@ export default function WorkforceGroupPersonPage() {
       `persons/${encodeURIComponent(globalPersonId)}/employments${qs}`,
     );
     if (await isWorkforceGate403(res)) {
-      setNotEntitled(true);
+      setError(t("needWorkforce"));
       setLoading(false);
       return;
     }
-    setNotEntitled(false);
     if (!res.ok) {
       const err = await parseWorkforceApiError(res);
       if (err.code === "HOLDING_HR_FORBIDDEN") setError(t("forbidden"));
@@ -187,7 +184,6 @@ export default function WorkforceGroupPersonPage() {
   }
 
   if (!ready) return null;
-  if (notEntitled) return <WorkforceGate />;
 
   const canSwitch = (orgId: string) =>
     memberships.some((m) => m.organizationId === orgId);
