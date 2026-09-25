@@ -635,7 +635,12 @@ if ($Wave) {
             $stagedBefore = @(git diff --cached --name-only | ForEach-Object { $_ -replace '\\', '/' })
             New-CommitMessage -ScopeName $waveName -Subj $Subject -Bod $Body
             foreach ($s in $stagedBefore) { [void]$remaining.Remove($s) }
-            $dropDirs = @($remaining | Where-Object { $stagedBefore -like "$_/*" })
+            # Porcelain can list an untracked directory as `foo/` after files
+            # inside were staged; `$_/*` would then be `foo//*` and miss.
+            $dropDirs = @($remaining | Where-Object {
+                $prefix = $_.TrimEnd('/')
+                ($stagedBefore -like "$prefix/*") -or ($stagedBefore -contains $prefix)
+            })
             foreach ($d in $dropDirs) { [void]$remaining.Remove($d) }
         }
     }
