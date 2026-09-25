@@ -31,7 +31,7 @@ sequenceDiagram
 
 Without Finance: rows remain in CP + F1 CSV export.
 
-Labor **shift plan** (places, cycles) is a separate CP module that **materializes into** these cells — [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md). It does not replace month approve as payroll SoR.
+Labor **shift plan** (places, cycles) is a separate CP module that **materializes into** these cells — [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md). Default materialize fills **empty DRAFT cells only**; `?overwrite=true` replaces occupied ops/FaceID cells (still skips APPROVED and absence locks). It does not replace month approve as payroll SoR.
 
 ## Events
 
