@@ -10,6 +10,7 @@ export { Field, FieldSelect, FieldTextarea, FieldRow, type FieldProps, type Fiel
 export {
   resolveCatalogControl,
   inferCatalogFieldKind,
+  catalogKindForOptions,
   assertCatalogAllowsPlainText,
   type CatalogFieldKind,
   type CatalogControlType,
