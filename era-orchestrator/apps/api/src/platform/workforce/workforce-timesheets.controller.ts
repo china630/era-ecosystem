@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  GoneException,
   Param,
   Patch,
   Post,
@@ -17,7 +18,6 @@ import { OrganizationId } from "../../common/org-id.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
-import { WorkforceRosterService } from "./workforce-roster.service";
 import {
   ApproveTimesheetEntriesDto,
   ListWorkforceTimesheetQueryDto,
@@ -29,10 +29,7 @@ import {
 @Controller("platform/v1/workforce/timesheets")
 @UseGuards(PermissionsGuard)
 export class WorkforceTimesheetsController {
-  constructor(
-    private readonly timesheets: WorkforceTimesheetsService,
-    private readonly roster: WorkforceRosterService,
-  ) {}
+  constructor(private readonly timesheets: WorkforceTimesheetsService) {}
 
   @Get()
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
@@ -106,35 +103,14 @@ export class WorkforceTimesheetsController {
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_TIMESHEET)
   @ApiOperation({
     summary:
-      "Fill empty DRAFT cells from shift assignments (source=roster_plan). Skips APPROVED, absence locks, and occupied cells unless ?overwrite=true. ?preserveManual=true keeps ops_grid/faceid even when overwriting. Then syncs approved absences.",
+      "Retired. The shift plan is not copied into timesheet cells. Fact stays manual, FaceID, or an approved absence.",
   })
-  async materializeRoster(
-    @OrganizationId() organizationId: string,
-    @Param("id") id: string,
-    @CurrentUser() user: EraJwtPayload,
-    @Query("preserveManual") preserveManualRaw?: string,
-    @Query("overwrite") overwriteRaw?: string,
-  ) {
-    const overwriteFacts =
-      overwriteRaw === "1" ||
-      overwriteRaw === "true" ||
-      overwriteRaw === "TRUE";
-    const preserveManual =
-      preserveManualRaw === "1" ||
-      preserveManualRaw === "true" ||
-      preserveManualRaw === "TRUE";
-    const summary = await this.roster.materializeMonth(
-      organizationId,
-      id,
-      user.sub,
-      { preserveManual, overwriteFacts },
-    );
-    try {
-      await this.timesheets.syncAbsences(organizationId, id, user.sub);
-    } catch {
-      return { ...summary, absenceSyncFailed: true };
-    }
-    return summary;
+  materializeRoster() {
+    throw new GoneException({
+      code: "ROSTER_MATERIALIZE_RETIRED",
+      message:
+        "Shift plan is not written into the timesheet. Compare plan and fact on the variance screen.",
+    });
   }
 
   @Patch(":id/entries/batch")

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Pencil } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   CatalogField,
   catalogKindForOptions,
@@ -20,7 +20,6 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 import { bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -31,7 +30,6 @@ import {
   workforceFetch as wfFetch,
 } from "../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
-import { WorkforceConfirmDialog } from "../../../../components/workspace/workforce-confirm-dialog";
 
 type Place = { id: string; code: string; name: string; status: string };
 type Cycle = { id: string; code: string; name: string };
@@ -52,6 +50,15 @@ type PreviewCell = {
   placeCode: string | null;
   shiftTypeCode: string | null;
   fromOverride: boolean;
+  conflict?: boolean;
+  conflictPlaces?: string[];
+};
+
+type CoverageGap = {
+  placeId: string;
+  placeCode: string;
+  placeName: string;
+  days: number[];
 };
 
 type PreviewRow = {
@@ -60,20 +67,6 @@ type PreviewRow = {
   orgUnitId: string | null;
   globalPersonId: string | null;
   cells: PreviewCell[];
-};
-
-type AssignmentRow = {
-  id: string;
-  placeId: string;
-  cycleId: string;
-  employmentId: string | null;
-  brigadeId: string | null;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  place?: { code: string; name: string } | null;
-  cycle?: { code: string; name: string } | null;
-  brigade?: { code: string; name: string } | null;
-  employment?: { id: string; globalPersonId?: string; staffCode?: string | null } | null;
 };
 
 type PersonBrief = {
@@ -114,10 +107,6 @@ function asRows<T>(raw: unknown): T[] {
   return [];
 }
 
-function ymdOf(value: string | null | undefined): string {
-  return String(value ?? "").slice(0, 10);
-}
-
 function placeColor(code: string | null | undefined): string {
   if (!code) return "#ECF0F1";
   let h = 0;
@@ -143,19 +132,14 @@ export default function WorkforceRosterPage() {
   const [employments, setEmployments] = useState<Employment[]>([]);
   const [persons, setPersons] = useState<Record<string, PersonBrief>>({});
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
+  const [gaps, setGaps] = useState<CoverageGap[]>([]);
   const [lastDay, setLastDay] = useState(31);
   const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [materializeMsg, setMaterializeMsg] = useState<string | null>(null);
-  const [materializeOpen, setMaterializeOpen] = useState(false);
-  const [overwriteFacts, setOverwriteFacts] = useState(false);
-  const [overwriteConfirm, setOverwriteConfirm] = useState(false);
-  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [editAssignmentId, setEditAssignmentId] = useState<string | null>(null);
-  const [endAssignment, setEndAssignment] = useState<AssignmentRow | null>(null);
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [targetKind, setTargetKind] = useState<"employment" | "brigade">(
@@ -191,10 +175,12 @@ export default function WorkforceRosterPage() {
     const body = (await res.json()) as {
       lastDay: number;
       rows: PreviewRow[];
+      gaps?: CoverageGap[];
       persons?: Record<string, PersonBrief>;
     };
     setLastDay(body.lastDay);
     setPreviewRows(body.rows ?? []);
+    setGaps(body.gaps ?? []);
     if (body.persons) {
       setPersons((prev) => ({ ...prev, ...body.persons }));
     }
@@ -203,14 +189,13 @@ export default function WorkforceRosterPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [pRes, cRes, bRes, eRes, uRes, tRes, aRes] = await Promise.all([
+    const [pRes, cRes, bRes, eRes, uRes, tRes] = await Promise.all([
       wfFetch("places?status=ACTIVE"),
       wfFetch("shift-cycles"),
       wfFetch("brigades"),
       loadActiveEmployments(),
       wfFetch("org-units"),
       wfFetch("shift-types"),
-      wfFetch("shift-assignments"),
     ]);
     if (await isWorkforceGate403(pRes)) {
       setNotEntitled(true);
@@ -222,7 +207,6 @@ export default function WorkforceRosterPage() {
     if (cRes.ok) setCycles(asRows<Cycle>(await cRes.json()));
     if (bRes.ok) setBrigades(asRows<Brigade>(await bRes.json()));
     if (tRes.ok) setShiftTypes(asRows(await tRes.json()));
-    if (aRes.ok) setAssignments(asRows<AssignmentRow>(await aRes.json()));
     setEmployments(eRes.items);
     if (eRes.persons) {
       setPersons((prev) => ({ ...prev, ...eRes.persons }));
@@ -307,26 +291,6 @@ export default function WorkforceRosterPage() {
     await loadPreview();
   }
 
-  async function closeAssignment(row: AssignmentRow) {
-    setBusy(true);
-    const from = ymdOf(row.effectiveFrom);
-    const today = todayBakuYmd();
-    const to = today < from ? from : today;
-    const res = await wfFetch(`shift-assignments/${row.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ effectiveTo: to }),
-    });
-    setBusy(false);
-    setEndAssignment(null);
-    if (!res.ok) {
-      const err = await parseWorkforceApiError(res);
-      setError(err.message || t("saveError"));
-      return;
-    }
-    await load();
-    await loadPreview();
-  }
-
   async function saveOverride() {
     if (!ovEmploymentId || !ovDay) {
       setFormError(t("requiredFields"));
@@ -362,58 +326,6 @@ export default function WorkforceRosterPage() {
     await loadPreview();
   }
 
-  async function materialize() {
-    if (overwriteFacts) {
-      setMaterializeOpen(false);
-      setOverwriteConfirm(true);
-      return;
-    }
-    await runMaterialize(false);
-  }
-
-  async function runMaterialize(overwrite: boolean) {
-    setBusy(true);
-    setMaterializeMsg(null);
-    setError(null);
-    const monthRes = await wfFetch(
-      `timesheets?year=${year}&month=${month}&pageSize=1`,
-    );
-    if (!monthRes.ok) {
-      setBusy(false);
-      const err = await parseWorkforceApiError(monthRes);
-      setError(err.message || t("materializeError"));
-      return;
-    }
-    const sheet = await monthRes.json();
-    const id = (sheet?.timesheet?.id ?? sheet?.id) as string | undefined;
-    if (!id) {
-      setBusy(false);
-      setError(t("materializeError"));
-      return;
-    }
-    const qs = overwrite ? "?overwrite=true" : "";
-    const res = await wfFetch(`timesheets/${id}/materialize-roster${qs}`, {
-      method: "POST",
-      body: "{}",
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const err = await parseWorkforceApiError(res);
-      setError(err.message || t("materializeError"));
-      return;
-    }
-    const summary = await res.json();
-    setMaterializeMsg(
-      t("materializeOk", {
-        touched: summary.cellsTouched ?? 0,
-        locked: summary.cellsSkippedLocked ?? 0,
-        manual: summary.cellsSkippedManual ?? 0,
-      }) + (summary.absenceSyncFailed ? ` ${t("absenceSyncFailed")}` : ""),
-    );
-    setMaterializeOpen(false);
-    await loadPreview();
-  }
-
   function openCellOverride(row: PreviewRow, cell: PreviewCell) {
     setOvEmploymentId(row.employmentId);
     setOvDay(cell.day);
@@ -446,7 +358,7 @@ export default function WorkforceRosterPage() {
     const name = person?.displayName?.trim();
     if (name) return name;
     if (person?.accessDenied) return t("maskedPerson");
-    return emp?.staffCode || tCommon("unnamedPerson");
+    return tCommon("unnamedPerson");
   };
   const empOptions = employments.map((e) => ({
     value: e.id,
@@ -486,16 +398,6 @@ export default function WorkforceRosterPage() {
         subtitle={t("rosterHint")}
         actions={
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => {
-                setMaterializeMsg(null);
-                setMaterializeOpen(true);
-              }}
-            >
-              {t("materialize")}
-            </button>
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
@@ -577,93 +479,24 @@ export default function WorkforceRosterPage() {
       </EraListFilterBar>
 
       <div className={CARD_CONTAINER_CLASS}>
-        <h2 className="mb-2 text-sm font-semibold">{t("assignmentsHeading")}</h2>
-        {assignments.length === 0 ? (
-          <p className="text-sm text-[#7F8C8D]">{t("assignmentsEmpty")}</p>
-        ) : (
-          <div className={`${DATA_TABLE_VIEWPORT_CLASS} overflow-x-auto`}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTarget")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPlace")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCycle")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFrom")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colUntil")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((a) => {
-                  const from = ymdOf(a.effectiveFrom);
-                  const toYmd = a.effectiveTo ? ymdOf(a.effectiveTo) : "";
-                  const to = toYmd || "—";
-                  const stillOpen = !toYmd || toYmd > todayBakuYmd();
-                  const target = a.brigade
-                    ? `${a.brigade.code} — ${a.brigade.name}`
-                    : a.employmentId
-                      ? empLabel(a.employmentId, a.employment?.globalPersonId)
-                      : "—";
-                  return (
-                    <tr key={a.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{target}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {a.place ? `${a.place.code} — ${a.place.name}` : "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {a.cycle ? `${a.cycle.code} — ${a.cycle.name}` : "—"}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>{from}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{to}</td>
-                      <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            title={t("editAssignment")}
-                            aria-label={t("editAssignment")}
-                            onClick={() => {
-                              setEditAssignmentId(a.id);
-                              setFormPlaceId(a.placeId);
-                              setFormCycleId(a.cycleId);
-                              setFormFrom(from);
-                              setFormTo(toYmd);
-                              setTargetKind(a.brigadeId ? "brigade" : "employment");
-                              setFormBrigadeId(a.brigadeId ?? "");
-                              setFormEmploymentId(a.employmentId ?? "");
-                              setFormError(null);
-                              setAssignOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                          </button>
-                          {stillOpen ? (
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            title={t("endAssignment")}
-                            aria-label={t("endAssignment")}
-                            onClick={() => setEndAssignment(a)}
-                          >
-                            <span className="text-sm font-bold text-[#C0392B]" aria-hidden>
-                              ×
-                            </span>
-                          </button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className={CARD_CONTAINER_CLASS}>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <>
+            {gaps.length > 0 ? (
+              <div className="mb-4">
+                <h2 className="mb-1 text-sm font-semibold">{t("gapsHeading")}</h2>
+                <ul className="space-y-1 text-sm text-[#7F8C8D]">
+                  {gaps.map((gap) => (
+                    <li key={gap.placeId}>
+                      <span className="font-medium text-[#34495E]">
+                        {gap.placeCode} — {gap.placeName}
+                      </span>
+                      {": "}
+                      {gap.days.join(", ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <h2 className="mb-2 text-sm font-semibold">{t("gridHeading")}</h2>
             <p className="mb-2 text-xs text-[var(--era-muted)]">{t("gridHint")}</p>
             <div className={`${DATA_TABLE_VIEWPORT_CLASS} mb-6 overflow-x-auto`}>
@@ -704,17 +537,24 @@ export default function WorkforceRosterPage() {
                         {empLabel(row.employmentId)}
                       </td>
                       {row.cells.map((cell) => {
-                        const label =
+                        const base =
                           cell.type == null
                             ? "·"
                             : cell.type === "OFF"
                               ? t("slotOff")
                               : cell.shiftTypeCode ?? "W";
+                        const label = cell.conflict ? `${base}!` : base;
                         return (
                           <td key={cell.day} className={DATA_TABLE_TD_CLASS} style={{ padding: 2 }}>
                             <button
                               type="button"
-                              title={`${cell.placeCode ?? ""} ${cell.shiftTypeCode ?? cell.type ?? ""}`.trim()}
+                              title={
+                                cell.conflict
+                                  ? t("conflictTitle", {
+                                      places: (cell.conflictPlaces ?? []).join(", "),
+                                    })
+                                  : `${cell.placeCode ?? ""} ${cell.shiftTypeCode ?? cell.type ?? ""}`.trim()
+                              }
                               className="min-w-[1.75rem] rounded px-1 py-0.5 text-[10px] leading-tight"
                               style={{
                                 background:
@@ -723,9 +563,11 @@ export default function WorkforceRosterPage() {
                                     : cell.type === "OFF"
                                       ? "#F5F6F7"
                                       : "transparent",
-                                outline: cell.fromOverride
-                                  ? "1px solid #E67E22"
-                                  : undefined,
+                                outline: cell.conflict
+                                  ? "2px solid #C0392B"
+                                  : cell.fromOverride
+                                    ? "1px solid #E67E22"
+                                    : undefined,
                               }}
                               onClick={() => openCellOverride(row, cell)}
                             >
@@ -888,82 +730,6 @@ export default function WorkforceRosterPage() {
         </div>
       </ModalShell>
 
-      <ModalShell
-        open={materializeOpen}
-        onClose={() => setMaterializeOpen(false)}
-        title={t("materialize")}
-        closeLabel={tCommon("close")}
-        footer={
-          <ModalFooter
-            onCancel={() => setMaterializeOpen(false)}
-            onSubmit={() => void materialize()}
-            cancelLabel={tCommon("cancel")}
-            submitLabel={t("materialize")}
-            busy={busy}
-          />
-        }
-      >
-        <div className="space-y-3">
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("year")}
-            value={String(year)}
-            onChange={(v) => setYear(Number(v))}
-            options={yearOptions}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("month")}
-            value={String(month)}
-            onChange={(v) => setMonth(Number(v))}
-            options={monthOptions}
-          />
-          <p className="text-sm text-[#7F8C8D]">{t("materializeHint")}</p>
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("overwriteFacts")}
-            value={overwriteFacts ? "yes" : "no"}
-            onChange={(v) => setOverwriteFacts(v === "yes")}
-            options={[
-              { value: "no", label: t("fillEmptyOnly") },
-              { value: "yes", label: t("overwriteFacts") },
-            ]}
-            hint={t("overwriteFactsHint")}
-          />
-          {materializeMsg ? (
-            <p className="text-sm text-[var(--era-muted)]">{materializeMsg}</p>
-          ) : null}
-        </div>
-      </ModalShell>
-      <WorkforceConfirmDialog
-        open={overwriteConfirm}
-        title={t("materialize")}
-        body={t("overwriteConfirm")}
-        confirmLabel={t("materialize")}
-        cancelLabel={tCommon("cancel")}
-        busy={busy}
-        onCancel={() => {
-          setOverwriteConfirm(false);
-          setMaterializeOpen(true);
-        }}
-        onConfirm={() => {
-          setOverwriteConfirm(false);
-          void runMaterialize(true);
-        }}
-      />
-      <WorkforceConfirmDialog
-        open={endAssignment !== null}
-        title={t("endAssignment")}
-        body={t("endAssignmentConfirm")}
-        confirmLabel={t("endAssignment")}
-        cancelLabel={tCommon("cancel")}
-        busy={busy}
-        onCancel={() => setEndAssignment(null)}
-        onConfirm={() => {
-          const row = endAssignment;
-          if (row) void closeAssignment(row);
-        }}
-      />
     </div>
   );
 }

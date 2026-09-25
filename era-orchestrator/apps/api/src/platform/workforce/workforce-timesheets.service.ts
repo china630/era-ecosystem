@@ -516,7 +516,13 @@ export class WorkforceTimesheetsService {
               source: "ops_grid",
               status: "DRAFT",
             },
-            update: { type: b.type, hours: hrs, lockedFromAbsence: false },
+            update: {
+              type: b.type,
+              hours: hrs,
+              lockedFromAbsence: false,
+              source: "ops_grid",
+              sourceRef: null,
+            },
           });
           cellsTouched += 1;
         }

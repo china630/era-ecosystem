@@ -66,7 +66,7 @@ In one `prisma.$transaction`:
 
 **Leave (no target):** close open row, `leftToBrigadeId = null`. Same date rules.
 
-**Backdated transfer:** allowed while the timesheet month for affected days is **not APPROVED**. If DRAFT cells exist for those days from `roster_plan`, the API returns a flag `rematerializeSuggested: true`; it does **not** silently rewrite approved fact. Operator rematerializes with existing `preserveManual`.
+**Backdated transfer:** allowed while the timesheet month for affected days is **not APPROVED**. If DRAFT cells exist for those days from an older `roster_plan` paint, the API returns `rematerializeSuggested: true`. The flag does **not** rewrite fact. HTTP materialize is retired (410); the operator compares plan and fact on `/workspace/workforce/plan-fact` and edits the timesheet by hand if the old letters are wrong.
 
 Reject: employment not in org / not ACTIVE; brigade not in org; overlapping interval; `effectiveFrom` after today+N (cap: 31 Baku days ahead) unless a documented override later.
 
@@ -133,7 +133,7 @@ Membership bounds are **Baku civil days** ([asia-baku-clock.md](./asia-baku-cloc
 
 - Prisma: drop `@@unique([brigadeId, employmentId])`; add interval columns + partial unique on open membership; migrate snapshot rows.
 - API: transfer/join/leave; list members `asOf`; history query; stop member-replace PATCH.
-- Roster preview + `materialize-roster` join membership **by day**.
+- Roster preview joins membership **by day**. `materialize-roster` is retired (410) and does not write fact.
 - Module map / COVERAGE_MATRIX: update when routes land; capability stays API until UAT-SMOKE.
 - Existing Wave 2 runbook steps that say “edit brigade MULTI” become “transfer as of date”.
 

@@ -106,7 +106,7 @@ Holdings reports compare like `bookCode` (NAS↔NAS, MGMT↔MGMT).
 |------|---------|
 | 0 | Two orgs + holding; hire/terminate/leave; Finance employment mirror (`WORKFORCE_EMPLOYMENT_HIRED` / `TERMINATED`, ensure-org, `financeEmployeeId` write-back). Runbook: [evrostar-wave-0.md](../runbooks/evrostar-wave-0.md). |
 | 1 | Month timesheet + official payroll + NAS postings + bank XML. Finance timesheet header APPROVED on CP approve; contract salary gate + bulk; CP grid pagination/chunked autofill. Runbook: [evrostar-wave-1.md](../runbooks/evrostar-wave-1.md). |
-| 2 | Places, brigades, shift constructor → DRAFT timesheet (`roster_plan`). Runbook: [evrostar-wave-2.md](../runbooks/evrostar-wave-2.md). |
+| 2 | Places, brigades, shift constructor (plan only; timesheet is not painted from the roster). Runbook: [evrostar-wave-2.md](../runbooks/evrostar-wave-2.md). |
 | 3 | Holding-federated HR view (optional parallel with 2). Runbook: [evrostar-wave-3.md](../runbooks/evrostar-wave-3.md). |
 | 4 | Order templates + leave variable; audit holes |
 | 5 | NAS frozen as ops + MGMT book + internal rate + MGMT labor delta; warehouse per org | Runbook: [evrostar-wave-5.md](../runbooks/evrostar-wave-5.md). Eng done; COVERAGE API. |
