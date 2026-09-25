@@ -428,7 +428,6 @@ export default function WorkforceEmploymentsPage() {
       setOrgUnits(active);
       return;
     }
-    }
     if (unitRes.ok) {
       const u = (await unitRes.json()) as { items: OrgUnitOpt[] };
       const active = (u.items ?? []).filter((x) => x.status === "ACTIVE");
