@@ -93,7 +93,7 @@ Does **not**:
 - Call the submit/approve API.
 - Publish `WORKFORCE_ABSENCE_APPROVED` ([cp-workforce-absence-split.md](./cp-workforce-absence-split.md)). Finance must not mirror these rows into payroll.
 - Subtract days from the step 6 balance (`replayHistoryIntoBalance=no`).
-- Set `lockedFromAbsence` on timesheet months that are already `APPROVED`. Open DRAFT months are unchanged by this load; HR materializes or edits them later if they want the plan to show history.
+- Set `lockedFromAbsence` on timesheet months that are already `APPROVED`. Open DRAFT months are unchanged by this load. The shift plan is not copied into those cells.
 
 `COMPENSATION` and `OTHER` are not absences. They do not become calendar days off. They may be stored later as issued orders with `source=import`, or skipped. Evrostar step 7 loads `VACATION` only.
 

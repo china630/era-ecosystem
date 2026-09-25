@@ -177,7 +177,39 @@ export class WorkforceRosterController {
       orgUnitId: orgUnitId?.trim() || undefined,
     });
     const personIds = [
-      ...new Set(body.rows.map((r) => r.globalPersonId).filter(Boolean)),
+      ...new Set(
+        body.rows
+          .map((r) => r.globalPersonId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { ...body, persons };
+  }
+
+  @Get("roster/compare")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  @ApiOperation({
+    summary:
+      "Read-only plan vs timesheet fact through today (Baku). Does not write cells.",
+  })
+  async compare(
+    @OrganizationId() organizationId: string,
+    @Query("year") yearRaw?: string,
+    @Query("month") monthRaw?: string,
+  ) {
+    const year = Number(yearRaw);
+    const month = Number(monthRaw);
+    const body = await this.roster.compareMonth(organizationId, year, month);
+    const personIds = [
+      ...new Set(
+        body.rows
+          .map((r) => r.globalPersonId)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
     const persons = await this.employments.resolvePersonProfiles(
       organizationId,
@@ -262,8 +294,20 @@ export class WorkforceRosterController {
   // Assignments
   @Get("shift-assignments")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
-  listAssignments(@OrganizationId() organizationId: string) {
-    return this.roster.listAssignments(organizationId);
+  async listAssignments(@OrganizationId() organizationId: string) {
+    const items = await this.roster.listAssignments(organizationId);
+    const personIds = [
+      ...new Set(
+        items
+          .map((row) => row.employment?.globalPersonId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const persons = await this.employments.resolvePersonProfiles(
+      organizationId,
+      personIds,
+    );
+    return { items, persons };
   }
 
   @Post("shift-assignments")

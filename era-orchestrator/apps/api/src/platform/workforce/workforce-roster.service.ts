@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import {
   Prisma,
+  WorkforceAbsenceStatus,
   WorkforceDayOverrideKind,
   WorkforceEmploymentStatus,
   WorkforcePlaceStatus,
@@ -27,6 +28,25 @@ import {
   SEED_SHIFT_TYPES,
 } from "./roster-cycle.util";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
+
+type CompareKind =
+  | "no_show"
+  | "unscheduled"
+  | "worked_on_leave"
+  | "matched"
+  | "expected_leave";
+
+type CompareRow = {
+  employmentId: string;
+  globalPersonId: string | null;
+  day: number;
+  date: string;
+  kind: CompareKind;
+  plan: "WORK" | "OFF" | null;
+  planPlaceCode: string | null;
+  fact: string | null;
+  factSource: string | null;
+};
 import {
   addBakuDays,
   bakuCivilUtcDate,
@@ -1103,27 +1123,10 @@ export class WorkforceRosterService {
       throw new BadRequestException("Invalid year/month");
     }
     const { lastDay } = monthBoundsUtc(year, month);
-    const employments = await this.prisma.workforceEmployment.findMany({
-      where: {
-        organizationId,
-        status: WorkforceEmploymentStatus.ACTIVE,
-        ...(opts?.orgUnitId ? { orgUnitId: opts.orgUnitId } : {}),
-      },
-      select: {
-        id: true,
-        orgUnitId: true,
-        globalPersonId: true,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
     const [assignments, brigadeMembers, cycles, overrides, shiftTypes, places] =
       await Promise.all([
         this.prisma.workforceShiftAssignment.findMany({
-          where: {
-            organizationId,
-            ...(opts?.placeId ? { placeId: opts.placeId } : {}),
-          },
+          where: { organizationId },
         }),
         this.prisma.workforceBrigadeMember.findMany({
           where: { organizationId },
@@ -1155,6 +1158,32 @@ export class WorkforceRosterService {
         }),
       ]);
 
+    const linkedIds = [
+      ...new Set([
+        ...assignments
+          .map((a) => a.employmentId)
+          .filter((id): id is string => Boolean(id)),
+        ...brigadeMembers.map((m) => m.employmentId),
+      ]),
+    ];
+    const employments = await this.prisma.workforceEmployment.findMany({
+      where: {
+        organizationId,
+        ...(opts?.orgUnitId ? { orgUnitId: opts.orgUnitId } : {}),
+        OR: [
+          { status: WorkforceEmploymentStatus.ACTIVE },
+          { id: { in: linkedIds } },
+        ],
+      },
+      select: {
+        id: true,
+        orgUnitId: true,
+        globalPersonId: true,
+        hireDate: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
     const ctx = this.buildResolveContext({
       assignments,
       brigadeMembers,
@@ -1173,10 +1202,35 @@ export class WorkforceRosterService {
         placeCode: string | null;
         shiftTypeCode: string | null;
         fromOverride: boolean;
+        conflict: boolean;
+        conflictPlaces: string[];
       }> = [];
+      const hired = emp.hireDate ? isoDayUtc(emp.hireDate) : null;
       for (let d = 1; d <= lastDay; d++) {
         const workDate = dayDateUtc(year, month, d);
         const ymd = isoDayUtc(workDate);
+        if (hired && ymd < hired) {
+          cells.push({
+            day: d,
+            type: null,
+            hours: 0,
+            placeId: null,
+            placeCode: null,
+            shiftTypeCode: null,
+            fromOverride: false,
+            conflict: false,
+            conflictPlaces: [],
+          });
+          continue;
+        }
+        const matches = ctx.listAssignments(emp.id, ymd);
+        const conflictPlaces = [
+          ...new Set(
+            matches
+              .map((a) => ctx.placeById.get(a.placeId)?.code ?? "")
+              .filter(Boolean),
+          ),
+        ];
         const resolved = this.resolveEmploymentDay(ctx, emp.id, ymd);
         if (!resolved) {
           cells.push({
@@ -1187,6 +1241,8 @@ export class WorkforceRosterService {
             placeCode: null,
             shiftTypeCode: null,
             fromOverride: false,
+            conflict: false,
+            conflictPlaces: [],
           });
           continue;
         }
@@ -1202,6 +1258,8 @@ export class WorkforceRosterService {
               ? ctx.typeById.get(resolved.shiftTypeId)?.code ?? null
               : null,
             fromOverride: resolved.fromOverride,
+            conflict: matches.length > 1,
+            conflictPlaces,
           });
           continue;
         }
@@ -1217,6 +1275,8 @@ export class WorkforceRosterService {
             ? ctx.typeById.get(resolved.shiftTypeId)?.code ?? null
             : null,
           fromOverride: resolved.fromOverride,
+          conflict: matches.length > 1,
+          conflictPlaces,
         });
       }
       return {
@@ -1228,13 +1288,194 @@ export class WorkforceRosterService {
       };
     });
 
+    const visibleRows = rows.filter((row) =>
+      row.cells.some((cell) => cell.type != null),
+    );
+    const covered = new Map<string, Set<number>>();
+    for (const row of visibleRows) {
+      for (const cell of row.cells) {
+        if (cell.type !== "WORK" || !cell.placeId) continue;
+        const set = covered.get(cell.placeId) ?? new Set<number>();
+        set.add(cell.day);
+        covered.set(cell.placeId, set);
+      }
+    }
+    const hireByEmp = new Map(
+      employments.map((e) => [e.id, e.hireDate ? isoDayUtc(e.hireDate) : null]),
+    );
+    const expected = new Map<string, Set<number>>();
+    for (const assignment of assignments) {
+      const cycle = ctx.cycleById.get(assignment.cycleId);
+      const tape = ctx.tapeFor(assignment.cycleId);
+      if (!cycle || tape.length < 1) continue;
+      const from = isoDayUtc(assignment.effectiveFrom);
+      const toEnd = assignment.effectiveTo ? isoDayUtc(assignment.effectiveTo) : null;
+      for (let d = 1; d <= lastDay; d++) {
+        const ymd = isoDayUtc(dayDateUtc(year, month, d));
+        if (ymd < from || (toEnd && ymd > toEnd)) continue;
+        if (assignment.employmentId) {
+          const hired = hireByEmp.get(assignment.employmentId);
+          if (hired && ymd < hired) continue;
+        } else if (assignment.brigadeId) {
+          const onCrew = brigadeMembers.filter((m) => {
+            if (m.brigadeId !== assignment.brigadeId) return false;
+            const memberFrom = isoDayUtc(m.effectiveFrom);
+            const memberTo = m.effectiveTo ? isoDayUtc(m.effectiveTo) : null;
+            return ymd >= memberFrom && (memberTo == null || ymd <= memberTo);
+          });
+          const someoneHired = onCrew.some((m) => {
+            const hired = hireByEmp.get(m.employmentId);
+            return !hired || ymd >= hired;
+          });
+          if (onCrew.length > 0 && !someoneHired) continue;
+        }
+        const slot = resolveCycleSlot(tape, isoDayUtc(cycle.cycleAnchor), ymd);
+        if (slot.kind !== "SHIFT") continue;
+        const set = expected.get(assignment.placeId) ?? new Set<number>();
+        set.add(d);
+        expected.set(assignment.placeId, set);
+      }
+    }
+    const gaps = [...expected.entries()]
+      .filter(([placeId]) => !opts?.placeId || placeId === opts.placeId)
+      .flatMap(([placeId, days]) => {
+      const worked = covered.get(placeId) ?? new Set<number>();
+      const missing = [...days].filter((d) => !worked.has(d)).sort((a, b) => a - b);
+      if (!missing.length) return [];
+      const place = places.find((p) => p.id === placeId);
+      return [
+        {
+          placeId,
+          placeCode: place?.code ?? "",
+          placeName: place?.name ?? "",
+          days: missing,
+        },
+      ];
+    });
+
     return {
       year,
       month,
       lastDay,
       places: places.map((p) => ({ id: p.id, code: p.code, name: p.name })),
-      rows,
+      rows: visibleRows,
+      gaps,
     };
+  }
+
+  /**
+   * Read-only plan vs timesheet fact through today (Baku). Does not write cells.
+   */
+  async compareMonth(organizationId: string, year: number, month: number) {
+    const plan = await this.previewMonth(organizationId, year, month);
+    const today = todayBakuYmd();
+    const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+    const from = `${monthKey}-01`;
+    const to =
+      monthKey > today.slice(0, 7)
+        ? ""
+        : monthKey < today.slice(0, 7)
+          ? `${monthKey}-${String(plan.lastDay).padStart(2, "0")}`
+          : today;
+    if (!to) {
+      return { year, month, from, to: from, rows: [] as CompareRow[] };
+    }
+
+    const sheet = await this.prisma.workforceTimesheet.findUnique({
+      where: {
+        organizationId_year_month: { organizationId, year, month },
+      },
+    });
+    const entries = sheet
+      ? await this.prisma.workforceTimesheetEntry.findMany({
+          where: {
+            organizationId,
+            timesheetId: sheet.id,
+            workDate: {
+              gte: bakuCivilUtcDate(from),
+              lte: bakuCivilUtcDate(to),
+            },
+          },
+        })
+      : [];
+    const absences = await this.prisma.workforceAbsence.findMany({
+      where: {
+        organizationId,
+        status: WorkforceAbsenceStatus.APPROVED,
+        startDate: { lte: bakuCivilUtcDate(to) },
+        endDate: { gte: bakuCivilUtcDate(from) },
+      },
+      select: { employmentId: true, startDate: true, endDate: true },
+    });
+
+    const planByEmp = new Map(plan.rows.map((row) => [row.employmentId, row]));
+    const factByKey = new Map(
+      entries.map((e) => [
+        `${e.employmentId}|${isoDayUtc(e.workDate)}`,
+        e,
+      ]),
+    );
+    const employmentIds = new Set<string>([
+      ...plan.rows.map((r) => r.employmentId),
+      ...entries.map((e) => e.employmentId),
+      ...absences.map((a) => a.employmentId),
+    ]);
+    const people = await this.prisma.workforceEmployment.findMany({
+      where: { organizationId, id: { in: [...employmentIds] } },
+      select: { id: true, globalPersonId: true },
+    });
+    const personByEmp = new Map(people.map((p) => [p.id, p.globalPersonId]));
+    const toDay = Number(to.slice(8, 10));
+    const rows: CompareRow[] = [];
+
+    for (const employmentId of employmentIds) {
+      for (let d = 1; d <= toDay; d++) {
+        const ymd = `${monthKey}-${String(d).padStart(2, "0")}`;
+        const cell = planByEmp.get(employmentId)?.cells.find((c) => c.day === d);
+        const fact = factByKey.get(`${employmentId}|${ymd}`);
+        const onLeave = absences.some((a) => {
+          if (a.employmentId !== employmentId) return false;
+          return isoDayUtc(a.startDate) <= ymd && ymd <= isoDayUtc(a.endDate);
+        });
+        const planType = cell?.type ?? null;
+        const realFact = fact && fact.source !== "roster_plan" ? fact : null;
+        const factType = realFact?.type ?? null;
+        let kind: CompareRow["kind"] | null = null;
+        if (onLeave && factType === WorkforceTimesheetEntryType.WORK) {
+          kind = "worked_on_leave";
+        } else if (onLeave) {
+          kind = "expected_leave";
+        } else if (planType === "WORK" && factType !== WorkforceTimesheetEntryType.WORK) {
+          kind = "no_show";
+        } else if (planType !== "WORK" && factType === WorkforceTimesheetEntryType.WORK) {
+          kind = "unscheduled";
+        } else if (
+          planType === "WORK" &&
+          factType === WorkforceTimesheetEntryType.WORK
+        ) {
+          kind = "matched";
+        }
+        if (!kind) continue;
+        rows.push({
+          employmentId,
+          globalPersonId: personByEmp.get(employmentId) ?? null,
+          day: d,
+          date: ymd,
+          kind,
+          plan: planType,
+          planPlaceCode: cell?.placeCode ?? null,
+          fact: factType,
+          factSource: realFact?.source ?? null,
+        });
+      }
+    }
+
+    rows.sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        a.employmentId.localeCompare(b.employmentId),
+    );
+    return { year, month, from, to, rows };
   }
 
   // ── Materialize ─────────────────────────────────────────────────────
@@ -1494,7 +1735,7 @@ export class WorkforceRosterService {
         };
       });
     };
-    const pickAssignment = (employmentId: string, ymd: string) => {
+    const listAssignments = (employmentId: string, ymd: string) => {
       const brigadeIds = memberships
         .filter(
           (m) =>
@@ -1503,7 +1744,7 @@ export class WorkforceRosterService {
             (m.toYmd == null || ymd <= m.toYmd),
         )
         .map((m) => m.brigadeId);
-      const candidates = input.assignments.filter((a) => {
+      return input.assignments.filter((a) => {
         const from = isoDayUtc(a.effectiveFrom);
         const to = a.effectiveTo ? isoDayUtc(a.effectiveTo) : null;
         if (ymd < from) return false;
@@ -1512,6 +1753,9 @@ export class WorkforceRosterService {
         if (a.brigadeId && brigadeIds.includes(a.brigadeId)) return true;
         return false;
       });
+    };
+    const pickAssignment = (employmentId: string, ymd: string) => {
+      const candidates = listAssignments(employmentId, ymd);
       if (!candidates.length) return null;
       candidates.sort((a, b) =>
         isoDayUtc(b.effectiveFrom).localeCompare(isoDayUtc(a.effectiveFrom)),
@@ -1525,6 +1769,7 @@ export class WorkforceRosterService {
       overrideByKey,
       tapeFor,
       pickAssignment,
+      listAssignments,
     };
   }
 
