@@ -225,7 +225,7 @@ export default function PositionsPage() {
         }}
       >
         <CatalogField
-          kind="ENTITY_REF"
+          kind={unitOptions.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
           label={t("filterOrgUnit")}
           value={filterOrgUnitId}
           onChange={(next) => setFilterOrgUnitId(String(next))}
@@ -376,7 +376,7 @@ export default function PositionsPage() {
       >
         <form onSubmit={(e) => void savePosition(e)} className="grid gap-3">
           <CatalogField
-            kind="ENTITY_REF"
+            kind={unitOptions.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
             label={t("fieldOrgUnit")}
             value={formOrgUnitId}
             onChange={(next) => setFormOrgUnitId(String(next))}

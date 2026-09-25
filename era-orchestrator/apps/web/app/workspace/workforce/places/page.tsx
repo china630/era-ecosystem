@@ -196,6 +196,7 @@ export default function WorkforcePlacesPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
+            className="!mb-0"
             resetLabel={tCommon("filterReset")}
             onReset={() => setFilterStatus("ACTIVE")}
           >
@@ -243,7 +244,7 @@ export default function WorkforcePlacesPage() {
                       aria-label={tCommon("edit")}
                       title={tCommon("edit")}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
                     </button>
                     {row.status === "ACTIVE" ? (
                       <button
@@ -253,7 +254,7 @@ export default function WorkforcePlacesPage() {
                         aria-label={t("archivePlace")}
                         title={t("archivePlace")}
                       >
-                        <Archive className="h-4 w-4" />
+                        <Archive className="h-4 w-4 text-[#C0392B]" aria-hidden />
                       </button>
                     ) : null}
                   </div>
@@ -315,7 +316,7 @@ export default function WorkforcePlacesPage() {
             />
           ) : null}
           <CatalogField
-            kind="ENTITY_REF"
+            kind={unitOptions.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
             label={t("responsibleUnit")}
             value={formOrgUnitId}
             onChange={(v) => setFormOrgUnitId(String(v))}
