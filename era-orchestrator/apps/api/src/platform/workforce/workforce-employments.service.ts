@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   forwardRef,
 } from "@nestjs/common";
 import { WORKFORCE_EMPLOYMENT_TRANSFERRED } from "@era/contracts";
@@ -20,6 +21,7 @@ import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
 import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
+import { WorkforceRosterCache } from "./workforce-roster-cache";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import type { CreateWorkforceEmploymentDto } from "./dto/workforce-employment.dto";
 import type { TransferEmploymentDto } from "./dto/workforce-org.dto";
@@ -62,6 +64,7 @@ export class WorkforceEmploymentsService {
     private readonly satelliteEvents: SatelliteEventsService,
     @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
     private readonly personnelOrders: WorkforcePersonnelOrdersService,
+    @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
 
   async list(
@@ -276,6 +279,7 @@ export class WorkforceEmploymentsService {
         positionId: dto.positionId,
       },
     });
+    await this.rosterCache?.forgetOrganization(organizationId);
 
     return row;
   }
@@ -364,6 +368,7 @@ export class WorkforceEmploymentsService {
         toPositionId: dto.positionId,
       },
     });
+    await this.rosterCache?.forgetOrganization(organizationId);
 
     return {
       ...updated,
