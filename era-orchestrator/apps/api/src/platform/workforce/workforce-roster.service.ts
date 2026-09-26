@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   Prisma,
@@ -28,6 +29,10 @@ import {
   SEED_SHIFT_TYPES,
 } from "./roster-cycle.util";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
+import {
+  WorkforceRosterCache,
+  type RosterPreviewSnapshot,
+} from "./workforce-roster-cache";
 
 type CompareKind =
   | "no_show"
@@ -117,7 +122,12 @@ export class WorkforceRosterService {
     private readonly prisma: PrismaService,
     private readonly entitlement: WorkforceEntitlementService,
     private readonly audit: WorkforceAuditService,
+    @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
+
+  private async forgetRoster(organizationId: string): Promise<void> {
+    await this.rosterCache?.forgetOrganization(organizationId);
+  }
 
   // ── Places ──────────────────────────────────────────────────────────
 
@@ -156,6 +166,7 @@ export class WorkforceRosterService {
         entityId: row.id,
         payload: { code: row.code },
       });
+      await this.forgetRoster(organizationId);
       return row;
     } catch (e) {
       if (
@@ -197,6 +208,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: dto as Record<string, unknown>,
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -261,6 +273,7 @@ export class WorkforceRosterService {
         entityId: row.id,
         payload: { code: row.code },
       });
+      await this.forgetRoster(organizationId);
       return row;
     } catch (e) {
       if (
@@ -303,6 +316,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: dto as Record<string, unknown>,
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -354,6 +368,7 @@ export class WorkforceRosterService {
         entityId: row.id,
         payload: { code: row.code, slotCount: dto.slots.length },
       });
+      await this.forgetRoster(organizationId);
       return row;
     } catch (e) {
       if (
@@ -415,6 +430,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: dto as Record<string, unknown>,
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -599,6 +615,7 @@ export class WorkforceRosterService {
         entityId: created.id,
         payload: { code: created.code, memberCount: employmentIds.length },
       });
+      await this.forgetRoster(organizationId);
       const listed = await this.listBrigades(organizationId, fromYmd);
       return (
         listed.find((b) => b.id === created.id) ?? {
@@ -644,6 +661,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: { name: updated.name },
     });
+    await this.forgetRoster(organizationId);
     const listed = await this.listBrigades(organizationId);
     return listed.find((b) => b.id === id) ?? updated;
   }
@@ -711,6 +729,7 @@ export class WorkforceRosterService {
         rematerializeSuggested,
       },
     });
+    await this.forgetRoster(organizationId);
     return {
       movedCount: moved.length,
       skippedCount: skipped.length,
@@ -775,6 +794,7 @@ export class WorkforceRosterService {
         rematerializeSuggested,
       },
     });
+    await this.forgetRoster(organizationId);
     return {
       leftCount: left.length,
       employmentIds: left,
@@ -853,6 +873,7 @@ export class WorkforceRosterService {
         brigadeId: row.brigadeId,
       },
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -919,6 +940,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: dto as Record<string, unknown>,
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -1002,6 +1024,7 @@ export class WorkforceRosterService {
       entityId: row.id,
       payload: { kind: dto.kind, workDate: dto.workDate },
     });
+    await this.forgetRoster(organizationId);
     return row;
   }
 
@@ -1024,6 +1047,7 @@ export class WorkforceRosterService {
       entityId: id,
       payload: {},
     });
+    await this.forgetRoster(organizationId);
     return { ok: true };
   }
 
@@ -1094,6 +1118,9 @@ export class WorkforceRosterService {
       });
       seededCycles += 1;
     }
+    if (missingTypes.length > 0 || seededCycles > 0) {
+      await this.forgetRoster(organizationId);
+    }
     return {
       types: byCode.size,
       seeded: missingTypes.length > 0 || seededCycles > 0,
@@ -1122,6 +1149,13 @@ export class WorkforceRosterService {
     ) {
       throw new BadRequestException("Invalid year/month");
     }
+    const cached = await this.rosterCache?.read(
+      organizationId,
+      year,
+      month,
+      opts,
+    );
+    if (cached) return cached;
     const { lastDay } = monthBoundsUtc(year, month);
     const [assignments, brigadeMembers, cycles, overrides, shiftTypes, places] =
       await Promise.all([
@@ -1353,7 +1387,7 @@ export class WorkforceRosterService {
       ];
     });
 
-    return {
+    const snapshot: RosterPreviewSnapshot = {
       year,
       month,
       lastDay,
@@ -1361,6 +1395,8 @@ export class WorkforceRosterService {
       rows: visibleRows,
       gaps,
     };
+    await this.rosterCache?.write(organizationId, snapshot, opts);
+    return snapshot;
   }
 
   /**

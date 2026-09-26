@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Optional } from "@nestjs/common";
 import {
   WorkforceAbsenceKind,
   WorkforceAbsenceStatus,
@@ -12,6 +12,7 @@ import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceImportService } from "./workforce-import.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
+import { WorkforceRosterCache } from "./workforce-roster-cache";
 import { WorkforceRosterService } from "./workforce-roster.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
@@ -137,6 +138,7 @@ export class WorkforceMigrationService {
     private readonly finance: FinanceWorkforceMirrorClient,
     private readonly importService: WorkforceImportService,
     private readonly audit: WorkforceAuditService,
+    @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
 
   async status(organizationId: string) {
@@ -569,6 +571,7 @@ export class WorkforceMigrationService {
               where: { id: existing.id },
               data: { hireDate: new Date(`${hireDate}T00:00:00.000Z`) },
             });
+            await this.rosterCache?.forgetOrganization(organizationId);
           }
           push(
             acc,
