@@ -123,7 +123,8 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 
 ## ERA Kafe (street café on SHARED F&B pool)
 
-1. Orch `/kafe` → `POST /v1/public/kafe/onboard` creates org `subscriptionPlan=kafe`, endpoint on existing F&B pool URL.
+1. Orch `/kafe` is **chromeless** (no control-plane sidebar). Signup form uses labelled fields (not DTO keys). `POST /v1/public/kafe/onboard` creates org `subscriptionPlan=kafe` on the existing F&B pool URL.
+   - **Lab firm (after seed):** CP `owner@demo.com` / `12345678`. F&B `/login` `owner` / `12345678` + ERA ID **100000**. PIN cashier `1111`, waiter `2222`. VÖEN `0123456789`.
 2. Owner `/login` (password) ≠ cashier `/pin`.
 3. Floor: empty ticket; tap dish adds line; **bitdi/var** on the tile; hotel APIs 403.
 4. Cashier PIN pays; waiter PIN cannot settle (403 `FNB_WAITER_NO_PAY`).

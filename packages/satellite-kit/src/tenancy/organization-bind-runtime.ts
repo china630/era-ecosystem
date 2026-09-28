@@ -1,7 +1,4 @@
-import {
-  isProductionNodeEnv,
-  isSentinelOrganizationId,
-} from "./organization-id-guard";
+import { isSentinelOrganizationId } from "./organization-id-guard";
 
 export type OrganizationBindSource =
   | "runtime"
@@ -36,7 +33,7 @@ export function getRuntimeOrganizationId(): string | null {
 export class SatelliteOrganizationUnboundError extends Error {
   readonly code = "SATELLITE_ORG_UNBOUND";
 
-  constructor(message = "Satellite organizationId is not bound (production refuses demo-org fallback)") {
+  constructor(message = "Satellite organizationId is not bound") {
     super(message);
     this.name = "SatelliteOrganizationUnboundError";
   }
@@ -65,8 +62,9 @@ export function resolveSatelliteOrganizationId(opts?: {
     assertNotSentinelBind(fromEnv);
     return { organizationId: fromEnv, source: "env" };
   }
-  if (opts?.allowFallback || !isProductionNodeEnv()) {
-    return { organizationId: "demo-org", source: "fallback" };
+  // Diagnostics (`allowFallback`) must not invent a tenant id.
+  if (opts?.allowFallback) {
+    return { organizationId: "", source: "fallback" };
   }
   throw new SatelliteOrganizationUnboundError();
 }

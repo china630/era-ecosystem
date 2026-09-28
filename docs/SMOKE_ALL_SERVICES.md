@@ -116,10 +116,10 @@ Repeat for each new app under `era-*`.
 ## Orchestrator membership & RBAC
 
 ```bash
-# Login (demo owner from Finance seed)
+# Login (lab demo owner)
 TOKEN=$(curl -s -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"demo.owner@erafinance.local\",\"password\":\"DemoLocal#2026\"}" \
+  -d "{\"email\":\"owner@demo.com\",\"password\":\"12345678\"}" \
   | jq -r .accessToken)
 
 # List memberships

@@ -18,7 +18,7 @@ export class SatelliteTenantRawSqlError extends Error {
  */
 export function assertTenantRawOrganizationId(organizationId: string): string {
   const id = organizationId?.trim() ?? "";
-  if (!id || id === "unbound" || (id === "demo-org" && process.env.NODE_ENV === "production")) {
+  if (!id || id === "unbound" || id === "demo-org" || id === "demo-clinic-org" || id === "demo-bank-org-001") {
     throw new SatelliteOrganizationUnboundError(
       "organizationId is required for tenant-scoped raw SQL",
     );

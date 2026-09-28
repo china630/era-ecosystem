@@ -82,7 +82,7 @@ function hydrateFromFileOnce(): void {
  * Resolve deployment org id. Prefer runtime bind / file over env so Sync
  * survives without editing compose `.env`.
  *
- * Order: runtime → file → env → fallback `demo-org` (non-production only).
+ * Order: runtime → file → env. Unbound throws (no ghost `demo-org` tenant).
  */
 export function resolveSatelliteOrganizationId(opts?: {
   allowFallback?: boolean;

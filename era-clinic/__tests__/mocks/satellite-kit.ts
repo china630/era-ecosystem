@@ -11,7 +11,7 @@ export function resolveSatelliteOrganizationId(opts?: {
   const id =
     als.organizationId ||
     process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-    (opts?.allowFallback ? "demo-org" : "");
+    (opts?.allowFallback ? "" : "");
   if (!id) throw new Error("unbound");
   return { organizationId: id, source: "mock" };
 }

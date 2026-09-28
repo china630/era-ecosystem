@@ -176,8 +176,16 @@ const emptyWalkIn = (): WalkInForm => ({
   programCode: "",
 });
 
+/** Prisma DateTime arrives as an ISO instant; day math needs YYYY-MM-DD. */
+function civilYmd(value: string): string | null {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value).trim());
+  return m?.[1] ?? null;
+}
+
 function daysRemaining(endsOn: string): number {
-  const end = bakuCivilUtcDate(endsOn);
+  const ymd = civilYmd(endsOn);
+  if (!ymd) return 0;
+  const end = bakuCivilUtcDate(ymd);
   const today = bakuCivilUtcDate(todayBakuYmd());
   return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86_400_000));
 }
