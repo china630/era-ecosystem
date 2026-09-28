@@ -497,7 +497,8 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "sessionExpired": "Сессия истекла. Войдите снова."
   },
   "common": {
     "loading": "Загрузка…",
@@ -543,6 +544,30 @@
     "busy": "…",
     "alreadyHaveAccount": "Уже есть аккаунт? Войти",
     "registerFailed": "Ошибка регистрации"
+  },
+  "kafe": {
+    "kicker": "ERA Kafe · 29 AZN",
+    "title": "ERA Kafe",
+    "lead": "Касса для маленького кафе. Пароль владельца — не PIN кассира.",
+    "pointPin": "Владелец входит паролем. Кассир и официант — PIN.",
+    "pointTill": "Пустой чек, нажал блюдо, bitdi/var.",
+    "pointQr": "QR-меню — гость только смотрит, не заказывает.",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "cafeName": "Название кафе",
+    "taxId": "VÖEN",
+    "voenHint": "Идентификатор юрлица Азербайджана — 10 цифр",
+    "invalidVoen": "VÖEN должен содержать ровно 10 цифр",
+    "extras": "Дополнительно",
+    "zal": "Зал — 5 PIN официантов (+19 AZN)",
+    "kitchen": "Кухня KDS (+19 AZN)",
+    "qrMenu": "QR-меню, только просмотр (+19 AZN)",
+    "submit": "Открыть кафе",
+    "busy": "…",
+    "alreadyHaveAccount": "Уже есть аккаунт ERA?",
+    "signupFailed": "Не удалось зарегистрировать кафе"
   },
   "registerOrg": {
     "title": "Регистрация организации",

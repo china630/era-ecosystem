@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { AuthLoginCard, buildAuthLoginLabels, parseApiError } from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
@@ -18,6 +18,7 @@ type PickerState = {
 
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
   const { login, token, ready, user } = useAuth();
@@ -29,6 +30,12 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState<PickerState | null>(null);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("reason") === "expired") {
+      setError(tAuth("sessionExpired"));
+    }
+  }, [searchParams, tAuth]);
 
   useEffect(() => {
     // Do not auto-redirect while a fresh multi-company login is choosing a

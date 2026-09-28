@@ -497,7 +497,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "sessionExpired": "Your session expired. Please sign in again."
   },
   "common": {
     "loading": "Loading…",
@@ -544,6 +545,30 @@
     "busy": "…",
     "alreadyHaveAccount": "Already have an account? Sign in",
     "registerFailed": "Registration failed"
+  },
+  "kafe": {
+    "kicker": "ERA Kafe · 29 AZN",
+    "title": "ERA Kafe",
+    "lead": "Till for a small café. The owner password is not the cashier PIN.",
+    "pointPin": "The owner signs in with a password. Cashier and waiter use a PIN.",
+    "pointTill": "Empty ticket, tap a dish, bitdi/var.",
+    "pointQr": "QR menu — guests can view, not order.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "cafeName": "Café name",
+    "taxId": "VÖEN",
+    "voenHint": "Azerbaijan legal entity ID — 10 digits",
+    "invalidVoen": "VÖEN must be exactly 10 digits",
+    "extras": "Add-ons",
+    "zal": "Floor — 5 waiter PINs (+19 AZN)",
+    "kitchen": "Kitchen KDS (+19 AZN)",
+    "qrMenu": "QR menu, read-only (+19 AZN)",
+    "submit": "Open café",
+    "busy": "…",
+    "alreadyHaveAccount": "Already have an ERA account?",
+    "signupFailed": "Sign-up failed"
   },
   "registerOrg": {
     "title": "Organization registration",
