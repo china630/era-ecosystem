@@ -241,12 +241,11 @@ describe("sentinel organization ids", () => {
     assert.equal(isSentinelOrganizationId("unbound", { production: false }), true);
   });
 
-  it("allows demo-org outside production", () => {
-    assert.equal(isSentinelOrganizationId("demo-org", { production: false }), false);
-  });
-
-  it("rejects demo-org in production", () => {
+  it("rejects demo-org always", () => {
+    assert.equal(isSentinelOrganizationId("demo-org", { production: false }), true);
     assert.equal(isSentinelOrganizationId("demo-org", { production: true }), true);
+    assert.equal(isSentinelOrganizationId("demo-clinic-org"), true);
+    assert.equal(isSentinelOrganizationId("demo-bank-org-001"), true);
   });
 });
 

@@ -1,95 +1,126 @@
 /**
- * F&B POS lab demo — waiter/manager users, RESTAURANT + BANQUET outlets, tables, sample menu.
- * Never entrypoint / RUN_SEED. Use: npm run db:seed:demo
- * Requires ERA_SATELLITE_ORGANIZATION_ID (demo-org forbidden).
+ * ERA Lab Kafe overlay — VÖEN 0123456789 / ERA ID 100000.
+ * Idempotent upsert on that org only. Does not wipe other tenants. Never demo-org.
+ *
+ *   npm run db:seed:demo
+ * Requires orch lab org (npx tsx …/seed-lab-demo-org.ts) then:
+ *   ERA_LAB_DEMO_ORGANIZATION_ID=<uuid>
+ *   or CONTROL_PLANE_SERVICE_TOKEN + orch URL to resolve orgNo 100000.
  */
-import { Prisma, PrismaClient } from "@prisma/client";
-import { createSatelliteTenantExtension, hashPassword } from "@era/satellite-kit";
+import { PrismaClient } from "@prisma/client";
+import { ERA_LAB_DEMO } from "@era/contracts";
+import { hashPassword, isSentinelOrganizationId } from "@era/satellite-kit";
+import { ensureSystemFnbRoles } from "../src/lib/auth/ensure-system-fnb-roles";
+import { hashStaffPin } from "../src/lib/labor-pin";
+import { recordMenuItemPrice } from "../src/lib/menu-price-history";
 
-const prisma = new PrismaClient().$extends(
-  createSatelliteTenantExtension(Prisma as never) as never,
-) as unknown as PrismaClient;
+process.env.ERA_SKIP_TENANT_FILTER = "1";
 
-function requireSeedOrgId(): string {
-  const id =
-    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-    process.env.ORGANIZATION_ID?.trim() ||
+const prisma = new PrismaClient();
+
+async function resolveLabOrganizationId(): Promise<string> {
+  const envId = process.env.ERA_LAB_DEMO_ORGANIZATION_ID?.trim();
+  if (envId) {
+    if (isSentinelOrganizationId(envId)) {
+      throw new Error("ERA_LAB_DEMO_ORGANIZATION_ID must be a real org UUID");
+    }
+    return envId;
+  }
+  const orch = (
+    process.env.ORCH_API_URL ||
+    process.env.NEXT_PUBLIC_ORCH_API_URL ||
+    "http://127.0.0.1:4000"
+  ).replace(/\/$/, "");
+  const token =
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
     "";
-  if (!id || id === "demo-org" || id === "demo-clinic-org" || id === "demo-bank-org-001") {
+  if (!token) {
     throw new Error(
-      "ERA_SATELLITE_ORGANIZATION_ID required for fnb db:seed:demo; demo-org is forbidden",
+      "Set ERA_LAB_DEMO_ORGANIZATION_ID or CONTROL_PLANE_SERVICE_TOKEN to resolve ERA ID 100000",
     );
+  }
+  const res = await fetch(
+    `${orch}/internal/v1/organizations/by-public-number/${ERA_LAB_DEMO.publicOrgNumber}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-service-token": token,
+      },
+    },
+  );
+  if (!res.ok) {
+    throw new Error(
+      `Lab org ERA ID ${ERA_LAB_DEMO.publicOrgNumber} not found (${res.status}). Run orch seed-lab-demo-org.ts first.`,
+    );
+  }
+  const data = (await res.json()) as { organizationId?: string };
+  const id = data.organizationId?.trim() ?? "";
+  if (!id || isSentinelOrganizationId(id)) {
+    throw new Error("Orch returned an invalid lab organizationId");
   }
   return id;
 }
 
 async function main() {
-  const organizationId = requireSeedOrgId();
-  process.env.ERA_SATELLITE_ORGANIZATION_ID = organizationId;
+  const organizationId = await resolveLabOrganizationId();
 
-  const waiterRole = await prisma.role.upsert({
-    where: { organizationId_code: { organizationId, code: "FB_WAITER" } },
-    update: {},
-    create: {
-      organizationId,
-      code: "FB_WAITER",
-      name: "Waiter",
-    },
-  });
-  const managerRole = await prisma.role.upsert({
-    where: { organizationId_code: { organizationId, code: "FB_MANAGER" } },
-    update: {},
-    create: {
-      organizationId,
-      code: "FB_MANAGER",
-      name: "Floor manager",
-    },
-  });
-  await prisma.role.upsert({
-    where: { organizationId_code: { organizationId, code: "FB_CASHIER" } },
-    update: {},
-    create: { organizationId, code: "FB_CASHIER", name: "Cashier" },
-  });
-  await prisma.role.upsert({
-    where: { organizationId_code: { organizationId, code: "FB_KITCHEN" } },
-    update: {},
-    create: { organizationId, code: "FB_KITCHEN", name: "Kitchen" },
+  await ensureSystemFnbRoles(prisma, organizationId, "kafe");
+
+  const managerRole = await prisma.role.findFirstOrThrow({
+    where: { organizationId, code: "FB_MANAGER" },
   });
 
-  const waiterHash = await hashPassword("waiter");
-  const managerHash = await hashPassword("manager");
-
+  const ownerHash = await hashPassword(ERA_LAB_DEMO.ownerPassword);
   await prisma.user.upsert({
-    where: { organizationId_login: { organizationId, login: "waiter" } },
-    update: { passwordHash: waiterHash, roleId: waiterRole.id },
-    create: {
-      organizationId,
-      login: "waiter",
-      fullName: "Demo Waiter",
-      passwordHash: waiterHash,
-      roleId: waiterRole.id,
+    where: {
+      organizationId_login: {
+        organizationId,
+        login: ERA_LAB_DEMO.ownerLogin,
+      },
     },
-  });
-  await prisma.user.upsert({
-    where: { organizationId_login: { organizationId, login: "manager" } },
-    update: { passwordHash: managerHash, roleId: managerRole.id },
+    update: {
+      passwordHash: ownerHash,
+      email: ERA_LAB_DEMO.ownerEmail,
+      roleId: managerRole.id,
+      fullName: "ERA Lab Owner",
+    },
     create: {
       organizationId,
-      login: "manager",
-      fullName: "Demo Manager",
-      passwordHash: managerHash,
+      login: ERA_LAB_DEMO.ownerLogin,
+      email: ERA_LAB_DEMO.ownerEmail,
+      fullName: "ERA Lab Owner",
+      passwordHash: ownerHash,
       roleId: managerRole.id,
     },
   });
 
-  const outlet = await prisma.outlet.upsert({
-    where: { organizationId_code: { organizationId, code: "RESTAURANT" } },
-    update: {},
+  await prisma.fnbOrgProfile.upsert({
+    where: { organizationId },
     create: {
       organizationId,
-      code: "RESTAURANT",
-      name: "Main Restaurant",
+      edition: "kafe",
+      hotelMode: false,
+      waiterPinPacks: 1,
+      activeModules: ["industry_fnb_pos", "fnb_waiter_pin"],
+    },
+    update: {
+      edition: "kafe",
+      hotelMode: false,
+      waiterPinPacks: 1,
+      activeModules: ["industry_fnb_pos", "fnb_waiter_pin"],
+    },
+  });
+
+  const outlet = await prisma.outlet.upsert({
+    where: { organizationId_code: { organizationId, code: "KAFE" } },
+    update: { name: ERA_LAB_DEMO.cafeName, publicSlug: "era-lab-kafe" },
+    create: {
+      organizationId,
+      code: "KAFE",
+      name: ERA_LAB_DEMO.cafeName,
       revenueCenterCode: "FOOD",
+      publicSlug: "era-lab-kafe",
     },
   });
 
@@ -101,106 +132,101 @@ async function main() {
         outletId: outlet.id,
         organizationId,
         code,
-        name: `Table ${code}`,
+        name: `Masa ${code}`,
         seats: 4,
       },
     });
   }
 
+  await prisma.staffRoster.upsert({
+    where: {
+      organizationId_staffCode: { organizationId, staffCode: "CASHIER-01" },
+    },
+    update: {
+      pinHash: hashStaffPin(ERA_LAB_DEMO.cashierPin),
+      pinRole: "CASHIER",
+      outletId: outlet.id,
+      active: true,
+      fullName: "Lab Cashier",
+    },
+    create: {
+      organizationId,
+      staffCode: "CASHIER-01",
+      fullName: "Lab Cashier",
+      pinHash: hashStaffPin(ERA_LAB_DEMO.cashierPin),
+      pinRole: "CASHIER",
+      outletId: outlet.id,
+      active: true,
+    },
+  });
+
+  await prisma.staffRoster.upsert({
+    where: {
+      organizationId_staffCode: { organizationId, staffCode: "WAITER-01" },
+    },
+    update: {
+      pinHash: hashStaffPin(ERA_LAB_DEMO.waiterPin),
+      pinRole: "WAITER",
+      outletId: outlet.id,
+      active: true,
+      fullName: "Lab Waiter",
+    },
+    create: {
+      organizationId,
+      staffCode: "WAITER-01",
+      fullName: "Lab Waiter",
+      pinHash: hashStaffPin(ERA_LAB_DEMO.waiterPin),
+      pinRole: "WAITER",
+      outletId: outlet.id,
+      active: true,
+    },
+  });
+
   let cat = await prisma.menuCategory.findFirst({
-    where: { organizationId, outletId: outlet.id, name: "Mains" },
+    where: { organizationId, outletId: outlet.id, name: "Əsas" },
   });
   if (!cat) {
     cat = await prisma.menuCategory.create({
       data: {
         organizationId,
         outletId: outlet.id,
-        name: "Mains",
+        name: "Əsas",
         sortOrder: 1,
       },
     });
   }
 
-  await prisma.menuItem.upsert({
-    where: { categoryId_plu: { categoryId: cat.id, plu: "PLU-001" } },
-    update: {},
-    create: {
-      organizationId,
-      categoryId: cat.id,
-      plu: "PLU-001",
-      name: "Grilled chicken",
-      priceAzn: 18.5,
-    },
-  });
-  await prisma.menuItem.upsert({
-    where: { categoryId_plu: { categoryId: cat.id, plu: "PLU-002" } },
-    update: {},
-    create: {
-      organizationId,
-      categoryId: cat.id,
-      plu: "PLU-002",
-      name: "Caesar salad",
-      priceAzn: 12.0,
-    },
-  });
+  const dishes: Array<{ plu: string; name: string; priceAzn: number }> = [
+    { plu: "KAFE-001", name: "Dönər", priceAzn: 6 },
+    { plu: "KAFE-002", name: "Çay", priceAzn: 1.5 },
+    { plu: "KAFE-003", name: "Qəhvə", priceAzn: 3 },
+  ];
 
-  const banquetOutlet = await prisma.outlet.upsert({
-    where: { organizationId_code: { organizationId, code: "BANQUET" } },
-    update: {},
-    create: {
-      organizationId,
-      code: "BANQUET",
-      name: "Banquet service",
-      revenueCenterCode: "FOOD",
-    },
-  });
-
-  let banquetCat = await prisma.menuCategory.findFirst({
-    where: { organizationId, outletId: banquetOutlet.id, name: "Extras" },
-  });
-  if (!banquetCat) {
-    banquetCat = await prisma.menuCategory.create({
-      data: {
+  for (const d of dishes) {
+    const item = await prisma.menuItem.upsert({
+      where: { categoryId_plu: { categoryId: cat.id, plu: d.plu } },
+      update: { name: d.name, priceAzn: d.priceAzn },
+      create: {
         organizationId,
-        outletId: banquetOutlet.id,
-        name: "Extras",
-        sortOrder: 1,
+        categoryId: cat.id,
+        plu: d.plu,
+        name: d.name,
+        priceAzn: d.priceAzn,
       },
     });
-  }
-
-  await prisma.menuItem.upsert({
-    where: { categoryId_plu: { categoryId: banquetCat.id, plu: "BQ-EXTRA-01" } },
-    update: {},
-    create: {
-      organizationId,
-      categoryId: banquetCat.id,
-      plu: "BQ-EXTRA-01",
-      name: "Banquet extra course",
-      priceAzn: 15.0,
-    },
-  });
-
-  const items = await prisma.menuItem.findMany({
-    where: { organizationId },
-    select: { id: true, priceAzn: true },
-  });
-  for (const item of items) {
-    const hasPrice = await prisma.menuItemPrice.findFirst({
+    const open = await prisma.menuItemPrice.findFirst({
       where: { menuItemId: item.id, effectiveTo: null },
     });
-    if (!hasPrice) {
-      await prisma.menuItemPrice.create({
-        data: {
-          menuItemId: item.id,
-          priceAzn: item.priceAzn,
-          effectiveFrom: new Date(),
-        },
+    if (!open) {
+      await recordMenuItemPrice(prisma, item.id, d.priceAzn, {
+        reason: "lab-demo",
       });
     }
   }
 
-  console.log(`era-fnb-pos demo seed OK for org ${organizationId}`);
+  console.log(
+    `era-fnb-pos lab kafe OK org=${organizationId} login=${ERA_LAB_DEMO.ownerLogin} orgNo=${ERA_LAB_DEMO.publicOrgNumber} PIN cashier=${ERA_LAB_DEMO.cashierPin} waiter=${ERA_LAB_DEMO.waiterPin}`,
+  );
 }
 
 main()

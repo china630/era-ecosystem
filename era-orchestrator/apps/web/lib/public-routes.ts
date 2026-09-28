@@ -8,6 +8,7 @@ const BARE_PUBLIC_PREFIXES = [
   "/satellites",
   "/terms",
   "/partner",
+  "/kafe",
 ] as const;
 
 /** Guest marketing + auth pages render without the logged-in app shell. */

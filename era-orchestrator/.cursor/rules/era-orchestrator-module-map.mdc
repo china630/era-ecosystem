@@ -16,7 +16,8 @@ globs:
 
 | Route | File | Notes |
 |-------|------|-------|
-| `/login` | `app/login/page.tsx` | AuthLoginCard; post-login 0/1/N routing (0 → onboarding gate, 1 → `/workspace`, N → `/organizations` picker on every login) |
+| `/login` | `app/login/page.tsx` | AuthLoginCard; post-login 0/1/N routing (0 → onboarding gate, 1 → `/workspace`, N → `/organizations` picker on every login). Expired JWT → `/login?reason=expired` (session-guard in `lib/orch-api.ts` + `auth-context.tsx`) |
+| `/kafe` | `app/kafe/page.tsx` | ERA Kafe chromeless signup (no control-plane shell). `POST /v1/public/kafe/onboard` → F&B pool `/login`. Lab firm: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` (`npm run seed:lab-demo` in orchestrator + F&B `db:seed:demo`) |
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
 | `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor) |

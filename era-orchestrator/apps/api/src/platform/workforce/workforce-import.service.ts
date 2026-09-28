@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Optional,
 } from "@nestjs/common";
 import { WorkforceAbsenceKind, WorkforceEmploymentStatus, OrgUnitStatus } from "@era365/database";
 import { MdmService } from "../../mdm/mdm.service";
@@ -11,6 +12,7 @@ import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
+import { WorkforceRosterCache } from "./workforce-roster-cache";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { normalizeDateOnly } from "./workforce-date";
 import { rosterSatelliteKeys } from "./workforce-satellite-keys";
@@ -52,6 +54,7 @@ export class WorkforceImportService {
     private readonly orgUnits: WorkforceOrgUnitsService,
     private readonly positions: WorkforcePositionsService,
     private readonly audit: WorkforceAuditService,
+    @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
 
   private async logImportApplied(
@@ -130,6 +133,7 @@ export class WorkforceImportService {
       );
     }
 
+    let rosterDirty = false;
     const units = await this.prisma.orgUnit.findMany({
       where: { workforceScopeId: link.workforceScopeId, status: "ACTIVE" },
     });
@@ -305,6 +309,7 @@ export class WorkforceImportService {
               where: { id: existing.id },
               data: { hireDate: new Date(`${hireDate}T00:00:00.000Z`) },
             });
+            rosterDirty = true;
             notes.push(`hireDate ${prevHire || "—"} → ${hireDate}`);
           }
           skipped++;
@@ -340,6 +345,7 @@ export class WorkforceImportService {
       }
     }
 
+    if (rosterDirty) await this.rosterCache?.forgetOrganization(organizationId);
     const result = { dryRun, created, skipped, errors, rows: results };
     await this.logImportApplied(
       organizationId,

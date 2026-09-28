@@ -72,6 +72,8 @@ import { WorkforceRosterController } from "./workforce-roster.controller";
 
 import { WorkforceRosterService } from "./workforce-roster.service";
 
+import { WorkforceRosterCache } from "./workforce-roster-cache";
+
 import { WorkforceHoldingController } from "./workforce-holding.controller";
 
 import { WorkforceHoldingService } from "./workforce-holding.service";
@@ -197,6 +199,8 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
     WorkforceMigrationService,
 
     WorkforceTimesheetsService,
+
+    WorkforceRosterCache,
 
     WorkforceRosterService,
 

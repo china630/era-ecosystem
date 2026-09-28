@@ -1,15 +1,14 @@
 import { financeWebUrl } from "@era/satellite-kit/platform/industry-modules";
 import type { SatelliteSsoTicket } from "@era/satellite-kit/auth/sso-launch";
 import {
-  ORCH_REFRESH_KEY,
-  ORCH_TOKEN_KEY,
+  ensureFreshOrchAccessToken,
   getOrchAccessToken,
-  getOrchRefreshToken,
+  isAccessTokenUsable,
   orchFetch,
-  setOrchTokens,
+  tokenAlgorithm,
 } from "./orch-api";
 
-export { getOrchAccessToken };
+export { ensureFreshOrchAccessToken, getOrchAccessToken };
 
 /**
  * Fetch a server-signed satellite SSO ticket. Signing happens in the orchestrator
@@ -70,73 +69,6 @@ export async function fetchSatelliteLaunchUrl(
       baseUrl: data.baseUrl.replace(/\/$/, ""),
       source: data.source === "registry" ? "registry" : "env",
     };
-  } catch {
-    return null;
-  }
-}
-
-function decodeJwtJsonSegment(segment: string): Record<string, unknown> | null {
-  try {
-    const b64 = segment.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    return JSON.parse(atob(padded)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function accessTokenExpiresAtMs(token: string): number | null {
-  const payload = decodeJwtJsonSegment(token.split(".")[1] ?? "");
-  return typeof payload?.exp === "number" ? payload.exp * 1000 : null;
-}
-
-function tokenAlgorithm(token: string): string | null {
-  const header = decodeJwtJsonSegment(token.split(".")[0] ?? "");
-  return typeof header?.alg === "string" ? header.alg : null;
-}
-
-function isAccessTokenUsable(token: string, skewMs = 120_000): boolean {
-  const exp = accessTokenExpiresAtMs(token);
-  // If exp cannot be read, still attempt the call — server is source of truth.
-  if (exp == null) return true;
-  return exp - Date.now() > skewMs;
-}
-
-/**
- * Ensure a fresh Orchestrator access token before Finance / satellite launch.
- * Prefers refresh when the access token is missing, expired, or near expiry.
- * Returns null when re-login is required.
- */
-export async function ensureFreshOrchAccessToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  const current = getOrchAccessToken();
-  if (current && isAccessTokenUsable(current)) {
-    return current;
-  }
-
-  const refreshToken = getOrchRefreshToken();
-  if (!refreshToken) {
-    if (current && isAccessTokenUsable(current, 0)) return current;
-    return null;
-  }
-
-  try {
-    const res = await orchFetch("/auth/token/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken }),
-    });
-    if (!res.ok) {
-      localStorage.removeItem(ORCH_TOKEN_KEY);
-      localStorage.removeItem(ORCH_REFRESH_KEY);
-      return null;
-    }
-    const data = (await res.json()) as {
-      accessToken?: string;
-      refreshToken?: string;
-    };
-    if (!data.accessToken) return null;
-    setOrchTokens(data.accessToken, data.refreshToken ?? refreshToken);
-    return data.accessToken;
   } catch {
     return null;
   }

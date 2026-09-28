@@ -497,7 +497,8 @@
     "localeToggleAria": "Dil",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "sessionExpired": "Sessiya bitdi. Yenidən daxil olun."
   },
   "common": {
     "loading": "Yüklənir…",
@@ -543,6 +544,30 @@
     "busy": "…",
     "alreadyHaveAccount": "Artıq hesab var? Daxil ol",
     "registerFailed": "Qeydiyyat uğursuz oldu"
+  },
+  "kafe": {
+    "kicker": "ERA Kafe · 29 AZN",
+    "title": "ERA Kafe",
+    "lead": "Kiçik kafe üçün kassa. Sahibkarın şifrəsi kassir PIN-i deyil.",
+    "pointPin": "Sahibkar şifrə ilə girir. Kassir və ofisiant — PIN.",
+    "pointTill": "Boş çek, yeməyə toxun, bitdi/var.",
+    "pointQr": "QR menyu — qonaq yalnız baxır, sifariş vermir.",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "cafeName": "Kafe adı",
+    "taxId": "VÖEN",
+    "voenHint": "Azərbaycan hüquqi şəxs identifikatoru — 10 rəqəm",
+    "invalidVoen": "VÖEN tam 10 rəqəmdən ibarət olmalıdır",
+    "extras": "Əlavələr",
+    "zal": "Zal — 5 ofisiant PIN (+19 AZN)",
+    "kitchen": "Mətbəx KDS (+19 AZN)",
+    "qrMenu": "QR menyu, yalnız oxumaq (+19 AZN)",
+    "submit": "Kafe aç",
+    "busy": "…",
+    "alreadyHaveAccount": "Artıq ERA hesabın var?",
+    "signupFailed": "Qeydiyyat uğursuz oldu"
   },
   "registerOrg": {
     "title": "Təşkilat qeydiyyatı",

@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import { InternalServerErrorException } from "@nestjs/common";
+import { ERA_LAB_DEMO } from "@era/contracts";
 
 /** Inclusive range for human-facing ERA ID (no leading zero). */
 export const PUBLIC_ORG_NUMBER_MIN = 100_000;
@@ -44,6 +45,7 @@ export async function allocatePublicOrgNumber(
       PUBLIC_ORG_NUMBER_MIN,
       PUBLIC_ORG_NUMBER_MAX + 1,
     );
+    if (candidate === ERA_LAB_DEMO.publicOrgNumber) continue;
     const clash = await prisma.organization.findUnique({
       where: { publicOrgNumber: candidate },
       select: { id: true },

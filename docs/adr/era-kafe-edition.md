@@ -20,7 +20,7 @@ Selling that shell as «29 AZN street POS» would bill **Foundation 29 + Gate 29
 - **Market name:** ERA Kafe (az/ru/en). Not «ERA Kassa» (sounds like KKM / bank / Finance cash).
 - **Code stays:** app `era-fnb-pos`, gate `industry_fnb_pos`. No second satellite DB.
 - **Edition / signup source:** `kafe` (org flag or `signupSource=kafe`). Hotel F&B orgs stay on the existing Nafta/hotel shell.
-- **Control plane:** one orchestrator. Dedicated landing + short onboarding form write the **same** org, subscription, and satellite bind. No parallel identity store.
+- **Control plane:** one orchestrator. Dedicated **chromeless** landing `/kafe` (not inside the logged-in app shell) + short onboarding form write the **same** org, subscription, and satellite bind. Lab overlay: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` (never sentinel `demo-org`). No parallel identity store.
 
 A later **banquet-hall** SKU is a **third world**, not mixed into Kafe nav and not implied by Nafta banquet BEO.
 

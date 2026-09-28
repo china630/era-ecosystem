@@ -5,7 +5,7 @@
  */
 async function main() {
   console.log(
-    "era-fnb-pos: no boot seed (org-scoped). For lab waiter/outlet/menu: npm run db:seed:demo with ERA_SATELLITE_ORGANIZATION_ID set",
+    "era-fnb-pos: no boot seed (org-scoped). Lab café: npm run db:seed:demo (ERA ID 100000).",
   );
 }
 

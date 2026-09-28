@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import {
-  CounterpartyLegalForm,
   OrganizationKind,
   Prisma,
   TariffTier,
@@ -10,7 +9,6 @@ import { provisionNasAccountsForOrganization } from "../../lib/chart/chart-seed"
 import { PRICING_MODULE_SEED_DEFAULTS } from "../../lib/core/pricing-module-seed";
 import {
   blindIndexVoenForSeed,
-  encryptVoenForSeed,
   normalizeVoenForSeed,
 } from "../../lib/demo/pii-for-org-seed";
 import { PLATFORM_SUPER_ADMIN_EMAILS } from "../../lib/platform/upsert-platform-super-admins";
@@ -18,53 +16,11 @@ import type { SeedContext } from "../_engine/upsert";
 
 const BCRYPT_ROUNDS = 10;
 
-/** Default local demo owner (not a platform super-admin). */
-const DEFAULT_DEMO_OWNER_EMAIL = "demo.owner@erafinance.local";
-const DEFAULT_DEMO_OWNER_PASSWORD = "DemoLocal#2026";
-
-const DEMO_ORGS: ReadonlyArray<{
-  name: string;
-  /** 10-digit test VÖEN; must stay unique in DB (global blind index). */
-  taxId: string;
-  legalAddress: string;
-  phone: string;
-  directorName: string;
-  kind?: OrganizationKind;
-  legalForm?: CounterpartyLegalForm;
-}> = [
-  {
-    name: "Demo MMC Alpha (local)",
-    taxId: "9900000001",
-    legalAddress: "Bakı, Nəsimi rayonu (demo)",
-    phone: "+994501112233",
-    directorName: "Demo Director Alpha",
-  },
-  {
-    name: "Demo MMC Beta (local)",
-    taxId: "9900000002",
-    legalAddress: "Bakı, Yasamal rayonu (demo)",
-    phone: "+994501112244",
-    directorName: "Demo Director Beta",
-  },
-  {
-    name: "Demo Budget Agency (local)",
-    taxId: "9900000003",
-    legalAddress: "Bakı, Nəsimi rayonu (demo B2G)",
-    phone: "+994501112255",
-    directorName: "Demo Director Budget",
-    kind: OrganizationKind.BUDGET,
-    legalForm: CounterpartyLegalForm.STATE_AGENCY,
-  },
-  {
-    name: "Demo NGO Foundation (local)",
-    taxId: "9900000004",
-    legalAddress: "Bakı, Yasamal rayonu (demo NGO)",
-    phone: "+994501112266",
-    directorName: "Demo Director NGO",
-    kind: OrganizationKind.NGO,
-    legalForm: CounterpartyLegalForm.NGO,
-  },
-];
+/** Keep in sync with @era/contracts ERA_LAB_DEMO */
+const LAB_DEMO_OWNER_EMAIL = "owner@demo.com";
+const LAB_DEMO_OWNER_PASSWORD = "12345678";
+const LAB_DEMO_TAX_ID = "0123456789";
+const LAB_DEMO_NAME = "ERA Lab Kafe";
 
 function demoActiveModules(): string[] {
   return [
@@ -205,93 +161,60 @@ async function ensureDemoSubscription(
 }
 
 /**
- * When `SEED_DEMO_ORG=1` (e.g. `npm run db:seed:demo` from repo root): lightweight **stub** MMC orgs
- * for local login / companies smoke tests — **not** the TiVi Media/Sport showcase (that is
- * `npm run seed:local -w @erafinance/api`). For both: `npm run db:seed:showcase` from repo root.
- *
- * Creates a demo owner user and two commercial organizations with NAS + ENTERPRISE-style modules.
+ * When `SEED_DEMO_ORG=1`: attach Finance owner to the **ERA lab firm**
+ * (VÖEN 0123456789). Control plane creates the org (`seed-lab-demo-org.ts`).
+ * Does not mint Alpha/Beta/Budget/NGO stub MMCs.
  *
  * Env (optional):
- * - `SEED_DEMO_USER_EMAIL` — owner email (default {@link DEFAULT_DEMO_OWNER_EMAIL})
- * - `SEED_DEMO_USER_PASSWORD` — bcrypt source (default {@link DEFAULT_DEMO_OWNER_PASSWORD})
- * - `SEED_DEMO_EXTRA_MEMBER_EMAILS` — optional comma-separated emails that receive ADMIN on each demo org
+ * - `SEED_DEMO_USER_EMAIL` — default owner@demo.com
+ * - `SEED_DEMO_USER_PASSWORD` — default 12345678
+ * - `SEED_DEMO_EXTRA_MEMBER_EMAILS` — extra ADMIN memberships
  */
 export async function seedDemoOrganizations(ctx: SeedContext): Promise<void> {
   if (ctx.dryRun) return;
   if (process.env.SEED_DEMO_ORG !== "1") return;
 
   const email =
-    process.env.SEED_DEMO_USER_EMAIL?.trim().toLowerCase() || DEFAULT_DEMO_OWNER_EMAIL;
+    process.env.SEED_DEMO_USER_EMAIL?.trim().toLowerCase() || LAB_DEMO_OWNER_EMAIL;
   const password =
-    process.env.SEED_DEMO_USER_PASSWORD?.trim() || DEFAULT_DEMO_OWNER_PASSWORD;
+    process.env.SEED_DEMO_USER_PASSWORD?.trim() || LAB_DEMO_OWNER_PASSWORD;
 
   const owner = await upsertDemoOwnerUser(ctx.prisma, email, password);
-  const modules = demoActiveModules();
-  const demoOrganizationIds: string[] = [];
-
-  for (const cfg of DEMO_ORGS) {
-    const voen = normalizeVoenForSeed(cfg.taxId);
-    if (voen.length !== 10) {
-      console.warn(`[seed:demo-org] skip invalid VÖEN for "${cfg.name}": ${cfg.taxId}`);
-      continue;
-    }
-    const taxIdBlindIndex = blindIndexVoenForSeed(voen);
-    const existing = await ctx.prisma.organization.findFirst({
-      where: { taxIdBlindIndex },
-      select: { id: true },
-    });
-    if (existing) {
-      demoOrganizationIds.push(existing.id);
-      console.info(`[seed:demo-org] exists: ${cfg.name} (${existing.id})`);
-      continue;
-    }
-
-    const taxIdCipher = encryptVoenForSeed(voen);
-
-    const org = await ctx.prisma.$transaction(async (tx) => {
-      const orgKind = cfg.kind ?? OrganizationKind.COMMERCIAL;
-      const orgLegalForm = cfg.legalForm ?? CounterpartyLegalForm.LLC;
-      const o = await tx.organization.create({
-        data: {
-          name: cfg.name,
-          taxIdCipher,
-          taxIdBlindIndex,
-          currency: "AZN",
-          legalAddress: cfg.legalAddress,
-          phone: cfg.phone,
-          directorName: cfg.directorName,
-          ownerId: owner.id,
-          kind: orgKind,
-          legalForm: orgLegalForm,
-          activeModules: modules,
-          settings: { erafinanceDemoSeed: true } as Prisma.InputJsonValue,
-        },
-      });
-
-      await tx.organizationMembership.create({
-        data: {
-          userId: owner.id,
-          organizationId: o.id,
-          role: UserRole.OWNER,
-        },
-      });
-
-      return o;
-    });
-
-    demoOrganizationIds.push(org.id);
-    await ensureDemoSubscription(ctx.prisma, org.id, modules);
-    await provisionNasAccountsForOrganization(
-      ctx.prisma,
-      org.id,
-      cfg.kind ?? OrganizationKind.COMMERCIAL,
+  const voen = normalizeVoenForSeed(LAB_DEMO_TAX_ID);
+  const taxIdBlindIndex = blindIndexVoenForSeed(voen);
+  const existing = await ctx.prisma.organization.findFirst({
+    where: { taxIdBlindIndex },
+    select: { id: true, name: true },
+  });
+  if (!existing) {
+    console.warn(
+      `[seed:demo-org] lab org VÖEN ${LAB_DEMO_TAX_ID} missing — run orch seed-lab-demo-org.ts (not creating stub MMCs)`,
     );
-    console.info(`[seed:demo-org] created: ${cfg.name} (${org.id}) voen=${voen}`);
+    return;
   }
 
-  await attachDemoOrgMembershipsForLocalTesters(ctx.prisma, demoOrganizationIds, owner.id);
+  await ctx.prisma.organizationMembership.upsert({
+    where: {
+      userId_organizationId: { userId: owner.id, organizationId: existing.id },
+    },
+    create: {
+      userId: owner.id,
+      organizationId: existing.id,
+      role: UserRole.OWNER,
+    },
+    update: { role: UserRole.OWNER, deletedAt: null },
+  });
+
+  const modules = demoActiveModules();
+  await ensureDemoSubscription(ctx.prisma, existing.id, modules);
+  await provisionNasAccountsForOrganization(
+    ctx.prisma,
+    existing.id,
+    OrganizationKind.COMMERCIAL,
+  );
+  await attachDemoOrgMembershipsForLocalTesters(ctx.prisma, [existing.id], owner.id);
 
   console.info(
-    `[seed:demo-org] demo owner: ${email} (password: env SEED_DEMO_USER_PASSWORD or built-in default for local — see prisma/seeds/demo/demo-organizations.ts)`,
+    `[seed:demo-org] lab org ${existing.id} (${existing.name ?? LAB_DEMO_NAME}) owner ${email}`,
   );
 }

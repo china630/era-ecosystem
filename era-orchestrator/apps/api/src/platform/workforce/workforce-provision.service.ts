@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   forwardRef,
 } from "@nestjs/common";
 import {
@@ -31,6 +32,7 @@ import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforcePositionsService } from "./workforce-positions.service";
 import { WorkforceRoleTemplateService } from "./workforce-role-template.service";
+import { WorkforceRosterCache } from "./workforce-roster-cache";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
 import { filterEntitledSatellites, shouldAllocateNewSeat } from "./workforce-satellite-keys";
@@ -85,6 +87,7 @@ export class WorkforceProvisionService {
     private readonly subscriptionAccess: SubscriptionAccessService,
     @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
     private readonly personnelOrders: WorkforcePersonnelOrdersService,
+    @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
 
   async hire(
@@ -287,6 +290,7 @@ export class WorkforceProvisionService {
       );
     }
 
+    await this.rosterCache?.forgetOrganization(organizationId);
     return {
       employment,
       bindings,
@@ -390,6 +394,7 @@ export class WorkforceProvisionService {
       workforceScopeId: link.workforceScopeId,
     });
 
+    await this.rosterCache?.forgetOrganization(organizationId);
     return { ok: true, personnelOrder: toPersonnelOrderRef(personnelOrder) };
   }
 

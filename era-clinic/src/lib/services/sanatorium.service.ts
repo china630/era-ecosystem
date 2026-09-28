@@ -641,8 +641,21 @@ export async function listOpenEpisodes(input?: {
     },
   >(e: T) {
     const flagged = withCareTeamFlag(e);
+    const raw = e.programInstance as
+      | (NonNullable<T["programInstance"]> & { startsOn?: Date | string; endsOn?: Date | string })
+      | null
+      | undefined;
+    const programInstance =
+      raw && raw.startsOn != null && raw.endsOn != null
+        ? {
+            ...raw,
+            startsOn: bakuDateKey(raw.startsOn),
+            endsOn: bakuDateKey(raw.endsOn),
+          }
+        : raw;
     return {
       ...flagged,
+      programInstance,
       packageSignal: packageSignal(e),
     };
   }

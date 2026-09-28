@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   BloodGroup,
@@ -15,6 +16,10 @@ import {
 } from "@era365/mdm-database";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
 import { MdmPrismaService } from "../prisma/mdm-prisma.service";
+import {
+  MdmPersonCache,
+  type WorkforcePersonCacheRow,
+} from "./mdm-person-cache";
 import {
   blindIndexFin,
   blindIndexIdentifier,
@@ -102,6 +107,7 @@ export class MdmService {
   constructor(
     private readonly mdm: MdmPrismaService,
     private readonly controlPlane: ControlPlanePrismaService,
+    @Optional() private readonly personCache?: MdmPersonCache,
   ) {}
 
   assertServiceToken(
@@ -591,6 +597,7 @@ export class MdmService {
       },
     });
     await this.backfillIdentifiers(personId, identifiers);
+    await this.personCache?.forget(personId);
   }
 
   private async backfillIdentifiers(
@@ -689,6 +696,8 @@ export class MdmService {
       }
     });
 
+    await this.personCache?.forget(sourceId);
+    await this.personCache?.forget(canonicalTarget);
     return {
       sourcePersonId: sourceId,
       targetPersonId: canonicalTarget,
@@ -868,6 +877,7 @@ export class MdmService {
       });
     });
 
+    await this.personCache?.forget(personId, req.requesterOrgId);
     return {
       ok: true,
       requestId: req.id,
@@ -1247,15 +1257,62 @@ export class MdmService {
         birthDate: string | null;
       }
     > = {};
+    const missed: string[] = [];
+    const cached = this.personCache
+      ? await this.personCache.read(orgId, unique)
+      : new Map<string, WorkforcePersonCacheRow>();
+    for (const pid of unique) {
+      const hit = cached.get(pid);
+      if (!hit) {
+        missed.push(pid);
+        continue;
+      }
+      out[hit.globalPersonId] = { ...hit, hrProfile: null };
+      if (hit.globalPersonId !== pid) out[pid] = { ...hit, hrProfile: null };
+    }
+    if (unique.length > 0 && missed.length === 0) {
+      const first = unique[0];
+      try {
+        await this.mdm.personAccessLog.create({
+          data: {
+            personId: cached.get(first)?.globalPersonId ?? first,
+            actorOrgId: orgId,
+            action: "WORKFORCE_OPS_PROFILE_CACHE",
+            metaJson: JSON.stringify({ count: unique.length, cache: true }),
+          },
+        });
+      } catch {
+        // The grid must still render if the access log is unavailable.
+      }
+      return out;
+    }
     const BATCH = 100;
-    for (let i = 0; i < unique.length; i += BATCH) {
-      const chunk = unique.slice(i, i + BATCH);
+    for (let i = 0; i < missed.length; i += BATCH) {
+      const chunk = missed.slice(i, i + BATCH);
       let logPersonId: string | null = null;
       for (const pid of chunk) {
         try {
           const profile = await this.resolveOpsProfileData(pid, orgId);
           if (!logPersonId) logPersonId = profile.globalPersonId;
-          out[profile.globalPersonId] = this.compactWorkforceDisplay(profile);
+          const compact = this.compactWorkforceDisplay(profile);
+          out[profile.globalPersonId] = compact;
+          const snapshot: WorkforcePersonCacheRow = {
+            globalPersonId: compact.globalPersonId,
+            displayName: compact.displayName,
+            firstName: compact.firstName,
+            middleName: compact.middleName,
+            lastName: compact.lastName,
+            primaryIdentifierMasked: compact.primaryIdentifierMasked,
+            accessDenied: compact.accessDenied,
+            sex: compact.sex,
+            birthDate: compact.birthDate,
+          };
+          await this.personCache?.write(
+            orgId,
+            profile.globalPersonId,
+            snapshot,
+            pid !== profile.globalPersonId ? pid : undefined,
+          );
         } catch {
           out[pid] = {
             globalPersonId: pid,
@@ -1331,6 +1388,7 @@ export class MdmService {
       },
       update: {},
     });
+    await this.personCache?.forget(canonical, granteeOrgId.trim());
     return { globalPersonId: canonical, organizationId: granteeOrgId.trim() };
   }
 

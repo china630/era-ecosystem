@@ -32,11 +32,11 @@ Industry satellites historically resolve tenancy from `ERA_SATELLITE_ORGANIZATIO
 1. Runtime bind (memory, set by POST bind or boot `setRuntimeOrganizationId`)
 2. File cache (`ERA_ORG_BIND_FILE` or `.data/organization-bind.json`)
 3. Env emergency override: `ERA_SATELLITE_ORGANIZATION_ID` → `ERA_BANK_ORGANIZATION_ID` → `ORGANIZATION_ID`
-4. Fallback `demo-org` (non-production smoke only)
+4. Fallback unbound **throws** (no ghost `demo-org` / `demo-clinic-org` / `demo-bank-org-001`). Lab café data uses a real CP org (VÖEN `0123456789`, ERA ID `100000`).
 
 DB row is loaded on bind GET/POST and when handlers hydrate; prefer calling kit helper rather than caching org id in module-level `const`.
 
-**Boot hydrate (required):** each satellite must call `onSatelliteBoot({ prisma })` from Next.js `instrumentation.ts` (or Nest bootstrap) so a container recreate without `.data/` volume still restores `_era_organization_bind` into runtime before the first request. Production `satelliteOrganizationId()` refuses silent `demo-org` fallback (`SatelliteOrganizationUnboundError`). In Docker, boot then **pulls** CP desired-state once and may start the reconcile loop (see §8); host `npm run dev` leaves pull off unless `ERA_DESIRED_STATE_PULL=1`.
+**Boot hydrate (required):** each satellite must call `onSatelliteBoot({ prisma })` from Next.js `instrumentation.ts` (or Nest bootstrap) so a container recreate without `.data/` volume still restores `_era_organization_bind` into runtime before the first request. Production and local `satelliteOrganizationId()` refuse sentinel ids (`SatelliteOrganizationUnboundError`). In Docker, boot then **pulls** CP desired-state once and may start the reconcile loop (see §8); host `npm run dev` leaves pull off unless `ERA_DESIRED_STATE_PULL=1`.
 
 ## Consequences
 

@@ -11,10 +11,17 @@ import {
 } from "react";
 import {
   ORCH_TOKEN_KEY,
+  accessTokenExpiresAtMs,
   clearOrchTokens,
+  getOrchAccessToken,
+  isAccessTokenUsable,
+  notifyOrchSessionExpired,
   orchFetch,
+  refreshOrchAccessToken,
   setOrchTokens,
+  subscribeOrchSession,
 } from "./orch-api";
+import { isBarePublicWebPath } from "./public-routes";
 
 export type OrchUser = {
   id: string;
@@ -73,6 +80,13 @@ type AuthContextValue = {
   applyAccessToken: (accessToken: string, refreshToken?: string | null) => void;
 };
 
+function redirectToLoginIfAppShell(): void {
+  if (typeof window === "undefined") return;
+  const pathname = window.location.pathname;
+  if (isBarePublicWebPath(pathname)) return;
+  window.location.replace("/login?reason=expired");
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -88,24 +102,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(ORCH_TOKEN_KEY);
-    if (!stored) {
-      setReady(true);
-      return;
+    let cancelled = false;
+    async function boot() {
+      const stored = localStorage.getItem(ORCH_TOKEN_KEY);
+      if (!stored) {
+        const refreshed = await refreshOrchAccessToken();
+        if (cancelled) return;
+        if (!refreshed) {
+          setReady(true);
+          return;
+        }
+        try {
+          setToken(refreshed);
+          setUser(userFromToken(refreshed));
+          setReady(true);
+          void loadMemberships(refreshed)
+            .then(setMemberships)
+            .catch(() => undefined);
+        } catch {
+          clearOrchTokens();
+          setReady(true);
+        }
+        return;
+      }
+      let access = stored;
+      if (!isAccessTokenUsable(stored, 30_000)) {
+        const refreshed = await refreshOrchAccessToken();
+        if (cancelled) return;
+        if (!refreshed) {
+          clearOrchTokens();
+          setReady(true);
+          redirectToLoginIfAppShell();
+          return;
+        }
+        access = refreshed;
+      }
+      try {
+        setToken(access);
+        setUser(userFromToken(access));
+        setReady(true);
+        void loadMemberships(access)
+          .then(setMemberships)
+          .catch(() => undefined);
+      } catch {
+        clearOrchTokens();
+        setReady(true);
+      }
     }
-    try {
-      setToken(stored);
-      setUser(userFromToken(stored));
-      setReady(true);
-      // Do not clear tokens on memberships failure — transient API/CORS blips
-      // were wiping orch SSO state and made satellite launch look "broken".
-      void loadMemberships(stored)
-        .then(setMemberships)
-        .catch(() => undefined);
-    } catch {
-      clearOrchTokens();
-      setReady(true);
-    }
+    void boot();
+    return () => {
+      cancelled = true;
+    };
   }, [loadMemberships]);
 
   const login = useCallback(
@@ -141,6 +188,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     setMemberships([]);
+  }, []);
+
+  useEffect(() => {
+    return subscribeOrchSession({
+      onExpired: () => {
+        setToken(null);
+        setUser(null);
+        setMemberships([]);
+        redirectToLoginIfAppShell();
+      },
+      onRefreshed: (accessToken) => {
+        setToken(accessToken);
+        try {
+          setUser(userFromToken(accessToken));
+        } catch {
+          /* keep previous user until next call */
+        }
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const exp = accessTokenExpiresAtMs(token);
+    if (exp == null) return;
+    const delay = Math.max(5_000, exp - Date.now() - 90_000);
+    const id = window.setTimeout(() => {
+      void refreshOrchAccessToken().then((fresh) => {
+        if (fresh) return;
+        const current = getOrchAccessToken();
+        if (current && isAccessTokenUsable(current, 0)) return;
+        notifyOrchSessionExpired();
+      });
+    }, delay);
+    return () => window.clearTimeout(id);
+  }, [token]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== ORCH_TOKEN_KEY) return;
+      if (e.newValue == null) {
+        setToken(null);
+        setUser(null);
+        setMemberships([]);
+        redirectToLoginIfAppShell();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const switchOrganization = useCallback(
