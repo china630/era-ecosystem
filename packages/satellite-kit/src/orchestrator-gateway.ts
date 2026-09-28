@@ -81,7 +81,7 @@ export async function publishToOrchestratorGateway(
 
 /**
  * Deployment org UUID for events, SSO SEC-SSO-05, billing.
- * Production: refuses silent `demo-org` — bind via Sync or set env first.
+ * Unbound throws — bind via Sync or set a real org UUID (never `demo-org`).
  */
 export function satelliteOrganizationId(): string {
   return resolveSatelliteOrganizationId().organizationId;

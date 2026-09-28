@@ -68,13 +68,12 @@ describe("findUserByCredential org scope", () => {
     }
   });
 
-  it("without org in non-production scopes to demo-org fallback (still not cross-org)", async () => {
+  it("without org when unbound returns null (never demo-org)", async () => {
     delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
     delete process.env.ERA_BANK_ORGANIZATION_ID;
     delete process.env.ORGANIZATION_ID;
-    await findUserByCredential(mockPrisma(), "reception");
-    assert.equal(calls.length, 1);
-    const where = (calls[0] as { where: { organizationId: string } }).where;
-    assert.equal(where.organizationId, "demo-org");
+    const row = await findUserByCredential(mockPrisma(), "reception");
+    assert.equal(row, null);
+    assert.equal(calls.length, 0);
   });
 });

@@ -7,7 +7,7 @@ Prerequisites: orchestrator API `:4100`, Finance API with `ERA_AUTH_MODE=control
 ```bash
 TOKEN=$(curl -s -X POST http://127.0.0.1:4100/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo.owner@erafinance.local","password":"DemoLocal#2026"}' \
+  -d '{"email":"owner@demo.com","password":"12345678"}' \
   | jq -r .accessToken)
 
 curl -s http://127.0.0.1:4100/memberships -H "Authorization: Bearer $TOKEN" | jq .

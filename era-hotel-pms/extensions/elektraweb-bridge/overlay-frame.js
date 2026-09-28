@@ -33,7 +33,7 @@ function needsAuth(s) {
 }
 
 function hasSetup(s) {
-  return !!(s.hotelBaseUrl && s.organizationId);
+  return !!(s.hotelBaseUrl && /^[1-9][0-9]{5}$/.test(String(s.orgNo || "")));
 }
 
 async function loadState() {
@@ -43,6 +43,7 @@ async function loadState() {
     "deskRole",
     "locale",
     "token",
+    "orgNo",
     "organizationId",
     "elektrawebHotelId",
     "login",
@@ -141,9 +142,9 @@ async function submitLogin(event) {
   const login = document.getElementById("ovLogin").value.trim();
   const password = document.getElementById("ovPassword").value;
   const hotelBaseUrl = String(s.hotelBaseUrl || "").replace(/\/$/, "");
-  const organizationId = String(s.organizationId || "").trim();
+  const orgNo = String(s.orgNo || "").trim();
   msg.innerHTML = "";
-  if (!hotelBaseUrl || !organizationId) {
+  if (!hotelBaseUrl || !/^[1-9][0-9]{5}$/.test(orgNo)) {
     msg.innerHTML = `<p class="err">${esc(ewT(locale, "overlayNeedSetup"))}</p>`;
     return;
   }
@@ -155,7 +156,7 @@ async function submitLogin(event) {
     const res = await fetch(`${hotelBaseUrl}/api/integrations/elektraweb-bridge/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, password, organizationId }),
+      body: JSON.stringify({ login, password, orgNo }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -164,8 +165,9 @@ async function submitLogin(event) {
     }
     await chrome.storage.local.set({
       hotelBaseUrl,
+      orgNo,
       token: json.token,
-      organizationId: json.organizationId || organizationId,
+      organizationId: json.organizationId,
       elektrawebHotelId: String(json.elektrawebHotelId ?? s.elektrawebHotelId ?? ""),
       login: json.user?.login || login,
       fullName: json.user?.fullName || "",

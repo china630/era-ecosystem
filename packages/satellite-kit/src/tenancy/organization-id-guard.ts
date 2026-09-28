@@ -1,5 +1,10 @@
 /** Values that must never be stored as a tenant organizationId. */
-export const SENTINEL_ORGANIZATION_IDS = ["unbound", "demo-org"] as const;
+export const SENTINEL_ORGANIZATION_IDS = [
+  "unbound",
+  "demo-org",
+  "demo-clinic-org",
+  "demo-bank-org-001",
+] as const;
 
 export class TenantOrganizationMismatchError extends Error {
   readonly code = "TENANT_ORG_MISMATCH";
@@ -21,19 +26,16 @@ export function isProductionNodeEnv(): boolean {
 }
 
 /**
- * `unbound` is never a tenant. `demo-org` is allowed only outside production
- * (local smoke). Production env/bind of `demo-org` is treated as unbound.
+ * `unbound` and legacy ghost ids (`demo-org`, …) are never tenants.
+ * Lab demo data uses a real CP org (VÖEN 0123456789 / ERA ID 100000).
  */
 export function isSentinelOrganizationId(
   id: string | null | undefined,
-  opts?: { production?: boolean },
+  _opts?: { production?: boolean },
 ): boolean {
   const v = id?.trim() ?? "";
   if (!v) return true;
-  if (v === "unbound") return true;
-  const production = opts?.production ?? isProductionNodeEnv();
-  if (v === "demo-org" && production) return true;
-  return false;
+  return (SENTINEL_ORGANIZATION_IDS as readonly string[]).includes(v);
 }
 
 /** Stamp create/upsert data; reject a client-supplied org that does not match context. */

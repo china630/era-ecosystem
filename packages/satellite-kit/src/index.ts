@@ -96,6 +96,7 @@ export {
   TenantOrganizationMismatchError,
   SENTINEL_ORGANIZATION_IDS,
 } from "./tenancy/organization-id-guard";
+export { ERA_LAB_DEMO, type EraLabDemo } from "@era/contracts";
 export {
   asSatellitePrisma,
   type SatellitePrisma,

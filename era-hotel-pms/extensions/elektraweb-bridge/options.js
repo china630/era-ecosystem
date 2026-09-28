@@ -17,9 +17,12 @@ function esc(value) {
     .replace(/"/g, "&quot;");
 }
 
+const ORG_NO_RE = /^[1-9][0-9]{5}$/;
+
 async function loadState() {
   const data = await chrome.storage.local.get([
     "token",
+    "orgNo",
     "organizationId",
     "elektrawebHotelId",
     "login",
@@ -53,6 +56,7 @@ function renderSession(data, locale) {
   $("session").innerHTML = `
     <div><strong>${esc(data.fullName || data.login)}</strong> (${esc(data.login)})</div>
     <div>Hotel URL: <code>${esc(data.hotelBaseUrl || "—")}</code></div>
+    <div>ERA ID: <code>${esc(data.orgNo || "—")}</code></div>
     <div>ERA org: <code>${esc(data.organizationId || "—")}</code></div>
     <div>Elektraweb HOTELID: <code>${esc(data.elektrawebHotelId || "—")}</code></div>
   `;
@@ -96,7 +100,7 @@ async function render() {
   paintLamp(data, locale);
 
   if (data.hotelBaseUrl) $("hotelBaseUrl").value = data.hotelBaseUrl;
-  if (data.organizationId) $("organizationId").value = data.organizationId;
+  if (data.orgNo && ORG_NO_RE.test(String(data.orgNo))) $("orgNo").value = data.orgNo;
   if (data.login) $("login").value = data.login;
   $("enabled").checked = !!data.enabled;
   $("writeEnabled").checked = !!data.writeEnabled && deskRoleOf(data) === "sanatorium";
@@ -112,7 +116,7 @@ async function render() {
 
 $("btnLogin").addEventListener("click", async () => {
   const hotelBaseUrl = $("hotelBaseUrl").value.trim().replace(/\/$/, "");
-  const organizationId = $("organizationId").value.trim();
+  const orgNo = $("orgNo").value.trim();
   const login = $("login").value.trim();
   const password = $("password").value;
   const data = await loadState();
@@ -122,7 +126,7 @@ $("btnLogin").addEventListener("click", async () => {
     $("msg").innerHTML = `<p class="err">${esc(ewT(locale, "fillAll"))}</p>`;
     return;
   }
-  if (!organizationId) {
+  if (!ORG_NO_RE.test(orgNo)) {
     $("msg").innerHTML = `<p class="err">${esc(ewT(locale, "fillOrg"))}</p>`;
     return;
   }
@@ -130,7 +134,7 @@ $("btnLogin").addEventListener("click", async () => {
     const res = await fetch(`${hotelBaseUrl}/api/integrations/elektraweb-bridge/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, password, organizationId }),
+      body: JSON.stringify({ login, password, orgNo }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -139,8 +143,9 @@ $("btnLogin").addEventListener("click", async () => {
     }
     await chrome.storage.local.set({
       hotelBaseUrl,
+      orgNo,
       token: json.token,
-      organizationId: json.organizationId || organizationId,
+      organizationId: json.organizationId,
       elektrawebHotelId: String(json.elektrawebHotelId),
       login: json.user?.login || login,
       fullName: json.user?.fullName || "",

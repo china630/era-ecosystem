@@ -15,7 +15,7 @@ Temporary dual-run extension: Elektraweb session on the desk PC ↔ this hotel-p
 
 Tooltip on the toolbar icon repeats the same text (EN / RU / AZ).
 
-**Login:** Options asks for ERA Hotel PMS URL + staff login/password. Server returns a **bridge JWT** that embeds:
+**Login (v0.3.14+):** Options asks for ERA Hotel PMS URL + **ERA ID (`orgNo`, 6 digits, not the UUID)** + staff login/password. Server returns a **bridge JWT** that embeds:
 
 - `organizationId` = `ERA_SATELLITE_ORGANIZATION_ID` of that hotel instance  
 - `elektrawebHotelId` = `ELEKTRAWEB_HOTEL_ID` (e.g. Nafta `31606`)

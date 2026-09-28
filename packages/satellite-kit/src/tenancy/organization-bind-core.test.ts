@@ -39,11 +39,12 @@ describe("resolveSatelliteOrganizationId", () => {
     assert.equal(r.source, "env");
   });
 
-  it("falls back to demo-org outside production", () => {
+  it("throws when unbound (no ghost demo-org tenant)", () => {
     process.env.NODE_ENV = "development";
-    const r = resolveSatelliteOrganizationId();
-    assert.equal(r.organizationId, "demo-org");
-    assert.equal(r.source, "fallback");
+    assert.throws(
+      () => resolveSatelliteOrganizationId(),
+      (err: unknown) => err instanceof SatelliteOrganizationUnboundError,
+    );
   });
 
   it("throws in production when unbound", () => {
@@ -54,8 +55,7 @@ describe("resolveSatelliteOrganizationId", () => {
     );
   });
 
-  it("throws in production when env is demo-org", () => {
-    process.env.NODE_ENV = "production";
+  it("throws when env is demo-org", () => {
     process.env.ERA_SATELLITE_ORGANIZATION_ID = "demo-org";
     assert.throws(
       () => resolveSatelliteOrganizationId(),
@@ -71,10 +71,10 @@ describe("resolveSatelliteOrganizationId", () => {
     );
   });
 
-  it("allowFallback skips production throw", () => {
+  it("allowFallback returns empty id (diagnostics), never demo-org", () => {
     process.env.NODE_ENV = "production";
     const r = resolveSatelliteOrganizationId({ allowFallback: true });
-    assert.equal(r.organizationId, "demo-org");
+    assert.equal(r.organizationId, "");
     assert.equal(r.source, "fallback");
   });
 });

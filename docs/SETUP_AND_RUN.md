@@ -360,7 +360,7 @@ npm run db:bootstrap-local   # первый раз: migrate + seed
 npm run dev                  # API :4100 + Web :3100
 ```
 
-**Demo BUDGET org (gov budget smoke):** seed creates **Demo Budget Agency (local)** (`OrganizationKind.BUDGET`, VÖEN `9900000003`) with owner `demo.owner@erafinance.local` / `DemoLocal#2026`. Enable `gov_budget_pro` on the org subscription, then open `/gov-budget` in Finance web.
+**Lab café org (not sentinel `demo-org`):** VÖEN `0123456789`, ERA ID `100000`, CP `owner@demo.com` / `12345678`. Seed: `cd era-orchestrator && npm run seed:lab-demo`, then `cd era-fnb-pos && npm run db:seed:demo`.
 
 **Control-plane auth cutover (dev):**
 
