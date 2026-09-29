@@ -16,6 +16,7 @@ function toBool(v: unknown): boolean {
 }
 
 export class KafeOnboardDto {
+  @Transform(({ value }) => String(value ?? "").toLowerCase().trim())
   @IsEmail()
   email!: string;
 

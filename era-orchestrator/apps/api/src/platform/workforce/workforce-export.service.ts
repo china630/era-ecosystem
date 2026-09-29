@@ -132,7 +132,7 @@ export class WorkforceExportService {
     const profiles = await this.mdm.batchGetPersonOpsProfile(personIds, organizationId);
 
     const header =
-      "staffCode,globalPersonId,displayName,workDate,hours,orgUnit,position,source";
+      "staffCode,globalPersonId,displayName,workDate,hours,normalMinutes,shortfallMinutes,overtimeMinutes,nightMinutes,restDayMinutes,holidayMinutes,hourlyLeaveMinutes,breakMinutes,orgUnit,position,source";
     const lines = entries.map((e) => {
       const emp = e.employment;
       const profile = profiles[emp.globalPersonId];
@@ -145,6 +145,14 @@ export class WorkforceExportService {
         displayName,
         e.workDate.toISOString().slice(0, 10),
         String(e.hours),
+        e.normalMinutes ?? "",
+        e.shortfallMinutes ?? "",
+        e.overtimeMinutes ?? "",
+        e.nightMinutes ?? "",
+        e.restDayMinutes ?? "",
+        e.holidayMinutes ?? "",
+        e.hourlyLeaveMinutes ?? "",
+        e.breakMinutes ?? "",
         emp.orgUnit?.name ?? "",
         emp.position?.name ?? "",
         e.source,

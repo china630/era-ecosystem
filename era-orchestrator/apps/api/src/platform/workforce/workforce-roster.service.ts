@@ -33,6 +33,7 @@ import {
   WorkforceRosterCache,
   type RosterPreviewSnapshot,
 } from "./workforce-roster-cache";
+import { WorkforceFitnessService } from "./workforce-fitness.service";
 
 type CompareKind =
   | "no_show"
@@ -122,6 +123,7 @@ export class WorkforceRosterService {
     private readonly prisma: PrismaService,
     private readonly entitlement: WorkforceEntitlementService,
     private readonly audit: WorkforceAuditService,
+    private readonly fitness: WorkforceFitnessService,
     @Optional() private readonly rosterCache?: WorkforceRosterCache,
   ) {}
 
@@ -156,6 +158,11 @@ export class WorkforceRosterService {
           code,
           name: dto.name.trim(),
           responsibleOrgUnitId: dto.responsibleOrgUnitId ?? null,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          radiusMeters: dto.radiusMeters ?? null,
+          allowOutside: dto.allowOutside === true,
+          graceMinutes: dto.graceMinutes ?? 0,
         },
       });
       await this.audit.log({
@@ -197,6 +204,17 @@ export class WorkforceRosterService {
         ...(dto.status != null ? { status: dto.status } : {}),
         ...(dto.responsibleOrgUnitId !== undefined
           ? { responsibleOrgUnitId: dto.responsibleOrgUnitId }
+          : {}),
+        ...(dto.latitude !== undefined ? { latitude: dto.latitude } : {}),
+        ...(dto.longitude !== undefined ? { longitude: dto.longitude } : {}),
+        ...(dto.radiusMeters !== undefined
+          ? { radiusMeters: dto.radiusMeters }
+          : {}),
+        ...(dto.allowOutside !== undefined
+          ? { allowOutside: dto.allowOutside }
+          : {}),
+        ...(dto.graceMinutes !== undefined
+          ? { graceMinutes: dto.graceMinutes }
           : {}),
       },
     });
@@ -835,12 +853,22 @@ export class WorkforceRosterService {
     await this.assertPlaceCycle(organizationId, dto.placeId, dto.cycleId);
     if (dto.employmentId) {
       await this.assertEmploymentsInOrg(organizationId, [dto.employmentId]);
+      await this.fitness.assertAssignable(
+        organizationId,
+        dto.employmentId,
+        dto.effectiveFrom,
+      );
     }
     if (dto.brigadeId) {
       const b = await this.prisma.workforceBrigade.findFirst({
         where: { id: dto.brigadeId, organizationId },
       });
       if (!b) throw new BadRequestException("Brigade not found in organization");
+      await this.fitness.assertBrigadeAssignable(
+        organizationId,
+        dto.brigadeId,
+        dto.effectiveFrom,
+      );
     }
     await this.assertAssignmentNoOverlap(organizationId, {
       employmentId: dto.employmentId ?? null,
@@ -914,6 +942,22 @@ export class WorkforceRosterService {
       },
       existing.id,
     );
+    if (dto.placeId != null && dto.placeId !== existing.placeId) {
+      if (existing.employmentId) {
+        await this.fitness.assertAssignable(
+          organizationId,
+          existing.employmentId,
+          nextFrom,
+        );
+      }
+      if (existing.brigadeId) {
+        await this.fitness.assertBrigadeAssignable(
+          organizationId,
+          existing.brigadeId,
+          nextFrom,
+        );
+      }
+    }
     const row = await this.prisma.workforceShiftAssignment.update({
       where: { id },
       data: {
@@ -990,6 +1034,11 @@ export class WorkforceRosterService {
           "EXTRA/SWAP override requires placeId (Place, not OrgUnit)",
         );
       }
+      await this.fitness.assertAssignable(
+        organizationId,
+        dto.employmentId,
+        dto.workDate,
+      );
     }
     const workDate = parseDateOnly(dto.workDate);
     const row = await this.prisma.workforceDayOverride.upsert({

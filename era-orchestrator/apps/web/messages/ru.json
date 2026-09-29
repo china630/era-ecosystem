@@ -556,18 +556,24 @@
     "lastName": "Фамилия",
     "email": "Электронная почта",
     "password": "Пароль",
+    "passwordHint": "Не меньше 8 символов",
     "cafeName": "Название кафе",
     "taxId": "VÖEN",
     "voenHint": "Идентификатор юрлица Азербайджана — 10 цифр",
     "invalidVoen": "VÖEN должен содержать ровно 10 цифр",
-    "extras": "Дополнительно",
+    "plan": "Тариф",
+    "gate": "ERA Kafe · 29 AZN",
+    "gateHint": "1 касса, меню, очередь",
     "zal": "Зал — 5 PIN официантов (+19 AZN)",
     "kitchen": "Кухня KDS (+19 AZN)",
     "qrMenu": "QR-меню, только просмотр (+19 AZN)",
     "submit": "Открыть кафе",
     "busy": "…",
     "alreadyHaveAccount": "Уже есть аккаунт ERA?",
-    "signupFailed": "Не удалось зарегистрировать кафе"
+    "signupFailed": "Не удалось зарегистрировать кафе",
+    "emailTaken": "Этот email уже зарегистрирован — войдите",
+    "voenTaken": "Этот VÖEN уже привязан",
+    "networkError": "Сбой сети. Попробуйте ещё раз."
   },
   "registerOrg": {
     "title": "Регистрация организации",
@@ -649,7 +655,10 @@
     "wfPlaces": "Рабочие места",
     "wfShifts": "Смены",
     "wfRoster": "График",
-    "wfAttendance": "Посещаемость"
+    "wfAttendance": "Посещаемость",
+    "wfFloor": "Доска пола",
+    "wfRequests": "Заявки",
+    "wfMe": "Мой кабинет"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",
@@ -1228,7 +1237,31 @@
     "orderDraftMissing": "Приём прошёл, но черновик приказа не создан. Откройте список приказов.",
     "draftOrderBanner": "Черновиков приказов: {count}",
     "hireWithoutFinBanner": "FIN пуст — приём создаст или найдёт персону без AZ FIN.",
-    "hireWithoutFinConfirm": "Принять без FIN? Сопоставление личности будет слабее."
+    "hireWithoutFinConfirm": "Принять без FIN? Сопоставление личности будет слабее.",
+    "enableCabinet": "Включить телефонный кабинет",
+    "cabinetEmail": "Email для входа",
+    "cabinetReady": "Одноразовый пароль:",
+    "cabinetLinked": "Кабинет привязан",
+    "fitnessTitle": "Допуски",
+    "fitnessHint": "Обязательные виды задаёт организация. Файлы только на этом трудоустройстве.",
+    "fitnessRequired": "обязательно",
+    "fitnessIssued": "Дата выдачи",
+    "fitnessValidUntil": "Действует до",
+    "fitnessUpload": "Загрузить",
+    "fitnessDownload": "Скачать",
+    "fitnessIssuedRequired": "Нужна дата выдачи",
+    "fitnessValidRequired": "Нужна дата окончания",
+    "fitnessCriminalEmployerRule": "Правило работодателя — не подпись законного требования.",
+    "fitnessKind": {
+      "HEALTH": "Медсправка",
+      "NARCOLOGY": "Наркологическая справка",
+      "CRIMINAL_RECORD": "Справка о судимости"
+    },
+    "fitnessStatus": {
+      "MISSING": "Нет",
+      "PRESENT": "Есть",
+      "EXPIRED": "Просрочено"
+    }
   },
   "workforceSecurity": {
     "title": "Доступ и безопасность — матрица ролей",
@@ -1669,6 +1702,13 @@
     "loadFailed": "Не удалось загрузить табель",
     "empty": "Нет активных трудоустройств.",
     "sourceFaceid": "FaceID",
+    "minNormal": "Н",
+    "minShortfall": "Нд",
+    "minOt": "Св",
+    "minNight": "Нч",
+    "minRest": "Вых",
+    "minHoliday": "Пр",
+    "minBreak": "Пер",
     "sourceRoster": "График",
     "sourceOps": "Ops",
     "type": {
@@ -1805,8 +1845,8 @@
     "overwriteFacts": "Перезаписать занятые клетки",
     "overwriteFactsHint": "Заменит ручные и FaceID отметки планом. Нужно подтверждение.",
     "overwriteConfirm": "Существующие отметки табеля (включая ручные и FaceID) будут заменены планом. Продолжить?",
-    "assignmentsHeading": "Наряды",
-    "assignmentsEmpty": "Нарядов пока нет. Добавьте смену для бригады или человека.",
+    "assignmentsHeading": "Назначения",
+    "assignmentsEmpty": "Назначений пока нет.",
     "editAssignment": "Изменить наряд",
     "endAssignment": "Закрыть",
     "endAssignmentConfirm": "Сегодня уйдёт из графика. Если наряд начинается сегодня или позже, этот день останется.",
@@ -1856,7 +1896,6 @@
     "month": "Месяц",
     "year": "Год",
     "shiftTypesHeading": "Типы смен",
-    "assignmentsHeading": "Назначения",
     "assignmentsHint": "Кто стоит на месте и цикле. Месячный график показывает только этих людей.",
     "brigadesHeading": "Бригады",
     "cyclesHeading": "Циклы",
@@ -1865,7 +1904,6 @@
     "gapsHeading": "Посты без людей",
     "conflictTitle": "Два назначения: {places}",
     "rosterEmpty": "На этот месяц назначений нет.",
-    "assignmentsEmpty": "Назначений пока нет.",
     "transfer": "Перевести",
     "transferTitle": "Перевод членов",
     "leaveCrew": "Вывести из бригады",
@@ -1883,7 +1921,46 @@
     "allBrigades": "Все бригады",
     "allPeople": "Все люди",
     "openEnded": "Открыто",
-    "renameBrigade": "Переименовать бригаду"
+    "renameBrigade": "Переименовать бригаду",
+    "latitude": "Широта",
+    "longitude": "Долгота",
+    "radiusMeters": "Радиус геозоны (м)",
+    "allowOutside": "Разрешить снаружи (приёмка всё равно нужна)",
+    "graceMinutes": "Допуск к смене (мин)"
+  },
+  "workforceFloor": {
+    "title": "Доска пола",
+    "subtitle": "Кто на объекте сегодня (Asia/Baku). Подозрительные панчи ждут приёмки HR перед rebuild.",
+    "date": "Дата",
+    "loadError": "Не удалось загрузить доску",
+    "suspiciousTitle": "Подозрительные панчи",
+    "suspiciousEmpty": "Нет панчей на проверке.",
+    "allowOutsideHint": "ожидаемо снаружи",
+    "accept": "Принять",
+    "acceptTitle": "Принять панч",
+    "acceptReason": "Причина",
+    "acceptError": "Не удалось принять",
+    "group": {
+      "ARRIVED": "Пришёл",
+      "SHIFT_STARTED_NO_IN": "Смена началась — нет IN",
+      "NOT_ARRIVED": "Ещё не пришёл",
+      "STILL_INSIDE": "Ещё внутри",
+      "LEFT_EARLY": "Ушёл раньше",
+      "LATE": "Опоздал",
+      "OPEN_BREAK": "Открытый перерыв",
+      "PENDING_REQUEST": "Ожидает заявку",
+      "FITNESS_ISSUE": "Допуск"
+    },
+    "fitnessKind": {
+      "HEALTH": "Медсправка",
+      "NARCOLOGY": "Наркология",
+      "CRIMINAL_RECORD": "Судимость"
+    },
+    "fitnessStatus": {
+      "MISSING": "нет",
+      "PRESENT": "есть",
+      "EXPIRED": "просрочено"
+    }
   },
   "workforceAttendance": {
     "title": "Посещаемость",
@@ -2010,5 +2087,39 @@
       "salary": "Договорной оклад и ставка MGMT в Finance.",
       "year-grid": "Только доказательство. Записи нет."
     }
+  },
+  "workforceMe": {
+    "title": "Мой кабинет",
+    "subtitle": "Заявки, объявления и расчётный лист по вашему трудоустройству",
+    "citizenship": "Гражданство",
+    "unread": "Непрочитанных объявлений: {count}",
+    "fullDay": "Отсутствие на день",
+    "absenceKind": "Вид",
+    "hourly": "Почасовой отпуск",
+    "hourlyPaidLabel": "Оплачиваемый?",
+    "hourlyPaid": "Оплачиваемый",
+    "hourlyUnpaid": "Неоплачиваемый",
+    "advance": "Заявка на аванс",
+    "note": "Комментарий",
+    "submit": "Отправить",
+    "announcements": "Объявления",
+    "noAnnouncements": "Нет объявлений",
+    "markRead": "Прочитано",
+    "payslip": "Расчётный лист",
+    "loadPayslip": "Загрузить прошлый закрытый месяц",
+    "noPayslip": "Нет проведённого листа"
+  },
+  "workforceRequests": {
+    "title": "Заявки сотрудников",
+    "subtitle": "Утверждение отпусков, почасовых и авансов",
+    "absences": "Полный день",
+    "hourly": "Почасовые",
+    "advances": "Авансы",
+    "approve": "Утвердить",
+    "reject": "Отклонить",
+    "paid": "Оплачиваемый",
+    "unpaid": "Неоплачиваемый",
+    "announce": "Опубликовать объявление",
+    "publish": "Опубликовать"
   }
 }

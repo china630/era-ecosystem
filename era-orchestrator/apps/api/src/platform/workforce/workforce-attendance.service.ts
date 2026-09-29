@@ -3,6 +3,8 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import {
@@ -15,7 +17,10 @@ import {
   Prisma,
   WorkforceAttendanceDeviceStatus,
   WorkforceAttendanceDirection,
+  WorkforceAttendanceJournalAction,
   WorkforceAttendancePunchStatus,
+  WorkforceAttendanceReviewStatus,
+  WorkforceEmploymentStatus,
   WorkforceTimesheetEntryStatus,
   WorkforceTimesheetEntryType,
   WorkforceTimesheetStatus,
@@ -23,11 +28,33 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
-import { bakuYmd, cycleSlotIndex, utcFromYmd } from "./roster-cycle.util";
+import {
+  applyDayOverride,
+  bakuYmd,
+  cycleSlotIndex,
+  isoDayUtc,
+  resolvedFromCycleSlot,
+  utcFromYmd,
+  type RosterTapeSlot,
+} from "./roster-cycle.util";
 import { csvFromWorkforceImportBody } from "./workforce-xlsx";
+import {
+  bakuMinuteOfDay,
+  haversineMeters,
+  isOutsideShiftWindow,
+} from "./attendance-geofence.util";
+import { todayBakuYmd } from "@era/satellite-kit/time";
+import { WorkforceEmploymentsService } from "./workforce-employments.service";
+import { CatalogGatewayService } from "../catalog/catalog-gateway.service";
+import { WorkforceFitnessService } from "./workforce-fitness.service";
+import {
+  classifyMinuteBuckets,
+  calendarKindFromDay,
+  type MinuteBuckets,
+  type TimeInterval,
+} from "./attendance-minute-buckets.util";
 
 const REBUILD_EMPLOYMENT_CHUNK = 240;
-const DEFAULT_HOUR_CAP = 24;
 
 function sha256Hex(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -48,13 +75,6 @@ function parseDateOnly(iso: string): Date {
   return new Date(`${iso.slice(0, 10)}T00:00:00.000Z`);
 }
 
-function hoursBetween(inAt: Date, outAt: Date, cap: number): number {
-  const ms = outAt.getTime() - inAt.getTime();
-  if (ms <= 0) return 0;
-  const h = ms / (60 * 60 * 1000);
-  return Math.min(h, cap);
-}
-
 function roundHours(h: number): Prisma.Decimal {
   return new Prisma.Decimal(Math.round(h * 100) / 100);
 }
@@ -69,10 +89,15 @@ export type AttendanceDeviceAuth = {
 
 @Injectable()
 export class WorkforceAttendanceService {
+  private readonly logger = new Logger(WorkforceAttendanceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly entitlement: WorkforceEntitlementService,
     private readonly audit: WorkforceAuditService,
+    private readonly employments: WorkforceEmploymentsService,
+    private readonly catalog: CatalogGatewayService,
+    private readonly fitness: WorkforceFitnessService,
   ) {}
 
   // ── Device auth (public ingest) ──────────────────────────────────────────
@@ -448,6 +473,85 @@ export class WorkforceAttendanceService {
       );
     }
 
+    const place = await this.prisma.workforcePlace.findFirst({
+      where: { id: placeId, organizationId: device.organizationId },
+    });
+    if (!place) {
+      throw new ForbiddenException("Place not found");
+    }
+
+    const reviewReasons: string[] = [];
+    const punchLat =
+      typeof item.latitude === "number" ? item.latitude : null;
+    const punchLng =
+      typeof item.longitude === "number" ? item.longitude : null;
+
+    if (
+      place.radiusMeters != null &&
+      place.radiusMeters > 0 &&
+      place.latitude != null &&
+      place.longitude != null &&
+      punchLat != null &&
+      punchLng != null
+    ) {
+      const dist = haversineMeters(
+        Number(place.latitude),
+        Number(place.longitude),
+        punchLat,
+        punchLng,
+      );
+      if (dist > place.radiusMeters) {
+        reviewReasons.push("OUTSIDE_RADIUS");
+      }
+    }
+
+    if (employmentId) {
+      const shiftWindow = await this.resolveShiftWindowForPunch(
+        device.organizationId,
+        employmentId,
+        placeId,
+        occurredAt,
+      );
+      if (shiftWindow) {
+        const minute = bakuMinuteOfDay(occurredAt);
+        if (
+          isOutsideShiftWindow(
+            minute,
+            shiftWindow.startMinute,
+            shiftWindow.endMinute,
+            place.graceMinutes ?? 0,
+          )
+        ) {
+          reviewReasons.push("OUTSIDE_WINDOW");
+        }
+      }
+
+      if (item.direction === "IN") {
+        const workYmd = bakuYmd(occurredAt);
+        const dayStart = utcFromYmd(workYmd);
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        const openElsewhere =
+          await this.prisma.workforceAttendancePunch.findFirst({
+            where: {
+              organizationId: device.organizationId,
+              employmentId,
+              status: WorkforceAttendancePunchStatus.OPEN,
+              direction: WorkforceAttendanceDirection.IN,
+              placeId: { not: placeId },
+              occurredAt: { gte: dayStart, lt: dayEnd },
+            },
+          });
+        if (openElsewhere) {
+          reviewReasons.push("MULTI_PLACE");
+        }
+      }
+    }
+
+    const reviewStatus =
+      reviewReasons.length > 0
+        ? WorkforceAttendanceReviewStatus.SUSPICIOUS
+        : WorkforceAttendanceReviewStatus.CLEAR;
+
     if (item.externalId) {
       const existing = await this.prisma.workforceAttendancePunch.findUnique({
         where: {
@@ -482,6 +586,10 @@ export class WorkforceAttendanceService {
           externalId: item.externalId ?? null,
           status,
           placeMismatch,
+          reviewStatus,
+          reviewReasons,
+          latitude: punchLat != null ? punchLat : null,
+          longitude: punchLng != null ? punchLng : null,
         },
       });
       return { punchId: punch.id, status: punch.status, duplicate: false };
@@ -575,8 +683,15 @@ export class WorkforceAttendanceService {
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i]!.split(",").map((c) => c.trim());
       const direction = cols[idx.direction]!.toUpperCase();
-      if (direction !== "IN" && direction !== "OUT") {
-        throw new BadRequestException(`Row ${i + 1}: direction must be IN|OUT`);
+      if (
+        direction !== "IN" &&
+        direction !== "OUT" &&
+        direction !== "BREAK_START" &&
+        direction !== "BREAK_END"
+      ) {
+        throw new BadRequestException(
+          `Row ${i + 1}: direction must be IN|OUT|BREAK_START|BREAK_END`,
+        );
       }
       let occurredAt = cols[idx.occurredAt]!;
       if (!occurredAt.includes("T")) {
@@ -647,32 +762,83 @@ export class WorkforceAttendanceService {
             WorkforceAttendancePunchStatus.PAIRED,
           ],
         },
+        reviewStatus: {
+          in: [
+            WorkforceAttendanceReviewStatus.CLEAR,
+            WorkforceAttendanceReviewStatus.ACCEPTED,
+          ],
+        },
         employmentId: { not: null },
         occurredAt: { gte: windowStart, lte: windowEnd },
       },
       orderBy: [{ employmentId: "asc" }, { occurredAt: "asc" }],
     });
 
-    const byEmp = new Map<string, typeof punches>();
-    for (const p of punches) {
+    const punchIds = punches.map((p) => p.id);
+    const journals =
+      punchIds.length > 0
+        ? await this.prisma.workforceAttendancePunchJournal.findMany({
+            where: {
+              organizationId,
+              punchId: { in: punchIds },
+              action: WorkforceAttendanceJournalAction.ACCEPT,
+            },
+            orderBy: { createdAt: "desc" },
+          })
+        : [];
+    const overlayByPunch = new Map<string, Date>();
+    for (const j of journals) {
+      if (overlayByPunch.has(j.punchId)) continue;
+      const after = j.afterJson as { occurredAt?: string } | null;
+      if (after?.occurredAt && !Number.isNaN(Date.parse(after.occurredAt))) {
+        overlayByPunch.set(j.punchId, new Date(after.occurredAt));
+      }
+    }
+    const punchesEffective = punches.map((p) => {
+      const overlay = overlayByPunch.get(p.id);
+      return overlay ? { ...p, occurredAt: overlay } : p;
+    });
+
+    const byEmp = new Map<string, typeof punchesEffective>();
+    for (const p of punchesEffective) {
       if (!p.employmentId) continue;
       const list = byEmp.get(p.employmentId) ?? [];
       list.push(p);
       byEmp.set(p.employmentId, list);
     }
 
-    const shiftTypes = await this.prisma.workforceShiftType.findMany({
-      where: { organizationId },
-    });
-    const shiftCapById = new Map(
-      shiftTypes.map((s) => [
-        s.id,
-        Number(s.defaultHours) > 0 ? Number(s.defaultHours) : DEFAULT_HOUR_CAP,
-      ]),
-    );
-    const nightTypeIds = new Set(
-      shiftTypes.filter((s) => s.isNight).map((s) => s.id),
-    );
+    const calendarByYmd = new Map<
+      string,
+      { dayType?: string; isWorking?: boolean }
+    >();
+    try {
+      const fromYmd = fromIso.slice(0, 10);
+      const toYmd = toIso.slice(0, 10);
+      const cal = (await this.catalog.getCalendarDaysRange(
+        "AZ",
+        fromYmd,
+        toYmd,
+        organizationId,
+      )) as {
+        days?: Array<{
+          date: string;
+          dayType?: string;
+          isWorking?: boolean;
+        }>;
+      };
+      for (const d of cal.days ?? []) {
+        calendarByYmd.set(d.date.slice(0, 10), {
+          dayType: d.dayType,
+          isWorking: d.isWorking,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `attendance rebuild calendar unavailable org=${organizationId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
 
     let pairsWritten = 0;
     let cellsUpserted = 0;
@@ -692,9 +858,8 @@ export class WorkforceAttendanceService {
           punches: list,
           from,
           to,
-          shiftCapById,
-          nightTypeIds,
           usePlannedIfOpen: opts?.usePlannedIfOpen === true,
+          calendarByYmd,
         });
         pairsWritten += pairResult.pairsWritten;
         cellsUpserted += pairResult.cellsUpserted;
@@ -739,9 +904,8 @@ export class WorkforceAttendanceService {
     }>;
     from: Date;
     to: Date;
-    shiftCapById: Map<string, number>;
-    nightTypeIds: Set<string>;
     usePlannedIfOpen: boolean;
+    calendarByYmd: Map<string, { dayType?: string; isWorking?: boolean }>;
   }) {
     let pairsWritten = 0;
     let cellsUpserted = 0;
@@ -753,16 +917,26 @@ export class WorkforceAttendanceService {
     const pending = [...input.punches];
     const used = new Set<string>();
 
-    const resolveCapAndNight = async (
+    type DayAgg = {
+      presence: TimeInterval[];
+      breaks: TimeInterval[];
+      pairIds: string[];
+      placeMismatch: boolean;
+    };
+    const byDay = new Map<string, DayAgg>();
+
+    const resolveShift = async (
       workDate: Date,
       workYmd: string,
     ): Promise<{
-      cap: number;
-      isNight: boolean;
-      assignmentPlaceId: string | null;
+      startMinute: number | null;
+      endMinute: number | null;
+      plannedBreakMinutes: number;
       plannedHours: number | null;
+      assignmentPlaceId: string | null;
+      wasShiftDay: boolean;
     }> => {
-      const assignment = await this.prisma.workforceShiftAssignment.findFirst({
+      let assignment = await this.prisma.workforceShiftAssignment.findFirst({
         where: {
           organizationId: input.organizationId,
           employmentId: input.employmentId,
@@ -773,47 +947,135 @@ export class WorkforceAttendanceService {
         include: {
           cycle: {
             include: {
-              slots: { include: { shiftType: true }, orderBy: { slotIndex: "asc" } },
+              slots: {
+                include: { shiftType: true },
+                orderBy: { slotIndex: "asc" },
+              },
             },
           },
         },
       });
       if (!assignment?.cycle?.slots?.length) {
-        return {
-          cap: DEFAULT_HOUR_CAP,
-          isNight: false,
-          assignmentPlaceId: assignment?.placeId ?? null,
-          plannedHours: null,
-        };
+        const member = await this.prisma.workforceBrigadeMember.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            employmentId: input.employmentId,
+            effectiveFrom: { lte: workDate },
+            OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+          },
+          orderBy: { effectiveFrom: "desc" },
+        });
+        if (member) {
+          assignment = await this.prisma.workforceShiftAssignment.findFirst({
+            where: {
+              organizationId: input.organizationId,
+              brigadeId: member.brigadeId,
+              effectiveFrom: { lte: workDate },
+              OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+            },
+            orderBy: { effectiveFrom: "desc" },
+            include: {
+              cycle: {
+                include: {
+                  slots: {
+                    include: { shiftType: true },
+                    orderBy: { slotIndex: "asc" },
+                  },
+                },
+              },
+            },
+          });
+        }
       }
-      const slots = [...assignment.cycle.slots].sort(
-        (a, b) => a.slotIndex - b.slotIndex,
-      );
-      const anchorYmd = bakuYmd(assignment.cycle.cycleAnchor);
-      const idx = cycleSlotIndex(anchorYmd, workYmd, slots.length);
-      const slot = slots[idx];
-      const shiftTypeId = slot?.shiftTypeId ?? null;
-      const isNight = shiftTypeId
-        ? input.nightTypeIds.has(shiftTypeId)
-        : false;
-      const cap = shiftTypeId
-        ? (input.shiftCapById.get(shiftTypeId) ?? DEFAULT_HOUR_CAP)
-        : DEFAULT_HOUR_CAP;
-      const plannedHours =
-        slot?.shiftTypeId && slot.shiftType
-          ? Number(slot.shiftType.defaultHours) || null
-          : null;
+
+      const ov = await this.prisma.workforceDayOverride.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          employmentId: input.employmentId,
+          workDate,
+        },
+        include: { shiftType: true },
+      });
+
+      let startMinute: number | null = null;
+      let endMinute: number | null = null;
+      let plannedBreakMinutes = 0;
+      let plannedHours: number | null = null;
+      let assignmentPlaceId: string | null = assignment?.placeId ?? null;
+      let wasShiftDay = false;
+
+      if (assignment?.cycle?.slots?.length) {
+        const slots = [...assignment.cycle.slots].sort(
+          (a, b) => a.slotIndex - b.slotIndex,
+        );
+        const anchorYmd = bakuYmd(assignment.cycle.cycleAnchor);
+        const idx = cycleSlotIndex(anchorYmd, workYmd, slots.length);
+        const slot = slots[idx];
+        const st = slot?.shiftType;
+        if (slot?.shiftTypeId && st) {
+          startMinute = st.startMinute;
+          endMinute = st.endMinute;
+          plannedBreakMinutes = st.breakMinutes ?? 0;
+          plannedHours = Number(st.defaultHours) || null;
+          wasShiftDay = true;
+        } else {
+          plannedHours = 0;
+          wasShiftDay = false;
+        }
+      }
+
+      if (ov) {
+        if (ov.kind === "DAY_OFF") {
+          return {
+            startMinute: null,
+            endMinute: null,
+            plannedBreakMinutes: 0,
+            plannedHours: 0,
+            assignmentPlaceId: ov.placeId ?? assignmentPlaceId,
+            wasShiftDay: false,
+          };
+        }
+        // EXTRA / SWAP — window from override shift type when present
+        if (ov.shiftType) {
+          startMinute = ov.shiftType.startMinute;
+          endMinute = ov.shiftType.endMinute;
+          plannedBreakMinutes = ov.shiftType.breakMinutes ?? 0;
+          plannedHours = Number(ov.shiftType.defaultHours) || plannedHours;
+          wasShiftDay = true;
+        } else if (ov.shiftTypeId) {
+          const st = await this.prisma.workforceShiftType.findFirst({
+            where: {
+              id: ov.shiftTypeId,
+              organizationId: input.organizationId,
+            },
+          });
+          if (st) {
+            startMinute = st.startMinute;
+            endMinute = st.endMinute;
+            plannedBreakMinutes = st.breakMinutes ?? 0;
+            plannedHours = Number(st.defaultHours) || plannedHours;
+            wasShiftDay = true;
+          }
+        } else if (!wasShiftDay) {
+          // EXTRA without type: still a shift day for shortfall, no window
+          wasShiftDay = true;
+        }
+        if (ov.placeId) assignmentPlaceId = ov.placeId;
+      }
+
       return {
-        cap,
-        isNight,
-        assignmentPlaceId: assignment.placeId,
-        plannedHours: slot?.shiftTypeId ? plannedHours : 0,
+        startMinute,
+        endMinute,
+        plannedBreakMinutes,
+        plannedHours,
+        assignmentPlaceId,
+        wasShiftDay,
       };
     };
 
     const upsertFaceidCell = async (
       workDate: Date,
-      hours: number,
+      buckets: MinuteBuckets,
       pairId: string,
     ): Promise<"ok" | "approved" | "absence" | "month"> => {
       const year = workDate.getUTCFullYear();
@@ -853,6 +1115,19 @@ export class WorkforceAttendanceService {
       if (existing?.status === WorkforceTimesheetEntryStatus.APPROVED) {
         return "approved";
       }
+      const minuteFields = {
+        normalMinutes: buckets.normalMinutes,
+        shortfallMinutes: buckets.shortfallMinutes,
+        overtimeMinutes: buckets.overtimeMinutes,
+        nightMinutes: buckets.nightMinutes,
+        restDayMinutes: buckets.restDayMinutes,
+        holidayMinutes: buckets.holidayMinutes,
+        hourlyLeaveMinutes:
+          buckets.hourlyLeaveMinutes > 0
+            ? buckets.hourlyLeaveMinutes
+            : (existing?.hourlyLeaveMinutes ?? 0),
+        breakMinutes: buckets.breakMinutes,
+      };
       await this.prisma.workforceTimesheetEntry.upsert({
         where: {
           timesheetId_employmentId_workDate: {
@@ -866,114 +1141,185 @@ export class WorkforceAttendanceService {
           timesheetId: timesheet.id,
           employmentId: input.employmentId,
           workDate,
-          hours: roundHours(hours),
+          hours: roundHours(buckets.hours),
           type: WorkforceTimesheetEntryType.WORK,
           lockedFromAbsence: false,
           source: "faceid",
           sourceRef: pairId,
           status: WorkforceTimesheetEntryStatus.DRAFT,
+          ...minuteFields,
         },
         update: {
-          hours: roundHours(hours),
+          hours: roundHours(buckets.hours),
           type: WorkforceTimesheetEntryType.WORK,
           source: "faceid",
           sourceRef: pairId,
           status: WorkforceTimesheetEntryStatus.DRAFT,
+          ...minuteFields,
         },
       });
       return "ok";
     };
 
-    let i = 0;
-    while (i < pending.length) {
-      const punch = pending[i]!;
-      if (
-        used.has(punch.id) ||
-        punch.direction !== WorkforceAttendanceDirection.IN
-      ) {
-        i += 1;
-        continue;
-      }
-      const outIdx = pending.findIndex(
-        (q, j) =>
-          j > i &&
-          !used.has(q.id) &&
-          q.direction === WorkforceAttendanceDirection.OUT &&
-          q.placeId === punch.placeId &&
-          q.occurredAt.getTime() > punch.occurredAt.getTime(),
-      );
-      if (outIdx < 0) {
+    const pairDirection = async (
+      startDir: WorkforceAttendanceDirection,
+      endDir: WorkforceAttendanceDirection,
+      kind: "presence" | "break",
+    ) => {
+      let i = 0;
+      while (i < pending.length) {
+        const punch = pending[i]!;
+        if (used.has(punch.id) || punch.direction !== startDir) {
+          i += 1;
+          continue;
+        }
+        const endIdx = pending.findIndex(
+          (q, j) =>
+            j > i &&
+            !used.has(q.id) &&
+            q.direction === endDir &&
+            q.placeId === punch.placeId &&
+            q.occurredAt.getTime() > punch.occurredAt.getTime(),
+        );
+        if (endIdx < 0) {
+          await this.prisma.workforceAttendancePunch.update({
+            where: { id: punch.id },
+            data: {
+              status: WorkforceAttendancePunchStatus.OPEN,
+              pairId: null,
+              hoursAttributed: null,
+              workDate: utcFromYmd(bakuYmd(punch.occurredAt)),
+            },
+          });
+          used.add(punch.id);
+          openLeft += 1;
+          i += 1;
+          continue;
+        }
+        const end = pending[endIdx]!;
+        const workYmd = bakuYmd(punch.occurredAt);
+        const workDate = utcFromYmd(workYmd);
+        if (
+          workDate.getTime() < input.from.getTime() ||
+          workDate.getTime() > input.to.getTime()
+        ) {
+          i += 1;
+          continue;
+        }
+
+        const resolved = await resolveShift(workDate, workYmd);
+        const pairId = punch.id;
+        const placeMismatch =
+          punch.placeMismatch ||
+          (resolved.assignmentPlaceId != null &&
+            resolved.assignmentPlaceId !== punch.placeId);
+        const hoursAttr =
+          kind === "presence"
+            ? roundHours(
+                (end.occurredAt.getTime() - punch.occurredAt.getTime()) /
+                  (60 * 60 * 1000),
+              )
+            : roundHours(
+                (end.occurredAt.getTime() - punch.occurredAt.getTime()) /
+                  (60 * 60 * 1000),
+              );
+
         await this.prisma.workforceAttendancePunch.update({
           where: { id: punch.id },
           data: {
-            status: WorkforceAttendancePunchStatus.OPEN,
-            pairId: null,
-            hoursAttributed: null,
-            workDate: utcFromYmd(bakuYmd(punch.occurredAt)),
+            status: WorkforceAttendancePunchStatus.PAIRED,
+            pairId,
+            hoursAttributed: hoursAttr,
+            workDate,
+            placeMismatch,
+          },
+        });
+        await this.prisma.workforceAttendancePunch.update({
+          where: { id: end.id },
+          data: {
+            status: WorkforceAttendancePunchStatus.PAIRED,
+            pairId,
+            hoursAttributed: hoursAttr,
+            workDate,
+            placeMismatch,
           },
         });
         used.add(punch.id);
-        openLeft += 1;
+        used.add(end.id);
+        pairsWritten += 1;
+
+        // Open break alone never creates a cell; only closed presence days write.
+        if (kind === "break") {
+          const agg =
+            byDay.get(workYmd) ??
+            ({
+              presence: [],
+              breaks: [],
+              pairIds: [],
+              placeMismatch: false,
+            } satisfies DayAgg);
+          agg.breaks.push({ start: punch.occurredAt, end: end.occurredAt });
+          agg.pairIds.push(pairId);
+          agg.placeMismatch = agg.placeMismatch || placeMismatch;
+          byDay.set(workYmd, agg);
+          i += 1;
+          continue;
+        }
+
+        const agg =
+          byDay.get(workYmd) ??
+          ({
+            presence: [],
+            breaks: [],
+            pairIds: [],
+            placeMismatch: false,
+          } satisfies DayAgg);
+        agg.presence.push({ start: punch.occurredAt, end: end.occurredAt });
+        agg.pairIds.push(pairId);
+        agg.placeMismatch = agg.placeMismatch || placeMismatch;
+        byDay.set(workYmd, agg);
         i += 1;
+      }
+    };
+
+    await pairDirection(
+      WorkforceAttendanceDirection.IN,
+      WorkforceAttendanceDirection.OUT,
+      "presence",
+    );
+    await pairDirection(
+      WorkforceAttendanceDirection.BREAK_START,
+      WorkforceAttendanceDirection.BREAK_END,
+      "break",
+    );
+
+    for (const [workYmd, agg] of byDay) {
+      if (agg.presence.length === 0) {
+        // Breaks without a closed IN→OUT do not write a cell
         continue;
       }
-      const out = pending[outIdx]!;
-      const workYmd = bakuYmd(punch.occurredAt);
       const workDate = utcFromYmd(workYmd);
-      if (
-        workDate.getTime() < input.from.getTime() ||
-        workDate.getTime() > input.to.getTime()
-      ) {
-        // Outside rebuild window — leave for another run; do not mark used
-        i += 1;
-        continue;
-      }
-
-      const resolved = await resolveCapAndNight(workDate, workYmd);
-      // Night OUT next calendar day → hours on IN date (workYmd from IN)
-      void resolved.isNight;
-
-      const hours = hoursBetween(
-        punch.occurredAt,
-        out.occurredAt,
-        resolved.cap,
+      const resolved = await resolveShift(workDate, workYmd);
+      const cal = input.calendarByYmd.get(workYmd) ?? null;
+      const buckets = classifyMinuteBuckets({
+        presence: agg.presence,
+        breaks: agg.breaks,
+        workYmd,
+        startMinute: resolved.startMinute,
+        endMinute: resolved.endMinute,
+        plannedBreakMinutes: resolved.plannedBreakMinutes,
+        calendarKind: calendarKindFromDay(cal),
+        wasShiftDay: resolved.wasShiftDay,
+      });
+      const cell = await upsertFaceidCell(
+        workDate,
+        buckets,
+        agg.pairIds[0] ?? `day:${workYmd}`,
       );
-      const pairId = punch.id;
-      const placeMismatch =
-        punch.placeMismatch ||
-        (resolved.assignmentPlaceId != null &&
-          resolved.assignmentPlaceId !== punch.placeId);
-
-      await this.prisma.workforceAttendancePunch.update({
-        where: { id: punch.id },
-        data: {
-          status: WorkforceAttendancePunchStatus.PAIRED,
-          pairId,
-          hoursAttributed: roundHours(hours),
-          workDate,
-          placeMismatch,
-        },
-      });
-      await this.prisma.workforceAttendancePunch.update({
-        where: { id: out.id },
-        data: {
-          status: WorkforceAttendancePunchStatus.PAIRED,
-          pairId,
-          hoursAttributed: roundHours(hours),
-          workDate,
-          placeMismatch,
-        },
-      });
-      used.add(punch.id);
-      used.add(out.id);
-      pairsWritten += 1;
-
-      const cell = await upsertFaceidCell(workDate, hours, pairId);
       if (cell === "ok") cellsUpserted += 1;
       else if (cell === "approved") cellsSkippedApproved += 1;
       else if (cell === "absence") cellsSkippedAbsence += 1;
       else if (cell === "month") monthsSkipped += 1;
-      i += 1;
     }
 
     if (input.usePlannedIfOpen) {
@@ -996,13 +1342,25 @@ export class WorkforceAttendanceService {
         ) {
           continue;
         }
-        const resolved = await resolveCapAndNight(workDate, workYmd);
+        const resolved = await resolveShift(workDate, workYmd);
         if (resolved.plannedHours == null || resolved.plannedHours <= 0) {
           continue;
         }
+        const plannedMin = Math.round(resolved.plannedHours * 60);
+        const buckets: MinuteBuckets = {
+          normalMinutes: plannedMin,
+          shortfallMinutes: 0,
+          overtimeMinutes: 0,
+          nightMinutes: 0,
+          restDayMinutes: 0,
+          holidayMinutes: 0,
+          hourlyLeaveMinutes: 0,
+          breakMinutes: 0,
+          hours: resolved.plannedHours,
+        };
         const cell = await upsertFaceidCell(
           workDate,
-          resolved.plannedHours,
+          buckets,
           `open:${punch.id}`,
         );
         if (cell === "ok") cellsUpserted += 1;
@@ -1020,5 +1378,611 @@ export class WorkforceAttendanceService {
       openLeft,
       monthsSkipped,
     };
+  }
+
+  private async resolveShiftWindowForPunch(
+    organizationId: string,
+    employmentId: string,
+    _placeId: string,
+    occurredAt: Date,
+  ): Promise<{ startMinute: number; endMinute: number } | null> {
+    const workYmd = bakuYmd(occurredAt);
+    const workDate = utcFromYmd(workYmd);
+    const assignment = await this.prisma.workforceShiftAssignment.findFirst({
+      where: {
+        organizationId,
+        employmentId,
+        effectiveFrom: { lte: workDate },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+      },
+      orderBy: { effectiveFrom: "desc" },
+      include: {
+        cycle: {
+          include: {
+            slots: {
+              include: { shiftType: true },
+              orderBy: { slotIndex: "asc" },
+            },
+          },
+        },
+      },
+    });
+    if (!assignment?.cycle?.slots?.length) {
+      // Brigade assignment covering this employment
+      const member = await this.prisma.workforceBrigadeMember.findFirst({
+        where: {
+          organizationId,
+          employmentId,
+          effectiveFrom: { lte: workDate },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+        },
+        orderBy: { effectiveFrom: "desc" },
+      });
+      if (!member) return null;
+      const brigadeAssignment =
+        await this.prisma.workforceShiftAssignment.findFirst({
+          where: {
+            organizationId,
+            brigadeId: member.brigadeId,
+            effectiveFrom: { lte: workDate },
+            OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+          },
+          orderBy: { effectiveFrom: "desc" },
+          include: {
+            cycle: {
+              include: {
+                slots: {
+                  include: { shiftType: true },
+                  orderBy: { slotIndex: "asc" },
+                },
+              },
+            },
+          },
+        });
+      if (!brigadeAssignment?.cycle?.slots?.length) return null;
+      return this.shiftWindowFromAssignment(brigadeAssignment, workYmd);
+    }
+    return this.shiftWindowFromAssignment(assignment, workYmd);
+  }
+
+  private shiftWindowFromAssignment(
+    assignment: {
+      cycle: {
+        cycleAnchor: Date;
+        slots: Array<{
+          slotIndex: number;
+          shiftType: { startMinute: number; endMinute: number } | null;
+        }>;
+      };
+    },
+    workYmd: string,
+  ): { startMinute: number; endMinute: number } | null {
+    const slots = [...assignment.cycle.slots].sort(
+      (a, b) => a.slotIndex - b.slotIndex,
+    );
+    const idx = cycleSlotIndex(
+      isoDayUtc(assignment.cycle.cycleAnchor),
+      workYmd,
+      slots.length,
+    );
+    const st = slots[idx]?.shiftType;
+    if (!st) return null;
+    return { startMinute: st.startMinute, endMinute: st.endMinute };
+  }
+
+  async floorBoard(
+    organizationId: string,
+    opts?: { date?: string; orgUnitId?: string; placeId?: string },
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const dateYmd = (opts?.date?.trim() || todayBakuYmd()).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) {
+      throw new BadRequestException("date must be YYYY-MM-DD");
+    }
+    const workDate = utcFromYmd(dateYmd);
+    const dayStart = workDate;
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const nowYmd = bakuYmd(now);
+    const nowMinute = bakuMinuteOfDay(now);
+    const dayIsPast = dateYmd < nowYmd;
+    const dayIsToday = dateYmd === nowYmd;
+
+    const employments = await this.prisma.workforceEmployment.findMany({
+      where: {
+        organizationId,
+        status: WorkforceEmploymentStatus.ACTIVE,
+        ...(opts?.orgUnitId ? { orgUnitId: opts.orgUnitId } : {}),
+      },
+      select: {
+        id: true,
+        globalPersonId: true,
+        orgUnitId: true,
+      },
+    });
+    const employmentIds = employments.map((e) => e.id);
+
+    const [places, overrides, dayPunchesAll, shiftTypes] = await Promise.all([
+      this.prisma.workforcePlace.findMany({
+        where: { organizationId },
+      }),
+      employmentIds.length
+        ? this.prisma.workforceDayOverride.findMany({
+            where: {
+              organizationId,
+              workDate,
+              employmentId: { in: employmentIds },
+            },
+            include: { shiftType: true },
+          })
+        : Promise.resolve([]),
+      employmentIds.length
+        ? this.prisma.workforceAttendancePunch.findMany({
+            where: {
+              organizationId,
+              employmentId: { in: employmentIds },
+              occurredAt: { gte: dayStart, lt: dayEnd },
+              direction: {
+                in: [
+                  WorkforceAttendanceDirection.IN,
+                  WorkforceAttendanceDirection.OUT,
+                  WorkforceAttendanceDirection.BREAK_START,
+                  WorkforceAttendanceDirection.BREAK_END,
+                ],
+              },
+            },
+            orderBy: { occurredAt: "asc" },
+          })
+        : Promise.resolve([]),
+      this.prisma.workforceShiftType.findMany({
+        where: { organizationId },
+      }),
+    ]);
+    const placeById = new Map(places.map((p) => [p.id, p]));
+    const shiftTypeById = new Map(shiftTypes.map((t) => [t.id, t]));
+    const overrideByEmp = new Map(overrides.map((o) => [o.employmentId, o]));
+    const punchesByEmp = new Map<string, typeof dayPunchesAll>();
+    for (const p of dayPunchesAll) {
+      if (!p.employmentId) continue;
+      const list = punchesByEmp.get(p.employmentId) ?? [];
+      list.push(p);
+      punchesByEmp.set(p.employmentId, list);
+    }
+
+    type Card = {
+      kind:
+        | "ARRIVED"
+        | "SHIFT_STARTED_NO_IN"
+        | "NOT_ARRIVED"
+        | "STILL_INSIDE"
+        | "LEFT_EARLY"
+        | "LATE"
+        | "OPEN_BREAK"
+        | "PENDING_REQUEST"
+        | "FITNESS_ISSUE";
+      employmentId: string;
+      globalPersonId: string;
+      placeId: string | null;
+      punchId: string | null;
+      fitnessKind?: string;
+      fitnessStatus?: string;
+    };
+    const cards: Card[] = [];
+
+    for (const emp of employments) {
+      let assignment = await this.prisma.workforceShiftAssignment.findFirst({
+        where: {
+          organizationId,
+          employmentId: emp.id,
+          effectiveFrom: { lte: workDate },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+        },
+        orderBy: { effectiveFrom: "desc" },
+        include: {
+          cycle: {
+            include: {
+              slots: {
+                include: { shiftType: true },
+                orderBy: { slotIndex: "asc" },
+              },
+            },
+          },
+        },
+      });
+      if (!assignment) {
+        const member = await this.prisma.workforceBrigadeMember.findFirst({
+          where: {
+            organizationId,
+            employmentId: emp.id,
+            effectiveFrom: { lte: workDate },
+            OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+          },
+          orderBy: { effectiveFrom: "desc" },
+        });
+        if (member) {
+          assignment = await this.prisma.workforceShiftAssignment.findFirst({
+            where: {
+              organizationId,
+              brigadeId: member.brigadeId,
+              effectiveFrom: { lte: workDate },
+              OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+            },
+            orderBy: { effectiveFrom: "desc" },
+            include: {
+              cycle: {
+                include: {
+                  slots: {
+                    include: { shiftType: true },
+                    orderBy: { slotIndex: "asc" },
+                  },
+                },
+              },
+            },
+          });
+        }
+      }
+
+      const ov = overrideByEmp.get(emp.id);
+      if (!assignment && !ov) continue;
+
+      let resolved = assignment
+        ? (() => {
+            const tape: RosterTapeSlot[] = (assignment.cycle?.slots ?? []).map(
+              (s) => {
+                if (!s.shiftTypeId || !s.shiftType) return { kind: "OFF" as const };
+                return {
+                  kind: "SHIFT" as const,
+                  shiftTypeId: s.shiftTypeId,
+                  defaultHours: Number(s.shiftType.defaultHours),
+                };
+              },
+            );
+            if (!tape.length) {
+              return {
+                type: "OFF" as const,
+                hours: 0,
+                shiftTypeId: null as string | null,
+                placeId: assignment.placeId as string | null,
+                assignmentId: assignment.id as string | null,
+                fromOverride: false,
+              };
+            }
+            const slot = tape[
+              cycleSlotIndex(
+                isoDayUtc(assignment.cycle!.cycleAnchor),
+                dateYmd,
+                tape.length,
+              )
+            ]!;
+            return resolvedFromCycleSlot(slot, assignment.placeId, assignment.id);
+          })()
+        : {
+            type: "OFF" as const,
+            hours: 0,
+            shiftTypeId: null as string | null,
+            placeId: null as string | null,
+            assignmentId: null as string | null,
+            fromOverride: false,
+          };
+
+      if (ov) {
+        resolved = applyDayOverride(resolved, {
+          kind: ov.kind as "DAY_OFF" | "EXTRA" | "SWAP",
+          placeId: ov.placeId,
+          shiftTypeId: ov.shiftTypeId,
+          defaultHours:
+            ov.shiftType != null
+              ? Number(ov.shiftType.defaultHours)
+              : ov.shiftTypeId
+                ? Number(
+                    shiftTypeById.get(ov.shiftTypeId)?.defaultHours ?? 8,
+                  )
+                : null,
+        });
+      }
+
+      // DAY_OFF (cycle or override) does not appear on the floor board
+      if (resolved.type === "OFF") continue;
+      const placeId = resolved.placeId;
+      if (opts?.placeId && placeId !== opts.placeId) continue;
+
+      const stId = resolved.shiftTypeId;
+      const st =
+        (stId ? shiftTypeById.get(stId) : null) ??
+        (stId && ov?.shiftType?.id === stId ? ov.shiftType : null) ??
+        (assignment?.cycle?.slots ?? []).find((s) => s.shiftTypeId === stId)
+          ?.shiftType ??
+        null;
+      if (!st) continue;
+
+      const place = placeId ? placeById.get(placeId) : undefined;
+      const grace = place?.graceMinutes ?? 0;
+      const startWithGrace = Math.max(0, st.startMinute - grace);
+      const endWithGrace = Math.min(1440, st.endMinute + grace);
+
+      const dayPunches = punchesByEmp.get(emp.id) ?? [];
+      const firstIn = dayPunches.find(
+        (p) => p.direction === WorkforceAttendanceDirection.IN,
+      );
+      const lastOut = [...dayPunches]
+        .reverse()
+        .find((p) => p.direction === WorkforceAttendanceDirection.OUT);
+      const openIn = dayPunches.find(
+        (p) =>
+          p.direction === WorkforceAttendanceDirection.IN &&
+          p.status === WorkforceAttendancePunchStatus.OPEN,
+      );
+      const openBreak = dayPunches.find(
+        (p) =>
+          p.direction === WorkforceAttendanceDirection.BREAK_START &&
+          p.status === WorkforceAttendancePunchStatus.OPEN,
+      );
+
+      const shiftStarted =
+        dayIsPast ||
+        (dayIsToday &&
+          (st.startMinute <= st.endMinute
+            ? nowMinute >= startWithGrace
+            : nowMinute >= startWithGrace || nowMinute <= endWithGrace));
+
+      if (openBreak) {
+        cards.push({
+          kind: "OPEN_BREAK",
+          employmentId: emp.id,
+          globalPersonId: emp.globalPersonId,
+          placeId,
+          punchId: openBreak.id,
+        });
+      }
+
+      if (firstIn && lastOut && lastOut.occurredAt > firstIn.occurredAt) {
+        const outMinute = bakuMinuteOfDay(lastOut.occurredAt);
+        const leftEarly =
+          st.startMinute < st.endMinute
+            ? outMinute < st.endMinute - grace
+            : false;
+        cards.push({
+          kind: leftEarly ? "LEFT_EARLY" : "ARRIVED",
+          employmentId: emp.id,
+          globalPersonId: emp.globalPersonId,
+          placeId,
+          punchId: leftEarly ? lastOut.id : firstIn.id,
+        });
+        continue;
+      }
+
+      if (openIn || (firstIn && !lastOut)) {
+        cards.push({
+          kind: "STILL_INSIDE",
+          employmentId: emp.id,
+          globalPersonId: emp.globalPersonId,
+          placeId,
+          punchId: (openIn ?? firstIn)!.id,
+        });
+        continue;
+      }
+
+      if (!firstIn && shiftStarted) {
+        const latePast =
+          dayIsPast ||
+          (dayIsToday &&
+            (st.startMinute < st.endMinute
+              ? nowMinute > st.startMinute + grace
+              : false));
+        cards.push({
+          kind: latePast ? "LATE" : "SHIFT_STARTED_NO_IN",
+          employmentId: emp.id,
+          globalPersonId: emp.globalPersonId,
+          placeId,
+          punchId: null,
+        });
+        continue;
+      }
+
+      if (!firstIn && dayIsToday && !shiftStarted) {
+        cards.push({
+          kind: "NOT_ARRIVED",
+          employmentId: emp.id,
+          globalPersonId: emp.globalPersonId,
+          placeId,
+          punchId: null,
+        });
+      }
+    }
+
+    // Wave 12: pending self-requests (absence / hourly / advance)
+    const [pendingAbs, pendingHourly, pendingAdv] = await Promise.all([
+      this.prisma.workforceAbsence.findMany({
+        where: {
+          organizationId,
+          status: "SUBMITTED",
+          employmentId: { in: employmentIds },
+        },
+        select: { employmentId: true },
+      }),
+      this.prisma.workforceHourlyLeaveRequest.findMany({
+        where: {
+          organizationId,
+          status: "SUBMITTED",
+          employmentId: { in: employmentIds },
+        },
+        select: { employmentId: true },
+      }),
+      this.prisma.workforceAdvanceRequest.findMany({
+        where: {
+          organizationId,
+          status: "SUBMITTED",
+          employmentId: { in: employmentIds },
+        },
+        select: { employmentId: true },
+      }),
+    ]);
+    const pendingEmpIds = new Set([
+      ...pendingAbs.map((r) => r.employmentId),
+      ...pendingHourly.map((r) => r.employmentId),
+      ...pendingAdv.map((r) => r.employmentId),
+    ]);
+    for (const emp of employments) {
+      if (!pendingEmpIds.has(emp.id)) continue;
+      cards.push({
+        kind: "PENDING_REQUEST",
+        employmentId: emp.id,
+        globalPersonId: emp.globalPersonId,
+        placeId: null,
+        punchId: null,
+      });
+    }
+
+    const fitnessIssues = await this.fitness.listFloorIssues(
+      organizationId,
+      employmentIds,
+    );
+    const empById = new Map(employments.map((e) => [e.id, e]));
+    for (const issue of fitnessIssues) {
+      const emp = empById.get(issue.employmentId);
+      if (!emp) continue;
+      cards.push({
+        kind: "FITNESS_ISSUE",
+        employmentId: emp.id,
+        globalPersonId: emp.globalPersonId,
+        placeId: null,
+        punchId: null,
+        fitnessKind: issue.kind,
+        fitnessStatus: issue.status,
+      });
+    }
+
+    const suspiciousQueue =
+      await this.prisma.workforceAttendancePunch.findMany({
+        where: {
+          organizationId,
+          reviewStatus: WorkforceAttendanceReviewStatus.SUSPICIOUS,
+          occurredAt: { gte: dayStart, lt: dayEnd },
+          ...(opts?.placeId ? { placeId: opts.placeId } : {}),
+        },
+        orderBy: { occurredAt: "desc" },
+        take: 100,
+      });
+
+    const groups = {
+      ARRIVED: cards.filter((c) => c.kind === "ARRIVED"),
+      SHIFT_STARTED_NO_IN: cards.filter(
+        (c) => c.kind === "SHIFT_STARTED_NO_IN",
+      ),
+      NOT_ARRIVED: cards.filter((c) => c.kind === "NOT_ARRIVED"),
+      STILL_INSIDE: cards.filter((c) => c.kind === "STILL_INSIDE"),
+      LEFT_EARLY: cards.filter((c) => c.kind === "LEFT_EARLY"),
+      LATE: cards.filter((c) => c.kind === "LATE"),
+      OPEN_BREAK: cards.filter((c) => c.kind === "OPEN_BREAK"),
+      PENDING_REQUEST: cards.filter((c) => c.kind === "PENDING_REQUEST"),
+      FITNESS_ISSUE: cards.filter((c) => c.kind === "FITNESS_ISSUE"),
+    };
+
+    const personIds = [
+      ...new Set(cards.map((c) => c.globalPersonId).filter(Boolean)),
+    ];
+    const persons =
+      personIds.length > 0
+        ? await this.employments.resolvePersonProfiles(
+            organizationId,
+            personIds,
+          )
+        : {};
+
+    return {
+      date: dateYmd,
+      groups,
+      persons,
+      suspiciousCount: suspiciousQueue.length,
+      suspicious: suspiciousQueue.map((p) => ({
+        id: p.id,
+        employmentId: p.employmentId,
+        placeId: p.placeId,
+        personRef: p.personRef,
+        direction: p.direction,
+        occurredAt: p.occurredAt.toISOString(),
+        reviewReasons: p.reviewReasons,
+        allowOutside:
+          placeById.get(p.placeId)?.allowOutside === true &&
+          p.reviewReasons.includes("OUTSIDE_RADIUS"),
+      })),
+    };
+  }
+
+  async getPunchDetail(organizationId: string, punchId: string) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const punch = await this.prisma.workforceAttendancePunch.findFirst({
+      where: { id: punchId, organizationId },
+      include: { place: true },
+    });
+    if (!punch) throw new NotFoundException("Punch not found");
+    const journal = await this.prisma.workforceAttendancePunchJournal.findMany(
+      {
+        where: { organizationId, punchId },
+        orderBy: { createdAt: "asc" },
+      },
+    );
+    return { punch, journal };
+  }
+
+  async acceptPunch(
+    organizationId: string,
+    punchId: string,
+    actorUserId: string,
+    dto: { reason: string; occurredAt?: string },
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const reason = dto.reason?.trim() ?? "";
+    if (reason.length < 1) {
+      throw new BadRequestException("reason is required");
+    }
+    const punch = await this.prisma.workforceAttendancePunch.findFirst({
+      where: { id: punchId, organizationId },
+    });
+    if (!punch) throw new NotFoundException("Punch not found");
+    if (punch.reviewStatus !== WorkforceAttendanceReviewStatus.SUSPICIOUS) {
+      throw new BadRequestException("Only SUSPICIOUS punches can be accepted");
+    }
+    let afterJson: { occurredAt?: string } | undefined;
+    if (dto.occurredAt?.trim()) {
+      if (Number.isNaN(Date.parse(dto.occurredAt))) {
+        throw new BadRequestException("occurredAt must be parseable ISO");
+      }
+      afterJson = { occurredAt: dto.occurredAt.trim() };
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.workforceAttendancePunchJournal.create({
+        data: {
+          organizationId,
+          punchId,
+          actorUserId,
+          action: WorkforceAttendanceJournalAction.ACCEPT,
+          reason: reason.slice(0, 512),
+          beforeJson: {
+            reviewStatus: punch.reviewStatus,
+            reviewReasons: punch.reviewReasons,
+            occurredAt: punch.occurredAt.toISOString(),
+          },
+          afterJson: afterJson ?? {
+            reviewStatus: WorkforceAttendanceReviewStatus.ACCEPTED,
+          },
+        },
+      });
+      await tx.workforceAttendancePunch.update({
+        where: { id: punchId },
+        data: {
+          reviewStatus: WorkforceAttendanceReviewStatus.ACCEPTED,
+        },
+      });
+    });
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "ATTENDANCE_PUNCH_ACCEPT",
+      entityType: "WorkforceAttendancePunch",
+      entityId: punchId,
+      payload: { reason, occurredAtOverlay: afterJson?.occurredAt ?? null },
+    });
+    return this.getPunchDetail(organizationId, punchId);
   }
 }

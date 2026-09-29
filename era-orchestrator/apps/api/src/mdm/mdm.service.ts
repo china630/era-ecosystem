@@ -1447,6 +1447,7 @@ export class MdmService {
       firstName: names?.firstName ?? null,
       middleName: names?.middleName ?? null,
       lastName: names?.lastName ?? null,
+  nationality: accessDenied ? null : person.nationality ?? null,
       phoneMasked:
         !accessDenied && person.phoneCipher
           ? maskPhone(decryptText(person.phoneCipher))

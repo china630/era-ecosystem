@@ -20,10 +20,15 @@ describe("WorkforceRosterService preview cache", () => {
       write: jest.fn(),
       forgetOrganization: jest.fn(),
     };
+    const fitness = {
+      assertAssignable: jest.fn(),
+      assertBrigadeAssignable: jest.fn(),
+    };
     const svc = new WorkforceRosterService(
       prisma as never,
       { assertWorkforceHub: jest.fn() } as never,
       { log: jest.fn() } as never,
+      fitness as never,
       cache as never,
     );
     const out = await svc.previewMonth(ORG, 2026, 3);
@@ -44,10 +49,15 @@ describe("WorkforceRosterService preview cache", () => {
       write: jest.fn(),
       forgetOrganization: jest.fn(),
     };
+    const fitness = {
+      assertAssignable: jest.fn(),
+      assertBrigadeAssignable: jest.fn(),
+    };
     const svc = new WorkforceRosterService(
       prisma as never,
       { assertWorkforceHub: jest.fn() } as never,
       { log: jest.fn() } as never,
+      fitness as never,
       cache as never,
     );
     await svc.deleteOverride(ORG, "ov-1", "actor-1");

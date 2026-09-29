@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@era/i18n-common";
+import { buildSatelliteSsoLaunchUrlFromTicket } from "@era/satellite-kit/auth/sso-launch";
 import {
   AUTH_FIELD_GROUP_CLASS,
   AUTH_FIELD_LABEL_CLASS,
@@ -15,12 +16,15 @@ import {
   parseApiError,
 } from "@era/satellite-kit/ui";
 import { orchFetch } from "../../lib/orch-api";
+import { useAuth } from "../../lib/auth-context";
+import { fetchSatelliteSsoTicket } from "../../lib/open-finance";
 import { OrchLanguageSwitcher } from "../../components/locale/orch-language-switcher";
 
 export default function KafeLandingPage() {
   const t = useTranslations("kafe");
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
+  const { login } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -30,7 +34,7 @@ export default function KafeLandingPage() {
     password: "",
     cafeName: "",
     taxId: "",
-    zal: true,
+    zal: false,
     kitchen: false,
     qrMenu: false,
   });
@@ -62,23 +66,75 @@ export default function KafeLandingPage() {
       const data = (await res.json().catch(() => ({}))) as {
         message?: string;
         error?: string;
-        kafe?: { poolBaseUrl?: string; publicOrgNumber?: number | null };
+        accessToken?: string;
+        refreshToken?: string;
+        claims?: {
+          sub?: string;
+          email?: string;
+          organizationId?: string;
+          role?: string;
+          isSuperAdmin?: boolean;
+        };
+        kafe?: {
+          poolBaseUrl?: string;
+          publicOrgNumber?: number | null;
+          organizationId?: string;
+        };
       };
       if (!res.ok) {
-        setError(parseApiError(data, t("signupFailed")));
+        const raw = parseApiError(data, t("signupFailed"));
+        if (/email already/i.test(raw)) {
+          setError(t("emailTaken"));
+          return;
+        }
+        if (/tax|vöen|voen|unique/i.test(raw)) {
+          setError(t("voenTaken"));
+          return;
+        }
+        setError(raw);
         return;
       }
-      const pool = data.kafe?.poolBaseUrl;
+      const pool = data.kafe?.poolBaseUrl?.replace(/\/$/, "") ?? "";
       const publicOrgNumber = data.kafe?.publicOrgNumber;
+      const organizationId =
+        data.kafe?.organizationId ?? data.claims?.organizationId ?? "";
+      if (data.accessToken && data.claims?.email) {
+        login(
+          data.accessToken,
+          {
+            id: data.claims.sub ?? "",
+            email: data.claims.email,
+            organizationId: organizationId || null,
+            role: data.claims.role,
+            isSuperAdmin: data.claims.isSuperAdmin,
+          },
+          data.refreshToken,
+        );
+        if (pool && organizationId) {
+          const ticket = await fetchSatelliteSsoTicket(
+            data.accessToken,
+            organizationId,
+          );
+          if (ticket) {
+            window.location.href = buildSatelliteSsoLaunchUrlFromTicket(
+              pool,
+              ticket,
+            );
+            return;
+          }
+        }
+      }
       if (pool && publicOrgNumber != null) {
-        window.location.href = `${pool.replace(/\/$/, "")}/login?org=${publicOrgNumber}`;
+        window.location.href = `${pool}/login?org=${publicOrgNumber}`;
         return;
       }
       if (pool) {
-        window.location.href = `${pool.replace(/\/$/, "")}/login`;
+        window.location.href = `${pool}/login`;
         return;
       }
       window.location.href = "/workspace";
+    } catch {
+      setError(t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -98,13 +154,6 @@ export default function KafeLandingPage() {
         </p>
       }
     >
-      <p className="mb-1 text-sm font-medium text-[#27AE60]">{t("kicker")}</p>
-      <p className="mb-4 text-sm text-[#34495E]">{t("lead")}</p>
-      <ul className="mb-5 list-disc space-y-1 pl-5 text-sm text-[#5D6D7E]">
-        <li>{t("pointPin")}</li>
-        <li>{t("pointTill")}</li>
-        <li>{t("pointQr")}</li>
-      </ul>
       {error ? (
         <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
@@ -118,6 +167,7 @@ export default function KafeLandingPage() {
             value={form.firstName}
             onChange={(e) => setForm({ ...form, firstName: e.target.value })}
             required
+            maxLength={120}
             autoComplete="given-name"
           />
         </label>
@@ -128,6 +178,7 @@ export default function KafeLandingPage() {
             value={form.lastName}
             onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             required
+            maxLength={120}
             autoComplete="family-name"
           />
         </label>
@@ -153,6 +204,7 @@ export default function KafeLandingPage() {
             minLength={8}
             autoComplete="new-password"
           />
+          <span className="text-xs text-[#7F8C8D]">{t("passwordHint")}</span>
         </label>
         <label className={AUTH_FIELD_GROUP_CLASS}>
           <span className={AUTH_FIELD_LABEL_CLASS}>{t("cafeName")}</span>
@@ -161,6 +213,7 @@ export default function KafeLandingPage() {
             value={form.cafeName}
             onChange={(e) => setForm({ ...form, cafeName: e.target.value })}
             required
+            maxLength={200}
             autoComplete="organization"
           />
         </label>
@@ -181,7 +234,22 @@ export default function KafeLandingPage() {
           <span className="text-xs text-[#7F8C8D]">{t("voenHint")}</span>
         </label>
         <fieldset className="grid gap-2 rounded-lg border border-[#E1E5EA] bg-[#F8F9FA] p-3">
-          <legend className="px-1 text-sm font-medium text-[#34495E]">{t("extras")}</legend>
+          <legend className="px-1 text-sm font-medium text-[#34495E]">{t("plan")}</legend>
+          <label className="flex items-start gap-2 text-sm text-[#34495E]">
+            <input
+              type="checkbox"
+              className="mt-1 pointer-events-none accent-[#27AE60]"
+              checked
+              readOnly
+              tabIndex={-1}
+              aria-checked="true"
+              aria-readonly="true"
+            />
+            <span>
+              <span className="font-medium">{t("gate")}</span>
+              <span className="mt-0.5 block text-xs text-[#7F8C8D]">{t("gateHint")}</span>
+            </span>
+          </label>
           <label className="flex items-start gap-2 text-sm text-[#34495E]">
             <input
               type="checkbox"

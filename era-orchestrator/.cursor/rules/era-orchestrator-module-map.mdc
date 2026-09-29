@@ -17,7 +17,7 @@ globs:
 | Route | File | Notes |
 |-------|------|-------|
 | `/login` | `app/login/page.tsx` | AuthLoginCard; post-login 0/1/N routing (0 → onboarding gate, 1 → `/workspace`, N → `/organizations` picker on every login). Expired JWT → `/login?reason=expired` (session-guard in `lib/orch-api.ts` + `auth-context.tsx`) |
-| `/kafe` | `app/kafe/page.tsx` | ERA Kafe chromeless signup (no control-plane shell). `POST /v1/public/kafe/onboard` → F&B pool `/login`. Lab firm: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` (`npm run seed:lab-demo` in orchestrator + F&B `db:seed:demo`) |
+| `/kafe` | `app/kafe/page.tsx` | ERA Kafe chromeless signup. `POST /v1/public/kafe/onboard` bills Gate always; Zal/KDS/QR default off. Provisions F&B owner password + KAFE outlet, then SSO (fallback `/login?org=`). Lab firm: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` |
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
 | `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor) |
@@ -146,8 +146,10 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `POST /platform/v1/workforce/brigades/leaves` | Close open membership as of Baku day |
 | `GET /platform/v1/workforce/brigades/:id/members?asOf=` | As-of roster for one brigade |
 | `GET /platform/v1/workforce/brigade-memberships?employmentId=&brigadeId=&from=&to=&page=&pageSize=` | Membership history |
-| `POST /platform/v1/workforce/attendance/punches` | **Public** device ingest (`att_*` Bearer, optional HMAC + Nest `rawBody`) — CP-WF-ATT-01; Zod `@era/contracts` batch |
-| `GET/POST …/attendance/devices\|identities\|punches` + `POST rebuild\|import-csv` | HR admin; rebuild body or `?from&to`; CSV/xlsx; nightly cron Asia/Baku 00:15 |
+| `POST /platform/v1/workforce/attendance/punches` | **Public** device ingest (`att_*` Bearer, optional HMAC + Nest `rawBody`) — CP-WF-ATT-01; Zod `@era/contracts` batch; optional lat/lng → Wave 9 review flags |
+| `GET …/attendance/floor?date=&orgUnitId=&placeId=` | Live floor board + suspicious queue — CP-WF-FLOOR-01 |
+| `GET …/attendance/punches/:id` + `POST …/punches/:id/accept` | Punch + journal; ACCEPT sets `reviewStatus=ACCEPTED` (immutable raw) |
+| `GET/POST …/attendance/devices\|identities\|punches` + `POST rebuild\|import-csv` | HR admin; rebuild body or `?from&to`; CSV/xlsx; nightly cron Asia/Baku 00:15; rebuild skips `SUSPICIOUS`; Wave 10 minute buckets + BREAK_START/END |
 | `POST …/timesheets/approve` | **410** `TIMESHEET_USE_MONTH_APPROVE` (cherry-pick retired) |
 | `GET/POST /platform/v1/workforce/scope/*` | `workforce-org.controller.ts` |
 | `GET/POST/PATCH/POST archive /platform/v1/workforce/org-units/*` | `workforce-org-units.service.ts` + controller |
@@ -179,13 +181,20 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/personnel-orders` | create/issue/cancel/PDF + HTML templates + terminate gate checkbox (settings PATCH) |
 | Web `/workspace/workforce/staff-schedule` | revisions submit/approve/PDF |
 | Web `/workspace/workforce/timesheets` | full-month grid; future cells visible, hand/batch/autofill stop at today; sync absences fills approved leave including future days |
-| Web `/workspace/workforce/places` | labor places CRUD (CatalogField) — CP-WF-ROSTER-01 |
+| Web `/workspace/workforce/places` | labor places CRUD (CatalogField) + geofence radius/grace/allowOutside — CP-WF-ROSTER-01 / CP-WF-FLOOR-01 |
 | Web `/workspace/workforce/shifts` | shift types + seed defaults; local subnav |
 | Web `/workspace/workforce/shifts/cycles` | shift cycles table |
 | Web `/workspace/workforce/shifts/brigades` | as-of roster + transfer/leave modal + membership history (SCREEN, not SHIPPED) — ADR `docs/adr/cp-workforce-brigade-membership.md` |
 | Web `/workspace/workforce/shifts/assignments` | assignment register (place, cycle, dates); not shown on the month plan canvas |
 | Web `/workspace/workforce/roster` | plan grid for employments with a shift assignment this month; coverage gaps; same-day conflict mark; assignment modal; no timesheet write |
 | Web `/workspace/workforce/plan-fact` | read-only plan vs timesheet fact, 1st through today, exceptions by default; cells with `source=roster_plan` are not fact |
+| Web `/workspace/workforce/floor` | live floor board + suspicious accept queue — CP-WF-FLOOR-01 (API until UAT); pending-request cards wave 12 |
+| Web `/workspace/workforce/requests` | HR queue: submitted absences / hourly / advances + announcements — CP-WF-SELF-01 |
+| Web `/workspace/me` | Employee phone cabinet (own employment) — CP-WF-SELF-01 (API until UAT) |
+| Web `/workspace/workforce/employments` fitness zone | Wave 13 fitness upload/download on employment card — CP-WF-FIT-01 (API until UAT); floor `FITNESS_ISSUE` |
+| `GET/PATCH /platform/v1/workforce/fitness/policy` | Org `requiredKinds` + `criminalRecordFreshnessDays` |
+| `GET/POST /platform/v1/workforce/employments/:id/fitness` | List + attach fitness file (quota + disk key) |
+| `GET /platform/v1/workforce/employments/:id/fitness/:kind/file` | HR download; not on self cabinet |
 | Web `/workspace/workforce/attendance` | punches (UNMAPPED/OPEN queue), rebuild, CSV; local subnav — CP-WF-ATT-01 |
 | Web `/workspace/workforce/attendance/devices` | devices table + add device (token once) |
 | Web `/workspace/workforce/attendance/identities` | personRef → employment identities |

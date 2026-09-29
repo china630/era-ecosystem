@@ -56,6 +56,7 @@ export const WORKFORCE_AUDIT_ACTIONS = [
   "ATTENDANCE_IDENTITY_UPSERTED",
   "ATTENDANCE_REBUILD",
   "ATTENDANCE_CSV_IMPORT",
+  "ATTENDANCE_PUNCH_ACCEPT",
 ] as const;
 
 export type WorkforceAuditAction = (typeof WORKFORCE_AUDIT_ACTIONS)[number];
