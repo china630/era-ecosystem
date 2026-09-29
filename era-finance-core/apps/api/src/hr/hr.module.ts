@@ -8,6 +8,7 @@ import { AbsencesController } from "./absences.controller";
 import { AbsencesService } from "./absences.service";
 import { EmployeesController } from "./employees.controller";
 import { InternalWorkforceEmployeesController } from "./internal-workforce-employees.controller";
+import { InternalWorkforcePayrollController } from "./internal-workforce-payroll.controller";
 import { EmployeesService } from "./employees.service";
 import { EmasController } from "./emas.controller";
 import { EmasContractService } from "./emas-contract.service";
@@ -68,6 +69,7 @@ import { MgmtLaborDeltaService } from "./mgmt-labor-delta.service";
   controllers: [
     EmployeesController,
     InternalWorkforceEmployeesController,
+    InternalWorkforcePayrollController,
     EmasController,
     PayrollController,
     PayrollComponentsController,

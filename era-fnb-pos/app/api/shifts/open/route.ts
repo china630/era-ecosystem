@@ -1,7 +1,7 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { getSessionFromRequest } from "@/lib/session";
@@ -9,7 +9,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const openSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   openingCash: z.number().nonnegative().default(0),
   fiscalDeviceId: z.string().min(1).max(64).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (denied) return denied;
   const body = openSchema.parse(await request.json());
 
-  const outlet = await ensureOutletByCode(body.outletCode);
+  const outlet = await resolveOpsOutlet(body.outletCode);
 
   const { resolveDefaultDevicesForSatellite } = await import("@era/satellite-kit");
   const { requestOrganizationId } = await import("@/lib/request-organization");

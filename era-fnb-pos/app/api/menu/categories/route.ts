@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
 }
 
 const createSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   name: z.string().min(1),
   sortOrder: z.number().int().optional(),
 });
@@ -39,7 +40,8 @@ export async function POST(request: Request) {
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());
-    const outlet = await ensureOutletByCode(body.outletCode);
+    const organizationId = requestOrganizationId();
+    const outlet = await resolveOpsOutlet(body.outletCode);
 
     const existing = await prisma.menuCategory.findFirst({
       where: { outletId: outlet.id, name: body.name },
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
 
     const category = await prisma.menuCategory.create({
       data: {
+        organizationId,
         outletId: outlet.id,
         name: body.name,
         sortOrder: body.sortOrder ?? (maxSort._max.sortOrder ?? 0) + 1,

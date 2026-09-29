@@ -49,6 +49,10 @@ import {
 import { MailService } from "../mail/mail.service";
 import { PayrollComponentsService } from "./payroll-components.service";
 import {
+  buildTimesheetPremiumLines,
+  reducesTaxableGross,
+} from "./payroll-minute-premiums";
+import {
   PDF_FONT_UNICODE,
   PDF_FONT_UNICODE_BOLD,
   registerUnicodeFonts,
@@ -224,6 +228,24 @@ export class PayrollService {
       linesByEmployee.set(line.employeeId, list);
     }
 
+    const openHolds = await this.prisma.payrollAdvanceHold.findMany({
+      where: {
+        organizationId,
+        appliedAt: null,
+        OR: [
+          { year: dto.year, month: { lte: dto.month } },
+          { year: { lt: dto.year } },
+        ],
+      },
+    });
+    const holdsByEmployee = new Map<string, typeof openHolds>();
+    for (const hold of openHolds) {
+      const list = holdsByEmployee.get(hold.employeeId) ?? [];
+      list.push(hold);
+      holdsByEmployee.set(hold.employeeId, list);
+    }
+    const appliedHoldIds: string[] = [];
+
     return this.prisma.$transaction(async (tx) => {
       const run = await tx.payrollRun.create({
         data: {
@@ -291,6 +313,7 @@ export class PayrollService {
         pushLine(PayrollComponentCode.BASE_SALARY, grossBase);
 
         const hoursRow = tsSummary?.hoursByEmployeeId?.[emp.id];
+        const minutesRow = tsSummary?.minutesByEmployeeId?.[emp.id];
         const schedule = emp.workSchedule;
         if (hoursRow && schedule && emp.kind === EmployeeKind.EMPLOYEE) {
           const normDays = Math.max(1, tsSummary?.normWorkingDays ?? 21);
@@ -299,19 +322,37 @@ export class PayrollService {
           const hourly = monthlyHours.gt(0)
             ? grossBase.div(monthlyHours)
             : new Decimal(0);
-          // Premium differential: hours × hourly × (rate − 1)
-          const nightExtra = hourly
-            .mul(hoursRow.night)
-            .mul(new Decimal(schedule.nightPremiumRate).sub(1));
-          const eveningExtra = hourly
-            .mul(hoursRow.evening)
-            .mul(new Decimal(schedule.eveningPremiumRate).sub(1));
-          const otExtra = hourly
-            .mul(hoursRow.overtime)
-            .mul(new Decimal(schedule.overtimePremiumRate).sub(1));
-          pushLine(PayrollComponentCode.NIGHT_PREMIUM, nightExtra);
-          pushLine(PayrollComponentCode.EVENING_PREMIUM, eveningExtra);
-          pushLine(PayrollComponentCode.OVERTIME_PREMIUM, otExtra);
+          const useMinutes = Boolean(minutesRow?.useMinutes);
+          const premiumLines = buildTimesheetPremiumLines({
+            hourly,
+            useMinutes,
+            minutes: useMinutes
+              ? {
+                  night: minutesRow!.night,
+                  overtime: minutesRow!.overtime,
+                  holiday: minutesRow!.holiday,
+                  rest: minutesRow!.rest,
+                  unpaid: minutesRow!.unpaid,
+                }
+              : null,
+            legacy: useMinutes
+              ? null
+              : {
+                  night: hoursRow.night,
+                  evening: hoursRow.evening,
+                  overtime: hoursRow.overtime,
+                },
+            schedule: {
+              nightPremiumRate: schedule.nightPremiumRate,
+              eveningPremiumRate: schedule.eveningPremiumRate,
+              overtimePremiumRate: schedule.overtimePremiumRate,
+              holidayPremiumRate: schedule.holidayPremiumRate ?? 2,
+              restPremiumRate: schedule.restPremiumRate ?? 2,
+            },
+          });
+          for (const pl of premiumLines) {
+            pushLine(pl.code, pl.amount);
+          }
         }
 
         for (const manual of linesByEmployee.get(emp.id) ?? []) {
@@ -325,10 +366,15 @@ export class PayrollService {
         let earnings = new Decimal(0);
         let deductions = new Decimal(0);
         let taxRelief = new Decimal(0);
+        let unpaidTime = new Decimal(0);
         for (const line of slipLineDrafts) {
           if (line.code === PayrollComponentCode.BASE_SALARY) continue;
           if (line.code === PayrollComponentCode.INCOME_TAX_RELIEF) {
             taxRelief = taxRelief.add(line.amount);
+            continue;
+          }
+          if (reducesTaxableGross(line.code)) {
+            unpaidTime = unpaidTime.add(line.amount);
             continue;
           }
           if (line.kind === PayrollComponentKind.EARNING) {
@@ -339,7 +385,7 @@ export class PayrollService {
         }
 
         const taxableGross = roundMoney2(
-          grossBase.add(earnings).sub(taxRelief),
+          grossBase.add(earnings).sub(taxRelief).sub(unpaidTime),
         );
         if (taxableGross.isNegative()) {
           throw new BadRequestException(
@@ -366,9 +412,17 @@ export class PayrollService {
             .add(b.unemploymentWorker)
             .add(b.contractorSocialWithheld),
         );
-        const net = roundMoney2(
+        const netBeforeHolds = roundMoney2(
           taxableGross.sub(statutoryWorker).sub(deductions),
         );
+        let net = netBeforeHolds;
+        for (const hold of holdsByEmployee.get(emp.id) ?? []) {
+          const amt = roundMoney2(new Decimal(hold.amount));
+          if (amt.lte(0) || net.sub(amt).isNegative()) continue;
+          pushLine(PayrollComponentCode.ADVANCE, amt, hold.note ?? "");
+          net = net.sub(amt);
+          appliedHoldIds.push(hold.id);
+        }
 
         if (net.isNegative()) {
           const p = personMap.get(emp.globalPersonId);
@@ -413,6 +467,13 @@ export class PayrollService {
             })),
           });
         }
+      }
+
+      if (appliedHoldIds.length > 0) {
+        await tx.payrollAdvanceHold.updateMany({
+          where: { id: { in: appliedHoldIds } },
+          data: { appliedAt: new Date() },
+        });
       }
 
       return tx.payrollRun.findUniqueOrThrow({

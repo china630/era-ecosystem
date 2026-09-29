@@ -1426,6 +1426,21 @@ model MgmtLaborDelta {
   @@map("mgmt_labor_deltas")
 }
 
+model PayrollAdvanceHold {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  employeeId     String    @map("employee_id") @db.Uuid
+  year           Int
+  month          Int
+  amount         Decimal   @db.Decimal(19, 4)
+  note           String    @default("")
+  appliedAt      DateTime? @map("applied_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([organizationId, year, month, appliedAt])
+  @@map("payroll_advance_holds")
+}
+
 model PayrollRun {
   id               String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId   String           @map("organization_id") @db.Uuid
@@ -1625,6 +1640,9 @@ model WorkSchedule {
   nightPremiumRate    Decimal          @default(1.5) @map("night_premium_rate") @db.Decimal(8, 4)
   eveningPremiumRate  Decimal          @default(1.2) @map("evening_premium_rate") @db.Decimal(8, 4)
   overtimePremiumRate Decimal          @default(2.0) @map("overtime_premium_rate") @db.Decimal(8, 4)
+  /// Wave 11: holiday / rest day premiums (floor 2 at pricing; TK AR).
+  holidayPremiumRate  Decimal          @default(2.0) @map("holiday_premium_rate") @db.Decimal(8, 4)
+  restPremiumRate     Decimal          @default(2.0) @map("rest_premium_rate") @db.Decimal(8, 4)
   createdAt           DateTime         @default(now()) @map("created_at")
   updatedAt           DateTime         @updatedAt @map("updated_at")
   organization        Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -1736,6 +1754,17 @@ model TimesheetEntry {
   overtimeHours     Decimal            @default(0) @map("overtime_hours") @db.Decimal(8, 2)
   eveningHours      Decimal            @default(0) @map("evening_hours") @db.Decimal(8, 2)
   nightHours        Decimal            @default(0) @map("night_hours") @db.Decimal(8, 2)
+  /// Wave 10 CP minute buckets; wave 11 payroll prices these when present.
+  normalMinutes       Int? @map("normal_minutes")
+  shortfallMinutes    Int? @map("shortfall_minutes")
+  overtimeMinutes     Int? @map("overtime_minutes")
+  nightMinutes        Int? @map("night_minutes")
+  restDayMinutes      Int? @map("rest_day_minutes")
+  holidayMinutes      Int? @map("holiday_minutes")
+  hourlyLeaveMinutes  Int? @map("hourly_leave_minutes")
+  /// Wave 12: paid hourly leave (excluded from UNPAID_TIME).
+  hourlyLeavePaid     Boolean @default(false) @map("hourly_leave_paid")
+  breakMinutes        Int? @map("break_minutes")
   /// *
   ///    * Заполнено из Absence — ручное редактирование запрещено.
   lockedFromAbsence Boolean            @default(false) @map("locked_from_absence")

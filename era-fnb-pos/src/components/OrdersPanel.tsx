@@ -70,8 +70,8 @@ export default function OrdersPanel() {
   const [guestSearching, setGuestSearching] = useState(false);
   const [entitlements, setEntitlements] = useState<GuestEntitlements | null>(null);
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
-  const [hotelMode, setHotelMode] = useState(true);
-  const [hasKds, setHasKds] = useState(true);
+  const [hotelMode, setHotelMode] = useState(false);
+  const [hasKds, setHasKds] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);

@@ -112,6 +112,7 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | ORCH-MDM-HR-01 | PersonHrProfile + PersonAddress (blood/stats/addr/edu) grant-gated | ADR | Y | — | — | — | HEADLESS | API | internal `/hr-profile`; ops-profile batch expands |
 | FIN-HR-AL-01 | Aktiv list report (JSON + Excel) MDM ops-profile read-through | TZ | Y | Y `/employees` export | Y | Y | — | API | WS1 restore; full PersonHrProfile batch deferred |
 | FIN-HR-PAY-01 | Payroll depth: slip lines, tariff/supplement, night/OT, seniority leave, email payslips, per-diem trips | TZ tender | Y | Y `/payroll` | Y | Y | — | API | WS1 restore; UAT-SMOKE pending |
+| FIN-HR-MIN-01 | CP minute buckets → payroll premiums / unpaid | ADR cp-workforce-floor-attendance | Y | Y `/payroll` slip lines | — | — | — | API | Wave 11; OT/holiday/rest floor ×2; MGMT hours unchanged; no UAT-SMOKE |
 | FIN-FA-LC-01 | Fixed asset lifecycle events + card history | TZ | Y | Y `/fixed-assets` | Y | Y | — | API | WS3 |
 | FIN-IA-01 | Intangible assets + amortization | TZ | Y | Y `/intangible-assets` | Y | Y | — | API | WS3 |
 | FIN-STAT-01 | Goskomstat statforms engine (1-müəssisə, 1/4-əmək, 1-İKT) | TZ | Y | Y `/reporting/statforms` | — | Y | — | API | compliance_pro\|tax_pro |
@@ -122,7 +123,11 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y `/workspace/workforce/personnel-orders` | — | API | table + modal CatalogField; no UAT-SMOKE |
 | CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y `/workspace/workforce/staff-schedule` | — | API | table + modal + live snapshot; no UAT-SMOKE |
 | CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y `/workspace/workforce/vacation-plans` | — | API | table + modal; list `{ items, persons }`; Finance mirror HEADLESS |
-| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | month approve only; APPROVED cells immutable; Finance UI link-only when `platform_workforce`; no UAT-SMOKE |
+| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | Y | — | — | Y `/workspace/workforce/timesheets` | — | API | month approve only; APPROVED cells immutable; Finance sidebar hides structure/positions/timesheet when CP master; `/hr/timesheet` direct URL = banner only; no UAT-SMOKE |
+| CP-WF-FLOOR-01 | Live floor board + suspicious punch queue | ADR cp-workforce-floor-attendance | Y | — | — | Y `/workspace/workforce/floor` | — | API | geofence/window/MULTI_PLACE → SUSPICIOUS; ACCEPT journal; rebuild skips until accept; no UAT-SMOKE |
+| CP-WF-MIN-01 | Timesheet minute buckets from punches | ADR cp-workforce-floor-attendance | Y | — | — | Y `/workspace/workforce/timesheets` read-only | — | API | BREAK pairs; hours=normal only; Finance prices via FIN-HR-MIN-01; no UAT-SMOKE |
+| CP-WF-SELF-01 | Employee phone cabinet (own employment) | ADR cp-workforce-floor-attendance | Y | — | — | Y `/workspace/me` | — | API | Wave 12; requests queue; advance no payment; payslip POSTED only; no UAT-SMOKE |
+| CP-WF-FIT-01 | Employment fitness files (health / narcology / criminal record) | ADR cp-workforce-floor-attendance §10 | Y | — | — | Y employments card + floor | — | API | Wave 13; org requiredKinds; assignment gate; no UAT-SMOKE |
 | CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | FIN-CP-MDM-01 | Counterparty ИП FIN → globalPersonId | ADR | Y | — | Y modal | Y | — | SHIPPED | — |
 | BANK-MDM-01 | CIF natural + UBO resolve | ADR D4 | Y | Y CIF modal | Y API | — | — | SHIPPED | — |
@@ -437,7 +442,11 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 | CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y `/workspace/workforce/vacation-plans` | — | multi-line modal + status gates; list `{ items, persons }`; API until UAT-SMOKE |
 | CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | `/platform/v1/workforce/personnel-orders/*` | — | — | Y `/workspace/workforce/personnel-orders` | — | status gates; list `{ items, persons }`; API until UAT-SMOKE |
 | CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | `/platform/v1/workforce/staff-schedule/*` | — | — | Y `/workspace/workforce/staff-schedule` | — | status gates + snapshot expand; API until UAT-SMOKE |
-| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | `GET ?year=&month=` + autofill/sync/batch/approve | — | — | Y `/workspace/workforce/timesheets` | — | empty→WORK; APPROVED immutable; 410 cherry-pick; Finance link-only; API until UAT-SMOKE |
+| CP-WF-TS-01 | Timesheet month grid (CP attendance SoR) | ADR | `GET ?year=&month=` + autofill/sync/batch/approve | — | — | Y `/workspace/workforce/timesheets` | — | empty→WORK; APPROVED immutable; 410 cherry-pick; Finance nav hides structure/positions/timesheet when CP master; API until UAT-SMOKE |
+| CP-WF-FLOOR-01 | Live floor board + geofence review queue | ADR cp-workforce-floor-attendance | `GET …/attendance/floor`, `GET/POST …/punches/:id[/accept]`; place radius/grace | — | — | Y `/workspace/workforce/floor` | — | SUSPICIOUS skipped by rebuild; ACCEPT overlay; Status=API until UAT-SMOKE |
+| CP-WF-MIN-01 | Punch → minute buckets on DRAFT cell | ADR cp-workforce-floor-attendance | rebuild classifies; approve `minutes` optional; Finance new columns | — | — | Y timesheet read-only line | — | hours=normal only; priced in Finance FIN-HR-MIN-01; Status=API |
+| CP-WF-SELF-01 | Employee phone cabinet | ADR cp-workforce-floor-attendance | `/platform/v1/workforce/me/*` + requests queue | — | — | Y `/workspace/me` + `/requests` | — | Wave 12 API; Status=API until UAT-SMOKE |
+| CP-WF-FIT-01 | Employment fitness files | ADR cp-workforce-floor-attendance §10 | `/platform/v1/workforce/employments/:id/fitness*` + policy | — | — | Y employments + floor `FITNESS_ISSUE` | — | Wave 13 API; Status=API until UAT-SMOKE |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*`, `POST …/import/org-structure` | — | — | Y | — | bootstrap + xlsx/csv import on `/workspace/workforce/org-structure`; upsert by name, no deletes |
 | CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` (+ archive) | — | — | Y | — | create/edit/archive on `/workspace/workforce/positions`; drill-down from org-structure; link to employments |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin + provision-sync | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | Matrix ACTIVE positions + optimistic save; grants/bindings/employments **server page**; bindings `provisionState`; overview = summary only |
@@ -448,6 +457,7 @@ Nafta appliance today = DEDICATED/ONPREM (one org per satellite DB). SHARED pool
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
 | FIN-HR-ABS-01 | Absence payroll mirror + calculators | TZ §7.0.2 | `GET /hr/absences`, vacation/sick calc | Y (read) | — | — | — | CP approve → Finance payroll list + syncAbsences |
+| FIN-HR-MIN-01 | CP minutes → DRAFT payroll premiums | ADR cp-workforce-floor-attendance | `payroll.service` + `payroll-minute-premiums` | Y slip lines | — | — | — | Wave 11 API; OT/holiday/rest floor ×2; UNPAID_TIME; not SHIPPED |
 | FIN-HR-CC-01 | CostCenter mirror (Department/JobPosition) | ADR cp-workforce-org-units | `GET /hr/departments`, `GET /hr/job-positions` | Y (read) | — | — | — | HEADLESS — CP org event → mirror row; UI banner → Workspace |
 
 ---
@@ -479,6 +489,12 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-09-30 | Wave 13 fitness files: `CP-WF-FIT-01` API — employment HEALTH/NARCOLOGY/CRIMINAL_RECORD, org requiredKinds gate on place assignment, floor group. Not SHIPPED. |
+| 2026-09-30 | Wave 12 employee cabinet: `CP-WF-SELF-01` API — `/workspace/me`, requests queue, announcements, advance→Finance DRAFT ADVANCE, payslip POSTED. Not SHIPPED. |
+| 2026-09-30 | Wave 11 Finance minute pricing: `FIN-HR-MIN-01` API — OT/holiday/rest floor ×2, night/rest/holiday/unpaid slip lines; MGMT hours unchanged. Not SHIPPED. |
+| 2026-09-30 | Wave 10 minute buckets: `CP-WF-MIN-01` API — BREAK pairs, bucket columns, approve `minutes`, Finance mirror without payroll premiums. Not SHIPPED. |
+| 2026-09-30 | Wave 9 floor: `CP-WF-FLOOR-01` API — live board + SUSPICIOUS queue; place geofence; ACCEPT journal; rebuild skips until accept. Not SHIPPED. |
+| 2026-09-30 | Wave 8 Finance HR nav: drop sidebar links to CP org-structure/positions; hide `/hr/timesheet` nav when `platform_workforce` or TIER_3; direct timesheet URL keeps banner (no empty status). CP-WF-TS-01 stays API. |
 | 2026-09-02 | CLI-48: `#27`/`#29` create `LabOrderItem` after `LabOrder` (nested `items.create` stamps `organizationId` and is rejected). Word filenames Dimer/CRP/PRL/Insulin/Hormon map to catalog codes. Status SHIPPED. |
 | 2026-09-02 | HOT-BOOK-02: reservation-full includes linked Guest on `paxGuests`; card hydrates companion names from that map (not booker-only). Status SHIPPED. |
 | 2026-09-02 | HOT-05/HOT-06: reservations import `A / B` → `ReservationGuest`; live FOCP guest = EW Id then name matcher, no first-guest fallback. Status SHIPPED / HEADLESS unchanged. |

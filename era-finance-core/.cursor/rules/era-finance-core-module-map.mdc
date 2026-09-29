@@ -69,6 +69,7 @@ Mutate roles: OWNER / ADMIN / ACCOUNTANT. SKU off → **402** `TRADE_CREDIT_REQU
 | `/employees` | `GET/POST/PATCH/DELETE /api/hr/employees`, `POST …/:id/convert-to-fin`, bulk-contract-salary; S2S panel `GET /api/hr/emas/s2s-status` (`s2sConfigured` = `ERA_EMAS_S2S_ENABLED` ∧ `EMAS_SUBMIT_URL`) |
 | `/hr/emas-queue` | `GET /api/hr/emas/queue`, mark submitted, CSV export; Wave 7 manual portal path |
 | `/hr/mgmt-labor-delta` | `GET/POST /api/hr/mgmt-labor-delta?year=&month=` — OWNER/ADMIN/DIRECTOR; MGMT JE only (not pay/XML) |
-| `/hr/timesheet` | CP-master link-only when `platform_workforce` |
-| `/payroll` | payroll runs; contract salary 0 banner |
+| `/hr/timesheet` | Finance-master grid when `platform_workforce` is off. When CP is master (`platform_workforce` or TIER_3): sidebar item hidden; direct URL keeps month picker + banner/link to Workspace timesheets (no empty status line). CP approve mirrors optional `minutes` into `TimesheetEntry`; wave 11 DRAFT payroll prices those columns (`FIN-HR-MIN-01`) |
+
+| `/payroll` | payroll runs; contract salary 0 banner; wave 11 CP minute premiums (`OVERTIME`/`NIGHT`/`HOLIDAY`/`REST`/`UNPAID_TIME`) when minute columns present |
 | S2S CP migration | `GET /internal/v1/workforce/employees/by-cp-employment`; `POST /internal/v1/workforce/employees/opening` (service token, `hr_full`) — salary / internalRate / inverted vacation opening |

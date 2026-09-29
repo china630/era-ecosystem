@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     if (!tenant.ok) {
       return jsonError(tenant.error, tenant.status);
     }
+    if (tenant.organizationId) {
+      enterSatelliteTenant({ organizationId: tenant.organizationId });
+    }
     const user = await findUserByCredential(prisma, body.login, tenant.organizationId);
     if (!(await verifySatelliteUserPassword(body.password, user)) || !user) {
       return jsonError("Invalid credentials", 401);

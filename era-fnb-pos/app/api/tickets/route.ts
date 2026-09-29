@@ -1,7 +1,7 @@
 import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 }
 
 const createSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   tableId: z.string().optional(),
   beoId: z.string().optional(),
   serviceChannel: z.enum(["DINE_IN", "ROOM_SERVICE", "WALK_IN", "TAKEAWAY"]).optional(),
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     if (body.beoId || body.serviceChannel === "ROOM_SERVICE") {
       await assertHotelFnbFeature("hotel-ticket");
     }
-    const outlet = await ensureOutletByCode(body.outletCode);
+    const outlet = await resolveOpsOutlet(body.outletCode);
 
     const lines = body.lines ?? [];
     for (const l of lines) {

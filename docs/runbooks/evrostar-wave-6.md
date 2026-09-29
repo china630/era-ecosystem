@@ -68,7 +68,7 @@ Device org A cannot write employment org B. Two tablets on one physical site for
 
 ## Out of scope
 
-ZKTeco/Hikvision SDK, on-prem agent product, auto-approve month, geofence, face templates in ERA, pay from punch.
+ZKTeco/Hikvision SDK, on-prem agent product, auto-approve month, face templates in ERA, pay from punch. Geofence, phone punch, break pairs, the live board, and employee requests are a later scope: [cp-workforce-floor-attendance.md](../adr/cp-workforce-floor-attendance.md). They are not part of this wave.
 
 ## Evidence
 

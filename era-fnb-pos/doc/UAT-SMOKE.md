@@ -123,10 +123,11 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 
 ## ERA Kafe (street café on SHARED F&B pool)
 
-1. Orch `/kafe` is **chromeless** (no control-plane sidebar). Signup form uses labelled fields (not DTO keys). `POST /v1/public/kafe/onboard` creates org `subscriptionPlan=kafe` on the existing F&B pool URL.
+1. Orch `/kafe` is **chromeless**. Signup: labelled fields; Gate locked 29 AZN; Zal/KDS/QR default off. `POST /v1/public/kafe/onboard` creates `subscriptionPlan=kafe`, F&B owner local login (email + password), outlet `KAFE`. Browser SSO to the pool; fallback `/login?org=`.
    - **Lab firm (after seed):** CP `owner@demo.com` / `12345678`. F&B `/login` `owner` / `12345678` + ERA ID **100000**. PIN cashier `1111`, waiter `2222`. VÖEN `0123456789`.
+   - Workspace for ERA ID **100000**: F&B tile **Open** (not «Modul əlavə et»). Seed must have `industry_fnb_pos` in `OrganizationSubscription.activeModules`.
 2. Owner `/login` (password) ≠ cashier `/pin`.
-3. Floor: empty ticket; tap dish adds line; **bitdi/var** on the tile; hotel APIs 403.
+3. Floor: empty ticket; tap dish adds line; **bitdi/var** on the tile; hotel banquet chrome hidden (`edition=kafe`). Tables/menu without `outletCode` land on outlet **KAFE**, not phantom `RESTAURANT`. A later runtime-config push that omits `edition` must not reset the profile back to hotel. Demo seed deactivates an empty `RESTAURANT` outlet left by the old default.
 4. Cashier PIN pays; waiter PIN cannot settle (403 `FNB_WAITER_NO_PAY`).
 5. Optional Zal/KDS/QR SKUs; QR `/m/{slug}` is read-only (POST 405).
 6. Excel `/api/menu/export` includes price history; suggest `/api/menu/suggest?q=`.
