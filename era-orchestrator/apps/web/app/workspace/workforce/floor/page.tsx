@@ -353,16 +353,10 @@ export default function WorkforceFloorPage() {
         <ModalFooter
           cancelLabel={tCommon("cancel")}
           onCancel={() => setAcceptId(null)}
-          primary={
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || !acceptReason.trim()}
-              onClick={() => void acceptPunch()}
-            >
-              {t("accept")}
-            </button>
-          }
+          submitLabel={t("accept")}
+          submitDisabled={busy || !acceptReason.trim()}
+          busy={busy}
+          onSubmit={() => void acceptPunch()}
         />
       </ModalShell>
       <ModalShell
