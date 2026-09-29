@@ -109,7 +109,10 @@ export default function WorkforceRequestsPage() {
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       {error ? <p className="text-sm text-red-600 mb-2">{error}</p> : null}
 
-      <EraListWorkspace>
+      <EraListWorkspace
+        tableShell={false}
+        table={
+          <div className="space-y-2 p-1">
         <h2 className="font-semibold mb-2">{t("absences")}</h2>
         {(data?.absences ?? []).map((a) => (
           <div key={a.id} className="flex flex-wrap items-center gap-2 border-b py-2 text-sm">
@@ -189,7 +192,9 @@ export default function WorkforceRequestsPage() {
             </button>
           </div>
         ))}
-      </EraListWorkspace>
+          </div>
+        }
+      />
 
       <section className="mt-8 space-y-2 max-w-lg">
         <h2 className="font-semibold">{t("announce")}</h2>
