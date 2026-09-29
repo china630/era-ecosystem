@@ -215,7 +215,7 @@ export default function WorkforceMePage() {
 
   return (
     <div className={`${LIST_PAGE_SHELL_CLASS} max-w-lg mx-auto`}>
-      <PageHeader title={t("title")} description={t("subtitle")} />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {ctx ? (
         <>

@@ -106,7 +106,7 @@ export default function WorkforceRequestsPage() {
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
-      <PageHeader title={t("title")} description={t("subtitle")} />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
       {error ? <p className="text-sm text-red-600 mb-2">{error}</p> : null}
 
       <EraListWorkspace>
