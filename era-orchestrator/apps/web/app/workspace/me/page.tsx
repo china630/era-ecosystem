@@ -256,7 +256,7 @@ export default function WorkforceMePage() {
               kind="CLOSED_SMALL"
               label={t("absenceKind")}
               value={kind}
-              onChange={setKind}
+              onChange={(next) => setKind(String(next))}
               options={kindOptions}
             />
             <input
@@ -307,7 +307,7 @@ export default function WorkforceMePage() {
               kind="CLOSED_SMALL"
               label={t("hourlyPaidLabel")}
               value={hourlyPaid}
-              onChange={setHourlyPaid}
+              onChange={(next) => setHourlyPaid(String(next))}
               options={paidOptions}
             />
             <button
