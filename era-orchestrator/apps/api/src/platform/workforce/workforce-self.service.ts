@@ -7,7 +7,7 @@ import {
 import { randomBytes } from "crypto";
 import * as bcrypt from "bcrypt";
 import {
-  Decimal,
+  Prisma,
   UserRole,
   WorkforceAbsenceKind,
   WorkforceAbsenceStatus,
@@ -247,7 +247,7 @@ export class WorkforceSelfService {
       data: {
         organizationId,
         employmentId: dto.employmentId,
-        amountAzn: new Decimal(dto.amountAzn),
+        amountAzn: new Prisma.Decimal(dto.amountAzn),
         note: (dto.note ?? "").trim(),
         status: WorkforceSelfRequestStatus.SUBMITTED,
         submittedByUserId: userId,
@@ -644,7 +644,7 @@ export class WorkforceSelfService {
           timesheetId: ts.id,
           employmentId: row.employmentId,
           workDate: row.workDate,
-          hours: new Decimal(0),
+          hours: new Prisma.Decimal(0),
           type: "WORK",
           source: "hourly_leave",
           status: WorkforceTimesheetEntryStatus.DRAFT,

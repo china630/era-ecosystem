@@ -782,6 +782,7 @@ export class WorkforceTimesheetsService {
       restDayMinutes: number | null;
       holidayMinutes: number | null;
       hourlyLeaveMinutes: number | null;
+      hourlyLeavePaid: boolean | null;
       breakMinutes: number | null;
       employment: {
         globalPersonId: string;
