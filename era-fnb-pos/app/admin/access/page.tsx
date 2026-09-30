@@ -13,6 +13,7 @@ import {
 } from "@era/satellite-kit/ui";
 import {
   PERMISSION_GROUPS,
+  PERMISSIONS,
   type Permission,
 } from "@/lib/auth/permissions";
 
@@ -32,6 +33,8 @@ export default function FnbAccessPage() {
   const [selectedCode, setSelectedCode] = useState("");
   const [draft, setDraft] = useState<Set<Permission>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [kafe, setKafe] = useState(true);
+  const [hasKds, setHasKds] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newCode, setNewCode] = useState("");
@@ -57,6 +60,45 @@ export default function FnbAccessPage() {
       })),
     [roles],
   );
+
+  useEffect(() => {
+    void fetch("/api/edition")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        const isKafe = d.edition === "kafe" || d.hotelMode === false;
+        setKafe(Boolean(isKafe));
+        setHasKds(
+          !isKafe ||
+            (Array.isArray(d.activeModules) &&
+              d.activeModules.includes("fnb_kitchen_kds")),
+        );
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const visibleGroups = useMemo(() => {
+    const hotelScreens = new Set<Permission>([
+      PERMISSIONS.SCREEN_CALENDAR,
+      PERMISSIONS.SCREEN_EXECUTIVE,
+      PERMISSIONS.SCREEN_ADMIN_IMPORT,
+      PERMISSIONS.SCREEN_ADMIN_INTEGRATION,
+      PERMISSIONS.SCREEN_ADMIN_DAILY_MENU,
+    ]);
+    if (!hasKds) hotelScreens.add(PERMISSIONS.SCREEN_KDS);
+    return PERMISSION_GROUPS.filter((group) => {
+      if (!kafe) return true;
+      if (group.id === "hotel") return false;
+      if (group.id === "kds" && !hasKds) return false;
+      return true;
+    }).map((group) => {
+      if (!kafe || group.id !== "screens") return group;
+      return {
+        ...group,
+        permissions: group.permissions.filter((p) => !hotelScreens.has(p)),
+      };
+    });
+  }, [kafe, hasKds]);
 
   const loadRoles = useCallback(async () => {
     setLoading(true);
@@ -325,7 +367,7 @@ export default function FnbAccessPage() {
             ) : null}
 
             <div className="space-y-4">
-              {PERMISSION_GROUPS.map((group) => (
+              {visibleGroups.map((group) => (
                 <div key={group.id}>
                   <h3 className="mb-2 text-sm font-semibold">
                     {t(group.labelKey)}

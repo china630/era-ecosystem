@@ -10,6 +10,7 @@ type Table = {
   code: string;
   name: string;
   status: string;
+  currentTicketId?: string | null;
 };
 
 type MenuItem = {
@@ -18,6 +19,20 @@ type MenuItem = {
   name: string;
   priceAzn: string | number;
   imageUrl?: string | null;
+  categoryId?: string;
+};
+
+type MenuCategory = {
+  id: string;
+  name: string;
+  items: MenuItem[];
+};
+
+type TicketLineView = {
+  id: string;
+  description: string;
+  qty: number;
+  unitPriceAzn: string | number;
 };
 
 type Outlet = {
@@ -35,7 +50,7 @@ type BanquetEvent = {
   referenceNo?: string | null;
 };
 
-function defaultLines(_menuItems: MenuItem[]) {
+function defaultLines() {
   return [];
 }
 
@@ -44,7 +59,12 @@ export default function FloorPanel() {
   const tc = useTranslations("common");
 
   const [tables, setTables] = useState<Table[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
+  const [menuQuery, setMenuQuery] = useState("");
+  const [activeCategoryId, setActiveCategoryId] = useState("");
+  const [ticketLines, setTicketLines] = useState<TicketLineView[]>([]);
+  const [ticketTotal, setTicketTotal] = useState<number | null>(null);
+  const [ticketCaption, setTicketCaption] = useState("");
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [selectedOutletId, setSelectedOutletId] = useState<string>("");
   const [banquets, setBanquets] = useState<BanquetEvent[]>([]);
@@ -60,12 +80,12 @@ export default function FloorPanel() {
   const selectedOutlet = outlets.find((o) => o.id === selectedOutletId) ?? null;
   const outletCode = selectedOutlet?.code ?? "";
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const [tablesRes, menuRes, outletsRes, editionRes, soldRes] = await Promise.all([
         fetch("/api/tables"),
-        fetch("/api/menu?dailyOnly=true"),
+        fetch("/api/menu"),
         fetch("/api/outlets"),
         fetch("/api/edition"),
         fetch("/api/menu/sold-out"),
@@ -100,10 +120,17 @@ export default function FloorPanel() {
       }
 
       setTables(Array.isArray(tablesData) ? tablesData : []);
-      const items = Array.isArray(menuData)
-        ? menuData.flatMap((cat: { items?: MenuItem[] }) => cat.items ?? [])
+      const cats: MenuCategory[] = Array.isArray(menuData)
+        ? menuData.map((cat: { id: string; name: string; items?: MenuItem[] }) => ({
+            id: cat.id,
+            name: cat.name,
+            items: cat.items ?? [],
+          }))
         : [];
-      setMenuItems(items);
+      setMenuCategories(cats);
+      setActiveCategoryId((prev) =>
+        prev && cats.some((c) => c.id === prev) ? prev : (cats[0]?.id ?? ""),
+      );
 
       const outletList = Array.isArray(outletsData.outlets) ? outletsData.outlets : [];
       setOutlets(outletList);
@@ -170,8 +197,12 @@ export default function FloorPanel() {
       return;
     }
     setMessage(t(successKey, { total: Number(data.totalAzn).toFixed(2), ...vars }));
-    if (typeof data.id === "string") setActiveTicketId(data.id);
-    await load();
+    if (typeof data.id === "string") {
+      setActiveTicketId(data.id);
+      setTicketLines(Array.isArray(data.lines) ? data.lines : []);
+      setTicketTotal(Number(data.totalAzn) || 0);
+    }
+    await load({ silent: true });
   }
 
   async function addDish(item: MenuItem) {
@@ -199,6 +230,26 @@ export default function FloorPanel() {
       return;
     }
     setMessage(t("dishAdded", { name: item.name }));
+    if (activeTicketId) await focusTicket(activeTicketId);
+  }
+
+  async function focusTicket(id: string, caption?: string) {
+    const res = await fetch(`/api/tickets/${id}`);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      setMessage(data?.error ?? tc("failed"));
+      return;
+    }
+    setActiveTicketId(id);
+    const lines = Array.isArray(data.lines) ? data.lines : [];
+    setTicketLines(
+      lines.filter(
+        (line: { kitchenStatus?: string }) => line.kitchenStatus !== "VOID",
+      ),
+    );
+    setTicketTotal(Number(data.totalAzn) || 0);
+    const tableCode = data.table?.code as string | undefined;
+    setTicketCaption(caption || tableCode || data.walkInLabel || id.slice(0, 6));
   }
 
   async function toggleSoldOut(item: MenuItem) {
@@ -208,20 +259,41 @@ export default function FloorPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ menuItemId: item.id, soldOut: next }),
     });
-    await load();
+    await load({ silent: true });
   }
 
   async function openTicket(table: Table) {
+    if (table.status === "OCCUPIED") {
+      if (table.currentTicketId) {
+        await focusTicket(table.currentTicketId, table.code);
+        return;
+      }
+      const res = await fetch("/api/tickets");
+      const data = await res.json().catch(() => null);
+      const found = Array.isArray(data)
+        ? data.find(
+            (ticket: { id?: string; table?: { id?: string } | null }) =>
+              ticket.table?.id === table.id,
+          )
+        : null;
+      if (found?.id) {
+        await focusTicket(found.id, table.code);
+        return;
+      }
+      setMessage(t("occupiedHint"));
+      return;
+    }
     await createTicket(
       {
         outletCode,
         tableId: table.id,
         covers: 2,
-        lines: defaultLines(menuItems),
+        lines: defaultLines(),
       },
       "ticketOpened",
       { table: table.code },
     );
+    setTicketCaption(table.code);
   }
 
   async function openWalkIn() {
@@ -230,10 +302,11 @@ export default function FloorPanel() {
         outletCode,
         serviceChannel: "WALK_IN",
         walkInLabel: walkInLabel.trim() || t("walkInDefaultLabel"),
-        lines: defaultLines(menuItems),
+        lines: defaultLines(),
       },
       "walkInOpened",
     );
+    setTicketCaption(walkInLabel.trim() || t("walkInDefaultLabel"));
   }
 
   async function openBanquetTicket() {
@@ -248,12 +321,23 @@ export default function FloorPanel() {
         beoId: selectedBeoId,
         guestName: beo?.eventName,
         covers: beo?.pax ?? 1,
-        lines: defaultLines(menuItems),
+        lines: defaultLines(),
       },
       "banquetOpened",
       { name: beo?.eventName ?? selectedBeoId.slice(0, 8) },
     );
   }
+
+  const query = menuQuery.trim().toLowerCase();
+  const visibleDishes = menuCategories.flatMap((cat) => {
+    if (!query && activeCategoryId && cat.id !== activeCategoryId) return [];
+    return cat.items.filter(
+      (item) =>
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.plu.toLowerCase().includes(query),
+    );
+  });
 
   return (
     <>
@@ -285,13 +369,15 @@ export default function FloorPanel() {
 
       <div className={`${CARD_CLASS} mb-4 grid gap-3 p-4 sm:grid-cols-2`}>
         <div>
-          <p className="mb-2 text-sm font-semibold text-[#34495E]">{t("walkInTitle")}</p>
+          <p className="mb-2 text-sm font-semibold text-[#34495E]">
+            {hotelMode ? t("walkInTitle") : t("counterTitle")}
+          </p>
           <div className="flex flex-wrap gap-2">
             <input
               type="text"
               value={walkInLabel}
               onChange={(e) => setWalkInLabel(e.target.value)}
-              placeholder={t("walkInPlaceholder")}
+              placeholder={hotelMode ? t("walkInPlaceholder") : t("counterPlaceholder")}
               className={`${INPUT_CLASS} min-w-[8rem] flex-1`}
             />
             <button
@@ -299,7 +385,7 @@ export default function FloorPanel() {
               className="rounded bg-[#27AE60] px-3 py-1.5 text-sm text-white"
               onClick={() => void openWalkIn()}
             >
-              {t("walkInOpen")}
+              {hotelMode ? t("walkInOpen") : t("counterOpen")}
             </button>
           </div>
         </div>
@@ -346,42 +432,90 @@ export default function FloorPanel() {
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
         <>
-          {menuItems.length > 0 && (
-            <div className={`${CARD_CLASS} mb-3 p-3`}>
-              <p className="mb-2 text-xs text-[#7F8C8D]">{t("menuStrip")}</p>
-              <div className="flex gap-2 overflow-x-auto">
-                {menuItems.slice(0, 16).map((m) => (
-                    <div key={m.id} className="w-24 shrink-0 text-center text-[10px] text-[#34495E]">
+          <div className="mb-4 grid gap-3 lg:grid-cols-[220px_1fr]">
+            <div className={`${CARD_CLASS} p-3`}>
+              <p className="mb-2 text-xs font-semibold text-[#34495E]">{t("ticketTitle")}</p>
+              {activeTicketId ? (
+                <>
+                  <p className="mb-2 text-sm font-medium">{ticketCaption}</p>
+                  <ul className="mb-2 space-y-1 text-sm">
+                    {ticketLines.map((line) => (
+                      <li key={line.id} className="flex justify-between gap-2">
+                        <span>
+                          {line.qty}× {line.description}
+                        </span>
+                      </li>
+                    ))}
+                    {ticketLines.length === 0 ? (
+                      <li className="text-[#7F8C8D]">{t("ticketEmpty")}</li>
+                    ) : null}
+                  </ul>
+                  <p className="text-sm font-semibold">
+                    {(ticketTotal ?? 0).toFixed(2)} AZN
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-[#7F8C8D]">{t("openTableFirst")}</p>
+              )}
+            </div>
+            <div className={`${CARD_CLASS} p-3`}>
+              <input
+                type="search"
+                value={menuQuery}
+                onChange={(e) => setMenuQuery(e.target.value)}
+                placeholder={t("menuSearch")}
+                className={`${INPUT_CLASS} mb-2 w-full`}
+              />
+              <div className="mb-2 flex gap-1 overflow-x-auto">
+                {menuCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`shrink-0 rounded px-2 py-1 text-xs ${
+                      !query && cat.id === activeCategoryId
+                        ? "bg-[#2980B9] text-white"
+                        : "bg-[#EBEDF0] text-[#34495E]"
+                    }`}
+                    onClick={() => {
+                      setMenuQuery("");
+                      setActiveCategoryId(cat.id);
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                {visibleDishes.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`rounded border border-[#D5DADF] p-2 text-left text-sm ${
+                      soldOutIds.has(m.id) ? "opacity-40" : ""
+                    }`}
+                  >
                     <button
                       type="button"
                       onClick={() => void addDish(m)}
                       disabled={soldOutIds.has(m.id)}
-                      className={`w-full ${soldOutIds.has(m.id) ? "opacity-40" : ""}`}
+                      className="w-full text-left"
                     >
-                      {m.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={m.imageUrl}
-                        alt={m.name}
-                        className="mb-1 h-14 w-20 rounded object-cover"
-                      />
-                      ) : (
-                        <div className="mb-1 h-14 w-20 rounded bg-[#EBEDF0]" />
-                      )}
-                      {m.name}
+                      <span className="block font-medium">{m.name}</span>
+                      <span className="text-xs text-[#7F8C8D]">
+                        {Number(m.priceAzn).toFixed(2)} AZN
+                      </span>
                     </button>
                     <button
                       type="button"
-                      className="mt-1 rounded bg-[#EBEDF0] px-1 py-0.5"
+                      className="mt-1 text-[10px] text-[#2980B9]"
                       onClick={() => void toggleSoldOut(m)}
                     >
                       {soldOutIds.has(m.id) ? "var" : "bitdi"}
                     </button>
-                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-          )}
+          </div>
           <ColorLegend
             className="mb-3"
             items={[
@@ -400,18 +534,19 @@ export default function FloorPanel() {
                 key={table.id}
                 type="button"
                 onClick={() => void openTicket(table)}
-                disabled={table.status === "OCCUPIED"}
-                className={`${CARD_CLASS} p-4 text-left transition hover:border-[#2980B9] disabled:opacity-60`}
+                className={`${CARD_CLASS} p-4 text-left transition hover:border-[#2980B9] ${
+                  table.status === "OCCUPIED" ? "bg-[#F4F6F7]" : ""
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold">{table.code}</span>
                   <span className="rounded-lg bg-[#EBEDF0] px-2 py-0.5 text-xs">
-                    {table.status}
+                    {table.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-[#7F8C8D]">{table.name}</p>
                 <p className="mt-2 text-xs text-[#2980B9]">
-                  {table.status === "FREE" ? t("tapOpen") : t("occupiedHint")}
+                  {table.status === "FREE" ? t("tapOpen") : t("tapResume")}
                 </p>
               </button>
             ))}

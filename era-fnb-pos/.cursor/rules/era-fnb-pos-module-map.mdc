@@ -2,7 +2,7 @@
 
 | Route | API | Role |
 |-------|-----|------|
-| `/floor` | tickets, tables, outlets, sold-out | Cashier PIN / waiter — empty ticket, bitdi/var |
+| `/floor` | tickets, tables, outlets, sold-out | Cashier — category menu, resume occupied table, counter ticket |
 | `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
 | `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order) |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |

@@ -32,7 +32,11 @@ export async function GET(request: Request) {
       ...(serviceChannel ? { serviceChannel } : {}),
       ...(selectedOutlet ? { outletId: selectedOutlet } : {}),
     },
-    include: { table: true, lines: true },
+    include: {
+      table: true,
+      lines: true,
+      outlet: { select: { code: true, name: true } },
+    },
     orderBy: { openedAt: "desc" },
     take: 100,
   });
