@@ -76,7 +76,16 @@ describe("WorkforceRosterService brigade membership", () => {
   };
   const entitlement = { assertWorkforceHub: jest.fn() };
   const audit = { log: jest.fn() };
-  const svc = new WorkforceRosterService(prisma, entitlement as never, audit as never);
+  const fitness = {
+    assertAssignable: jest.fn(),
+    assertBrigadeAssignable: jest.fn(),
+  };
+  const svc = new WorkforceRosterService(
+    prisma,
+    entitlement as never,
+    audit as never,
+    fitness as never,
+  );
 
   function seedOpen(brigadeId: string, fromYmd: string, employmentId = EMP) {
     members.push({

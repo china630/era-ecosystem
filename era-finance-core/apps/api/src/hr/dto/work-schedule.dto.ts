@@ -33,12 +33,26 @@ export class CreateWorkScheduleDto {
   @Min(0)
   eveningPremiumRate?: number;
 
-  @ApiPropertyOptional({ example: 2 })
+  @ApiPropertyOptional({ example: 2, description: "Floor 2 at payroll (TK AR art. 165)" })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   overtimePremiumRate?: number;
+
+  @ApiPropertyOptional({ example: 2, description: "Holiday premium; floor 2 at payroll" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  holidayPremiumRate?: number;
+
+  @ApiPropertyOptional({ example: 2, description: "Rest-day premium; floor 2 at payroll" })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  restPremiumRate?: number;
 }
 
 export class UpdateWorkScheduleDto {
@@ -79,4 +93,18 @@ export class UpdateWorkScheduleDto {
   @IsNumber()
   @Min(0)
   overtimePremiumRate?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  holidayPremiumRate?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  restPremiumRate?: number;
 }

@@ -328,7 +328,9 @@ export default function HrTimesheetPage() {
     <div className="space-y-6 max-w-[100vw]">
       <PageHeader
         title={t("timesheet.title")}
-        subtitle={t("timesheet.subtitle")}
+        subtitle={
+          cpMaster ? t("timesheet.cpMasterBanner") : t("timesheet.subtitle")
+        }
         leading={
           <div className="flex flex-col gap-2">
             <div className="flex h-8 flex-wrap items-center gap-2">
@@ -348,16 +350,18 @@ export default function HrTimesheetPage() {
                 aria-label={t("banking.monthPickerLabel")}
               />
             </div>
-            <p className="m-0 text-sm text-slate-600">
-              {t("timesheet.status")}:{" "}
-              <span className="font-medium text-gray-900">
-                {timesheet
-                  ? timesheet.status === "APPROVED"
-                    ? t("timesheet.statusApproved")
-                    : t("timesheet.statusDraft")
-                  : "—"}
-              </span>
-            </p>
+            {!loading && !cpMaster ? (
+              <p className="m-0 text-sm text-slate-600">
+                {t("timesheet.status")}:{" "}
+                <span className="font-medium text-gray-900">
+                  {timesheet
+                    ? timesheet.status === "APPROVED"
+                      ? t("timesheet.statusApproved")
+                      : t("timesheet.statusDraft")
+                    : "—"}
+                </span>
+              </p>
+            ) : null}
           </div>
         }
         actions={

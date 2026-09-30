@@ -45,9 +45,18 @@ export default function TablesAdminPanel() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/tables");
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      setMessage(
+        data && typeof data === "object" && "error" in data
+          ? String((data as { error: string }).error)
+          : t("saveFailed"),
+      );
+      setTables([]);
+      return;
+    }
     setTables(Array.isArray(data) ? data : []);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -193,9 +202,10 @@ export default function TablesAdminPanel() {
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
-        <Field
-          label={t("zone")}
-          preset="shortText"
+          <Field
+            label={t("zone")}
+            hint={t("zoneHint")}
+            preset="shortText"
           value={form.zone}
           onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))}
         />

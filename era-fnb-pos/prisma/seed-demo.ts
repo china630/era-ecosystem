@@ -114,7 +114,7 @@ async function main() {
 
   const outlet = await prisma.outlet.upsert({
     where: { organizationId_code: { organizationId, code: "KAFE" } },
-    update: { name: ERA_LAB_DEMO.cafeName, publicSlug: "era-lab-kafe" },
+    update: { name: ERA_LAB_DEMO.cafeName, publicSlug: "era-lab-kafe", active: true },
     create: {
       organizationId,
       code: "KAFE",
@@ -123,6 +123,21 @@ async function main() {
       publicSlug: "era-lab-kafe",
     },
   });
+
+  const phantom = await prisma.outlet.findFirst({
+    where: { organizationId, code: "RESTAURANT" },
+  });
+  if (phantom) {
+    const tickets = await prisma.ticket.count({ where: { outletId: phantom.id } });
+    if (tickets === 0) {
+      await prisma.menuCategory.deleteMany({ where: { outletId: phantom.id } });
+      await prisma.posTable.deleteMany({ where: { outletId: phantom.id } });
+      await prisma.outlet.update({
+        where: { id: phantom.id },
+        data: { active: false },
+      });
+    }
+  }
 
   for (const code of ["T-01", "T-02", "T-03", "T-04"]) {
     await prisma.posTable.upsert({

@@ -32,7 +32,7 @@ export default function PosShiftPanel() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [openModal, setOpenModal] = useState(false);
-  const [outletCode, setOutletCode] = useState("RESTAURANT");
+  const [outletCode, setOutletCode] = useState("");
   const [openingCash, setOpeningCash] = useState("0");
   const [kkms, setKkms] = useState<FiscalDevice[]>([]);
   const [banks, setBanks] = useState<FiscalDevice[]>([]);
@@ -78,7 +78,21 @@ export default function PosShiftPanel() {
   }, [load]);
 
   useEffect(() => {
-    if (openModal) void loadDevices(outletCode.trim() || "RESTAURANT");
+    void fetch("/api/outlets")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const list = Array.isArray(d?.outlets) ? d.outlets : [];
+        const pick =
+          list.find((o: { code: string }) => o.code === "KAFE") ??
+          list.find((o: { code: string }) => o.code === "RESTAURANT") ??
+          list[0];
+        if (pick?.code) setOutletCode(pick.code);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (openModal) void loadDevices(outletCode.trim());
   }, [openModal, outletCode, loadDevices]);
 
   async function openShift() {
@@ -88,7 +102,7 @@ export default function PosShiftPanel() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        outletCode: outletCode.trim() || "RESTAURANT",
+        ...(outletCode.trim() ? { outletCode: outletCode.trim() } : {}),
         openingCash: Number(openingCash) || 0,
         ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
         ...(bankTerminalId ? { bankTerminalId } : {}),

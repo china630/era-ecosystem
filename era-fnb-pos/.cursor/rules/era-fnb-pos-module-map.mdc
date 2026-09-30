@@ -14,7 +14,7 @@
 
 Hotel-only (403 when edition=kafe): banquets, in-house, room-charge, defer-to-hub, room-service.
 
-Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` (per-org edition/modules in SHARED pool). Quotas: 120 ticket creates/min/org, 600 QR reads/min/IP.
+Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet/T-01. Ops tables/menu/tickets default outlet **KAFE** when present (`resolveOpsOutlet`). Public signup: orch S2S `POST /api/internal/v1/kafe/bootstrap-owner` (owner password, not PIN). Quotas: 120 ticket creates/min/org, 600 QR reads/min/IP.
 
 **SaaS:** login JWT `organizationId`; Kafe onboard upserts `SatelliteEndpoint` to pool URL (`ERA_FNB_POS_ORIGIN`). Schema+kit SHARED is in production path; live two-org field UAT remains a Product-Readiness 🟡, not a missing process.
 | `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |

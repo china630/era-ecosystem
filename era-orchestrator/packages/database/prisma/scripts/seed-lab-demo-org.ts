@@ -7,7 +7,7 @@
  */
 import { createHash, createCipheriv, createHmac, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { Prisma, UserRole } from "../../generated/client";
+import { Prisma, TariffTier, UserRole } from "../../generated/client";
 import { closePrismaPool, createPrismaClient } from "../prisma-client";
 
 /** Keep in sync with @era/contracts ERA_LAB_DEMO */
@@ -50,6 +50,127 @@ function encryptText(value: string): string {
 function blindIndexVoen(voen: string): string {
   const key = piiKey("PII_BLIND_INDEX_KEY");
   return createHmac("sha256", key).update(`voen:${voen.replace(/\D/g, "")}`).digest("hex");
+}
+
+const LAB_MODULES = [FNB_KEY, FNB_ZAL] as const;
+
+async function upsertLabSubscription(
+  prisma: ReturnType<typeof createPrismaClient>,
+  organizationId: string,
+): Promise<string[]> {
+  const existing = await prisma.organizationSubscription.findUnique({
+    where: { organizationId },
+    select: { activeModules: true },
+  });
+  const set = new Set(existing?.activeModules ?? []);
+  for (const m of LAB_MODULES) set.add(m);
+  const activeModules = [...set];
+  if (existing) {
+    await prisma.organizationSubscription.update({
+      where: { organizationId },
+      data: {
+        activeModules,
+        isTrial: false,
+        isBlocked: false,
+      },
+    });
+  } else {
+    await prisma.organizationSubscription.create({
+      data: {
+        organizationId,
+        currentTier: TariffTier.TIER_0,
+        isTrial: false,
+        isBlocked: false,
+        activeModules,
+        customConfig: { modules: activeModules, signupSource: "lab-demo" },
+      },
+    });
+  }
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { activeModules },
+  });
+  return activeModules;
+}
+
+async function upsertFnbSatelliteEntitlement(
+  prisma: ReturnType<typeof createPrismaClient>,
+  organizationId: string,
+): Promise<void> {
+  try {
+    await prisma.satellite.upsert({
+      where: { key: FNB_KEY },
+      create: {
+        key: FNB_KEY,
+        name: "F&B POS",
+        verticalSlug: "fnb",
+        sortOrder: 40,
+      },
+      update: {},
+    });
+    await prisma.organizationSatelliteEntitlement.upsert({
+      where: {
+        organizationId_satelliteKey: {
+          organizationId,
+          satelliteKey: FNB_KEY,
+        },
+      },
+      create: {
+        organizationId,
+        satelliteKey: FNB_KEY,
+        isTrial: false,
+        trialOverridden: true,
+      },
+      update: { isTrial: false, trialOverridden: true },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`[lab-demo] satellite entitlement skipped: ${msg}\n`);
+  }
+}
+
+async function pushFnbBindAndRuntime(
+  organizationId: string,
+  activeModules: string[],
+): Promise<void> {
+  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() || "";
+  const base = poolBaseUrl();
+  if (!token) {
+    process.stdout.write(
+      "[lab-demo] skip F&B bind: SATELLITE_EVENT_SERVICE_TOKEN unset\n",
+    );
+    return;
+  }
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  const timeout = AbortSignal.timeout(
+    Number(process.env.SATELLITE_FANOUT_TIMEOUT_MS ?? 15_000),
+  );
+  const bindRes = await fetch(`${base}/api/internal/v1/organization/bind`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ organizationId, boundBy: "lab-demo-seed" }),
+    signal: timeout,
+  });
+  process.stdout.write(`[lab-demo] F&B bind ${bindRes.status}\n`);
+  const runtimeRes = await fetch(`${base}/api/internal/v1/runtime-config`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      organizationId,
+      updatedBy: "lab-demo-seed",
+      deploymentTopology: "SHARED",
+      edition: "kafe",
+      publicOrgNumber: LAB.publicOrgNumber,
+      activeModules,
+    }),
+    signal: AbortSignal.timeout(
+      Number(process.env.SATELLITE_FANOUT_TIMEOUT_MS ?? 15_000),
+    ),
+  });
+  process.stdout.write(`[lab-demo] F&B runtime-config ${runtimeRes.status}\n`);
 }
 
 function poolBaseUrl(): string {
@@ -206,8 +327,17 @@ async function main() {
     },
   });
 
+  const activeModules = await upsertLabSubscription(prisma, organizationId);
+  await upsertFnbSatelliteEntitlement(prisma, organizationId);
+  try {
+    await pushFnbBindAndRuntime(organizationId, activeModules);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`[lab-demo] F&B bind/runtime skipped: ${msg}\n`);
+  }
+
   process.stdout.write(
-    `[lab-demo] org ${organizationId} ERA ID ${LAB.publicOrgNumber} VÖEN ${LAB.taxId} owner ${LAB.ownerEmail}\n`,
+    `[lab-demo] org ${organizationId} ERA ID ${LAB.publicOrgNumber} VÖEN ${LAB.taxId} owner ${LAB.ownerEmail} modules ${activeModules.join(",")}\n`,
   );
 
   await prisma.$disconnect();

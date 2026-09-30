@@ -119,6 +119,8 @@ export class KafeOnboardService {
       // Pool bind is best-effort; org+endpoint already exist.
     }
 
+    await this.bootstrapFnbOwner(organizationId, dto, extraSlugs);
+
     const orgRow = await this.prisma.organization.findUnique({
       where: { id: organizationId },
       select: { publicOrgNumber: true },
@@ -134,5 +136,48 @@ export class KafeOnboardService {
         modules: Object.keys(extraSlugs).filter((k) => extraSlugs[k]),
       },
     };
+  }
+
+  private async bootstrapFnbOwner(
+    organizationId: string,
+    dto: KafeOnboardDto,
+    extraSlugs: Record<string, boolean>,
+  ): Promise<void> {
+    const resolved = await this.endpoints.resolveEndpoint(organizationId, FNB_KEY);
+    const base = (resolved?.baseUrl || this.poolBaseUrl()).replace(/\/$/, "");
+    const token =
+      this.config.get<string>("SATELLITE_EVENT_SERVICE_TOKEN")?.trim() ||
+      process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+      "";
+    if (!token) {
+      throw new ServiceUnavailableException(
+        "SATELLITE_EVENT_SERVICE_TOKEN is required to provision the café till",
+      );
+    }
+    const activeModules = Object.keys(extraSlugs).filter((k) => extraSlugs[k]);
+    const res = await fetch(`${base}/api/internal/v1/kafe/bootstrap-owner`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        organizationId,
+        email: dto.email,
+        password: dto.password,
+        fullName: `${dto.firstName.trim()} ${dto.lastName.trim()}`.trim(),
+        cafeName: dto.cafeName.trim(),
+        activeModules,
+      }),
+      signal: AbortSignal.timeout(
+        Number(process.env.SATELLITE_FANOUT_TIMEOUT_MS ?? 15_000),
+      ),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new ServiceUnavailableException(
+        `F&B café bootstrap failed (${res.status}) ${text.slice(0, 120)}`.trim(),
+      );
+    }
   }
 }

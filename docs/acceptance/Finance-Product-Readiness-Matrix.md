@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 |
-| Payroll / employees | `/payroll, /employees`, `/hr/emas-queue` | 🟡 — ƏMAS manual queue + extension prefill STUB (`FIN-EMAS-01`); not sell-ready without portal UAT |
+| Payroll / employees | `/payroll, /employees`, `/hr/emas-queue` | 🟡 — ƏMAS manual queue + extension prefill STUB (`FIN-EMAS-01`); wave 11 minute premiums API (`FIN-HR-MIN-01`); not sell-ready without portal UAT |
 | FA / reporting | `/fixed-assets, /reporting/*` | 🟡 |
 | Multi-GAAP mapping | `/accounting/ledger-mappings` | 🟡 |
 | IFRS chart / adj / close | `/accounting/chart`, adjustments, reporting close | 🟡 |

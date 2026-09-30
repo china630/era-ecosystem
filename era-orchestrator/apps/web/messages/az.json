@@ -556,18 +556,24 @@
     "lastName": "Soyad",
     "email": "E-poçt",
     "password": "Şifrə",
+    "passwordHint": "Ən azı 8 simvol",
     "cafeName": "Kafe adı",
     "taxId": "VÖEN",
     "voenHint": "Azərbaycan hüquqi şəxs identifikatoru — 10 rəqəm",
     "invalidVoen": "VÖEN tam 10 rəqəmdən ibarət olmalıdır",
-    "extras": "Əlavələr",
+    "plan": "Tarif",
+    "gate": "ERA Kafe · 29 AZN",
+    "gateHint": "1 kassa, menyu, növbə",
     "zal": "Zal — 5 ofisiant PIN (+19 AZN)",
     "kitchen": "Mətbəx KDS (+19 AZN)",
     "qrMenu": "QR menyu, yalnız oxumaq (+19 AZN)",
     "submit": "Kafe aç",
     "busy": "…",
     "alreadyHaveAccount": "Artıq ERA hesabın var?",
-    "signupFailed": "Qeydiyyat uğursuz oldu"
+    "signupFailed": "Qeydiyyat uğursuz oldu",
+    "emailTaken": "Bu e-poçt artıq qeydiyyatdadır — girişə keç",
+    "voenTaken": "Bu VÖEN artıq bağlıdır",
+    "networkError": "Şəbəkə xətası. Yenidən cəhd et."
   },
   "registerOrg": {
     "title": "Təşkilat qeydiyyatı",
@@ -649,7 +655,10 @@
     "wfPlaces": "İş yerləri",
     "wfShifts": "Növbələr",
     "wfRoster": "Cədvəl",
-    "wfAttendance": "Davamiyyət"
+    "wfAttendance": "Davamiyyət",
+    "wfFloor": "Doska",
+    "wfRequests": "Sorğular",
+    "wfMe": "Kabinetim"
   },
   "headerStrip": {
     "trialUntil": "Sınaq dövrü {date}-dək",
@@ -1228,7 +1237,31 @@
     "orderDraftMissing": "Qəbul oldu, amma qaralama əmr yaranmadı. Əmrlər siyahısını açın.",
     "draftOrderBanner": "{count} qaralama əmr",
     "hireWithoutFinBanner": "FIN boşdur — qəbul AZ FIN olmadan şəxs yaradacaq və ya tapacaq.",
-    "hireWithoutFinConfirm": "FIN olmadan qəbul? Şəxsiyyət tutuşması zəif olacaq."
+    "hireWithoutFinConfirm": "FIN olmadan qəbul? Şəxsiyyət tutuşması zəif olacaq.",
+    "enableCabinet": "Telefon kabinetini aç",
+    "cabinetEmail": "Giriş e-poçtu",
+    "cabinetReady": "Birdəfəlik parol:",
+    "cabinetLinked": "Kabinet bağlandı",
+    "fitnessTitle": "Uyğunluq sənədləri",
+    "fitnessHint": "Tələb olunan növləri təşkilat təyin edir. Fayllar yalnız bu işyerində saxlanılır.",
+    "fitnessRequired": "tələb olunur",
+    "fitnessIssued": "Verilmə tarixi",
+    "fitnessValidUntil": "Etibarlıdır",
+    "fitnessUpload": "Yüklə",
+    "fitnessDownload": "Endir",
+    "fitnessIssuedRequired": "Verilmə tarixi mütləqdir",
+    "fitnessValidRequired": "Bitmə tarixi mütləqdir",
+    "fitnessCriminalEmployerRule": "İşəgötürənin qaydası — qanuni tələb kimi göstərilmir.",
+    "fitnessKind": {
+      "HEALTH": "Sağlamlıq arayışı",
+      "NARCOLOGY": "Narkoloji arayış",
+      "CRIMINAL_RECORD": "Məhkumluq haqqında arayış"
+    },
+    "fitnessStatus": {
+      "MISSING": "Yoxdur",
+      "PRESENT": "Var",
+      "EXPIRED": "Vaxtı keçib"
+    }
   },
   "workforceSecurity": {
     "title": "Giriş və təhlükəsizlik — rol matrisi",
@@ -1669,6 +1702,13 @@
     "loadFailed": "Tabel yüklənmədi",
     "empty": "Aktiv əməkdaş yoxdur.",
     "sourceFaceid": "FaceID",
+    "minNormal": "N",
+    "minShortfall": "Ək",
+    "minOt": "Əlavə",
+    "minNight": "Gecə",
+    "minRest": "İst",
+    "minHoliday": "Bay",
+    "minBreak": "Fs",
     "sourceRoster": "Cədvəl",
     "sourceOps": "Ops",
     "type": {
@@ -1805,8 +1845,8 @@
     "overwriteFacts": "Mövcud xanaların üzərinə yaz",
     "overwriteFactsHint": "Əl və FaceID qeydlərini planla əvəz edir. Təsdiq tələb olunur.",
     "overwriteConfirm": "Tabeldəki mövcud qeydlər (o cümlədən əl və FaceID) planla əvəz olunacaq. Davam edilsin?",
-    "assignmentsHeading": "Növbə təyinatları",
-    "assignmentsEmpty": "Hələ təyinat yoxdur. Briqada və ya şəxs üçün növbə əlavə edin.",
+    "assignmentsHeading": "Təyinatlar",
+    "assignmentsEmpty": "Təyinat yoxdur.",
     "editAssignment": "Təyinatı redaktə et",
     "endAssignment": "Bağla",
     "endAssignmentConfirm": "Bu gün plandan çıxır. Təyinat bu gün və ya sonra başlayırsa, həmin gün qalır.",
@@ -1856,7 +1896,6 @@
     "month": "Ay",
     "year": "İl",
     "shiftTypesHeading": "Növbə növləri",
-    "assignmentsHeading": "Təyinatlar",
     "assignmentsHint": "Kim yerə və dövrə təyin olunub. Aylıq cədvəl yalnız bu insanları göstərir.",
     "brigadesHeading": "Briqadalar",
     "cyclesHeading": "Dövrlər",
@@ -1865,7 +1904,6 @@
     "gapsHeading": "Adamı olmayan postlar",
     "conflictTitle": "İki təyinat: {places}",
     "rosterEmpty": "Bu ay üçün təyinat yoxdur.",
-    "assignmentsEmpty": "Təyinat yoxdur.",
     "transfer": "Köçür",
     "transferTitle": "Üzvləri köçür",
     "leaveCrew": "Briqadadan çıxar",
@@ -1883,7 +1921,46 @@
     "allBrigades": "Bütün briqadalar",
     "allPeople": "Bütün şəxslər",
     "openEnded": "Açıq",
-    "renameBrigade": "Briqadanı adlandır"
+    "renameBrigade": "Briqadanı adlandır",
+    "latitude": "Enlem",
+    "longitude": "Uzunluq",
+    "radiusMeters": "Geozona radiusu (m)",
+    "allowOutside": "Kenarda icaze (yine qebul lazim)",
+    "graceMinutes": "Nobet ehtiyati (deqiqe)"
+  },
+  "workforceFloor": {
+    "title": "Canli doska",
+    "subtitle": "Bu gun obyektde kim var (Asia/Baku). Shubheli punch HR qebulundan sonra rebuild-e dushur.",
+    "date": "Tarix",
+    "loadError": "Doskani yuklemek olmadı",
+    "suspiciousTitle": "Shubheli punch-lar",
+    "suspiciousEmpty": "Baxilmaq uchun punch yoxdur.",
+    "allowOutsideHint": "kenarda gozlenilir",
+    "accept": "Qebul et",
+    "acceptTitle": "Punch-u qebul et",
+    "acceptReason": "Sebeb",
+    "acceptError": "Qebul ugursuz",
+    "group": {
+      "ARRIVED": "Gelib",
+      "SHIFT_STARTED_NO_IN": "Nobet bashlayib — IN yox",
+      "NOT_ARRIVED": "Hele gelmeyib",
+      "STILL_INSIDE": "Hele iceride",
+      "LEFT_EARLY": "Erken chixib",
+      "LATE": "Gecilib",
+      "OPEN_BREAK": "Açıq fasilə",
+      "PENDING_REQUEST": "Gözləyən sorğu",
+      "FITNESS_ISSUE": "Uyğunluq problemi"
+    },
+    "fitnessKind": {
+      "HEALTH": "Sağlamlıq",
+      "NARCOLOGY": "Narkologiya",
+      "CRIMINAL_RECORD": "Məhkumluq"
+    },
+    "fitnessStatus": {
+      "MISSING": "yoxdur",
+      "PRESENT": "var",
+      "EXPIRED": "vaxtı keçib"
+    }
   },
   "workforceAttendance": {
     "title": "Davamiyyət",
@@ -2010,5 +2087,39 @@
       "salary": "Müqavilə maaşı və MGMT dərəcəsi Finance-də.",
       "year-grid": "Yalnız sübut. Yazı yoxdur."
     }
+  },
+  "workforceMe": {
+    "title": "İş kabineti",
+    "subtitle": "Öz məzuniyyət, elan və əməkhaqqı vərəqəniz",
+    "citizenship": "Vətəndaşlıq",
+    "unread": "{count} oxunmamış elan",
+    "fullDay": "Tam günlük məzuniyyət",
+    "absenceKind": "Növ",
+    "hourly": "Saatlıq məzuniyyət",
+    "hourlyPaidLabel": "Ödənişli?",
+    "hourlyPaid": "Ödənişli",
+    "hourlyUnpaid": "Ödənişsiz",
+    "advance": "Avans sorğusu",
+    "note": "Qeyd",
+    "submit": "Göndər",
+    "announcements": "Elanlar",
+    "noAnnouncements": "Elan yoxdur",
+    "markRead": "Oxundu",
+    "payslip": "Əmək haqqı vərəqəsi",
+    "loadPayslip": "Son bağlı ayı yüklə",
+    "noPayslip": "Keçirilmiş vərəqə yoxdur"
+  },
+  "workforceRequests": {
+    "title": "İşçi sorğuları",
+    "subtitle": "Məzuniyyət, saatlıq və avans təsdiqi",
+    "absences": "Tam günlük",
+    "hourly": "Saatlıq",
+    "advances": "Avanslar",
+    "approve": "Təsdiq",
+    "reject": "İmtina",
+    "paid": "Ödənişli",
+    "unpaid": "Ödənişsiz",
+    "announce": "Elan dərc et",
+    "publish": "Dərc et"
   }
 }

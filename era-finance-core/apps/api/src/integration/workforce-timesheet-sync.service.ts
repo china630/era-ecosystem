@@ -91,6 +91,7 @@ export class WorkforceTimesheetSyncService {
       );
       const dayDate = dayDateUtc(year, month, day);
       const entryType = mapApprovedType(row.type);
+      const minutes = row.minutes;
       await this.prisma.timesheetEntry.upsert({
         where: {
           timesheetId_employeeId_dayDate: {
@@ -105,10 +106,43 @@ export class WorkforceTimesheetSyncService {
           dayDate,
           type: entryType,
           hours: new Decimal(row.hours),
+          // Wave 10: do not write overtimeHours / nightHours (payroll premiums).
+          overtimeHours: new Decimal(0),
+          nightHours: new Decimal(0),
+          eveningHours: new Decimal(0),
+          ...(minutes
+            ? {
+                normalMinutes: minutes.normalMinutes,
+                shortfallMinutes: minutes.shortfallMinutes,
+                overtimeMinutes: minutes.overtimeMinutes,
+                nightMinutes: minutes.nightMinutes,
+                restDayMinutes: minutes.restDayMinutes,
+                holidayMinutes: minutes.holidayMinutes,
+                hourlyLeaveMinutes: minutes.hourlyLeaveMinutes,
+                breakMinutes: minutes.breakMinutes,
+                hourlyLeavePaid: minutes.hourlyLeavePaid === true,
+              }
+            : {}),
         },
         update: {
           type: entryType,
           hours: new Decimal(row.hours),
+          overtimeHours: new Decimal(0),
+          nightHours: new Decimal(0),
+          eveningHours: new Decimal(0),
+          ...(minutes
+            ? {
+                normalMinutes: minutes.normalMinutes,
+                shortfallMinutes: minutes.shortfallMinutes,
+                overtimeMinutes: minutes.overtimeMinutes,
+                nightMinutes: minutes.nightMinutes,
+                restDayMinutes: minutes.restDayMinutes,
+                holidayMinutes: minutes.holidayMinutes,
+                hourlyLeaveMinutes: minutes.hourlyLeaveMinutes,
+                breakMinutes: minutes.breakMinutes,
+                hourlyLeavePaid: minutes.hourlyLeavePaid === true,
+              }
+            : {}),
         },
       });
       mirrored += 1;

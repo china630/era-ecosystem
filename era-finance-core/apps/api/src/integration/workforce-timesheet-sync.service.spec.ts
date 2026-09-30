@@ -169,4 +169,67 @@ describe("WorkforceTimesheetSyncService", () => {
       }),
     );
   });
+
+  it("stores minute buckets without filling overtimeHours/nightHours", async () => {
+    const prisma = {
+      employee: {
+        findFirst: jest.fn().mockResolvedValue({ id: FIN_EMP }),
+      },
+      timesheetEntry: { upsert: jest.fn().mockResolvedValue({}) },
+    };
+    const timesheet = {
+      getOrCreate: jest.fn().mockResolvedValue({
+        timesheet: { id: "ts-1", status: TimesheetStatus.DRAFT },
+      }),
+      markApprovedFromCpMirror: jest.fn().mockResolvedValue("ts-1"),
+    };
+    const svc = new WorkforceTimesheetSyncService(
+      prisma as never,
+      { hasModule: jest.fn().mockResolvedValue(true) } as never,
+      timesheet as never,
+    );
+
+    const event = {
+      type: "WORKFORCE_TIMESHEET_APPROVED",
+      organizationId: ORG,
+      correlationId: "c1",
+      occurredAt: "2026-08-31T00:00:00.000Z",
+      payload: {
+        organizationId: ORG,
+        cpTimesheetEntryIds: [ENTRY],
+        approvedByUserId: ACTOR,
+        approvedAt: "2026-08-31T00:00:00.000Z",
+        rows: [
+          {
+            cpTimesheetEntryId: ENTRY,
+            cpEmploymentId: EMP_CP,
+            globalPersonId: PERSON,
+            workDate: "2026-09-16",
+            hours: 8,
+            type: "WORK",
+            minutes: {
+              normalMinutes: 480,
+              shortfallMinutes: 0,
+              overtimeMinutes: 60,
+              nightMinutes: 30,
+              restDayMinutes: 0,
+              holidayMinutes: 0,
+              hourlyLeaveMinutes: 0,
+              breakMinutes: 45,
+            },
+          },
+        ],
+      },
+    };
+
+    await svc.handleApproved(ORG, event);
+
+    const create = prisma.timesheetEntry.upsert.mock.calls[0][0].create;
+    expect(create.normalMinutes).toBe(480);
+    expect(create.overtimeMinutes).toBe(60);
+    expect(create.nightMinutes).toBe(30);
+    expect(create.breakMinutes).toBe(45);
+    expect(Number(create.overtimeHours)).toBe(0);
+    expect(Number(create.nightHours)).toBe(0);
+  });
 });

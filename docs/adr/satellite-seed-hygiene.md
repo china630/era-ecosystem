@@ -14,7 +14,7 @@ Clinic already split satellite templates vs org overlay ([clinic-catalog-templat
 
 1. **`db:seed`** = satellite / reference / role templates only — idempotent, insert-if-missing where org-stamped, never wipe. No `demo-org`, `demo-clinic-org`, or `demo-bank-org-001` fallback. Missing bind → exit 1 (or empty no-op when the schema has no unscoped catalog, e.g. F&B).
 
- * `db:seed:demo` = lab overlays (ERA lab org VÖEN 0123456789 / ERA ID 100000). Manual only. Never compose entrypoint. Never `demo-org`.
+ * `db:seed:demo` = lab overlays (ERA lab org VÖEN 0123456789 / ERA ID 100000). Manual only. Never compose entrypoint. Never `demo-org`. Orchestrator `seed:lab-demo` must also set subscription `activeModules` + satellite entitlement (workspace Open).
 
 3. **Compose `RUN_SEED`** defaults **false** for clinic, hotel (standalone), bank-core, bank, bank-dbo. First empty lab: set `*_RUN_SEED=true` **once** after a real org UUID is bound, or run `db:seed:demo` on the host.
 

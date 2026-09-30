@@ -140,5 +140,6 @@ Edition / Product-Readiness stay `mvp` until Lab RT + field signoff. Pilot harde
 - [workforce-timesheet-construction-bridge.md](./workforce-timesheet-construction-bridge.md)
 - [workforce-compliance-emas-boundary.md](./workforce-compliance-emas-boundary.md)
 - [workforce-seat-licensing.md](./workforce-seat-licensing.md)
+- [cp-workforce-floor-attendance.md](./cp-workforce-floor-attendance.md) — live board, phone/door punch, breaks, employee requests; fitness files (health, narcology, criminal record) before a place assignment
 - [clinic-practitioner-shifts.md](./clinic-practitioner-shifts.md)
 - [org-operating-mode.md](./org-operating-mode.md)

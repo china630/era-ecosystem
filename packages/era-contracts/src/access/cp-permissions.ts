@@ -54,9 +54,12 @@ export const CP_PERMISSION = {
   API_WORKFORCE_ROLE_TEMPLATES: "api:workforce.role_templates",
   API_WORKFORCE_MANUAL_GRANTS: "api:workforce.manual_grants",
   API_WORKFORCE_VACATION: "api:workforce.vacation",
+  /** Employee phone cabinet — own employment only (wave 12). */
+  API_WORKFORCE_SELF: "api:workforce.self",
   // Workspace screens
   SCREEN_WORKSPACE_HOME: "screen:workspace.home",
   SCREEN_WORKSPACE_WORKFORCE: "screen:workspace.workforce",
+  SCREEN_WORKSPACE_ME: "screen:workspace.me",
   SCREEN_SETTINGS_TEAM: "screen:settings.team",
   SCREEN_SETTINGS_ACCESS: "screen:settings.access",
   SCREEN_HOLDINGS: "screen:holdings",

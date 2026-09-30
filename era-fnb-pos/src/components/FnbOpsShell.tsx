@@ -74,14 +74,15 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const { session } = useSatelliteOpsSession();
-  const [edition, setEdition] = useState("hotel");
+  const [edition, setEdition] = useState<string | null>(null);
   const [modules, setModules] = useState<string[]>([]);
   const [me, setMe] = useState<MePayload | null>(null);
 
   useEffect(() => {
     void fetch("/api/edition")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
+        if (!d) return;
         setEdition(String(d.edition ?? "hotel"));
         setModules(Array.isArray(d.activeModules) ? d.activeModules : []);
       })
@@ -118,7 +119,7 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
   const can = (p: Permission) =>
     me != null && sessionHasFnbPermission(permSession, p);
 
-  const kafe = edition.toLowerCase() === "kafe";
+  const kafe = edition == null || edition.toLowerCase() === "kafe";
   const links = kafe ? [...kafeLinks] : [...hotelLinks];
   if (kafe && modules.includes("fnb_kitchen_kds")) {
     const hasKds = links.some((l) => l.href === "/kds");

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { handleRouteError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -32,11 +33,11 @@ export async function GET(request: Request) {
 }
 
 const createSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   code: z.string().min(1),
   name: z.string().min(1),
   seats: z.number().int().positive().optional(),
-  zone: z.string().optional(),
+  zone: z.string().nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -47,13 +48,16 @@ export async function POST(request: Request) {
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());
-    const outlet = await ensureOutletByCode(body.outletCode);
-    const table = await prisma.posTable.create({      data: {
+    const organizationId = requestOrganizationId();
+    const outlet = await resolveOpsOutlet(body.outletCode);
+    const table = await prisma.posTable.create({
+      data: {
+        organizationId,
         outletId: outlet.id,
         code: body.code,
         name: body.name,
         seats: body.seats ?? 4,
-        zone: body.zone,
+        zone: body.zone ?? null,
       },
     });
     return jsonOk(table, 201);

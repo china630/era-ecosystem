@@ -250,6 +250,22 @@ export const workforceTimesheetBatchImportedPayloadSchema = z.object({
   entries: z.array(workforceTimesheetRowSchema).min(1),
 });
 
+export const workforceTimesheetMinutesSchema = z.object({
+  normalMinutes: z.number().int().min(0),
+  shortfallMinutes: z.number().int().min(0),
+  overtimeMinutes: z.number().int().min(0),
+  nightMinutes: z.number().int().min(0),
+  restDayMinutes: z.number().int().min(0),
+  holidayMinutes: z.number().int().min(0),
+  hourlyLeaveMinutes: z.number().int().min(0),
+  breakMinutes: z.number().int().min(0),
+  /** Wave 12: paid hourly leave must not feed Finance UNPAID_TIME. */
+  hourlyLeavePaid: z.boolean().optional(),
+});
+export type WorkforceTimesheetMinutes = z.infer<
+  typeof workforceTimesheetMinutesSchema
+>;
+
 export const workforceTimesheetApprovedPayloadSchema = z.object({
   organizationId: z.string().uuid(),
   cpTimesheetEntryIds: z.array(z.string().uuid()).min(1),
@@ -266,6 +282,8 @@ export const workforceTimesheetApprovedPayloadSchema = z.object({
       type: z
         .enum(["WORK", "VACATION", "SICK", "OFF", "BUSINESS_TRIP"])
         .optional(),
+      /** Wave 10 minute buckets; omit for legacy rows. */
+      minutes: workforceTimesheetMinutesSchema.optional(),
     }),
   ),
 });

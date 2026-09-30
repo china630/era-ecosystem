@@ -22,6 +22,10 @@ import { enrichEmployeesWithMdm } from "./employee-person.util";
 import { HrCalendarService } from "./hr-calendar.service";
 import type { TimesheetBatchItemDto } from "./dto/timesheet-batch.dto";
 import { MgmtLaborDeltaService } from "./mgmt-labor-delta.service";
+import {
+  aggregateMinuteHours,
+  entryHasCpMinutes,
+} from "./payroll-minute-premiums";
 
 function monthBoundsUtc(year: number, month: number): { start: Date; end: Date; lastDay: number } {
   const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -548,7 +552,7 @@ export class TimesheetService {
       throw new BadRequestException("Табель не найден или не утверждён");
     }
     const entries = await this.prisma.timesheetEntry.findMany({
-      where: { timesheetId },
+      where: { timesheetId, deletedAt: null },
     });
     const { year, month } = ts;
     const normWorkingDays = await this.calendar.countWorkingDaysInMonth(year, month);
@@ -564,6 +568,25 @@ export class TimesheetService {
     const hoursEmp = new Map<
       string,
       { hours: Decimal; night: Decimal; evening: Decimal; overtime: Decimal }
+    >();
+    const minutesEmp = new Map<
+      string,
+      {
+        useMinutes: boolean;
+        entries: Array<{
+          normalMinutes: number | null;
+          shortfallMinutes: number | null;
+          overtimeMinutes: number | null;
+          nightMinutes: number | null;
+          restDayMinutes: number | null;
+          holidayMinutes: number | null;
+          hourlyLeaveMinutes: number | null;
+          breakMinutes: number | null;
+          hourlyLeavePaid: boolean;
+          lockedFromAbsence: boolean;
+          entryType: string;
+        }>;
+      }
     >();
 
     for (const e of entries) {
@@ -586,6 +609,29 @@ export class TimesheetService {
       hrs.night = hrs.night.add(e.nightHours ?? 0);
       hrs.evening = hrs.evening.add(e.eveningHours ?? 0);
       hrs.overtime = hrs.overtime.add(e.overtimeHours ?? 0);
+
+      let minBucket = minutesEmp.get(e.employeeId);
+      if (!minBucket) {
+        minBucket = { useMinutes: false, entries: [] };
+        minutesEmp.set(e.employeeId, minBucket);
+      }
+      const minuteFields = {
+        normalMinutes: e.normalMinutes ?? null,
+        shortfallMinutes: e.shortfallMinutes ?? null,
+        overtimeMinutes: e.overtimeMinutes ?? null,
+        nightMinutes: e.nightMinutes ?? null,
+        restDayMinutes: e.restDayMinutes ?? null,
+        holidayMinutes: e.holidayMinutes ?? null,
+        hourlyLeaveMinutes: e.hourlyLeaveMinutes ?? null,
+        breakMinutes: e.breakMinutes ?? null,
+        hourlyLeavePaid: e.hourlyLeavePaid === true,
+        lockedFromAbsence: e.lockedFromAbsence ?? false,
+        entryType: e.type,
+      };
+      if (entryHasCpMinutes(minuteFields)) {
+        minBucket.useMinutes = true;
+      }
+      minBucket.entries.push(minuteFields);
 
       switch (e.type) {
         case TimesheetEntryType.WORK:
@@ -654,6 +700,29 @@ export class TimesheetService {
       };
     }
 
+    const minutesByEmployeeId: Record<
+      string,
+      {
+        useMinutes: boolean;
+        night: Decimal;
+        overtime: Decimal;
+        holiday: Decimal;
+        rest: Decimal;
+        unpaid: Decimal;
+      }
+    > = {};
+    for (const [id, v] of minutesEmp) {
+      const agg = aggregateMinuteHours(v.entries);
+      minutesByEmployeeId[id] = {
+        useMinutes: v.useMinutes,
+        night: agg.night,
+        overtime: agg.overtime,
+        holiday: agg.holiday,
+        rest: agg.rest,
+        unpaid: agg.unpaid,
+      };
+    }
+
     return {
       year: ts.year,
       month: ts.month,
@@ -661,6 +730,7 @@ export class TimesheetService {
       byEmployeeId: Object.fromEntries(byEmp),
       mixByEmployeeId,
       hoursByEmployeeId,
+      minutesByEmployeeId,
     };
   }
 

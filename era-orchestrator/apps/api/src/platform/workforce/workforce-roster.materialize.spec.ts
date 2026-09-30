@@ -36,10 +36,15 @@ describe("WorkforceRosterService.materializeMonth", () => {
   };
   const entitlement = { assertWorkforceHub: jest.fn() };
   const audit = { log: jest.fn() };
+  const fitness = {
+    assertAssignable: jest.fn(),
+    assertBrigadeAssignable: jest.fn(),
+  };
   const svc = new WorkforceRosterService(
     prisma,
     entitlement as never,
     audit as never,
+    fitness as never,
   );
 
   const sheet = {

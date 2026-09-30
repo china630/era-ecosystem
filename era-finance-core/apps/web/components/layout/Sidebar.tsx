@@ -34,7 +34,6 @@ import {
   Inbox,
   Landmark,
   Link2,
-  Network,
   Package,
   PackageSearch,
   PieChart,
@@ -64,7 +63,29 @@ import {
 import type { AuthUser } from "../../lib/auth-context";
 import { useOrgPermissions } from "../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../lib/role-utils";
+import {
+  useSubscription,
+  type SubscriptionSnapshot,
+} from "../../lib/subscription-context";
 import { EraAppSidebar } from "@era/satellite-kit/ui";
+
+/** Mirror SubscriptionAccessService.hasModule(..., "platform_workforce") for nav. */
+function isCpAttendanceMaster(snapshot: SubscriptionSnapshot | null): boolean {
+  if (!snapshot) return false;
+  if (snapshot.tier === "TIER_3") return true;
+  if (snapshot.activeModules.includes("platform_workforce")) return true;
+  const custom = snapshot.customConfig;
+  if (custom && typeof custom === "object") {
+    const modules = (custom as { modules?: unknown }).modules;
+    if (
+      Array.isArray(modules) &&
+      modules.map(String).includes("platform_workforce")
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
 type SidebarLayout = {
   /** Collapsed rail только на lg+; на мобильном выезде — всегда полная ширина. */
@@ -469,6 +490,9 @@ export function MainSidebar({
   const pathname = usePathname();
   const { t } = useTranslation();
   const perms = useOrgPermissions();
+  const { effectiveSnapshot } = useSubscription();
+  const showFinanceTimesheetNav =
+    effectiveSnapshot != null && !isCpAttendanceMaster(effectiveSnapshot);
   const canSeeAuditHubNav =
     perms.can(CP_PERMISSION.API_LEDGER_READ) ||
     perms.can(CP_PERMISSION.API_REPORTS_NAS) ||
@@ -888,30 +912,16 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
           ) : null}
-          <SideNavItem
-            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/positions`}
-            label={t("nav.hrStaffingUnits")}
-            isActive={false}
-            icon={Briefcase}
-            nested
-            onNavClick={onNavClick}
-          />
-          <SideNavItem
-            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/org-structure`}
-            label={t("nav.hrStructure")}
-            isActive={false}
-            icon={Network}
-            nested
-            onNavClick={onNavClick}
-          />
-          <SideNavItem
-            href="/hr/timesheet"
-            label={t("nav.hrTimesheet")}
-            isActive={pathname.startsWith("/hr/timesheet")}
-            icon={CalendarCheck}
-            nested
-            onNavClick={onNavClick}
-          />
+          {showFinanceTimesheetNav ? (
+            <SideNavItem
+              href="/hr/timesheet"
+              label={t("nav.hrTimesheet")}
+              isActive={pathname.startsWith("/hr/timesheet")}
+              icon={CalendarCheck}
+              nested
+              onNavClick={onNavClick}
+            />
+          ) : null}
           <SideNavSubItem
             href="/psa/projects"
             label={t("nav.psaProjects")}
@@ -969,13 +979,6 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
           ) : null}
-          <SideNavSubItem
-            href="/reporting/compare-books"
-            label={t("nav.compareBooks")}
-            isActive={pathname.startsWith("/reporting/compare-books")}
-            icon={Scale}
-            onNavClick={onNavClick}
-          />
           <SideNavSubItem
             href="/reporting/turnovers"
             label={t("nav.accountTurnovers")}

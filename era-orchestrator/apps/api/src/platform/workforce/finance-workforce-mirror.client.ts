@@ -157,4 +157,96 @@ export class FinanceWorkforceMirrorClient {
       "http://127.0.0.1:4100"
     ).replace(/\/$/, "");
   }
+
+  /**
+   * Wave 12: queue ADVANCE slip line on DRAFT payroll (or holding queue).
+   * Never marks registry PAID / POSTED. Returns false when hr_full missing.
+   */
+  async queueAdvanceLine(input: {
+    organizationId: string;
+    financeEmployeeId: string;
+    amountAzn: number;
+    note: string;
+    year: number;
+    month: number;
+  }): Promise<boolean> {
+    try {
+      const base = await this.resolveFinanceBaseUrl(input.organizationId);
+      const token =
+        this.config.get<string>("FINANCE_INTERNAL_SERVICE_TOKEN")?.trim() ?? "";
+      const res = await fetch(
+        `${base}/internal/v1/workforce/payroll/advance-line`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(input),
+        },
+      );
+      if (res.status === 403 || res.status === 404) return false;
+      if (!res.ok) {
+        this.logger.warn(`Finance advance-line ${res.status}`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `Finance advance-line unavailable: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Wave 12: posted payslip JSON for employee cabinet (no internalRate).
+   */
+  async fetchPostedPayslip(input: {
+    organizationId: string;
+    financeEmployeeId: string;
+    year: number;
+    month: number;
+  }): Promise<{
+    year: number;
+    month: number;
+    gross: string;
+    net: string;
+    lines: Array<{ code: string; kind: string; amount: string }>;
+  } | null> {
+    try {
+      const base = await this.resolveFinanceBaseUrl(input.organizationId);
+      const token =
+        this.config.get<string>("FINANCE_INTERNAL_SERVICE_TOKEN")?.trim() ?? "";
+      const url = new URL(`${base}/internal/v1/workforce/payroll/payslip`);
+      url.searchParams.set("organizationId", input.organizationId);
+      url.searchParams.set("financeEmployeeId", input.financeEmployeeId);
+      url.searchParams.set("year", String(input.year));
+      url.searchParams.set("month", String(input.month));
+      const res = await fetch(url.toString(), {
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.status === 404 || res.status === 403) return null;
+      if (!res.ok) {
+        this.logger.warn(`Finance payslip ${res.status}`);
+        return null;
+      }
+      return (await res.json()) as {
+        year: number;
+        month: number;
+        gross: string;
+        net: string;
+        lines: Array<{ code: string; kind: string; amount: string }>;
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Finance payslip unavailable: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return null;
+    }
+  }
 }

@@ -88,9 +88,18 @@ export default function MenuAdminPanel() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/menu?includeInactive=true");
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      setMessage(
+        data && typeof data === "object" && "error" in data
+          ? String((data as { error: string }).error)
+          : t("saveFailed"),
+      );
+      setCategories([]);
+      return;
+    }
     setCategories(Array.isArray(data) ? data : []);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
