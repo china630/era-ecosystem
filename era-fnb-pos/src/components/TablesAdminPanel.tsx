@@ -10,6 +10,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { Pencil, Trash2 } from "lucide-react";
+import { CARD_CLASS } from "@/lib/design-system";
 
 type TableRow = {
   id: string;
