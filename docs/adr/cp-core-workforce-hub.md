@@ -93,5 +93,6 @@ Onsite cutover: [v3-workforce-cutover.md](../runbooks/v3-workforce-cutover.md)
 | Seat licensing | [workforce-seat-licensing.md](./workforce-seat-licensing.md) |
 | Dual audit | [workforce-dual-audit.md](./workforce-dual-audit.md) |
 | Field-workforce pilot (group HR, labor roster, NAS vs MGMT) | [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md) |
+| Floor attendance, thin cabinet, Evrostar fitness files | [cp-workforce-floor-attendance.md](./cp-workforce-floor-attendance.md) |
 
 Additional events: `WORKFORCE_TIMESHEET_BATCH_IMPORTED`, `WORKFORCE_TIMESHEET_APPROVED`.

@@ -2,7 +2,7 @@ import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { findOpsOutlet, resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
@@ -21,10 +21,10 @@ export async function GET(request: Request) {
     const denied = denyUnlessAnyPermission(session, TILL_READ_DAILY_MENU);
     if (denied) return denied;
     const url = new URL(request.url);
-    const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
+    const outletCodeParam = url.searchParams.get("outletCode");
     const { ymd, date } = resolveBoardDate(url.searchParams.get("date"));
 
-    const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
+    const outlet = await findOpsOutlet(outletCodeParam);
     if (!outlet) return jsonOk({ date: ymd, entries: [] });
 
     const entries = await prisma.dailyMenuEntry.findMany({
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     });
 
     return jsonOk({
-      outletCode,
+      outletCode: outlet.code,
       date: ymd,
       entries: entries.map((e) => ({
         id: e.id,
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 }
 
 const putSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   date: z.string().optional(),
   menuItemIds: z.array(z.string()).min(1),
 });
@@ -68,7 +68,7 @@ export async function PUT(request: Request) {
     const body = putSchema.parse(await request.json());
     const { date } = resolveBoardDate(body.date);
 
-    const outlet = await ensureOutletByCode(body.outletCode);
+    const outlet = await resolveOpsOutlet(body.outletCode);
 
     await prisma.$transaction([
       prisma.dailyMenuEntry.deleteMany({ where: { outletId: outlet.id, boardDate: date } }),
@@ -89,7 +89,7 @@ export async function PUT(request: Request) {
 }
 
 const copySchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   fromDate: z.string(),
   toDate: z.string(),
 });
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     const { date: from } = resolveBoardDate(body.fromDate);
     const { date: to } = resolveBoardDate(body.toDate);
 
-    const outlet = await prisma.outlet.findFirst({ where: { code: body.outletCode } });
+    const outlet = await findOpsOutlet(body.outletCode);
     if (!outlet) return jsonError("Outlet not found", 404);
 
     const source = await prisma.dailyMenuEntry.findMany({

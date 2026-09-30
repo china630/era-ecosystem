@@ -102,7 +102,21 @@ import { WorkforceAttendanceService } from "./workforce-attendance.service";
 
 import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
 
+import { WorkforceSelfController } from "./workforce-self.controller";
 
+import { WorkforceRequestsController } from "./workforce-requests.controller";
+
+import { WorkforceSelfService } from "./workforce-self.service";
+
+
+
+import { QuotaModule } from "../../quota/quota.module";
+
+import { CatalogGatewayModule } from "../catalog/catalog-gateway.module";
+
+import { WorkforceFitnessController } from "./workforce-fitness.controller";
+
+import { WorkforceFitnessService } from "./workforce-fitness.service";
 
 @Module({
 
@@ -117,6 +131,10 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
     PlatformSharedModule,
 
     SatelliteEventsModule,
+
+    CatalogGatewayModule,
+
+    QuotaModule,
 
   ],
 
@@ -161,6 +179,12 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
     WorkforceAttendanceController,
 
     WorkforceAttendanceIngestController,
+
+    WorkforceSelfController,
+
+    WorkforceRequestsController,
+
+    WorkforceFitnessController,
 
   ],
 
@@ -219,6 +243,10 @@ import { WorkforceAttendanceCronService } from "./workforce-attendance.cron";
     WorkforceAttendanceService,
 
     WorkforceAttendanceCronService,
+
+    WorkforceSelfService,
+
+    WorkforceFitnessService,
 
   ],
 

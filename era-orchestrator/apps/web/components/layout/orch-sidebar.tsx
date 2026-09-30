@@ -17,6 +17,7 @@ import {
   FolderInput,
   GitCompare,
   Gauge,
+  Inbox,
   LayoutGrid,
   MapPin,
   Network,
@@ -134,6 +135,15 @@ export function OrchSidebar({
           icon={LayoutGrid}
           onNavClick={onNavClick}
         />
+        {can("screen:workspace.me") ? (
+          <SideNavItem
+            href="/workspace/me"
+            label={t("wfMe")}
+            isActive={pathname.startsWith("/workspace/me")}
+            icon={Users}
+            onNavClick={onNavClick}
+          />
+        ) : null}
 
         <CollapsibleNavSection
           sectionKey="organization"
@@ -163,6 +173,7 @@ export function OrchSidebar({
           ) : null}
         </CollapsibleNavSection>
 
+        {can("screen:workspace.workforce") ? (
         <CollapsibleNavSection
           sectionKey="workforce"
           title={t("sectionWorkforce")}
@@ -206,6 +217,14 @@ export function OrchSidebar({
             label={t("wfAbsences")}
             isActive={pathname.startsWith("/workspace/workforce/absences")}
             icon={CalendarOff}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/requests"
+            label={t("wfRequests")}
+            isActive={pathname.startsWith("/workspace/workforce/requests")}
+            icon={Inbox}
             nested
             onNavClick={onNavClick}
           />
@@ -262,6 +281,14 @@ export function OrchSidebar({
             label={t("wfAttendance")}
             isActive={pathname.startsWith("/workspace/workforce/attendance")}
             icon={Fingerprint}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/workforce/floor"
+            label={t("wfFloor")}
+            isActive={pathname.startsWith("/workspace/workforce/floor")}
+            icon={LayoutGrid}
             nested
             onNavClick={onNavClick}
           />
@@ -340,6 +367,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
         </CollapsibleNavSection>
+        ) : null}
 
         <CollapsibleNavSection
           sectionKey="resources"

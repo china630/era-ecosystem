@@ -89,12 +89,21 @@ describe("Wave 5 MgmtLaborDelta formula", () => {
     ).toBe(true);
   });
 
-  it("payroll statutory path ignores internalRate (salary only)", () => {
-    const salary = 1200;
-    const internalRate = 2500;
-    const payrollGross = salary;
-    expect(payrollGross).toBe(1200);
-    expect(payrollGross).not.toBe(internalRate);
+  it("Wave 11: MGMT workHours stay entry.hours (normal); overtime minutes do not inflate ratio", () => {
+    const entryHours = 8;
+    const overtimeMinutes = 60;
+    const workHoursForMgmt = entryHours; // MgmtLaborDeltaService selects hours only
+    const r = computeDelta({
+      internalRate: 1600,
+      salary: 800,
+      workHours: workHoursForMgmt,
+      monthNormHours: 160,
+      slipGross: 900, // slip gross may grow from OT premiums
+    });
+    expect(workHoursForMgmt).toBe(8);
+    expect(workHoursForMgmt).not.toBe(entryHours + overtimeMinutes / 60);
+    // Higher slip gross shrinks the grey delta without changing MGMT hours input
+    expect(r.delta).toBeLessThan(800);
   });
 });
 

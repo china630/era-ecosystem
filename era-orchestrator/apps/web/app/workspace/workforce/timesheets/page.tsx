@@ -63,6 +63,13 @@ type TsEntry = {
   lockedFromAbsence: boolean;
   status?: "DRAFT" | "APPROVED";
   source?: string;
+  normalMinutes?: number | null;
+  shortfallMinutes?: number | null;
+  overtimeMinutes?: number | null;
+  nightMinutes?: number | null;
+  restDayMinutes?: number | null;
+  holidayMinutes?: number | null;
+  breakMinutes?: number | null;
 };
 
 type Person = {
@@ -113,6 +120,34 @@ function personName(
 ): string {
   const n = persons[globalPersonId]?.displayName?.trim();
   return n || unnamed;
+}
+
+function minutesLine(e: TsEntry | undefined, t: (key: string) => string): string | null {
+  if (!e) return null;
+  const hasBuckets =
+    e.normalMinutes != null ||
+    e.overtimeMinutes != null ||
+    e.breakMinutes != null ||
+    e.nightMinutes != null ||
+    e.restDayMinutes != null ||
+    e.holidayMinutes != null ||
+    e.shortfallMinutes != null;
+  if (!hasBuckets) return null;
+  const parts: string[] = [];
+  parts.push(`${t("minNormal")}:${e.normalMinutes ?? 0}`);
+  if ((e.shortfallMinutes ?? 0) > 0)
+    parts.push(`${t("minShortfall")}:${e.shortfallMinutes}`);
+  if ((e.overtimeMinutes ?? 0) > 0)
+    parts.push(`${t("minOt")}:${e.overtimeMinutes}`);
+  if ((e.nightMinutes ?? 0) > 0)
+    parts.push(`${t("minNight")}:${e.nightMinutes}`);
+  if ((e.restDayMinutes ?? 0) > 0)
+    parts.push(`${t("minRest")}:${e.restDayMinutes}`);
+  if ((e.holidayMinutes ?? 0) > 0)
+    parts.push(`${t("minHoliday")}:${e.holidayMinutes}`);
+  if ((e.breakMinutes ?? 0) > 0)
+    parts.push(`${t("minBreak")}:${e.breakMinutes}`);
+  return parts.join(" ");
 }
 
 function bakuYearMonth(): { year: number; month: number; iso: string } {
@@ -693,6 +728,14 @@ export default function TimesheetsPage() {
                               {t("sourceFaceid")}
                             </span>
                           ) : null}
+                          {(() => {
+                            const line = minutesLine(e, t);
+                            return line ? (
+                              <span className="mt-0.5 block text-[8px] font-normal leading-tight text-[#5D6D7E]">
+                                {line}
+                              </span>
+                            ) : null;
+                          })()}
                         </button>
                       </td>
                     );

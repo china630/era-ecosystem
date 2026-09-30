@@ -53,65 +53,80 @@ export default function FloorPanel() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [outletSaving, setOutletSaving] = useState(false);
-  const [hotelMode, setHotelMode] = useState(true);
+  const [hotelMode, setHotelMode] = useState(false);
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   const selectedOutlet = outlets.find((o) => o.id === selectedOutletId) ?? null;
-  const outletCode = selectedOutlet?.code ?? "RESTAURANT";
+  const outletCode = selectedOutlet?.code ?? "";
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [tablesRes, menuRes, outletsRes, editionRes, soldRes] = await Promise.all([
-      fetch("/api/tables"),
-      fetch("/api/menu?dailyOnly=true"),
-      fetch("/api/outlets"),
-      fetch("/api/edition"),
-      fetch("/api/menu/sold-out"),
-    ]);
-    const tablesData = await tablesRes.json();
-    const menuData = await menuRes.json();
-    const outletsData = await outletsRes.json();
-    const editionData = await editionRes.json().catch(() => ({}));
-    const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
-    setHotelMode(editionData?.hotelMode !== false && editionData?.edition !== "kafe");
-    setSoldOutIds(
-      new Set(
-        (Array.isArray(soldData.soldOut) ? soldData.soldOut : []).map(
-          (r: { menuItemId: string }) => r.menuItemId,
+    try {
+      const [tablesRes, menuRes, outletsRes, editionRes, soldRes] = await Promise.all([
+        fetch("/api/tables"),
+        fetch("/api/menu?dailyOnly=true"),
+        fetch("/api/outlets"),
+        fetch("/api/edition"),
+        fetch("/api/menu/sold-out"),
+      ]);
+      const tablesData = await tablesRes.json().catch(() => null);
+      const menuData = await menuRes.json().catch(() => null);
+      const outletsData = await outletsRes.json().catch(() => ({}));
+      const editionData = editionRes.ok
+        ? await editionRes.json().catch(() => ({}))
+        : {};
+      const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
+      const kafe =
+        String(editionData?.edition ?? "").toLowerCase() === "kafe" ||
+        editionData?.hotelMode === false;
+      setHotelMode(!kafe);
+      if (!tablesRes.ok) {
+        setMessage(
+          typeof tablesData?.error === "string" ? tablesData.error : tc("failed"),
+        );
+      }
+      setSoldOutIds(
+        new Set(
+          (Array.isArray(soldData.soldOut) ? soldData.soldOut : []).map(
+            (r: { menuItemId: string }) => r.menuItemId,
+          ),
         ),
-      ),
-    );
-    let banquetsData: BanquetEvent[] = [];
-    if (editionData?.hotelMode !== false && editionData?.edition !== "kafe") {
-      const banquetsRes = await fetch("/api/banquets");
-      banquetsData = await banquetsRes.json();
+      );
+      let banquetsData: BanquetEvent[] = [];
+      if (!kafe) {
+        const banquetsRes = await fetch("/api/banquets");
+        banquetsData = await banquetsRes.json().catch(() => []);
+      }
+
+      setTables(Array.isArray(tablesData) ? tablesData : []);
+      const items = Array.isArray(menuData)
+        ? menuData.flatMap((cat: { items?: MenuItem[] }) => cat.items ?? [])
+        : [];
+      setMenuItems(items);
+
+      const outletList = Array.isArray(outletsData.outlets) ? outletsData.outlets : [];
+      setOutlets(outletList);
+      const sel =
+        outletsData.selectedOutletId ??
+        outletList.find((o: Outlet) => o.code === "KAFE")?.id ??
+        outletList.find((o: Outlet) => o.code === "RESTAURANT")?.id ??
+        outletList[0]?.id ??
+        "";
+      setSelectedOutletId(sel);
+
+      setBanquets(Array.isArray(banquetsData) ? banquetsData : []);
+      setSelectedBeoId((prev) => {
+        if (prev) return prev;
+        const list = Array.isArray(banquetsData) ? banquetsData : [];
+        return list[0]?.id ?? "";
+      });
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : tc("failed"));
+    } finally {
+      setLoading(false);
     }
-
-    setTables(Array.isArray(tablesData) ? tablesData : []);
-    const items = Array.isArray(menuData)
-      ? menuData.flatMap((cat: { items?: MenuItem[] }) => cat.items ?? [])
-      : [];
-    setMenuItems(items);
-
-    const outletList = Array.isArray(outletsData.outlets) ? outletsData.outlets : [];
-    setOutlets(outletList);
-    const sel =
-      outletsData.selectedOutletId ??
-      outletList.find((o: Outlet) => o.code === "RESTAURANT")?.id ??
-      outletList[0]?.id ??
-      "";
-    setSelectedOutletId(sel);
-
-    setBanquets(Array.isArray(banquetsData) ? banquetsData : []);
-    setSelectedBeoId((prev) => {
-      if (prev) return prev;
-      const list = Array.isArray(banquetsData) ? banquetsData : [];
-      return list[0]?.id ?? "";
-    });
-
-    setLoading(false);
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     void load();
@@ -140,10 +155,14 @@ export default function FloorPanel() {
 
   async function createTicket(body: Record<string, unknown>, successKey: string, vars?: Record<string, string | number>) {
     setMessage("");
+    const payload = { ...body };
+    if (typeof payload.outletCode === "string" && !payload.outletCode.trim()) {
+      delete payload.outletCode;
+    }
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -250,7 +269,9 @@ export default function FloorPanel() {
               disabled={outletSaving || outlets.length === 0}
               className={`${INPUT_CLASS} mt-1 min-w-[10rem]`}
             >
-              {outlets.length === 0 && <option value="">{tc("loading")}</option>}
+              {outlets.length === 0 && (
+                <option value="">{loading ? tc("loading") : t("outletEmpty")}</option>
+              )}
               {outlets.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.code} — {o.name}

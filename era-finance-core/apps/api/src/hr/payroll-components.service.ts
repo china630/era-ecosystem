@@ -53,6 +53,20 @@ const DEFAULT_COMPONENTS: Array<{
     nameEn: "Overtime premium",
   },
   {
+    code: PayrollComponentCode.HOLIDAY_PREMIUM,
+    kind: PayrollComponentKind.EARNING,
+    nameAz: "Bayram əlavəsi",
+    nameRu: "Праздничная надбавка",
+    nameEn: "Holiday premium",
+  },
+  {
+    code: PayrollComponentCode.REST_PREMIUM,
+    kind: PayrollComponentKind.EARNING,
+    nameAz: "İstirahət günü əlavəsi",
+    nameRu: "Надбавка за выходной",
+    nameEn: "Rest-day premium",
+  },
+  {
     code: PayrollComponentCode.INCOME_TAX_RELIEF,
     kind: PayrollComponentKind.EARNING,
     nameAz: "Gəlir vergisi güzəşti",
@@ -93,6 +107,13 @@ const DEFAULT_COMPONENTS: Array<{
     nameAz: "Həmkarlar ittifaqı haqqı",
     nameRu: "Профсоюзный взнос",
     nameEn: "Union due",
+  },
+  {
+    code: PayrollComponentCode.UNPAID_TIME,
+    kind: PayrollComponentKind.DEDUCTION,
+    nameAz: "Ödənilməyən vaxt",
+    nameRu: "Неоплаченное время",
+    nameEn: "Unpaid time",
   },
 ];
 

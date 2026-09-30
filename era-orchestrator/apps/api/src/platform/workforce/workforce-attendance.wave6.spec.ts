@@ -41,15 +41,22 @@ describe("WorkforceAttendanceService wave 6", () => {
     },
     workforceAttendancePunch: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    workforceAttendancePunchJournal: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
     workforcePlace: { findFirst: jest.fn() },
     workforceEmployment: { findFirst: jest.fn() },
     workforceShiftAssignment: { findFirst: jest.fn() },
-    workforceShiftType: { findMany: jest.fn() },
+    workforceBrigadeMember: { findFirst: jest.fn() },
+    workforceDayOverride: { findFirst: jest.fn() },
+    workforceShiftType: { findMany: jest.fn(), findFirst: jest.fn() },
     workforceTimesheet: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -58,13 +65,22 @@ describe("WorkforceAttendanceService wave 6", () => {
       findUnique: jest.fn(),
       upsert: jest.fn(),
     },
+    $transaction: jest.fn(async (fn: (tx: any) => Promise<unknown>) =>
+      fn(prisma),
+    ),
   };
   const entitlement = { assertWorkforceHub: jest.fn() };
   const audit = { log: jest.fn() };
+  const employments = { resolvePersonProfiles: jest.fn() };
+  const catalog = { getCalendarDaysRange: jest.fn().mockResolvedValue({ days: [] }) };
+  const fitness = { listFloorIssues: jest.fn().mockResolvedValue([]) };
   const svc = new WorkforceAttendanceService(
     prisma,
     entitlement as never,
     audit as never,
+    employments as never,
+    catalog as never,
+    fitness as never,
   );
 
   const rawToken = "att_test_token_wave6_abc";
@@ -99,7 +115,20 @@ describe("WorkforceAttendanceService wave 6", () => {
         ...data,
       }),
     );
+    prisma.workforceAttendancePunchJournal.findMany.mockResolvedValue([]);
+    prisma.workforcePlace.findFirst.mockResolvedValue({
+      id: PLACE_A,
+      organizationId: ORG_A,
+      code: "SITE_A",
+      latitude: null,
+      longitude: null,
+      radiusMeters: null,
+      allowOutside: false,
+      graceMinutes: 0,
+    });
     prisma.workforceShiftAssignment.findFirst.mockResolvedValue(null);
+    prisma.workforceBrigadeMember.findFirst.mockResolvedValue(null);
+    prisma.workforceDayOverride.findFirst.mockResolvedValue(null);
     prisma.workforceShiftType.findMany.mockResolvedValue([
       { id: "night", defaultHours: 12, isNight: true },
     ]);
@@ -289,7 +318,13 @@ describe("WorkforceAttendanceService wave 6", () => {
           {
             slotIndex: 0,
             shiftTypeId: "night",
-            shiftType: { isNight: true, defaultHours: 12 },
+            shiftType: {
+              isNight: true,
+              defaultHours: 12,
+              startMinute: 20 * 60,
+              endMinute: 8 * 60,
+              breakMinutes: 0,
+            },
           },
         ],
       },

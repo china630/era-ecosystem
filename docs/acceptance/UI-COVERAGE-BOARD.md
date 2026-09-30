@@ -102,8 +102,13 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | FIN-PRC-01 / FIN-AP-01 | Finance | procurement / AP aging | Y | `/procurement/protocols`, `/reporting/ap-aging` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-EQAIME-02 / IN-01 | Finance | EQF + incoming | Y | registry / inbox | **SCREEN** | UAT-SMOKE UI | submit S2S = VENDOR/STUB |
 | FIN-HR-PAY / FA / IA | Finance | payroll / FA / IA | Y | `/payroll`, `/fixed-assets`, `/intangible-assets` | **SCREEN** | UAT-SMOKE UI | |
-| CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | kit list chrome; timesheet = payroll fact vs roster plan; month grid CP master; Finance UI link-only; not SHOW |
+| FIN-HR-MIN-01 | Finance | CP minutes → payroll premiums | Y | `/payroll` slip lines (existing) | **SCREEN** | UAT open; Status=API | Wave 11; not SHOW / not SHIPPED |
+| CP-WF-SELF-01 | Platform | Employee phone cabinet | Y | `/workspace/me` + `/workspace/workforce/requests` | **SCREEN** | UAT open; Status=API | Wave 12; not SHOW / not SHIPPED |
+| CP-WF-FIT-01 | Platform | Employment fitness files | Y | employments card + floor `FITNESS_ISSUE` | **SCREEN** | UAT open; Status=API | Wave 13; not SHOW / not SHIPPED |
+| CP-WF-VAC/ORD/STAT/TS | Platform | vacation / orders / ştat / timesheets | Y | `/workspace/workforce/*` | **SCREEN** | UAT-SMOKE-PLATFORM | kit list chrome; timesheet = payroll fact vs roster plan; month grid CP master; Finance sidebar hides timesheet when CP master, direct `/hr/timesheet` is banner only; not SHOW |
 | CP-WF-ATT-01 | Platform | FaceID / attendance → DRAFT | Y | `/workspace/workforce/attendance` | **SCREEN** | UAT field tablet open; Status=API | device token + rebuild; not SHOW |
+| CP-WF-FLOOR-01 | Platform | Live floor + suspicious queue | Y | `/workspace/workforce/floor` | **SCREEN** | UAT open; Status=API | geofence accept; not SHOW / not SHIPPED |
+| CP-WF-MIN-01 | Platform | Minute buckets on timesheet | Y | `/workspace/workforce/timesheets` read-only line | **SCREEN** | UAT open; Status=API | hours=normal only; not SHOW |
 | CP-WF-EMP-01 / CP-WF-SEC-01 | Platform | employments hire/card + Login & access + security matrix/bindings | Y | `/workspace/workforce/employments`, `/security`, `/security/bindings`, `/security/audit` | **SCREEN** | UAT-SMOKE-PLATFORM | zoned hire/card `max-w-5xl` + MDM FIN search; grant-access; post-hire order bridge; per-person satellite checkboxes; matrix = position defaults; not SHOW |
 | CP-WF-MIG-01 | Platform | Evrostar workforce migration wizard | Y | `/workspace/workforce/migration` | **SCREEN** | UAT open; COVERAGE **API** | nine steps + skip; not SHOW / not SHIPPED |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
@@ -164,6 +169,11 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-09-30 | CP-WF-FIT-01 fitness files **SCREEN** (employments + floor); COVERAGE Status=API. Not SHOW / not SHIPPED. |
+| 2026-09-30 | CP-WF-SELF-01 employee cabinet **SCREEN** (`/workspace/me` + requests); COVERAGE Status=API. Not SHOW / not SHIPPED. |
+| 2026-09-30 | FIN-HR-MIN-01 CP minutes → payroll premiums **SCREEN** (existing `/payroll` slip); COVERAGE Status=API. Not SHOW / not SHIPPED. |
+| 2026-09-30 | CP-WF-MIN-01 minute buckets **SCREEN** (read-only timesheet line); COVERAGE Status=API. Not SHOW / not SHIPPED. |
+| 2026-09-30 | CP-WF-FLOOR-01 live floor **SCREEN** (`/workspace/workforce/floor`); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-24 | CP-WF-MIG-01 migration wizard **SCREEN** (`/workspace/workforce/migration`); COVERAGE Status=API. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-24 | CP-WF-ROSTER-01 brigades transfer + history **SCREEN** (`/workspace/workforce/shifts/brigades`); dated membership API landed. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-23 | Platform Workforce lists: EraListWorkspace/EraDataGrid fill + empty row; ModalShell footer stripe removed; roster vs timesheet copy. Class stays **SCREEN** (not SHOW / not SHIPPED). |

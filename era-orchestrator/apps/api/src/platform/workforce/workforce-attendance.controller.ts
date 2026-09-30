@@ -19,6 +19,7 @@ import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   AttendanceCsvImportDto,
   AttendanceRebuildDto,
+  AcceptAttendancePunchDto,
   CreateAttendanceDeviceDto,
   UpsertAttendanceIdentityDto,
 } from "./dto/workforce-attendance.dto";
@@ -30,6 +31,25 @@ import { WorkforceAttendanceService } from "./workforce-attendance.service";
 @UseGuards(PermissionsGuard)
 export class WorkforceAttendanceController {
   constructor(private readonly attendance: WorkforceAttendanceService) {}
+
+  @Get("floor")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ATTENDANCE)
+  @ApiOperation({
+    summary:
+      "Wave 9 live floor board for a Baku calendar day + suspicious punch queue",
+  })
+  floorBoard(
+    @OrganizationId() organizationId: string,
+    @Query("date") date?: string,
+    @Query("orgUnitId") orgUnitId?: string,
+    @Query("placeId") placeId?: string,
+  ) {
+    return this.attendance.floorBoard(organizationId, {
+      date,
+      orgUnitId,
+      placeId,
+    });
+  }
 
   @Get("devices")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ATTENDANCE)
@@ -89,6 +109,31 @@ export class WorkforceAttendanceController {
       status,
       limit: Number.isFinite(limit) ? limit : undefined,
     });
+  }
+
+  @Get("punches/:id")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ATTENDANCE)
+  @ApiOperation({ summary: "Punch detail + correction journal" })
+  getPunch(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    return this.attendance.getPunchDetail(organizationId, id);
+  }
+
+  @Post("punches/:id/accept")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ATTENDANCE)
+  @ApiOperation({
+    summary:
+      "Accept SUSPICIOUS punch for rebuild (immutable raw; optional occurredAt overlay)",
+  })
+  acceptPunch(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: AcceptAttendancePunchDto,
+  ) {
+    return this.attendance.acceptPunch(organizationId, id, user.sub, dto);
   }
 
   @Post("rebuild")

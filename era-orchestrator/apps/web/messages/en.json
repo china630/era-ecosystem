@@ -557,18 +557,24 @@
     "lastName": "Last name",
     "email": "Email",
     "password": "Password",
+    "passwordHint": "At least 8 characters",
     "cafeName": "Café name",
     "taxId": "VÖEN",
     "voenHint": "Azerbaijan legal entity ID — 10 digits",
     "invalidVoen": "VÖEN must be exactly 10 digits",
-    "extras": "Add-ons",
+    "plan": "Plan",
+    "gate": "ERA Kafe · 29 AZN",
+    "gateHint": "1 till, menu, queue",
     "zal": "Floor — 5 waiter PINs (+19 AZN)",
     "kitchen": "Kitchen KDS (+19 AZN)",
     "qrMenu": "QR menu, read-only (+19 AZN)",
     "submit": "Open café",
     "busy": "…",
     "alreadyHaveAccount": "Already have an ERA account?",
-    "signupFailed": "Sign-up failed"
+    "signupFailed": "Sign-up failed",
+    "emailTaken": "This email is already registered — sign in",
+    "voenTaken": "This VÖEN is already linked",
+    "networkError": "Network error. Try again."
   },
   "registerOrg": {
     "title": "Organization registration",
@@ -650,7 +656,10 @@
     "wfPlaces": "Workplaces",
     "wfShifts": "Shifts",
     "wfRoster": "Roster",
-    "wfAttendance": "Attendance"
+    "wfAttendance": "Attendance",
+    "wfFloor": "Floor",
+    "wfRequests": "Requests",
+    "wfMe": "My cabinet"
   },
   "headerStrip": {
     "trialUntil": "Trial until {date}",
@@ -1229,7 +1238,31 @@
     "orderDraftMissing": "Hire succeeded, but the draft order was not created. Open the orders list to add it.",
     "draftOrderBanner": "{count} draft order(s)",
     "hireWithoutFinBanner": "FIN is empty — hire will create or match a person without AZ FIN.",
-    "hireWithoutFinConfirm": "Hire without FIN? Identity matching will be weaker."
+    "hireWithoutFinConfirm": "Hire without FIN? Identity matching will be weaker.",
+    "enableCabinet": "Enable phone cabinet",
+    "cabinetEmail": "Login email",
+    "cabinetReady": "One-time password:",
+    "cabinetLinked": "Cabinet linked",
+    "fitnessTitle": "Fitness files",
+    "fitnessHint": "Required kinds are set by the organization. Files stay on this employment only.",
+    "fitnessRequired": "required",
+    "fitnessIssued": "Issued on",
+    "fitnessValidUntil": "Valid until",
+    "fitnessUpload": "Upload",
+    "fitnessDownload": "Download",
+    "fitnessIssuedRequired": "Issued date is required",
+    "fitnessValidRequired": "Valid-until date is required",
+    "fitnessCriminalEmployerRule": "Employer rule — not labeled as a legal requirement.",
+    "fitnessKind": {
+      "HEALTH": "Health certificate",
+      "NARCOLOGY": "Narcology certificate",
+      "CRIMINAL_RECORD": "Criminal-record certificate"
+    },
+    "fitnessStatus": {
+      "MISSING": "Missing",
+      "PRESENT": "Present",
+      "EXPIRED": "Expired"
+    }
   },
   "workforceSecurity": {
     "title": "Access & security — role matrix",
@@ -1671,6 +1704,13 @@
     "loadFailed": "Failed to load timesheet",
     "empty": "No active employments.",
     "sourceFaceid": "FaceID",
+    "minNormal": "N",
+    "minShortfall": "SF",
+    "minOt": "OT",
+    "minNight": "Nt",
+    "minRest": "R",
+    "minHoliday": "H",
+    "minBreak": "Br",
     "sourceRoster": "Roster",
     "sourceOps": "Ops",
     "type": {
@@ -1807,8 +1847,8 @@
     "overwriteFacts": "Overwrite occupied cells",
     "overwriteFactsHint": "Replaces manual and FaceID marks with the plan. Confirmation required.",
     "overwriteConfirm": "Existing timesheet marks (including manual and FaceID) will be replaced by the plan. Continue?",
-    "assignmentsHeading": "Shift assignments",
-    "assignmentsEmpty": "No assignments yet. Add a shift for a brigade or person.",
+    "assignmentsHeading": "Assignments",
+    "assignmentsEmpty": "No assignments yet.",
     "editAssignment": "Edit assignment",
     "endAssignment": "Close",
     "endAssignmentConfirm": "Today drops off the plan. If the assignment starts today or later, that start day stays.",
@@ -1858,7 +1898,6 @@
     "month": "Month",
     "year": "Year",
     "shiftTypesHeading": "Shift types",
-    "assignmentsHeading": "Assignments",
     "assignmentsHint": "Who is assigned to a place and cycle. The month plan shows these people only.",
     "brigadesHeading": "Brigades",
     "cyclesHeading": "Cycles",
@@ -1867,7 +1906,6 @@
     "gapsHeading": "Uncovered posts",
     "conflictTitle": "Two assignments: {places}",
     "rosterEmpty": "No shift assignments this month.",
-    "assignmentsEmpty": "No assignments yet.",
     "transfer": "Transfer",
     "transferTitle": "Transfer members",
     "leaveCrew": "Remove from brigade",
@@ -1885,7 +1923,47 @@
     "allBrigades": "All brigades",
     "allPeople": "All people",
     "openEnded": "Open",
-    "renameBrigade": "Rename brigade"
+    "renameBrigade": "Rename brigade",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "radiusMeters": "Geofence radius (m)",
+    "allowOutside": "Allow outside (still needs accept)",
+    "graceMinutes": "Shift grace (minutes)"
+  },
+  "workforceFloor": {
+    "title": "Floor board",
+    "subtitle": "Who is on site today (Asia/Baku). Suspicious punches wait for HR accept before rebuild.",
+    "date": "Date",
+    "loadError": "Could not load floor board",
+    "suspiciousTitle": "Suspicious punches",
+    "suspiciousEmpty": "No punches waiting for review.",
+    "allowOutsideHint": "expected outside",
+    "accept": "Accept",
+    "acceptTitle": "Accept punch",
+    "acceptReason": "Reason",
+    "acceptError": "Accept failed",
+    "group": {
+      "ARRIVED": "Arrived",
+      "SHIFT_STARTED_NO_IN": "Shift started — no IN",
+      "NOT_ARRIVED": "Not arrived yet",
+      "STILL_INSIDE": "Still inside",
+      "LEFT_EARLY": "Left early",
+      "LATE": "Late",
+      "OPEN_BREAK": "Open break",
+      "PENDING_REQUEST": "Pending request",
+      "FITNESS_ISSUE": "Fitness issue"
+    },
+    "groups": {},
+    "fitnessKind": {
+      "HEALTH": "Health",
+      "NARCOLOGY": "Narcology",
+      "CRIMINAL_RECORD": "Criminal record"
+    },
+    "fitnessStatus": {
+      "MISSING": "missing",
+      "PRESENT": "present",
+      "EXPIRED": "expired"
+    }
   },
   "workforceAttendance": {
     "title": "Attendance",
@@ -2012,5 +2090,39 @@
       "salary": "Contract salary and MGMT rate in Finance.",
       "year-grid": "Evidence only. No write."
     }
+  },
+  "workforceMe": {
+    "title": "My work",
+    "subtitle": "Requests, announcements, and payslip for your employment",
+    "citizenship": "Citizenship",
+    "unread": "{count} unread announcements",
+    "fullDay": "Full-day leave",
+    "absenceKind": "Absence kind",
+    "hourly": "Hourly leave",
+    "hourlyPaidLabel": "Paid?",
+    "hourlyPaid": "Paid",
+    "hourlyUnpaid": "Unpaid",
+    "advance": "Advance request",
+    "note": "Note",
+    "submit": "Submit",
+    "announcements": "Announcements",
+    "noAnnouncements": "No announcements",
+    "markRead": "Mark read",
+    "payslip": "Payslip",
+    "loadPayslip": "Load last closed month",
+    "noPayslip": "No posted payslip"
+  },
+  "workforceRequests": {
+    "title": "Workforce requests",
+    "subtitle": "Approve employee leave, hourly leave, and advances",
+    "absences": "Full-day absences",
+    "hourly": "Hourly leave",
+    "advances": "Advances",
+    "approve": "Approve",
+    "reject": "Reject",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "announce": "Publish announcement",
+    "publish": "Publish"
   }
 }

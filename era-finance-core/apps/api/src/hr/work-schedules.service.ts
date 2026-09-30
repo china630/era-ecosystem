@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { WorkScheduleKind, Decimal } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { AZ_DOUBLE_RATE_FLOOR, floorPremiumRate } from "./payroll-minute-premiums";
 
 @Injectable()
 export class WorkSchedulesService {
@@ -34,6 +35,8 @@ export class WorkSchedulesService {
       nightPremiumRate?: number;
       eveningPremiumRate?: number;
       overtimePremiumRate?: number;
+      holidayPremiumRate?: number;
+      restPremiumRate?: number;
     },
   ) {
     const name = dto.name.trim();
@@ -46,7 +49,15 @@ export class WorkSchedulesService {
         dayHours: new Decimal(dto.dayHours ?? 8),
         nightPremiumRate: new Decimal(dto.nightPremiumRate ?? 1.5),
         eveningPremiumRate: new Decimal(dto.eveningPremiumRate ?? 1.2),
-        overtimePremiumRate: new Decimal(dto.overtimePremiumRate ?? 2),
+        overtimePremiumRate: floorPremiumRate(
+          dto.overtimePremiumRate ?? AZ_DOUBLE_RATE_FLOOR,
+        ),
+        holidayPremiumRate: floorPremiumRate(
+          dto.holidayPremiumRate ?? AZ_DOUBLE_RATE_FLOOR,
+        ),
+        restPremiumRate: floorPremiumRate(
+          dto.restPremiumRate ?? AZ_DOUBLE_RATE_FLOOR,
+        ),
       },
     });
   }
@@ -61,6 +72,8 @@ export class WorkSchedulesService {
       nightPremiumRate?: number;
       eveningPremiumRate?: number;
       overtimePremiumRate?: number;
+      holidayPremiumRate?: number;
+      restPremiumRate?: number;
     },
   ) {
     await this.getOne(organizationId, id);
@@ -77,7 +90,15 @@ export class WorkSchedulesService {
           ? { eveningPremiumRate: new Decimal(dto.eveningPremiumRate) }
           : {}),
         ...(dto.overtimePremiumRate != null
-          ? { overtimePremiumRate: new Decimal(dto.overtimePremiumRate) }
+          ? {
+              overtimePremiumRate: floorPremiumRate(dto.overtimePremiumRate),
+            }
+          : {}),
+        ...(dto.holidayPremiumRate != null
+          ? { holidayPremiumRate: floorPremiumRate(dto.holidayPremiumRate) }
+          : {}),
+        ...(dto.restPremiumRate != null
+          ? { restPremiumRate: floorPremiumRate(dto.restPremiumRate) }
           : {}),
       },
     });

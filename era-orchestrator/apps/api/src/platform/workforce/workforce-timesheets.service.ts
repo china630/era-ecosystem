@@ -775,6 +775,15 @@ export class WorkforceTimesheetsService {
       workDate: Date;
       hours: Prisma.Decimal;
       type: WorkforceTimesheetEntryType;
+      normalMinutes: number | null;
+      shortfallMinutes: number | null;
+      overtimeMinutes: number | null;
+      nightMinutes: number | null;
+      restDayMinutes: number | null;
+      holidayMinutes: number | null;
+      hourlyLeaveMinutes: number | null;
+      hourlyLeavePaid: boolean | null;
+      breakMinutes: number | null;
       employment: {
         globalPersonId: string;
         financeEmployeeId: string | null;
@@ -783,15 +792,39 @@ export class WorkforceTimesheetsService {
   ) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
     const approvedAt = new Date().toISOString();
-    const rows = entries.map((e) => ({
-      cpTimesheetEntryId: e.id,
-      cpEmploymentId: e.employmentId,
-      globalPersonId: e.employment.globalPersonId,
-      financeEmployeeId: e.employment.financeEmployeeId ?? undefined,
-      workDate: isoDay(e.workDate),
-      hours: Number(e.hours),
-      type: e.type,
-    }));
+    const rows = entries.map((e) => {
+      const hasMinutes =
+        e.normalMinutes != null ||
+        e.overtimeMinutes != null ||
+        e.breakMinutes != null ||
+        e.nightMinutes != null ||
+        e.restDayMinutes != null ||
+        e.holidayMinutes != null;
+      return {
+        cpTimesheetEntryId: e.id,
+        cpEmploymentId: e.employmentId,
+        globalPersonId: e.employment.globalPersonId,
+        financeEmployeeId: e.employment.financeEmployeeId ?? undefined,
+        workDate: isoDay(e.workDate),
+        hours: Number(e.hours),
+        type: e.type,
+        ...(hasMinutes
+          ? {
+              minutes: {
+                normalMinutes: e.normalMinutes ?? 0,
+                shortfallMinutes: e.shortfallMinutes ?? 0,
+                overtimeMinutes: e.overtimeMinutes ?? 0,
+                nightMinutes: e.nightMinutes ?? 0,
+                restDayMinutes: e.restDayMinutes ?? 0,
+                holidayMinutes: e.holidayMinutes ?? 0,
+                hourlyLeaveMinutes: e.hourlyLeaveMinutes ?? 0,
+                breakMinutes: e.breakMinutes ?? 0,
+                hourlyLeavePaid: e.hourlyLeavePaid === true,
+              },
+            }
+          : {}),
+      };
+    });
     await this.satelliteEvents.enqueue({
       type: WORKFORCE_TIMESHEET_APPROVED,
       organizationId: link.workforceScope.anchorOrganizationId,

@@ -37,6 +37,38 @@ export class CreateWorkforcePlaceDto {
   @IsOptional()
   @IsUUID()
   responsibleOrgUnitId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50000)
+  radiusMeters?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  allowOutside?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(180)
+  graceMinutes?: number;
 }
 
 export class UpdateWorkforcePlaceDto {
@@ -53,6 +85,38 @@ export class UpdateWorkforcePlaceDto {
   @IsOptional()
   @IsUUID()
   responsibleOrgUnitId?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50000)
+  radiusMeters?: number | null;
+
+  @IsOptional()
+  @IsBoolean()
+  allowOutside?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(180)
+  graceMinutes?: number;
 }
 
 export class CreateWorkforceShiftTypeDto {

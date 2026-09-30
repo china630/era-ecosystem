@@ -446,6 +446,15 @@ exports.Prisma.WorkforceTimesheetEntryScalarFieldEnum = {
   source: 'source',
   sourceRef: 'sourceRef',
   status: 'status',
+  normalMinutes: 'normalMinutes',
+  shortfallMinutes: 'shortfallMinutes',
+  overtimeMinutes: 'overtimeMinutes',
+  nightMinutes: 'nightMinutes',
+  restDayMinutes: 'restDayMinutes',
+  holidayMinutes: 'holidayMinutes',
+  hourlyLeaveMinutes: 'hourlyLeaveMinutes',
+  hourlyLeavePaid: 'hourlyLeavePaid',
+  breakMinutes: 'breakMinutes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -457,6 +466,11 @@ exports.Prisma.WorkforcePlaceScalarFieldEnum = {
   name: 'name',
   status: 'status',
   responsibleOrgUnitId: 'responsibleOrgUnitId',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  radiusMeters: 'radiusMeters',
+  allowOutside: 'allowOutside',
+  graceMinutes: 'graceMinutes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -496,10 +510,96 @@ exports.Prisma.WorkforceAttendancePunchScalarFieldEnum = {
   externalId: 'externalId',
   status: 'status',
   placeMismatch: 'placeMismatch',
+  reviewStatus: 'reviewStatus',
+  reviewReasons: 'reviewReasons',
+  latitude: 'latitude',
+  longitude: 'longitude',
   pairId: 'pairId',
   hoursAttributed: 'hoursAttributed',
   workDate: 'workDate',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceAttendancePunchJournalScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  punchId: 'punchId',
+  actorUserId: 'actorUserId',
+  action: 'action',
+  reason: 'reason',
+  beforeJson: 'beforeJson',
+  afterJson: 'afterJson',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceHourlyLeaveRequestScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  workDate: 'workDate',
+  startMinute: 'startMinute',
+  endMinute: 'endMinute',
+  paid: 'paid',
+  note: 'note',
+  status: 'status',
+  submittedAt: 'submittedAt',
+  submittedByUserId: 'submittedByUserId',
+  decidedAt: 'decidedAt',
+  decidedByUserId: 'decidedByUserId',
+  rejectionReason: 'rejectionReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAdvanceRequestScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  amountAzn: 'amountAzn',
+  note: 'note',
+  status: 'status',
+  submittedAt: 'submittedAt',
+  submittedByUserId: 'submittedByUserId',
+  decidedAt: 'decidedAt',
+  decidedByUserId: 'decidedByUserId',
+  rejectionReason: 'rejectionReason',
+  financeQueuedAt: 'financeQueuedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAnnouncementScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  body: 'body',
+  publishedByUserId: 'publishedByUserId',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceAnnouncementReadScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  announcementId: 'announcementId',
+  employmentId: 'employmentId',
+  readAt: 'readAt'
+};
+
+exports.Prisma.WorkforceFitnessRecordScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  kind: 'kind',
+  issuedOn: 'issuedOn',
+  validUntil: 'validUntil',
+  storageKey: 'storageKey',
+  contentType: 'contentType',
+  byteSize: 'byteSize',
+  originalName: 'originalName',
+  attachedByUserId: 'attachedByUserId',
+  attachedAt: 'attachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.WorkforceShiftTypeScalarFieldEnum = {
@@ -1407,7 +1507,9 @@ exports.WorkforceAttendanceDeviceStatus = exports.$Enums.WorkforceAttendanceDevi
 
 exports.WorkforceAttendanceDirection = exports.$Enums.WorkforceAttendanceDirection = {
   IN: 'IN',
-  OUT: 'OUT'
+  OUT: 'OUT',
+  BREAK_START: 'BREAK_START',
+  BREAK_END: 'BREAK_END'
 };
 
 exports.WorkforceAttendancePunchStatus = exports.$Enums.WorkforceAttendancePunchStatus = {
@@ -1416,6 +1518,30 @@ exports.WorkforceAttendancePunchStatus = exports.$Enums.WorkforceAttendancePunch
   OPEN: 'OPEN',
   PAIRED: 'PAIRED',
   REJECTED: 'REJECTED'
+};
+
+exports.WorkforceAttendanceReviewStatus = exports.$Enums.WorkforceAttendanceReviewStatus = {
+  CLEAR: 'CLEAR',
+  SUSPICIOUS: 'SUSPICIOUS',
+  ACCEPTED: 'ACCEPTED'
+};
+
+exports.WorkforceAttendanceJournalAction = exports.$Enums.WorkforceAttendanceJournalAction = {
+  ACCEPT: 'ACCEPT',
+  NOTE: 'NOTE'
+};
+
+exports.WorkforceSelfRequestStatus = exports.$Enums.WorkforceSelfRequestStatus = {
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.WorkforceFitnessKind = exports.$Enums.WorkforceFitnessKind = {
+  HEALTH: 'HEALTH',
+  NARCOLOGY: 'NARCOLOGY',
+  CRIMINAL_RECORD: 'CRIMINAL_RECORD'
 };
 
 exports.WorkforceDayOverrideKind = exports.$Enums.WorkforceDayOverrideKind = {
@@ -1666,6 +1792,12 @@ exports.Prisma.ModelName = {
   WorkforceAttendanceDevice: 'WorkforceAttendanceDevice',
   WorkforceAttendanceIdentity: 'WorkforceAttendanceIdentity',
   WorkforceAttendancePunch: 'WorkforceAttendancePunch',
+  WorkforceAttendancePunchJournal: 'WorkforceAttendancePunchJournal',
+  WorkforceHourlyLeaveRequest: 'WorkforceHourlyLeaveRequest',
+  WorkforceAdvanceRequest: 'WorkforceAdvanceRequest',
+  WorkforceAnnouncement: 'WorkforceAnnouncement',
+  WorkforceAnnouncementRead: 'WorkforceAnnouncementRead',
+  WorkforceFitnessRecord: 'WorkforceFitnessRecord',
   WorkforceShiftType: 'WorkforceShiftType',
   WorkforceShiftCycle: 'WorkforceShiftCycle',
   WorkforceShiftCycleSlot: 'WorkforceShiftCycleSlot',

@@ -23,21 +23,34 @@ export async function upsertFnbOrgSnapshot(
     activeModules?: string[];
   },
 ): Promise<FnbOrgProfileRow> {
-  const edition = (snap.edition ?? "hotel").trim() || "hotel";
+  const existing = await prisma.fnbOrgProfile.findUnique({
+    where: { organizationId },
+  });
+  const edition =
+    (snap.edition?.trim() || existing?.edition || "hotel").trim() || "hotel";
   const kafe = edition.toLowerCase() === "kafe";
-  const activeModules = snap.activeModules ?? [];
+  const activeModules =
+    snap.activeModules !== undefined
+      ? snap.activeModules
+      : (existing?.activeModules ?? []);
+  const waiterPinPacks = kafe
+    ? activeModules.includes("fnb_waiter_pin")
+      ? 1
+      : 0
+    : (existing?.waiterPinPacks ?? 1);
   const row = await prisma.fnbOrgProfile.upsert({
     where: { organizationId },
     create: {
       organizationId,
       edition,
       hotelMode: !kafe,
-      waiterPinPacks: kafe && activeModules.includes("fnb_waiter_pin") ? 1 : kafe ? 0 : 1,
+      waiterPinPacks,
       activeModules,
     },
     update: {
       edition,
       hotelMode: !kafe,
+      waiterPinPacks,
       activeModules,
     },
   });

@@ -360,7 +360,7 @@ npm run db:bootstrap-local   # первый раз: migrate + seed
 npm run dev                  # API :4100 + Web :3100
 ```
 
-**Lab café org (not sentinel `demo-org`):** VÖEN `0123456789`, ERA ID `100000`, CP `owner@demo.com` / `12345678`. Seed: `cd era-orchestrator && npm run seed:lab-demo`, then `cd era-fnb-pos && npm run db:seed:demo`.
+**Lab café org (not sentinel `demo-org`):** VÖEN `0123456789`, ERA ID `100000`, CP `owner@demo.com` / `12345678`. Seed: `cd era-orchestrator && npm run seed:lab-demo` (subscription + F&B bind/runtime-config), then `cd era-fnb-pos && npm run db:seed:demo` (outlet `KAFE`, tables, owner login).
 
 **Control-plane auth cutover (dev):**
 

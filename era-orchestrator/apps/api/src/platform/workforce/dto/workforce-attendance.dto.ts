@@ -67,3 +67,17 @@ export class AttendanceCsvImportDto {
   @IsString()
   xlsxBase64?: string;
 }
+
+export class AcceptAttendancePunchDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(512)
+  reason!: string;
+
+  /** Optional overlay for rebuild pairing; raw punch.occurredAt stays immutable. */
+  @IsOptional()
+  @IsString()
+  @MinLength(10)
+  @MaxLength(40)
+  occurredAt?: string;
+}

@@ -2,8 +2,9 @@ import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
-import { ensureOutletByCode } from "@/lib/outlet-helpers";
+import { findOpsOutlet, resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     if (denied) return denied;
     const url = new URL(request.url);
     const dailyOnly = url.searchParams.get("dailyOnly") === "true";
-    const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
+    const outletCodeParam = url.searchParams.get("outletCode");
     const includeInactive = url.searchParams.get("includeInactive") === "true";
     // Inactive catalog rows are admin-only (menu matrix).
     if (
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
       return jsonOk(categories);
     }
 
-    const outlet = await prisma.outlet.findFirst({ where: { code: outletCode } });
+    const outlet = await findOpsOutlet(outletCodeParam);
     if (!outlet) return jsonOk(categories);
 
     const boardDate = bakuCivilUtcDate(todayBakuYmd());
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
 }
 
 const createSchema = z.object({
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1).optional(),
   categoryId: z.string().min(1).optional(),
   categoryName: z.string().min(1).optional(),
   plu: z.string().min(1),
@@ -103,7 +104,8 @@ export async function POST(request: Request) {
     if (denied) return denied;
 
     const body = createSchema.parse(await request.json());
-    const outlet = await ensureOutletByCode(body.outletCode);
+    const organizationId = requestOrganizationId();
+    const outlet = await resolveOpsOutlet(body.outletCode);
 
     let category =
       body.categoryId != null
@@ -116,6 +118,7 @@ export async function POST(request: Request) {
       if (!category) {
         category = await prisma.menuCategory.create({
           data: {
+            organizationId,
             outletId: outlet.id,
             name: body.categoryName,
             sortOrder: 99,
@@ -135,6 +138,7 @@ export async function POST(request: Request) {
     const item = await prisma.$transaction(async (tx) => {
       const created = await tx.menuItem.create({
         data: {
+          organizationId,
           categoryId: category!.id,
           plu: body.plu,
           name: body.name,

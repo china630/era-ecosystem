@@ -2,7 +2,9 @@
 
 ## Public hub (Orchestrator web)
 
-Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_WEB_URL`, default `:3000`): `/login`, `/register`, `/register-org`, `/pricing`, `/help`, `/terms`, `/partner`. Finance and satellites link out via `orchPublicHref()`; Finance `/pricing` and `/register*` redirect to Orch. Canonical FAQ: Orch `/help`. See [ECOSYSTEM_URLS.md](./ECOSYSTEM_URLS.md).
+Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_WEB_URL`, default `:3000`): `/login`, `/register`, `/register-org`, `/kafe`, `/pricing`, `/help`, `/terms`, `/partner`. Finance and satellites link out via `orchPublicHref()`; Finance `/pricing` and `/register*` redirect to Orch. Canonical FAQ: Orch `/help`. See [ECOSYSTEM_URLS.md](./ECOSYSTEM_URLS.md).
+
+`POST /v1/public/kafe/onboard` (throttled, `@Public`) creates the CP user+org (`subscriptionPlan=kafe`, SHARED F&B endpoint) then S2S `POST {FNB_POS_API_URL}/api/internal/v1/kafe/bootstrap-owner` so the owner password works on satellite `/login` (not PIN). After signup the browser prefers HMAC SSO to the pool (`/sso/callback`); fallback is `/login?org={publicOrgNumber}`. Lab org ERA ID **100000** is seeded with the same subscription modules + bind/runtime-config (`npm run seed:lab-demo` in orchestrator).
 
 ## SSO (Epic A — Phase A complete)
 
@@ -330,7 +332,7 @@ User JWT composition API: `v1/holdings/*` (create, attach org, members). Web: Or
 
 **Planned (Evrostar pilot, not in contracts yet):** the labor roster stays CP-local and does not write timesheet cells (`materialize-roster` is 410). Optional later: `WORKFORCE_MGMT_LABOR_DELTA_POSTED` (Finance MGMT book only). ADR: [evrostar-workforce-pilot.md](./adr/evrostar-workforce-pilot.md).
 
-**Attendance punches (wave 6):** Vendor-agnostic HTTP ingest — not a satellite event. `POST /platform/v1/workforce/attendance/punches` with per-device Bearer `att_*` (optional HMAC). Schema: `@era/contracts` `workforceAttendancePunchBatchSchema` (`packages/era-contracts/src/workforce/attendance.ts`). Rebuild pairs IN/OUT → DRAFT timesheet `source=faceid`. See [evrostar-wave-6.md](./runbooks/evrostar-wave-6.md). Do **not** use `SATELLITE_EVENT_SERVICE_TOKEN` on tablet URLs.
+**Attendance punches (wave 6 + wave 9 + wave 10):** Vendor-agnostic HTTP ingest — not a satellite event. `POST /platform/v1/workforce/attendance/punches` with per-device Bearer `att_*` (optional HMAC). Schema: `@era/contracts` `workforceAttendancePunchBatchSchema` including optional `latitude` / `longitude` and directions `IN` / `OUT` / `BREAK_START` / `BREAK_END`. Rebuild pairs presence and breaks → DRAFT timesheet `source=faceid` with minute buckets; skips `reviewStatus=SUSPICIOUS` until HR Accept. Floor board: `GET /platform/v1/workforce/attendance/floor` (+ `OPEN_BREAK`). See [evrostar-wave-6.md](./runbooks/evrostar-wave-6.md), [evrostar-wave-9.md](./runbooks/evrostar-wave-9.md), [evrostar-wave-10.md](./runbooks/evrostar-wave-10.md). Do **not** use `SATELLITE_EVENT_SERVICE_TOKEN` on tablet URLs. Dedicated phone app remains later — [cp-workforce-floor-attendance.md](./adr/cp-workforce-floor-attendance.md).
 
 Absence `kind` (TK AZ set): `VACATION` (əmək məzuniyyəti) → Finance `LABOR_LEAVE`, `SICK` → `SICK_LEAVE`, `UNPAID` → `UNPAID_LEAVE`, `SOCIAL_LEAVE` (maternity) → `SOCIAL_LEAVE`, `EDUCATIONAL_LEAVE` → `EDUCATIONAL_LEAVE`, `ADMINISTRATIVE` → `UNPAID_LEAVE`. `BUSINESS_TRIP` (ezamiyyət) is an attendance record, not a payroll leave, so it is **not** mirrored to Finance (sync skips it).
 
@@ -384,7 +386,8 @@ Do not treat a grant to `industry_retail` (etc.) as a working POS login. Track t
 | Event | Direction | Purpose |
 |-------|-----------|---------|
 | `WORKFORCE_TIMESHEET_BATCH_IMPORTED` | construction → orchestrator | Upsert cells on CP month `WorkforceTimesheet` |
-| `WORKFORCE_TIMESHEET_APPROVED` | orchestrator → Finance (`hr_full`) | Mirror hours + optional `rows[].type`; **set Finance `Timesheet.status=APPROVED`** for touched year/month (idempotent; Evrostar wave 1). Finance mutations 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`; Finance UI link-only (no local edit). CP cherry-pick approve retired (410). |
+| `WORKFORCE_TIMESHEET_APPROVED` | orchestrator → Finance (`hr_full`) | Mirror hours + optional `rows[].type` + optional `rows[].minutes` (wave 10 buckets → Finance minute columns; optional `hourlyLeavePaid`). **Wave 11:** when minute columns are present, Finance `hr_full` DRAFT payroll prices them into `OVERTIME_PREMIUM` / `NIGHT_PREMIUM` / `HOLIDAY_PREMIUM` / `REST_PREMIUM` / `UNPAID_TIME` (legacy `overtimeHours`/`nightHours`/`eveningHours` ignored to avoid double pay; paid hourly leave excluded from unpaid). **Set Finance `Timesheet.status=APPROVED`** for touched year/month (idempotent; Evrostar wave 1). Finance mutations 409 `TIMESHEET_MASTER_IS_CP` when `platform_workforce`; Finance sidebar hides the timesheet item (also on TIER_3); direct `/hr/timesheet` is a banner link (no local edit). CP cherry-pick approve retired (410). |
+| Advance line (wave 12) | orchestrator → Finance internal | `POST /internal/v1/workforce/payroll/advance-line` (Bearer `FINANCE_INTERNAL_SERVICE_TOKEN`): attach `ADVANCE` on an existing DRAFT slip and reduce `net`, or store `PayrollAdvanceHold` until the next draft. Never POSTED/PAID. Payslip read: `GET /internal/v1/workforce/payroll/payslip` (POSTED only, no `internalRate`). |
 
 ADR: [workforce-timesheet-construction-bridge.md](./adr/workforce-timesheet-construction-bridge.md).
 

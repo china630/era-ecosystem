@@ -165,7 +165,10 @@ export function SatellitePageView({
             <Link href={pricingHrefForSatellite(slug)} className={`${PRIMARY_BUTTON_CLASS} text-sm no-underline`}>
               {copy.pricingCta}
             </Link>
-            <Link href="/register-org" className={`${SECONDARY_BUTTON_CLASS} text-sm no-underline`}>
+            <Link
+              href={slug === "fnb" ? "/kafe" : "/register-org"}
+              className={`${SECONDARY_BUTTON_CLASS} text-sm no-underline`}
+            >
               {copy.registerCta}
             </Link>
           </div>

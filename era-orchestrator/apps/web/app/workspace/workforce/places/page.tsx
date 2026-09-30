@@ -31,6 +31,11 @@ type PlaceRow = {
   name: string;
   status: string;
   responsibleOrgUnitId: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  radiusMeters?: number | null;
+  allowOutside?: boolean;
+  graceMinutes?: number;
 };
 
 type OrgUnit = { id: string; name: string; status?: string };
@@ -53,6 +58,11 @@ export default function WorkforcePlacesPage() {
   const [formName, setFormName] = useState("");
   const [formStatus, setFormStatus] = useState("ACTIVE");
   const [formOrgUnitId, setFormOrgUnitId] = useState("");
+  const [formLat, setFormLat] = useState("");
+  const [formLng, setFormLng] = useState("");
+  const [formRadius, setFormRadius] = useState("");
+  const [formAllowOutside, setFormAllowOutside] = useState(false);
+  const [formGrace, setFormGrace] = useState("0");
   const [formError, setFormError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
   const [archiveRow, setArchiveRow] = useState<PlaceRow | null>(null);
@@ -97,6 +107,11 @@ export default function WorkforcePlacesPage() {
     setFormName("");
     setFormStatus("ACTIVE");
     setFormOrgUnitId("");
+    setFormLat("");
+    setFormLng("");
+    setFormRadius("");
+    setFormAllowOutside(false);
+    setFormGrace("0");
     setFormError(null);
     setEditState({ mode: "create" });
   }
@@ -106,6 +121,11 @@ export default function WorkforcePlacesPage() {
     setFormName(row.name);
     setFormStatus(row.status);
     setFormOrgUnitId(row.responsibleOrgUnitId ?? "");
+    setFormLat(row.latitude != null ? String(row.latitude) : "");
+    setFormLng(row.longitude != null ? String(row.longitude) : "");
+    setFormRadius(row.radiusMeters != null ? String(row.radiusMeters) : "");
+    setFormAllowOutside(row.allowOutside === true);
+    setFormGrace(String(row.graceMinutes ?? 0));
     setFormError(null);
     setEditState({ mode: "edit", row });
   }
@@ -117,17 +137,26 @@ export default function WorkforcePlacesPage() {
     }
     setBusy(true);
     setFormError(null);
+    const geo = {
+      latitude: formLat.trim() ? Number(formLat) : null,
+      longitude: formLng.trim() ? Number(formLng) : null,
+      radiusMeters: formRadius.trim() ? Number(formRadius) : null,
+      allowOutside: formAllowOutside,
+      graceMinutes: formGrace.trim() ? Number(formGrace) : 0,
+    };
     const body =
       editState?.mode === "create"
         ? {
             code: formCode.trim(),
             name: formName.trim(),
             responsibleOrgUnitId: formOrgUnitId || undefined,
+            ...geo,
           }
         : {
             name: formName.trim(),
             status: formStatus,
             responsibleOrgUnitId: formOrgUnitId || null,
+            ...geo,
           };
     const res =
       editState?.mode === "create"
@@ -323,6 +352,42 @@ export default function WorkforcePlacesPage() {
             options={unitOptions}
             emptyLabel={tCommon("select")}
           />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("latitude")}
+            value={formLat}
+            onChange={(v) => setFormLat(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("longitude")}
+            value={formLng}
+            onChange={(v) => setFormLng(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("radiusMeters")}
+            value={formRadius}
+            onChange={(v) => setFormRadius(String(v))}
+            options={[]}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("graceMinutes")}
+            value={formGrace}
+            onChange={(v) => setFormGrace(String(v))}
+            options={[]}
+          />
+          <label className="flex items-center gap-2 text-sm text-[var(--era-text)]">
+            <input
+              type="checkbox"
+              checked={formAllowOutside}
+              onChange={(e) => setFormAllowOutside(e.target.checked)}
+            />
+            {t("allowOutside")}
+          </label>
           {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
         </div>
       </ModalShell>

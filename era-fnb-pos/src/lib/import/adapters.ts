@@ -17,8 +17,12 @@ function toDecimal(n: number) {
 
 async function defaultOutlet(tx: ImportTx) {
   const orgId = requestOrganizationId();
+  const kafe = await tx.outlet.findFirst({
+    where: { code: "KAFE", active: true },
+  });
+  if (kafe) return kafe;
   const existing = await tx.outlet.findFirst({
-    where: { OR: [{ code: "RESTAURANT" }, { code: "XUDMANI" }] },
+    where: { OR: [{ code: "RESTAURANT" }, { code: "XUDMANI" }], active: true },
     orderBy: { createdAt: "asc" },
   });
   if (existing) return existing;

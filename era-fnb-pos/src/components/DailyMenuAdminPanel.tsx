@@ -24,9 +24,11 @@ export default function DailyMenuAdminPanel() {
     const menu = await menuRes.json();
     const board = await boardRes.json();
     const flat: MenuItem[] = [];
-    for (const cat of menu) {
-      for (const item of cat.items ?? []) {
-        flat.push({ ...item, category: { name: cat.name } });
+    if (Array.isArray(menu)) {
+      for (const cat of menu) {
+        for (const item of cat.items ?? []) {
+          flat.push({ ...item, category: { name: cat.name } });
+        }
       }
     }
     setAllItems(flat);
@@ -94,7 +96,7 @@ export default function DailyMenuAdminPanel() {
           <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void copyYesterday()}>
             {t('copyYesterday')}
           </button>
-          <a className="text-sm text-[#2980B9] underline self-center" href={`/menu/today?outlet=RESTAURANT`} target="_blank" rel="noreferrer">
+          <a className="text-sm text-[#2980B9] underline self-center" href="/menu/today" target="_blank" rel="noreferrer">
             {t('guestQrMenu')}
           </a>
         </div>

@@ -234,6 +234,22 @@ export default function WorkforceEmploymentsPage() {
   const [busy, setBusy] = useState(false);
   const [hireOpen, setHireOpen] = useState(false);
   const [actionEmp, setActionEmp] = useState<EmploymentRow | null>(null);
+  const [cabinetEmail, setCabinetEmail] = useState("");
+  const [cabinetMsg, setCabinetMsg] = useState<string | null>(null);
+  const [fitnessItems, setFitnessItems] = useState<
+    Array<{
+      kind: string;
+      status: string;
+      required: boolean;
+      issuedOn: string | null;
+      validUntil: string | null;
+      id: string | null;
+    }>
+  >([]);
+  const [fitnessBusyKind, setFitnessBusyKind] = useState<string | null>(null);
+  const [fitnessDates, setFitnessDates] = useState<
+    Record<string, { issuedOn: string; validUntil: string }>
+  >({});
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferOrgUnitId, setTransferOrgUnitId] = useState("");
   const [transferPositionId, setTransferPositionId] = useState("");
@@ -1116,13 +1132,31 @@ export default function WorkforceEmploymentsPage() {
     setCardPin("");
     setCardLoginDirty(Boolean(emp.satelliteStaffLogin?.trim()));
     setCardOrders([]);
+    setFitnessItems([]);
+    setCabinetMsg(null);
 
-    const [opsRes, hrRes, ordersRes] = await Promise.all([
+    const [opsRes, hrRes, ordersRes, fitnessRes] = await Promise.all([
       mdmWorkforceFetch(`${emp.globalPersonId}/ops-profile`),
       mdmWorkforceFetch(`${emp.globalPersonId}/hr-profile`),
       workforceFetch(`personnel-orders?employmentId=${encodeURIComponent(emp.id)}`),
+      workforceFetch(`employments/${emp.id}/fitness`),
     ]);
     setBusy(false);
+    if (fitnessRes.ok) {
+      const body = (await fitnessRes.json()) as {
+        items?: typeof fitnessItems;
+      };
+      const items = body.items ?? [];
+      setFitnessItems(items);
+      const dates: Record<string, { issuedOn: string; validUntil: string }> = {};
+      for (const it of items) {
+        dates[it.kind] = {
+          issuedOn: it.issuedOn ?? "",
+          validUntil: it.validUntil ?? "",
+        };
+      }
+      setFitnessDates(dates);
+    }
     if (opsRes.ok) {
       const ops = (await opsRes.json()) as {
         fullName?: string | null;
@@ -2350,6 +2384,247 @@ export default function WorkforceEmploymentsPage() {
               </Link>
             ) : null}
           </fieldset>
+
+          {actionEmp ? (
+            <fieldset className={ZONE_CLASS}>
+              <legend className="px-1 text-xs font-semibold text-[#34495E]">
+                {t("fitnessTitle")}
+              </legend>
+              <p className="mb-2 text-xs text-[#7F8C8D]">{t("fitnessHint")}</p>
+              <ul className="grid gap-3">
+                {(fitnessItems.length
+                  ? fitnessItems
+                  : [
+                      { kind: "HEALTH", status: "MISSING", required: false, issuedOn: null, validUntil: null, id: null },
+                      { kind: "NARCOLOGY", status: "MISSING", required: false, issuedOn: null, validUntil: null, id: null },
+                      { kind: "CRIMINAL_RECORD", status: "MISSING", required: false, issuedOn: null, validUntil: null, id: null },
+                    ]
+                ).map((item) => (
+                  <li key={item.kind} className="rounded border border-[#E5E9EC] p-2 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">
+                        {t(`fitnessKind.${item.kind}` as "fitnessKind.HEALTH")}
+                        {item.required ? ` · ${t("fitnessRequired")}` : ""}
+                      </span>
+                      <span className="text-xs text-[#7F8C8D]">
+                        {t(`fitnessStatus.${item.status}` as "fitnessStatus.MISSING")}
+                      </span>
+                    </div>
+                    {item.kind === "CRIMINAL_RECORD" ? (
+                      <p className="mt-1 text-xs text-[#7F8C8D]">
+                        {t("fitnessCriminalEmployerRule")}
+                      </p>
+                    ) : null}
+                    {item.issuedOn ? (
+                      <p className="mt-1 text-xs">
+                        {t("fitnessIssued")}: {item.issuedOn}
+                        {item.validUntil
+                          ? ` · ${t("fitnessValidUntil")}: ${item.validUntil}`
+                          : ""}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <DatePicker
+                        label={t("fitnessIssued")}
+                        value={fitnessDates[item.kind]?.issuedOn ?? ""}
+                        onChange={(next) =>
+                          setFitnessDates((prev) => ({
+                            ...prev,
+                            [item.kind]: {
+                              issuedOn: next,
+                              validUntil: prev[item.kind]?.validUntil ?? "",
+                            },
+                          }))
+                        }
+                        placeholder={tCommon("datePlaceholder")}
+                        fluid
+                      />
+                      {item.kind !== "CRIMINAL_RECORD" ? (
+                        <DatePicker
+                          label={t("fitnessValidUntil")}
+                          value={fitnessDates[item.kind]?.validUntil ?? ""}
+                          onChange={(next) =>
+                            setFitnessDates((prev) => ({
+                              ...prev,
+                              [item.kind]: {
+                                issuedOn: prev[item.kind]?.issuedOn ?? "",
+                                validUntil: next,
+                              },
+                            }))
+                          }
+                          placeholder={tCommon("datePlaceholder")}
+                          fluid
+                        />
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <label className={`${SECONDARY_BUTTON_CLASS} cursor-pointer`}>
+                        {fitnessBusyKind === item.kind
+                          ? t("busy")
+                          : t("fitnessUpload")}
+                        <input
+                          type="file"
+                          accept="application/pdf,image/jpeg,image/png"
+                          className="hidden"
+                          disabled={busy || fitnessBusyKind != null}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (!file || !actionEmp) return;
+                            void (async () => {
+                              setFitnessBusyKind(item.kind);
+                              setModalError(null);
+                              try {
+                                const issuedOn =
+                                  fitnessDates[item.kind]?.issuedOn?.trim();
+                                if (!issuedOn) {
+                                  throw new Error(t("fitnessIssuedRequired"));
+                                }
+                                if (
+                                  (item.kind === "HEALTH" ||
+                                    item.kind === "NARCOLOGY") &&
+                                  !fitnessDates[item.kind]?.validUntil?.trim()
+                                ) {
+                                  throw new Error(t("fitnessValidRequired"));
+                                }
+                                const buf = await file.arrayBuffer();
+                                const bytes = new Uint8Array(buf);
+                                let bin = "";
+                                for (let i = 0; i < bytes.length; i += 1) {
+                                  bin += String.fromCharCode(bytes[i]!);
+                                }
+                                const fileBase64 = btoa(bin);
+                                const body: Record<string, string> = {
+                                  kind: item.kind,
+                                  issuedOn,
+                                  fileBase64,
+                                  fileName: file.name,
+                                  contentType: file.type || "application/pdf",
+                                };
+                                if (
+                                  item.kind === "HEALTH" ||
+                                  item.kind === "NARCOLOGY"
+                                ) {
+                                  body.validUntil =
+                                    fitnessDates[item.kind]!.validUntil;
+                                }
+                                const res = await workforceFetch(
+                                  `employments/${actionEmp.id}/fitness`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify(body),
+                                  },
+                                );
+                                if (!res.ok) {
+                                  throw new Error(await res.text());
+                                }
+                                const next = (await res.json()) as {
+                                  items?: typeof fitnessItems;
+                                };
+                                setFitnessItems(next.items ?? []);
+                              } catch (err) {
+                                setModalError(
+                                  err instanceof Error
+                                    ? err.message
+                                    : String(err),
+                                );
+                              } finally {
+                                setFitnessBusyKind(null);
+                              }
+                            })();
+                          }}
+                        />
+                      </label>
+                      {item.id ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          onClick={() => {
+                            void (async () => {
+                              const res = await workforceFetch(
+                                `employments/${actionEmp.id}/fitness/${item.kind}/file`,
+                              );
+                              if (!res.ok) {
+                                setModalError(await res.text());
+                                return;
+                              }
+                              const blob = await res.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `${item.kind.toLowerCase()}`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            })();
+                          }}
+                        >
+                          {t("fitnessDownload")}
+                        </button>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </fieldset>
+          ) : null}
+
+          {actionEmp ? (
+            <fieldset className={ZONE_CLASS}>
+              <legend className="px-1 text-xs font-semibold text-[#34495E]">
+                {t("enableCabinet")}
+              </legend>
+              <input
+                className="w-full rounded border px-2 py-1 text-sm"
+                value={cabinetEmail}
+                onChange={(e) => setCabinetEmail(e.target.value)}
+                placeholder={t("cabinetEmail")}
+              />
+              <button
+                type="button"
+                className={`${SECONDARY_BUTTON_CLASS} mt-2`}
+                disabled={busy}
+                onClick={() => {
+                  void (async () => {
+                    setBusy(true);
+                    setCabinetMsg(null);
+                    try {
+                      const res = await workforceFetch(
+                        `/employments/${actionEmp.id}/enable-cabinet`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            loginEmail: cabinetEmail.trim() || undefined,
+                          }),
+                        },
+                      );
+                      if (!res.ok) throw new Error(await res.text());
+                      const body = (await res.json()) as {
+                        temporaryPassword?: string | null;
+                      };
+                      setCabinetMsg(
+                        body.temporaryPassword
+                          ? `${t("cabinetReady")} ${body.temporaryPassword}`
+                          : t("cabinetLinked"),
+                      );
+                    } catch (e) {
+                      setModalError(e instanceof Error ? e.message : String(e));
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              >
+                {t("enableCabinet")}
+              </button>
+              {cabinetMsg ? (
+                <p className="mt-1 text-xs text-[#34495E]">{cabinetMsg}</p>
+              ) : null}
+            </fieldset>
+          ) : null}
 
           {modalError && cardOpen ? (
             <p className="text-sm text-red-700">{modalError}</p>
