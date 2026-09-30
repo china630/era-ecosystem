@@ -24,6 +24,7 @@ export async function GET(request: Request) {
         zone: true,
         status: true,
         outletId: true,
+        currentTicketId: true,
       },
     });
     return jsonOk(tables);

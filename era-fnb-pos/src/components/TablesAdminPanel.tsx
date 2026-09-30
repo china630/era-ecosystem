@@ -8,8 +8,8 @@ import {
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { Pencil, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type TableRow = {
@@ -148,20 +148,24 @@ export default function TablesAdminPanel() {
                 <td className="py-2 pr-2">{row.seats}</td>
                 <td className="py-2 pr-2">{row.zone || "—"}</td>
                 <td className="py-2 pr-2">{row.status}</td>
-                <td className="py-2 text-right space-x-2">
+                <td className="py-2 text-right">
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    aria-label={t("edit")}
+                    title={t("edit")}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                     onClick={() => openEdit(row)}
                   >
-                    {t("edit")}
+                    <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    aria-label={t("delete")}
+                    title={t("delete")}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
                     onClick={() => void remove(row.id)}
                   >
-                    {t("delete")}
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
               </tr>

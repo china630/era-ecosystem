@@ -354,7 +354,7 @@ export default function OrdersPanel() {
             >
               <div className="flex justify-between text-sm">
                 <span className="font-medium">
-                  {ticketLabel(ticket)} · {ticket.outlet.code}
+                  {ticketLabel(ticket)} · {ticket.outlet?.code ?? ""}
                   {ticket.serviceChannel === "WALK_IN" ? " · WALK_IN" : ""}
                   {ticket.beoId ? " · BEO" : ""}
                 </span>

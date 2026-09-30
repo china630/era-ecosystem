@@ -1,6 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import {
+  Ban,
+  Download,
+  History,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -11,7 +18,6 @@ import {
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { CARD_CLASS } from "@/lib/design-system";
@@ -252,24 +258,29 @@ export default function MenuAdminPanel() {
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2 justify-between">
         <p className="text-sm text-[#7F8C8D]">{t("subtitle")}</p>
-        <div className="flex flex-wrap gap-2">
-          {recipesHref && (
+        <div className="flex flex-wrap items-center gap-2">
+          {recipesHref ? (
             <a
               href={recipesHref}
               target="_blank"
               rel="noreferrer"
-              className={SECONDARY_BUTTON_CLASS}
+              aria-label={t("recipesInFinance")}
+              title={t("recipesInFinance")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
             >
-              {t("recipesInFinance")}
+              <Download className="h-4 w-4" />
             </a>
-          )}
-          <Link href="/admin/tables" className={SECONDARY_BUTTON_CLASS}>
-            {t("manageTables")}
-          </Link>
-          <a href="/api/menu/export" className={SECONDARY_BUTTON_CLASS}>
-            Excel
+          ) : null}
+          <a
+            href="/api/menu/export"
+            aria-label="Excel"
+            title="Excel"
+            className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
+          >
+            <Download className="h-4 w-4" />
           </a>
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateCategory}>
+            <Plus className="mr-1 inline h-4 w-4" />
             {t("addCategory")}
           </button>
           <button
@@ -278,6 +289,7 @@ export default function MenuAdminPanel() {
             onClick={() => openCreateItem(categories[0]?.id ?? "")}
             disabled={categories.length === 0}
           >
+            <Plus className="mr-1 inline h-4 w-4" />
             {t("addItem")}
           </button>
         </div>
@@ -299,27 +311,33 @@ export default function MenuAdminPanel() {
                   #{cat.sortOrder ?? 0}
                 </span>
               </h3>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <button
                   type="button"
-                  className={SECONDARY_BUTTON_CLASS}
+                  aria-label={t("edit")}
+                  title={t("edit")}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                   onClick={() => openEditCategory(cat)}
                 >
-                  {t("edit")}
+                  <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  className={SECONDARY_BUTTON_CLASS}
+                  aria-label={t("addItem")}
+                  title={t("addItem")}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                   onClick={() => openCreateItem(cat.id)}
                 >
-                  {t("addItem")}
+                  <Plus className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  className={SECONDARY_BUTTON_CLASS}
+                  aria-label={t("delete")}
+                  title={t("delete")}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
                   onClick={() => void deleteCategory(cat.id)}
                 >
-                  {t("delete")}
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -358,30 +376,36 @@ export default function MenuAdminPanel() {
                     <td className="py-2 pr-2">
                       {item.active ? t("active") : t("inactive")}
                     </td>
-                    <td className="py-2 text-right space-x-2">
+                    <td className="py-2 text-right">
                       <button
                         type="button"
-                        className="text-[#2980B9] underline"
+                        aria-label={t("edit")}
+                        title={t("edit")}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                         onClick={() => openEditItem(item, cat.id)}
                       >
-                        {t("edit")}
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
-                        className="text-[#2980B9] underline"
+                        aria-label={t("priceHistory")}
+                        title={t("priceHistory")}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                         onClick={() => void openPriceHistory(item)}
                       >
-                        {t("priceHistory")}
+                        <History className="h-4 w-4" />
                       </button>
-                      {item.active && (
+                      {item.active ? (
                         <button
                           type="button"
-                          className="text-[#C0392B] underline"
+                          aria-label={t("deactivate")}
+                          title={t("deactivate")}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
                           onClick={() => void deactivateItem(item.id)}
                         >
-                          {t("deactivate")}
+                          <Ban className="h-4 w-4" />
                         </button>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 ))}
