@@ -1,7 +1,7 @@
 -- Hotel child/line organizationId. Backfill from the parent row.
 -- If this database has no organization at all, drop the unscoped leftovers instead of aborting migrate-all.
 
-CREATE OR REPLACE FUNCTION pg_temp.era_stamp_child_org(tbl text) RETURNS void AS $
+CREATE OR REPLACE FUNCTION pg_temp.era_stamp_child_org(tbl text) RETURNS void AS $era$
 DECLARE
   n int;
   org text;
@@ -53,7 +53,7 @@ BEGIN
     RAISE EXCEPTION '%: organizationId backfill left null rows', tbl;
   END IF;
 END;
-$ LANGUAGE plpgsql;
+$era$ LANGUAGE plpgsql;
 
 
 ALTER TABLE "LaundryTicketLine" ADD COLUMN IF NOT EXISTS "organizationId" TEXT;
