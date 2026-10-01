@@ -4,7 +4,9 @@ export async function register() {
   const { onSatelliteBoot } = await import(
     /* webpackIgnore: true */ "@era/satellite-kit/tenancy/boot"
   );
-  const { satelliteRuntimeConfig } = await import("@era/satellite-kit");
+  const { satelliteRuntimeConfig } = await import(
+    /* webpackIgnore: true */ "@era/satellite-kit"
+  );
   try {
     const result = await onSatelliteBoot({ prisma });
     if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
