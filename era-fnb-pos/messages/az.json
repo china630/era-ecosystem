@@ -24,6 +24,8 @@
     "calendar": "Stol rezervasiyası",
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
+    "logout": "Çıxış",
+    "sales": "Satış jurnalı",
     "access": "Giriş"
   },
   "home": {
@@ -41,7 +43,9 @@
     "revenueToday": "Bu günün gəliri",
     "topDishes": "Ən çox satılan",
     "topEmpty": "Bu gün bağlanmış çek yoxdur.",
-    "loadFailed": "Günlük yüklənmədi"
+    "loadFailed": "Günlük yüklənmədi",
+    "intro": "Bu günün çekləri, masalar və gəlir.",
+    "healthLink": "Sağlamlıq API"
   },
   "floor": {
     "title": "Zal xəritəsi",
@@ -89,7 +93,17 @@
     "confirmCancel": "Bu çeki ləğv edək?",
     "ticketCancelled": "Çek ləğv edildi",
     "nothingToPay": "Ödəniləcək məbləğ yoxdur",
-    "queuedOffline": "Oflayn saxlanıldı — şəbəkə qayıdanda göndəriləcək"
+    "queuedOffline": "Oflayn saxlanıldı — şəbəkə qayıdanda göndəriləcək",
+    "shiftRequired": "Əvvəl növbəni açın",
+    "cashReceived": "Alındı",
+    "cashShort": "Alınan məbləğ çekdən azdır",
+    "changeDue": "qalıq {amount} AZN",
+    "paidBanner": "Çek #{no} · {amount} AZN {change}",
+    "colName": "Ad",
+    "colQty": "Say",
+    "colPrice": "Qiymət",
+    "colSum": "Məbləğ",
+    "payTransfer": "Köçürmə"
   },
   "kds": {
     "title": "Mətbəx ekranı"
@@ -117,7 +131,7 @@
     },
     "menu": {
       "title": "Menyu admin",
-      "subtitle": "Kateqoriyalar və yeməklər — modal CRUD (menecer)",
+      "subtitle": "Kateqoriyalar və yeməklər",
       "addCategory": "Kateqoriya əlavə et",
       "editCategory": "Kateqoriyanı redaktə et",
       "addItem": "Yemək əlavə et",
@@ -148,6 +162,7 @@
       "active": "Aktiv",
       "inactive": "Deaktiv",
       "actions": "Əməliyyatlar",
+      "exportExcel": "Excel",
       "edit": "Redaktə",
       "delete": "Sil",
       "deactivate": "Deaktiv et",
@@ -225,6 +240,12 @@
     "inHouseHint": "In-house qonaq — room charge; ödəniş çıxışda resepsiyada.",
     "openKds": "KDS aç",
     "void": "Ləğv",
+    "colName": "Ad",
+    "colQty": "Say",
+    "colPrice": "Qiymət",
+    "colSum": "Məbləğ",
+    "qtyMinus": "Azalt",
+    "qtyPlus": "Artır",
     "applyDiscount": "Endirim %",
     "splitSelected": "Seçilmişləri ayır",
     "selectLinesToSplit": "Ayırmaq üçün sətirləri seçin",
@@ -253,6 +274,22 @@
     "mealBreakfast": "Səhər yeməyi daxil",
     "mealAllInclusive": "All inclusive"
   },
+  "sales": {
+    "title": "Satış jurnalı",
+    "subtitle": "Bağlanmış çeklər — bu gün və açıq növbə",
+    "today": "Bu gün",
+    "thisShift": "Bu növbə",
+    "time": "Vaxt",
+    "place": "Yer",
+    "method": "Ödəniş",
+    "sum": "Məbləğ",
+    "empty": "Çek yoxdur",
+    "cash": "Nağd",
+    "card": "Kart",
+    "transfer": "Köçürmə",
+    "count": "Çek",
+    "takeaway": "Take away"
+  },
   "shift": {
     "title": "POS növbəsi",
     "noShift": "Açıq növbə yoxdur",
@@ -268,6 +305,7 @@
     "closeFailed": "Növbə bağlanmadı",
     "managerRequired": "Z-close üçün menecer rolu lazımdır",
     "openTicketsBlock": "Z-close mümkün deyil: {count} açıq çek",
+    "xReport": "X",
     "fiscalDevice": "Kassa aparatı (KKM)",
     "bankTerminal": "Bank POS",
     "autoDefault": "Defolt / avto"
@@ -287,9 +325,29 @@
     "azn": "AZN",
     "loading": "Yüklənir…",
     "emDash": "—",
+    "home": "Əsas",
+    "save": "Saxla",
+    "cancel": "Ləğv",
+    "edit": "Redaktə",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "all": "Hamısı",
+    "search": "Axtar",
+    "name": "Ad",
+    "status": "Status",
+    "date": "Tarix",
+    "guest": "Qonaq",
+    "notes": "Qeyd",
+    "complete": "Tamamla",
+    "notFound": "Tapılmadı",
+    "select": "Seçin…",
+    "failed": "Alınmadı",
+    "error": "Xəta",
+    "loadingFailed": "Yüklənmədi",
+    "saveFailed": "Saxlanılmadı",
     "loadError": "Yükləmə xətası",
-    "saveError": "Saxlama xətası",
-    "failed": "Alınmadı"
+    "saveError": "Saxlama xətası"
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
@@ -325,6 +383,23 @@
     "invalid": "PIN yanlışdır",
     "unbound": "PIN outlet-ə bağlı deyil — sahibdən soruşun",
     "backToLogin": "Şifrə ilə giriş"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identifikasiya, abunə və sənaye modulları ERA 365 idarəetmə paneli və Finance ERP vasitəsilə birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olum?",
+        "a": "Bu modulu ERA Finance və ya ERA 365 Orchestrator-dan açın — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirim?",
+        "a": "İlk girişdən sonra Orchestrator-da və ya app.era-365.online-da VÖEN ilə təşkilat qeydiyyatı."
+      }
+    }
   },
   "cutoverImport": {
     "title": "Elektraweb import",

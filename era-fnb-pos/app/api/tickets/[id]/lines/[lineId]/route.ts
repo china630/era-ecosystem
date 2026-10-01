@@ -12,6 +12,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const qtySchema = z.object({
   qty: z.number().int().min(0),
@@ -37,6 +38,7 @@ export async function PATCH(
     if (!["OPEN", "HELD"].includes(ticket.status)) {
       return NextResponse.json({ error: "Ticket is not open" }, { status: 400 });
     }
+    await requireOpenShift(ticket.outletId);
 
     const line = await prisma.ticketLine.findFirst({
       where: { id: lineId, ticketId: id },

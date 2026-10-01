@@ -319,7 +319,7 @@ export default function MenuAdminPanel() {
             ) : null}
             <a href="/api/menu/export" className={SECONDARY_BUTTON_CLASS}>
               <Download className="mr-1 inline h-4 w-4" />
-              Excel
+              {t("exportExcel")}
             </a>
           </div>
         }

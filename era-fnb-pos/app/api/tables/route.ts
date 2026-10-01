@@ -27,7 +27,32 @@ export async function GET(request: Request) {
         currentTicketId: true,
       },
     });
-    return jsonOk(tables);
+    const openTickets = await prisma.ticket.findMany({
+      where: {
+        status: { in: ["OPEN", "HELD"] },
+        tableId: { not: null },
+      },
+      select: { id: true, tableId: true, totalAzn: true },
+    });
+    const totalByTicket = new Map(openTickets.map((row) => [row.id, Number(row.totalAzn)]));
+    const totalByTable = new Map(
+      openTickets
+        .filter((row) => row.tableId)
+        .map((row) => [row.tableId as string, Number(row.totalAzn)]),
+    );
+    return jsonOk(
+      tables.map((table) => ({
+        ...table,
+        status:
+          table.status === "OCCUPIED" || table.currentTicketId || totalByTable.has(table.id)
+            ? "OCCUPIED"
+            : table.status,
+        openTotalAzn:
+          (table.currentTicketId ? totalByTicket.get(table.currentTicketId) : undefined) ??
+          totalByTable.get(table.id) ??
+          null,
+      })),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

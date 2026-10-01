@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { MODAL_INPUT_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
+import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
 
 type OpenShift = {
   id: string;
@@ -13,6 +14,7 @@ type OpenShift = {
   openedAt: string;
   fiscalDeviceId?: string | null;
   bankTerminalId?: string | null;
+  openedBy?: string | null;
   outlet: { code: string; name: string };
 };
 
@@ -37,6 +39,8 @@ export default function PosShiftPanel() {
   const [banks, setBanks] = useState<FiscalDevice[]>([]);
   const [fiscalDeviceId, setFiscalDeviceId] = useState("");
   const [bankTerminalId, setBankTerminalId] = useState("");
+  const [report, setReport] = useState<{ rows: SaleRowView[]; totals: SaleTotalsView } | null>(null);
+  const ts = useTranslations("sales");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -137,7 +141,20 @@ export default function PosShiftPanel() {
       return;
     }
     showSuccess(t("closed"));
+    if (data.report?.rows && data.report?.totals) {
+      setReport({ rows: data.report.rows, totals: data.report.totals });
+    }
     await load();
+  }
+
+  async function showX() {
+    const res = await fetch("/api/sales?scope=shift");
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      showApiError(data, t("closeFailed"));
+      return;
+    }
+    setReport({ rows: data.rows ?? [], totals: data.totals });
   }
 
   return (
@@ -156,9 +173,8 @@ export default function PosShiftPanel() {
                 cash: Number(shift.openingCash).toFixed(2),
                 time: bakuTimeLabel(shift.openedAt),
               })}
-              {shift.fiscalDeviceId
-                ? ` · KKM ${shift.fiscalDeviceId.slice(0, 8)}`
-                : ""}
+              {shift.openedBy ? ` · ${shift.openedBy}` : ""}
+              {shift.fiscalDeviceId ? ` · KKM ${shift.fiscalDeviceId.slice(0, 8)}` : ""}
             </p>
           ) : (
             <p className="text-sm text-[#7F8C8D]">{t("noShift")}</p>
@@ -173,6 +189,15 @@ export default function PosShiftPanel() {
               onClick={() => setOpenModal(true)}
             >
               {t("openShift")}
+            </button>
+          )}
+          {shift && (
+            <button
+              type="button"
+              className="rounded border border-[#2980B9] px-3 py-1.5 text-sm text-[#2980B9]"
+              onClick={() => void showX()}
+            >
+              {t("xReport")}
             </button>
           )}
           {shift && (
@@ -259,6 +284,39 @@ export default function PosShiftPanel() {
                 onClick={() => void openShift()}
               >
                 {t("confirmOpen")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {report && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-lg overflow-auto p-4`}>
+            <h3 className="mb-3 text-sm font-semibold text-[#34495E]">{t("xReport")}</h3>
+            <SaleTable
+              rows={report.rows}
+              totals={report.totals}
+              azn={tc("azn")}
+              labels={{
+                time: ts("time"),
+                place: ts("place"),
+                method: ts("method"),
+                sum: ts("sum"),
+                empty: ts("empty"),
+                cash: ts("cash"),
+                card: ts("card"),
+                transfer: ts("transfer"),
+                count: ts("count"),
+                takeaway: ts("takeaway"),
+              }}
+            />
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
+                onClick={() => setReport(null)}
+              >
+                {tc("cancel", { defaultValue: "Cancel" })}
               </button>
             </div>
           </div>

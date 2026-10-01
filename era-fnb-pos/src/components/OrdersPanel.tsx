@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { CheckLines } from "@/components/CheckLines";
 
 type TicketLine = {
   id: string;
@@ -60,6 +61,7 @@ function isInHouseTicket(ticket: Ticket): boolean {
 
 export default function OrdersPanel() {
   const t = useTranslations("orders");
+  const tf = useTranslations("floor");
   const tc = useTranslations("common");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,6 +75,12 @@ export default function OrdersPanel() {
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const [hasKds, setHasKds] = useState(false);
+  const [cashReceived, setCashReceived] = useState("");
+  const [lastPaid, setLastPaid] = useState<{
+    dayNo: number | null;
+    amount: number;
+    change: number | null;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -152,6 +160,13 @@ export default function OrdersPanel() {
 
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (!selected) return;
+    const due = Number(selected.totalAzn);
+    const got = Number(cashReceived);
+    if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
+      showApiError({ error: tf("cashShort") });
+      return;
+    }
+    const paidDay = selected.dayNo ?? null;
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -168,14 +183,23 @@ export default function OrdersPanel() {
     }
     const data = await res.json();
     if (!res.ok) {
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf("shiftRequired") });
+        return;
+      }
       showApiError(
         data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
-        "Payment failed",
+        tc("failed"),
       );
       return;
     }
-    const label = method === "CARD" ? t("payCard") : t("payCash");
-    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
+    const amount = Number(data.amount);
+    setLastPaid({
+      dayNo: paidDay,
+      amount,
+      change: method === "CASH" ? Math.round((got - amount) * 100) / 100 : null,
+    });
+    setCashReceived("");
     setSelectedId(null);
     await load();
   }
@@ -267,22 +291,22 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function voidLine(lineId: string) {
+  async function changeQty(lineId: string, qty: number) {
     if (!selected) return;
-    const res = await fetch(
-      `/api/tickets/${selected.id}/lines/${lineId}/void`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Manager void" }),
-      },
-    );
-    const data = await res.json();
+    const res = await fetch(`/api/tickets/${selected.id}/lines/${lineId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qty }),
+    });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showApiError(data, t("void"));
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf("shiftRequired") });
+        return;
+      }
+      showApiError(data, tc("failed"));
       return;
     }
-    showSuccess(t("void"));
     await load();
   }
 
@@ -373,40 +397,44 @@ export default function OrdersPanel() {
       <div className={`${CARD_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
         {!selected ? (
-          <p className="text-sm text-[#7F8C8D]">{t("selectTicket")}</p>
+          <p className="text-sm text-[#7F8C8D]">
+            {lastPaid
+              ? tf("paidBanner", {
+                  no: lastPaid.dayNo ?? "—",
+                  amount: lastPaid.amount.toFixed(2),
+                  change:
+                    lastPaid.change == null
+                      ? ""
+                      : tf("changeDue", { amount: lastPaid.change.toFixed(2) }),
+                })
+              : t("selectTicket")}
+          </p>
         ) : (
           <>
             <p className="mb-2 text-sm font-medium text-[#34495E]">
               {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
               {selected.dayNo ? ` #${selected.dayNo}` : ""}
             </p>
-            <ul className="mb-2 space-y-1 text-sm text-[#34495E]">
-              {selected.lines.filter((l) => l.kitchenStatus !== "VOID").map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-2">
-                  <label className="flex flex-1 items-center gap-2">
-                    {l.kitchenStatus !== "VOID" && (
-                      <input
-                        type="checkbox"
-                        checked={splitLineIds.includes(l.id)}
-                        onChange={() => toggleSplitLine(l.id)}
-                        aria-label={t("selectLinesToSplit")}
-                      />
-                    )}
-                    <span>
-                      {l.qty}× {l.description}
-                    </span>
-                  </label>
-                  <button
-                    type="button"
-                    className="text-red-600 underline"
-                    onClick={() => void voidLine(l.id)}
-                  >
-                    {t("void")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="mb-4 text-base font-semibold">
+            <div className="mb-2">
+              <CheckLines
+                lines={selected.lines.filter((l) => l.kitchenStatus !== "VOID")}
+                onQty={(line, qty) => void changeQty(line.id, qty)}
+                onRemove={(line) => void changeQty(line.id, 0)}
+                onToggle={hotelMode ? (line) => toggleSplitLine(line.id) : undefined}
+                selectedIds={splitLineIds}
+                azn={tc("azn")}
+                labels={{
+                  name: t("colName"),
+                  qty: t("colQty"),
+                  price: t("colPrice"),
+                  sum: t("colSum"),
+                  minus: t("qtyMinus"),
+                  plus: t("qtyPlus"),
+                  remove: t("void"),
+                }}
+              />
+            </div>
+            <p className="mb-4 text-right text-2xl font-semibold tabular-nums">
               {Number(selected.totalAzn).toFixed(2)} {tc("azn")}
             </p>
             <div className="mb-3 flex flex-wrap items-end gap-2">
@@ -522,6 +550,7 @@ export default function OrdersPanel() {
             </div>
             ) : null}
             <div className="flex flex-wrap gap-2">
+              {hasKds ? (
               <button
                 type="button"
                 className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
@@ -529,6 +558,7 @@ export default function OrdersPanel() {
               >
                 {t("fireKitchen")}
               </button>
+              ) : null}
               {hotelMode && (inHouse || selected.roomChargeReservationId) ? (
                 <button
                   type="button"
@@ -546,7 +576,17 @@ export default function OrdersPanel() {
                   {t("sendToReception")}
                 </button>
               ) : (
-                <>
+                <div className="flex w-full flex-col items-end gap-2">
+                  <label className="block w-full text-xs text-[#7F8C8D]">
+                    {tf("cashReceived")}
+                    <input
+                      inputMode="decimal"
+                      value={cashReceived}
+                      onChange={(e) => setCashReceived(e.target.value)}
+                      className={`${INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
+                    />
+                  </label>
+                  <div className="flex flex-wrap justify-end gap-2">
                   <button
                     type="button"
                     className="rounded bg-[#27AE60] px-3 py-1.5 text-sm text-white"
@@ -568,7 +608,8 @@ export default function OrdersPanel() {
                   >
                     {t("payTransfer")}
                   </button>
-                </>
+                  </div>
+                </div>
               )}
               {hasKds ? (
               <Link

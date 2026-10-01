@@ -8,6 +8,8 @@ import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { handleRouteError } from "@/lib/api-utils";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const splitSchema = z.object({
   lineIds: z.array(z.string()).min(1),
@@ -34,6 +36,11 @@ export async function POST(
   }
   if (!["OPEN", "HELD"].includes(source.status)) {
     return NextResponse.json({ error: "Ticket is not open" }, { status: 400 });
+  }
+  try {
+    await requireOpenShift(source.outletId);
+  } catch (err) {
+    return handleRouteError(err);
   }
 
   const lineSet = new Set(body.lineIds);

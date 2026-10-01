@@ -11,6 +11,7 @@ import {
   Receipt,
   UtensilsCrossed,
   LayoutPanelTop,
+  ScrollText,
   Shield,
 } from "lucide-react";
 import {
@@ -39,6 +40,7 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/admin/menu": PERMISSIONS.SCREEN_ADMIN_MENU,
   "/admin/tables": PERMISSIONS.SCREEN_ADMIN_TABLES,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
+  "/sales": PERMISSIONS.SCREEN_ORDERS,
 };
 
 const hotelLinks = [
@@ -48,6 +50,7 @@ const hotelLinks = [
   { href: "/kds", key: "kds", icon: ChefHat },
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
+  { href: "/sales", key: "sales", icon: ScrollText },
   { href: "/admin/access", key: "access", icon: Shield },
 ] as const;
 
@@ -57,6 +60,7 @@ const kafeLinks = [
   { href: "/orders", key: "orders", icon: Receipt },
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
+  { href: "/sales", key: "sales", icon: ScrollText },
   { href: "/admin/access", key: "access", icon: Shield },
 ] as const;
 
