@@ -258,6 +258,7 @@ export async function ensurePlanningDefaults(
       for (const resourceCode of pool.resourceCodes) {
         await db.procedureTypeRequirement.create({
           data: {
+            organizationId: orgId,
             procedureTypeId: pt.id,
             role: "LOCATION",
             resourceKind: "ROOM",
@@ -275,6 +276,7 @@ export async function ensurePlanningDefaults(
       if (!hasStaff) {
         await db.procedureTypeRequirement.create({
           data: {
+            organizationId: orgId,
             procedureTypeId: pt.id,
             role: "STAFF",
             staffMode: "SOFT",
