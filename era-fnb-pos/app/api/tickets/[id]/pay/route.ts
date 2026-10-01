@@ -18,6 +18,7 @@ import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD", "TRANSFER"]),
@@ -70,6 +71,7 @@ export async function POST(
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }
   const organizationId = requestOrganizationId();
+  await requireOpenShift(ticket.outletId);
 
   const settlement = await resolveTicketSettlement(ticket);
   const payBlock = payBlockedReason(settlement);
@@ -126,7 +128,7 @@ export async function POST(
 
   await prisma.ticket.update({
     where: { id },
-    data: { status: "CLOSED", closedAt: new Date() },
+    data: { status: "CLOSED", closedAt: new Date(), paymentMethod: body.method },
   });
   await releaseTableForTicket(id, ticket.tableId);
 

@@ -24,6 +24,8 @@
     "calendar": "Бронь столов",
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
+    "logout": "Выход",
+    "sales": "Журнал продаж",
     "access": "Доступ"
   },
   "home": {
@@ -41,7 +43,9 @@
     "revenueToday": "Выручка за сегодня",
     "topDishes": "Больше всего продано",
     "topEmpty": "Сегодня нет закрытых чеков.",
-    "loadFailed": "Не удалось загрузить день"
+    "loadFailed": "Не удалось загрузить день",
+    "intro": "Чеки, столы и выручка за сегодня.",
+    "healthLink": "Проверка API"
   },
   "floor": {
     "title": "Карта зала",
@@ -89,7 +93,17 @@
     "confirmCancel": "Отменить этот чек?",
     "ticketCancelled": "Чек отменён",
     "nothingToPay": "Нечего оплачивать",
-    "queuedOffline": "Сохранено офлайн — уйдёт, когда сеть вернётся"
+    "queuedOffline": "Сохранено офлайн — уйдёт, когда сеть вернётся",
+    "shiftRequired": "Сначала откройте смену",
+    "cashReceived": "Получено",
+    "cashShort": "Полученная сумма меньше чека",
+    "changeDue": "сдача {amount} AZN",
+    "paidBanner": "Чек #{no} · {amount} AZN {change}",
+    "colName": "Название",
+    "colQty": "Кол-во",
+    "colPrice": "Цена",
+    "colSum": "Сумма",
+    "payTransfer": "Перевод"
   },
   "kds": {
     "title": "Экран кухни"
@@ -117,7 +131,7 @@
     },
     "menu": {
       "title": "Админ меню",
-      "subtitle": "Категории и блюда — модальный CRUD (менеджер)",
+      "subtitle": "Категории и блюда",
       "addCategory": "Добавить категорию",
       "editCategory": "Изменить категорию",
       "addItem": "Добавить блюдо",
@@ -148,6 +162,7 @@
       "active": "Активно",
       "inactive": "Неактивно",
       "actions": "Действия",
+      "exportExcel": "Excel",
       "edit": "Изменить",
       "delete": "Удалить",
       "deactivate": "Деактивировать",
@@ -225,6 +240,12 @@
     "inHouseHint": "Гость in-house — room charge; оплата на ресепшене при выезде.",
     "openKds": "Открыть KDS",
     "void": "Сторно",
+    "colName": "Название",
+    "colQty": "Кол-во",
+    "colPrice": "Цена",
+    "colSum": "Сумма",
+    "qtyMinus": "Меньше",
+    "qtyPlus": "Больше",
     "applyDiscount": "Скидка %",
     "splitSelected": "Разделить выбранные",
     "selectLinesToSplit": "Выберите строки для разделения",
@@ -253,6 +274,22 @@
     "mealBreakfast": "Завтрак вкл.",
     "mealAllInclusive": "All inclusive"
   },
+  "sales": {
+    "title": "Журнал продаж",
+    "subtitle": "Закрытые чеки — сегодня и открытая смена",
+    "today": "Сегодня",
+    "thisShift": "Эта смена",
+    "time": "Время",
+    "place": "Место",
+    "method": "Оплата",
+    "sum": "Сумма",
+    "empty": "Чеков нет",
+    "cash": "Нал",
+    "card": "Карта",
+    "transfer": "Перевод",
+    "count": "Чеки",
+    "takeaway": "Take away"
+  },
   "shift": {
     "title": "POS-смена",
     "noShift": "Смена не открыта",
@@ -268,6 +305,7 @@
     "closeFailed": "Не удалось закрыть смену",
     "managerRequired": "Для Z-close нужна роль менеджера",
     "openTicketsBlock": "Z-close невозможен: {count} открытых чек(ов)",
+    "xReport": "X",
     "fiscalDevice": "Кассовый аппарат (KKM)",
     "bankTerminal": "Банковский POS",
     "autoDefault": "По умолчанию / авто"
@@ -287,9 +325,29 @@
     "azn": "AZN",
     "loading": "Загрузка…",
     "emDash": "—",
+    "home": "Главная",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "all": "Все",
+    "search": "Поиск",
+    "name": "Название",
+    "status": "Статус",
+    "date": "Дата",
+    "guest": "Гость",
+    "notes": "Заметка",
+    "complete": "Готово",
+    "notFound": "Не найдено",
+    "select": "Выберите…",
+    "failed": "Не получилось",
+    "error": "Ошибка",
+    "loadingFailed": "Не загрузилось",
+    "saveFailed": "Не сохранилось",
     "loadError": "Ошибка загрузки",
-    "saveError": "Ошибка сохранения",
-    "failed": "Не получилось"
+    "saveError": "Ошибка сохранения"
   },
   "auth": {
     "loginFailed": "Вход не выполнен",
@@ -325,6 +383,23 @@
     "invalid": "Неверный PIN",
     "unbound": "PIN не привязан к точке — обратитесь к владельцу",
     "backToLogin": "Вход по паролю"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA личность, подписки и отраслевые модули сходятся в панели ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Откройте этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся сам."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — регистрация организации в Orchestrator или на app.era-365.online с VÖEN."
+      }
+    }
   },
   "cutoverImport": {
     "title": "Импорт Elektraweb",

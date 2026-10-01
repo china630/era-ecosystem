@@ -8,6 +8,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { handleRouteError } from "@/lib/api-utils";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const lineSchema = z.object({
   description: z.string().min(1),
@@ -40,6 +41,7 @@ export async function POST(
       { status: 400 },
     );
   }
+  await requireOpenShift(ticket.outletId);
 
   const parsed = createSchema.parse(await request.json());
   const items = Array.isArray(parsed) ? parsed : [parsed];

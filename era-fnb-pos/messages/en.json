@@ -17,6 +17,7 @@
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
     "logout": "Logout",
+    "sales": "Sales journal",
     "access": "Access"
   },
   "home": {
@@ -84,7 +85,17 @@
     "confirmCancel": "Cancel this check?",
     "ticketCancelled": "Check cancelled",
     "nothingToPay": "Nothing to pay",
-    "queuedOffline": "Saved offline — will send when the network is back"
+    "queuedOffline": "Saved offline — will send when the network is back",
+    "shiftRequired": "Open a shift first",
+    "cashReceived": "Received",
+    "cashShort": "Received amount is less than the check",
+    "changeDue": "change {amount} AZN",
+    "paidBanner": "Check #{no} · {amount} AZN {change}",
+    "colName": "Item",
+    "colQty": "Qty",
+    "colPrice": "Price",
+    "colSum": "Amount",
+    "payTransfer": "Transfer"
   },
   "kds": {
     "title": "Kitchen display"
@@ -112,7 +123,7 @@
     },
     "menu": {
       "title": "Menu admin",
-      "subtitle": "Categories and dishes — modal CRUD (manager)",
+      "subtitle": "Categories and dishes",
       "addCategory": "Add category",
       "editCategory": "Edit category",
       "addItem": "Add dish",
@@ -143,6 +154,7 @@
       "active": "Active",
       "inactive": "Inactive",
       "actions": "Actions",
+      "exportExcel": "Excel",
       "edit": "Edit",
       "delete": "Delete",
       "deactivate": "Deactivate",
@@ -220,6 +232,12 @@
     "inHouseHint": "In-house guest — use room charge; payment at hotel checkout.",
     "openKds": "Open KDS",
     "void": "Void",
+    "colName": "Item",
+    "colQty": "Qty",
+    "colPrice": "Price",
+    "colSum": "Amount",
+    "qtyMinus": "Decrease",
+    "qtyPlus": "Increase",
     "applyDiscount": "Apply discount %",
     "splitSelected": "Split selected lines",
     "selectLinesToSplit": "Select lines to split",
@@ -248,6 +266,22 @@
     "mealBreakfast": "Breakfast incl.",
     "mealAllInclusive": "All inclusive"
   },
+  "sales": {
+    "title": "Sales journal",
+    "subtitle": "Closed checks — today and the open shift",
+    "today": "Today",
+    "thisShift": "This shift",
+    "time": "Time",
+    "place": "Place",
+    "method": "Tender",
+    "sum": "Amount",
+    "empty": "No checks",
+    "cash": "Cash",
+    "card": "Card",
+    "transfer": "Transfer",
+    "count": "Checks",
+    "takeaway": "Take away"
+  },
   "shift": {
     "title": "POS shift",
     "noShift": "No open shift",
@@ -263,6 +297,7 @@
     "closeFailed": "Failed to close shift",
     "managerRequired": "Manager role required for Z-close",
     "openTicketsBlock": "Cannot Z-close: {count} open ticket(s)",
+    "xReport": "X",
     "fiscalDevice": "Cash register (KKM)",
     "bankTerminal": "Bank POS",
     "autoDefault": "Default / auto"

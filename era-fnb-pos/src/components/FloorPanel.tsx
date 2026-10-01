@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { Ban } from "lucide-react";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { CheckLines } from "@/components/CheckLines";
+import PosShiftPanel from "@/components/PosShiftPanel";
 
 type Table = {
   id: string;
@@ -12,6 +15,7 @@ type Table = {
   name: string;
   status: string;
   currentTicketId?: string | null;
+  openTotalAzn?: number | null;
 };
 
 type MenuItem = {
@@ -82,6 +86,12 @@ export default function FloorPanel() {
   const [ticketTotal, setTicketTotal] = useState<number | null>(null);
   const [ticketCaption, setTicketCaption] = useState("");
   const [dayNo, setDayNo] = useState<number | null>(null);
+  const [cashReceived, setCashReceived] = useState("");
+  const [lastPaid, setLastPaid] = useState<{
+    dayNo: number | null;
+    amount: number;
+    change: number | null;
+  } | null>(null);
   const [openChips, setOpenChips] = useState<OpenChip[]>([]);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [selectedOutletId, setSelectedOutletId] = useState<string>("");
@@ -96,7 +106,6 @@ export default function FloorPanel() {
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
   const [canPay, setCanPay] = useState(false);
-  const [canEditLines, setCanEditLines] = useState(false);
   const [canSoldOut, setCanSoldOut] = useState(false);
   const busy = useRef(false);
 
@@ -195,9 +204,9 @@ export default function FloorPanel() {
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
       const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
       const perms: string[] = Array.isArray(me.permissions) ? me.permissions : [];
-      setCanPay(perms.includes(PERMISSIONS.TICKETS_PAY));
-      setCanEditLines(perms.includes(PERMISSIONS.TICKETS_LINES));
-      setCanSoldOut(perms.includes(PERMISSIONS.MENU_SOLD_OUT));
+      const owner = me.isOwner === true || me.role === "BUSINESS_OWNER";
+      setCanPay(owner || perms.includes(PERMISSIONS.TICKETS_PAY));
+      setCanSoldOut(owner || perms.includes(PERMISSIONS.MENU_SOLD_OUT));
       const kafe = editionData
         ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
           editionData.hotelMode === false
@@ -329,13 +338,16 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, caption);
-    showSuccess(t("dishAdded", { name: item.name }));
     await load({ silent: true });
   }
 
   function apiFailed(data: { error?: string; code?: string }) {
     if (data.code === "SOLD_OUT") {
       showApiError({ error: t("soldOut") });
+      return;
+    }
+    if (data.code === "SHIFT_REQUIRED") {
+      showApiError({ error: t("shiftRequired") });
       return;
     }
     const err = data.error?.trim() ?? "";
@@ -375,7 +387,6 @@ export default function FloorPanel() {
         return;
       }
       applyTicket({ ...data, id: activeTicketId });
-      showSuccess(t("dishAdded", { name: item.name }));
       await load({ silent: true });
       return;
     }
@@ -402,7 +413,7 @@ export default function FloorPanel() {
   }
 
   async function changeQty(line: TicketLineView, qty: number, nested = false) {
-    if ((!nested && busy.current) || !activeTicketId || !canEditLines) return;
+    if ((!nested && busy.current) || !activeTicketId) return;
     if (qty > line.qty) {
       const itemId = line.menuItemId;
       if (itemId && soldOutIds.has(itemId)) {
@@ -429,14 +440,21 @@ export default function FloorPanel() {
     }
   }
 
-  async function pay(method: "CASH" | "CARD") {
+  async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (busy.current || !activeTicketId || !canPay) return;
     if (ticketLines.length === 0 || (ticketTotal ?? 0) <= 0) {
       showApiError({ error: t("nothingToPay") });
       return;
     }
+    const due = ticketTotal ?? 0;
+    const got = Number(cashReceived);
+    if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
+      showApiError({ error: t("cashShort") });
+      return;
+    }
     busy.current = true;
     const ticketId = activeTicketId;
+    const paidDay = dayNo;
     try {
     const res = await fetch(`/api/tickets/${ticketId}/pay`, {
       method: "POST",
@@ -454,14 +472,23 @@ export default function FloorPanel() {
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: t("shiftRequired") });
+        return;
+      }
       showApiError(
         data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
         tc("failed"),
       );
       return;
     }
-    const label = method === "CARD" ? t("payCard") : t("payCash");
-    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
+    const amount = Number(data.amount);
+    setLastPaid({
+      dayNo: paidDay,
+      amount,
+      change: method === "CASH" ? Math.round((got - amount) * 100) / 100 : null,
+    });
+    setCashReceived("");
     setActiveTicketId(null);
     setDraft(null);
     setTicketLines([]);
@@ -701,7 +728,9 @@ export default function FloorPanel() {
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
-        <div className="grid items-start gap-3 lg:grid-cols-[16rem_minmax(0,1fr)_minmax(26rem,38%)]">
+        <div className="space-y-3">
+          <PosShiftPanel />
+          <div className="grid items-stretch gap-3 lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
           <div className="space-y-3">
             {!hotelMode && (
               <>
@@ -752,16 +781,27 @@ export default function FloorPanel() {
                   type="button"
                   onClick={() => selectTable(table)}
                   className={`${CARD_CLASS} p-3 text-left transition hover:border-[#2980B9] ${
-                    table.status === "OCCUPIED" ? "bg-[#F4F6F7]" : ""
+                    table.status === "OCCUPIED" ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                   } ${draft?.kind === "table" && draft.tableId === table.id ? "border-[#2980B9]" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-base font-semibold">{table.code}</span>
-                    <span className="rounded-lg bg-[#EBEDF0] px-2 py-0.5 text-xs">
+                    <span
+                      className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                        table.status === "OCCUPIED"
+                          ? "bg-[#2980B9] text-white"
+                          : "bg-[#EBEDF0] text-[#34495E]"
+                      }`}
+                    >
                       {table.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[#7F8C8D]">{table.name}</p>
+                  {table.status === "OCCUPIED" && table.openTotalAzn != null ? (
+                    <p className="mt-1 text-right text-sm font-semibold tabular-nums text-[#2C3E50]">
+                      {Number(table.openTotalAzn).toFixed(2)} {tc("azn")}
+                    </p>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -775,15 +815,15 @@ export default function FloorPanel() {
               placeholder={t("menuSearch")}
               className={`${INPUT_CLASS} mb-2 w-full`}
             />
-            <div className="mb-2 flex gap-1 overflow-x-auto">
+            <div className="mb-3 flex gap-2 overflow-x-auto">
               {menuCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
-                  className={`shrink-0 rounded px-2 py-1 text-xs ${
+                  className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold ${
                     !query && cat.id === activeCategoryId
                       ? "bg-[#2980B9] text-white"
-                      : "bg-[#EBEDF0] text-[#34495E]"
+                      : "bg-white text-[#2C3E50] ring-1 ring-[#B7C3CE]"
                   }`}
                   onClick={() => {
                     setMenuQuery("");
@@ -794,112 +834,130 @@ export default function FloorPanel() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {visibleDishes.map((m) => (
-                <div
-                  key={m.id}
-                  className={`rounded border border-[#D5DADF] p-2 text-left text-sm ${
-                    soldOutIds.has(m.id) ? "opacity-40" : ""
+                <div key={m.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => void addDish(m)}
+                  disabled={soldOutIds.has(m.id)}
+                  className={`flex h-28 w-full flex-col items-center justify-center rounded-md border border-[#D5DADF] bg-white px-2 text-center ${
+                    soldOutIds.has(m.id) ? "opacity-40" : "hover:border-[#2980B9]"
                   }`}
                 >
+                  <span className="line-clamp-2 text-base font-semibold leading-5 text-[#2C3E50]">
+                    {m.name}
+                  </span>
+                  <span className="mt-2 text-sm font-bold tabular-nums text-[#1E8449]">
+                    {Number(m.priceAzn).toFixed(2)} {tc("azn")}
+                  </span>
+                </button>
+                {canSoldOut ? (
                   <button
                     type="button"
-                    onClick={() => void addDish(m)}
-                    disabled={soldOutIds.has(m.id)}
-                    className="w-full text-left"
+                    className="absolute right-1 top-1 rounded p-1 text-[#7F8C8D] hover:text-[#C0392B]"
+                    aria-label={soldOutIds.has(m.id) ? t("inStock") : t("soldOut")}
+                    onClick={() => void toggleSoldOut(m)}
                   >
-                    <span className="block font-medium">{m.name}</span>
-                    <span className="text-xs text-[#7F8C8D]">
-                      {Number(m.priceAzn).toFixed(2)} {tc("azn")}
-                    </span>
+                    <Ban className="h-3.5 w-3.5" />
                   </button>
-                  {canSoldOut && (
-                    <button
-                      type="button"
-                      className="mt-1 text-[10px] text-[#2980B9]"
-                      onClick={() => void toggleSoldOut(m)}
-                    >
-                      {soldOutIds.has(m.id) ? t("inStock") : t("soldOut")}
-                    </button>
-                  )}
+                ) : null}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`${CARD_CLASS} flex min-h-[24rem] flex-col p-4`}>
-            <p className="text-xs font-semibold text-[#34495E]">{t("ticketTitle")}</p>
+          <div className={`${CARD_CLASS} flex min-h-[32rem] flex-col p-4`}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {t("ticketTitle")}
+            </p>
+            {lastPaid ? (
+              <p className="mt-2 text-sm text-[#1E8449]">
+                {t("paidBanner", {
+                  no: lastPaid.dayNo ?? "—",
+                  amount: lastPaid.amount.toFixed(2),
+                  change:
+                    lastPaid.change == null
+                      ? ""
+                      : t("changeDue", { amount: lastPaid.change.toFixed(2) }),
+                })}
+              </p>
+            ) : null}
             {checkOpen ? (
               <>
                 <p className="mt-1 text-base font-semibold">{heading || t("ticketTitle")}</p>
-                <ul className="mt-3 flex-1 space-y-2">
-                  {ticketLines.map((line) => (
-                    <li key={line.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 flex-1">
-                        {line.description}
-                        <span className="mt-0.5 block text-xs text-[#7F8C8D]">
-                          {(line.qty * Number(line.unitPriceAzn)).toFixed(2)} {tc("azn")}
-                        </span>
-                      </span>
-                      {canEditLines && (
-                        <span className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            className="h-7 w-7 rounded border border-[#D5DADF] text-[#34495E]"
-                            aria-label={t("qtyMinus")}
-                            onClick={() => void changeQty(line, line.qty - 1)}
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center">{line.qty}</span>
-                          <button
-                            type="button"
-                            className="h-7 w-7 rounded border border-[#D5DADF] text-[#34495E]"
-                            aria-label={t("qtyPlus")}
-                            onClick={() => void changeQty(line, line.qty + 1)}
-                          >
-                            +
-                          </button>
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                <div className="mt-3 flex-1">
                   {ticketLines.length === 0 ? (
-                    <li className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</li>
-                  ) : null}
-                </ul>
-                <p className="mt-3 border-t border-[#D5DADF] pt-3 text-lg font-semibold">
+                    <p className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</p>
+                  ) : (
+                    <CheckLines
+                      lines={ticketLines}
+                      onQty={(line, qty) => void changeQty(line, qty)}
+                      onRemove={(line) => void changeQty(line, 0)}
+                      azn={tc("azn")}
+                      labels={{
+                        name: t("colName"),
+                        qty: t("colQty"),
+                        price: t("colPrice"),
+                        sum: t("colSum"),
+                        minus: t("qtyMinus"),
+                        plus: t("qtyPlus"),
+                        remove: t("qtyMinus"),
+                      }}
+                    />
+                  )}
+                </div>
+                <p className="mt-3 border-t border-[#D5DADF] pt-3 text-right text-2xl font-semibold tabular-nums">
                   {(ticketTotal ?? 0).toFixed(2)} {tc("azn")}
                 </p>
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded bg-[#27AE60] px-3 py-2 text-sm text-white"
-                      onClick={() => void pay("CASH")}
-                    >
-                      {t("payCash")}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded bg-[#2980B9] px-3 py-2 text-sm text-white"
-                      onClick={() => void pay("CARD")}
-                    >
-                      {t("payCard")}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B]"
-                      onClick={() => void cancelTicket()}
-                    >
-                      {t("cancelTicket")}
-                    </button>
+                  <div className="mt-3 space-y-2">
+                    <label className="block text-xs text-[#7F8C8D]">
+                      {t("cashReceived")}
+                      <input
+                        inputMode="decimal"
+                        value={cashReceived}
+                        onChange={(e) => setCashReceived(e.target.value)}
+                        className={`${INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
+                      />
+                    </label>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        className="rounded bg-[#27AE60] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("CASH")}
+                      >
+                        {t("payCash")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded bg-[#2980B9] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("CARD")}
+                      >
+                        {t("payCard")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded bg-[#1A5276] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("TRANSFER")}
+                      >
+                        {t("payTransfer")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B]"
+                        onClick={() => void cancelTicket()}
+                      >
+                        {t("cancelTicket")}
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
             ) : (
               <p className="mt-3 text-sm text-[#7F8C8D]">{t("openTableFirst")}</p>
             )}
+          </div>
           </div>
         </div>
       )}

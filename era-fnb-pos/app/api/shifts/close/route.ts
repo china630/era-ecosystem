@@ -7,6 +7,7 @@ import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { saleReportForShift } from "@/lib/sales-report";
 
 const closeSchema = z.object({
   shiftId: z.string().optional(),
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const report = await saleReportForShift(shift.id);
+
   const closed = await prisma.posShift.update({
     where: { id: shift.id },
     data: { status: "CLOSED", closedAt: new Date() },
@@ -76,5 +79,5 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json(closed);
+  return NextResponse.json({ ...closed, report });
 }

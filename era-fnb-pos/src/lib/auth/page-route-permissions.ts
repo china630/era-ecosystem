@@ -50,6 +50,9 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname === "/orders" || pathname.startsWith("/orders/")) {
     return [PERMISSIONS.SCREEN_ORDERS];
   }
+  if (pathname === "/sales" || pathname.startsWith("/sales/")) {
+    return [PERMISSIONS.SCREEN_ORDERS];
+  }
   if (pathname === "/kds" || pathname.startsWith("/kds/")) {
     return [PERMISSIONS.SCREEN_KDS];
   }

@@ -77,6 +77,7 @@ export async function POST(request: Request) {
     data: {
       outletId: outlet.id,
       openingCash: body.openingCash,
+      openedBy: session?.fullName?.trim() || session?.login || null,
       fiscalDeviceId: fiscalDeviceId ?? null,
       bankTerminalId: bankTerminalId ?? null,
     },
