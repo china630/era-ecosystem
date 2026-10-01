@@ -475,7 +475,11 @@ function ReportSheet({ sheet, locale }: { sheet: TabularSheet; locale: string })
                 <tr key={index} className={index % 2 === 1 ? 'bg-[#F8F9FA]' : undefined}>
                   {row.map((value, cellIndex) => (
                     <td key={cellIndex} className="px-3 py-1.5 text-[#34495E]">
-                      {value == null ? '' : typeof value === 'number' ? value.toLocaleString(locale) : value}
+                      {value == null
+                        ? ''
+                        : typeof value === 'number'
+                          ? new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(value)
+                          : value}
                     </td>
                   ))}
                 </tr>
