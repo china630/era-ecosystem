@@ -13,6 +13,7 @@ import { assertTicketCreateQuota } from "@/lib/fnb-quota";
 import { handleRouteError } from "@/lib/api-utils";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
+import { attachDayNos } from "@/lib/ticket-helpers";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
     orderBy: { openedAt: "desc" },
     take: 100,
   });
-  return NextResponse.json(tickets);
+  return NextResponse.json(await attachDayNos(tickets));
 }
 
 const createSchema = z.object({
@@ -129,14 +130,15 @@ export async function POST(request: Request) {
     include: { lines: true, table: true },
   });
 
-  if (body.tableId) {
+  if (body.tableId && lines.length > 0) {
     await prisma.posTable.update({
       where: { id: body.tableId },
       data: { status: "OCCUPIED", currentTicketId: ticket.id },
     });
   }
 
-  return NextResponse.json(ticket, { status: 201 });
+  const [withDay] = await attachDayNos([ticket]);
+  return NextResponse.json(withDay ?? ticket, { status: 201 });
   } catch (err) {
     return handleRouteError(err);
   }
