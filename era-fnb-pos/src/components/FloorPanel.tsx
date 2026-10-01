@@ -91,6 +91,7 @@ export default function FloorPanel() {
   const [loading, setLoading] = useState(true);
   const [outletSaving, setOutletSaving] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
+  const hotelModeRef = useRef(false);
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
@@ -189,18 +190,22 @@ export default function FloorPanel() {
       const menuData = await menuRes.json().catch(() => null);
       const outletsData = await outletsRes.json().catch(() => ({}));
       const editionData = editionRes.ok
-        ? await editionRes.json().catch(() => ({}))
-        : {};
+        ? await editionRes.json().catch(() => null)
+        : null;
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
       const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
       const perms: string[] = Array.isArray(me.permissions) ? me.permissions : [];
       setCanPay(perms.includes(PERMISSIONS.TICKETS_PAY));
       setCanEditLines(perms.includes(PERMISSIONS.TICKETS_LINES));
       setCanSoldOut(perms.includes(PERMISSIONS.MENU_SOLD_OUT));
-      const kafe =
-        String(editionData?.edition ?? "").toLowerCase() === "kafe" ||
-        editionData?.hotelMode === false;
-      setHotelMode(!kafe);
+      const kafe = editionData
+        ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
+          editionData.hotelMode === false
+        : !hotelModeRef.current;
+      if (editionData) {
+        hotelModeRef.current = !kafe;
+        setHotelMode(!kafe);
+      }
       if (!tablesRes.ok) {
         showApiError(tablesData, tc("failed"));
       }
