@@ -21,7 +21,6 @@ export function enterSatelliteTenant(ctx: { organizationId?: string }): void {
 }
 
 export function resolveSatelliteTenantOrgId(): string | null {
-  if (process.env.ERA_SKIP_TENANT_FILTER === "1") return null;
   if (als.organizationId) return als.organizationId;
   const bind = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
   return bind || "test-org";
@@ -48,25 +47,24 @@ export function runWithSatelliteTenant<T>(
 
 export async function runCronForEachTenant<T>(
   opts: {
-    listOrganizationIds?: () => Promise<string[]>;
     fetchPoolOrganizationIds?: () => Promise<string[]>;
   },
   work: (organizationId: string) => Promise<T>,
 ): Promise<
   { ok: true; results: T[] } | { ok: false; status: number; reason: string }
 > {
-  const env =
-    process.env.ERA_CRON_ORGANIZATION_IDS?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
-  let ids = env;
-  if (!ids.length && opts.fetchPoolOrganizationIds) {
+  let ids: string[];
+  if (process.env.ERA_DEPLOYMENT_TOPOLOGY === "SHARED") {
+    if (!opts.fetchPoolOrganizationIds) {
+      return { ok: false, status: 503, reason: "pool_registry_not_configured" };
+    }
     ids = await opts.fetchPoolOrganizationIds();
+    if (!ids.length) return { ok: false, status: 503, reason: "pool_registry_empty" };
+  } else {
+    const processOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+    if (!processOrg) return { ok: false, status: 503, reason: "satellite_unbound" };
+    ids = [processOrg];
   }
-  if (!ids.length && opts.listOrganizationIds) {
-    ids = await opts.listOrganizationIds();
-  }
-  if (!ids.length) ids = [resolveSatelliteTenantOrgId() || "test-org"];
   const results: T[] = [];
   for (const organizationId of [...new Set(ids)]) {
     results.push(

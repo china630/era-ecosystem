@@ -1,12 +1,12 @@
 /**
- * SaaS Wave 10 — clinic cron wires DB org discover callback.
+ * SaaS Wave 10 — clinic cron passes only the orch pool registry to the kit.
  */
 jest.mock("@era/satellite-kit", () => ({
   runCronForEachTenant: jest.fn(),
 }));
 
 jest.mock("@/lib/cron-organization-ids", () => ({
-  listCronOrganizationIdsFromDb: jest.fn(async () => [
+  fetchClinicPoolOrganizationIds: jest.fn(async () => [
     "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   ]),
@@ -17,7 +17,7 @@ jest.mock("@/domain/procedure/procedure-completion.service", () => ({
 }));
 
 import { runCronForEachTenant } from "@era/satellite-kit";
-import { listCronOrganizationIdsFromDb } from "@/lib/cron-organization-ids";
+import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { POST } from "../app/api/cron/procedure-auto-complete/route";
 
 describe("saas wave 10 clinic cron discover", () => {
@@ -25,14 +25,15 @@ describe("saas wave 10 clinic cron discover", () => {
     jest.clearAllMocks();
   });
 
-  it("POST passes listOrganizationIds to runCronForEachTenant", async () => {
+  it("POST passes only fetchPoolOrganizationIds to runCronForEachTenant", async () => {
     (runCronForEachTenant as jest.Mock).mockImplementation(
       async (
-        opts: { listOrganizationIds?: () => Promise<string[]> },
+        opts: Record<string, unknown> & { fetchPoolOrganizationIds?: () => Promise<string[]> },
         work: (id: string) => Promise<unknown>,
       ) => {
-        expect(opts.listOrganizationIds).toBe(listCronOrganizationIdsFromDb);
-        const ids = await opts.listOrganizationIds!();
+        expect(opts.fetchPoolOrganizationIds).toBe(fetchClinicPoolOrganizationIds);
+        expect(opts).not.toHaveProperty("listOrganizationIds");
+        const ids = await opts.fetchPoolOrganizationIds!();
         const results = [];
         for (const id of ids) {
           results.push(await work(id));
@@ -52,6 +53,19 @@ describe("saas wave 10 clinic cron discover", () => {
     expect(body.byOrganization[0].organizationId).toBe(
       "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     );
-    expect(listCronOrganizationIdsFromDb).toHaveBeenCalled();
+    expect(fetchClinicPoolOrganizationIds).toHaveBeenCalled();
+  });
+
+  it("POST surfaces the kit 503 reason when the org list is unavailable", async () => {
+    (runCronForEachTenant as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 503,
+      reason: "pool_registry_empty",
+    });
+    const res = await POST(
+      new Request("http://localhost/api/cron/procedure-auto-complete", { method: "POST" }),
+    );
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "pool_registry_empty" });
   });
 });

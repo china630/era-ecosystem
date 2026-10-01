@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
 import { resolveCreditLimitAzn } from '@/lib/services/guest-dedup.service';
@@ -28,7 +29,7 @@ export function hashRoomChargeRequest(input: RoomChargeIdempotencyInput): string
 }
 
 export async function findRoomChargeByIdempotencyKey(idempotencyKey: string) {
-  const row = await prisma.posRoomChargeIdempotency.findUnique({
+  const row = await prisma.posRoomChargeIdempotency.findFirst({
     where: { idempotencyKey },
   });
   if (!row) return null;
@@ -45,7 +46,13 @@ export async function saveRoomChargeIdempotency(
   requestHash: string,
 ) {
   await prisma.posRoomChargeIdempotency.create({
-    data: { idempotencyKey, folioChargeId, reservationId, requestHash },
+    data: {
+      organizationId: requestOrganizationId(),
+      idempotencyKey,
+      folioChargeId,
+      reservationId,
+      requestHash,
+    },
   });
 }
 
@@ -218,12 +225,14 @@ export async function reportPosShiftStatus(input: {
 
   await prisma.posBridgeShift.upsert({
     where: {
-      outletCode_externalShiftId: {
+      organizationId_outletCode_externalShiftId: {
+        organizationId: requestOrganizationId(),
         outletCode: input.outletCode,
         externalShiftId: input.shiftId,
       },
     },
     create: {
+      organizationId: requestOrganizationId(),
       outletCode: input.outletCode,
       externalShiftId: input.shiftId,
       propertyCode: input.propertyCode,

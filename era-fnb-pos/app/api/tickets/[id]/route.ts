@@ -1,7 +1,33 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
+import { assertFnbEntitled, jsonError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { denyUnlessAnyPermission } from "@/lib/auth/require";
+import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
 import { prisma } from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/session";
+import { attachDayNos } from "@/lib/ticket-helpers";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  await assertFnbEntitled();
+  const session = await getSessionFromRequest(request);
+  const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
+  if (denied) return denied;
+  const { id } = await params;
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    include: {
+      lines: true,
+      table: true,
+      outlet: { select: { code: true, name: true } },
+    },
+  });
+  if (!ticket) return jsonError("Ticket not found", 404);
+  const [withDay] = await attachDayNos([ticket]);
+  return NextResponse.json(withDay ?? ticket);
+}
 
 const patchSchema = z.object({
   roomChargeReservationId: z.string().nullable().optional(),

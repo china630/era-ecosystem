@@ -40,7 +40,7 @@
 
 **Edition / wave rollup (BE, in-scope)** = worst(FO, CASH, HK, RATE, MDM) → **✅**.  
 AC-HOT-INT remains 🟡 and is **out of Scaffold BE rollup** until vendor modes leave STUB.  
-AC-HOT-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** (does not undo FO money scaffold).  
+AC-HOT-TENANT is 🟡 (Nafta placement is SHARED; `organizationId` covers roots and child/line rows) and stays **out of Scaffold BE rollup** until field two-org UAT (does not undo FO money scaffold).  
 AC-HOT-AGP is 🟡 (P0–P1 landing) and stays **out of Scaffold BE rollup** until negative suite is green.  
 AC-HOT-CO-EARLY is 🟡 and stays **out of Scaffold BE rollup**.  
 AC-HOT-TOUR is Scaffold ✅ (negatives + UAT UI path) and stays **out of Scaffold BE rollup**.

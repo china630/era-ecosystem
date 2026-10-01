@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import type { Prisma } from "@erafinance/database";
 import type { AuthUser } from "../auth/types/auth-user";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import {
   computeAuditHash,
   type AuditHashPayload,
@@ -384,13 +385,28 @@ export class AuditService {
       userAgent,
       createdAt,
     };
-    const previous = orgId
-      ? await this.prisma.auditLog.findFirst({
-          where: { organizationId: orgId },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          select: { hash: true },
-        })
-      : null;
+    if (!orgId) {
+      await this.insertPlatformAuditRow(this.prisma, {
+        userId,
+        entityType,
+        entityId,
+        action: method,
+        changes,
+        oldValues,
+        newValues,
+        clientIp,
+        userAgent,
+        hash: computeAuditHash({ ...hashPayload, prevHash: null }, this.hashSecret),
+        createdAt,
+      });
+      return;
+    }
+
+    const previous = await this.prisma.auditLog.findFirst({
+      where: { organizationId: orgId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { hash: true },
+    });
     const hash = computeAuditHash(
       {
         ...hashPayload,
@@ -422,20 +438,54 @@ export class AuditService {
       },
     });
 
-    if (orgId) {
-      void this.activityEmitter
-        .emitFromAuditMutation({
-          organizationId: orgId,
-          actorUserId: userId,
-          auditEntityType: entityType,
-          entityId,
-          httpMethod: method,
-        })
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          this.logger.warn(`activity stream emit failed: ${msg}`);
-        });
-    }
+    void this.activityEmitter
+      .emitFromAuditMutation({
+        organizationId: orgId,
+        actorUserId: userId,
+        auditEntityType: entityType,
+        entityId,
+        httpMethod: method,
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`activity stream emit failed: ${msg}`);
+      });
+  }
+
+  /**
+   * Platform audit row (`organization_id IS NULL`), outside every org hash chain.
+   * Raw SQL: the tenant extension rejects a model write without an org and would
+   * stamp the caller's context org on one, breaking that org's chain.
+   */
+  private async insertPlatformAuditRow(
+    client: Pick<Prisma.TransactionClient, "$executeRaw">,
+    row: {
+      userId: string | null;
+      entityType: string;
+      entityId: string;
+      action: string;
+      changes?: unknown;
+      oldValues?: unknown;
+      newValues?: unknown;
+      clientIp?: string | null;
+      userAgent?: string | null;
+      hash?: string | null;
+      createdAt?: Date;
+    },
+  ): Promise<void> {
+    const json = (v: unknown): string | null =>
+      v === null || v === undefined ? null : JSON.stringify(v);
+    const createdAt = (row.createdAt ?? new Date()).toISOString();
+    await client.$executeRaw`
+      INSERT INTO audit_logs (
+        organization_id, user_id, entity_type, entity_id, action,
+        changes, old_values, new_values, client_ip, user_agent, hash, created_at
+      ) VALUES (
+        NULL, ${row.userId}::uuid, ${row.entityType}, ${row.entityId}, ${row.action},
+        ${json(row.changes)}::jsonb, ${json(row.oldValues)}::jsonb, ${json(row.newValues)}::jsonb,
+        ${row.clientIp ?? null}, ${row.userAgent ?? null}, ${row.hash ?? null},
+        (${createdAt}::timestamptz AT TIME ZONE 'UTC')
+      )`;
   }
 
   verifyStoredLog(log: {
@@ -584,7 +634,10 @@ export class AuditService {
     const compromisedIds: string[] = [];
     let compromisedOrganizations = 0;
     for (const org of organizations) {
-      const r = await this.verifyOrganizationChain(org.id);
+      const r = await runWithTenantContextAsync(
+        { organizationId: org.id, skipTenantFilter: false },
+        () => this.verifyOrganizationChain(org.id),
+      );
       if (r.compromisedCount > 0) {
         compromisedOrganizations += 1;
         compromisedIds.push(...r.compromisedIds);
@@ -605,25 +658,20 @@ export class AuditService {
     orderId: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    const exists = await tx.auditLog.findFirst({
-      where: {
-        entityType: "platform.billing.payment_applied",
-        entityId: orderId,
-      },
-      select: { id: true },
-    });
-    if (exists) {
+    const entityType = "platform.billing.payment_applied";
+    const exists = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM audit_logs
+      WHERE organization_id IS NULL AND entity_type = ${entityType} AND entity_id = ${orderId}
+      LIMIT 1`;
+    if (exists.length > 0) {
       return;
     }
-    await tx.auditLog.create({
-      data: {
-        organizationId: null,
-        userId: null,
-        entityType: "platform.billing.payment_applied",
-        entityId: orderId,
-        action: "webhook",
-        newValues: this.dataMasking.maskDeep(payload) as object,
-      },
+    await this.insertPlatformAuditRow(tx, {
+      userId: null,
+      entityType,
+      entityId: orderId,
+      action: "webhook",
+      newValues: this.dataMasking.maskDeep(payload),
     });
   }
 
@@ -638,16 +686,30 @@ export class AuditService {
       params.payload != null
         ? (this.dataMasking.maskDeep(params.payload) as object)
         : undefined;
-    await this.prisma.auditLog.create({
-      data: {
-        organizationId: params.organizationId,
+    if (!params.organizationId) {
+      await this.insertPlatformAuditRow(this.prisma, {
         userId: null,
         entityType: params.entityType,
         entityId: params.entityId,
         action: params.action,
         newValues,
-      },
-    });
+      });
+      return;
+    }
+    const organizationId = params.organizationId;
+    await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.appendTenantAuditChainEntry({
+          organizationId,
+          userId: null,
+          entityType: params.entityType,
+          entityId: params.entityId,
+          action: params.action,
+          newValues,
+          changes: { source: "logOrganizationSystemEvent" },
+        }),
+    );
   }
 
   /**

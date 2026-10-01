@@ -1,14 +1,18 @@
 import { ForbiddenException } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
 import { getTenantContext } from "./tenant-context";
-import { isRecoveryBypassTenantFilter } from "./recovery-context";
 
 /**
  * Связь пользователь ↔ организация: запросы идут по `userId` (все компании пользователя)
  * или по явному `organizationId`. Автоподмешивание JWT-организации ломает
  * `findMany({ where: { userId } })` и `create` членства для новой организации в транзакции.
  */
-const EXCLUDED_FROM_TENANT_AUTO_FILTER = new Set(["OrganizationMembership"]);
+const EXCLUDED_FROM_TENANT_AUTO_FILTER = new Set([
+  "OrganizationMembership",
+  // Invite is addressed by email / invite id. The recipient is not inside that
+  // organization yet, and may have no session org at all.
+  "OrganizationInvite",
+]);
 
 /** Модели со скалярным organizationId (динамически из Prisma DMMF). */
 function tenantModelNames(): Set<string> {
@@ -65,13 +69,15 @@ export function mergeWhereForUnique(where: unknown, orgId: string): Record<strin
   return { ...w, organizationId: orgId };
 }
 
+/**
+ * No ALS context is an error: workers, crons and public routes must enter
+ * `runWithTenantContextAsync({ organizationId, skipTenantFilter: false })`.
+ * Only super-admin `/api/admin/*` and the audit archive worker set `skipTenantFilter`.
+ */
 function requireOrgOrSkip(): string | null {
-  if (isRecoveryBypassTenantFilter()) {
-    return null;
-  }
   const ctx = getTenantContext();
   if (!ctx) {
-    return null;
+    throw new ForbiddenException("Tenant context required");
   }
   if (ctx.skipTenantFilter) {
     return null;

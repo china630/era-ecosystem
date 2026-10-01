@@ -7,6 +7,7 @@ import {
   resolveSatelliteOrganizationId,
   type OrgBindPrisma,
 } from "./organization-bind-core";
+import { satelliteRuntimeConfig } from "./runtime-config-core";
 
 const bindBodySchema = z.object({
   organizationId: z.string().uuid(),
@@ -40,6 +41,13 @@ export function createOrganizationBindHandlers(
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+    if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
+      return NextResponse.json({
+        ok: true,
+        organizationId: "",
+        source: "shared" as const,
+      });
+    }
     const prisma = opts.getPrisma?.() ?? null;
     if (prisma) {
       await hydrateOrganizationBindFromDb(prisma);
@@ -64,6 +72,13 @@ export function createOrganizationBindHandlers(
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid body";
       return NextResponse.json({ error: message }, { status: 400 });
+    }
+    if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
+      return NextResponse.json({
+        ok: true,
+        organizationId: body.organizationId,
+        source: "request" as const,
+      });
     }
     const prisma = opts.getPrisma?.() ?? null;
     await applyOrganizationBind({

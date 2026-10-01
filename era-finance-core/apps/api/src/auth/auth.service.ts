@@ -30,6 +30,7 @@ import type { Response } from "express";
 import { OrgStructureService } from "../hr/org-structure.service";
 import { OrganizationsService } from "../organizations/organizations.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES } from "../subscription/subscription.constants";
 import { billingPeriodKeyBaku } from "../billing/baku-billing.util";
 import { resolveNewOrganizationTrialSubscription } from "../subscription/trial-package.util";
@@ -1786,31 +1787,36 @@ export class AuthService {
     if (!org) {
       throw new NotFoundException("Organization not found for this VÖEN");
     }
-    const existing = await this.prisma.organizationMembership.findUnique({
-      where: {
-        userId_organizationId: { userId, organizationId: org.id },
+    return runWithTenantContextAsync(
+      { organizationId: org.id, skipTenantFilter: false },
+      async () => {
+        const existing = await this.prisma.organizationMembership.findUnique({
+          where: {
+            userId_organizationId: { userId, organizationId: org.id },
+          },
+        });
+        if (existing) {
+          throw new ConflictException("Already a member of this organization");
+        }
+        const pending = await this.prisma.accessRequest.findFirst({
+          where: {
+            organizationId: org.id,
+            requesterId: userId,
+            status: AccessRequestStatus.PENDING,
+          },
+        });
+        if (pending) {
+          throw new ConflictException("Access request already pending");
+        }
+        return this.prisma.accessRequest.create({
+          data: {
+            organizationId: org.id,
+            requesterId: userId,
+            message: message?.trim() || null,
+          },
+        });
       },
-    });
-    if (existing) {
-      throw new ConflictException("Already a member of this organization");
-    }
-    const pending = await this.prisma.accessRequest.findFirst({
-      where: {
-        organizationId: org.id,
-        requesterId: userId,
-        status: AccessRequestStatus.PENDING,
-      },
-    });
-    if (pending) {
-      throw new ConflictException("Access request already pending");
-    }
-    return this.prisma.accessRequest.create({
-      data: {
-        organizationId: org.id,
-        requesterId: userId,
-        message: message?.trim() || null,
-      },
-    });
+    );
   }
 
   async listPendingAccessRequests(organizationId: string) {

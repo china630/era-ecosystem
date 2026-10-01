@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 const schema = z.object({
   roomId: z.string().uuid(),
   date: z.string(),
-  kind: z.enum(['SKIP', 'SLEEP']),
+  kind: z.enum(['SKIP', 'SLEEP']).nullable(),
   notes: z.string().optional(),
 });
 
@@ -36,6 +36,12 @@ export async function POST(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
+    if (!body.kind) {
+      await prisma.hkDiscrepancy.deleteMany({
+        where: { roomId: body.roomId, workDate: bakuCivilUtcDate(body.date) },
+      });
+      return jsonOk({ cleared: true });
+    }
     return jsonOk(serialize(await recordDiscrepancy(body.roomId, body.date, body.kind, body.notes)));
   } catch (err) {
     return handleRouteError(err);

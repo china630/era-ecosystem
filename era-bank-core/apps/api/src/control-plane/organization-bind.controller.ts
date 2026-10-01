@@ -13,6 +13,7 @@ import {
   hydrateOrganizationBindFromDb,
   resolveSatelliteOrganizationId,
 } from "@era/satellite-kit";
+import { isSharedBankProcess } from "../common/bank-org.config";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrganizationBindBodyDto } from "./organization-bind.dto";
 
@@ -49,6 +50,13 @@ export class OrganizationBindController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     this.authorize(authorization, xServiceToken);
+    if (isSharedBankProcess()) {
+      return {
+        ok: true,
+        organizationId: "",
+        source: "shared" as const,
+      };
+    }
     await hydrateOrganizationBindFromDb(this.prisma as never);
     const resolved = resolveSatelliteOrganizationId({ allowFallback: true });
     return {
@@ -66,6 +74,13 @@ export class OrganizationBindController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     this.authorize(authorization, xServiceToken);
+    if (isSharedBankProcess()) {
+      return {
+        ok: true,
+        organizationId: body.organizationId,
+        source: "request" as const,
+      };
+    }
     await applyOrganizationBind({
       organizationId: body.organizationId,
       boundBy: body.boundBy,

@@ -59,7 +59,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 |------|------|
 | Three axes + check-in does not write OCCUPIED | Landed |
 | Roster / rotation DnD + CatalogField shifts | Landed (SCREEN) |
-| Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN) |
+| Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN). Sheet filter, readable job labels, NSR toggle, print in the page header. |
 | Laundry ticket + immediate post on accept | **Superseded** — accept is IN_PLANT only |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
 | HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
@@ -334,7 +334,7 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk/forecast` | 7–14 day load |
 | `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY` |
 | `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
-| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Keep; closed-rooms gain real OOO≠OOS |
+| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS and can close a door. |
 
 `/hk/maids` code+name CRUD is not the roster.
 

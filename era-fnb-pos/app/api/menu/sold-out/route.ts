@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_SOLD_OUT } from "@/lib/auth/read-permission-sets";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { isSoldOutSchemaDrift } from "@/lib/fnb-sold-out";
 
 const bodySchema = z.object({
   menuItemId: z.string().min(1),
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
     });
     return jsonOk({ soldOut: rows.filter((r) => r.soldOut) });
   } catch (err) {
+    if (isSoldOutSchemaDrift(err)) return jsonOk({ soldOut: [] });
     return handleRouteError(err);
   }
 }

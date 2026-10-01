@@ -7,6 +7,7 @@ import {
 } from "@erafinance/database";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import {
@@ -41,50 +42,50 @@ export class VacationBalanceService {
   }
 
   async recalculateBalancesAsOf(asOf: Date): Promise<{ updated: number }> {
-    const employees = await this.prisma.employee.findMany({
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
+    });
+    const entitledOrgs = await this.cronGate.filterEntitledOrgs(
+      orgs.map((o) => o.id),
+      ModuleEntitlement.HR_FULL,
+    );
+    let updated = 0;
+    for (const organizationId of entitledOrgs) {
+      updated += await runWithTenantContextAsync(
+        { organizationId, skipTenantFilter: false },
+        () => this.recalculateOrganizationAsOf(organizationId, asOf),
+      );
+    }
+    return { updated };
+  }
+
+  private async recalculateOrganizationAsOf(
+    organizationId: string,
+    asOf: Date,
+  ): Promise<number> {
+    const entitledEmployees = await this.prisma.employee.findMany({
       where: {
+        organizationId,
         kind: EmployeeKind.EMPLOYEE,
         employmentStatus: EmployeeEmploymentStatus.ACTIVE,
       },
       select: {
         id: true,
-        organizationId: true,
         hireDate: true,
         initialVacationDays: true,
         baseVacationDaysPerYear: true,
       },
     });
-    if (employees.length === 0) {
-      return { updated: 0 };
-    }
-
-    const orgIds = [...new Set(employees.map((e) => e.organizationId))];
-    const entitledOrgs = new Set(
-      await this.cronGate.filterEntitledOrgs(orgIds, ModuleEntitlement.HR_FULL),
-    );
-    const entitledEmployees = employees.filter((e) =>
-      entitledOrgs.has(e.organizationId),
-    );
     if (entitledEmployees.length === 0) {
-      return { updated: 0 };
+      return 0;
     }
     const seniorityRules = await this.prisma.vacationSeniorityRule.findMany({
-      where: { organizationId: { in: [...entitledOrgs] } },
+      where: { organizationId },
       select: {
-        organizationId: true,
         yearsFrom: true,
         extraDays: true,
       },
     });
-    const rulesByOrg = new Map<
-      string,
-      { yearsFrom: number; extraDays: number }[]
-    >();
-    for (const r of seniorityRules) {
-      const list = rulesByOrg.get(r.organizationId) ?? [];
-      list.push({ yearsFrom: r.yearsFrom, extraDays: r.extraDays });
-      rulesByOrg.set(r.organizationId, list);
-    }
 
     const ids = entitledEmployees.map((e) => e.id);
     const absences = await this.prisma.absence.findMany({
@@ -117,7 +118,7 @@ export class VacationBalanceService {
           const seniorityExtraDaysPerYear = extraDaysFromSeniority(
             emp.hireDate,
             asOf,
-            rulesByOrg.get(emp.organizationId) ?? [],
+            seniorityRules,
           );
           const balance = computeVacationBalance({
             hireDate: emp.hireDate,
@@ -136,6 +137,6 @@ export class VacationBalanceService {
       updated += slice.length;
     }
 
-    return { updated };
+    return updated;
   }
 }

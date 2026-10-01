@@ -12,6 +12,7 @@ import {
   RiskSeverity,
 } from "@erafinance/database";
 import { PrismaService } from "../../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../../prisma/tenant-context";
 import { decodeOrganizationTaxId } from "../../security/pii-crypto.util";
 import { validateVoen } from "../../common/utils/voen-validator";
 import type { AuthUser } from "../types/auth-user";
@@ -84,14 +85,18 @@ export class VoenIntegrityGuard implements CanActivate {
       });
     }
 
-    const riskyCount = await this.prisma.riskAudit.count({
-      where: {
-        organizationId: orgId,
-        status: RiskAuditStatus.PENDING,
-        severity: RiskSeverity.HIGH,
-        type: { in: [RiskAuditType.FRAUD, RiskAuditType.COMPLIANCE] },
-      },
-    });
+    const riskyCount = await runWithTenantContextAsync(
+      { organizationId: orgId, skipTenantFilter: false },
+      () =>
+        this.prisma.riskAudit.count({
+          where: {
+            organizationId: orgId,
+            status: RiskAuditStatus.PENDING,
+            severity: RiskSeverity.HIGH,
+            type: { in: [RiskAuditType.FRAUD, RiskAuditType.COMPLIANCE] },
+          },
+        }),
+    );
     if (riskyCount > 0) {
       throw new ForbiddenException({
         statusCode: 403,

@@ -64,7 +64,11 @@ export async function POST(
     );
   }
 
+  const liveLines = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID");
   const amount = body.amount ?? Number(ticket.totalAzn);
+  if (liveLines.length === 0 || amount <= 0) {
+    return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
+  }
   const organizationId = requestOrganizationId();
 
   const settlement = await resolveTicketSettlement(ticket);

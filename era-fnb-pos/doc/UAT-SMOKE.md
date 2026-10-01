@@ -31,7 +31,7 @@
 3. **PIN floor:** `/pin?org=104221` — posts `{ "pin", "orgNo", "outletId" }`.
 4. `GET /api/menu` — seeded items
 5. `GET /api/menu?dailyOnly=true` — board uses **Asia/Baku** civil `@db.Date` (`bakuCivilUtcDate(todayBakuYmd())`), not host midnight / UTC slice
-6. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
+6. Manager: `/admin/menu` — categories on the left, one dish table (name + price) on the right; search; inactive hidden unless “show inactive”; PLU / recipe SKU / image inside the dish modal
 7. Manager: `/admin/tables` — create/edit/delete static tables
 8. Manager: `/admin/daily-menu` (or DailyMenuAdminPanel) — default board date = Asia/Baku today
 9. RBAC Variant A: doors are grants (`api:*` / `screen:*`), not role names. Waiter can fire/pay (hotel); manager required for void/Z — strip void on `/admin/access` → API 403. Kitchen without `screen:admin.menu` cannot open that page. Kitchen also cannot `GET /api/tickets` / `GET /api/menu` (till-read grants).
@@ -127,7 +127,7 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
    - **Lab firm (after seed):** CP `owner@demo.com` / `12345678`. F&B `/login` `owner` / `12345678` + ERA ID **100000**. PIN cashier `1111`, waiter `2222`. VÖEN `0123456789`.
    - Workspace for ERA ID **100000**: F&B tile **Open** (not «Modul əlavə et»). Seed must have `industry_fnb_pos` in `OrganizationSubscription.activeModules`.
 2. Owner `/login` (password) ≠ cashier `/pin`.
-3. Floor: empty ticket; tap dish adds line; **bitdi/var** on the tile; hotel banquet chrome hidden (`edition=kafe`). Tables/menu without `outletCode` land on outlet **KAFE**, not phantom `RESTAURANT`. A later runtime-config push that omits `edition` must not reset the profile back to hotel. Demo seed deactivates an empty `RESTAURANT` outlet left by the old default.
+3. Floor is one till: tables on the left, category menu in the middle, wide check on the right. **Take away** sits above the tables; open takeaway checks are chips (tap to resume). A check is created on the first dish (`TAKEAWAY` or `DINE_IN`), not as an empty 0.00 ticket; the table turns DOLU only then. Same dish tap increases qty; minus removes a line on an open check. Cash and card pay, and cancel, are on the check for `api:tickets.pay` (cashier). Waiter PIN does not see pay. After pay or cancel the table is BOŞ on the same screen. Hotel banquet stays hidden (`edition=kafe`). Tables/menu without `outletCode` land on outlet **KAFE**. Home shows today's Baku board (`GET /api/dashboard/today`).
 4. Cashier PIN pays; waiter PIN cannot settle (403 `FNB_WAITER_NO_PAY`).
 5. Optional Zal/KDS/QR SKUs; QR `/m/{slug}` is read-only (POST 405).
 6. Excel `/api/menu/export` includes price history; suggest `/api/menu/suggest?q=`.

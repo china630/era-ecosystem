@@ -5,24 +5,26 @@
  * (room types, rooms, agencies, rate plans) and reference seed rows.
  *
  * Usage (staging):
- *   ERA_SKIP_TENANT_FILTER=1 ERA_SATELLITE_ORGANIZATION_ID=<uuid> \
- *     npx tsx scripts/ops/wipe-hotel-ops-transactional.ts [--dry-run]
+ *   npx tsx scripts/ops/wipe-hotel-ops-transactional.ts --org=<uuid> [--dry-run]
+ *   (or ERA_SATELLITE_ORGANIZATION_ID=<uuid> instead of --org)
  *
- * Requires explicit org id (never wipes all tenants).
+ * Requires explicit org id (never wipes all tenants). Runs inside that org's
+ * tenant context with the kit filter on; explicit org where-clauses stay as a
+ * second boundary.
  */
-import { PrismaClient } from '@prisma/client';
+import { isSentinelOrganizationId, runWithSatelliteTenant } from '@era/satellite-kit';
+import { prisma } from '@/lib/prisma';
 
 const dryRun = process.argv.includes('--dry-run');
 const orgId =
+  process.argv.find((a) => a.startsWith('--org='))?.slice(6)?.trim() ||
   process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-  process.argv.find((a) => a.startsWith('--org='))?.slice(6)?.trim();
+  '';
 
-if (!orgId) {
-  console.error('Set ERA_SATELLITE_ORGANIZATION_ID or pass --org=<uuid>');
+if (!orgId || isSentinelOrganizationId(orgId)) {
+  console.error('Pass --org=<uuid> or set ERA_SATELLITE_ORGANIZATION_ID (real org UUID)');
   process.exit(1);
 }
-
-const prisma = new PrismaClient();
 
 type Counts = Record<string, number>;
 
@@ -103,7 +105,7 @@ async function main() {
   }
 }
 
-main()
+runWithSatelliteTenant({ organizationId: orgId }, main)
   .catch((e) => {
     console.error(e);
     process.exit(1);

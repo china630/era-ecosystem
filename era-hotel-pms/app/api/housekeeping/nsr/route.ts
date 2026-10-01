@@ -10,6 +10,7 @@ const schema = z.object({
   reservationId: z.string().uuid(),
   roomId: z.string().uuid(),
   date: z.string(),
+  clear: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -17,11 +18,22 @@ export async function POST(request: Request) {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
+    const workDate = new Date(`${body.date}T00:00:00.000Z`);
+    if (body.clear) {
+      await prisma.hkNsrDay.deleteMany({
+        where: { reservationId: body.reservationId, workDate },
+      });
+      return jsonOk({ cleared: true });
+    }
+    const existing = await prisma.hkNsrDay.findFirst({
+      where: { reservationId: body.reservationId, workDate },
+    });
+    if (existing) return jsonOk(serialize(existing));
     const row = await prisma.hkNsrDay.create({
       data: {
         reservationId: body.reservationId,
         roomId: body.roomId,
-        workDate: new Date(`${body.date}T00:00:00.000Z`),
+        workDate,
       },
     });
     return jsonOk(serialize(row));

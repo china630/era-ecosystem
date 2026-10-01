@@ -8,8 +8,9 @@ import {
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
+import { Pencil, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type TableRow = {
@@ -39,7 +40,6 @@ const emptyForm = (): Form => ({
 export default function TablesAdminPanel() {
   const t = useTranslations("admin.tables");
   const [tables, setTables] = useState<TableRow[]>([]);
-  const [message, setMessage] = useState("");
   const [modal, setModal] = useState<"create" | "edit" | null>(null);
   const [form, setForm] = useState<Form>(emptyForm());
 
@@ -47,11 +47,7 @@ export default function TablesAdminPanel() {
     const res = await fetch("/api/tables");
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      setMessage(
-        data && typeof data === "object" && "error" in data
-          ? String((data as { error: string }).error)
-          : t("saveFailed"),
-      );
+      showApiError(data, t("saveFailed"));
       setTables([]);
       return;
     }
@@ -79,7 +75,6 @@ export default function TablesAdminPanel() {
   }
 
   async function save() {
-    setMessage("");
     const payload = {
       code: form.code.trim(),
       name: form.name.trim(),
@@ -100,7 +95,7 @@ export default function TablesAdminPanel() {
           });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      showApiError(data, t("saveFailed"));
       return;
     }
     setModal(null);
@@ -108,12 +103,14 @@ export default function TablesAdminPanel() {
   }
 
   async function remove(id: string) {
-    setMessage("");
     if (!confirm(t("confirmDelete"))) return;
     const res = await fetch(`/api/tables/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      const occupied =
+        data.error === "Cannot delete occupied table" || data.code === "TABLE_OCCUPIED";
+      if (occupied) showApiError({ error: t("occupiedDelete") });
+      else showApiError({ error: data.error ?? t("saveFailed") });
       return;
     }
     await load();
@@ -127,7 +124,6 @@ export default function TablesAdminPanel() {
           {t("add")}
         </button>
       </div>
-      {message && <p className="mb-3 text-sm">{message}</p>}
       <div className={`${CARD_CLASS} overflow-x-auto p-4`}>
         <table className="w-full text-left text-sm">
           <thead>
@@ -147,21 +143,27 @@ export default function TablesAdminPanel() {
                 <td className="py-2 pr-2">{row.name}</td>
                 <td className="py-2 pr-2">{row.seats}</td>
                 <td className="py-2 pr-2">{row.zone || "—"}</td>
-                <td className="py-2 pr-2">{row.status}</td>
-                <td className="py-2 text-right space-x-2">
+                <td className="py-2 pr-2">
+                  {row.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
+                </td>
+                <td className="py-2 text-right">
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    aria-label={t("edit")}
+                    title={t("edit")}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
                     onClick={() => openEdit(row)}
                   >
-                    {t("edit")}
+                    <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    aria-label={t("delete")}
+                    title={t("delete")}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
                     onClick={() => void remove(row.id)}
                   >
-                    {t("delete")}
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
               </tr>

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { OrgBindPrisma } from "./organization-bind-core";
 import {
   applySatelliteRuntimeConfig,
+  satelliteRuntimeConfig,
   type SatelliteRuntimeConfig,
 } from "./runtime-config-core";
 import { getRuntimeConfigMemory } from "./runtime-config-memory";
@@ -13,7 +14,10 @@ import {
   resolveOrchestratorBaseUrl,
 } from "./resolve-orchestrator-url";
 import { satelliteKeyFromEnv } from "./login-hostname-memory";
-import { getRuntimeOrganizationId } from "./organization-bind-runtime";
+import {
+  clearProcessOrganizationBind,
+  getRuntimeOrganizationId,
+} from "./organization-bind-runtime";
 
 const DESIRED_STATE_PATH = "/v1/internal/satellites/desired-state";
 
@@ -252,7 +256,10 @@ export async function pullDesiredStateOnce(
     }
 
     const processWide = processWideConfigFromPayload(configRaw);
-    if (processWide.organizationId) {
+    const shared =
+      processWide.deploymentTopology === "SHARED" ||
+      satelliteRuntimeConfig().deploymentTopology === "SHARED";
+    if (processWide.organizationId && !shared) {
       // Dynamic import avoids circular graph with organization-bind-core.
       const { applyOrganizationBind } = await import("./organization-bind-core");
       await applyOrganizationBind({
@@ -262,9 +269,11 @@ export async function pullDesiredStateOnce(
       });
     }
 
+    const sharedProcessWide = { ...processWide };
+    if (shared) delete sharedProcessWide.organizationId;
     await applySatelliteRuntimeConfig({
       config: {
-        ...processWide,
+        ...(shared ? sharedProcessWide : processWide),
         // Cheap last-success markers (Wave 7) — survive file/DB hydrate.
         desiredStateHash: hash,
         pulledAt: new Date().toISOString(),
@@ -272,6 +281,7 @@ export async function pullDesiredStateOnce(
       updatedBy: "desired-state-pull",
       prisma: opts.prisma ?? null,
     });
+    if (shared) clearProcessOrganizationBind();
 
     lastAppliedHash = hash;
     return { status: "applied", hash };

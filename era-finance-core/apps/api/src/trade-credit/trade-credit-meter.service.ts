@@ -5,6 +5,7 @@ import { billingPeriodKeyBaku } from "../billing/baku-billing.util";
 import { BillingMeterService } from "../billing/billing-meter.service";
 import { BillingNotificationService } from "../billing/billing-notification.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import {
@@ -35,20 +36,29 @@ export class TradeCreditMeterService {
   /** EOD Baku — snapshot all orgs that have any trade-credit facility and SKU on. */
   @Cron("30 23 * * *", { timeZone: "Asia/Baku" })
   async runNightlySnapshots(): Promise<void> {
-    const orgs = await this.prisma.tradeCreditFacility.findMany({
-      select: { organizationId: true },
-      distinct: ["organizationId"],
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
     });
     let ran = 0;
-    for (const { organizationId } of orgs) {
-      const on = await this.cronGate.isModuleOn(
-        organizationId,
-        ModuleEntitlement.TRADE_CREDIT_CONTROL,
-      );
-      if (!on) continue;
+    for (const { id: organizationId } of orgs) {
       try {
-        await this.snapshotBilledBuyers(organizationId);
-        ran += 1;
+        const snapped = await runWithTenantContextAsync(
+          { organizationId, skipTenantFilter: false },
+          async () => {
+            const facilities = await this.prisma.tradeCreditFacility.count({
+              where: { organizationId },
+            });
+            if (facilities === 0) return false;
+            const on = await this.cronGate.isModuleOn(
+              organizationId,
+              ModuleEntitlement.TRADE_CREDIT_CONTROL,
+            );
+            if (!on) return false;
+            await this.snapshotBilledBuyers(organizationId);
+            return true;
+          },
+        );
+        if (snapped) ran += 1;
       } catch (e) {
         this.logger.warn(
           `Trade credit meter failed org=${organizationId}: ${

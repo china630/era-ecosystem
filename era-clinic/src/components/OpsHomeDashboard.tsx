@@ -223,6 +223,7 @@ export function OpsHomeDashboard({
   const locale = useLocale();
   const { auth } = useClinicAuth();
   const enabledPresets: ClinicPresetCode[] = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
+  const hasOutpatient = enabledPresets.includes(CLINIC_PRESET.OUTPATIENT);
   const hasSanatorium = enabledPresets.includes(CLINIC_PRESET.SANATORIUM_CLINICAL);
   const hasInpatient = enabledPresets.includes(CLINIC_PRESET.INPATIENT_DAY);
 
@@ -299,22 +300,27 @@ export function OpsHomeDashboard({
       {error ? <p className={`text-xs ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <MetricTile
-          icon={Stethoscope}
-          iconClass={ACCENT_SURFACE_CLASS}
-          label={t("kpiAppointments")}
-          value={summary.appointments.total}
-          hint={t("kpiAppointmentsHint")}
-          href="/appointments"
-        />
-        <MetricTile
-          icon={Syringe}
-          iconClass="bg-teal-500/10 text-teal-700"
-          label={t("kpiProcedures")}
-          value={summary.procedures.total}
-          hint={t("kpiProceduresHint")}
-          href="/nurse"
-        />
+        {hasOutpatient || hasSanatorium ? (
+          <MetricTile
+            icon={Stethoscope}
+            iconClass={ACCENT_SURFACE_CLASS}
+            label={t("kpiAppointments")}
+            value={summary.appointments.total}
+            hint={t("kpiAppointmentsHint")}
+            href="/appointments"
+          />
+        ) : null}
+        {hasSanatorium ? (
+          <MetricTile
+            icon={Syringe}
+            iconClass="bg-teal-500/10 text-teal-700"
+            label={t("kpiProcedures")}
+            value={summary.procedures.total}
+            hint={t("kpiProceduresHint")}
+            href="/nurse"
+          />
+        ) : null}
+        {hasOutpatient ? (
         <MetricTile
           icon={ListOrdered}
           iconClass="bg-orange-500/10 text-orange-700"
@@ -323,6 +329,7 @@ export function OpsHomeDashboard({
           hint={t("kpiQueueHint", { called: summary.queue.called })}
           href="/reception/queue"
         />
+        ) : null}
         <MetricTile
           icon={FlaskConical}
           iconClass="bg-violet-500/10 text-violet-700"
@@ -331,15 +338,17 @@ export function OpsHomeDashboard({
           hint={t("kpiLabsHint", { ready: summary.labs.resultReady })}
           href="/lab-orders"
         />
-        <MetricTile
-          icon={AlertTriangle}
-          iconClass={overdueIconClass}
-          label={t("kpiOverdue")}
-          value={summary.overdueProcedures}
-          hint={t("kpiOverdueHint")}
-          href="/nurse"
-          tone={overdueTone}
-        />
+        {hasSanatorium ? (
+          <MetricTile
+            icon={AlertTriangle}
+            iconClass={overdueIconClass}
+            label={t("kpiOverdue")}
+            value={summary.overdueProcedures}
+            hint={t("kpiOverdueHint")}
+            href="/nurse"
+            tone={overdueTone}
+          />
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -462,24 +471,30 @@ export function OpsHomeDashboard({
 
       <SectionPanel icon={LayoutGrid} title={t("quickLinks")}>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {hasOutpatient || hasSanatorium ? (
           <QuickLink
             href="/appointments"
             icon={Stethoscope}
             label={t("linkAppointments")}
             iconClass={ACCENT_SURFACE_CLASS}
           />
+          ) : null}
+          {hasSanatorium ? (
           <QuickLink
             href="/nurse"
             icon={Syringe}
             label={t("linkNurse")}
             iconClass="bg-teal-500/10 text-teal-700"
           />
+          ) : null}
+          {hasOutpatient ? (
           <QuickLink
             href="/reception/queue"
             icon={ListOrdered}
             label={t("linkQueue")}
             iconClass="bg-orange-500/10 text-orange-700"
           />
+          ) : null}
           <QuickLink
             href="/lab-orders"
             icon={FlaskConical}

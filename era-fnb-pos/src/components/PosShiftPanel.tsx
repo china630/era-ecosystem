@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
-import { MODAL_INPUT_CLASS } from "@era/satellite-kit/ui";
+import { MODAL_INPUT_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 
 type OpenShift = {
@@ -30,7 +30,6 @@ export default function PosShiftPanel() {
   const [none, setNone] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [outletCode, setOutletCode] = useState("");
   const [openingCash, setOpeningCash] = useState("0");
@@ -97,7 +96,6 @@ export default function PosShiftPanel() {
 
   async function openShift() {
     setBusy(true);
-    setMessage("");
     const res = await fetch("/api/shifts/open", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,17 +109,16 @@ export default function PosShiftPanel() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error ?? t("openFailed"));
+      showApiError(data, t("openFailed"));
       return;
     }
     setOpenModal(false);
-    setMessage(t("opened"));
+    showSuccess(t("opened"));
     await load();
   }
 
   async function closeShift() {
     setBusy(true);
-    setMessage("");
     const res = await fetch("/api/shifts/close", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -131,15 +128,15 @@ export default function PosShiftPanel() {
     setBusy(false);
     if (!res.ok) {
       if (res.status === 403) {
-        setMessage(t("managerRequired"));
+        showApiError({ error: t("managerRequired") });
       } else if (res.status === 409) {
-        setMessage(t("openTicketsBlock", { count: data.openTickets ?? "?" }));
+        showApiError({ error: t("openTicketsBlock", { count: data.openTickets ?? "?" }) });
       } else {
-        setMessage(data.error ?? t("closeFailed"));
+        showApiError(data, t("closeFailed"));
       }
       return;
     }
-    setMessage(t("closed"));
+    showSuccess(t("closed"));
     await load();
   }
 
@@ -190,8 +187,6 @@ export default function PosShiftPanel() {
           )}
         </div>
       </div>
-      {message && <p className="mt-2 text-xs text-[#34495E]">{message}</p>}
-
       {openModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className={`${CARD_CLASS} w-full max-w-sm p-4`}>

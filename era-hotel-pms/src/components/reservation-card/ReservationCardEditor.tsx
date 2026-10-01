@@ -67,7 +67,15 @@ import type {
   TabId,
 } from '@/components/reservation-card/types';
 import { computeGuestFolioBalance } from '@/components/reservation-card/folio-balance';
-import { isOtaAgency, bookingSourceKind, persistCounterpartyIds, fksFromSalesContract, contractCounterpartyType } from '@/lib/booking-source-kind';
+import {
+  isOtaAgency,
+  isWalkInRecordedAgency,
+  inferSourceKindFromAgency,
+  bookingSourceKind,
+  persistCounterpartyIds,
+  fksFromSalesContract,
+  contractCounterpartyType,
+} from '@/lib/booking-source-kind';
 import { previewOccupancyAfterDepart } from '@/lib/occupancy-party';
 
 function mergeDateTime(date: string, time: string): string | undefined {
@@ -627,6 +635,16 @@ export function ReservationCardEditor({
     };
   }, [open, bookingGroupId]);
 
+  useEffect(() => {
+    if (!open || sourceId || !agencyId || sources.length === 0 || agencies.length === 0) return;
+    const agency = agencies.find((a) => a.id === agencyId);
+    if (!agency) return;
+    const kind = inferSourceKindFromAgency(agency.code, agency.label);
+    if (!kind) return;
+    const match = sources.find((s) => bookingSourceKind(s.code) === kind);
+    if (match) setSourceId(match.id);
+  }, [open, sourceId, agencyId, sources, agencies]);
+
   async function saveBookingName(nextName: string) {
     if (!bookingGroupId) return;
     setBusy(true);
@@ -760,8 +778,9 @@ export function ReservationCardEditor({
           ag.map((x: { id: string; code: string; name: string }) => ({
             id: x.id,
             code: x.code,
-            label: `${x.code} — ${x.name}`,
+            label: x.name || x.code,
             isOta: isOtaAgency(x.code, x.name),
+            isWalkIn: isWalkInRecordedAgency(x.code, x.name),
           })),
         );
       }
@@ -770,8 +789,9 @@ export function ReservationCardEditor({
           co.map((x: { id: string; code: string; name: string }) => ({
             id: x.id,
             code: x.code,
-            label: `${x.code} — ${x.name}`,
+            label: x.name || x.code,
             isOta: false,
+            isWalkIn: false,
           })),
         );
       }
@@ -1498,7 +1518,12 @@ export function ReservationCardEditor({
     setBusy(true);
     try {
       const sourceKind = bookingSourceKind(sources.find((s) => s.id === sourceId)?.code);
-      const parties = persistCounterpartyIds({ sourceKind, agencyId, companyId });
+      const parties = persistCounterpartyIds({
+        sourceKind,
+        agencyId,
+        companyId,
+        agencyIsWalkIn: agencies.find((a) => a.id === agencyId)?.isWalkIn ?? false,
+      });
       const namesBlocked =
         !isCreate &&
         reservationNamesIncomplete({

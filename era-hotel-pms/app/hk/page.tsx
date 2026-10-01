@@ -54,7 +54,6 @@ export default function HousekeepingPage() {
   const [filter, setFilter] = useState<HkFilter>('all');
   const [sheetFloor, setSheetFloor] = useState('2');
   const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
-  const [printPages, setPrintPages] = useState<Array<{ floor: number; rows: Array<Record<string, unknown>> }>>([]);
   const [sheetDate] = useState(() => hotelDateKey());
   const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
 
@@ -132,6 +131,26 @@ export default function HousekeepingPage() {
   const showClean = filter === 'all' || filter === 'clean';
   const showDirty = filter === 'all' || filter === 'dirty';
 
+  const visibleSheet = useMemo(() => {
+    return sheetRows.filter((r) => {
+      const hk = String(r.hkCondition ?? r.status ?? '');
+      if (filter === 'dirty') return hk === 'DIRTY' || hk === 'PICKUP';
+      if (filter === 'clean') return hk === 'CLEAN';
+      if (filter === 'pending') return hk === 'DIRTY' || hk === 'PICKUP';
+      return true;
+    });
+  }, [sheetRows, filter]);
+
+  function knownLabel(group: 'job' | 'hkCond' | 'occ', code: string) {
+    const allowed: Record<typeof group, string[]> = {
+      job: ['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK'],
+      hkCond: ['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'],
+      occ: ['OCC', 'AVL'],
+    };
+    if (!code || !allowed[group].includes(code)) return code;
+    return t(`${group}.${code}`);
+  }
+
   if (!can(PERMISSIONS.HOUSEKEEPING_MANAGE) && !can(PERMISSIONS.ROOMS_STATUS)) {
     return (
       <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionHousekeeping')}</p>
@@ -144,12 +163,20 @@ export default function HousekeepingPage() {
         title={t('title')}
         subtitle={t('hint')}
         actions={
-          can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOooModalOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t('setOoo')}
+          <div className="flex flex-wrap gap-2 print:hidden">
+            <a className={SECONDARY_BUTTON_CLASS} href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}`}>
+              {t('downloadSheetPdf')}
+            </a>
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => window.print()}>
+              {t('printSheet')}
             </button>
-          ) : undefined
+            {can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOooModalOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden />
+                {t('setOoo')}
+              </button>
+            ) : null}
+          </div>
         }
       />
       {msg ? (
@@ -174,34 +201,24 @@ export default function HousekeepingPage() {
           <option value="clean">{t('filterClean')}</option>
         </FieldSelect>
       </EraListFilterBar>
-      <p className="mb-4 text-[12px] text-[#7F8C8D]">{t('statusActionsHint')}</p>
+      <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('sheetHint')}</p>
+      <p className="mb-4 text-[12px] text-[#7F8C8D]">{t('nsrHint')}</p>
 
       <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 print:shadow-none`} id="hk-floor-sheet">
         <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
           <h2 className="text-sm font-semibold">{t('sheetTitle')}</h2>
-          <input
-            type="number"
-            className={MODAL_INPUT_CLASS}
-            style={{ width: 80 }}
-            value={sheetFloor}
-            onChange={(e) => setSheetFloor(e.target.value)}
-          />
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={async () => {
-              const res = await fetch(`/api/housekeeping/sheet?all=1&date=${sheetDate}`);
-              if (res.ok) setPrintPages(await res.json());
-              window.print();
-            }}
-          >
-            {t('printSheet')}
-          </button>
-          <a className={SECONDARY_BUTTON_CLASS} href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}`}>
-            {t('downloadSheetPdf')}
-          </a>
+          <label className="text-[12px] text-[#7F8C8D]">
+            {t('floor')}
+            <input
+              type="number"
+              className={`${MODAL_INPUT_CLASS} ml-2`}
+              style={{ width: 80 }}
+              value={sheetFloor}
+              onChange={(e) => setSheetFloor(e.target.value)}
+            />
+          </label>
         </div>
-        {(printPages.length ? printPages : [{ floor: Number(sheetFloor), rows: sheetRows }]).map((page) => (
+        {[{ floor: Number(sheetFloor), rows: visibleSheet }].map((page) => (
           <div key={page.floor} className="hk-print-floor" style={{ pageBreakAfter: 'always' }}>
             <p className="mb-1 hidden text-xs print:block">
               {t('sheetTitle')} · {t('floor')} {page.floor} · {sheetDate} · {t('inList')}: {page.rows.length}
@@ -235,11 +252,18 @@ export default function HousekeepingPage() {
                 </tr>
               </thead>
               <tbody>
+                {page.rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={23} className="py-3 text-[#7F8C8D]">
+                      {t('sheetEmpty')}
+                    </td>
+                  </tr>
+                ) : null}
                 {page.rows.map((r) => (
                   <tr key={String(r.roomId)} className="break-inside-avoid">
                     <td>{String(r.roomNumber)}</td>
-                    <td>{String(r.hkCondition ?? r.status)}</td>
-                    <td>{String(r.occupancy ?? '')}</td>
+                    <td>{knownLabel('hkCond', String(r.hkCondition ?? r.status ?? ''))}</td>
+                    <td>{knownLabel('occ', String(r.occupancy ?? ''))}</td>
                     <td>{String(r.roomType)}</td>
                     <td>{String(r.maidName)}</td>
                     <td>{String(r.floor)}</td>
@@ -251,8 +275,8 @@ export default function HousekeepingPage() {
                     <td>{String(r.departure)}</td>
                     <td>{String(r.adults)}</td>
                     <td>{String(r.children)}</td>
-                    <td>{String(r.jobType)}</td>
-                    <td>{String(r.jobDuty ?? '')}</td>
+                    <td>{knownLabel('job', String(r.jobType ?? ''))}</td>
+                    <td>{knownLabel('job', String(r.jobDuty ?? ''))}</td>
                     <td>{String(r.nationality)}</td>
                     <td>{String(r.extraPax ?? 0)}</td>
                     <td>{String(r.todayArrivalPax ?? 0)}</td>
@@ -303,8 +327,14 @@ export default function HousekeepingPage() {
                           />
                           <button
                             type="button"
-                            className={SECONDARY_BUTTON_CLASS}
+                            className={
+                              String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR'
+                                ? PRIMARY_BUTTON_CLASS
+                                : SECONDARY_BUTTON_CLASS
+                            }
+                            title={t('nsrHint')}
                             onClick={() => {
+                              const on = String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR';
                               void fetch('/api/housekeeping/nsr', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -312,11 +342,14 @@ export default function HousekeepingPage() {
                                   reservationId: r.reservationId,
                                   roomId: r.roomId,
                                   date: sheetDate,
+                                  clear: on,
                                 }),
                               }).then(() => load());
                             }}
                           >
-                            {t('nsr')}
+                            {String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR'
+                              ? t('nsrClear')
+                              : t('nsr')}
                           </button>
                         </div>
                       ) : null}

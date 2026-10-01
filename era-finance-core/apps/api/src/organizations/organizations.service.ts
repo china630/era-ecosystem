@@ -18,6 +18,7 @@ import {
 import { AccountsService } from "../accounts/accounts.service";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { AccessControlService } from "../access/access-control.service";
 import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
@@ -58,15 +59,20 @@ export class OrganizationsService {
     organizationId: string,
     kind: OrganizationKind = OrganizationKind.COMMERCIAL,
   ): Promise<void> {
-    await provisionNasAccountsForOrganization(
-      tx,
-      organizationId,
-      kind,
-      this.chartRemoteLoader(),
+    await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      async () => {
+        await provisionNasAccountsForOrganization(
+          tx,
+          organizationId,
+          kind,
+          this.chartRemoteLoader(),
+        );
+        await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
+        await upsertGlobalPostingRoleTemplates(tx);
+        await this.accounts.bootstrapMultiGaapForNewOrganization(organizationId, tx);
+      },
     );
-    await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
-    await upsertGlobalPostingRoleTemplates(tx);
-    await this.accounts.bootstrapMultiGaapForNewOrganization(organizationId, tx);
   }
 
   /**

@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export type TenantContextStore = {
   /** Текущая организация из JWT. */
   organizationId: string | null;
-  /** Пропуск фильтра по тенанту (супер-админ /api/admin, публичные маршруты, глобальные воркеры). */
+  /** Пропуск фильтра по тенанту: только супер-админ `/api/admin/*` и архив аудита (audit-archive.worker). */
   skipTenantFilter: boolean;
 };
 

@@ -35,7 +35,7 @@
 | AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 2 clinic login/JWT/`enterSatelliteTenant` + lifecycle ALS; Wave 4 cron + capacity POST multi-org; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-BONUS, AC-CLI-SAN-PAX, AC-CLI-EPISODE, AC-CLI-RBAC) → **✅**.
-AC-CLI-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.
+AC-CLI-TENANT is 🟡 (Nafta clinic placement is SHARED; schema+filter) and stays **out of Scaffold BE rollup** until field isolation UAT.
 AC-CLI-SAN-PKG is 🟡 and stays **out of Scaffold BE rollup** (does not reopen AC-CLI-SAN).
 AC-CLI-SAN-QUOTA is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-SAN-DAY1 is 🟡 and stays **out of Scaffold BE rollup**.

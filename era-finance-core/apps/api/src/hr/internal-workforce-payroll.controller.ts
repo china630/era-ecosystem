@@ -13,6 +13,7 @@ import { Decimal, PayrollComponentKind, PayrollRunStatus } from "@erafinance/dat
 import { Public } from "../auth/decorators/public.decorator";
 import { InternalServiceTokenGuard } from "../common/guards/internal-service-token.guard";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { PayrollComponentCode } from "./payroll-component-codes";
 import { PayrollComponentsService } from "./payroll-components.service";
@@ -60,6 +61,17 @@ export class InternalWorkforcePayrollController {
       throw new ForbiddenException("amountAzn must be positive");
     }
 
+    return runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () => this.applyAdvanceLine(organizationId, financeEmployeeId, body),
+    );
+  }
+
+  private async applyAdvanceLine(
+    organizationId: string,
+    financeEmployeeId: string,
+    body: { amountAzn: number; note?: string; year: number; month: number },
+  ) {
     const emp = await this.prisma.employee.findFirst({
       where: { id: financeEmployeeId, organizationId, deletedAt: null },
     });
@@ -156,6 +168,18 @@ export class InternalWorkforcePayrollController {
       throw new ForbiddenException("hr_full required");
     }
 
+    return runWithTenantContextAsync(
+      { organizationId: orgId, skipTenantFilter: false },
+      () => this.postedPayslip(orgId, empId, year, month),
+    );
+  }
+
+  private async postedPayslip(
+    orgId: string,
+    empId: string,
+    year: number,
+    month: number,
+  ) {
     const run = await this.prisma.payrollRun.findFirst({
       where: {
         organizationId: orgId,

@@ -19,7 +19,7 @@ import { GuestCardTimeShareTab } from '@/components/guest-card/GuestCardTimeShar
 import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
 import { GuestCardIdReaderModal, type IdReaderPayload } from '@/components/guest-card/GuestCardIdReaderModal';
-import { guestComposedFullName } from '@/lib/guest-identity.shared';
+import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity.shared';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
 
 const STAT_COLORS = [
@@ -168,10 +168,20 @@ export default function GuestCardModal({
       if (!res.ok) throw new Error(json.error ?? tc('loadError'));
       const g = json.guest as Record<string, unknown>;
       setStats(json.stats as GuestStats);
-      setFullName(String(g.fullName ?? ''));
-      setFirstName(String(g.firstName ?? ''));
-      setLastName(String(g.lastName ?? ''));
-      setMiddleName(String(g.middleName ?? ''));
+      const storedFull = String(g.fullName ?? '');
+      let first = String(g.firstName ?? '');
+      let middle = String(g.middleName ?? '');
+      let last = String(g.lastName ?? '');
+      if (!first && !middle && !last && storedFull) {
+        const split = splitStoredFullName(storedFull);
+        first = split.firstName;
+        middle = split.middleName;
+        last = split.lastName;
+      }
+      setFullName(guestComposedFullName({ firstName: first, middleName: middle, lastName: last, fullName: storedFull }));
+      setFirstName(first);
+      setLastName(last);
+      setMiddleName(middle);
       setTitle(String(g.title ?? ''));
       setSex(String(g.sex ?? ''));
       setNationality(String(g.nationality ?? 'AZ'));
@@ -267,10 +277,20 @@ export default function GuestCardModal({
   const resActions = reservationDetailsButtons(guestId, crmBadges);
 
   function handleLeftPanelChange(patch: Record<string, string | boolean>) {
-    if ('fullName' in patch) setFullName(String(patch.fullName));
-    if ('firstName' in patch) setFirstName(String(patch.firstName));
-    if ('lastName' in patch) setLastName(String(patch.lastName));
-    if ('middleName' in patch) setMiddleName(String(patch.middleName));
+    if ('firstName' in patch || 'middleName' in patch || 'lastName' in patch) {
+      const nextFirst = 'firstName' in patch ? String(patch.firstName) : firstName;
+      const nextMiddle = 'middleName' in patch ? String(patch.middleName) : middleName;
+      const nextLast = 'lastName' in patch ? String(patch.lastName) : lastName;
+      setFirstName(nextFirst);
+      setMiddleName(nextMiddle);
+      setLastName(nextLast);
+      const composed = guestComposedFullName({
+        firstName: nextFirst,
+        middleName: nextMiddle,
+        lastName: nextLast,
+      });
+      if (composed) setFullName(composed);
+    }
     if ('title' in patch) setTitle(String(patch.title));
     if ('sex' in patch) setSex(String(patch.sex));
     if ('nationality' in patch) setNationality(String(patch.nationality));
@@ -304,9 +324,15 @@ export default function GuestCardModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: fullName.trim() || `${firstName} ${lastName}`.trim(),
+          fullName:
+            guestComposedFullName({ firstName, middleName, lastName, fullName }) ||
+            fullName.trim(),
           firstName: firstName || null,
+          middleName: middleName || null,
           lastName: lastName || null,
+          title: title || null,
+          sex: sex || null,
+          birthDate: detailFields.birthDate || null,
           nationality,
           phone: phone || null,
           email: email || null,

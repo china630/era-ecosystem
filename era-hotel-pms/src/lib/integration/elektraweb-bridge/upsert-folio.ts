@@ -83,8 +83,10 @@ export async function upsertFolioFromElektrawebRow(
       .filter(Boolean)
       .join(' — ') || `Elektraweb folio ${externalRef}`;
 
-  const existing = await prisma.folioCharge.findUnique({ where: { externalRef } });
+  const organizationId = bridgeRequestOrganizationId();
+  const existing = await prisma.folioCharge.findFirst({ where: { externalRef } });
   const data = {
+    organizationId,
     externalRef,
     folioId: folio.id,
     revenueCodeId,
@@ -95,7 +97,7 @@ export async function upsertFolioFromElektrawebRow(
   };
 
   await prisma.folioCharge.upsert({
-    where: { externalRef },
+    where: { organizationId_externalRef: { organizationId, externalRef } },
     create: data,
     update: {
       revenueCodeId: data.revenueCodeId,

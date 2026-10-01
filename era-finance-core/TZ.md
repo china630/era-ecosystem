@@ -277,7 +277,7 @@
 18. **Drop wave 2 (column):** удалена plaintext-колонка `users.full_name`; запись больше не ведётся, а обратная совместимость ответа API поддерживается вычислением `fullName` из расшифрованных name-cipher полей.
 19. **Drop wave 3 (columns):** удалены plaintext-колонки `users.first_name` и `users.last_name`; runtime читает ФИО только из `first_name_cipher` / `last_name_cipher` (с вычислением `fullName` в API-ответах).
 20. **Drop wave 4 (column):** удалена plaintext-колонка `employees.voen`; для CONTRACTOR используется только `voen_cipher` / `voen_blind_index`, экспорт и API-чтение берут значение через дешифрование cipher-поля.
-16. **Invite lifecycle (v95+):** `inviteUser(email, role)` создаёт запись приглашения, генерирует invite token и отправляет email со ссылкой принятия; `accept` создаёт membership по токену/идентификатору инвайта; `revoke` переводит pending-invite в отклонённый статус и блокирует дальнейшее принятие. **Безопасность (M1):** просроченный JWT приглашения отклоняется отдельным сообщением от «невалидного» токена; принятие инвайта **атомарно** резервирует строку (`UPDATE … WHERE status=PENDING`), повторное использование ссылки даёт **`409 Conflict`**; дубликат membership (`P2002`) трактуется как конфликт («уже участник организации»), в т.ч. при гонках между несколькими организациями/сессиями.
+16. **Invite lifecycle (v95+):** `inviteUser(email, role)` создаёт запись приглашения, генерирует invite token и отправляет email со ссылкой принятия; `accept` создаёт membership по токену/идентификатору инвайта; `revoke` переводит pending-invite в отклонённый статус и блокирует дальнейшее принятие. Список и принятие ищут приглашение по почте и id, не по организации текущей сессии (получатель ещё не в этой организации). Запрос на вступление по VÖEN после нахождения организации проверяет и создаёт заявку в её контексте. **Безопасность (M1):** просроченный JWT приглашения отклоняется отдельным сообщением от «невалидного» токена; принятие инвайта **атомарно** резервирует строку (`UPDATE … WHERE status=PENDING`), повторное использование ссылки даёт **`409 Conflict`**; дубликат membership (`P2002`) трактуется как конфликт («уже участник организации»), в т.ч. при гонках между несколькими организациями/сессиями.
 
 ### 2.2. Self-service профиль пользователя (`/api/users/me`, v2026.06)
 
@@ -1079,7 +1079,7 @@ Multi-GAAP отчётность: UI NAS/IFRS toggle + `ledgerType` на backend 
 - Для сущностей **Invoice**, **Employee**, **Product** и для операций с **проводками** (например `POST /accounting/quick-expense` → снимок транзакции и строк `JournalEntry`) сохраняются **`oldValues`** и **`newValues`** (JSON); для прочих мутаций — запись типа `HTTP_MUTATION` с телом запроса в поле `changes`.
 - В каждую запись записываются **`clientIp`**, **`userAgent`**, **`hash`** (SHA-256 от канонического JSON полей + секрет).
 - **Проверка целостности:** `POST /api/audit/integrity-check` (Owner/Admin) — сверка хешей по организации; строки без хеша (legacy) учитываются отдельно.
-- **Hash Chain Verify (v95+):** `POST /api/audit/verify-chain` проверяет цепочку `audit_logs` по порядку (`createdAt,id`), сверяет hash каждой записи (chain/legacy-совместимо) и возвращает список `compromisedIds` при нарушении целостности.
+- **Hash Chain Verify (v95+):** `POST /api/audit/verify-chain` проверяет цепочку `audit_logs` по порядку (`createdAt,id`), сверяет hash каждой записи (chain/legacy-совместимо) и возвращает список `compromisedIds` при нарушении целостности. Системное событие организации (`logOrganizationSystemEvent` с `organizationId`) дописывается в эту цепочку с хэшем, а не отдельной строкой без хэша.
 - **Архив:** BullMQ-процесс **раз в месяц** переносит записи `AuditLog` старше **1 года** в **`AuditLogArchive`** (отключается `AUDIT_ARCHIVE_DISABLED=1`).
 
 **Стаб §5.E (Activity Stream):** пользовательская коллаборация (**`EntityActivity`**, **`EntityComment`**, **`Mention`**) — **отдельно** от `AuditLog`: не дублирует security-аудит; системные события ленты могут эмититься рядом с успешной мутацией (см. **§12.8.2**). Уведомления о @mention — через существующую модель **`Notification`** и REST **`/api/notifications`** (PRD §10.2).
@@ -2156,18 +2156,7 @@ enum SubscriptionTier {
 
 #### 14.8.8. Вебхуки платёжных систем (v23.0)
 
-| Метод | Путь | Назначение |
-|-------|------|------------|
-| POST | `/api/billing/webhooks/:provider` | Приём уведомления шлюза (`mock`, `pasha`, `pasha_bank`). **Публичный** маршрут (`@Public()`): без JWT. |
-
-- **Подпись:** тело `{ orderId, status, signature, externalId? }`; проверка HMAC как у PAŞA Bank mock/реального шлюза (`PashaBankPaymentProvider.verifyWebhookSignature`). Неверная подпись → **401**.
-- **Идемпотентность:** перевод `PaymentOrder` из `PENDING` в `PAID` через **`updateMany`** с условием `status = PENDING`; повторный вебхук не продлевает подписку повторно. Запись **`SubscriptionInvoice`** — с защитой от дубликата по `paymentOrderId`.
-- **Побочные эффекты при успехе:** обновление **`OrganizationSubscription`** (продление `expiresAt` / синхронизация модулей по metadata заказа), запись в **`audit_logs`** с `organizationId = null`, `entityType = platform.billing.payment_applied` (глобальный аудит платформы).
-- **Legacy:** `POST /api/public/billing/webhook` сохраняется для совместимости; новые заказы используют callback URL на **`/api/billing/webhooks/pasha_bank`**.
-- **Auto-Resume (SRE/QA):** добавлен публичный маршрут `POST /api/public/billing/webhook/:provider` (поддержка `mock`, `pasha`, `pasha_bank`, `stripe`) и payload с `subscriptionInvoiceId`; при `status=success` система:
-  1) переводит соответствующий `SubscriptionInvoice` в `PAID`,
-  2) находит связанные организации по invoice items,
-  3) автоматически снимает ограничения доступа (`billingStatus -> ACTIVE`) даже из состояния `HARD_BLOCK`.
+Входящие маршруты `POST /api/billing/webhooks/:provider` и `POST /api/public/billing/webhook/:provider` в API нет. Неподключённые методы `PaymentProviderService` (`confirmPaymentOrder`, `handleWebhook`, `handleDrakarisWebhook`) удалены. Оплата PAŞA Bank остаётся редиректом из `createOrder`. Завершение заказа агрегатора — `finalizePaidOrderPublic` (§14.8.14).
 
 #### 14.8.12. Сверка биллинга (anti-freerider)
 
@@ -2206,7 +2195,7 @@ enum SubscriptionTier {
 **Биллинг-интеграция:**
 - `PaymentOrder.provider` — это **строка** (default `"pasha_bank"`), миграция схемы не нужна; для нового провайдера используется значение `"drakaris"`.
 - `PaymentProviderService.createOrder` поддерживает выбор провайдера через `dto.provider` (`"pasha_bank" | "drakaris"`); для Drakaris — `paymentUrl: null` + инструкции UI.
-- `apps/api/src/billing/billing-webhooks.controller.ts` — список `SUPPORTED_PROVIDERS` дополнен `"drakaris"` на случай если yığım вместо REST вызовет webhook; HMAC-проверка PAŞA не применяется, в `payment-provider.service.ts` ветка `if (provider === 'drakaris')` делегирует обработку в `DrakarisService.topUpBalance`.
+- Отдельного `billing-webhooks.controller.ts` нет. Drakaris завершает уже созданный `PaymentOrder` через `finalizePaidOrderPublic`, не через HMAC-вебхук PAŞA.
 - `apps/api/src/audit/audit-mutation.interceptor.ts` — `pathRaw.includes('/integrations/drakaris/')` добавлен в исключения (yığım не имеет нашего user/org контекста); аудит платежа продолжает идти через `auditService.logPlatformBillingPaymentApplied`.
 
 **Env (корневой `.env.example`):**
@@ -2402,7 +2391,10 @@ enum SubscriptionTier {
 - **Контекст:** `AsyncLocalStorage` (или эквивалент), заполняется HTTP-interceptor’ом из JWT (`organizationId`); для маршрутов **`/api/admin`** при `isSuperAdmin` — режим без фильтра по тенанту (только для платформенных эндпоинтов).
 - **Исключения:** модели без тенанта (`User`, `Organization`, `SystemConfig`, `TranslationOverride` и т.д.) не подмешивают `organizationId`.
 - **Audit Hub (§9.A):** таблица **`audit_samples`**, записи **`EntityComment`** с **`kind = AUDIT_NOTE`**, а также все выборки в **`/api/audit-hub/*`** — в рамках **`organizationId`**, переданного в запросе: обычно из JWT активной org, либо **подменённого** контекстом **guest engagement** (см. §9.A); сырой SQL — с явным предикатом по этому **`organizationId`**.
-- **Воркеры BullMQ:** в начале обработки job выставляют тот же контекст (`organizationId` из payload) либо `skipTenantFilter` для глобальных задач (например архив аудита).
+- **Нет контекста — ошибка:** запрос к тенантской модели без контекста `AsyncLocalStorage` завершается `ForbiddenException("Tenant context required")`; режима «нет контекста = без фильтра» нет. `skipTenantFilter: true` ставят только супер-админ на `/api/admin/*` и воркер архива аудита (`audit-archive.worker.ts`).
+- **Воркеры BullMQ и cron:** job с `organizationId` в payload выставляет контекст этой организации; пакетные задачи берут список из таблицы `Organization` и обрабатывают каждую организацию в `runWithTenantContextAsync({ organizationId, skipTenantFilter: false })`.
+- **Публичные и сервисные маршруты:** interceptor ставит `organizationId` из JWT, из подписанной buyer-сессии или `null`. При `null` обработчик сам входит в контекст организации, известной из тела S2S-запроса, подписанного SSO-тикета или справочника `Organization` (секрет вебхука банка, Drakaris client id). Поиск по ключу, уникальному среди организаций (публичный токен счёта, id подписи), идёт по списку `Organization` с включённым фильтром на каждой (`prisma/organization-scan.ts`). Guards, которые читают тенантские модели (dispute freeze, VÖEN integrity, quota), входят в контекст организации пользователя сами: они выполняются до interceptor’а.
+- **Платформенные строки аудита** (`organization_id IS NULL`) пишутся и проверяются сырым SQL (`AuditService.insertPlatformAuditRow`): `platform.billing.payment_applied`, мутации без пользователя в глобальном `AuditMutationInterceptor` (S2S, вебхуки, кабинет покупателя) и `logOrganizationSystemEvent` без организации. `logOrganizationSystemEvent` с организацией дописывается в хэш-цепочку этой организации (`appendTenantAuditChainEntry`), не сырой строкой без хэша. Модельная запись без организации в контексте отклоняется; запись с чужим контекстом получила бы `organizationId` текущего вызова и сломала бы цепочку.
 
 ### Async Processing (BullMQ)
 

@@ -1,6 +1,7 @@
 import {
   CLINIC_PRESET,
   isClinicPreset,
+  presetsRequiredForPath,
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
 
@@ -19,19 +20,14 @@ export function parsePresetsCookie(raw: string | undefined | null): ClinicPreset
   return parsed.length > 0 ? parsed : [CLINIC_PRESET.OUTPATIENT];
 }
 
-export function pathnameRequiresPreset(pathname: string): ClinicPresetCode | null {
-  if (pathname === "/sanatorium" || pathname.startsWith("/sanatorium/")) {
-    return CLINIC_PRESET.SANATORIUM_CLINICAL;
-  }
-  if (pathname === "/inpatient" || pathname.startsWith("/inpatient/")) {
-    return CLINIC_PRESET.INPATIENT_DAY;
-  }
-  return null;
+export function pathnameRequiresPreset(pathname: string): ClinicPresetCode[] | null {
+  return presetsRequiredForPath(pathname);
 }
 
 export function hasPresetInList(
   enabled: ClinicPresetCode[],
-  required: ClinicPresetCode,
+  required: ClinicPresetCode | ClinicPresetCode[],
 ): boolean {
-  return enabled.includes(required);
+  const need = Array.isArray(required) ? required : [required];
+  return need.some((code) => enabled.includes(code));
 }

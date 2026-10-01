@@ -52,4 +52,4 @@ Admin replenishment and supplier-match surfaces now follow the list + modal play
 - Edition column copies `docs/editions/retail.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
-- Forbidden: «SHARED / multi-tenant retail SaaS» — AC-RET-TENANT 🟡 (schema+filter ≠ live pool); retail remains one-org DEDICATED/ONPREM this edition ([deployment-topology.md](../adr/deployment-topology.md)).
+- Forbidden: «SHARED / multi-tenant retail SaaS» — AC-RET-TENANT 🟡 until field two-org UAT. Nafta retail already runs SHARED; that placement is not a sell claim ([deployment-topology.md](../adr/deployment-topology.md)).

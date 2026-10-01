@@ -63,7 +63,7 @@ export async function POST(
     });
     await tx.ticketLine.updateMany({
       where: { id: { in: toMove.map((l: TicketLine) => l.id) } },
-      data: { ticketId: created.id },
+      data: { ticketId: created.id, organizationId: created.organizationId },
     });
     return created;
   });

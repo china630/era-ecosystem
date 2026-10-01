@@ -6,8 +6,6 @@ import { AsyncLocalStorage } from "node:async_hooks";
  */
 export type RecoveryContextStore = {
   includeSoftDeleted: boolean;
-  /** Skip tenant Prisma filter (super-admin recovery / rollback ETL). */
-  bypassTenantFilter?: boolean;
 };
 
 export const recoveryContextStorage = new AsyncLocalStorage<RecoveryContextStore>();
@@ -18,10 +16,6 @@ export function getRecoveryContext(): RecoveryContextStore | undefined {
 
 export function isIncludeSoftDeleted(): boolean {
   return Boolean(getRecoveryContext()?.includeSoftDeleted);
-}
-
-export function isRecoveryBypassTenantFilter(): boolean {
-  return Boolean(getRecoveryContext()?.bypassTenantFilter);
 }
 
 export function runWithRecoveryContext<T>(store: RecoveryContextStore, fn: () => T): T {

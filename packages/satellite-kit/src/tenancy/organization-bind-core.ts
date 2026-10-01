@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { onSatelliteRuntimeBoot } from "./runtime-config-core";
+import { onSatelliteRuntimeBoot, satelliteRuntimeConfig } from "./runtime-config-core";
 import {
+  clearProcessOrganizationBind,
   getRuntimeOrganizationId,
   resetOrganizationBindRuntimeForTests,
   resolveSatelliteOrganizationId as resolveFromRuntime,
@@ -15,6 +16,7 @@ import {
 } from "./desired-state-pull";
 
 export {
+  clearProcessOrganizationBind,
   getRuntimeOrganizationId,
   setRuntimeOrganizationId,
   SatelliteOrganizationUnboundError,
@@ -183,6 +185,10 @@ export async function onSatelliteBoot(opts: {
         satelliteKey: opts.satelliteKey,
       });
     }
+  }
+
+  if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
+    clearProcessOrganizationBind();
   }
 
   return result;

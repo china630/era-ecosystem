@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { GUEST_FIN_DOC_TYPES, GUEST_PASSPORT_DOC_TYPES } from '@/lib/guest-list-identity';
+import { requestOrganizationId } from '@/lib/request-organization';
 
 type DocClient = Pick<
   Prisma.TransactionClient,
@@ -25,7 +26,7 @@ async function upsertGuestDoc(
     return;
   }
   await tx.guestDocument.create({
-    data: { guestId, docType, docNumber, isPrimary },
+    data: { organizationId: requestOrganizationId(), guestId, docType, docNumber, isPrimary },
   });
 }
 

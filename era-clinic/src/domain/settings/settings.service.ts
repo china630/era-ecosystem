@@ -36,7 +36,7 @@ export async function getDefaultTenant() {
       data: {
         code: DEFAULT_TENANT_CODE,
         name: "Nafta Clinic",
-        enabledPresets: [CLINIC_PRESET.OUTPATIENT, CLINIC_PRESET.SANATORIUM_CLINICAL],
+        enabledPresets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
         programSchedulingMode: SANATORIUM_DEFAULT_SETTINGS.programSchedulingMode,
         schedulingSlotMinutes: SANATORIUM_DEFAULT_SETTINGS.schedulingSlotMinutes,
         defaultAppointmentSlotMinutes:

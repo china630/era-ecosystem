@@ -150,8 +150,9 @@ model MenuItem {
 
 /// Selling-price journal for menu reporting (catalog history; TicketLine still snapshots sale price).
 model MenuItemPrice {
-  id            String    @id @default(cuid())
-  menuItemId    String    @map("menu_item_id")
+  id             String    @id @default(cuid())
+  organizationId String
+  menuItemId     String    @map("menu_item_id")
   priceAzn      Decimal   @map("price_azn") @db.Decimal(12, 2)
   effectiveFrom DateTime  @map("effective_from")
   effectiveTo   DateTime? @map("effective_to")
@@ -161,6 +162,7 @@ model MenuItemPrice {
   menuItem      MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
   @@index([menuItemId, effectiveFrom])
+  @@index([organizationId])
   @@map("menu_item_prices")
 }
 
@@ -169,7 +171,7 @@ model MenuItemSoldOut {
   organizationId String   @map("organization_id")
   menuItemId     String   @map("menu_item_id")
   outletId       String   @map("outlet_id")
-  soldOut        Boolean  @default(true)
+  soldOut        Boolean  @default(true) @map("sold_out")
   updatedAt      DateTime @updatedAt @map("updated_at")
   menuItem       MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   outlet         Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
@@ -180,8 +182,9 @@ model MenuItemSoldOut {
 }
 
 model DailyMenuEntry {
-  id         String   @id @default(cuid())
-  outletId   String   @map("outlet_id")
+  id             String   @id @default(cuid())
+  organizationId String
+  outletId       String   @map("outlet_id")
   menuItemId String   @map("menu_item_id")
   boardDate  DateTime @map("board_date") @db.Date
   sortOrder  Int      @default(0) @map("sort_order")
@@ -192,6 +195,7 @@ model DailyMenuEntry {
 
   @@unique([outletId, menuItemId, boardDate])
   @@index([outletId, boardDate])
+  @@index([organizationId])
   @@map("daily_menu_entries")
 }
 
@@ -229,6 +233,7 @@ model Ticket {
 
 model TicketLine {
   id             String                  @id @default(cuid())
+  organizationId String
   ticketId       String                  @map("ticket_id")
   menuItemId     String?                 @map("menu_item_id")
   description    String
@@ -242,6 +247,7 @@ model TicketLine {
   menuItem       MenuItem?               @relation(fields: [menuItemId], references: [id])
 
   @@index([ticketId])
+  @@index([organizationId])
   @@map("ticket_lines")
 }
 

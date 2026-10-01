@@ -2,9 +2,9 @@
 
 | Route | API | Role |
 |-------|-----|------|
-| `/floor` | tickets, tables, outlets, sold-out | Cashier PIN / waiter — empty ticket, bitdi/var |
+| `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — menu, Take away chips, wide check with qty and cash/card |
 | `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
-| `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order) |
+| `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order). Outlet by `publicSlug` per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |
 | `/kds` | kds fire | `fnb_kitchen_kds` |
 | `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions | `admin:access_manage` + `screen:admin.access` — Variant A matrix |
@@ -16,10 +16,10 @@ Hotel-only (403 when edition=kafe): banquets, in-house, room-charge, defer-to-hu
 
 Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet/T-01. Ops tables/menu/tickets default outlet **KAFE** when present (`resolveOpsOutlet`). Public signup: orch S2S `POST /api/internal/v1/kafe/bootstrap-owner` (owner password, not PIN). Quotas: 120 ticket creates/min/org, 600 QR reads/min/IP.
 
-**SaaS:** login JWT `organizationId`; Kafe onboard upserts `SatelliteEndpoint` to pool URL (`ERA_FNB_POS_ORIGIN`). Schema+kit SHARED is in production path; live two-org field UAT remains a Product-Readiness 🟡, not a missing process.
+**SaaS:** login JWT `organizationId`; Kafe onboard upserts `SatelliteEndpoint` to pool URL (`ERA_FNB_POS_ORIGIN`). Schema+kit SHARED is in production path; live two-org field UAT remains a Product-Readiness 🟡, not a missing process. Line tables `ticket_lines`, `menu_item_prices`, `daily_menu_entries` carry `"organizationId"` (hotel column name), backfilled from the parent.
 | `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |
 | `/kds` | kds fire | Kitchen |
-| `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — categories/items modal CRUD, price history, recipeSku, imageUrl |
+| `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — category rail + one dish table (name, price); search; inactive hidden; PLU/recipe/image inside dish modal |
 | `/admin/import` | `/api/import`, `/api/import/[entity]` | Manager / super-admin — Nafta cutover `#30`–`#32` (groups, cards, walk-in cheques) |
 | `/admin/tables` | `/api/tables`, `/api/tables/[id]` | Manager — static table master CRUD |
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |

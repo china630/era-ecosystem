@@ -12,6 +12,12 @@ export function extraTicketIdForOrder(orderId: string): string {
   return `clinic-ticket-${orderId}`;
 }
 
+/** Print link carries the ticket org: the print page binds the tenant from it. */
+export function extraTicketPrintPath(ticketId: string, organizationId: string): string {
+  const qs = new URLSearchParams({ organizationId, autoprint: "1" });
+  return `/print/extra-ticket/${encodeURIComponent(ticketId)}?${qs.toString()}`;
+}
+
 export function extraNeedsPaperTicket(input: {
   amountNet: number;
   packageIncluded?: boolean;

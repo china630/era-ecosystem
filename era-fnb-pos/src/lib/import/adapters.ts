@@ -245,6 +245,7 @@ export const fnbTransactionsAdapter: ImportAdapter<z.infer<typeof txSchema>> = {
     }
     await tx.ticketLine.create({
       data: {
+        organizationId: ticket.organizationId,
         ticketId: ticket.id,
         description: row.description,
         qty: 1,

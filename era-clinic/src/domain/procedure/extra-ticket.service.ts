@@ -12,8 +12,10 @@ import {
 import {
   extraNeedsPaperTicket,
   extraTicketIdForOrder,
+  extraTicketPrintPath,
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 export async function listExtrasAwaitingTicket(organizationId?: string | null) {
   const orgId = resolveClinicCutoverOrgId(organizationId);
@@ -137,32 +139,17 @@ export async function issueExtraTickets(
     printPaths: issued
       .map((row) => row.extraTicketId)
       .filter((id): id is string => Boolean(id))
-      .map((id) => `/print/extra-ticket/${id}?autoprint=1`),
+      .map((id) => extraTicketPrintPath(id, orgId)),
     orders: issued,
   };
 }
 
-export async function loadExtraTicketPrint(ticketId: string) {
-  // Skip filter briefly to resolve ticket org, then enter ALS for the load.
-  const prev = process.env.ERA_SKIP_TENANT_FILTER;
-  process.env.ERA_SKIP_TENANT_FILTER = "1";
-  let organizationId: string | undefined;
-  try {
-    const probe = await prisma.procedureOrder.findFirst({
-      where: { extraTicketId: ticketId },
-      select: { organizationId: true },
-    });
-    organizationId = probe?.organizationId;
-  } finally {
-    if (prev === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prev;
-  }
-  if (!organizationId) return [];
-  const { enterRequestTenant } = await import("@/lib/request-organization");
-  enterRequestTenant(organizationId);
-  const orders = await prisma.procedureOrder.findMany({
-    where: { extraTicketId: ticketId, organizationId },
+export async function loadExtraTicketPrint(ticketId: string, organizationId: string) {
+  const orgId = organizationId.trim();
+  if (!orgId) return [];
+  enterRequestTenant(orgId);
+  return prisma.procedureOrder.findMany({
+    where: { extraTicketId: ticketId },
     include: { patientRef: true },
   });
-  return orders;
 }

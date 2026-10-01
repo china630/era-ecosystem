@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runCronForEachTenant } from '@era/satellite-kit';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
-import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
+import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from '@/lib/prisma';
 import { runDueRecurringSchedules } from '@/lib/services/service-work-order.service';
 
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 }
 
 /**
- * Cron hook: generate work orders for due schedules (multi-org via ERA_CRON_ORGANIZATION_IDS).
+ * Cron hook: generate work orders for due schedules (multi-org via orch pool registry).
  * Auth: Authorization Bearer SERVICE_CRON_SECRET, or legacy x-service-cron-secret = raw secret.
  */
 export async function PUT(req: Request) {
@@ -66,8 +66,7 @@ export async function PUT(req: Request) {
       moduleKey: 'hotel_service',
       authorization,
       cronSecretEnv: 'SERVICE_CRON_SECRET',
-      listOrganizationIds: listCronOrganizationIdsFromDb,
-        fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
+      fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
     },
     async (organizationId) => {
       const created = await runDueRecurringSchedules();
@@ -84,7 +83,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     if (gate.status === 503) {
-      return NextResponse.json({ error: 'satellite_unbound' }, { status: 503 });
+      return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
     return NextResponse.json({
       generated: 0,

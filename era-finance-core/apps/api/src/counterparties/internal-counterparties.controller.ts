@@ -5,6 +5,7 @@ import { assertEnvServiceToken } from "@era/satellite-kit";
 import { Public } from "../auth/decorators/public.decorator";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CounterpartiesService } from "./counterparties.service";
 import { blindIndex, normalizeVoen } from "../security/pii-crypto.util";
 
@@ -60,10 +61,14 @@ export class InternalCounterpartiesController {
     }
 
     const taxIdBlindIndex = blindIndex("voen", normalized);
-    const row = await this.prisma.counterparty.findFirst({
-      where: { organizationId, taxIdBlindIndex, deletedAt: null },
-      select: { id: true },
-    });
+    const row = await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.prisma.counterparty.findFirst({
+          where: { organizationId, taxIdBlindIndex, deletedAt: null },
+          select: { id: true },
+        }),
+    );
     if (!row) {
       throw new NotFoundException("Counterparty not found for VOEN");
     }
@@ -81,11 +86,15 @@ export class InternalCounterpartiesController {
     this.authorize(authorization, xServiceToken);
 
     const parsed = findOrCreateBodySchema.parse(body);
-    const cp = await this.counterparties.findOrCreateByVoen({
-      organizationId,
-      taxId: parsed.taxId,
-      nameFallback: parsed.nameFallback,
-    });
+    const cp = await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.counterparties.findOrCreateByVoen({
+          organizationId,
+          taxId: parsed.taxId,
+          nameFallback: parsed.nameFallback,
+        }),
+    );
 
     return { id: cp.id, taxId: normalizeVoen(parsed.taxId.trim()) };
   }

@@ -1,7 +1,7 @@
 import { runCronForEachTenant } from "@era/satellite-kit";
 import { addBakuDays, parseBakuDateTime, todayBakuYmd } from "@era/satellite-kit/time";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { listCronOrganizationIdsFromDb, fetchAutoPoolOrganizationIds } from "@/lib/cron-organization-ids";
+import { fetchAutoPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from "@/lib/prisma";
 import { sendNotification, createBookingSlots } from "@/integration/control-plane-platform.client";
 import { platformNotificationsEnabled } from "@/lib/platform-notify";
@@ -9,7 +9,7 @@ import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 
 /**
  * Scan aged OPEN work orders → notify + booking slots.
- * SHARED: ERA_CRON_ORGANIZATION_IDS override or DB User DISTINCT (DEDICATED = process bind).
+ * SHARED: orch pool registry (kit). DEDICATED / ONPREM: process org.
  */
 export async function POST(req: Request) {
   try {
@@ -18,7 +18,6 @@ export async function POST(req: Request) {
         satelliteKey: "industry_auto_service",
         authorization: req.headers.get("authorization"),
         cronSecretEnv: "PLATFORM_CRON_SECRET",
-        listOrganizationIds: listCronOrganizationIdsFromDb,
         fetchPoolOrganizationIds: fetchAutoPoolOrganizationIds,
       },
       async (organizationId) => {
@@ -92,7 +91,7 @@ export async function POST(req: Request) {
     if (!gate.ok) {
       if (gate.status === 401) return new Response("Unauthorized", { status: 401 });
       if (gate.status === 503) {
-        return Response.json({ error: "satellite_unbound" }, { status: 503 });
+        return Response.json({ error: gate.reason }, { status: 503 });
       }
       return jsonOk({ skipped: true, reason: gate.reason, moduleKey: gate.moduleKey });
     }

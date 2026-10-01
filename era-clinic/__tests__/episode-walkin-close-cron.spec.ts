@@ -1,15 +1,14 @@
 /**
- * CLI-55 — episode-walkin-close cron discovers orgs like other clinic crons.
+ * CLI-55 — episode-walkin-close cron lists orgs like other clinic crons (orch pool registry).
  */
 jest.mock("@era/satellite-kit", () => ({
   runCronForEachTenant: jest.fn(),
 }));
 
 jest.mock("@/lib/cron-organization-ids", () => ({
-  listCronOrganizationIdsFromDb: jest.fn(async () => [
+  fetchClinicPoolOrganizationIds: jest.fn(async () => [
     "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   ]),
-  fetchClinicPoolOrganizationIds: jest.fn(async () => []),
 }));
 
 jest.mock("@/lib/services/sanatorium.service", () => ({
@@ -17,7 +16,7 @@ jest.mock("@/lib/services/sanatorium.service", () => ({
 }));
 
 import { runCronForEachTenant } from "@era/satellite-kit";
-import { listCronOrganizationIdsFromDb } from "@/lib/cron-organization-ids";
+import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { POST } from "../app/api/cron/episode-walkin-close/route";
 
 describe("CLI-55 episode-walkin-close cron", () => {
@@ -25,14 +24,15 @@ describe("CLI-55 episode-walkin-close cron", () => {
     jest.clearAllMocks();
   });
 
-  it("POST passes listOrganizationIds to runCronForEachTenant", async () => {
+  it("POST passes only fetchPoolOrganizationIds to runCronForEachTenant", async () => {
     (runCronForEachTenant as jest.Mock).mockImplementation(
       async (
-        opts: { listOrganizationIds?: () => Promise<string[]> },
+        opts: Record<string, unknown> & { fetchPoolOrganizationIds?: () => Promise<string[]> },
         work: (id: string) => Promise<unknown>,
       ) => {
-        expect(opts.listOrganizationIds).toBe(listCronOrganizationIdsFromDb);
-        const ids = await opts.listOrganizationIds!();
+        expect(opts.fetchPoolOrganizationIds).toBe(fetchClinicPoolOrganizationIds);
+        expect(opts).not.toHaveProperty("listOrganizationIds");
+        const ids = await opts.fetchPoolOrganizationIds!();
         const results = [];
         for (const id of ids) {
           results.push(await work(id));

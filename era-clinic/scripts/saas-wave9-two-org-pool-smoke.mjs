@@ -52,35 +52,35 @@ async function main() {
   );
   const { runWithSatelliteTenant } = await import(pathToFileURL(kitCtxPath).href);
 
-  const prevSkip = process.env.ERA_SKIP_TENANT_FILTER;
-  process.env.ERA_SKIP_TENANT_FILTER = "1";
   const base = new PrismaClient();
   const prisma = base.$extends(createSatelliteTenantExtension(Prisma));
+  const inOrg = (organizationId, fn) => runWithSatelliteTenant({ organizationId }, fn);
+  const cleanup = () =>
+    Promise.all(
+      [ORG_A, ORG_B].map((org) =>
+        inOrg(org, () =>
+          prisma.patientRef.deleteMany({
+            where: { refCode: { in: [MARK_A, MARK_B] } },
+          }),
+        ),
+      ),
+    );
 
   try {
-    await prisma.patientRef.deleteMany({
-      where: { refCode: { in: [MARK_A, MARK_B] } },
-    });
+    await cleanup();
 
-    const patA = await prisma.patientRef.create({
-      data: {
-        organizationId: ORG_A,
-        refCode: MARK_A,
-        fullName: "Wave9 Smoke Alice",
-      },
-    });
-    const patB = await prisma.patientRef.create({
-      data: {
-        organizationId: ORG_B,
-        refCode: MARK_B,
-        fullName: "Wave9 Smoke Bob",
-      },
-    });
+    const patA = await inOrg(ORG_A, () =>
+      prisma.patientRef.create({
+        data: { refCode: MARK_A, fullName: "Wave9 Smoke Alice" },
+      }),
+    );
+    const patB = await inOrg(ORG_B, () =>
+      prisma.patientRef.create({
+        data: { refCode: MARK_B, fullName: "Wave9 Smoke Bob" },
+      }),
+    );
 
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
-
-    await runWithSatelliteTenant({ organizationId: ORG_B }, async () => {
+    await inOrg(ORG_B, async () => {
       const list = await prisma.patientRef.findMany({
         where: { refCode: { in: [MARK_A, MARK_B] } },
       });
@@ -101,12 +101,7 @@ async function main() {
       `[wave9-clinic-smoke] PASS: Org B isolated from Org A (patients ${patA.id} / ${patB.id})`,
     );
   } finally {
-    process.env.ERA_SKIP_TENANT_FILTER = "1";
-    await prisma.patientRef.deleteMany({
-      where: { refCode: { in: [MARK_A, MARK_B] } },
-    }).catch(() => undefined);
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
+    await cleanup().catch(() => undefined);
     await base.$disconnect();
   }
 }

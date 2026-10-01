@@ -279,69 +279,71 @@ export async function createReservation(input: {
     totalAmount = toDecimal(nightly * nights);
   }
 
-  const reservation = await prisma.reservation.create({
-    data: {
-      organizationId: requestOrganizationId(),
-      roomTypeId: input.roomTypeId,
-      givenRoomTypeId: input.givenRoomTypeId,
-      guestId: input.guestId,
-      ratePlanId,
-      mealPlanId: input.mealPlanId,
-      roomId: input.roomId,
-      sourceId: input.sourceId,
-      agencyId,
-      companyId,
-      salesContractId,
-      groupId: input.groupId,
-      checkInDate: input.checkInDate,
-      checkOutDate: input.checkOutDate,
-      paymentMethod: input.paymentMethod,
-      totalAmount,
-      /** Variant A: one Reservation = one room stay */
-      roomCount: 1,
-      adults: input.adults ?? 1,
-      children11_6: input.children11_6 ?? 0,
-      children5_2: input.children5_2 ?? 0,
-      children1_0: input.children1_0 ?? 0,
-      partyBillingMode,
-      booker: input.booker,
-      guestRep: input.guestRep,
-      paidBy: input.paidBy,
-      contractRef:
-        input.contractRef ||
-        (salesContractId
-          ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))
-              ?.code
-          : undefined),
-      shareEligible,
-      shareGender,
-      shareBedIndex,
-      status: input.status ?? 'CONFIRMED',
-      externalRef: input.externalRef,
-      paxGuests: {
-        create: [
-          {
+  const contractRef =
+    input.contractRef ||
+    (salesContractId
+      ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))
+          ?.code
+      : undefined);
+
+  const reservation = await prisma.$transaction(async (tx) => {
+    const created = await tx.reservation.create({
+      data: {
+        organizationId: requestOrganizationId(),
+        roomTypeId: input.roomTypeId,
+        givenRoomTypeId: input.givenRoomTypeId,
+        guestId: input.guestId,
+        ratePlanId,
+        mealPlanId: input.mealPlanId,
+        roomId: input.roomId,
+        sourceId: input.sourceId,
+        agencyId,
+        companyId,
+        salesContractId,
+        groupId: input.groupId,
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+        paymentMethod: input.paymentMethod,
+        totalAmount,
+        /** Variant A: one Reservation = one room stay */
+        roomCount: 1,
+        adults: input.adults ?? 1,
+        children11_6: input.children11_6 ?? 0,
+        children5_2: input.children5_2 ?? 0,
+        children1_0: input.children1_0 ?? 0,
+        partyBillingMode,
+        booker: input.booker,
+        guestRep: input.guestRep,
+        paidBy: input.paidBy,
+        contractRef,
+        shareEligible,
+        shareGender,
+        shareBedIndex,
+        status: input.status ?? 'CONFIRMED',
+        externalRef: input.externalRef,
+        paxGuests: {
+          create: {
             guestId: input.guestId,
-            firstName: paxFirstName,
-            lastName: paxLastName,
+            firstName: paxFirstName ?? null,
+            lastName: paxLastName ?? null,
             isPrimary: true,
             ownsFolio: true,
             sortOrder: 0,
           },
-        ],
+        },
+        staySlices: {
+          create: {
+            fromDate: input.checkInDate,
+            toDate: input.checkOutDate,
+            roomTypeId: input.roomTypeId,
+            ratePlanId,
+          },
+        },
       },
-    },
-    include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
-  });
+      include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
+    });
 
-  await prisma.reservationStaySlice.create({
-    data: {
-      reservationId: reservation.id,
-      fromDate: reservation.checkInDate,
-      toDate: reservation.checkOutDate,
-      roomTypeId: reservation.roomTypeId,
-      ratePlanId: reservation.ratePlanId,
-    },
+    return created;
   });
 
   {

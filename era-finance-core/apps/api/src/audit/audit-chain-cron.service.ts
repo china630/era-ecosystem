@@ -4,6 +4,7 @@ import { Cron } from "@nestjs/schedule";
 import { SecurityMode } from "@erafinance/database";
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { AuditService } from "./audit.service";
 
 @Injectable()
@@ -27,24 +28,29 @@ export class AuditChainCronService {
       );
       const orgs = await this.prisma.organization.findMany({ select: { id: true } });
       for (const org of orgs) {
-        const chain = await this.audit.verifyOrganizationChain(org.id);
-        if (chain.compromisedCount === 0) {
-          continue;
-        }
-        try {
-          await this.prisma.organizationSecurityState.upsert({
-            where: { organizationId: org.id },
-            create: {
-              organizationId: org.id,
-              mode: SecurityMode.HARD_BLOCK_PLATFORM,
-            },
-            update: { mode: SecurityMode.HARD_BLOCK_PLATFORM },
-          });
-        } catch (e) {
-          this.logger.warn(
-            `Could not set HARD_BLOCK_PLATFORM for ${org.id}: ${e instanceof Error ? e.message : String(e)}`,
-          );
-        }
+        await runWithTenantContextAsync(
+          { organizationId: org.id, skipTenantFilter: false },
+          async () => {
+            const chain = await this.audit.verifyOrganizationChain(org.id);
+            if (chain.compromisedCount === 0) {
+              return;
+            }
+            try {
+              await this.prisma.organizationSecurityState.upsert({
+                where: { organizationId: org.id },
+                create: {
+                  organizationId: org.id,
+                  mode: SecurityMode.HARD_BLOCK_PLATFORM,
+                },
+                update: { mode: SecurityMode.HARD_BLOCK_PLATFORM },
+              });
+            } catch (e) {
+              this.logger.warn(
+                `Could not set HARD_BLOCK_PLATFORM for ${org.id}: ${e instanceof Error ? e.message : String(e)}`,
+              );
+            }
+          },
+        );
       }
       await this.sendExternalCriticalAlert(msg, res.compromisedIds);
       const admins = await this.prisma.user.findMany({

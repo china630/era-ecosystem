@@ -52,35 +52,35 @@ async function main() {
   );
   const { runWithSatelliteTenant } = await import(pathToFileURL(kitCtxPath).href);
 
-  const prevSkip = process.env.ERA_SKIP_TENANT_FILTER;
-  process.env.ERA_SKIP_TENANT_FILTER = "1";
   const base = new PrismaClient();
   const prisma = base.$extends(createSatelliteTenantExtension(Prisma));
+  const inOrg = (organizationId, fn) => runWithSatelliteTenant({ organizationId }, fn);
+  const cleanup = () =>
+    Promise.all(
+      [ORG_A, ORG_B].map((org) =>
+        inOrg(org, () =>
+          prisma.guest.deleteMany({
+            where: { externalRef: { in: [MARK_A, MARK_B] } },
+          }),
+        ),
+      ),
+    );
 
   try {
-    await prisma.guest.deleteMany({
-      where: { externalRef: { in: [MARK_A, MARK_B] } },
-    });
+    await cleanup();
 
-    const guestA = await prisma.guest.create({
-      data: {
-        organizationId: ORG_A,
-        externalRef: MARK_A,
-        fullName: "Wave9 Smoke Alice",
-      },
-    });
-    const guestB = await prisma.guest.create({
-      data: {
-        organizationId: ORG_B,
-        externalRef: MARK_B,
-        fullName: "Wave9 Smoke Bob",
-      },
-    });
+    const guestA = await inOrg(ORG_A, () =>
+      prisma.guest.create({
+        data: { externalRef: MARK_A, fullName: "Wave9 Smoke Alice" },
+      }),
+    );
+    const guestB = await inOrg(ORG_B, () =>
+      prisma.guest.create({
+        data: { externalRef: MARK_B, fullName: "Wave9 Smoke Bob" },
+      }),
+    );
 
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
-
-    await runWithSatelliteTenant({ organizationId: ORG_B }, async () => {
+    await inOrg(ORG_B, async () => {
       const list = await prisma.guest.findMany({
         where: { externalRef: { in: [MARK_A, MARK_B] } },
       });
@@ -101,12 +101,7 @@ async function main() {
       `[wave9-hotel-smoke] PASS: Org B isolated from Org A (guests ${guestA.id} / ${guestB.id})`,
     );
   } finally {
-    process.env.ERA_SKIP_TENANT_FILTER = "1";
-    await prisma.guest.deleteMany({
-      where: { externalRef: { in: [MARK_A, MARK_B] } },
-    }).catch(() => undefined);
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
+    await cleanup().catch(() => undefined);
     await base.$disconnect();
   }
 }

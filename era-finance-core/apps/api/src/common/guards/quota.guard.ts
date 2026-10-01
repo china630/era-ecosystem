@@ -7,6 +7,7 @@ import { Reflector } from "@nestjs/core";
 import type { AuthUser } from "../../auth/types/auth-user";
 import { QuotaResource } from "../../quota/quota-resource";
 import { QuotaService } from "../../quota/quota.service";
+import { runWithTenantContextAsync } from "../../prisma/tenant-context";
 import { CHECK_QUOTA_KEY } from "../decorators/check-quota.decorator";
 
 @Injectable()
@@ -31,17 +32,26 @@ export class QuotaGuard implements CanActivate {
       return true;
     }
 
+    await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () => this.assertQuota(resource, organizationId),
+    );
+    return true;
+  }
+
+  private async assertQuota(
+    resource: QuotaResource,
+    organizationId: string,
+  ): Promise<void> {
     switch (resource) {
       case QuotaResource.USERS:
         await this.quota.assertEmployeeQuota(organizationId);
-        return true;
+        return;
       case QuotaResource.INVOICES_PER_MONTH:
         await this.quota.assertInvoiceMonthlyQuota(organizationId);
-        return true;
-      case QuotaResource.STORAGE:
-        return true;
+        return;
       default:
-        return true;
+        return;
     }
   }
 }

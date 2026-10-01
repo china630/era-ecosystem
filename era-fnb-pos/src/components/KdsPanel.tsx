@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ColorLegend } from "@era/satellite-kit/ui";
+import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type KdsLine = {
@@ -18,7 +18,6 @@ type KdsLine = {
 
 export default function KdsPanel() {
   const [lines, setLines] = useState<KdsLine[]>([]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -36,7 +35,6 @@ export default function KdsPanel() {
   }, [load]);
 
   async function markDone(lineId: string) {
-    setMessage("");
     const res = await fetch(`/api/kds/lines/${lineId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -44,16 +42,15 @@ export default function KdsPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Update failed");
+      showApiError(data, "Update failed");
       return;
     }
-    setMessage(`Line done: ${data.description}`);
+    showSuccess(data.description ? String(data.description) : "OK");
     await load();
   }
 
   return (
     <>
-      {message && <p className="mb-3 text-sm">{message}</p>}
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">Loading…</p>
       ) : (

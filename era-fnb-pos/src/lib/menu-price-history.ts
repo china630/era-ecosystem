@@ -11,12 +11,20 @@ export async function recordMenuItemPrice(
   opts?: { effectiveFrom?: Date; reason?: string | null; createdBy?: string | null },
 ) {
   const now = opts?.effectiveFrom ?? new Date();
+  const item = await db.menuItem.findUnique({
+    where: { id: menuItemId },
+    select: { organizationId: true },
+  });
+  if (!item?.organizationId) {
+    throw new Error("Menu item not found");
+  }
   await db.menuItemPrice.updateMany({
     where: { menuItemId, effectiveTo: null },
     data: { effectiveTo: now },
   });
   return db.menuItemPrice.create({
     data: {
+      organizationId: item.organizationId,
       menuItemId,
       priceAzn,
       effectiveFrom: now,

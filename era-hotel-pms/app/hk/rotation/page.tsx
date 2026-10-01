@@ -69,6 +69,7 @@ export default function HkRotationPage() {
       />
       <input type="date" className="mb-4 border px-2 py-1" value={date} onChange={(e) => setDate(e.target.value)} />
       {warn ? <p className="mb-2 text-sm text-amber-800">{t('pairsLeftover')}</p> : null}
+      {rows.length === 0 ? <p className="mb-4 text-sm text-[#7F8C8D]">{t('rotationEmpty')}</p> : null}
       <ul className="space-y-2 text-sm">
         {rows.map((r) => (
           <li

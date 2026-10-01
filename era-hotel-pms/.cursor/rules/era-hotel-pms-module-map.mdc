@@ -4,7 +4,7 @@ Entitlement keys: `hotel_distribution`, `hotel_banquets` (see `docs/adr/hotel-mo
 
 **Acceptance SSOT:** [Hotel-Acceptance-System](../../../docs/acceptance/Hotel-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Hotel-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Hotel-Implementation-Matrix.md) · edition [`docs/editions/hotel.yaml`](../../../docs/editions/hotel.yaml)
 
-**SaaS Wave 4 cron:** `PUT /api/service/recurring`, `POST /api/cron/auto-bar`, allotment cutoff, email-cron → `runCronForEachTenant` + `byOrganization` (`ERA_CRON_ORGANIZATION_IDS`). Not sellable SHARED pool.
+**SaaS Wave 4 cron:** `PUT /api/service/recurring`, `POST /api/cron/auto-bar`, allotment cutoff, email-cron → `runCronForEachTenant` + `byOrganization` (SHARED: orch pool registry in the kit, 503 when unavailable; DEDICATED/ONPREM: process org). Not sellable SHARED pool.
 ## Menu IA canon
 
 SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
@@ -51,7 +51,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | `/distribution/travel-agencies` | `GET/POST /api/admin/travel-agencies` | Travel agent master (commission + settlementMode) |
 | `/distribution/companies` | `GET/POST /api/admin/companies` | Corporate master (settlementMode, no commission) |
 | `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
-| `/distribution/channel` | `GET/PUT /api/channel/binding`, `GET/POST /api/channel/*`, health, ota-cancel, sync push/pull; `POST /api/integrations/channex/webhook`; cron `channel-ari-drain` | Local CM (HOT-CH-01); Channex binding + ARI queue (HOT-CH-02 STUB until live UAT) |
+| `/distribution/channel` | `GET/PUT /api/channel/binding`, `GET/POST /api/channel/*`, health, ota-cancel, sync push/pull; `POST /api/integrations/channex/webhook`; cron `channel-ari-drain` | Local CM (HOT-CH-01); Channex binding + ARI queue (HOT-CH-02 STUB until live UAT). Webhook / IBE key → binding found per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/b2c` | `GET /api/public/v1/availability`, `POST /api/public/v1/holds`, `POST /api/public/v1/bookings` | Direct IBE (HOT-IBE-01); legacy `/api/public/booking/rates` → 410 |
 | Groups / booking envelope | `GET/POST /api/reservation-groups`, `POST /api/reservation-groups/book`, `GET/PATCH/POST /api/reservation-groups/:id` | Booking = group; `/book` = envelope + N stays; POST id = add RoomStay |
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
@@ -188,21 +188,9 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Role |
 |-------|-----|------|
-| `/reports` | hub | Category tiles + shared period filter |
-| `/reports/analysis` | `GET /api/reports/analysis` | A0 hub (cubes P2) |
-| `/reports/occupancy` | `GET /api/reports/occupancy` | A occupancy / forecast / annual / monthly-daily |
-| `/reports/occupancy/annual` | `GET /api/reports/annual-occupancy?lang=` | P0 Annual Occupancy screen + PDF |
-| `/reports/occupancy/monthly-daily` | `GET /api/reports/monthly-daily-analysis?lang=` | P0 Monthly and Daily Analysis screen + PDF |
-| `/reports/daily` | hub | B Daily flash |
-| `/reports/daily/management` | `GET /api/reports/daily-management?lang=` | P0 Daily Management screen + PDF |
-| `/reports/daily/in-house` | `GET /api/reports/in-house?lang=` | P0 In-house screen + PDF |
-| `/reports/financial` | hub | C Financial |
-| `/reports/financial/trial-balance-period` | `GET /api/reports/trial-balance-period?lang=` | P0 Trial Balance Date Period screen + PDF |
-| `/reports/financial/cash` | `GET /api/reports/cash-report?lang=` | P0 Cash Report screen + PDF |
-| `/reports/financial/folio-transactions` | `GET /api/reports/folio-transactions?lang=` | P0 Folio Transactions screen + PDF |
-| `/reports/financial/department-revenues` | `GET /api/reports/department-revenues?lang=` | P0 Department Revenues screen + PDF |
-| `/reports/agency` | existing profitability | D agency / market |
-| `/reports/booking` | planned | E create / cancel / CRM |
+| `/reports` | `GET /api/reports/{slug}`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, shared period, Show, PDF and Excel. Category hubs and old slug URLs redirect here. |
+| `/reports/analytics` | booking analytics API | Folded tool link from the workspace |
+| `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Room-type occupancy grid (not a catalog slug) |
 | `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
 | `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
 

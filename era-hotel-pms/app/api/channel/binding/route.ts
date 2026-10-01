@@ -1,11 +1,12 @@
 import { z } from 'zod';
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import {
   getChannelManagerBinding,
+  isBindingPoolUnavailable,
   upsertChannelManagerBinding,
 } from '@/lib/channel/channel-manager-binding.service';
 
@@ -51,6 +52,9 @@ export async function PUT(request: Request) {
     const binding = await upsertChannelManagerBinding(body);
     return jsonOk(binding);
   } catch (err) {
+    if (isBindingPoolUnavailable(err)) {
+      return jsonError('Organization registry unavailable', 503);
+    }
     return handleRouteError(err);
   }
 }

@@ -28,7 +28,7 @@ export async function GET(
     if (!def) return jsonError(`Unknown report: ${slug}`, 404);
 
     if (!isImplementedReportSlug(slug)) {
-      return jsonError(`Report "${slug}" PDF not implemented`, 501);
+      return jsonError(`Report "${slug}" is not implemented`, 501);
     }
 
     const url = new URL(request.url);

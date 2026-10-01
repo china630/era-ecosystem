@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 
 type TicketLine = {
@@ -30,6 +31,7 @@ type GuestEntitlements = {
 type Ticket = {
   id: string;
   status: string;
+  dayNo?: number | null;
   totalAzn: string | number;
   discountPercent?: string | number;
   serviceChannel?: string | null;
@@ -42,13 +44,13 @@ type Ticket = {
   lines: TicketLine[];
 };
 
-function ticketLabel(ticket: Ticket): string {
+function ticketLabel(ticket: Ticket, takeaway: string, walkIn: string): string {
   if (ticket.table?.code) return ticket.table.code;
-  if (ticket.serviceChannel === "WALK_IN") {
-    return ticket.walkInLabel?.trim() || "Walk-in";
+  if (ticket.serviceChannel === "TAKEAWAY" || ticket.serviceChannel === "WALK_IN") {
+    return takeaway;
   }
   if (ticket.beoId) return `BEO ${ticket.beoId.slice(0, 8)}`;
-  return "Walk-in";
+  return ticket.walkInLabel?.trim() || walkIn;
 }
 
 function isInHouseTicket(ticket: Ticket): boolean {
@@ -61,7 +63,6 @@ export default function OrdersPanel() {
   const tc = useTranslations("common");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [discountInput, setDiscountInput] = useState("0");
   const [splitLineIds, setSplitLineIds] = useState<string[]>([]);
@@ -139,20 +140,18 @@ export default function OrdersPanel() {
 
   async function fireTicket() {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/fire`, { method: "POST" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Fire failed");
+      showApiError(data, "Fire failed");
       return;
     }
-    setMessage(`Fired ${data.firedCount} line(s) to kitchen`);
+    showSuccess(`Fired ${data.firedCount} line(s) to kitchen`);
     await load();
   }
 
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -164,30 +163,32 @@ export default function OrdersPanel() {
           detail: { kind: "pay", ticketId: selected.id, payload: { method } },
         }),
       );
-      setMessage(t("queuedOffline"));
+      showApiError({ error: t("queuedOffline") });
       return;
     }
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Payment failed");
+      showApiError(
+        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
+        "Payment failed",
+      );
       return;
     }
     const label = method === "CARD" ? t("payCard") : t("payCash");
-    setMessage(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")} (stub fiscal)`);
+    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
     setSelectedId(null);
     await load();
   }
 
   async function deferToHub() {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/defer-to-hub`, { method: "POST" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? t("deferFailed"));
+      showApiError(data, t("deferFailed"));
       return;
     }
-    setMessage(t("deferSuccess"));
+    showSuccess(t("deferSuccess"));
     setSelectedId(null);
     await load();
   }
@@ -196,13 +197,12 @@ export default function OrdersPanel() {
     const q = guestQuery.trim();
     if (!q) return;
     setGuestSearching(true);
-    setMessage("");
     try {
       const res = await fetch(`/api/in-house?query=${encodeURIComponent(q)}`);
       const data = await res.json();
       setGuestResults(Array.isArray(data) ? data : []);
       if (!Array.isArray(data) || data.length === 0) {
-        setMessage(t("guestNotFound"));
+        showApiError({ error: t("guestNotFound") });
       }
     } finally {
       setGuestSearching(false);
@@ -212,10 +212,9 @@ export default function OrdersPanel() {
   async function linkInHouseGuest(guest: InHouseGuest) {
     if (!selected) return;
     if (!guest.allowRoomCharge) {
-      setMessage(t("guestRoomChargeBlocked"));
+      showApiError({ error: t("guestRoomChargeBlocked") });
       return;
     }
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -226,10 +225,10 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? t("guestLinkFailed"));
+      showApiError(data, t("guestLinkFailed"));
       return;
     }
-    setMessage(t("guestLinked", { room: guest.roomNumber, name: guest.guestName }));
+    showSuccess(t("guestLinked", { room: guest.roomNumber, name: guest.guestName }));
     setGuestResults([]);
     setGuestQuery("");
     await load();
@@ -238,15 +237,13 @@ export default function OrdersPanel() {
 
   async function clearGuestLink() {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roomChargeReservationId: null, guestName: null }),
     });
     if (!res.ok) {
-      const data = await res.json();
-      setMessage(data.error ?? t("guestLinkFailed"));
+      showApiError(await res.json().catch(() => ({})), t("guestLinkFailed"));
       return;
     }
     await load();
@@ -255,7 +252,6 @@ export default function OrdersPanel() {
 
   async function roomCharge() {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/room-charge`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -263,17 +259,16 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Room charge failed");
+      showApiError(data, "Room charge failed");
       return;
     }
-    setMessage(t("roomChargeOk"));
+    showSuccess(t("roomChargeOk"));
     setSelectedId(null);
     await load();
   }
 
   async function voidLine(lineId: string) {
     if (!selected) return;
-    setMessage("");
     const res = await fetch(
       `/api/tickets/${selected.id}/lines/${lineId}/void`,
       {
@@ -284,16 +279,15 @@ export default function OrdersPanel() {
     );
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Void failed (manager role required)");
+      showApiError(data, t("void"));
       return;
     }
-    setMessage("Line voided");
+    showSuccess(t("void"));
     await load();
   }
 
   async function applyDiscount() {
     if (!selected) return;
-    setMessage("");
     const discountPercent = parseFloat(discountInput);
     if (Number.isNaN(discountPercent)) return;
     const res = await fetch(`/api/tickets/${selected.id}/discount`, {
@@ -303,16 +297,15 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Discount failed (manager role required)");
+      showApiError(data, t("applyDiscount"));
       return;
     }
-    setMessage(`Discount ${discountPercent}% applied`);
+    showSuccess(`${discountPercent}%`);
     await load();
   }
 
   async function splitTicket() {
     if (!selected || splitLineIds.length === 0) return;
-    setMessage("");
     const res = await fetch(`/api/tickets/${selected.id}/split`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -320,10 +313,10 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Split failed");
+      showApiError(data, t("splitSelected"));
       return;
     }
-    setMessage(`Split ticket ${data.split?.id?.slice(0, 8) ?? ""} created`);
+    showSuccess(t("splitSelected"));
     setSplitLineIds([]);
     await load();
   }
@@ -332,6 +325,15 @@ export default function OrdersPanel() {
     setSplitLineIds((prev) =>
       prev.includes(lineId) ? prev.filter((id) => id !== lineId) : [...prev, lineId],
     );
+  }
+
+  function statusLabel(status: string): string {
+    if (status === "OPEN") return t("status_OPEN");
+    if (status === "HELD") return t("status_HELD");
+    if (status === "PENDING_HUB") return t("status_PENDING_HUB");
+    if (status === "CLOSED") return t("status_CLOSED");
+    if (status === "VOID") return t("status_VOID");
+    return status;
   }
 
   return (
@@ -349,16 +351,16 @@ export default function OrdersPanel() {
               type="button"
               onClick={() => setSelectedId(ticket.id)}
               className={`${CARD_CLASS} w-full p-4 text-left ${
-                selected?.id === ticket.id ? "border-[#2980B9]" : ""
+                selected?.id === ticket.id ? "border-[#2980B9] ring-2 ring-[#2980B9]" : ""
               }`}
             >
               <div className="flex justify-between text-sm">
                 <span className="font-medium">
-                  {ticketLabel(ticket)} · {ticket.outlet.code}
-                  {ticket.serviceChannel === "WALK_IN" ? " · WALK_IN" : ""}
+                  {ticketLabel(ticket, t("channelTakeaway"), t("channelWalkIn"))}
+                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""} · {ticket.outlet?.code ?? ""}
                   {ticket.beoId ? " · BEO" : ""}
                 </span>
-                <span>{ticket.status}</span>
+                <span>{statusLabel(ticket.status)}</span>
               </div>
               <p className="mt-1 text-lg font-semibold">
                 {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
@@ -374,8 +376,12 @@ export default function OrdersPanel() {
           <p className="text-sm text-[#7F8C8D]">{t("selectTicket")}</p>
         ) : (
           <>
-            <ul className="mb-4 space-y-1 text-xs text-[#7F8C8D]">
-              {selected.lines.map((l) => (
+            <p className="mb-2 text-sm font-medium text-[#34495E]">
+              {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
+              {selected.dayNo ? ` #${selected.dayNo}` : ""}
+            </p>
+            <ul className="mb-2 space-y-1 text-sm text-[#34495E]">
+              {selected.lines.filter((l) => l.kitchenStatus !== "VOID").map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-2">
                   <label className="flex flex-1 items-center gap-2">
                     {l.kitchenStatus !== "VOID" && (
@@ -387,7 +393,7 @@ export default function OrdersPanel() {
                       />
                     )}
                     <span>
-                      {l.qty}× {l.description} ({l.kitchenStatus})
+                      {l.qty}× {l.description}
                     </span>
                   </label>
                   <button
@@ -400,6 +406,9 @@ export default function OrdersPanel() {
                 </li>
               ))}
             </ul>
+            <p className="mb-4 text-base font-semibold">
+              {Number(selected.totalAzn).toFixed(2)} {tc("azn")}
+            </p>
             <div className="mb-3 flex flex-wrap items-end gap-2">
               <label className="text-xs text-[#7F8C8D]">
                 {t("applyDiscount")}
@@ -572,7 +581,6 @@ export default function OrdersPanel() {
             </div>
           </>
         )}
-        {message && <p className="mt-3 text-sm">{message}</p>}
         {selected && hotelMode && inHouse && (
           <p className="mt-2 text-xs text-[#8E44AD]">{t("inHouseHint")}</p>
         )}

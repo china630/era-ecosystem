@@ -1,4 +1,4 @@
-import { getReportBySlug, getPackDefaults, validatePackSlugs } from '@/lib/reports/catalog';
+import { getReportBySlug, getPackDefaults, reportHref, validatePackSlugs } from '@/lib/reports/catalog';
 import { parseReportLangParam, resolveReportLocale } from '@/lib/reports/locale';
 import { resolveDateMode } from '@/lib/reports/period';
 
@@ -70,6 +70,17 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
     it('rejects unknown pack slug', () => {
       const result = validatePackSlugs(['daily-management', 'ghost-report']);
       expect(result.ok).toBe(false);
+    });
+
+    it('joins extra query with & so night-audit deep links keep the slug', () => {
+      const def = getReportBySlug('cash-report');
+      expect(def).toBeTruthy();
+      const href = reportHref(def!, { from: '2026-08-16', to: '2026-08-16' });
+      const url = new URL(href, 'http://local');
+      expect(url.pathname).toBe('/reports');
+      expect(url.searchParams.get('report')).toBe('cash-report');
+      expect(url.searchParams.get('from')).toBe('2026-08-16');
+      expect(href.split('?').length).toBe(2);
     });
 
     it('accepts Nafta default eight', () => {

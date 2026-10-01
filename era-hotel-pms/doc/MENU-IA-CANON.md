@@ -244,22 +244,16 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md) (ElektraWeb WA0058/59 + Nafta samples). **W1 live** — 8 P0 screens + PDF + nightly ZIP; not SHIPPED (no UAT evidence).
 
-**Sidebar:** category hubs, not 50 PDF tiles.
+**Sidebar:** one workspace plus the nightly pack. Categories live in the report list, not as extra menu screens.
 
 | Menu item | URL | Classifier |
 |-----------|-----|------------|
-| Reports hub | `/reports` | Tiles + shared date/period filter |
-| Analysis | `/reports/analysis` | A0 screens (cubes = P2) |
-| Occupancy | `/reports/occupancy` | A occupancy / forecast / annual / monthly-daily |
-| Daily flash | `/reports/daily` | B Daily Management + in-house |
-| Financial | `/reports/financial` | C trial balance, dept revenues, cash, folio day |
-| Agency & market | `/reports/agency` | D agency / nationality / segment |
-| Reservations & CRM | `/reports/booking` | E create/cancel/definite/CRM |
+| All reports | `/reports` | Shared period, grouped list, PDF + Excel. Old category and slug URLs redirect here |
 | Nightly pack | `/reports/nightly-pack` | Hotel-configured ZIP for closed NA date |
 
 SatAdmin pack membership: `/settings/report-pack`.
 
-**One screen → one primary home:** Management PDFs live here. Night Audit `/night-audit/reports` is a **deep-link hub** (enabled pack + Download ZIP + NA-only ops grids). Front Cash journal links to cash report; FO in-house ops list stays `/fo/in-house` and links to `/reports/daily/in-house` for PDF.
+**One screen → one primary home:** Management PDFs live on `/reports`. Night Audit `/night-audit/reports` is a **deep-link hub** (enabled pack + Download ZIP + NA-only ops grids). Front Cash journal links to the cash report; FO in-house ops list stays `/fo/in-house` and links to `/reports?report=in-house`.
 
 **Not copied:** `.frx` engine; EW Accounting/Stock/POS report menus; Task Cube.
 
@@ -321,7 +315,7 @@ Readiness: [`MENU-IA-PRIMARY-FILL-AUDIT.md`](./MENU-IA-PRIMARY-FILL-AUDIT.md) ·
 
 - Invoice / Accounting / Fixed Assets / Purchasing / ERP Stock as hotel modules  
 - Full POS / Digital Menu inside hotel sidebar  
-- 50+ Management Report tiles as separate sidebar rows (use `/reports` category hubs)  
+- 50+ Management Report tiles as separate sidebar rows (one `/reports` workspace)  
 - Duplicate End of Day Log 2  
 - Elektraweb Setup noise (license, carbon, agency portal)
 

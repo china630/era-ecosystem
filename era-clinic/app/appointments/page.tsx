@@ -28,6 +28,8 @@ import {
   type TimeHorizon,
 } from "@/components/sanatorium/ResourceDayMatrix";
 import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
+import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
 
 type DetailState = {
   appointmentId: string;
@@ -41,6 +43,8 @@ type DetailState = {
 export default function AppointmentsPage() {
   const t = useTranslations("appointments");
   const tc = useTranslations("common");
+  const { auth } = useClinicAuth();
+  const hasOutpatient = auth?.enabledPresets?.includes(CLINIC_PRESET.OUTPATIENT) ?? false;
   const [date, setDate] = useState(() => todayBakuYmd());
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [practitionerFilter, setPractitionerFilter] = useState("");
@@ -294,14 +298,14 @@ export default function AppointmentsPage() {
                 {t("openVisit")}
               </Link>
             )}
-            {detail?.visitId && (
+            {detail?.visitId && hasOutpatient ? (
               <Link
                 href={`/cashier?visitId=${detail.visitId}`}
                 className={SECONDARY_BUTTON_CLASS}
               >
                 {t("cashier")}
               </Link>
-            )}
+            ) : null}
             {detail?.status !== "CANCELLED" && (
               <button
                 type="button"
