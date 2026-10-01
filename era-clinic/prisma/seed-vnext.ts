@@ -220,12 +220,12 @@ async function main() {
     where: { code: "default" },
     update: {
       name: "Nafta Clinic",
-      enabledPresets: ["outpatient", "sanatorium_clinical", "inpatient_day"],
+      enabledPresets: ["sanatorium_clinical"],
     },
     create: {
       code: "default",
       name: "Nafta Clinic",
-      enabledPresets: ["outpatient", "sanatorium_clinical", "inpatient_day"],
+      enabledPresets: ["sanatorium_clinical"],
     },
   });
 

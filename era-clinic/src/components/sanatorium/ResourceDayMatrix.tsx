@@ -1,6 +1,8 @@
 "use client";
 
 import { ColorLegend, TEXT_DANGER_CLASS, TEXT_MUTED_CLASS, TEXT_SUCCESS_CLASS } from "@era/satellite-kit/ui";
+import { bakuHourMinute, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
+import { matrixNowLineLeft } from "@/components/sanatorium/matrix-now-line";
 
 export type MatrixSlot = {
   time: string;
@@ -51,6 +53,7 @@ export type ResourceDayMatrixLabels = {
 
 type Segment =
   | { kind: "free"; slot: MatrixSlot; col: number }
+  | { kind: "blocked"; slot: MatrixSlot; col: number }
   | { kind: "lunch"; slot: MatrixSlot; col: number }
   | {
       kind: "bar";
@@ -78,8 +81,6 @@ type Props = {
   slotColumnWidth?: string;
 };
 
-const BAKU_TZ = "Asia/Baku";
-
 function shortName(full?: string) {
   if (!full) return "…";
   return full.trim().split(/\s+/)[0] || "…";
@@ -92,37 +93,14 @@ function staffInitials(full?: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function bakuYmdNow() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: BAKU_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-function bakuMinutesNow() {
-  return slotStartMinutesBaku({ time: new Date().toISOString(), occupied: false });
+function wallMinutes(isoOrDate: Date | string): number {
+  const { hour, minute } = bakuHourMinute(isoOrDate);
+  const h = hour === 24 ? 0 : hour;
+  return h * 60 + minute;
 }
 
 function slotStartMinutesBaku(slot: MatrixSlot): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: BAKU_TZ,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date(slot.time));
-  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
-  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
-  return hour * 60 + minute;
-}
-
-function formatBakuTime(iso: string): string {
-  return new Intl.DateTimeFormat([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: BAKU_TZ,
-  }).format(new Date(iso));
+  return wallMinutes(slot.time);
 }
 
 function barClass(status?: string) {
@@ -193,7 +171,7 @@ function filterSlotsByHorizon(
   // Always anchor to wall-clock (Baku): now − 5 min, floored to the 5-min grid.
   // Same rule for today and other dates — so "rest / +1h / +3h" never silently
   // restart at 09:00 just because the operator opened a future day.
-  const nowMin = bakuMinutesNow();
+  const nowMin = wallMinutes(new Date());
   const anchorMin = Math.floor((nowMin - 5) / 5) * 5;
   const endMin =
     horizon === "+1h"
@@ -227,6 +205,11 @@ function buildSegments(slots: MatrixSlot[]): Segment[] {
     const slot = slots[i];
     if (slot.lunch) {
       out.push({ kind: "lunch", slot, col: i });
+      i += 1;
+      continue;
+    }
+    if (slot.blocked && !slot.procedureOrderId) {
+      out.push({ kind: "blocked", slot, col: i });
       i += 1;
       continue;
     }
@@ -281,18 +264,15 @@ export function ResourceDayMatrix({
   const baseSlots = filtered[0]?.slots ?? resources[0]?.slots ?? [];
   const timeSlots = filterSlotsByHorizon(baseSlots, date, timeHorizon, dayStartHour);
   const colCount = timeSlots.length;
-  const isToday = date === bakuYmdNow();
-
-  let nowLinePct: number | null = null;
-  if (isToday && colCount > 0 && timeHorizon === "full") {
-    const startMin = slotStartMinutesBaku(timeSlots[0]);
-    const last = timeSlots[colCount - 1];
-    const endMin = slotStartMinutesBaku(last) + 5;
-    const nowMin = bakuMinutesNow();
-    if (nowMin >= startMin && nowMin <= endMin && endMin > startMin) {
-      nowLinePct = ((nowMin - startMin) / (endMin - startMin)) * 100;
-    }
-  }
+  const isToday = date === todayBakuYmd();
+  const nowLineLeft =
+    isToday && timeHorizon === "full"
+      ? matrixNowLineLeft({
+          slotTimes: timeSlots.map((slot) => slot.time),
+          now: new Date(),
+          slotColumnWidth,
+        })
+      : null;
 
   // Fixed narrow columns (scroll horizontally) — do not stretch with 1fr.
   const gridCols = `10rem repeat(${Math.max(colCount, 1)}, ${slotColumnWidth})`;
@@ -342,7 +322,7 @@ export function ResourceDayMatrix({
                   key={slot.time}
                   className={`sticky top-0 z-20 border-b border-[#D5DADF] bg-[#F8FAFC] px-0.5 py-2 text-center text-[10px] font-medium ${TEXT_MUTED_CLASS}`}
                 >
-                  {formatBakuTime(slot.time)}
+                  {bakuTimeLabel(slot.time)}
                 </div>
               ))}
 
@@ -365,6 +345,16 @@ export function ResourceDayMatrix({
                             className="min-h-[3.25rem] border-b border-r border-slate-300 bg-slate-200/80"
                             style={{ gridColumn: "span 1" }}
                             title={labels.legendLunch}
+                          />
+                        );
+                      }
+                      if (seg.kind === "blocked") {
+                        return (
+                          <div
+                            key={`${row.resourceId}-blocked-${seg.slot.time}`}
+                            className="min-h-[3.25rem] border-b border-r border-amber-300 bg-amber-50"
+                            style={{ gridColumn: "span 1" }}
+                            title={labels.legendBlocked}
                           />
                         );
                       }
@@ -437,11 +427,11 @@ export function ResourceDayMatrix({
                 );
               })}
             </div>
-            {nowLinePct != null ? (
+            {nowLineLeft != null ? (
               <div
                 className="pointer-events-none absolute bottom-0 top-8 z-40 w-0.5 bg-[#E74C3C]"
                 style={{
-                  left: `calc(10rem + (100% - 10rem) * ${nowLinePct / 100})`,
+                  left: nowLineLeft,
                 }}
                 title={labels.now}
               >
