@@ -1,4 +1,60 @@
--- Hotel child/line organizationId. Backfill from the parent row; fail if any row stays null.
+-- Hotel child/line organizationId. Backfill from the parent row.
+-- If this database has no organization at all, drop the unscoped leftovers instead of aborting migrate-all.
+
+CREATE OR REPLACE FUNCTION pg_temp.era_stamp_child_org(tbl text) RETURNS void AS $era$
+DECLARE
+  n int;
+  org text;
+  leftover int;
+BEGIN
+  EXECUTE format('SELECT COUNT(*) FROM %I WHERE "organizationId" IS NULL', tbl) INTO leftover;
+  IF leftover = 0 THEN
+    RETURN;
+  END IF;
+
+  SELECT COUNT(DISTINCT "organizationId") INTO n
+  FROM "HotelProfile"
+  WHERE "organizationId" IS NOT NULL;
+  IF n = 1 THEN
+    SELECT "organizationId" INTO org
+    FROM "HotelProfile"
+    WHERE "organizationId" IS NOT NULL
+    LIMIT 1;
+  ELSIF n = 0 THEN
+    SELECT COUNT(DISTINCT "organizationId") INTO n
+    FROM "Reservation"
+    WHERE "organizationId" IS NOT NULL;
+    IF n = 1 THEN
+      SELECT "organizationId" INTO org
+      FROM "Reservation"
+      WHERE "organizationId" IS NOT NULL
+      LIMIT 1;
+    ELSIF n = 0 THEN
+      SELECT COUNT(DISTINCT "organizationId") INTO n
+      FROM "Guest"
+      WHERE "organizationId" IS NOT NULL;
+      IF n = 1 THEN
+        SELECT "organizationId" INTO org
+        FROM "Guest"
+        WHERE "organizationId" IS NOT NULL
+        LIMIT 1;
+      END IF;
+    END IF;
+  END IF;
+
+  IF org IS NOT NULL THEN
+    EXECUTE format('UPDATE %I SET "organizationId" = $1 WHERE "organizationId" IS NULL', tbl) USING org;
+  ELSIF n = 0 THEN
+    EXECUTE format('DELETE FROM %I WHERE "organizationId" IS NULL', tbl);
+  END IF;
+
+  EXECUTE format('SELECT COUNT(*) FROM %I WHERE "organizationId" IS NULL', tbl) INTO leftover;
+  IF leftover > 0 THEN
+    RAISE EXCEPTION '%: organizationId backfill left null rows', tbl;
+  END IF;
+END;
+$era$ LANGUAGE plpgsql;
+
 
 ALTER TABLE "LaundryTicketLine" ADD COLUMN IF NOT EXISTS "organizationId" TEXT;
 
@@ -10,7 +66,7 @@ WHERE c."ticketId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "LaundryTicketLine" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'LaundryTicketLine: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('LaundryTicketLine');
   END IF;
 END $$;
 
@@ -27,7 +83,7 @@ WHERE c."roomId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "MinibarPosting" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'MinibarPosting: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('MinibarPosting');
   END IF;
 END $$;
 
@@ -62,7 +118,7 @@ BEGIN
     UPDATE "MinibarEvent" SET "organizationId" = org WHERE "organizationId" IS NULL;
   END IF;
   IF EXISTS (SELECT 1 FROM "MinibarEvent" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'MinibarEvent: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('MinibarEvent');
   END IF;
 END $$;
 
@@ -79,7 +135,7 @@ WHERE c."channelId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "ChannelRoomMapping" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'ChannelRoomMapping: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('ChannelRoomMapping');
   END IF;
 END $$;
 
@@ -96,7 +152,7 @@ WHERE c."channelId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "ChannelRateMapping" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'ChannelRateMapping: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('ChannelRateMapping');
   END IF;
 END $$;
 
@@ -113,7 +169,7 @@ WHERE c."banquetEventId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "EventOrderLine" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'EventOrderLine: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('EventOrderLine');
   END IF;
 END $$;
 
@@ -130,7 +186,7 @@ WHERE c."banquetEventId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "EventResourceBooking" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'EventResourceBooking: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('EventResourceBooking');
   END IF;
 END $$;
 
@@ -147,7 +203,7 @@ WHERE c."banquetEventId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "EventStaffAssignment" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'EventStaffAssignment: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('EventStaffAssignment');
   END IF;
 END $$;
 
@@ -164,7 +220,7 @@ WHERE c."resourceId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "PosReservation" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'PosReservation: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('PosReservation');
   END IF;
 END $$;
 
@@ -193,7 +249,7 @@ BEGIN
     UPDATE "PosBridgeShift" SET "organizationId" = org WHERE "organizationId" IS NULL;
   END IF;
   IF EXISTS (SELECT 1 FROM "PosBridgeShift" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'PosBridgeShift: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('PosBridgeShift');
   END IF;
 END $$;
 
@@ -215,7 +271,7 @@ WHERE c."reservationId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "PosRoomChargeIdempotency" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'PosRoomChargeIdempotency: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('PosRoomChargeIdempotency');
   END IF;
 END $$;
 
@@ -237,7 +293,7 @@ WHERE c."reservationId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "TransferOrder" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'TransferOrder: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('TransferOrder');
   END IF;
 END $$;
 
@@ -254,7 +310,7 @@ WHERE c."departureId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "TourBooking" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'TourBooking: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('TourBooking');
   END IF;
 END $$;
 
@@ -271,7 +327,7 @@ WHERE c."guestId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "ConciergeOrder" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'ConciergeOrder: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('ConciergeOrder');
   END IF;
 END $$;
 
@@ -305,7 +361,7 @@ BEGIN
     UPDATE "DispatchRequest" SET "organizationId" = org WHERE "organizationId" IS NULL;
   END IF;
   IF EXISTS (SELECT 1 FROM "DispatchRequest" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'DispatchRequest: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('DispatchRequest');
   END IF;
 END $$;
 
@@ -322,7 +378,7 @@ WHERE c."productId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "StockMovement" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'StockMovement: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('StockMovement');
   END IF;
 END $$;
 
@@ -339,7 +395,7 @@ WHERE c."productId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "Recipe" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'Recipe: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('Recipe');
   END IF;
 END $$;
 
@@ -356,7 +412,7 @@ WHERE c."recipeId" = p.id
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "RecipeLine" WHERE "organizationId" IS NULL) THEN
-    RAISE EXCEPTION 'RecipeLine: organizationId backfill left null rows';
+    PERFORM pg_temp.era_stamp_child_org('RecipeLine');
   END IF;
 END $$;
 
