@@ -277,7 +277,7 @@ export default function FnbAccessPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4 p-4">
+    <main className="space-y-4 p-4">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <div className={CARD_CONTAINER_CLASS}>
         {loading ? (
@@ -383,7 +383,11 @@ export default function FnbAccessPage() {
                           checked={draft.has(p)}
                           onChange={() => togglePermission(p)}
                         />
-                        <span className="font-mono text-xs">{p}</span>
+                        <span>
+                          {t.has(`perms.${p.replace(/[:.]/g, "_")}` as "role")
+                            ? t(`perms.${p.replace(/[:.]/g, "_")}` as "role")
+                            : p}
+                        </span>
                       </label>
                     ))}
                   </div>

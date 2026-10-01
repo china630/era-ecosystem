@@ -30,6 +30,7 @@ type GuestEntitlements = {
 type Ticket = {
   id: string;
   status: string;
+  dayNo?: number | null;
   totalAzn: string | number;
   discountPercent?: string | number;
   serviceChannel?: string | null;
@@ -42,13 +43,13 @@ type Ticket = {
   lines: TicketLine[];
 };
 
-function ticketLabel(ticket: Ticket): string {
+function ticketLabel(ticket: Ticket, takeaway: string, walkIn: string): string {
   if (ticket.table?.code) return ticket.table.code;
-  if (ticket.serviceChannel === "WALK_IN") {
-    return ticket.walkInLabel?.trim() || "Walk-in";
+  if (ticket.serviceChannel === "TAKEAWAY" || ticket.serviceChannel === "WALK_IN") {
+    return takeaway;
   }
   if (ticket.beoId) return `BEO ${ticket.beoId.slice(0, 8)}`;
-  return "Walk-in";
+  return ticket.walkInLabel?.trim() || walkIn;
 }
 
 function isInHouseTicket(ticket: Ticket): boolean {
@@ -169,7 +170,7 @@ export default function OrdersPanel() {
     }
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Payment failed");
+      setMessage(data.error === "Nothing to pay" ? t("nothingToPay") : (data.error ?? "Payment failed"));
       return;
     }
     const label = method === "CARD" ? t("payCard") : t("payCash");
@@ -334,6 +335,15 @@ export default function OrdersPanel() {
     );
   }
 
+  function statusLabel(status: string): string {
+    if (status === "OPEN") return t("status_OPEN");
+    if (status === "HELD") return t("status_HELD");
+    if (status === "PENDING_HUB") return t("status_PENDING_HUB");
+    if (status === "CLOSED") return t("status_CLOSED");
+    if (status === "VOID") return t("status_VOID");
+    return status;
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="space-y-3">
@@ -349,16 +359,16 @@ export default function OrdersPanel() {
               type="button"
               onClick={() => setSelectedId(ticket.id)}
               className={`${CARD_CLASS} w-full p-4 text-left ${
-                selected?.id === ticket.id ? "border-[#2980B9]" : ""
+                selected?.id === ticket.id ? "border-[#2980B9] ring-2 ring-[#2980B9]" : ""
               }`}
             >
               <div className="flex justify-between text-sm">
                 <span className="font-medium">
-                  {ticketLabel(ticket)} · {ticket.outlet?.code ?? ""}
-                  {ticket.serviceChannel === "WALK_IN" ? " · WALK_IN" : ""}
+                  {ticketLabel(ticket, t("channelTakeaway"), t("channelWalkIn"))}
+                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""} · {ticket.outlet?.code ?? ""}
                   {ticket.beoId ? " · BEO" : ""}
                 </span>
-                <span>{ticket.status}</span>
+                <span>{statusLabel(ticket.status)}</span>
               </div>
               <p className="mt-1 text-lg font-semibold">
                 {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
@@ -374,8 +384,12 @@ export default function OrdersPanel() {
           <p className="text-sm text-[#7F8C8D]">{t("selectTicket")}</p>
         ) : (
           <>
-            <ul className="mb-4 space-y-1 text-xs text-[#7F8C8D]">
-              {selected.lines.map((l) => (
+            <p className="mb-2 text-sm font-medium text-[#34495E]">
+              {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
+              {selected.dayNo ? ` #${selected.dayNo}` : ""}
+            </p>
+            <ul className="mb-2 space-y-1 text-sm text-[#34495E]">
+              {selected.lines.filter((l) => l.kitchenStatus !== "VOID").map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-2">
                   <label className="flex flex-1 items-center gap-2">
                     {l.kitchenStatus !== "VOID" && (
@@ -387,7 +401,7 @@ export default function OrdersPanel() {
                       />
                     )}
                     <span>
-                      {l.qty}× {l.description} ({l.kitchenStatus})
+                      {l.qty}× {l.description}
                     </span>
                   </label>
                   <button
@@ -400,6 +414,9 @@ export default function OrdersPanel() {
                 </li>
               ))}
             </ul>
+            <p className="mb-4 text-base font-semibold">
+              {Number(selected.totalAzn).toFixed(2)} {tc("azn")}
+            </p>
             <div className="mb-3 flex flex-wrap items-end gap-2">
               <label className="text-xs text-[#7F8C8D]">
                 {t("applyDiscount")}

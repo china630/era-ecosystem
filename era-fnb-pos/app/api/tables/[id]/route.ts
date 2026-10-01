@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
@@ -60,7 +61,10 @@ export async function DELETE(
     const existing = await prisma.posTable.findUnique({ where: { id } });
     if (!existing) return jsonError("Table not found", 404);
     if (existing.status === "OCCUPIED" || existing.currentTicketId) {
-      return jsonError("Cannot delete occupied table", 400);
+      return NextResponse.json(
+        { error: "Cannot delete occupied table", code: "TABLE_OCCUPIED" },
+        { status: 400 },
+      );
     }
 
     await prisma.posTable.delete({ where: { id } });

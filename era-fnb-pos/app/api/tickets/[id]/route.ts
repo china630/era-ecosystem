@@ -5,6 +5,7 @@ import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/session";
+import { attachDayNos } from "@/lib/ticket-helpers";
 
 export async function GET(
   request: Request,
@@ -24,7 +25,8 @@ export async function GET(
     },
   });
   if (!ticket) return jsonError("Ticket not found", 404);
-  return NextResponse.json(ticket);
+  const [withDay] = await attachDayNos([ticket]);
+  return NextResponse.json(withDay ?? ticket);
 }
 
 const patchSchema = z.object({

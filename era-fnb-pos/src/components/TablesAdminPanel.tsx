@@ -8,6 +8,7 @@ import {
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { Pencil, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
@@ -113,7 +114,10 @@ export default function TablesAdminPanel() {
     const res = await fetch(`/api/tables/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      const occupied =
+        data.error === "Cannot delete occupied table" || data.code === "TABLE_OCCUPIED";
+      if (occupied) showApiError({ error: t("occupiedDelete") });
+      else showApiError({ error: data.error ?? t("saveFailed") });
       return;
     }
     await load();
@@ -147,7 +151,9 @@ export default function TablesAdminPanel() {
                 <td className="py-2 pr-2">{row.name}</td>
                 <td className="py-2 pr-2">{row.seats}</td>
                 <td className="py-2 pr-2">{row.zone || "—"}</td>
-                <td className="py-2 pr-2">{row.status}</td>
+                <td className="py-2 pr-2">
+                  {row.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
+                </td>
                 <td className="py-2 text-right">
                   <button
                     type="button"

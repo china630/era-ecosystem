@@ -169,7 +169,7 @@ model MenuItemSoldOut {
   organizationId String   @map("organization_id")
   menuItemId     String   @map("menu_item_id")
   outletId       String   @map("outlet_id")
-  soldOut        Boolean  @default(true)
+  soldOut        Boolean  @default(true) @map("sold_out")
   updatedAt      DateTime @updatedAt @map("updated_at")
   menuItem       MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   outlet         Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)

@@ -24,6 +24,14 @@ export async function POST(
   const { id, lineId } = await params;
   const body = voidSchema.parse(await request.json());
 
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  if (!ticket) {
+    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+  }
+  if (!["OPEN", "HELD"].includes(ticket.status)) {
+    return NextResponse.json({ error: "Ticket is not open" }, { status: 400 });
+  }
+
   const line = await prisma.ticketLine.findFirst({
     where: { id: lineId, ticketId: id },
   });
