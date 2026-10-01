@@ -1,7 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { randomBytes } from 'crypto';
-import { fetchChannexClientConfig, runWithSatelliteTenant } from '@era/satellite-kit';
+import {
+  CronOrganizationListError,
+  SatelliteOrganizationUnboundError,
+  fetchChannexClientConfig,
+  listCronOrganizationIds,
+  runWithSatelliteTenant,
+} from '@era/satellite-kit';
+import { fetchHotelPoolOrganizationIds } from '@/lib/cron-organization-ids';
 import { decryptSecret, encryptSecret } from '@/lib/crypto/secret-box';
 import { isChannexProductionBase } from '@/lib/channel/channex-api';
 
@@ -60,15 +67,36 @@ export async function getChannelManagerBinding(
   return row ? toPublic(row) : null;
 }
 
-/** Cross-tenant lookup for webhooks — skip filter, then enter org ALS. */
+type BindingKey = { channexPropertyId: string } | { ibePublishableKey: string };
+
+/**
+ * Vendor keys are unique across the pool. Orgs come from the orch registry
+ * (SHARED) or the process org (DEDICATED / ONPREM); each lookup runs with the
+ * tenant filter on. Registry failure throws `CronOrganizationListError` /
+ * `SatelliteOrganizationUnboundError` — callers answer 503.
+ */
+async function findBindingInPool(where: BindingKey) {
+  const organizationIds = await listCronOrganizationIds(fetchHotelPoolOrganizationIds);
+  for (const organizationId of organizationIds) {
+    const row = await runWithSatelliteTenant({ organizationId }, () =>
+      prisma.channelManagerBinding.findFirst({ where }),
+    );
+    if (row) return row;
+  }
+  return null;
+}
+
+export function isBindingPoolUnavailable(err: unknown): boolean {
+  return (
+    err instanceof CronOrganizationListError || err instanceof SatelliteOrganizationUnboundError
+  );
+}
+
+/** Webhook lookup: the caller enters the returned row's org before any work. */
 export async function getChannelManagerBindingByPropertyId(propertyId: string) {
   const id = propertyId.trim();
   if (!id) return null;
-  return runWithSatelliteTenant({ skipTenantFilter: true }, () =>
-    prisma.channelManagerBinding.findFirst({
-      where: { channexPropertyId: id },
-    }),
-  );
+  return findBindingInPool({ channexPropertyId: id });
 }
 
 export function bindingWebhookPlaintext(cipher: string | null | undefined): string | null {
@@ -99,23 +127,17 @@ async function ensureChannexChannel(orgId: string) {
 async function uniqueIbeKey(): Promise<string> {
   for (let i = 0; i < 8; i += 1) {
     const key = `pk_${randomBytes(16).toString('hex')}`;
-    const clash = await runWithSatelliteTenant({ skipTenantFilter: true }, () =>
-      prisma.channelManagerBinding.findFirst({ where: { ibePublishableKey: key } }),
-    );
+    const clash = await findBindingInPool({ ibePublishableKey: key });
     if (!clash) return key;
   }
   throw new Error('Could not allocate unique IBE key');
 }
 
-/** Cross-tenant lookup for IBE publishable key. */
+/** IBE lookup: the caller enters the returned row's org before any work. */
 export async function getChannelManagerBindingByIbeKey(publishableKey: string) {
   const key = publishableKey.trim();
   if (!key) return null;
-  return runWithSatelliteTenant({ skipTenantFilter: true }, () =>
-    prisma.channelManagerBinding.findFirst({
-      where: { ibePublishableKey: key },
-    }),
-  );
+  return findBindingInPool({ ibePublishableKey: key });
 }
 
 export type UpsertChannelManagerBindingInput = {

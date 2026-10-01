@@ -77,7 +77,7 @@ export async function postRoomCharge(
   if (idempotencyKey) {
     const existing = await findRoomChargeByIdempotencyKey(idempotencyKey);
     if (existing) {
-      const row = await prisma.posRoomChargeIdempotency.findUnique({
+      const row = await prisma.posRoomChargeIdempotency.findFirst({
         where: { idempotencyKey },
       });
       if (row && row.requestHash !== requestHash) {

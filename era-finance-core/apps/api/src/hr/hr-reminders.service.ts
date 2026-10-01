@@ -3,6 +3,7 @@ import { Cron } from "@nestjs/schedule";
 import { EmployeeEmploymentStatus, EmployeeKind, UserRole } from "@erafinance/database";
 import { addBakuDays, bakuCivilUtcDate, bakuYmd, todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
@@ -42,12 +43,33 @@ export class HrRemindersService {
       return;
     }
 
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
+    });
+    let sent = 0;
+    for (const { id: orgId } of orgs) {
+      const on = await this.cronGate.isModuleOn(orgId, ModuleEntitlement.HR_FULL);
+      if (!on) {
+        this.logger.debug(`HR reminders skipped org ${orgId}: hr_full off`);
+        continue;
+      }
+      sent += await runWithTenantContextAsync(
+        { organizationId: orgId, skipTenantFilter: false },
+        () => this.remindOrganization(orgId),
+      );
+    }
+
+    this.logger.log(`HR reminders cron: ${sent} notification(s) dispatched`);
+  }
+
+  private async remindOrganization(orgId: string): Promise<number> {
     const todayYmd = todayBakuYmd();
     const todayParts = bakuYmd(new Date());
     const contractTarget = bakuCivilUtcDate(addBakuDays(todayYmd, 7));
 
     const employees = await this.prisma.employee.findMany({
       where: {
+        organizationId: orgId,
         kind: EmployeeKind.EMPLOYEE,
         employmentStatus: EmployeeEmploymentStatus.ACTIVE,
         deletedAt: null,
@@ -61,32 +83,20 @@ export class HrRemindersService {
         birthDate: true,
       },
     });
+    if (employees.length === 0) return 0;
 
-    const byOrg = new Map<string, typeof employees>();
-    for (const emp of employees) {
-      const list = byOrg.get(emp.organizationId) ?? [];
-      list.push(emp);
-      byOrg.set(emp.organizationId, list);
-    }
     const personLabels = new Map<string, string>();
-    for (const [orgId, orgEmps] of byOrg) {
-      const on = await this.cronGate.isModuleOn(orgId, ModuleEntitlement.HR_FULL);
-      if (!on) {
-        this.logger.debug(`HR reminders skipped org ${orgId}: hr_full off`);
-        continue;
-      }
-      const map = await batchEmployeePersonMap(
-        this.mdm,
-        orgId,
-        orgEmps.map((e) => e.globalPersonId),
+    const map = await batchEmployeePersonMap(
+      this.mdm,
+      orgId,
+      employees.map((e) => e.globalPersonId),
+    );
+    for (const e of employees) {
+      const p = map.get(e.globalPersonId);
+      personLabels.set(
+        e.id,
+        p?.displayName ?? `${p?.lastName ?? "—"} ${p?.firstName ?? "—"}`.trim(),
       );
-      for (const e of orgEmps) {
-        const p = map.get(e.globalPersonId);
-        personLabels.set(
-          e.id,
-          p?.displayName ?? `${p?.lastName ?? "—"} ${p?.firstName ?? "—"}`.trim(),
-        );
-      }
     }
 
     let sent = 0;
@@ -126,7 +136,7 @@ export class HrRemindersService {
       }
     }
 
-    this.logger.log(`HR reminders cron: ${sent} notification(s) dispatched`);
+    return sent;
   }
 
   private async hrRecipientEmails(organizationId: string): Promise<string[]> {

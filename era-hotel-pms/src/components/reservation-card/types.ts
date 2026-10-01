@@ -51,7 +51,12 @@ export type SelectOption = { id: string; label: string; adultCapacity?: number }
 
 export type SourceOption = SelectOption & { code: string };
 
-export type AgencyOption = SelectOption & { code: string; isOta: boolean };
+export type AgencyOption = SelectOption & {
+  code: string;
+  isOta: boolean;
+  /** Nafta walk-in medical row stored as an agency (`WALKIN MEDICAL`). */
+  isWalkIn: boolean;
+};
 
 export type PartyBillingMode = 'PRIMARY' | 'EQUAL';
 

@@ -7,18 +7,14 @@ import {
 } from "../tenancy/organization-bind-core";
 
 describe("findUserByCredential org scope", () => {
-  const prevSkip = process.env.ERA_SKIP_TENANT_FILTER;
   const calls: unknown[] = [];
 
   beforeEach(() => {
     calls.length = 0;
-    delete process.env.ERA_SKIP_TENANT_FILTER;
     resetOrganizationBindForTests();
   });
 
   afterEach(() => {
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
     resetOrganizationBindForTests();
   });
 

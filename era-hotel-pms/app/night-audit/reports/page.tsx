@@ -187,7 +187,9 @@ export default function NightAuditReportsHubPage() {
         <div className="flex flex-wrap gap-2">
           {packSlugs.map((p) => {
             const def = getReportBySlug(p.slug);
-            const href = def ? `${reportHref(def)}?from=${date}&to=${date}` : `/reports/${p.slug}`;
+            const href = def
+              ? reportHref(def, { from: date, to: date })
+              : `/reports?report=${encodeURIComponent(p.slug)}`;
             return (
             <Link
               key={p.slug}

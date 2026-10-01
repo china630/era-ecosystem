@@ -7,12 +7,9 @@ import { isSentinelOrganizationId } from "./organization-id-guard";
 
 export type SatelliteTenantContext = {
   organizationId?: string;
-  skipTenantFilter?: boolean;
 };
 
-export type SatelliteTenantFilter =
-  | { mode: "skip" }
-  | { mode: "apply"; organizationId: string };
+export type SatelliteTenantFilter = { mode: "apply"; organizationId: string };
 
 const als = new AsyncLocalStorage<SatelliteTenantContext>();
 
@@ -47,14 +44,12 @@ function requireUsableOrgId(id: string): string {
 }
 
 /**
- * Org for Prisma tenant extension.
- * `skip` = seeds (`ERA_SKIP_TENANT_FILTER=1` or ALS skip) — unfiltered on purpose.
+ * Org for Prisma tenant extension. There is no unfiltered mode: lookups by a
+ * pool-unique key iterate registry orgs, each inside `runWithSatelliteTenant`.
  * Unbound / sentinel → throw (fail-closed). Never return empty and continue.
  */
 export function resolveSatelliteTenantFilter(): SatelliteTenantFilter {
-  if (process.env.ERA_SKIP_TENANT_FILTER === "1") return { mode: "skip" };
   const ctx = als.getStore();
-  if (ctx?.skipTenantFilter) return { mode: "skip" };
   if (ctx?.organizationId?.trim()) {
     return { mode: "apply", organizationId: requireUsableOrgId(ctx.organizationId) };
   }
@@ -62,12 +57,7 @@ export function resolveSatelliteTenantFilter(): SatelliteTenantFilter {
   return { mode: "apply", organizationId: requireUsableOrgId(resolved.organizationId) };
 }
 
-/**
- * Org id when the filter applies; `null` only for explicit skip.
- * Unbound throws — do not treat null as "no tenant".
- */
-export function resolveSatelliteTenantOrgId(): string | null {
-  const filter = resolveSatelliteTenantFilter();
-  if (filter.mode === "skip") return null;
-  return filter.organizationId;
+/** Org id the tenant filter applies. Unbound throws. */
+export function resolveSatelliteTenantOrgId(): string {
+  return resolveSatelliteTenantFilter().organizationId;
 }

@@ -60,6 +60,7 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 - Left: static `FieldPanel` groups — Identity · Classification · Documents & MDM · Other. Scalars live left; MDM lookup/merge in Documents panel.
 - Right tabs: Identity/Contact (docs/contacts/addresses/consents) · CRM · Reservations · Loyalty · Time share. No separate Details tab.
 - Dates via `DatePicker`; fields via kit `Field` / `FieldRow`.
+- **Full name** is read-only: composed from first name + patronymic + last name on every change (`guestComposedFullName`). Legacy guests with only `fullName` get parts split on load. Create (`POST /api/guests`) persists the parts, title, sex, email and birth date, and passes them to the MDM link. Citizenship is ISO 3166-1 alpha-2 (legacy `OTHER` still accepted); non-`AZ` needs a passport.
 
 ## FO screen chain
 

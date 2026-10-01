@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import * as bcrypt from "bcrypt";
 import { config as loadDotenv } from "dotenv";
 import { Module } from "@nestjs/common";
@@ -26,6 +26,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { apiEnvFilePaths } from "../load-env-paths";
 import { PrismaModule } from "../prisma/prisma.module";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { DEFAULT_TRIAL_MODULE_SLUGS } from "../subscription/trial-package.util";
 import {
@@ -278,9 +279,12 @@ async function recreateOrganization(
     where: { taxIdBlindIndex: blindIndex("voen", normalizeVoen(config.taxId)) },
   });
 
-  await prisma.$transaction(async (tx) => {
+  const organizationId = randomUUID();
+  await runWithTenantContextAsync({ organizationId, skipTenantFilter: false }, () =>
+    prisma.$transaction(async (tx) => {
     const organization = await tx.organization.create({
       data: {
+        id: organizationId,
         name: config.name,
         taxIdBlindIndex: blindIndex("voen", normalizeVoen(config.taxId)),
         taxIdCipher: encryptText(normalizeVoen(config.taxId)),
@@ -917,7 +921,8 @@ async function recreateOrganization(
         });
       }
     }
-  });
+    }),
+  );
 }
 
 async function bootstrap() {
@@ -1139,14 +1144,18 @@ async function bootstrap() {
       select: { id: true, name: true, taxIdCipher: true },
     });
     for (const org of organizations) {
-      const cashRows = await prisma.journalEntry.findMany({
-        where: {
-          organizationId: org.id,
-          ledgerType: LedgerType.NAS,
-          account: { code: { startsWith: "101" } },
-        },
-        select: { debit: true, credit: true },
-      });
+      const cashRows = await runWithTenantContextAsync(
+        { organizationId: org.id, skipTenantFilter: false },
+        () =>
+          prisma.journalEntry.findMany({
+            where: {
+              organizationId: org.id,
+              ledgerType: LedgerType.NAS,
+              account: { code: { startsWith: "101" } },
+            },
+            select: { debit: true, credit: true },
+          }),
+      );
       const net = cashRows.reduce(
         (acc, row) => acc.add(row.debit).sub(row.credit),
         new Decimal(0),

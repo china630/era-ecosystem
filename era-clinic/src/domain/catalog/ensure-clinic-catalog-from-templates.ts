@@ -174,6 +174,7 @@ export async function ensureClinicCatalogFromTemplates(
         if (existingA) continue;
         await db.diagnosticAnalyte.create({
           data: {
+            organizationId: orgId,
             serviceId: service.id,
             code: at.code,
             unit: at.unit,

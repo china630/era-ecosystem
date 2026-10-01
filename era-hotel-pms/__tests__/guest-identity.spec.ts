@@ -33,6 +33,13 @@ describe('guest-identity', () => {
     });
     expect(data).toEqual({
       fullName: 'Ali Mammadov',
+      firstName: null,
+      middleName: null,
+      lastName: null,
+      title: null,
+      sex: null,
+      email: null,
+      birthDate: null,
       nationality: 'AZ',
       phone: '+994501234567',
       voen: null,
@@ -40,6 +47,33 @@ describe('guest-identity', () => {
     });
     expect(data).not.toHaveProperty('nationalIdFin');
     expect(data).not.toHaveProperty('passportNumber');
+  });
+
+  it('normalizeGuestInput composes fullName from name parts', async () => {
+    const { normalizeGuestInput } = await import('@/lib/guest-input');
+    const data = normalizeGuestInput({
+      fullName: 'old label',
+      firstName: 'Ali',
+      middleName: 'Vaqif',
+      lastName: 'Mammadov',
+      nationality: 'AZ',
+    });
+    expect(data.fullName).toBe('Ali Vaqif Mammadov');
+    expect(data.middleName).toBe('Vaqif');
+  });
+
+  it('createGuestSchema accepts ISO citizenship from the guest card', async () => {
+    const { createGuestSchema } = await import('@/lib/guest-input');
+    const foreign = createGuestSchema.safeParse({
+      fullName: 'Ivan Petrov',
+      nationality: 'ru',
+      passportNumber: '751234567',
+    });
+    expect(foreign.success).toBe(true);
+    expect(foreign.success && foreign.data.nationality).toBe('RU');
+    expect(
+      createGuestSchema.safeParse({ fullName: 'X', nationality: 'Russia', passportNumber: '1' }).success,
+    ).toBe(false);
   });
 
   it('createGuest links transient identity without persisting FIN/passport', async () => {

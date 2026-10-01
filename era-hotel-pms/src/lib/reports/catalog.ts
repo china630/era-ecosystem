@@ -119,11 +119,14 @@ export function validatePackSlugs(slugs: string[]): { ok: true; slugs: string[] 
   return { ok: true, slugs };
 }
 
-export function reportHref(def: ReportDef): string {
-  if (def.slug === 'daily-management') return '/reports/daily/management';
-  if (def.slug === 'agency-profitability') return '/reports/agency-profitability';
-  if (def.slug.endsWith('-cube')) return `/reports/analysis/cubes?cube=${def.slug}`;
-  return `/reports/${def.category}/${def.slug}`;
+export function reportHref(def: ReportDef, extra?: Record<string, string | undefined>): string {
+  const qs = new URLSearchParams({ report: def.slug });
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) qs.set(key, value);
+    }
+  }
+  return `/reports?${qs.toString()}`;
 }
 
 export function getReportsByCategory(category: ReportCategory): Array<ReportDef & { id: string; href: string }> {

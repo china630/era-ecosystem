@@ -74,6 +74,7 @@ export async function PUT(request: Request) {
       prisma.dailyMenuEntry.deleteMany({ where: { outletId: outlet.id, boardDate: date } }),
       prisma.dailyMenuEntry.createMany({
         data: body.menuItemIds.map((menuItemId, idx) => ({
+          organizationId: outlet.organizationId,
           outletId: outlet.id,
           menuItemId,
           boardDate: date,
@@ -117,6 +118,7 @@ export async function POST(request: Request) {
       prisma.dailyMenuEntry.deleteMany({ where: { outletId: outlet.id, boardDate: to } }),
       prisma.dailyMenuEntry.createMany({
         data: source.map((e) => ({
+          organizationId: outlet.organizationId,
           outletId: outlet.id,
           menuItemId: e.menuItemId,
           boardDate: to,

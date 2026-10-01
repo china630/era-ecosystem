@@ -16,6 +16,7 @@ import { apiEnvFilePaths } from "../src/load-env-paths";
 import { DataMaskingService } from "../src/privacy/data-masking.service";
 import { PrismaModule } from "../src/prisma/prisma.module";
 import { PrismaService } from "../src/prisma/prisma.service";
+import { runWithTenantContextAsync } from "../src/prisma/tenant-context";
 
 const envFiles = apiEnvFilePaths();
 
@@ -55,7 +56,10 @@ async function main() {
     const trimIds = (ids: string[]) =>
       verbose ? ids : ids.length <= 12 ? ids : [...ids.slice(0, 12), `…+${ids.length - 12} more`];
     if (orgId) {
-      const r = await audit.verifyOrganizationChain(orgId);
+      const r = await runWithTenantContextAsync(
+        { organizationId: orgId, skipTenantFilter: false },
+        () => audit.verifyOrganizationChain(orgId),
+      );
       const out = {
         scope: "organization" as const,
         organizationId: orgId,

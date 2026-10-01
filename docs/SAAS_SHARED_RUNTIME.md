@@ -22,7 +22,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | Finance: Nest `TenantContextInterceptor` + membership JWT org (not kit ALS) | AC-CP-TOPO Scaffold ✅ (field / lab signoff still open) |
 | Kit `findUserByCredential(login, org?)` | |
 | Hotel / clinic / auto cron via `runCronForEachTenant` + `byOrganization` JSON | |
-| SHARED cron: `ERA_CRON_ORGANIZATION_IDS` → **orch pool members** (`GET /v1/internal/satellite-pool/members`) → User DISTINCT → bind | |
+| SHARED cron: **orch pool members** only (`GET /v1/internal/satellite-pool/members`, kit backoff); empty / unreachable → 503 | |
 | Hotel + clinic **lab** two-org isolation CI | Field SHARED pool isolation UAT |
 | HOT-06 lab SHOW; extension write HEADLESS | |
 | Placement: hotel curated JSON slice + **artifact on job** + host agent import-slice + apply log | Field migrate UAT; multi-sat slices |
@@ -36,9 +36,16 @@ Finance already request-tenants via Nest ALS (`TenantContextInterceptor` → `te
 
 ## Multi-org cron (Waves 4 + 10 + isolation eng)
 
-`runCronForEachTenant`: entitlement gate → org list → per-org `runWithSatelliteTenant`. Cron JSON returns `byOrganization[]`.
+`runCronForEachTenant`: cron secret → org list → per-org module check (`requireSatelliteModule` with that org) → per-org `runWithSatelliteTenant`. Orgs without the module are skipped; 403 `module_inactive` only when no listed org is entitled. Cron JSON returns `byOrganization[]`.
 
-Org list priority: `ERA_CRON_ORGANIZATION_IDS` (override) → **orch** `fetchPoolOrganizationIdsFromOrch` → `listOrganizationIds` (User DISTINCT) → process bind. Orgs with no staff `User` rows are still covered when registered on `SatelliteEndpoint` for this process URL.
+Org list lives once in the kit (`listCronOrganizationIds`):
+
+- **SHARED:** orch registry only — satellite routes pass `fetchPoolOrganizationIds` (`fetch*PoolOrganizationIdsFromOrch`). Retry with growing pause (network / 5xx / 429). Empty list, network drop, 401/403, missing orch URL, service token, or public base URL → `CronOrganizationListError`; `runCronForEachTenant` returns **503** with `reason` and runs no work. No process-org fallback, no local `User` discover, no env override.
+- **DEDICATED / ONPREM:** the single process org (`resolveSatelliteOrganizationId`). Registry not required. Unbound → 503 `satellite_unbound`.
+
+`ERA_CRON_ORGANIZATION_IDS` and the satellite `listOrganizationIds` (User DISTINCT) callback are removed. Ops scripts that loop orgs (`backfill-guest-mdm`, `backfill-patient-mdm`) reuse `listCronOrganizationIds` and run each org inside `runWithSatelliteTenant` with the filter on.
+
+The env switch `ERA_SKIP_TENANT_FILTER` is removed from the kit. Seeds, loaders, imports and wipes bind the target org (`--org=` or the dedicated process org) via `runWithSatelliteTenant` / `enterSatelliteTenant`; the kit stamps `organizationId`. The kit has no unfiltered mode: the ALS `skipTenantFilter` branch is removed. Lookups by a pool-unique vendor key (hotel Channex property id / IBE key, F&B outlet `publicSlug`) take the org list from `listCronOrganizationIds` (orch registry in SHARED, process org in DEDICATED/ONPREM) and query each org inside `runWithSatelliteTenant`; registry down → 503. F&B `prismaBare` is removed.
 
 ## Lab two-org UAT (Wave 5)
 

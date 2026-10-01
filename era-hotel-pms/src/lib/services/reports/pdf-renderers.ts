@@ -1,5 +1,7 @@
 import { createReportDoc, renderHeader, renderTable, finishDoc, type PdfTableColumn } from '@/lib/reports/pdf-render';
 import { formatReportTimestamp } from '@/lib/reports/pdf-i18n';
+import { columnLabel } from '@/lib/reports/column-labels';
+import { reportToSheets } from '@/lib/reports/tabular';
 import type { TrialBalancePeriodResult } from './trial-balance-period.service';
 import type { CashReportResult } from './cash-report.service';
 import type { FolioTransactionsResult } from './folio-transactions.service';
@@ -371,58 +373,41 @@ export async function renderReportPdf(
   ctx: RenderCtx,
 ): Promise<Buffer | null> {
   const renderer = PDF_RENDERERS[slug];
-  if (renderer) return renderer(data, ctx);
+  if (renderer) {
+    try {
+      return await renderer(data, ctx);
+    } catch (err) {
+      console.error(`[reports] PDF renderer failed for ${slug}, using tabular fallback`, err);
+    }
+  }
   return renderGenericDataPdf(data, ctx);
 }
 
-function asRows(data: unknown): (string | number)[][] {
-  if (Array.isArray(data)) {
-    return data.map((row) => {
-      if (row && typeof row === 'object') return Object.values(row as Record<string, unknown>).map(cellStr);
-      return [cellStr(row)];
-    });
-  }
-  if (data && typeof data === 'object') {
-    const obj = data as Record<string, unknown>;
-    if (Array.isArray(obj.rows)) {
-      return (obj.rows as unknown[]).map((row) => {
-        if (row && typeof row === 'object') return Object.values(row as Record<string, unknown>).map(cellStr);
-        return [cellStr(row)];
-      });
-    }
-    return Object.entries(obj)
-      .filter(([, v]) => v == null || typeof v !== 'object')
-      .map(([k, v]) => [k, cellStr(v)]);
-  }
-  return [];
-}
-
-function cellStr(v: unknown): string {
-  if (v == null) return '';
-  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2);
-  if (typeof v === 'boolean') return v ? 'Y' : 'N';
-  return String(v);
-}
-
 export async function renderGenericDataPdf(data: unknown, ctx: RenderCtx): Promise<Buffer> {
-  const doc = createReportDoc({ ...ctx, generatedAt: formatReportTimestamp(ctx.locale), landscape: true });
-  renderHeader(doc, { ...ctx, generatedAt: formatReportTimestamp(ctx.locale), landscape: true });
+  const docOpts = { ...ctx, generatedAt: formatReportTimestamp(ctx.locale), landscape: true as const };
+  const doc = createReportDoc(docOpts);
+  renderHeader(doc, docOpts);
 
-  let headers: string[] = [];
-  if (Array.isArray(data) && data[0] && typeof data[0] === 'object') {
-    headers = Object.keys(data[0] as object);
-  } else if (data && typeof data === 'object' && Array.isArray((data as { rows?: unknown }).rows) && (data as { rows: unknown[] }).rows[0] && typeof (data as { rows: unknown[] }).rows[0] === 'object') {
-    headers = Object.keys((data as { rows: object[] }).rows[0]);
-  } else {
-    headers = ['Field', 'Value'];
+  const sheets = reportToSheets(data).filter((sheet) => sheet.columns.length > 0);
+  const noData = ctx.t?.('reportsPdf.noData') ?? 'No data for the selected period';
+  if (sheets.length === 0) {
+    renderTable(doc, [{ header: ' ', width: 240, align: 'left' }], [[noData]]);
+    return finishDoc(doc);
   }
 
-  const cols: PdfTableColumn[] = headers.map((h) => ({
-    header: h,
-    width: Math.max(60, Math.min(160, Math.floor(720 / Math.max(headers.length, 1)))),
-    align: 'left' as const,
-  }));
-  const rows = asRows(data);
-  renderTable(doc, cols, rows.length ? rows : [['', 'No data for the selected period']]);
+  sheets.forEach((sheet, index) => {
+    if (index > 0) {
+      doc.moveDown(0.6);
+      doc.fontSize(10).text(columnLabel(ctx.locale, sheet.name === 'Summary' ? 'field' : sheet.name));
+      doc.moveDown(0.2);
+    }
+    const headers = sheet.columns.map((key) => columnLabel(ctx.locale, key));
+    const width = Math.max(52, Math.min(140, Math.floor(760 / Math.max(headers.length, 1))));
+    const cols: PdfTableColumn[] = headers.map((header) => ({ header, width, align: 'left' }));
+    const rows = sheet.rows.length
+      ? sheet.rows.map((row) => row.map((value) => (value == null ? '' : value)))
+      : [[noData]];
+    renderTable(doc, cols, rows);
+  });
   return finishDoc(doc);
 }

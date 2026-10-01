@@ -48,6 +48,11 @@ export async function syncReservationPaxFromImport(
     guestName?: string | null;
   },
 ): Promise<{ paxCount: number; linkedCount: number }> {
+  const stay = await tx.reservation.findUnique({
+    where: { id: reservationId },
+    select: { id: true },
+  });
+  if (!stay) throw new Error(`Reservation not found: ${reservationId}`);
   const planned = await planReservationPaxForImport(tx, input);
   const guestIds = [...new Set(planned.map((row) => row.guestId).filter(Boolean))] as string[];
   const guests =

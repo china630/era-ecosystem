@@ -203,11 +203,16 @@ export async function createGuest(input: CreateGuestInput) {
   const globalPersonId =
     input.globalPersonId?.trim() ||
     (await linkGuestPersonIdentity({
+      firstName: input.firstName,
+      middleName: input.middleName,
+      lastName: input.lastName,
       fullName: input.fullName,
       nationalIdFin: input.nationalIdFin,
       passportNumber: input.passportNumber,
       nationality: input.nationality,
       phone: input.phone,
+      sex: input.sex,
+      birthDate: input.birthDate,
     }));
 
   assertGuestMdmStrict(input, globalPersonId);

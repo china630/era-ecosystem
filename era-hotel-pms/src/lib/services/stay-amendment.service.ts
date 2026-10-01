@@ -141,7 +141,7 @@ export async function applyStayAmendment(input: {
       (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
     if (adj) {
       const externalRef = rateAdjExternalRef(input.reservationId, isoDate(biz));
-      const existing = await prisma.folioCharge.findUnique({ where: { externalRef } });
+      const existing = await prisma.folioCharge.findFirst({ where: { externalRef } });
       if (!existing) {
         await postCharge({
           reservationId: input.reservationId,

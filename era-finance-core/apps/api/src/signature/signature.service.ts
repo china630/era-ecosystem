@@ -13,6 +13,8 @@ import {
 } from "@erafinance/database";
 import { parseSignerDisplayName } from "../common/certificate-subject.util";
 import { PrismaService } from "../prisma/prisma.service";
+import { findInOrganizations } from "../prisma/organization-scan";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import { reconciliationDocumentUuid } from "./reconciliation-document-id";
 import type { GovSignaturePurpose } from "./gov-signature.adapter";
@@ -444,27 +446,34 @@ export class SignatureService {
    * Только публичные поля: без organizationId, documentId, thumbprint, сумм счёта.
    */
   async getPublicVerification(logId: string) {
-    const log = await this.prisma.digitalSignatureLog.findFirst({
-      where: {
-        id: logId,
-        status: DigitalSignatureStatus.COMPLETED,
-      },
-      include: {
-        organization: { select: { name: true, taxIdCipher: true } },
-      },
-    });
-    if (!log) return null;
+    const hit = await findInOrganizations(this.prisma, () =>
+      this.prisma.digitalSignatureLog.findFirst({
+        where: {
+          id: logId,
+          status: DigitalSignatureStatus.COMPLETED,
+        },
+        include: {
+          organization: { select: { name: true, taxIdCipher: true } },
+        },
+      }),
+    );
+    if (!hit) return null;
+    const log = hit.row;
 
     const signerName = parseSignerDisplayName(log.certificateSubject);
 
     if (log.documentKind === SignedDocumentKind.INVOICE) {
-      const invoice = await this.prisma.invoice.findFirst({
-        where: {
-          id: log.documentId,
-          organizationId: log.organizationId,
-        },
-        select: { number: true, createdAt: true },
-      });
+      const invoice = await runWithTenantContextAsync(
+        { organizationId: hit.organizationId, skipTenantFilter: false },
+        () =>
+          this.prisma.invoice.findFirst({
+            where: {
+              id: log.documentId,
+              organizationId: log.organizationId,
+            },
+            select: { number: true, createdAt: true },
+          }),
+      );
       if (!invoice) return null;
 
       return {

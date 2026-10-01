@@ -4,6 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { installBigIntJsonSerializer } from "./common/bigint-json";
+import { releaseSharedBankProcessBind, isSharedBankProcess } from "./common/bank-org.config";
 import { PrismaService } from "./prisma/prisma.service";
 
 installBigIntJsonSerializer();
@@ -49,7 +50,10 @@ async function bootstrap() {
       prisma: prisma as never,
       satelliteKey: "industry_banking",
     });
-    if (result.organizationId) {
+    if (isSharedBankProcess()) {
+      releaseSharedBankProcessBind();
+      logger.log("SHARED bank pool: process organization bind cleared");
+    } else if (result.organizationId) {
       logger.log(
         `organization bind hydrated source=${result.source} org=${result.organizationId}`,
       );

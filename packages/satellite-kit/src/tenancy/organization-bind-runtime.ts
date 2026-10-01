@@ -26,6 +26,14 @@ export function setRuntimeOrganizationId(organizationId: string | null): void {
   }
 }
 
+/** SHARED pool: forget the last Sync org. `setRuntimeOrganizationId(null)` leaves env. */
+export function clearProcessOrganizationBind(): void {
+  runtimeOrganizationId = null;
+  delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
+  delete process.env.ERA_BANK_ORGANIZATION_ID;
+  delete process.env.ORGANIZATION_ID;
+}
+
 export function getRuntimeOrganizationId(): string | null {
   return runtimeOrganizationId;
 }

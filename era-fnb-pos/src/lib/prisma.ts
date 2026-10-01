@@ -11,7 +11,6 @@ const globalForPrisma = globalThis as unknown as { prisma?: AppPrisma };
 
 function createClient(): AppPrisma {
   const base = new PrismaClient();
-  // Fail-closed tenant filter via kit; ERA_SKIP_TENANT_FILTER=1 for seeds only.
   return asSatellitePrisma(
     base.$extends(createSatelliteTenantExtension(Prisma as never) as never) as unknown as PrismaClient,
   );
@@ -19,11 +18,4 @@ function createClient(): AppPrisma {
 
 export const prisma = globalForPrisma.prisma ?? createClient();
 
-/** Unscoped client — public QR slug lookup only, then enterRequestTenant. */
-export const prismaBare =
-  (globalForPrisma as { prismaBare?: PrismaClient }).prismaBare ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-  (globalForPrisma as { prismaBare?: PrismaClient }).prismaBare = prismaBare;
-}
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

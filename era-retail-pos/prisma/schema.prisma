@@ -9,7 +9,7 @@ datasource db {
 
 model Tenant {
   id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  organizationId String
   code           String
   name           String
   createdAt      DateTime @default(now())
@@ -37,7 +37,7 @@ enum ReceiptLineStatus {
 
 model Outlet {
   id             String     @id @default(cuid())
-  organizationId String     @map("organization_id")
+  organizationId String
   tenantId       String
   code           String
   name           String
@@ -53,7 +53,7 @@ model Outlet {
 
 model Register {
   id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
+  organizationId String
   outletId       String
   code           String
   name           String
@@ -68,7 +68,7 @@ model Register {
 
 model Shift {
   id             String      @id @default(cuid())
-  organizationId String      @map("organization_id")
+  organizationId String
   registerId     String
   status         ShiftStatus @default(OPEN)
   openedAt       DateTime    @default(now())
@@ -84,7 +84,7 @@ model Shift {
 
 model Receipt {
   id                String        @id @default(cuid())
-  organizationId    String        @map("organization_id")
+  organizationId    String
   outletId          String
   registerId        String
   shiftId           String
@@ -121,7 +121,7 @@ model Receipt {
 
 model ReceiptLine {
   id             String            @id @default(cuid())
-  organizationId String            @map("organization_id")
+  organizationId String
   receiptId      String
   description    String
   qty            Int               @default(1)
@@ -146,7 +146,7 @@ model ReceiptLine {
 
 model Role {
   id              String   @id @default(cuid())
-  organizationId  String   @map("organization_id")
+  organizationId  String
   code            String
   name            String
   permissionsJson String   @default("[]")
@@ -158,7 +158,7 @@ model Role {
 
 model User {
   id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
+  organizationId String
   login          String
   email          String?
   phone          String?   
@@ -178,7 +178,7 @@ model User {
 
 model OfflineReceiptQueue {
   id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
+  organizationId String
   clientId       String
   payloadJson    String
   status         String    @default("PENDING")
@@ -191,7 +191,7 @@ model OfflineReceiptQueue {
 
 model MarketplaceWebhookEvent {
   id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
+  organizationId String
   channel        String
   externalRef    String
   payloadJson    String
@@ -204,7 +204,7 @@ model MarketplaceWebhookEvent {
 
 model ProductCache {
   id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  organizationId String
   sku            String
   barcode        String?
   description    String

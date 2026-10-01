@@ -11,6 +11,7 @@ import {
   issueExtraTickets,
   listExtrasAwaitingTicket,
 } from "@/domain/procedure/extra-ticket.service";
+import { extraTicketPrintPath } from "@/domain/procedure/extra-ticket";
 import {
   mapAttendanceHttpStatus,
   ProcedureAttendanceError,
@@ -100,7 +101,8 @@ export async function POST(request: Request) {
       paid: false,
       ticketId: result.ticketId,
       printPath:
-        result.printPaths[0] ?? `/print/extra-ticket/${result.ticketId}?autoprint=1`,
+        result.printPaths[0] ??
+        extraTicketPrintPath(result.ticketId, session!.organizationId!),
       printPaths: result.printPaths,
       count: result.orders.length,
     });

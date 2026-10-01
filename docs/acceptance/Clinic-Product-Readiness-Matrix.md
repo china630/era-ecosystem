@@ -71,4 +71,4 @@
 - Edition column copies `docs/editions/clinic.yaml`.
 - Sell text must not contradict the worst layer above.
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
-- Forbidden: «SHARED / multi-tenant clinic SaaS» — AC-CLI-TENANT 🟡 (schema+filter on Nafta ≠ live pool); Nafta remains one-org appliance.
+- Forbidden: «SHARED / multi-tenant clinic SaaS» — AC-CLI-TENANT 🟡 until field two-org UAT. Nafta clinic already runs SHARED; that placement is not a sell claim.

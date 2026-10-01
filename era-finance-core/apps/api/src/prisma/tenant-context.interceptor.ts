@@ -24,18 +24,10 @@ export class TenantContextInterceptor implements NestInterceptor {
       };
       originalUrl?: string;
       url?: string;
+      buyerSession?: { organizationId?: string };
     } & RequestWithAuditEngagement>();
     const url = (req.originalUrl ?? req.url ?? "").split("?")[0];
     const user = req.user;
-
-    const isPublic =
-      url.startsWith("/api/public") ||
-      url.startsWith("/api/auth/login") ||
-      url.startsWith("/api/auth/register-user") ||
-      url.startsWith("/api/auth/register") ||
-      url.startsWith("/api/auth/refresh") ||
-      url === "/api/health" ||
-      url.startsWith("/docs");
 
     const runWithContexts = (tenantStore: {
       organizationId: string | null;
@@ -45,12 +37,16 @@ export class TenantContextInterceptor implements NestInterceptor {
         actorContextStorage.run({ userId: user?.userId ?? null }, () => next.handle()),
       );
 
-    if (isPublic) {
-      return runWithContexts({ organizationId: null, skipTenantFilter: true });
-    }
-
+    /**
+     * Public / service-token routes without a signed org get `organizationId: null`:
+     * tenant models then throw, so such handlers enter the org context explicitly
+     * (`runWithTenantContextAsync`) once the org is known from the token / directory.
+     */
     if (!user) {
-      return runWithContexts({ organizationId: null, skipTenantFilter: true });
+      return runWithContexts({
+        organizationId: req.buyerSession?.organizationId ?? null,
+        skipTenantFilter: false,
+      });
     }
 
     const effectiveOrgId =

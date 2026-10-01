@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma, prismaBare } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import {
+  findActiveOutletByPublicSlug,
+  isOutletPoolUnavailable,
+} from "@/lib/public-outlet.service";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
 import { assertPublicMenuQuota } from "@/lib/fnb-quota";
@@ -16,9 +20,15 @@ export async function GET(
       "unknown";
     assertPublicMenuQuota(ip);
     const { slug } = await params;
-    const outlet = await prismaBare.outlet.findFirst({
-      where: { publicSlug: slug, active: true },
-    });
+    let outlet: Awaited<ReturnType<typeof findActiveOutletByPublicSlug>>;
+    try {
+      outlet = await findActiveOutletByPublicSlug(slug);
+    } catch (err) {
+      if (isOutletPoolUnavailable(err)) {
+        return jsonError("Organization registry unavailable", 503);
+      }
+      throw err;
+    }
     if (!outlet) return jsonError("Menu not found", 404);
     enterRequestTenant(outlet.organizationId);
     await requireFnbSubmodule("fnb_qr_menu", outlet.organizationId);

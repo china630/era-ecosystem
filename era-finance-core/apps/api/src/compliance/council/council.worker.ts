@@ -10,6 +10,7 @@ import { Job, Worker } from "bullmq";
 import { attachWorkerFailureAlert } from "../../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../../queue/bullmq.config";
 import { PrismaService } from "../../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../../prisma/tenant-context";
 import { SubscriptionAccessService } from "../../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../../subscription/subscription.constants";
 import { todayBakuYmd } from "@era/satellite-kit/time";
@@ -60,7 +61,10 @@ export class CouncilWorker implements OnModuleInit, OnModuleDestroy {
     if (job.name === "council_deliberate") {
       const data = job.data as CouncilDeliberationJobPayload;
       if (!data.verdictId || !data.organizationId) return;
-      await this.engine.runDeliberation(data);
+      await runWithTenantContextAsync(
+        { organizationId: data.organizationId, skipTenantFilter: false },
+        () => this.engine.runDeliberation(data),
+      );
       return;
     }
 
@@ -95,22 +99,27 @@ export class CouncilWorker implements OnModuleInit, OnModuleDestroy {
 
     for (const { id: organizationId } of orgs) {
       try {
-        const allowed = await this.access.hasModule(
-          organizationId,
-          ModuleEntitlement.COMPLIANCE_PRO,
-        );
-        if (!allowed) continue;
+        await runWithTenantContextAsync(
+          { organizationId, skipTenantFilter: false },
+          async () => {
+            const allowed = await this.access.hasModule(
+              organizationId,
+              ModuleEntitlement.COMPLIANCE_PRO,
+            );
+            if (!allowed) return;
 
-        await this.dispatcher.deliberate({
-          organizationId,
-          triggerSource: trigger,
-          target: {
-            entityType,
-            entityId: null,
-            label: `Period:${week}`,
+            await this.dispatcher.deliberate({
+              organizationId,
+              triggerSource: trigger,
+              target: {
+                entityType,
+                entityId: null,
+                label: `Period:${week}`,
+              },
+              dedupeKey: `${dedupeSuffix}_${organizationId}`,
+            });
           },
-          dedupeKey: `${dedupeSuffix}_${organizationId}`,
-        });
+        );
       } catch (e) {
         this.logger.warn(
           `Council batch ${trigger} failed for org ${organizationId}: ${e instanceof Error ? e.message : String(e)}`,

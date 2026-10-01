@@ -4,7 +4,7 @@ import {
   runWithSatelliteTenant,
   satelliteRuntimeConfig,
 } from "@era/satellite-kit";
-import { listCronOrganizationIdsFromDb, fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
+import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import {
   evaluateAndPublishCapacity,
   getCapacitySummary,
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 
 /**
  * Evaluate + publish bus event when risk level changes (cron / hotel sync).
- * Multi-org: ERA_CRON_ORGANIZATION_IDS. Auth: Bearer CLINIC_BRIDGE_SECRET or legacy x-clinic-bridge-secret.
+ * Multi-org: orch pool registry (kit). Auth: Bearer CLINIC_BRIDGE_SECRET or legacy x-clinic-bridge-secret.
  */
 export async function POST(request: Request) {
   const legacy = request.headers.get("x-clinic-bridge-secret");
@@ -70,8 +70,7 @@ export async function POST(request: Request) {
       satelliteKey: "industry_clinic",
       authorization,
       cronSecretEnv: "CLINIC_BRIDGE_SECRET",
-      listOrganizationIds: listCronOrganizationIdsFromDb,
-        fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
+      fetchPoolOrganizationIds: fetchClinicPoolOrganizationIds,
     },
     async (organizationId) => {
       const result = await evaluateAndPublishCapacity(refDate);
@@ -82,7 +81,7 @@ export async function POST(request: Request) {
   if (!gate.ok) {
     if (gate.status === 401) return unauthorized();
     if (gate.status === 503) {
-      return NextResponse.json({ error: "satellite_unbound" }, { status: 503 });
+      return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
     return NextResponse.json({
       skipped: true,

@@ -45,7 +45,7 @@ function requireOrgId(organizationId: string): string {
 
 /**
  * Dump rows for each model where organizationId matches.
- * Caller must pass delegates that can read cross-tenant (e.g. ERA_SKIP_TENANT_FILTER).
+ * Caller binds the tenant context to that organizationId; delegates read with the filter on.
  */
 export async function exportOrgSlice(input: {
   organizationId: string;

@@ -99,7 +99,7 @@ export async function settleVisitBill(input: SettleInput) {
           create: bill.lines.map((l) => lineCreate(l)),
         },
         payments: {
-          create: [{ method: "FOLIO", amount: amountNet }],
+          create: [{ organizationId: requestOrganizationId(), method: "FOLIO", amount: amountNet }],
         },
       },
       include: { lines: true, payments: true },
@@ -138,7 +138,7 @@ export async function settleVisitBill(input: SettleInput) {
           create: bill.lines.map((l) => lineCreate(l)),
         },
         payments: {
-          create: [{ method: "HUB", amount: amountNet }],
+          create: [{ organizationId: requestOrganizationId(), method: "HUB", amount: amountNet }],
         },
       },
       include: { lines: true, payments: true },
@@ -215,6 +215,7 @@ export async function settleVisitBill(input: SettleInput) {
       paidAt: new Date(),
       payments: {
         create: payments.map((p) => ({
+          organizationId: requestOrganizationId(),
           method: p.method,
           amount: p.amount,
           fiscalReceiptId: fiscal.receiptId || null,
@@ -234,6 +235,7 @@ export async function settleVisitBill(input: SettleInput) {
 
 function lineCreate(l: BillLine) {
   return {
+    organizationId: requestOrganizationId(),
     serviceCode: l.serviceCode,
     description: l.description,
     amount: l.amount,
@@ -421,6 +423,7 @@ export async function settleChargeLogLocally(input: {
       paidAt: new Date(),
       payments: {
         create: payments.map((p) => ({
+          organizationId: requestOrganizationId(),
           method: p.method,
           amount: p.amount,
           fiscalReceiptId: fiscal.receiptId || null,

@@ -10,6 +10,15 @@ export class FnbSoldOutError extends Error {
   }
 }
 
+/** Stop-list table/column not migrated yet — do not block the till. */
+export function isSoldOutSchemaDrift(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const code = "code" in err ? String((err as { code: unknown }).code) : "";
+  if (code === "P2021" || code === "P2022") return true;
+  const message = err instanceof Error ? err.message : "";
+  return message.includes("menu_item_sold_out") && message.includes("does not exist");
+}
+
 export async function assertMenuItemNotSoldOut(input: {
   outletId: string;
   menuItemId?: string | null;
@@ -21,13 +30,19 @@ export async function assertMenuItemNotSoldOut(input: {
     menuItemId = item?.id;
   }
   if (!menuItemId) return;
-  const stop = await prisma.menuItemSoldOut.findFirst({
-    where: {
-      organizationId: requestOrganizationId(),
-      menuItemId,
-      outletId: input.outletId,
-      soldOut: true,
-    },
-  });
+  let stop: { soldOut: boolean } | null = null;
+  try {
+    stop = await prisma.menuItemSoldOut.findFirst({
+      where: {
+        organizationId: requestOrganizationId(),
+        menuItemId,
+        outletId: input.outletId,
+        soldOut: true,
+      },
+    });
+  } catch (err) {
+    if (isSoldOutSchemaDrift(err)) return;
+    throw err;
+  }
   if (stop) throw new FnbSoldOutError(input.plu);
 }

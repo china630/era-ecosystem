@@ -192,7 +192,7 @@ export default function FrontCashTransactionsPage() {
         subtitle={t('transactionsSubtitle')}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href="/reports/financial/cash-report" className={SECONDARY_BUTTON_CLASS}>
+            <Link href="/reports?report=cash-report" className={SECONDARY_BUTTON_CLASS}>
               {t('pdfCashReport')}
             </Link>
             <button

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { DigitalSignatureStatus, SignedDocumentKind } from "@erafinance/database";
 import { Job, Worker } from "bullmq";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { QuotaService } from "../quota/quota.service";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
@@ -49,7 +50,17 @@ export class InvoicePdfWorker implements OnModuleInit, OnModuleDestroy {
   }
 
   private async handle(job: Job<InvoicePdfJobPayload>): Promise<void> {
-    const { invoiceId, organizationId } = job.data;
+    const { organizationId } = job.data;
+    await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () => this.renderAndStore(job.data),
+    );
+  }
+
+  private async renderAndStore({
+    invoiceId,
+    organizationId,
+  }: InvoicePdfJobPayload): Promise<void> {
     const model = await buildInvoicePdfModelFromIds(
       this.prisma,
       this.config,

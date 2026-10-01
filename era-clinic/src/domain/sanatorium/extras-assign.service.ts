@@ -16,6 +16,7 @@ import { recordClinicAudit } from "@/lib/satellite-audit";
 import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
 import {
   extraTicketIdForOrder,
+  extraTicketPrintPath,
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
 import { postHotelElektrawebOutbox } from "@/lib/elektraweb-outbox-client";
@@ -302,7 +303,7 @@ export async function payAndScheduleExtras(
       include: { patientRef: true },
     });
     issuedOrders.push(updated);
-    printPaths.push(`/print/extra-ticket/${c.ticketId}?autoprint=1`);
+    printPaths.push(extraTicketPrintPath(c.ticketId, orgId));
   }
 
   await recordClinicAudit(

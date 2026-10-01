@@ -286,7 +286,10 @@ export function GuestCardLeftPanel({
             label={t('fields.fullName')}
             preset="longText"
             value={fullName}
-            onChange={set('fullName')}
+            readOnly
+            tabIndex={-1}
+            hint={t('fields.fullNameAutoHint')}
+            inputClassName="bg-[#F4F6F7] text-[#5D6D7E]"
           />
           <FieldRow cols={2}>
             <CatalogField

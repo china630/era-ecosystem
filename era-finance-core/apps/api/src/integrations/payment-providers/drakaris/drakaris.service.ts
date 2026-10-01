@@ -11,6 +11,7 @@ import {
   TariffTier,
 } from "@erafinance/database";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../../../prisma/tenant-context";
 import { SystemConfigService } from "../../../system-config/system-config.service";
 import { decryptText } from "../../../security/pii-crypto.util";
 import { PaymentProviderService } from "../../../billing/payment-provider.service";
@@ -116,14 +117,18 @@ export class DrakarisService {
       ? decryptText(org.owner.lastNameCipher)
       : null;
 
-    const pendingTotal = await this.prisma.paymentOrder.aggregate({
-      where: {
-        organizationId: org.id,
-        status: PaymentOrderStatus.PENDING,
-        provider: "drakaris",
-      },
-      _sum: { amountAzn: true },
-    });
+    const pendingTotal = await runWithTenantContextAsync(
+      { organizationId: org.id, skipTenantFilter: false },
+      () =>
+        this.prisma.paymentOrder.aggregate({
+          where: {
+            organizationId: org.id,
+            status: PaymentOrderStatus.PENDING,
+            provider: "drakaris",
+          },
+          _sum: { amountAzn: true },
+        }),
+    );
 
     const balance = Number(pendingTotal._sum.amountAzn ?? 0);
 
@@ -209,6 +214,38 @@ export class DrakarisService {
       Math.floor(Number(amountAzn.toString()) / monthlyPrice),
     );
 
+    return runWithTenantContextAsync(
+      { organizationId: org.id, skipTenantFilter: false },
+      () =>
+        this.applyTopUp({
+          organizationId: org.id,
+          idParam,
+          amountNum,
+          amountAzn,
+          months,
+          currency,
+          txnRaw,
+        }),
+    );
+  }
+
+  private async applyTopUp({
+    organizationId,
+    idParam,
+    amountNum,
+    amountAzn,
+    months,
+    currency,
+    txnRaw,
+  }: {
+    organizationId: string;
+    idParam: string;
+    amountNum: number;
+    amountAzn: Prisma.Decimal;
+    months: number;
+    currency: string;
+    txnRaw: string;
+  }): Promise<DrakarisEnvelope> {
     const existing = await this.prisma.paymentOrder.findUnique({
       where: { idempotencyKey: txnRaw },
     });
@@ -230,7 +267,7 @@ export class DrakarisService {
 
       const order = await this.prisma.paymentOrder.create({
         data: {
-          organizationId: org.id,
+          organizationId,
           amountAzn,
           monthsApplied: months,
           description: `Drakaris/yığım subscription (${months} mo.)`,

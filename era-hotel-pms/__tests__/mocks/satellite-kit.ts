@@ -10,7 +10,6 @@ export function enterSatelliteTenant(ctx: { organizationId?: string }): void {
 }
 
 export function resolveSatelliteTenantOrgId(): string | null {
-  if (process.env.ERA_SKIP_TENANT_FILTER === "1") return null;
   if (als.organizationId) return als.organizationId;
   const bind = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
   return bind || null;

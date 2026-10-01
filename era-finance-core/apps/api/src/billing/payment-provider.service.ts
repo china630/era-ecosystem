@@ -1,15 +1,11 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
-  BillingStatus,
   PaymentOrderStatus,
   Prisma,
-  SubscriptionInvoiceStatus,
   TariffTier,
 } from "@erafinance/database";
 import { AuditService } from "../audit/audit.service";
@@ -18,7 +14,6 @@ import { BillingService } from "./billing.service";
 import { SystemConfigService } from "../system-config/system-config.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import type { CheckoutDto } from "./dto/checkout.dto";
-import type { PaymentWebhookDto } from "./dto/payment-webhook.dto";
 import { PashaBankPaymentProvider } from "./providers/pasha-bank-payment.provider";
 import { DrakarisPaymentProvider } from "../integrations/payment-providers/drakaris/drakaris-payment.provider";
 import { BillingPlatformService } from "./billing-platform.service";
@@ -32,8 +27,6 @@ import { BillingSettlementService } from "./billing-settlement.service";
 
 @Injectable()
 export class PaymentProviderService {
-  private readonly logger = new Logger(PaymentProviderService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly billing: BillingService,
@@ -221,154 +214,9 @@ export class PaymentProviderService {
     };
   }
 
-  /** Mock-pay: фиксируем оплату и продлеваем подписку. */
-  async confirmPaymentOrder(orderId: string, mockToken: string): Promise<void> {
-    if (!this.pasha.verifyOrderToken(orderId, mockToken)) {
-      throw new UnauthorizedException("Invalid payment token");
-    }
-    await this.finalizePaidOrder(orderId);
-  }
-
-  async handleWebhook(dto: PaymentWebhookDto): Promise<{ ok: boolean }> {
-    if (dto.subscriptionInvoiceId) {
-      if (
-        !this.pasha.verifyWebhookSignature(
-          dto.subscriptionInvoiceId,
-          dto.status,
-          dto.signature,
-        )
-      ) {
-        throw new UnauthorizedException("Invalid webhook signature");
-      }
-      if (dto.status === "failed") return { ok: true };
-      await this.finalizePaidSubscriptionInvoice(dto.subscriptionInvoiceId);
-      return { ok: true };
-    }
-
-    if (!dto.orderId) {
-      throw new BadRequestException("Missing orderId or subscriptionInvoiceId");
-    }
-    if (
-      !this.pasha.verifyWebhookSignature(
-        dto.orderId,
-        dto.status,
-        dto.signature,
-      )
-    ) {
-      throw new UnauthorizedException("Invalid webhook signature");
-    }
-
-    if (dto.status === "failed") {
-      await this.prisma.paymentOrder.updateMany({
-        where: {
-          id: dto.orderId,
-          status: PaymentOrderStatus.PENDING,
-        },
-        data: { status: PaymentOrderStatus.FAILED },
-      });
-      return { ok: true };
-    }
-
-    if (dto.externalId) {
-      await this.prisma.paymentOrder.updateMany({
-        where: { id: dto.orderId, status: PaymentOrderStatus.PENDING },
-        data: { providerTxnId: dto.externalId },
-      });
-    }
-
-    await this.finalizePaidOrder(dto.orderId);
-    return { ok: true };
-  }
-
   /** Called by Drakaris/yığım inbound API after creating a pending PaymentOrder. */
   async finalizePaidOrderPublic(orderId: string): Promise<void> {
     await this.finalizePaidOrder(orderId);
-  }
-
-  /**
-   * Optional callback from Drakaris (same shape as inbound POST) without PAŞА HMAC.
-   */
-  async handleDrakarisWebhook(
-    body: Record<string, unknown>,
-  ): Promise<{ ok: boolean }> {
-    try {
-      const orderId =
-        typeof body.orderId === "string"
-          ? body.orderId
-          : typeof body.order_id === "string"
-            ? body.order_id
-            : undefined;
-      const txnId =
-        typeof body["transaction-id"] === "string"
-          ? body["transaction-id"]
-          : typeof body.transactionId === "string"
-            ? body.transactionId
-            : undefined;
-
-      if (orderId) {
-        await this.finalizePaidOrder(orderId);
-        return { ok: true };
-      }
-      if (txnId) {
-        const order = await this.prisma.paymentOrder.findFirst({
-          where: {
-            idempotencyKey: txnId,
-            provider: "drakaris",
-            status: PaymentOrderStatus.PENDING,
-          },
-        });
-        if (order) await this.finalizePaidOrder(order.id);
-        return { ok: true };
-      }
-    } catch (e) {
-      this.logger.warn(`Drakaris webhook: ${String(e)}`);
-    }
-    return { ok: true };
-  }
-
-  private async finalizePaidSubscriptionInvoice(
-    subscriptionInvoiceId: string,
-  ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const invoice = await tx.subscriptionInvoice.findUnique({
-        where: { id: subscriptionInvoiceId },
-        include: {
-          items: {
-            select: {
-              organizationId: true,
-            },
-          },
-        },
-      });
-      if (!invoice) {
-        throw new BadRequestException("Subscription invoice not found");
-      }
-
-      if (invoice.status !== SubscriptionInvoiceStatus.PAID) {
-        await tx.subscriptionInvoice.update({
-          where: { id: subscriptionInvoiceId },
-          data: { status: SubscriptionInvoiceStatus.PAID },
-        });
-      }
-
-      const orgIds = Array.from(
-        new Set(invoice.items.map((it) => it.organizationId).filter(Boolean)),
-      );
-      for (const orgId of orgIds) {
-        await tx.organization.update({
-          where: { id: orgId },
-          data: { billingStatus: BillingStatus.ACTIVE },
-        });
-      }
-    });
-
-    const invoice = await this.prisma.subscriptionInvoice.findUnique({
-      where: { id: subscriptionInvoiceId },
-      select: { userId: true },
-    });
-    if (invoice?.userId) {
-      await this.billingSettlement.settleOrganizationsForOwner(invoice.userId, {});
-    }
   }
 
   /**

@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import { CatalogField, DatePicker, PageHeader, showApiError, showSuccess } from '@era/satellite-kit/ui';
 
 type Disc = { id: string; roomId: string; kind: string; notes: string | null; status: string };
 type Esc = { roomNumber: string; kind: string; days: number };
+type Room = { id: string; roomNumber: string; status?: string };
 
 export default function HkDiscrepancyPage() {
   const t = useTranslations('housekeeping');
@@ -14,9 +15,7 @@ export default function HkDiscrepancyPage() {
   const [date, setDate] = useState(() => hotelDateKey());
   const [rows, setRows] = useState<Disc[]>([]);
   const [escalations, setEscalations] = useState<Esc[]>([]);
-  const [roomId, setRoomId] = useState('');
-  const [kind, setKind] = useState('SKIP');
-  const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string }>>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   const load = useCallback(async () => {
     const [dRes, rRes] = await Promise.all([
@@ -38,11 +37,17 @@ export default function HkDiscrepancyPage() {
     void load();
   }, [load]);
 
-  async function save() {
+  const byRoom = useMemo(() => {
+    const map = new Map<string, Disc>();
+    for (const row of rows) map.set(row.roomId, row);
+    return map;
+  }, [rows]);
+
+  async function setKind(roomId: string, kind: string) {
     const res = await fetch('/api/housekeeping/discrepancy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId, date, kind }),
+      body: JSON.stringify({ roomId, date, kind: kind === 'SKIP' || kind === 'SLEEP' ? kind : null }),
     });
     if (!res.ok) showApiError(await res.json(), tc('failed'));
     else showSuccess(tc('saved'));
@@ -51,7 +56,10 @@ export default function HkDiscrepancyPage() {
 
   return (
     <>
-      <PageHeader title={t('discrepancyTitle')} />
+      <PageHeader
+        title={t('discrepancyTitle')}
+        subtitle={`${t('skip')} · ${t('sleep')}`}
+      />
       {escalations.length > 0 ? (
         <div className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
           {escalations.map((e) => (
@@ -61,36 +69,51 @@ export default function HkDiscrepancyPage() {
           ))}
         </div>
       ) : null}
-      <input type="date" className="mb-4 border px-2 py-1" value={date} onChange={(e) => setDate(e.target.value)} />
-      <div className="mb-4 grid max-w-md gap-2">
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('roomSelect')}
-          value={roomId}
-          onChange={(v) => setRoomId(String(v))}
-          options={rooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+      <div className="mb-4 max-w-xs">
+        <DatePicker
+          label={tc('datePlaceholder')}
+          value={date}
+          onChange={(next) => {
+            if (next) setDate(next);
+          }}
+          placeholder={tc('datePlaceholder')}
+          preset="date"
         />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t('discrepancyKind')}
-          value={kind}
-          onChange={(v) => setKind(String(v))}
-          options={[
-            { value: 'SKIP', label: t('skip') },
-            { value: 'SLEEP', label: t('sleep') },
-          ]}
-        />
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void save()}>
-          {tc('save')}
-        </button>
       </div>
-      <ul className="text-sm">
-        {rows.map((r) => (
-          <li key={r.id}>
-            {r.kind} · {r.roomId.slice(0, 8)} · {r.status}
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+              <th className="px-3 py-2">{t('colRoom')}</th>
+              <th className="px-3 py-2">{t('discrepancyKind')}</th>
+              <th className="px-3 py-2">{t('outcome')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rooms.map((room) => {
+              const hit = byRoom.get(room.id);
+              return (
+                <tr key={room.id} className="border-b border-[#ECF0F1]">
+                  <td className="px-3 py-2 font-medium">{room.roomNumber}</td>
+                  <td className="px-3 py-2">
+                    <CatalogField
+                      kind="CLOSED_SMALL"
+                      label={t('discrepancyKind')}
+                      value={hit?.kind ?? ''}
+                      onChange={(v) => void setKind(room.id, String(v))}
+                      options={[
+                        { value: 'SKIP', label: t('skip') },
+                        { value: 'SLEEP', label: t('sleep') },
+                      ]}
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-[#7F8C8D]">{hit?.status ?? '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

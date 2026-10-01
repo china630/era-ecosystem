@@ -25,7 +25,7 @@ That gap was:
 
 Nafta dual-run (Excel + MV3 extension + extra-ticket outbox) was built as an **appliance** (one property per process). The owner’s SaaS picture is the opposite: **120 hotels in one pool**, each possibly pulling from **their** old PMS for a cutover window, all configured from Super-Admin — not from droplet `.env`.
 
-Column `organizationId` ≠ “the process is multi-tenant at runtime.” False-green to sell SHARED pool from schema alone ([deployment-topology.md](./deployment-topology.md)).
+Column `organizationId` ≠ “the process is multi-tenant at runtime.” False-green to sell SHARED pool from schema alone ([deployment-topology.md](./deployment-topology.md)). The Postgres name is `"organizationId"` (hotel style, no `organization_id` map). A parent row with the column is not enough: line and child tables carry the same column, copied from the parent. Clinic: migration `20261001130000_clinic_child_organization_id`. Retail already had the column on every table, including `ReceiptLine`; migration `20261001160000_retail_organization_id_rename` only renames `organization_id` to `"organizationId"`. Global catalogs (`IcdCode`, diagnostic and physio templates) stay unscoped.
 
 ## Decision
 
@@ -93,7 +93,7 @@ These are **not** Nafta Elektraweb ids. They belong to the **hotel (or clinic) p
 | **7** | Placement lab hop SHARED→DEDICATED advance chain + Platform UAT; slice still metadata stub | **Landed** — AC-CP-TOPO 🟡; no live dump/sell |
 | **8** | EW ingest stamps: `bridgeRequestOrganizationId` (ALS first) in folio/reservation/resnameid | **Landed** — HOT-06 still not SHIPPED |
 | **9** | Live SHARED pool smoke scripts (hotel + clinic, `ERA_WAVE9_POOL_SMOKE`) + field runbooks / signoff middle tier | **Landed** — field evidence open; TENANT 🟡; HOT-06 not SHIPPED |
-| **10** | Cron org DB-discover: `listOrganizationIds` + User DISTINCT; env `ERA_CRON_ORGANIZATION_IDS` still wins | **Landed** — TENANT still 🟡; no orch SoR list |
+| **10** | Cron org DB-discover: `listOrganizationIds` + User DISTINCT; env `ERA_CRON_ORGANIZATION_IDS` still wins | **Superseded** — orch registry only (kit `listCronOrganizationIds`); see §7 |
 | **11** | Hotel curated JSON org-slice dump + orch `sliceMeta` counts; lab import validate | **Landed** — AC-CP-TOPO 🟡; host apply open; not SHIPPED / not `ga` |
 | **12** | Honesty closeout: status drift fix + acceptance SaaS false-green bans | **Landed** — no Scaffold/SHIPPED/`ga` flips |
 
@@ -114,6 +114,9 @@ Nafta on **ERA cloud** as the first hotel org in a SHARED-ready process is allow
 - AC-*-TENANT / AC-CP-TOPO stay 🟡 (no live SHARED pool field UAT / Scaffold ✅).
 - Do not mark edition `ga` or “SaaS pool ready” from this ADR alone.
 - **Finance Wave 3 audit:** `TenantContextInterceptor` fills `tenantContextStorage` from JWT `organizationId`; no kit `satelliteOrganizationId()` ops stamps in finance production code.
+- **Tenant filter skip removal (supersedes the Wave 4 / Wave 10 org-list chain):** kit `listCronOrganizationIds` is the single cron org list. SHARED = orch pool registry only (backoff; empty / drop / auth / missing config → 503, no work). DEDICATED / ONPREM = process org. `ERA_CRON_ORGANIZATION_IDS`, satellite `listOrganizationIds` (User DISTINCT) and the env switch `ERA_SKIP_TENANT_FILTER` are removed. Seeds / loaders / imports / wipes bind the target org and keep the filter on. Clinic extra-ticket print carries `organizationId` in the link. See [SAAS_SHARED_RUNTIME.md](../SAAS_SHARED_RUNTIME.md#multi-org-cron-waves-4--10--isolation-eng).
+- **No unfiltered mode (follow-up pass):** the org list always comes from a directory (orch pool registry for satellites, the finance `Organization` table); each org is then processed with the filter on. Kit ALS `skipTenantFilter` is removed; hotel Channex / IBE binding lookups and the F&B public menu (`publicSlug`) iterate registry orgs inside `runWithSatelliteTenant`, and F&B `prismaBare` is gone. Finance: no ALS context → `ForbiddenException`; `skipTenantFilter: true` remains only for super-admin `/api/admin/*` and `audit-archive.worker.ts`; workers / crons / public and S2S routes enter `runWithTenantContextAsync` per org (details in `era-finance-core/TZ.md` §16). The unused recovery `bypassTenantFilter` is removed. Orchestrator `billing-monthly.service.ts` dropped its `skipTenantFilter` wrappers: orch Prisma has no tenant extension, so they changed nothing; owner-level billing across orgs stays cross-org by design.
+
 ## Consequences
 
 **Positive:** 120 hotels can each have a time-boxed vendor bridge; Super-Admin enables Nafta without redeploy; hour X is one org card.

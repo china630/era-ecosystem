@@ -10,6 +10,7 @@ export {
 } from "./tenancy/organization-bind";
 export {
   applyOrganizationBind,
+  clearProcessOrganizationBind,
   resolveSatelliteOrganizationId,
   setRuntimeOrganizationId,
   hydrateOrganizationBindFromDb,
@@ -431,6 +432,9 @@ export {
   requireSatelliteModule,
   runCronIfEntitled,
   runCronForEachTenant,
+  listCronOrganizationIds,
+  CronOrganizationListError,
+  setCronPoolRetryDelaysForTests,
   isIndustryModuleActive,
   IndustryModuleInactiveError,
   INDUSTRY_MODULE_BY_APP,
@@ -452,7 +456,11 @@ export {
   type CronEntitlementOpts,
   type CronEntitlementResult,
 } from "./integration/org-entitlement-gate";
-export { fetchPoolOrganizationIdsFromOrch } from "./integration/fetch-pool-organization-ids";
+export {
+  fetchPoolOrganizationIdsFromOrch,
+  SatellitePoolRegistryError,
+  type SatellitePoolRegistryErrorReason,
+} from "./integration/fetch-pool-organization-ids";
 export {
   exportOrgSlice,
   exportOrgSliceLabSummary,

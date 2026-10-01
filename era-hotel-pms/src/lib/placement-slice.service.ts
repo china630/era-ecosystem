@@ -1,21 +1,13 @@
 import {
   exportOrgSlice,
   importOrgSlice,
+  runWithSatelliteTenant,
   type OrgSliceExportResult,
   type OrgSliceImportResult,
   type SliceModelDelegate,
 } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { HOTEL_PLACEMENT_SLICE_MODEL_ORDER } from "@/lib/placement-slice-models";
-
-function withSkipTenantFilter<T>(fn: () => Promise<T>): Promise<T> {
-  const prev = process.env.ERA_SKIP_TENANT_FILTER;
-  process.env.ERA_SKIP_TENANT_FILTER = "1";
-  return fn().finally(() => {
-    if (prev === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prev;
-  });
-}
 
 function hotelSliceModels(): Record<string, SliceModelDelegate> {
   return {
@@ -58,7 +50,7 @@ function hotelSliceModels(): Record<string, SliceModelDelegate> {
 export async function exportHotelOrgSlice(
   organizationId: string,
 ): Promise<OrgSliceExportResult> {
-  return withSkipTenantFilter(() =>
+  return runWithSatelliteTenant({ organizationId }, () =>
     exportOrgSlice({
       organizationId,
       models: hotelSliceModels(),
@@ -71,7 +63,7 @@ export async function importHotelOrgSlice(input: {
   slice: OrgSliceExportResult;
   mode: "validate" | "upsert";
 }): Promise<OrgSliceImportResult> {
-  return withSkipTenantFilter(() =>
+  return runWithSatelliteTenant({ organizationId: input.organizationId }, () =>
     importOrgSlice({
       organizationId: input.organizationId,
       slice: input.slice,

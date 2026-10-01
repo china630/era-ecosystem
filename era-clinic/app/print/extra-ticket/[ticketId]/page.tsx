@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { PrintShell } from "@/components/print/PrintShell";
 import { loadExtraTicketPrint } from "@/domain/procedure/extra-ticket.service";
@@ -9,7 +10,13 @@ import { todayBakuYmd } from "@/lib/baku-day";
 
 type Props = {
   params: Promise<{ ticketId: string }>;
-  searchParams: Promise<{ lang?: string; autoprint?: string; sheets?: string; copy?: string }>;
+  searchParams: Promise<{
+    organizationId?: string;
+    lang?: string;
+    autoprint?: string;
+    sheets?: string;
+    copy?: string;
+  }>;
 };
 
 const COPIES = ["copyReception", "copyNurse", "copyGuest"] as const;
@@ -18,7 +25,11 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
   const { ticketId } = await params;
   const sp = await searchParams;
   const lang = normalizePrintLang(sp.lang);
-  const orders = await loadExtraTicketPrint(ticketId);
+  const organizationId = sp.organizationId?.trim();
+  if (!organizationId) notFound();
+  const sessionOrganizationId = (await headers()).get("x-era-organization-id")?.trim();
+  if (sessionOrganizationId !== organizationId) notFound();
+  const orders = await loadExtraTicketPrint(ticketId, organizationId);
   if (!orders.length) notFound();
   const first = orders[0]!;
   const branding = await getPrintBranding(lang);

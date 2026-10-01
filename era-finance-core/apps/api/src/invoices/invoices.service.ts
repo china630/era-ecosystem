@@ -16,6 +16,8 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { VatDepositService } from "../accounting/vat-deposit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { findInOrganizations } from "../prisma/organization-scan";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 import { InventoryService } from "../inventory/inventory.service";
 import {
@@ -122,11 +124,14 @@ export class InvoicesService {
     organizationId: string,
     invoiceId: string,
   ): void {
-    void this.prisma.invoice
-      .findFirst({
-        where: { id: invoiceId, organizationId },
-        select: { counterpartyId: true },
-      })
+    void runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.prisma.invoice.findFirst({
+          where: { id: invoiceId, organizationId },
+          select: { counterpartyId: true },
+        }),
+    )
       .then((inv) => {
         this.scheduleTradeCreditReclassify(organizationId, inv?.counterpartyId);
       })
@@ -2118,18 +2123,21 @@ export class InvoicesService {
     if (!raw || raw.length > 400 || !PUBLIC_INVOICE_TOKEN_RE.test(raw)) {
       throw new NotFoundException();
     }
-    const inv = await this.prisma.invoice.findFirst({
-      where: { publicToken: raw },
-      include: {
-        counterparty: true,
-        items: { include: { product: true } },
-        payments: { orderBy: [{ date: "asc" }, { createdAt: "asc" }] },
-        organization: {
-          include: { bankAccountsOrg: true },
+    const hit = await findInOrganizations(this.prisma, () =>
+      this.prisma.invoice.findFirst({
+        where: { publicToken: raw },
+        include: {
+          counterparty: true,
+          items: { include: { product: true } },
+          payments: { orderBy: [{ date: "asc" }, { createdAt: "asc" }] },
+          organization: {
+            include: { bankAccountsOrg: true },
+          },
         },
-      },
-    });
-    if (!inv) throw new NotFoundException();
+      }),
+    );
+    if (!hit) throw new NotFoundException();
+    const inv = hit.row;
 
     const paidTotal = inv.paidAmount ?? new Decimal(0);
     const remaining = inv.totalAmount.sub(paidTotal);
@@ -2187,15 +2195,17 @@ export class InvoicesService {
     if (!raw || raw.length > 400 || !PUBLIC_INVOICE_TOKEN_RE.test(raw)) {
       throw new NotFoundException();
     }
-    const inv = await this.prisma.invoice.findFirst({
-      where: { publicToken: raw },
-      select: { id: true },
-    });
-    if (!inv) throw new NotFoundException();
-    const model = await buildInvoicePdfModelByInvoiceIdPublic(
-      this.prisma,
-      this.config,
-      inv.id,
+    const hit = await findInOrganizations(this.prisma, () =>
+      this.prisma.invoice.findFirst({
+        where: { publicToken: raw },
+        select: { id: true },
+      }),
+    );
+    if (!hit) throw new NotFoundException();
+    const model = await runWithTenantContextAsync(
+      { organizationId: hit.organizationId, skipTenantFilter: false },
+      () =>
+        buildInvoicePdfModelByInvoiceIdPublic(this.prisma, this.config, hit.row.id),
     );
     if (!model) throw new NotFoundException();
     return renderInvoicePdf(model);

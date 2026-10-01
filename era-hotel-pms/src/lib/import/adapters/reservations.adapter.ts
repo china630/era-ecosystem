@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { requestOrganizationId } from '@/lib/request-organization';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   cellNumber,
@@ -138,7 +137,6 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
 
     const existing = await tx.reservation.findFirst({ where: { externalRef: row.externalRef } });
     const data = {
-      organizationId: requestOrganizationId(),
       externalRef: row.externalRef,
       roomTypeId: roomType.id,
       roomId,
@@ -182,7 +180,6 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (folios.length === 0) {
       await tx.folio.create({
         data: {
-          organizationId: requestOrganizationId(),
           reservationId: reservation.id,
           type: 'GUEST',
           status: 'OPEN',

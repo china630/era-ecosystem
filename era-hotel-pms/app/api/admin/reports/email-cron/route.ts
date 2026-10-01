@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { trySendPlatformNotification, runCronForEachTenant } from "@era/satellite-kit";
 import { todayBakuYmd } from "@era/satellite-kit/time";
-import { listCronOrganizationIdsFromDb, fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
+import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 
 /**
  * v1.1 — scheduled email reports hook (WA0345+).
@@ -25,8 +25,7 @@ export async function POST(req: Request) {
     {
       satelliteKey: "industry_hotel_pms",
       moduleKey: "hotel_core",
-      listOrganizationIds: listCronOrganizationIdsFromDb,
-        fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
+      fetchPoolOrganizationIds: fetchHotelPoolOrganizationIds,
     },
     async (organizationId) => {
       const to = process.env.HOTEL_REPORT_EMAIL_TO ?? "manager@demo.local";
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
   );
   if (!gate.ok) {
     if (gate.status === 503) {
-      return NextResponse.json({ error: "satellite_unbound" }, { status: 503 });
+      return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
     return NextResponse.json({
       ok: true,

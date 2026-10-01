@@ -7,6 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Job, Worker } from "bullmq";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { AuditService } from "../audit/audit.service";
@@ -75,21 +76,26 @@ export class BankBalancesSyncWorker implements OnModuleInit, OnModuleDestroy {
   private async syncOrganizations(organizationIds: string[]): Promise<void> {
     for (const organizationId of organizationIds) {
       try {
-        const balances = await this.gateway.getBalances(organizationId);
-        await this.audit.logOrganizationSystemEvent({
-          organizationId,
-          entityType: "banking.sync_balances",
-          entityId: organizationId,
-          action: "SYNC",
-          payload: {
-            providers: balances.providers.map((item) => item.provider),
-            accountsCount: balances.balances.length,
-            details: balances.providers.map((item) => ({
-              provider: item.provider,
-              accountsCount: item.balances.length,
-            })),
+        await runWithTenantContextAsync(
+          { organizationId, skipTenantFilter: false },
+          async () => {
+            const balances = await this.gateway.getBalances(organizationId);
+            await this.audit.logOrganizationSystemEvent({
+              organizationId,
+              entityType: "banking.sync_balances",
+              entityId: organizationId,
+              action: "SYNC",
+              payload: {
+                providers: balances.providers.map((item) => item.provider),
+                accountsCount: balances.balances.length,
+                details: balances.providers.map((item) => ({
+                  provider: item.provider,
+                  accountsCount: item.balances.length,
+                })),
+              },
+            });
           },
-        });
+        );
       } catch (error) {
         this.logger.warn(
           `sync-bank-balances org=${organizationId}: ${error instanceof Error ? error.message : String(error)}`,

@@ -130,6 +130,12 @@
       "price": "Qiymət AZN",
       "recipeSku": "Resept SKU",
       "recipeSkuHint": "Finance-də Product / ProductRecipe bağlantısı (anbar silinməsi). BOM Manufacturing-də yaradılır.",
+      "search": "Yemək axtar",
+      "showInactive": "Qeyri-aktivləri göstər",
+      "searchResults": "Axtarış",
+      "moveUp": "Yuxarı",
+      "moveDown": "Aşağı",
+      "details": "Ətraflı",
       "recipesInFinance": "Finance reseptləri",
       "imageUrl": "Şəkil URL",
       "priceReason": "Qiymət dəyişikliyi səbəbi",
@@ -282,7 +288,8 @@
     "loading": "Yüklənir…",
     "emDash": "—",
     "loadError": "Yükləmə xətası",
-    "saveError": "Saxlama xətası"
+    "saveError": "Saxlama xətası",
+    "failed": "Alınmadı"
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",

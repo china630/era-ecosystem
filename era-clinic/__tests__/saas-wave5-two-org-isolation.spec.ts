@@ -65,18 +65,14 @@ function listAppointments(orgId: string) {
 
 describe("saas wave 5 clinic two-org isolation (lab)", () => {
   const prevBind = process.env.ERA_SATELLITE_ORGANIZATION_ID;
-  const prevSkip = process.env.ERA_SKIP_TENANT_FILTER;
 
   beforeEach(() => {
-    delete process.env.ERA_SKIP_TENANT_FILTER;
     process.env.ERA_SATELLITE_ORGANIZATION_ID = ORG_B;
   });
 
   afterEach(() => {
     if (prevBind === undefined) delete process.env.ERA_SATELLITE_ORGANIZATION_ID;
     else process.env.ERA_SATELLITE_ORGANIZATION_ID = prevBind;
-    if (prevSkip === undefined) delete process.env.ERA_SKIP_TENANT_FILTER;
-    else process.env.ERA_SKIP_TENANT_FILTER = prevSkip;
   });
 
   it("under Org B ALS, patient list excludes Org A rows", () => {

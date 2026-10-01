@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CatalogField,
   Field,
   ModalFooter,
   ModalShell,
@@ -14,8 +15,16 @@ import {
 
 export default function MinibarPage() {
   const t = useTranslations('minibarControl');
+  const th = useTranslations('housekeeping');
   const tc = useTranslations('common');
   const [items, setItems] = useState<Array<{ id: string; code: string; name: string; price: number }>>([]);
+  const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string }>>([]);
+  const [postings, setPostings] = useState<
+    Array<{ id: string; qty: number; item?: { name: string }; room?: { roomNumber: string } }>
+  >([]);
+  const [roomId, setRoomId] = useState('');
+  const [itemId, setItemId] = useState('');
+  const [qty, setQty] = useState('1');
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -31,6 +40,8 @@ export default function MinibarPage() {
         return;
       }
       setItems(data.items ?? []);
+      setRooms(data.rooms ?? []);
+      setPostings(data.postings ?? []);
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
@@ -78,16 +89,74 @@ export default function MinibarPage() {
     <>
       <PageHeader
         title={t('title')}
+        subtitle={t('hint')}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openModal}>
             {tc('add')}
           </button>
         }
       />
-      <ul className="space-y-2 text-[13px]">
+      <section className="mb-6 max-w-lg space-y-2">
+        <h2 className="text-sm font-semibold text-[#34495E]">{t('postTitle')}</h2>
+        <CatalogField
+          kind="ENTITY_REF"
+          label={th('roomSelect')}
+          value={roomId}
+          onChange={(v) => setRoomId(String(v))}
+          options={rooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t('item')}
+          value={itemId}
+          onChange={(v) => setItemId(String(v))}
+          options={items.map((i) => ({ value: i.id, label: `${i.code} · ${i.name} · ${i.price} AZN` }))}
+        />
+        <Field label={t('qty')} preset="amount" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={busy || !roomId || !itemId}
+          onClick={() => {
+            void (async () => {
+              setBusy(true);
+              try {
+                const res = await fetch('/api/housekeeping/minibar', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ roomId, itemId, qty: Number(qty) }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  showApiError(data, tc('failed'));
+                  return;
+                }
+                showSuccess(tc('saved'));
+                await load();
+              } finally {
+                setBusy(false);
+              }
+            })();
+          }}
+        >
+          {t('post')}
+        </button>
+      </section>
+      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
+      {items.length === 0 ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('emptyCatalog')}</p> : null}
+      <ul className="mb-6 space-y-2 text-[13px]">
         {items.map((i) => (
-          <li key={i.id} className="rounded border px-3 py-2">
+          <li key={i.id} className="rounded border border-[#D5DADF] bg-white px-3 py-2">
             {i.code} — {i.name} · {i.price} AZN
+          </li>
+        ))}
+      </ul>
+      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recent')}</h2>
+      {postings.length === 0 ? <p className="text-[13px] text-[#7F8C8D]">{t('noPostings')}</p> : null}
+      <ul className="space-y-1 text-[13px]">
+        {postings.map((p) => (
+          <li key={p.id}>
+            {p.room?.roomNumber ?? '—'} · {p.item?.name ?? '—'} · ×{p.qty}
           </li>
         ))}
       </ul>

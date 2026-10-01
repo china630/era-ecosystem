@@ -462,6 +462,7 @@ export async function patchReservationFull(
         const isPrimary = i === primaryIdx;
         const ownsFolio = billingMode === 'EQUAL' ? true : isPrimary;
         return {
+          organizationId: existing.organizationId,
           reservationId: id,
           guestId: p.guestId ?? null,
           title: p.title ?? null,

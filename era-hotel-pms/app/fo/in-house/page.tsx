@@ -83,7 +83,7 @@ export default function InHousePage() {
       <div className="flex items-center justify-between">
         <PageHeader title={t('title')} />
         <Link
-          href="/reports/daily/in-house"
+          href="/reports?report=in-house"
           className="rounded bg-[#ECF0F1] px-2 py-1 text-[12px] text-[#2980B9] hover:bg-[#D5DBDB]"
         >
           PDF Report

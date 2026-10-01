@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { batchEmployeePersonMap } from "./employee-person.util";
 import { normalizeListPagination } from "../common/list-pagination";
@@ -35,6 +36,15 @@ export class OrgStructureService {
    * Для новой организации: корневой отдел HQ и должность Generalist (без сотрудников).
    */
   async ensureDefaultDepartmentAndPosition(organizationId: string): Promise<void> {
+    await runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () => this.createDefaultDepartmentAndPosition(organizationId),
+    );
+  }
+
+  private async createDefaultDepartmentAndPosition(
+    organizationId: string,
+  ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       let dept = await tx.department.findFirst({
         where: { organizationId, name: "HQ", parentId: null },

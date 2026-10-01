@@ -17,10 +17,30 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { bookingSourceKind, contractsForSource, fksFromSalesContract, isOtaAgency, persistCounterpartyIds } from '@/lib/booking-source-kind';
+import {
+  bookingSourceKind,
+  contractsForSource,
+  fksFromSalesContract,
+  isManualFoSourceKind,
+  isOtaAgency,
+  isWalkInRecordedAgency,
+  persistCounterpartyIds,
+  sourceKindLabel,
+} from '@/lib/booking-source-kind';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
-type SelectOpt = { id: string; label: string; code?: string; adultCapacity?: number; isOta?: boolean };
+function catalogValue(v: string | string[]): string {
+  return Array.isArray(v) ? (v[0] ?? '') : v;
+}
+
+type SelectOpt = {
+  id: string;
+  label: string;
+  code?: string;
+  adultCapacity?: number;
+  isOta?: boolean;
+  isWalkIn?: boolean;
+};
 
 type RatePlanOpt = SelectOpt & {
   type?: string;
@@ -135,7 +155,9 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
-  const walkInLocked = sourceKind === 'WALKIN';
+  const walkInAgencies = useMemo(() => agencies.filter((a) => a.isWalkIn), [agencies]);
+  const walkInLocked =
+    sourceKind === 'WEB' || (sourceKind === 'WALKIN' && walkInAgencies.length === 0);
   const corporateLocked = sourceKind === 'CORPORATE';
   const agencyPickerLocked = walkInLocked || corporateLocked;
   const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
@@ -146,16 +168,27 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
 
   const agencyOptions = useMemo(() => {
-    if (sourceKind === 'AGENCY') return agencies.filter((a) => !a.isOta);
+    if (sourceKind === 'AGENCY') return agencies.filter((a) => !a.isOta && !a.isWalkIn);
     if (sourceKind === 'BOOKING') return agencies.filter((a) => a.isOta);
-    return agencies;
-  }, [agencies, sourceKind]);
+    if (sourceKind === 'WALKIN') return walkInAgencies;
+    return agencies.filter((a) => !a.isWalkIn);
+  }, [agencies, walkInAgencies, sourceKind]);
+
+  const sourceOptions = useMemo(
+    () =>
+      sources.filter(
+        (s) => isManualFoSourceKind(bookingSourceKind(s.code)) || s.id === sourceId,
+      ),
+    [sources, sourceId],
+  );
 
   const agencyFieldLabel =
     sourceKind === 'BOOKING'
       ? tr('otaChannel')
-      : sourceKind === 'WALKIN'
-        ? tr('individual')
+      : sourceKind === 'WALKIN' && !walkInLocked
+        ? tr('walkInProfile')
+        : sourceKind === 'WALKIN' || sourceKind === 'WEB'
+          ? tr('individual')
         : sourceKind === 'CORPORATE'
           ? tr('company')
           : tr('agency');
@@ -301,8 +334,9 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
           ag.map((x: { id: string; code: string; name: string }) => ({
             id: x.id,
             code: x.code,
-            label: `${x.code} — ${x.name}`,
+            label: x.name || x.code,
             isOta: isOtaAgency(x.code, x.name),
+            isWalkIn: isWalkInRecordedAgency(x.code, x.name),
           })),
         );
       }
@@ -503,7 +537,12 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
 
     setBusy(true);
     try {
-      const parties = persistCounterpartyIds({ sourceKind, agencyId, companyId });
+      const parties = persistCounterpartyIds({
+        sourceKind,
+        agencyId,
+        companyId,
+        agencyIsWalkIn: agencies.find((a) => a.id === agencyId)?.isWalkIn ?? false,
+      });
       const body = {
         code: code.trim() || undefined,
         name: name.trim(),
@@ -661,105 +700,84 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                   </option>
                 ))}
               </FieldSelect>
-              <FieldSelect
+              <CatalogField
+                kind="CLOSED_SMALL"
                 label={tr('mealPlan')}
-                preset="select"
                 className="min-w-0"
-                selectClassName="w-full min-w-0 max-w-full"
                 value={mealPlanId}
-                onChange={(e) => setMealPlanId(e.target.value)}
+                onChange={(v) => setMealPlanId(catalogValue(v))}
+                options={mealPlans.map((m) => ({ value: m.id, label: m.label }))}
                 hint={mealLockedByPackage ? tr('hintMealLocked') : tr('hintMealPlan')}
                 disabled={mealLockedByPackage}
-              >
-                <option value="">—</option>
-                {mealPlans.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </FieldSelect>
+              />
             </FieldRow>
           </FieldPanel>
 
           <FieldPanel title={tr('commercialSales')}>
             <FieldRow cols={2}>
-              <FieldSelect
+              <CatalogField
+                kind="CLOSED_SMALL"
                 label={tr('source')}
-                preset="select"
                 value={sourceId}
-                onChange={(e) => {
-                  setSourceId(e.target.value);
+                onChange={(v) => {
+                  setSourceId(catalogValue(v));
                   setAgencyId('');
                   setSalesContractId('');
                   setContractRef('');
                 }}
+                options={sourceOptions.map((s) => ({
+                  value: s.id,
+                  label: sourceKindLabel(tr, bookingSourceKind(s.code), s.label),
+                }))}
                 hint={tr('hintSource')}
-              >
-                <option value="">—</option>
-                {sources.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </FieldSelect>
+              />
               {corporateLocked ? (
-                <FieldSelect
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={tr('company')}
-                  preset="selectWide"
                   value={companyId}
-                  onChange={(e) => {
-                    setCompanyId(e.target.value);
+                  onChange={(v) => {
+                    setCompanyId(catalogValue(v));
                     setSalesContractId('');
                     setContractRef('');
                   }}
+                  options={companies.map((c) => ({ value: c.id, label: c.label }))}
+                  emptyLabel={tc('select')}
                   hint={tr('hintCompany')}
-                >
-                  <option value="">{tc('select')}</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </FieldSelect>
+                />
               ) : (
-                <FieldSelect
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={agencyFieldLabel}
-                  preset="selectWide"
                   value={agencyPickerLocked ? '' : agencyId}
-                  onChange={(e) => {
-                    setAgencyId(e.target.value);
+                  onChange={(v) => {
+                    setAgencyId(catalogValue(v));
                     setSalesContractId('');
                     setContractRef('');
                   }}
+                  options={
+                    agencyPickerLocked
+                      ? []
+                      : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
+                  }
                   disabled={agencyPickerLocked}
+                  emptyLabel={
+                    agencyPickerLocked || sourceKind === 'WALKIN' ? tr('individual') : tc('select')
+                  }
                   hint={tr('hintAgency')}
-                >
-                  <option value="">{agencyPickerLocked ? tr('individual') : tc('select')}</option>
-                  {!agencyPickerLocked
-                    ? agencyOptions.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.label}
-                        </option>
-                      ))
-                    : null}
-                </FieldSelect>
+                />
               )}
             </FieldRow>
             {!corporateLocked ? (
-              <FieldSelect
+              <CatalogField
+                kind="SEARCHABLE"
                 label={tr('company')}
-                preset="selectWide"
                 value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
+                onChange={(v) => setCompanyId(catalogValue(v))}
+                options={companies.map((c) => ({ value: c.id, label: c.label }))}
+                emptyLabel={tc('select')}
                 hint={tr('companyOptionalHint')}
-              >
-                <option value="">{tc('select')}</option>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </FieldSelect>
+              />
             ) : null}
             {showAgencyContract || showCompanyContract ? (
               <FieldRow cols={2}>

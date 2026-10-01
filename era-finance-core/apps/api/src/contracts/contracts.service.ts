@@ -11,6 +11,7 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { bakuCivilUtcDate, todayBakuYmd } from "../billing/baku-billing.util";
@@ -342,32 +343,39 @@ export class ContractsService {
 
   /** Sets ACTIVE contracts with dateTo &lt; today (UTC) to EXPIRED. */
   async expireOverdueContracts(): Promise<{ updated: number }> {
-        const today = todayBakuDateOnly();
-    const candidates = await this.prisma.contract.findMany({
-      where: {
-        status: ContractStatus.ACTIVE,
-        dateTo: { lt: today },
-      },
-      select: { id: true, organizationId: true },
+    const today = todayBakuDateOnly();
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
     });
-    const byOrg = new Map<string, string[]>();
-    for (const row of candidates) {
-      const list = byOrg.get(row.organizationId) ?? [];
-      list.push(row.id);
-      byOrg.set(row.organizationId, list);
-    }
     let updated = 0;
-    for (const [orgId, ids] of byOrg) {
-      const on = await this.cronGate.isModuleOn(
-        orgId,
-        ModuleEntitlement.CONTRACT_MANAGEMENT_PRO,
+    for (const { id: orgId } of orgs) {
+      updated += await runWithTenantContextAsync(
+        { organizationId: orgId, skipTenantFilter: false },
+        async () => {
+          const overdue = await this.prisma.contract.count({
+            where: {
+              organizationId: orgId,
+              status: ContractStatus.ACTIVE,
+              dateTo: { lt: today },
+            },
+          });
+          if (overdue === 0) return 0;
+          const on = await this.cronGate.isModuleOn(
+            orgId,
+            ModuleEntitlement.CONTRACT_MANAGEMENT_PRO,
+          );
+          if (!on) return 0;
+          const result = await this.prisma.contract.updateMany({
+            where: {
+              organizationId: orgId,
+              status: ContractStatus.ACTIVE,
+              dateTo: { lt: today },
+            },
+            data: { status: ContractStatus.EXPIRED },
+          });
+          return result.count;
+        },
       );
-      if (!on) continue;
-      const result = await this.prisma.contract.updateMany({
-        where: { id: { in: ids }, status: ContractStatus.ACTIVE },
-        data: { status: ContractStatus.EXPIRED },
-      });
-      updated += result.count;
     }
     return { updated };
   }

@@ -10,6 +10,7 @@ import { BillingStatus } from "@erafinance/database";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { COMPLIANCE_RISK_QUEUE } from "./compliance-risk.queue";
@@ -64,12 +65,17 @@ export class ComplianceRiskWorker implements OnModuleInit, OnModuleDestroy {
 
       for (const { id } of orgs) {
         try {
-          const allowed = await this.access.hasModule(
-            id,
-            ModuleEntitlement.COMPLIANCE_PRO,
+          await runWithTenantContextAsync(
+            { organizationId: id, skipTenantFilter: false },
+            async () => {
+              const allowed = await this.access.hasModule(
+                id,
+                ModuleEntitlement.COMPLIANCE_PRO,
+              );
+              if (!allowed) return;
+              await this.compliance.runScansForOrganization(id);
+            },
           );
-          if (!allowed) continue;
-          await this.compliance.runScansForOrganization(id);
         } catch (e) {
           this.logger.warn(
             `compliance scan failed for org ${id}: ${e instanceof Error ? e.message : String(e)}`,
@@ -90,7 +96,10 @@ export class ComplianceRiskWorker implements OnModuleInit, OnModuleDestroy {
       });
       for (const { id } of orgs) {
         try {
-          await this.compliance.runTaxLimitScanForOrganization(id);
+          await runWithTenantContextAsync(
+            { organizationId: id, skipTenantFilter: false },
+            () => this.compliance.runTaxLimitScanForOrganization(id),
+          );
         } catch (e) {
           this.logger.warn(
             `check-tax-limits failed for org ${id}: ${e instanceof Error ? e.message : String(e)}`,
