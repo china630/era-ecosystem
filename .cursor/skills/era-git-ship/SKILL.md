@@ -94,7 +94,7 @@ This runs:
 orchestrator → data-hub → mdm → rest (all satellites, finance, bank, platform, docs)
 ```
 
-**Topology / `organizationId` waves** ([deployment-topology.md](../../../docs/adr/deployment-topology.md)): do **not** one-PR kit + all satellites + orch placement + Nafta compose. Order: kit/ADR → **one satellite** schema → orchestrator desired-state/placement → finance SSO/config. Nafta appliance deploy ≠ SHARED pool deploy.
+**Topology / `organizationId` waves** ([deployment-topology.md](../../../docs/adr/deployment-topology.md)): do **not** one-PR kit + all satellites + orch placement + Nafta compose. Order: kit/ADR → **one satellite** schema → orchestrator desired-state/placement → finance SSO/config. Nafta hotel/clinic/retail already run SHARED; a Nafta deploy is not a license to schema-wave every other satellite in the same PR.
 
 ### Option A — script (preferred on Windows)
 

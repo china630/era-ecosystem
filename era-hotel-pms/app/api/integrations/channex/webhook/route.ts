@@ -5,6 +5,7 @@ import { upsertOtaReservation } from '@/lib/channel/ota-ingest.service';
 import {
   bindingWebhookPlaintext,
   getChannelManagerBindingByPropertyId,
+  isBindingPoolUnavailable,
 } from '@/lib/channel/channel-manager-binding.service';
 import { enterRequestTenant } from '@/lib/request-organization';
 import { logSyncError } from '@/lib/services/channel.service';
@@ -36,7 +37,15 @@ export async function POST(request: Request) {
       return Response.json({ error: 'revision_id required' }, { status: 400 });
     }
 
-    const binding = await getChannelManagerBindingByPropertyId(propertyId);
+    let binding: Awaited<ReturnType<typeof getChannelManagerBindingByPropertyId>>;
+    try {
+      binding = await getChannelManagerBindingByPropertyId(propertyId);
+    } catch (err) {
+      if (isBindingPoolUnavailable(err)) {
+        return Response.json({ error: 'Organization registry unavailable' }, { status: 503 });
+      }
+      throw err;
+    }
     if (!binding || binding.provider !== 'channex') {
       return Response.json({ error: 'Unknown property' }, { status: 404 });
     }

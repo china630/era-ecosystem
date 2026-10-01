@@ -1,7 +1,10 @@
 import { getChannelAvailability } from '@/lib/services/channel.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { prisma } from '@/lib/prisma';
-import { getChannelManagerBindingByIbeKey } from '@/lib/channel/channel-manager-binding.service';
+import {
+  getChannelManagerBindingByIbeKey,
+  isBindingPoolUnavailable,
+} from '@/lib/channel/channel-manager-binding.service';
 import { enterRequestTenant, requestOrganizationId } from '@/lib/request-organization';
 import { enqueueAriPush } from '@/lib/channel/channel-ari-queue.service';
 import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
@@ -49,7 +52,15 @@ export async function resolveIbeTenant(req: Request): Promise<{
 }> {
   const key = parseIbePublishableKey(req);
   if (!key) throw new IbeAuthError('IBE publishable key required');
-  const binding = await getChannelManagerBindingByIbeKey(key);
+  let binding: Awaited<ReturnType<typeof getChannelManagerBindingByIbeKey>>;
+  try {
+    binding = await getChannelManagerBindingByIbeKey(key);
+  } catch (err) {
+    if (isBindingPoolUnavailable(err)) {
+      throw new IbeUnavailableError('Organization registry unavailable');
+    }
+    throw err;
+  }
   if (!binding?.ibePublishableKey) throw new IbeAuthError('Invalid IBE key');
 
   const origin = req.headers.get('origin')?.trim();

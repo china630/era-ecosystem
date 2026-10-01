@@ -15,7 +15,7 @@ Do **not** claim ElektraWeb 01–22 archive parity, FastReport `.frx` parity, or
 ## 1. Product rules
 
 1. **Home is Reports.** Canonical URLs live under `/reports/*`. Night Audit, Front Cash, and FO **link** here; they do not own a second catalog.
-2. **Classifier = submenu.** Categories A0–E below are the Reports sub-menu, not a flat list of 50 tiles.
+2. **One workspace.** `/reports` is the screen: groups in the left list (same A0–E classifier), one period bar, Show, PDF and Excel. Sidebar is “All reports” plus the nightly pack — not six category hubs. Old `/reports/{category}` and `/reports/{category}/{slug}` URLs redirect into the workspace.
 3. **One report, one slug.** Variants (Brüt/NET, AZN/EUR, List/Summary, YoY) are flags on the same slug, not extra menu rows.
 4. **Screen first, PDF export second.** Live grid/chart on `/reports/...`; PDF is a snapshot of that query. FastReport `.frx` is **not** ported.
 5. **Cubes (Revenue / Folio / Agency Sales / Reservation / Task) are P2.** Nafta P0 is screen + PDF + nightly ZIP, not OLAP.
@@ -33,7 +33,7 @@ Every report screen uses one toolbar (kit `EraListFilterBar` + `DatePicker`).
 | Start / End Date | `from` / `to` (`DatePicker`) |
 | Period presets | `PeriodPreset`: Default · Today · Yesterday · Tomorrow · This Week · This Month · Last Month · This Year · Last Year |
 | Default | Report `date_mode` (see §3) applied to current **business date** |
-| Pdf / Frx | Drop. Button **Export PDF** on SCREEN reports |
+| Pdf / Excel | **Export PDF** and **Export Excel** on the same period. FastReport `.frx` is not ported. |
 
 Presets rewrite `from`/`to`; they do not bypass `date_mode` semantics for nightly ZIP (pack uses closed NA date, not wall clock).
 
@@ -72,18 +72,14 @@ Nafta answers (2026-08-19): Monthly and Daily Analysis = through closed date inc
 
 ## 5. Reports menu IA
 
-Primary home: sidebar **Reports** (`/reports`). Keep the sidebar short: **category hubs**, not 50 rows.
+Primary home: sidebar **All reports** (`/reports`) plus **Nightly pack**. Categories are groups inside the workspace list, not extra sidebar screens.
 
 ```
-Reports                         /reports                    hub + filter + category tiles
-├── Analysis                    /reports/analysis           A0 SCREEN
-├── Occupancy                   /reports/occupancy          A  (existing grid stays; more slugs as children)
-├── Daily flash                 /reports/daily              B
-├── Financial                   /reports/financial          C
-├── Agency & market             /reports/agency             D  (agency-profitability lives here)
-├── Reservations & CRM          /reports/booking            E
+Reports                         /reports                    list + shared period + PDF/Excel
 └── Nightly pack                /reports/nightly-pack       configured ZIP for closed date
 ```
+
+Old `/reports/{category}` and `/reports/{category}/{slug}` URLs redirect to `/reports?report=` or `?category=`.
 
 SatAdmin pack membership: `/settings/report-pack` (not a Reports sidebar row).
 
@@ -93,8 +89,8 @@ SatAdmin pack membership: `/settings/report-pack` (not a Reports sidebar row).
 |------|------|
 | Night Audit → EOD reports | `/night-audit/reports` shows **enabled pack members** for the closed date + **Download ZIP**. Each row opens the canonical `/reports/...` slug. Ops grids that are **not** Management Reports (cancelled today, room moves, VIP, reservation updates, EOD logs) stay on `/night-audit/*` as NA tools. |
 | Night Audit console (after successful roll) | Same ZIP button + short pack list. |
-| Front Cash journal | Link to `cash-report` (`/reports/financial/cash`). |
-| FO in-house | Link to `in-house` (`/reports/daily/in-house`). Existing `/fo/in-house` remains the **ops** list; the report is the printable/PDF view. |
+| Front Cash journal | Link to `cash-report` (`/reports?report=cash-report`). |
+| FO in-house | Link to `in-house` (`/reports?report=in-house`). Existing `/fo/in-house` remains the **ops** list; the report is the printable/PDF view. |
 | Agency ledger | Stays `/front-cash/agency-ledger` (ops). Company CL: `/front-cash/company-ledger`. Profitability report stays under Agency & market. |
 
 **Anti-pattern:** duplicating Daily Management as a Night Audit-only PDF generator that cannot be opened from Reports.
@@ -195,7 +191,7 @@ Sample Forecast KPIs (16.08.2026): rooms 56/78 (71.79%), revenue 9,780.39 AZN, A
 | B-08 | In-house | ERA in-house daily | `/reports/daily/in-house` | **P0** | W1 screen+PDF; Reports home live |
 | B-09 | Daily Department & Room Summary | `DailyDepartmentSummaryDetailed.pdf` | alias of C-04 detailed | P1 | |
 
-Consolidated **screen** for B-01…B-07: one page `/reports/daily/management` with tabs (List / Summary / Revenue / YoY / Forecast). Nightly ZIP still emits **B-01** as its own PDF filename.
+Consolidated screen for B-01…B-07 is `/reports` (one period, one report at a time). Variants are their own slugs (`daily-management`, `daily-management-summary`, `main-current`, `date-range-management`). `/reports/daily/management` redirects to `daily-management`. Nightly ZIP still emits **B-01** as its own PDF filename.
 
 ### C — Financial / trial balance / department / cash (`BOTH`)
 
@@ -296,7 +292,7 @@ Rows = hotel departments (Accommodation, Pension, Naftani, Disco, Laundry, Xudma
 
 | Wave | Deliver |
 |------|---------|
-| **W1 P0** | Eight pack slugs: screen (reuse existing grids where they exist) + PDF + pack config + ZIP. Reports menu: category hubs + nightly pack. NA hub lists pack members instead of the dead 15-row mix. |
+| **W1 P0** | Eight pack slugs on `/reports` + PDF/Excel + pack config + ZIP. Reports menu: workspace + nightly pack. NA hub lists pack members instead of the dead 15-row mix. |
 | **W2 P1** | Remaining A/B/C/D/E PDFs as screens+export; shared filter presets; Daily Management tabs. |
 | **W3 P2** | Cubes, 3-year comparative, email cron body (today stub `email-cron`). |
 

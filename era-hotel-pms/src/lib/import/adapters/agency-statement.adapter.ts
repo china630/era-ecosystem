@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { cellMoney, cellString, firstCellString, parseDateCell, slugCode } from "@/lib/import/helpers";
 import { toDecimal } from "@/lib/decimal";
@@ -66,7 +65,6 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
       throw new Error(`Reservation not found for Res Id ${row.reservationExternalRef}`);
     }
 
-    const orgId = requestOrganizationId();
     const agencyCode = slugCode(row.agencyLabel);
     let agency = await tx.agency.findFirst({
       where: {
@@ -79,7 +77,6 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
     if (!agency && !dryRun) {
       agency = await tx.agency.create({
         data: {
-          organizationId: orgId,
           code: agencyCode,
           name: row.agencyLabel,
           active: true,
@@ -98,7 +95,7 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
     });
     if (!revenue && !dryRun) {
       revenue = await tx.revenueCode.create({
-        data: { organizationId: orgId, code: "EW-CL", name: "City Ledger (EW statement)" },
+        data: { code: "EW-CL", name: "City Ledger (EW statement)" },
       });
     }
     if (dryRun) return "created";
@@ -108,7 +105,6 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
     if (!folio) {
       folio = await tx.folio.create({
         data: {
-          organizationId: orgId,
           reservationId: reservation.id,
           type: "AGENCY",
           status: "OPEN",
@@ -127,7 +123,12 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
 
     const existing = await tx.folioCharge.findFirst({ where: { externalRef: row.externalRef } });
     await tx.folioCharge.upsert({
-      where: { externalRef: row.externalRef } as never,
+      where: {
+        organizationId_externalRef: {
+          organizationId: reservation.organizationId,
+          externalRef: row.externalRef,
+        },
+      },
       create: {
         externalRef: row.externalRef,
         folioId: folio.id,

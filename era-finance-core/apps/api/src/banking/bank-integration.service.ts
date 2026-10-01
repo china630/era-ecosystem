@@ -13,6 +13,7 @@ import {
   Prisma as DbPrisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { BankMatchService } from "./bank-match.service";
 import {
   fetchMockAbbTransactions,
@@ -391,8 +392,19 @@ export class BankIntegrationService {
       });
     }
 
+    return runWithTenantContextAsync(
+      { organizationId: org.id, skipTenantFilter: false },
+      () => this.applyWebhookBatch(org.id, bankName, inbound),
+    );
+  }
+
+  private async applyWebhookBatch(
+    organizationId: string,
+    bankName: string,
+    inbound: InboundBankTransaction[],
+  ) {
     const { createdLineIds, skipped } = await this.ingestTransactions(
-      org.id,
+      organizationId,
       bankName,
       "webhook",
       inbound,
@@ -400,13 +412,13 @@ export class BankIntegrationService {
 
     let autoMatched = 0;
     for (const lineId of createdLineIds) {
-      const m = await this.bankMatch.tryAutoMatchLine(org.id, lineId);
+      const m = await this.bankMatch.tryAutoMatchLine(organizationId, lineId);
       if (m.autoMatched) autoMatched += 1;
-      const outMatched = await this.autoMatchOutgoingForLine(org.id, lineId);
+      const outMatched = await this.autoMatchOutgoingForLine(organizationId, lineId);
       if (outMatched) autoMatched += 1;
     }
 
-    await this.patchBankingDirectSettings(org.id, {
+    await this.patchBankingDirectSettings(organizationId, {
       lastSyncAt: new Date().toISOString(),
       lastSyncStatus: "ok",
       lastSyncError: null,
@@ -427,7 +439,10 @@ export class BankIntegrationService {
     });
     for (const o of orgs) {
       try {
-        await this.runDirectSync(o.id, "cron");
+        await runWithTenantContextAsync(
+          { organizationId: o.id, skipTenantFilter: false },
+          () => this.runDirectSync(o.id, "cron"),
+        );
       } catch {
         // статус ошибки уже записан в settings
       }

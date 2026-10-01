@@ -29,7 +29,7 @@ Nafta appliance tenant `code=default` keeps preset `sanatorium_clinical` only (m
 
 Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert). Cutover `#21` calls hotel `GET /api/internal/v1/stays/by-external-ref` then MDM `linkPersonIdentity`.
 
-**SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware `x-era-organization-id`; `getRouteSession` → `enterSatelliteTenant`; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron remains appliance/DEDICATED-oriented. Not SHIPPED pool / AC-CLI-TENANT still 🟡.
+**SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware `x-era-organization-id`; `getRouteSession` → `enterSatelliteTenant`; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron org list: kit `listCronOrganizationIds` (SHARED = orch pool registry with backoff, 503 when empty/unreachable; DEDICATED/ONPREM = process org). Not SHIPPED pool / AC-CLI-TENANT still 🟡.
 
 Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-favorites` (now a tab on `/admin/diagnostic-catalog`). Both routes deleted — no redirect.
 
@@ -56,7 +56,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/visits/[id]` | Visit card; diagnoses panel `GET/POST/DELETE /api/visits/[id]/diagnoses` (`VisitDiagnosis`, selectable CATEGORY/LEAF only); CPOE panel + print `/print/visit-exam/[cpoeEntryId]` (AuthZ: `api:visits`\|`api:patients`) |
 | `/reports/diagnoses` | `GET /api/reports/diagnoses` — ICD usage by episode / visit / admission (date + chapter + source) |
 | `/cashier` | Queue / history / over-quota tabs; shift open+close (X/Z); settle modal by channel (`LOCAL` / `HOTEL_FOLIO` / `SETTLEMENT_HUB`); `GET /api/cashier/queue`, `…/shifts/current`, `…/shifts/[id]/close|report`, `…/bills/[visitId]` (+ settle), `…/receipts` (+ void/reprint), `…/over-quota` (+ settle); `GET /api/fiscal/devices` (KKM/POS pick); hub banner informational |
-| `/reception/extra-tickets` | Sanatorium dual-run extras. `GET/POST /api/procedures/issue-ticket` (**Pay** → folio → place → ticket ×3 for `PENDING_PAY`); UI: `LIST_PAGE_SHELL` + `EraListFilterBar` (search + origin `CatalogField`) + `DATA_TABLE` + row **Banknote** pay; receipt/cheque still required. `POST /api/procedures/extra-reverse`; print `/print/extra-ticket/[ticketId]`. Hotel void inbound `POST /api/internal/v1/extras/hotel-void`. Enqueues hotel Elektraweb outbox when `ClinicCutoverPolicy.elektrawebDualRun` (Sync). Not SHIPPED / not cashier SoT. CLI-57 |
+| `/reception/extra-tickets` | Sanatorium dual-run extras. `GET/POST /api/procedures/issue-ticket` (**Pay** → folio → place → ticket ×3 for `PENDING_PAY`); UI: `LIST_PAGE_SHELL` + `EraListFilterBar` (search + origin `CatalogField`) + `DATA_TABLE` + row **Banknote** pay; receipt/cheque still required. `POST /api/procedures/extra-reverse`; print `/print/extra-ticket/[ticketId]?organizationId=` (org from the link binds the tenant; must match the session org). Hotel void inbound `POST /api/internal/v1/extras/hotel-void`. Enqueues hotel Elektraweb outbox when `ClinicCutoverPolicy.elektrawebDualRun` (Sync). Not SHIPPED / not cashier SoT. CLI-57 |
 | Executive (`GET /api/executive/summary?date=&practitionerId=`) | client `ExecutiveDashboard`; OrgOwner (`canViewExecutive`); rendered on Home `/` (no standalone `/executive` route) |
 
 ## Preset `sanatorium_clinical`
@@ -124,7 +124,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `PATCH /api/sanatorium/episodes/[id]` | session — OPEN episode anamnesis |
 | `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |
-| `/api/capacity/summary` | bridge secret — GET remaining%/risk (`x-era-organization-id` or process bind); POST `runCronForEachTenant` → `byOrganization` |
+| `/api/capacity/summary` | bridge secret — GET remaining%/risk (`x-era-organization-id` or process bind); POST `runCronForEachTenant` (orch pool registry) → `byOrganization` |
 
 ## Preset gating
 

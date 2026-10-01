@@ -130,6 +130,12 @@
       "price": "Цена AZN",
       "recipeSku": "SKU рецепта",
       "recipeSkuHint": "Ссылка на Product / ProductRecipe в Finance (списание склада). BOM создаётся в Manufacturing Finance.",
+      "search": "Поиск блюда",
+      "showInactive": "Показать неактивные",
+      "searchResults": "Поиск",
+      "moveUp": "Выше",
+      "moveDown": "Ниже",
+      "details": "Подробнее",
       "recipesInFinance": "Рецепты в Finance",
       "imageUrl": "URL фото",
       "priceReason": "Причина смены цены",
@@ -282,7 +288,8 @@
     "loading": "Загрузка…",
     "emDash": "—",
     "loadError": "Ошибка загрузки",
-    "saveError": "Ошибка сохранения"
+    "saveError": "Ошибка сохранения",
+    "failed": "Не получилось"
   },
   "auth": {
     "loginFailed": "Вход не выполнен",

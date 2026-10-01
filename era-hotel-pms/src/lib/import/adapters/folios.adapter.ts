@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { requestOrganizationId } from '@/lib/request-organization';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import { toDecimal } from '@/lib/decimal';
@@ -76,7 +75,6 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (!folio && !dryRun) {
       folio = await tx.folio.create({
         data: {
-          organizationId: requestOrganizationId(),
           reservationId: reservation.id,
           type: 'GUEST',
           status: 'OPEN',
@@ -101,7 +99,12 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     if (dryRun) return existing ? 'updated' : 'created';
 
     await tx.folioCharge.upsert({
-      where: { externalRef: row.externalRef } as never,
+      where: {
+        organizationId_externalRef: {
+          organizationId: reservation.organizationId,
+          externalRef: row.externalRef,
+        },
+      },
       create: data,
       update: {
         revenueCodeId: data.revenueCodeId,

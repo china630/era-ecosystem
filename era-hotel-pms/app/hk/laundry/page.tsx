@@ -15,10 +15,10 @@ import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 type Item = { id: string; code: string; name: string; washPrice: number; ironPrice: number };
 type Stay = {
   id: string;
-  roomId: string;
+  roomId: string | null;
   status: string;
-  guest: { fullName: string };
-  room: { id: string; roomNumber: string };
+  guest: { fullName: string } | null;
+  room: { id: string; roomNumber: string } | null;
 };
 type Ticket = {
   id: string;
@@ -58,7 +58,8 @@ export default function HkLaundryPage() {
     void load();
   }, [load]);
 
-  const stay = stays.find((s) => s.roomId === roomId);
+  const assignedStays = stays.filter((s) => s.roomId && s.room?.roomNumber);
+  const stay = assignedStays.find((s) => s.roomId === roomId);
   const mismatch = useMemo(
     () =>
       Object.values(qty).some((q) => (q.guest ?? 0) !== (q.hotel ?? 0) && ((q.wash ?? 0) > 0 || (q.iron ?? 0) > 0)),
@@ -81,7 +82,7 @@ export default function HkLaundryPage() {
       body: JSON.stringify({
         roomId,
         reservationId: stay?.id,
-        guestName: stay?.guest.fullName,
+        guestName: stay?.guest?.fullName,
         express,
         lines,
       }),
@@ -104,12 +105,12 @@ export default function HkLaundryPage() {
           label={t('roomSelect')}
           value={roomId}
           onChange={(v) => setRoomId(String(v))}
-          options={stays.map((s) => ({
-            value: s.roomId,
-            label: `${s.room.roomNumber} · ${s.guest.fullName}`,
+          options={assignedStays.map((s) => ({
+            value: s.roomId as string,
+            label: `${s.room?.roomNumber ?? ''} · ${s.guest?.fullName ?? ''}`,
           }))}
         />
-        <p className="text-sm text-[#7F8C8D]">{stay ? stay.guest.fullName : t('guestName')}</p>
+        <p className="text-sm text-[#7F8C8D]">{stay?.guest?.fullName ?? t('guestName')}</p>
         {expressEnabled ? (
           <CatalogField
             kind="CLOSED_SMALL"
@@ -173,7 +174,7 @@ export default function HkLaundryPage() {
           </li>
         ))}
       </ul>
-      <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void submit()}>
+      <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!roomId} onClick={() => void submit()}>
         {t('acceptLaundry')}
       </button>
       <button type="button" className={`${SECONDARY_BUTTON_CLASS} ml-2 print:hidden`} onClick={() => window.print()}>

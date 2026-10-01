@@ -1,12 +1,26 @@
 import { z } from 'zod';
+import { guestComposedFullName } from '@/lib/guest-identity.shared';
 
-export const GUEST_NATIONALITIES = ['AZ', 'OTHER'] as const;
-export type GuestNationality = (typeof GUEST_NATIONALITIES)[number];
+/** ISO 3166-1 alpha-2 citizenship; legacy `OTHER` still accepted as "foreign, unknown". */
+const guestNationalitySchema = z
+  .string()
+  .trim()
+  .transform((v) => v.toUpperCase())
+  .refine((v) => v === 'OTHER' || /^[A-Z]{2}$/.test(v), {
+    message: 'Nationality must be an ISO 3166-1 alpha-2 code',
+  });
 
 export const createGuestSchema = z
   .object({
     fullName: z.string().trim().min(1),
-    nationality: z.enum(GUEST_NATIONALITIES).default('AZ'),
+    firstName: z.string().trim().optional().nullable(),
+    middleName: z.string().trim().optional().nullable(),
+    lastName: z.string().trim().optional().nullable(),
+    title: z.string().trim().optional().nullable(),
+    sex: z.string().trim().optional().nullable(),
+    email: z.string().trim().optional().nullable(),
+    birthDate: z.string().trim().optional().nullable(),
+    nationality: guestNationalitySchema.default('AZ'),
     nationalIdFin: z.string().trim().optional().nullable(),
     passportNumber: z.string().trim().optional().nullable(),
     phone: z.string().trim().optional().nullable(),
@@ -47,8 +61,19 @@ export type CreateGuestInput = z.infer<typeof createGuestSchema>;
 
 /** Ops cache fields only — identity is transient (MDM link via guest-identity). */
 export function normalizeGuestInput(input: CreateGuestInput) {
+  const firstName = input.firstName?.trim() || null;
+  const middleName = input.middleName?.trim() || null;
+  const lastName = input.lastName?.trim() || null;
+  const birthDate = input.birthDate?.trim() ? new Date(input.birthDate.trim()) : null;
   return {
-    fullName: input.fullName.trim(),
+    fullName: guestComposedFullName({ firstName, middleName, lastName, fullName: input.fullName }),
+    firstName,
+    middleName,
+    lastName,
+    title: input.title?.trim() || null,
+    sex: input.sex?.trim() || null,
+    email: input.email?.trim() || null,
+    birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
     nationality: input.nationality,
     phone: input.phone?.trim() || null,
     voen: input.voen?.trim() || null,

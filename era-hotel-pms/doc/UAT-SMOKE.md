@@ -115,7 +115,7 @@ Room plan UI (Wave C+ / EW palette):
 - [ ] Table uses **full content width**; exclusive row ~36px; share door = N × 36px
 
 1. `/room-plan` — extend +1 night on bar.
-2. `/reports/occupancy` — 30-day grid loads.
+2. `/reports/occupancy/grid` — 30-day grid loads.
 
 ## 10. Housekeeping & medical
 
@@ -365,31 +365,31 @@ Prerequisite: W1 code deployed (`src/lib/reports/`, 8 P0 query services + pages 
 
 1. Switch UI locale to **az** (`/settings` or locale switcher). Open `/reports/nightly-pack` → **Download ZIP** for closed business date → open PDF inside → content in Azerbaijani (headers, labels, dates).
 2. Switch UI locale to **ru**, same page → Download ZIP → PDF content in Russian (not cached English).
-3. Each of the 8 P0 reports — open screen + **Export PDF** (no curl):
-   - `/reports/daily/management` (Daily Management)
-   - `/reports/financial/trial-balance-period` (Trial Balance Date Period)
-   - `/reports/financial/cash-report` (Cash Report)
-   - `/reports/occupancy/monthly-daily-analysis` (Monthly and Daily Analysis)
-   - `/reports/daily/in-house` (In-house)
-   - `/reports/occupancy/annual-occupancy` (Annual Occupancy)
-   - `/reports/financial/folio-transactions` (Folio Transactions)
-   - `/reports/financial/department-revenues` (Department Revenues)
+3. Each of the 8 P0 reports — open `/reports?report={slug}`, press **Show**, then **Export PDF** and **Export Excel** (no curl). Old paths such as `/reports/daily/management` redirect to the same screen:
+   - `daily-management`
+   - `trial-balance-period`
+   - `cash-report`
+   - `monthly-daily-analysis`
+   - `in-house`
+   - `annual-occupancy`
+   - `folio-transactions`
+   - `department-revenues`
 4. Night Audit `/night-audit/reports`: pack member links resolve to canonical `/reports/...` pages + Download ZIP button — not a dead list.
 5. SatAdmin `/settings/report-pack`: disable one report → Download ZIP without it.
 6. Empty report (e.g. no discounts for the day) → empty PDF renders with empty-state message, not HTTP 500.
 
 ## 31. Reports W2 — remaining catalog (P1)
 
-1. Open `/reports/daily/management` tabs: List / Summary / Revenue / YoY / Forecast — each loads without curl.
-2. Open one Agency hub report (e.g. `/reports/agency/agency-monthly`) + Export PDF.
-3. Open one Booking report (e.g. `/reports/booking/cancel-by-cancel`) + Export PDF.
-4. `/reports/analytics` still reachable from Analysis hub (folded, not a second catalog).
-5. `/reports/agency-profitability` reachable from Agency hub.
+1. On `/reports`, morning-pack chips switch the selected report without leaving the screen.
+2. Open one Agency report (`/reports?report=agency-monthly`) + Export PDF and Export Excel.
+3. Open one Booking report (`/reports?report=cancel-by-cancel`) + Export PDF.
+4. `/reports/analytics` is linked from the report list (not a second catalog).
+5. `/reports?report=agency-profitability` opens in the same workspace.
 
 ## 32. Reports W3 — cubes / 3-year / email ZIP link
 
-1. `/reports/analysis/cubes` — pick Revenue cube + a dimension (department) → pivot table renders (not OLAP engine).
-2. `/reports/occupancy/three-year-occ` (or `/reports/occupancy/three-year-occ` via hub) — 3-year occupancy PDF exports.
+1. `/reports?report=revenue-cube` — pick dimension Department → **Show** renders the pivot table (not an OLAP engine).
+2. `/reports?report=three-year-occ` — Export PDF downloads a file (not an error page).
 3. Email cron (HEADLESS): `POST /api/admin/reports/email-cron?secret=…` body contains ZIP URL with `lang=` from `HOTEL_REPORT_EMAIL_LOCALE` (no UI session). Task Cube is not in Hotel PMS.
 
 ## Pass criteria

@@ -2,8 +2,10 @@
  * Run Elektraweb hotel import pack from a directory (wizard order #03–#15).
  *
  * Usage:
- *   ERA_SKIP_TENANT_FILTER=1 ERA_SATELLITE_ORGANIZATION_ID=<uuid> \
- *     npx tsx scripts/ops/import-hotel-pack.ts /path/to/hotel [--dry-run] [--from=guests]
+ *   npx tsx scripts/ops/import-hotel-pack.ts /path/to/hotel --org=<uuid> [--dry-run] [--from=guests]
+ *   (or ERA_SATELLITE_ORGANIZATION_ID=<uuid> instead of --org)
+ *
+ * Runs inside that org's tenant context — the kit filter stays on.
  *
  * File name hints (first match wins):
  *   *Revenue* *Bed* *Room*View* *Room*Type* *Rate* *Rooms* *Agenc*
@@ -11,15 +13,26 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { isSentinelOrganizationId, runWithSatelliteTenant } from '@era/satellite-kit';
 import { listImportEntities, getImportAdapter } from '../../src/lib/import/adapters';
 import { runImport, runImportBuffers } from '../../src/lib/import/run-import';
 
 const dryRun = process.argv.includes('--dry-run');
 const fromArg = process.argv.find((a) => a.startsWith('--from='))?.slice(7);
 const packArg = process.argv.find((a) => !a.startsWith('-') && fs.existsSync(a));
+const organizationId =
+  process.argv.find((a) => a.startsWith('--org='))?.slice(6)?.trim() ||
+  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+  '';
 
 if (!packArg) {
-  console.error('Usage: npx tsx scripts/ops/import-hotel-pack.ts <packDir> [--dry-run] [--from=entity]');
+  console.error(
+    'Usage: npx tsx scripts/ops/import-hotel-pack.ts <packDir> --org=<uuid> [--dry-run] [--from=entity]',
+  );
+  process.exit(1);
+}
+if (!organizationId || isSentinelOrganizationId(organizationId)) {
+  console.error('Pass --org=<uuid> or ERA_SATELLITE_ORGANIZATION_ID (real org UUID)');
   process.exit(1);
 }
 
@@ -78,7 +91,7 @@ async function main() {
   }
   const startIdx = fromArg ? fromIdx : 0;
 
-  console.log(`${dryRun ? '[dry-run] ' : ''}Import pack: ${packDir}`);
+  console.log(`${dryRun ? '[dry-run] ' : ''}Import pack: ${packDir} (org ${organizationId})`);
   for (const entity of entities.slice(startIdx)) {
     const pattern = FILE_PATTERNS[entity];
     const files = pattern ? findFiles(packDir, pattern) : [];
@@ -86,7 +99,7 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+runWithSatelliteTenant({ organizationId }, main).catch((e) => {
   console.error(e);
   process.exit(1);
 });

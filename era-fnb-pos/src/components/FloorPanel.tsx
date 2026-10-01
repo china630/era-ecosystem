@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ColorLegend } from "@era/satellite-kit/ui";
+import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -88,7 +88,6 @@ export default function FloorPanel() {
   const [banquets, setBanquets] = useState<BanquetEvent[]>([]);
   const [selectedBeoId, setSelectedBeoId] = useState("");
   const [walkInLabel, setWalkInLabel] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [outletSaving, setOutletSaving] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
@@ -203,9 +202,7 @@ export default function FloorPanel() {
         editionData?.hotelMode === false;
       setHotelMode(!kafe);
       if (!tablesRes.ok) {
-        setMessage(
-          typeof tablesData?.error === "string" ? tablesData.error : tc("failed"),
-        );
+        showApiError(tablesData, tc("failed"));
       }
       setSoldOutIds(
         new Set(
@@ -257,7 +254,7 @@ export default function FloorPanel() {
       });
       await loadChips();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : tc("failed"));
+      showApiError(err instanceof Error ? { error: err.message } : {}, tc("failed"));
     } finally {
       setLoading(false);
     }
@@ -270,7 +267,6 @@ export default function FloorPanel() {
   async function selectOutlet(outletId: string) {
     setSelectedOutletId(outletId);
     setOutletSaving(true);
-    setMessage("");
     try {
       const res = await fetch("/api/outlets/select", {
         method: "POST",
@@ -279,10 +275,10 @@ export default function FloorPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
-      setMessage(t("outletSelected", { code: data.code ?? outletCode }));
+      showSuccess(t("outletSelected", { code: data.code ?? outletCode }));
     } finally {
       setOutletSaving(false);
     }
@@ -292,7 +288,7 @@ export default function FloorPanel() {
     const res = await fetch(`/api/tickets/${id}`);
     const data = await res.json().catch(() => null);
     if (!res.ok || !data) {
-      setMessage(data?.error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     applyTicket(data, caption);
@@ -328,25 +324,26 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, caption);
-    setMessage(t("dishAdded", { name: item.name }));
+    showSuccess(t("dishAdded", { name: item.name }));
     await load({ silent: true });
   }
 
   function apiFailed(data: { error?: string; code?: string }) {
     if (data.code === "SOLD_OUT") {
-      setMessage(t("soldOut"));
+      showApiError({ error: t("soldOut") });
       return;
     }
-    setMessage(tc("failed"));
+    const err = data.error?.trim() ?? "";
+    const prismaDump = err.includes("prisma.") || err.startsWith("Invalid `");
+    showApiError(prismaDump ? { error: tc("failed") } : data, tc("failed"));
   }
 
   async function addDish(item: MenuItem) {
     if (busy.current) return;
     if (soldOutIds.has(item.id)) {
-      setMessage(t("soldOut"));
+      showApiError({ error: t("soldOut") });
       return;
     }
-    setMessage("");
     busy.current = true;
     try {
     if (activeTicketId) {
@@ -373,7 +370,7 @@ export default function FloorPanel() {
         return;
       }
       applyTicket({ ...data, id: activeTicketId });
-      setMessage(t("dishAdded", { name: item.name }));
+      showSuccess(t("dishAdded", { name: item.name }));
       await load({ silent: true });
       return;
     }
@@ -393,7 +390,7 @@ export default function FloorPanel() {
       );
       return;
     }
-    setMessage(t("openTableFirst"));
+    showApiError({ error: t("openTableFirst") });
     } finally {
       busy.current = false;
     }
@@ -404,7 +401,7 @@ export default function FloorPanel() {
     if (qty > line.qty) {
       const itemId = line.menuItemId;
       if (itemId && soldOutIds.has(itemId)) {
-        setMessage(t("soldOut"));
+        showApiError({ error: t("soldOut") });
         return;
       }
     }
@@ -430,10 +427,9 @@ export default function FloorPanel() {
   async function pay(method: "CASH" | "CARD") {
     if (busy.current || !activeTicketId || !canPay) return;
     if (ticketLines.length === 0 || (ticketTotal ?? 0) <= 0) {
-      setMessage(t("nothingToPay"));
+      showApiError({ error: t("nothingToPay") });
       return;
     }
-    setMessage("");
     busy.current = true;
     const ticketId = activeTicketId;
     try {
@@ -448,16 +444,19 @@ export default function FloorPanel() {
           detail: { kind: "pay", ticketId, payload: { method } },
         }),
       );
-      setMessage(t("queuedOffline"));
+      showApiError({ error: t("queuedOffline") });
       return;
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(data.error === "Nothing to pay" ? t("nothingToPay") : tc("failed"));
+      showApiError(
+        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
+        tc("failed"),
+      );
       return;
     }
     const label = method === "CARD" ? t("payCard") : t("payCash");
-    setMessage(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
+    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
     setActiveTicketId(null);
     setDraft(null);
     setTicketLines([]);
@@ -473,15 +472,14 @@ export default function FloorPanel() {
   async function cancelTicket() {
     if (busy.current || !activeTicketId || !canPay) return;
     if (!window.confirm(t("confirmCancel"))) return;
-    setMessage("");
     busy.current = true;
     try {
     const res = await fetch(`/api/tickets/${activeTicketId}/void`, { method: "POST" });
     if (!res.ok) {
-      setMessage(tc("failed"));
+      showApiError({}, tc("failed"));
       return;
     }
-    setMessage(t("ticketCancelled"));
+    showSuccess(t("ticketCancelled"));
     applyTicket({ id: activeTicketId, status: "VOID", released: true });
     await load({ silent: true });
     } finally {
@@ -498,14 +496,13 @@ export default function FloorPanel() {
       body: JSON.stringify({ menuItemId: item.id, soldOut: next }),
     });
     if (!res.ok) {
-      setMessage(tc("failed"));
+      showApiError(await res.json().catch(() => ({})), tc("failed"));
       return;
     }
     await load({ silent: true });
   }
 
   function selectTable(table: Table) {
-    setMessage("");
     if (table.status === "OCCUPIED") {
       if (table.currentTicketId) {
         void focusTicket(table.currentTicketId, table.code);
@@ -529,7 +526,7 @@ export default function FloorPanel() {
           await focusTicket(match.id, table.code);
           return;
         }
-        setMessage(t("occupiedHint"));
+        showApiError({ error: t("occupiedHint") });
       })();
       return;
     }
@@ -542,7 +539,6 @@ export default function FloorPanel() {
   }
 
   function startTakeaway() {
-    setMessage("");
     setActiveTicketId(null);
     setTicketLines([]);
     setTicketTotal(0);
@@ -552,7 +548,6 @@ export default function FloorPanel() {
   }
 
   async function openWalkIn() {
-    setMessage("");
     const payload: Record<string, unknown> = {
       outletCode,
       serviceChannel: "WALK_IN",
@@ -567,17 +562,17 @@ export default function FloorPanel() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(tc("failed"));
+      apiFailed(data);
       return;
     }
     applyTicket(data, walkInLabel.trim() || t("walkInDefaultLabel"));
-    setMessage(t("walkInOpened", { total: Number(data.totalAzn).toFixed(2) }));
+    showSuccess(t("walkInOpened", { total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
 
   async function openBanquetTicket() {
     if (!selectedBeoId) {
-      setMessage(t("banquetSelectRequired"));
+      showApiError({ error: t("banquetSelectRequired") });
       return;
     }
     const beo = banquets.find((b) => b.id === selectedBeoId);
@@ -594,11 +589,11 @@ export default function FloorPanel() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(tc("failed"));
+      apiFailed(data);
       return;
     }
     applyTicket(data, beo?.eventName);
-    setMessage(t("banquetOpened", { name: beo?.eventName ?? "", total: Number(data.totalAzn).toFixed(2) }));
+    showSuccess(t("banquetOpened", { name: beo?.eventName ?? "", total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
 
@@ -621,8 +616,6 @@ export default function FloorPanel() {
 
   return (
     <>
-      {message && <p className="mb-3 text-sm text-[#34495E]">{message}</p>}
-
       {outlets.length > 1 && (
         <div className={`${CARD_CLASS} mb-4 p-4`}>
           <div className="flex flex-wrap items-end gap-3">

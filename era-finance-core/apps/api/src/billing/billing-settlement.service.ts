@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { BillingStatus } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { billingPeriodKeyBaku } from "./baku-billing.util";
 import { BillingMeterService } from "./billing-meter.service";
 
@@ -32,23 +33,28 @@ export class BillingSettlementService {
     const periodKey = billingPeriodKeyBaku();
     let updated = 0;
     for (const org of orgs) {
-      await this.prisma.organization.update({
-        where: { id: org.id },
-        data: {
-          billingStatus: BillingStatus.ACTIVE,
-          whatsappAlertsUsed: 0,
-          ocrPagesUsed: 0,
+      await runWithTenantContextAsync(
+        { organizationId: org.id, skipTenantFilter: false },
+        async () => {
+          await this.prisma.organization.update({
+            where: { id: org.id },
+            data: {
+              billingStatus: BillingStatus.ACTIVE,
+              whatsappAlertsUsed: 0,
+              ocrPagesUsed: 0,
+            },
+          });
+          await this.prisma.organizationSubscription.updateMany({
+            where: { organizationId: org.id },
+            data: { billingPeriodKey: periodKey },
+          });
+          if (bumpSet.has(org.id)) {
+            await this.billingMeter.bumpTierAfterIntradayPayment(org.id);
+          } else {
+            await this.billingMeter.resetMonthlySpendAfterInvoiced(org.id);
+          }
         },
-      });
-      await this.prisma.organizationSubscription.updateMany({
-        where: { organizationId: org.id },
-        data: { billingPeriodKey: periodKey },
-      });
-      if (bumpSet.has(org.id)) {
-        await this.billingMeter.bumpTierAfterIntradayPayment(org.id);
-      } else {
-        await this.billingMeter.resetMonthlySpendAfterInvoiced(org.id);
-      }
+      );
       updated += 1;
     }
 

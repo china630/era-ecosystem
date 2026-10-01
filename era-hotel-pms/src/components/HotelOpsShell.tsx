@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import type { Locale } from '@era/i18n-common';
@@ -8,13 +8,11 @@ import {
   Activity,
   BarChart3,
   BedDouble,
-  BookOpen,
   Building2,
   CalendarDays,
   Bus,
   Car,
   ClipboardList,
-  DollarSign,
   FileBarChart,
   FileText,
   HeartPulse,
@@ -741,52 +739,10 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: BarChart3,
           items: sectionItems([
             {
-              id: 'rep-overview',
+              id: 'rep-workspace',
               href: '/reports',
-              labelKey: 'reportsOverview',
+              labelKey: 'reportsAll',
               icon: BarChart3,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-analysis',
-              href: '/reports/analysis',
-              labelKey: 'reportsAnalysis',
-              icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-occ',
-              href: '/reports/occupancy',
-              labelKey: 'reportsOccupancy',
-              icon: BedDouble,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-daily',
-              href: '/reports/daily',
-              labelKey: 'reportsDaily',
-              icon: CalendarDays,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-financial',
-              href: '/reports/financial',
-              labelKey: 'reportsFinancial',
-              icon: DollarSign,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-agency',
-              href: '/reports/agency',
-              labelKey: 'reportsAgency',
-              icon: Users,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
-            },
-            {
-              id: 'rep-booking',
-              href: '/reports/booking',
-              labelKey: 'reportsBooking',
-              icon: BookOpen,
               show: can(PERMISSIONS.SCREEN_REPORTS),
             },
             {
@@ -907,11 +863,22 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
 
   const organizationName = user?.organizationName ?? null;
 
+  const resolveActive = useCallback((currentPath: string, href: string) => {
+    if (href === '/') return currentPath === '/';
+    const hrefs = navSections.flatMap((section) =>
+      section.items.map((item) => item.href).filter((value): value is string => Boolean(value)),
+    );
+    const matches = hrefs.filter((value) => currentPath === value || currentPath.startsWith(`${value}/`));
+    const best = [...matches].sort((a, b) => b.length - a.length)[0];
+    return best === href;
+  }, [navSections]);
+
   return (
     <>
       <EraAppRouteShell
         brandTitle={tMeta('title')}
         navSections={navSections}
+        resolveActive={resolveActive}
         headerLeft={headerLeft}
         profile={
         user ? (

@@ -62,6 +62,7 @@ export async function POST(
 
     await prisma.ticketLine.create({
       data: {
+        organizationId: ticket.organizationId,
         ticketId: id,
         menuItemId,
         description: item.description,

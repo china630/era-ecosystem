@@ -8,7 +8,11 @@ import {
   satelliteRuntimeConfig,
   type SatelliteRuntimeConfig,
 } from "./runtime-config-core";
-import { applyOrganizationBind, type OrgBindPrisma } from "./organization-bind-core";
+import {
+  applyOrganizationBind,
+  clearProcessOrganizationBind,
+  type OrgBindPrisma,
+} from "./organization-bind-core";
 import {
   hydrateLoginOrgNoMapFromDisk,
   mergeLoginOrgNoPersistent,
@@ -144,6 +148,9 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
     }
     hydrateLoginOrgNoMapFromDisk();
     hydrateLoginHostnameMapFromDisk();
+    if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
+      clearProcessOrganizationBind();
+    }
     return NextResponse.json({
       ok: true,
       config: publicRuntimeConfigView(satelliteRuntimeConfig()),
@@ -228,6 +235,7 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       updatedBy: body.updatedBy,
       prisma,
     });
+    if (isShared) clearProcessOrganizationBind();
     return NextResponse.json({
       ok: true,
       config: publicRuntimeConfigView(cfg),

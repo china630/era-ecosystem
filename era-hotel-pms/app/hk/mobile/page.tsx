@@ -3,37 +3,50 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
+import { CatalogField, PageHeader, showApiError } from '@era/satellite-kit/ui';
 
-type HkTask = {
-  id: string;
+type SheetRow = {
   roomId: string;
-  housekeeperId?: string | null;
+  roomNumber: string;
+  floor: number;
   jobType?: string;
-  status: string;
-  room?: { roomNumber: string; floor?: number };
+  hkCondition?: string;
+  guests?: string;
+  reservationId?: string | null;
 };
 
-type Rot = { housekeeperId: string; housekeeper: { id: string; name: string }; pair: { floorLow: number; floorHigh: number } };
+type Rot = {
+  housekeeperId: string;
+  housekeeper: { id: string; name: string };
+  pair: { floorLow: number; floorHigh: number };
+};
 
 const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
+const JOBS = new Set(['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK']);
+const HK = new Set(['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED']);
 
 export default function HkMobilePage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
-  const [tasks, setTasks] = useState<HkTask[]>([]);
+  const [rows, setRows] = useState<SheetRow[]>([]);
   const [rotation, setRotation] = useState<Rot[]>([]);
   const [maidId, setMaidId] = useState('');
 
   const load = useCallback(async () => {
     const date = hotelDateKey();
-    const [tRes, rRes] = await Promise.all([
-      fetch('/api/housekeeping/tasks'),
+    const [sRes, rRes] = await Promise.all([
+      fetch(`/api/housekeeping/sheet?all=1&date=${date}`),
       fetch(`/api/housekeeping/rotation?date=${date}`),
     ]);
-    const tJson = await tRes.json();
-    if (tRes.ok) setTasks(Array.isArray(tJson) ? tJson : (tJson.tasks ?? []));
-    else showApiError(tJson, tc('loadError'));
+    const sJson = await sRes.json();
+    if (sRes.ok) {
+      const pages = Array.isArray(sJson) ? sJson : [];
+      const flat: SheetRow[] = [];
+      for (const page of pages) {
+        for (const row of page.rows ?? []) flat.push(row as SheetRow);
+      }
+      setRows(flat);
+    } else showApiError(sJson, tc('loadError'));
     const rJson = await rRes.json();
     if (rRes.ok) setRotation(Array.isArray(rJson) ? rJson : []);
   }, [tc]);
@@ -43,31 +56,18 @@ export default function HkMobilePage() {
   }, [load]);
 
   const mine = useMemo(() => {
-    if (!maidId) return tasks;
+    if (!maidId) return rows;
     const rot = rotation.find((r) => r.housekeeperId === maidId || r.housekeeper.id === maidId);
-    if (!rot) return tasks.filter((x) => x.housekeeperId === maidId);
-    return tasks.filter((x) => {
-      const f = x.room?.floor;
-      if (typeof f !== 'number') return x.housekeeperId === maidId;
-      return f >= rot.pair.floorLow && f <= rot.pair.floorHigh;
-    });
-  }, [tasks, rotation, maidId]);
+    if (!rot) return [];
+    return rows.filter((x) => x.floor >= rot.pair.floorLow && x.floor <= rot.pair.floorHigh);
+  }, [rows, rotation, maidId]);
 
-  async function complete(id: string) {
-    const res = await fetch('/api/housekeeping/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: id }),
-    });
-    if (!res.ok) showApiError(await res.json(), tc('failed'));
-    await load();
-  }
-
-  async function outcome(id: string, code: string) {
+  async function outcome(roomId: string, code: string) {
+    const date = hotelDateKey();
     const res = await fetch('/api/housekeeping/outcome', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: id, outcome: code }),
+      body: JSON.stringify({ roomId, date, outcome: code }),
     });
     if (!res.ok) showApiError(await res.json(), tc('failed'));
     await load();
@@ -75,7 +75,7 @@ export default function HkMobilePage() {
 
   return (
     <main className="mx-auto max-w-md p-4">
-      <PageHeader title={t('mobileTitle')} />
+      <PageHeader title={t('mobileTitle')} subtitle={rotation.length === 0 ? t('mobileEmpty') : t('sheetHint')} />
       <CatalogField
         kind="ENTITY_REF"
         label={t('myFloors')}
@@ -85,30 +85,33 @@ export default function HkMobilePage() {
           value: r.housekeeperId ?? r.housekeeper.id,
           label: `${r.housekeeper.name} ${r.pair.floorLow}–${r.pair.floorHigh}`,
         }))}
+        emptyLabel="—"
       />
+      {mine.length === 0 ? <p className="mt-4 text-sm text-[#7F8C8D]">{t('mobileNoRows')}</p> : null}
       <ul className="mt-4 space-y-2">
-        {mine.map((task) => (
-          <li key={task.id} className="rounded border p-3">
-            <span className="text-sm">
-              {task.room?.roomNumber ?? task.roomId} · {task.jobType} · {task.status}
-            </span>
-            {task.status !== 'DONE' && (
-              <div className="mt-2">
-                <CatalogField
-                  kind="CLOSED_SMALL"
-                  label={t('outcome')}
-                  value=""
-                  onChange={(v) => void outcome(task.id, String(v))}
-                  options={OUTCOMES.map((o) => ({
-                    value: o,
-                    label: o === 'REFUSED' ? t('refused') : o,
-                  }))}
-                />
-                <button type="button" className={`${PRIMARY_BUTTON_CLASS} mt-2`} onClick={() => void complete(task.id)}>
-                  {t('completeClean')}
-                </button>
-              </div>
-            )}
+        {mine.map((row) => (
+          <li key={row.roomId} className="rounded border border-[#D5DADF] bg-white p-3">
+            <p className="text-sm font-medium text-[#34495E]">
+              {row.roomNumber} · {t('floor')} {row.floor}
+            </p>
+            <p className="text-[12px] text-[#7F8C8D]">
+              {row.hkCondition && HK.has(row.hkCondition) ? t(`hkCond.${row.hkCondition}`) : row.hkCondition ?? ''}
+              {' · '}
+              {row.jobType && JOBS.has(row.jobType) ? t(`job.${row.jobType}`) : row.jobType ?? ''}
+              {row.guests ? ` · ${row.guests}` : ''}
+            </p>
+            <div className="mt-2">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t('outcome')}
+                value=""
+                onChange={(v) => void outcome(row.roomId, String(v))}
+                options={OUTCOMES.map((o) => ({
+                  value: o,
+                  label: o === 'REFUSED' ? t('refused') : o,
+                }))}
+              />
+            </div>
           </li>
         ))}
       </ul>

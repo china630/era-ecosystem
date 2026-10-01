@@ -17,7 +17,6 @@ import {
 } from "../tenancy/organization-bind-core";
 import {
   getSatelliteTenantContext,
-  resolveSatelliteTenantFilter,
   runWithSatelliteTenant,
 } from "../tenancy/satellite-tenant-context";
 
@@ -202,16 +201,22 @@ export type CronEntitlementOpts = {
   /** Env var holding expected Bearer secret (checked when set) */
   cronSecretEnv?: string;
   /**
-   * SHARED pool: discover org UUIDs from the satellite DB when
-   * `ERA_CRON_ORGANIZATION_IDS` is unset. Env always wins over this callback.
-   */
-  listOrganizationIds?: () => Promise<string[]>;
-  /**
-   * Orch SoR pool members (preferred after env, before DB discover).
-   * Typically `fetchPoolOrganizationIdsFromOrch`.
+   * SHARED: orch SoR pool members — the only org list source.
+   * Typically `fetchPoolOrganizationIdsFromOrch`. Ignored on DEDICATED / ONPREM.
    */
   fetchPoolOrganizationIds?: () => Promise<string[]>;
 };
+
+export class CronOrganizationListError extends Error {
+  readonly code = "CRON_ORG_LIST";
+  readonly reason: string;
+
+  constructor(reason: string, message: string) {
+    super(message);
+    this.name = "CronOrganizationListError";
+    this.reason = reason;
+  }
+}
 
 export type CronEntitlementResult =
   | { ok: true }
@@ -224,6 +229,12 @@ export type CronEntitlementResult =
 export async function runCronIfEntitled(
   opts: CronEntitlementOpts,
 ): Promise<CronEntitlementResult> {
+  const auth = checkCronSecret(opts);
+  if (!auth.ok) return auth;
+  return checkCronEntitlement(opts);
+}
+
+function checkCronSecret(opts: CronEntitlementOpts): CronEntitlementResult {
   const envKey = opts.cronSecretEnv ?? "PLATFORM_CRON_SECRET";
   const secret = process.env[envKey]?.trim() ?? process.env.PLATFORM_CRON_SECRET?.trim() ?? "";
   if (secret) {
@@ -232,7 +243,14 @@ export async function runCronIfEntitled(
       return { ok: false, status: 401, reason: "unauthorized" };
     }
   }
+  return { ok: true };
+}
 
+/** Without `organizationId` the module check uses the request ALS / process org. */
+async function checkCronEntitlement(
+  opts: CronEntitlementOpts,
+  organizationId?: string,
+): Promise<CronEntitlementResult> {
   if (devUnlockAllModules()) return { ok: true };
 
   const keys = [opts.satelliteKey, opts.moduleKey].filter(
@@ -242,7 +260,7 @@ export async function runCronIfEntitled(
 
   try {
     for (const key of keys) {
-      await requireSatelliteModule(key);
+      await requireSatelliteModule(key, organizationId ? { organizationId } : undefined);
     }
     return { ok: true };
   } catch (err) {
@@ -258,57 +276,88 @@ export async function runCronIfEntitled(
   }
 }
 
-async function listCronOrganizationIds(
-  listOrganizationIds?: () => Promise<string[]>,
-  fetchPoolOrganizationIds?: () => Promise<string[]>,
-): Promise<string[]> {
-  const extra =
-    process.env.ERA_CRON_ORGANIZATION_IDS?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
-  if (extra.length) return [...new Set(extra)];
+const DEFAULT_CRON_POOL_RETRY_DELAYS_MS = [500, 1500, 4500];
+let cronPoolRetryDelaysMs: readonly number[] = DEFAULT_CRON_POOL_RETRY_DELAYS_MS;
 
-  if (fetchPoolOrganizationIds) {
+/** Tests only: shorten registry backoff. Pass `null` to restore defaults. */
+export function setCronPoolRetryDelaysForTests(delays: readonly number[] | null): void {
+  cronPoolRetryDelaysMs = delays ?? DEFAULT_CRON_POOL_RETRY_DELAYS_MS;
+}
+
+function isRetryableRegistryError(err: unknown): boolean {
+  return Boolean(
+    err &&
+      typeof err === "object" &&
+      (err as { retryable?: unknown }).retryable === true,
+  );
+}
+
+function registryErrorReason(err: unknown): string {
+  const reason =
+    err && typeof err === "object" ? (err as { reason?: unknown }).reason : undefined;
+  return typeof reason === "string" && reason ? reason : "pool_registry_failed";
+}
+
+async function fetchPoolWithBackoff(
+  fetchPoolOrganizationIds: () => Promise<string[]>,
+): Promise<string[]> {
+  const delays = cronPoolRetryDelaysMs;
+  for (let attempt = 0; ; attempt += 1) {
     try {
-      const fromOrch = await fetchPoolOrganizationIds();
-      const ids = [
-        ...new Set(
-          (fromOrch ?? [])
-            .map((s) => (typeof s === "string" ? s.trim() : ""))
-            .filter(Boolean),
-        ),
-      ];
-      if (ids.length) return ids;
-    } catch {
-      // Fall through to DB discover / bind.
+      return await fetchPoolOrganizationIds();
+    } catch (err) {
+      if (!isRetryableRegistryError(err) || attempt >= delays.length) {
+        throw new CronOrganizationListError(
+          registryErrorReason(err),
+          `Pool registry unavailable after ${attempt + 1} attempt(s): ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
+      await new Promise((r) => setTimeout(r, delays[attempt]));
     }
   }
-
-  if (listOrganizationIds) {
-    const discovered = await listOrganizationIds();
-    const ids = [
-      ...new Set(
-        (discovered ?? [])
-          .map((s) => (typeof s === "string" ? s.trim() : ""))
-          .filter(Boolean),
-      ),
-    ];
-    if (ids.length) return ids;
-  }
-
-  const filter = resolveSatelliteTenantFilter();
-  if (filter.mode === "skip") {
-    throw new SatelliteOrganizationUnboundError(
-      "cron cannot run with ERA_SKIP_TENANT_FILTER",
-    );
-  }
-  return [filter.organizationId];
 }
 
 /**
- * Entitlement gate + fail-closed tenant ALS for each org.
- * Dedicated/on-prem: one bound org.
- * SHARED: `ERA_CRON_ORGANIZATION_IDS` → orch pool members → `listOrganizationIds` → process bind.
+ * SHARED: orch registry only (backoff on network / 5xx), never process bind.
+ * DEDICATED / ONPREM: the one org bound to this process.
+ * Throws `CronOrganizationListError` / `SatelliteOrganizationUnboundError`.
+ */
+export async function listCronOrganizationIds(
+  fetchPoolOrganizationIds?: () => Promise<string[]>,
+): Promise<string[]> {
+  if (satelliteRuntimeConfig().deploymentTopology !== "SHARED") {
+    return [resolveSatelliteOrganizationId().organizationId];
+  }
+  if (!fetchPoolOrganizationIds) {
+    throw new CronOrganizationListError(
+      "pool_registry_not_configured",
+      "SHARED cron requires fetchPoolOrganizationIds",
+    );
+  }
+  const fromOrch = await fetchPoolWithBackoff(fetchPoolOrganizationIds);
+  const ids = [
+    ...new Set(
+      (fromOrch ?? [])
+        .map((s) => (typeof s === "string" ? s.trim() : ""))
+        .filter(Boolean),
+    ),
+  ];
+  if (!ids.length) {
+    throw new CronOrganizationListError(
+      "pool_registry_empty",
+      "Pool registry returned no enabled organizations for this process URL",
+    );
+  }
+  return ids;
+}
+
+/**
+ * Cron secret → org list → per-org entitlement + fail-closed tenant ALS.
+ * DEDICATED / ONPREM: one bound org. SHARED: orch pool members.
+ * Org list failure → 503 before any work starts. Orgs without the module are
+ * skipped; 403 only when no listed org is entitled.
  */
 export async function runCronForEachTenant<T>(
   opts: CronEntitlementOpts,
@@ -317,20 +366,35 @@ export async function runCronForEachTenant<T>(
   | { ok: false; status: 401 | 403 | 503; reason: string; moduleKey?: string }
   | { ok: true; results: T[] }
 > {
-  const gate = await runCronIfEntitled(opts);
-  if (!gate.ok) return gate;
+  const auth = checkCronSecret(opts);
+  if (!auth.ok) return auth;
+  let ids: string[];
   try {
-    const ids = await listCronOrganizationIds(
-      opts.listOrganizationIds,
-      opts.fetchPoolOrganizationIds,
-    );
+    ids = await listCronOrganizationIds(opts.fetchPoolOrganizationIds);
+  } catch (err) {
+    if (err instanceof CronOrganizationListError) {
+      return { ok: false, status: 503, reason: err.reason };
+    }
+    if (err instanceof SatelliteOrganizationUnboundError) {
+      return { ok: false, status: 503, reason: "satellite_unbound" };
+    }
+    throw err;
+  }
+  try {
     const results: T[] = [];
+    let denied: Extract<CronEntitlementResult, { ok: false }> | null = null;
     for (const organizationId of ids) {
+      const entitled = await checkCronEntitlement(opts, organizationId);
+      if (!entitled.ok) {
+        denied = entitled;
+        continue;
+      }
       const part = await runWithSatelliteTenant({ organizationId }, () =>
         work(organizationId),
       );
       results.push(await Promise.resolve(part));
     }
+    if (denied && results.length === 0) return denied;
     return { ok: true, results };
   } catch (err) {
     if (err instanceof SatelliteOrganizationUnboundError) {

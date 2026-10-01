@@ -11,6 +11,7 @@ import {
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { assertEnvServiceToken } from "@era/satellite-kit";
 import { Public } from "../auth/decorators/public.decorator";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { ConsumeTradeCreditGrantDto } from "./dto/consume-trade-credit-grant.dto";
 import { TradeCreditService } from "./trade-credit.service";
 
@@ -56,7 +57,10 @@ export class TradeCreditInternalController {
       );
     }
     // Buyer-shaped view — never includes policyGroup
-    return this.tradeCredit.getFacilityView(org, cp);
+    return runWithTenantContextAsync(
+      { organizationId: org, skipTenantFilter: false },
+      () => this.tradeCredit.getFacilityView(org, cp),
+    );
   }
 
   @Post("grants/consume")
@@ -70,13 +74,17 @@ export class TradeCreditInternalController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     this.authorize(authorization, xServiceToken);
-    return this.tradeCredit.consumeGrant({
-      organizationId: dto.organizationId,
-      counterpartyId: dto.counterpartyId,
-      code: dto.code,
-      amount: dto.amount,
-      sourceEntityType: dto.sourceEntityType,
-      sourceEntityId: dto.sourceEntityId,
-    });
+    return runWithTenantContextAsync(
+      { organizationId: dto.organizationId, skipTenantFilter: false },
+      () =>
+        this.tradeCredit.consumeGrant({
+          organizationId: dto.organizationId,
+          counterpartyId: dto.counterpartyId,
+          code: dto.code,
+          amount: dto.amount,
+          sourceEntityType: dto.sourceEntityType,
+          sourceEntityId: dto.sourceEntityId,
+        }),
+    );
   }
 }

@@ -49,7 +49,7 @@ Composition edits must **not** rewrite the contract of stays already opened.
 | **Identity** | Stable product `code` (e.g. `PKG-STANDART`) + integer `version`. Unique `(organizationId, code, version)`. |
 | **Current** | Exactly one row per `code` with `isCurrent=true` / `retiredAt=null` for new check-ins. |
 | **Save composition** | If **any** `ProgramInstance` pins this row → insert **new version** (previous retired; stays keep pin). If **zero** pins → **in-place** mutate current row (bootstrap / fill empty quotas without v+1). |
-| **One current** | Partial unique index `(organization_id, code) WHERE is_current` — at most one sellable row per code. |
+| **One current** | Partial unique index `("organizationId", code) WHERE is_current` — at most one sellable row per code. |
 | **Snapshot prefer** | Assign reads `entitlementSnapshot` whenever present (including empty `members` = frozen empty/heuristic). Null snapshot only until backfill. |
 | **Backfill** | Migration / `POST ?action=backfill-snapshots` fills null snapshots from the pinned template. |
 | **Seed / import** | Skip or `ensureWritableCurrentTemplate` (bump) before mutating a current row that has instances. |

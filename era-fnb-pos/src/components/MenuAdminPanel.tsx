@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  Ban,
+  ChevronDown,
+  ChevronUp,
   Download,
   History,
   Pencil,
@@ -11,16 +12,21 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  CARD_CONTAINER_CLASS,
   CatalogField,
   CatalogFieldKind,
+  DATA_TABLE_CLASS,
   Field,
-  FieldRow,
   ModalFooter,
   ModalShell,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
-import { CARD_CLASS } from "@/lib/design-system";
+import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 
 type MenuItem = {
   id: string;
@@ -79,7 +85,6 @@ function financeRecipesUrl(): string | null {
 export default function MenuAdminPanel() {
   const t = useTranslations("admin.menu");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [message, setMessage] = useState("");
   const [catModal, setCatModal] = useState<"create" | "edit" | null>(null);
   const [catDraft, setCatDraft] = useState({ id: "", name: "", sortOrder: "0" });
   const [itemModal, setItemModal] = useState<"create" | "edit" | null>(null);
@@ -89,6 +94,10 @@ export default function MenuAdminPanel() {
   const [historyTitle, setHistoryTitle] = useState("");
   const [priceHistory, setPriceHistory] = useState<PriceRow[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [query, setQuery] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const recipesHref = financeRecipesUrl();
 
@@ -96,11 +105,7 @@ export default function MenuAdminPanel() {
     const res = await fetch("/api/menu?includeInactive=true");
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      setMessage(
-        data && typeof data === "object" && "error" in data
-          ? String((data as { error: string }).error)
-          : t("saveFailed"),
-      );
+      showApiError(data, t("saveFailed"));
       setCategories([]);
       return;
     }
@@ -110,6 +115,35 @@ export default function MenuAdminPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setSelectedCategoryId((prev) =>
+      prev && categories.some((c) => c.id === prev) ? prev : (categories[0]?.id ?? ""),
+    );
+  }, [categories]);
+
+  async function moveCategory(index: number, direction: -1 | 1) {
+    const next = index + direction;
+    if (next < 0 || next >= categories.length) return;
+    const reordered = [...categories];
+    const [row] = reordered.splice(index, 1);
+    if (!row) return;
+    reordered.splice(next, 0, row);
+    const results = await Promise.all(
+      reordered.map((cat, i) =>
+        fetch(`/api/menu/categories/${cat.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder: (i + 1) * 10 }),
+        }),
+      ),
+    );
+    const failed = results.find((res) => !res.ok);
+    if (failed) {
+      showApiError(await failed.json().catch(() => ({})), t("saveFailed"));
+    }
+    await load();
+  }
 
   function openCreateCategory() {
     setCatDraft({ id: "", name: "", sortOrder: String((categories.length + 1) * 10) });
@@ -126,47 +160,39 @@ export default function MenuAdminPanel() {
   }
 
   async function saveCategory() {
-    setMessage("");
-    if (catModal === "create") {
-      const res = await fetch("/api/menu/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: catDraft.name.trim(),
-          sortOrder: Number(catDraft.sortOrder) || 0,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(data.error ?? t("saveFailed"));
-        return;
-      }
-    } else if (catModal === "edit") {
-      const res = await fetch(`/api/menu/categories/${catDraft.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: catDraft.name.trim(),
-          sortOrder: Number(catDraft.sortOrder) || 0,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(data.error ?? t("saveFailed"));
-        return;
-      }
+    const name = catDraft.name.trim();
+    if (!name) {
+      showApiError({ error: t("saveFailed") }, t("saveFailed"));
+      return;
+    }
+    const res =
+      catModal === "create"
+        ? await fetch("/api/menu/categories", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          })
+        : await fetch(`/api/menu/categories/${catDraft.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(data, t("saveFailed"));
+      return;
     }
     setCatModal(null);
+    showSuccess(t("saved"));
     await load();
   }
 
   async function deleteCategory(id: string) {
-    setMessage("");
     if (!confirm(t("confirmDeleteCategory"))) return;
     const res = await fetch(`/api/menu/categories/${id}`, { method: "DELETE" });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      showApiError(data, t("saveFailed"));
       return;
     }
     await load();
@@ -174,12 +200,14 @@ export default function MenuAdminPanel() {
 
   function openCreateItem(categoryId: string) {
     setEditingItemId(null);
+    setShowDetails(false);
     setItemForm(emptyItemForm(categoryId || categories[0]?.id || ""));
     setItemModal("create");
   }
 
   function openEditItem(item: MenuItem, categoryId: string) {
     setEditingItemId(item.id);
+    setShowDetails(false);
     setItemForm({
       categoryId: item.categoryId ?? categoryId,
       plu: item.plu,
@@ -193,16 +221,35 @@ export default function MenuAdminPanel() {
     setItemModal("edit");
   }
 
+  function nextPlu(categoryId: string): string {
+    const used = new Set(
+      (categories.find((c) => c.id === categoryId)?.items ?? []).map((item) => item.plu),
+    );
+    let n = 1;
+    while (used.has(String(n))) n += 1;
+    return String(n);
+  }
+
   async function saveItem() {
-    setMessage("");
+    const name = itemForm.name.trim();
+    const price = Number(itemForm.priceAzn);
+    if (!name || itemForm.priceAzn.trim() === "" || Number.isNaN(price)) {
+      showApiError({ error: t("saveFailed") }, t("saveFailed"));
+      return;
+    }
+    const typedPlu = itemForm.plu.trim();
     const payload = {
       categoryId: itemForm.categoryId,
-      plu: itemForm.plu.trim(),
-      name: itemForm.name.trim(),
-      priceAzn: Number(itemForm.priceAzn),
+      name,
+      priceAzn: price,
       recipeSku: itemForm.recipeSku.trim() || null,
       imageUrl: itemForm.imageUrl.trim() || null,
       active: itemForm.active,
+      ...(itemModal === "create"
+        ? { plu: typedPlu || nextPlu(itemForm.categoryId) }
+        : typedPlu
+          ? { plu: typedPlu }
+          : {}),
       ...(itemForm.priceReason.trim()
         ? { priceReason: itemForm.priceReason.trim() }
         : {}),
@@ -220,33 +267,21 @@ export default function MenuAdminPanel() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      showApiError(data, t("saveFailed"));
       return;
     }
     setItemModal(null);
-    setMessage(t("saved"));
-    await load();
-  }
-
-  async function deactivateItem(id: string) {
-    setMessage("");
-    const res = await fetch(`/api/menu/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
-      return;
-    }
+    showSuccess(t("saved"));
     await load();
   }
 
   async function openPriceHistory(item: MenuItem) {
-    setMessage("");
     const res = await fetch(`/api/menu/${item.id}/prices`);
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(data.error ?? t("saveFailed"));
+      showApiError(data, t("saveFailed"));
       return;
     }
     setHistoryTitle(`${item.plu} — ${item.name}`);
@@ -254,172 +289,202 @@ export default function MenuAdminPanel() {
     setHistoryOpen(true);
   }
 
+  const needle = query.trim().toLowerCase();
+  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) ?? null;
+  const visibleItems = categories.flatMap((cat) => {
+    if (!needle && cat.id !== selectedCategoryId) return [];
+    return cat.items
+      .filter((item) => {
+        if (!showInactive && !item.active) return false;
+        if (!needle) return true;
+        return (
+          item.name.toLowerCase().includes(needle) ||
+          item.plu.toLowerCase().includes(needle)
+        );
+      })
+      .map((item) => ({ ...item, categoryName: cat.name, categoryId: item.categoryId ?? cat.id }));
+  });
+
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2 justify-between">
-        <p className="text-sm text-[#7F8C8D]">{t("subtitle")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          {recipesHref ? (
-            <a
-              href={recipesHref}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t("recipesInFinance")}
-              title={t("recipesInFinance")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
-            >
-              <Download className="h-4 w-4" />
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {recipesHref ? (
+              <a href={recipesHref} target="_blank" rel="noreferrer" className={SECONDARY_BUTTON_CLASS}>
+                {t("recipesInFinance")}
+              </a>
+            ) : null}
+            <a href="/api/menu/export" className={SECONDARY_BUTTON_CLASS}>
+              <Download className="mr-1 inline h-4 w-4" />
+              Excel
             </a>
-          ) : null}
-          <a
-            href="/api/menu/export"
-            aria-label="Excel"
-            title="Excel"
-            className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
-          >
-            <Download className="h-4 w-4" />
-          </a>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateCategory}>
-            <Plus className="mr-1 inline h-4 w-4" />
-            {t("addCategory")}
-          </button>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => openCreateItem(categories[0]?.id ?? "")}
-            disabled={categories.length === 0}
-          >
-            <Plus className="mr-1 inline h-4 w-4" />
-            {t("addItem")}
-          </button>
-        </div>
+          </div>
+        }
+      />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("search")}
+          className={`${INPUT_CLASS} min-w-[14rem] flex-1`}
+        />
+        <label className="flex items-center gap-2 text-sm text-[#34495E]">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          {t("showInactive")}
+        </label>
       </div>
 
-      {message && <p className="mb-3 text-sm text-[#2C3E50]">{message}</p>}
-
-      {categories.length === 0 && (
-        <p className="text-sm text-[#7F8C8D]">{t("emptyCategories")}</p>
-      )}
-
-      <div className="space-y-4">
-        {categories.map((cat) => (
-          <div key={cat.id} className={`${CARD_CLASS} p-4`}>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-semibold">
-                {cat.name}{" "}
-                <span className="text-xs font-normal text-[#7F8C8D]">
-                  #{cat.sortOrder ?? 0}
-                </span>
-              </h3>
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  aria-label={t("edit")}
-                  title={t("edit")}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
-                  onClick={() => openEditCategory(cat)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={t("addItem")}
-                  title={t("addItem")}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
-                  onClick={() => openCreateItem(cat.id)}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={t("delete")}
-                  title={t("delete")}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
-                  onClick={() => void deleteCategory(cat.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
-                  <th className="py-1 pr-2">{t("plu")}</th>
-                  <th className="py-1 pr-2">{t("name")}</th>
-                  <th className="py-1 pr-2">{t("price")}</th>
-                  <th className="py-1 pr-2">{t("recipeSku")}</th>
-                  <th className="py-1 pr-2">{t("status")}</th>
-                  <th className="py-1 text-right">{t("actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cat.items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#EEF1F3]">
-                    <td className="py-2 pr-2">
-                      <div className="flex items-center gap-2">
-                        {item.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            className="h-8 w-8 rounded object-cover"
-                          />
-                        ) : null}
-                        {item.plu}
-                      </div>
-                    </td>
-                    <td className="py-2 pr-2">{item.name}</td>
-                    <td className="py-2 pr-2">{Number(item.priceAzn).toFixed(2)}</td>
-                    <td className="py-2 pr-2 font-mono text-xs">
-                      {item.recipeSku || "—"}
-                    </td>
-                    <td className="py-2 pr-2">
-                      {item.active ? t("active") : t("inactive")}
-                    </td>
-                    <td className="py-2 text-right">
-                      <button
-                        type="button"
-                        aria-label={t("edit")}
-                        title={t("edit")}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
-                        onClick={() => openEditItem(item, cat.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("priceHistory")}
-                        title={t("priceHistory")}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
-                        onClick={() => void openPriceHistory(item)}
-                      >
-                        <History className="h-4 w-4" />
-                      </button>
-                      {item.active ? (
-                        <button
-                          type="button"
-                          aria-label={t("deactivate")}
-                          title={t("deactivate")}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
-                          onClick={() => void deactivateItem(item.id)}
-                        >
-                          <Ban className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-                {cat.items.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-2 text-[#7F8C8D]">
-                      {t("noItems")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+      <div className="grid items-start gap-3 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className={`${CARD_CLASS} p-2`}>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {t("category")}
+            </p>
+            <button
+              type="button"
+              aria-label={t("addCategory")}
+              title={t("addCategory")}
+              className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
+              onClick={openCreateCategory}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
-        ))}
+          {categories.length === 0 && (
+            <p className="px-2 py-3 text-sm text-[#7F8C8D]">{t("emptyCategories")}</p>
+          )}
+          <ul className="space-y-1">
+            {categories.map((cat, index) => {
+              const selected = cat.id === selectedCategoryId;
+              return (
+                <li key={cat.id} className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setSelectedCategoryId(cat.id);
+                    }}
+                    className={`min-w-0 flex-1 truncate rounded px-2 py-1.5 text-left text-sm ${
+                      selected ? "bg-[#2980B9] text-white" : "text-[#34495E] hover:bg-[#EBEDF0]"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("moveUp")}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-[#7F8C8D] hover:bg-[#EBEDF0] disabled:opacity-30"
+                    disabled={index === 0}
+                    onClick={() => void moveCategory(index, -1)}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("moveDown")}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-[#7F8C8D] hover:bg-[#EBEDF0] disabled:opacity-30"
+                    disabled={index === categories.length - 1}
+                    onClick={() => void moveCategory(index, 1)}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("edit")}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
+                    onClick={() => openEditCategory(cat)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("delete")}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-[#C0392B] hover:bg-[#EBEDF0]"
+                    onClick={() => void deleteCategory(cat.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-[#34495E]">
+              {needle ? t("searchResults") : (selectedCategory?.name ?? t("category"))}
+            </h2>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!selectedCategoryId}
+              onClick={() => openCreateItem(selectedCategoryId)}
+            >
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("addItem")}
+            </button>
+          </div>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className="border-b border-[#D5DADF] text-left text-[#7F8C8D]">
+                <th className="py-2 pr-2">{t("name")}</th>
+                {needle ? <th className="py-2 pr-2">{t("category")}</th> : null}
+                <th className="py-2 pr-2">{t("price")}</th>
+                <th className="py-2 text-right">{t("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleItems.map((item) => (
+                <tr key={item.id} className="border-b border-[#EEF1F3]">
+                  <td className={`py-2 pr-2 font-medium ${item.active ? "" : "text-[#7F8C8D]"}`}>
+                    {item.name}
+                    {!item.active ? (
+                      <span className="ml-2 text-xs font-normal">{t("inactive")}</span>
+                    ) : null}
+                  </td>
+                  {needle ? (
+                    <td className="py-2 pr-2 text-[#7F8C8D]">{item.categoryName}</td>
+                  ) : null}
+                  <td className="py-2 pr-2">{Number(item.priceAzn).toFixed(2)}</td>
+                  <td className="py-2 text-right">
+                    <button
+                      type="button"
+                      aria-label={t("edit")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
+                      onClick={() => openEditItem(item, item.categoryId)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("priceHistory")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
+                      onClick={() => void openPriceHistory(item)}
+                    >
+                      <History className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {visibleItems.length === 0 && (
+                <tr>
+                  <td colSpan={needle ? 4 : 3} className="py-3 text-[#7F8C8D]">
+                    {t("noItems")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <ModalShell
@@ -427,22 +492,12 @@ export default function MenuAdminPanel() {
         title={catModal === "create" ? t("addCategory") : t("editCategory")}
         onClose={() => setCatModal(null)}
       >
-        <FieldRow cols={2}>
-          <Field
-            label={t("categoryName")}
-            preset="shortText"
-            value={catDraft.name}
-            onChange={(e) => setCatDraft((d) => ({ ...d, name: e.target.value }))}
-          />
-          <Field
-            label={t("sortOrder")}
-            preset="shortText"
-            value={catDraft.sortOrder}
-            onChange={(e) =>
-              setCatDraft((d) => ({ ...d, sortOrder: e.target.value }))
-            }
-          />
-        </FieldRow>
+        <Field
+          label={t("categoryName")}
+          preset="shortText"
+          value={catDraft.name}
+          onChange={(e) => setCatDraft((d) => ({ ...d, name: e.target.value }))}
+        />
         <ModalFooter
           onCancel={() => setCatModal(null)}
           onSubmit={() => void saveCategory()}
@@ -456,38 +511,6 @@ export default function MenuAdminPanel() {
         onClose={() => setItemModal(null)}
       >
         <div className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block text-[#7F8C8D]">{t("category")}</span>
-            <select
-              className="w-full rounded border border-[#D5DADF] px-2 py-1.5"
-              value={itemForm.categoryId}
-              onChange={(e) =>
-                setItemForm((f) => ({ ...f, categoryId: e.target.value }))
-              }
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <FieldRow cols={2}>
-            <Field
-              label={t("plu")}
-              preset="code"
-              value={itemForm.plu}
-              onChange={(e) => setItemForm((f) => ({ ...f, plu: e.target.value }))}
-            />
-            <Field
-              label={t("price")}
-              preset="amount"
-              value={itemForm.priceAzn}
-              onChange={(e) =>
-                setItemForm((f) => ({ ...f, priceAzn: e.target.value }))
-              }
-            />
-          </FieldRow>
           <CatalogField
             kind={"SEARCHABLE" as CatalogFieldKind}
             label={t("name")}
@@ -511,42 +534,79 @@ export default function MenuAdminPanel() {
             }
           />
           <Field
-            label={t("recipeSku")}
-            preset="code"
-            value={itemForm.recipeSku}
+            label={t("price")}
+            preset="amount"
+            value={itemForm.priceAzn}
             onChange={(e) =>
-              setItemForm((f) => ({ ...f, recipeSku: e.target.value }))
+              setItemForm((f) => ({ ...f, priceAzn: e.target.value }))
             }
           />
-          <p className="text-xs text-[#7F8C8D]">{t("recipeSkuHint")}</p>
-          <Field
-            label={t("imageUrl")}
-            preset="shortText"
-            value={itemForm.imageUrl}
-            onChange={(e) =>
-              setItemForm((f) => ({ ...f, imageUrl: e.target.value }))
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("category")}
+            value={itemForm.categoryId}
+            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            onChange={(next) =>
+              setItemForm((f) => ({
+                ...f,
+                categoryId: Array.isArray(next) ? next[0] ?? "" : next,
+              }))
             }
           />
-          {itemModal === "edit" && (
-            <Field
-              label={t("priceReason")}
-              preset="shortText"
-              value={itemForm.priceReason}
-              onChange={(e) =>
-                setItemForm((f) => ({ ...f, priceReason: e.target.value }))
-              }
-            />
+          <button
+            type="button"
+            className="text-sm text-[#2980B9]"
+            onClick={() => setShowDetails((v) => !v)}
+          >
+            {t("details")}
+          </button>
+          {showDetails && (
+            <>
+              <Field
+                label={t("plu")}
+                preset="code"
+                value={itemForm.plu}
+                onChange={(e) => setItemForm((f) => ({ ...f, plu: e.target.value }))}
+              />
+              <Field
+                label={t("recipeSku")}
+                preset="code"
+                value={itemForm.recipeSku}
+                onChange={(e) =>
+                  setItemForm((f) => ({ ...f, recipeSku: e.target.value }))
+                }
+              />
+              <p className="text-xs text-[#7F8C8D]">{t("recipeSkuHint")}</p>
+              <Field
+                label={t("imageUrl")}
+                preset="shortText"
+                value={itemForm.imageUrl}
+                onChange={(e) =>
+                  setItemForm((f) => ({ ...f, imageUrl: e.target.value }))
+                }
+              />
+              {itemModal === "edit" && (
+                <Field
+                  label={t("priceReason")}
+                  preset="shortText"
+                  value={itemForm.priceReason}
+                  onChange={(e) =>
+                    setItemForm((f) => ({ ...f, priceReason: e.target.value }))
+                  }
+                />
+              )}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={itemForm.active}
+                  onChange={(e) =>
+                    setItemForm((f) => ({ ...f, active: e.target.checked }))
+                  }
+                />
+                {t("active")}
+              </label>
+            </>
           )}
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={itemForm.active}
-              onChange={(e) =>
-                setItemForm((f) => ({ ...f, active: e.target.checked }))
-              }
-            />
-            {t("active")}
-          </label>
         </div>
         <ModalFooter
           onCancel={() => setItemModal(null)}

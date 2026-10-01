@@ -1,0 +1,2 @@
+ALTER TABLE "LostFoundItem" ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
+ALTER TABLE "LostFoundItem" ADD COLUMN IF NOT EXISTS "photoData" TEXT;

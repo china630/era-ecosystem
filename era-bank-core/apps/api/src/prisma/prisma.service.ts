@@ -5,9 +5,9 @@ import { Pool } from "pg";
 import {
   asSatellitePrisma,
   createSatelliteTenantExtension,
-  setRuntimeOrganizationId,
   type SatellitePrisma,
 } from "@era/satellite-kit";
+import { bindDedicatedBankOrganizationFromEnv } from "../common/bank-org.config";
 
 type ExtendedClient = SatellitePrisma<PrismaClient> & { __pool: Pool };
 
@@ -41,10 +41,7 @@ export class PrismaService
 {
   constructor() {
     super();
-    const bankOrg =
-      process.env.ERA_BANK_ORGANIZATION_ID?.trim() ||
-      process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
-    if (bankOrg) setRuntimeOrganizationId(bankOrg);
+    bindDedicatedBankOrganizationFromEnv();
   }
 
   async onModuleInit() {

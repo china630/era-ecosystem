@@ -4,11 +4,26 @@
  * Stay policy: check-in 14:00, check-out 12:00 Asia/Baku.
  * Per-room date ranges must not overlap (adjacent turnover allowed).
  *
- * Run after reference/master seed:
- *   node prisma/load-nafta-transactions.cjs
+ * Run after reference/master seed, for one org (wipes and reloads that org only):
+ *   node prisma/load-nafta-transactions.cjs --org=<uuid>
+ *   (or ERA_SATELLITE_ORGANIZATION_ID=<uuid>)
  */
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { Prisma, PrismaClient } = require("@prisma/client");
+const { createSatelliteTenantExtension } = require("@era/satellite-kit/tenancy");
+const { isSentinelOrganizationId, runWithSatelliteTenant } = require("@era/satellite-kit");
+
+const prisma = new PrismaClient().$extends(createSatelliteTenantExtension(Prisma));
+
+function requireOrgId() {
+  const id =
+    process.argv.find((a) => a.startsWith("--org="))?.slice(6)?.trim() ||
+    process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
+    "";
+  if (!id || isSentinelOrganizationId(id)) {
+    throw new Error("Pass --org=<uuid> or ERA_SATELLITE_ORGANIZATION_ID (real org UUID)");
+  }
+  return id;
+}
 
 function mulberry32(a) {
   return function () {
@@ -345,7 +360,8 @@ async function main() {
   );
 }
 
-main()
+Promise.resolve()
+  .then(() => runWithSatelliteTenant({ organizationId: requireOrgId() }, main))
   .catch((e) => {
     console.error("TX ERR", e);
     process.exit(1);

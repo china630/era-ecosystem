@@ -23,7 +23,7 @@
 
 **Edition / wave rollup (BE only)** = worst(POS, STOCK) → **✅**.  
 AC-RET-FISCAL remains 🟡 and is **out of Scaffold BE rollup** until vendor/fiscal modes leave STUB. Do **not** mark FISCAL Scaffold ✅.  
-AC-RET-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  
+AC-RET-TENANT is 🟡 (Nafta retail placement is SHARED; schema+filter) and stays **out of Scaffold BE rollup** until field isolation UAT.  
 Do not call this table «product readiness».
 
 ### Residual register

@@ -18,7 +18,7 @@
 - **Episode as care course (CLI-55 SCREEN):** [clinic-episode-as-clinical-course.md](../adr/clinic-episode-as-clinical-course.md) — card switcher + walk-in close landed; AC-CLI-EPISODE 🟡 out of BE rollup until field UAT; not SHIPPED / not Pilot
 - **W4 landed:** unmatched WO nahiye queue + `#23` nahiye column (CLI-49). Product-Readiness remains SCREEN until UAT-SMOKE.
 - **Nafta card wave (2026-08-30):** (1) check-in intake `PKG-NAFTA-INTAKE` (not WO `#33`); (2) physio S UX + rematch; (3) Baku slot clock. Still SCREEN / not Pilot-ready / not GA — droplet seed + re-Apply + UAT-SMOKE required.
-- **Declared, not this edition:** SHARED multi-tenant clinic pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). Waves 3–5: tenant roots + kit filter (CP-TENANT-01 API / AC-CLI-TENANT 🟡); Nafta remains one-org DEDICATED/ONPREM. Do not sell SHARED clinic.
+- **Nafta placement:** clinic runs SHARED (one process, one DB, many `organizationId`). **Not this edition:** selling that pool, and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). AC-CLI-TENANT stays 🟡 until field two-org UAT. Do not sell SHARED clinic.
 
 ## Definition of Done (soft / scaffold)
 

@@ -14,6 +14,7 @@ import {
 } from "@erafinance/database";
 import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CronModuleGateService } from "../subscription/cron-module-gate.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
@@ -688,21 +689,24 @@ export class TradeCreditPolicyService {
    * or invoice revenue recognize. Quiet no-op when SKU off or no facility.
    */
   scheduleReclassify(organizationId: string, counterpartyId: string): void {
-    void (async () => {
-      const on = await this.cronGate.isModuleOn(
-        organizationId,
-        ModuleEntitlement.TRADE_CREDIT_CONTROL,
-      );
-      if (!on) return;
-      const facility = await this.prisma.tradeCreditFacility.findUnique({
-        where: {
-          organizationId_counterpartyId: { organizationId, counterpartyId },
-        },
-        select: { id: true },
-      });
-      if (!facility) return;
-      await this.reclassifyCounterparty(organizationId, counterpartyId);
-    })().catch((e) => {
+    void runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      async () => {
+        const on = await this.cronGate.isModuleOn(
+          organizationId,
+          ModuleEntitlement.TRADE_CREDIT_CONTROL,
+        );
+        if (!on) return;
+        const facility = await this.prisma.tradeCreditFacility.findUnique({
+          where: {
+            organizationId_counterpartyId: { organizationId, counterpartyId },
+          },
+          select: { id: true },
+        });
+        if (!facility) return;
+        await this.reclassifyCounterparty(organizationId, counterpartyId);
+      },
+    ).catch((e) => {
       this.logger.warn(
         `scheduleReclassify failed org=${organizationId} cp=${counterpartyId}: ${
           e instanceof Error ? e.message : String(e)
@@ -713,21 +717,30 @@ export class TradeCreditPolicyService {
 
   @Cron("0 2 * * *", { timeZone: "Asia/Baku" })
   async runNightlyReclassify(): Promise<void> {
-    const orgs = await this.prisma.tradeCreditFacility.findMany({
-      select: { organizationId: true },
-      distinct: ["organizationId"],
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
     });
     let ran = 0;
-    for (const { organizationId } of orgs) {
-      const on = await this.cronGate.isModuleOn(
-        organizationId,
-        ModuleEntitlement.TRADE_CREDIT_CONTROL,
-      );
-      if (!on) continue;
+    for (const { id: organizationId } of orgs) {
       try {
-        await this.reclassifyOrganization(organizationId);
-        await this.fillDecisionFollowups(organizationId);
-        ran += 1;
+        const done = await runWithTenantContextAsync(
+          { organizationId, skipTenantFilter: false },
+          async () => {
+            const facilities = await this.prisma.tradeCreditFacility.count({
+              where: { organizationId },
+            });
+            if (facilities === 0) return false;
+            const on = await this.cronGate.isModuleOn(
+              organizationId,
+              ModuleEntitlement.TRADE_CREDIT_CONTROL,
+            );
+            if (!on) return false;
+            await this.reclassifyOrganization(organizationId);
+            await this.fillDecisionFollowups(organizationId);
+            return true;
+          },
+        );
+        if (done) ran += 1;
       } catch (e) {
         this.logger.warn(
           `Nightly trade-credit reclassify failed org=${organizationId}: ${

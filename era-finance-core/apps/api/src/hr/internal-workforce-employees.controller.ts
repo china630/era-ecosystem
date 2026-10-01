@@ -11,6 +11,7 @@ import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "../auth/decorators/public.decorator";
 import { InternalServiceTokenGuard } from "../common/guards/internal-service-token.guard";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { WorkforceOpeningDto } from "./dto/workforce-opening.dto";
 import { EmployeesService } from "./employees.service";
@@ -41,13 +42,17 @@ export class InternalWorkforceEmployeesController {
     if (!hasHr) {
       throw new ForbiddenException("hr_full required");
     }
-    return this.employees.applyWorkforceOpening(organizationId, cpEmploymentId, {
-      salary: dto.salary,
-      internalRate: dto.internalRate,
-      balanceDays: dto.balanceDays,
-      baseVacationDaysPerYear: dto.baseVacationDaysPerYear,
-      asOfDate: dto.asOfDate,
-    });
+    return runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.employees.applyWorkforceOpening(organizationId, cpEmploymentId, {
+          salary: dto.salary,
+          internalRate: dto.internalRate,
+          balanceDays: dto.balanceDays,
+          baseVacationDaysPerYear: dto.baseVacationDaysPerYear,
+          asOfDate: dto.asOfDate,
+        }),
+    );
   }
 
   @Get("by-cp-employment")
@@ -79,17 +84,22 @@ export class InternalWorkforceEmployeesController {
         hrFull: false,
       };
     }
-    const row = await this.prisma.employee.findFirst({
-      where: {
-        organizationId: organizationId.trim(),
-        cpEmploymentId: cpEmploymentId.trim(),
-      },
-      select: {
-        salary: true,
-        vacationDaysBalance: true,
-        employmentStatus: true,
-      },
-    });
+    const orgId = organizationId.trim();
+    const row = await runWithTenantContextAsync(
+      { organizationId: orgId, skipTenantFilter: false },
+      () =>
+        this.prisma.employee.findFirst({
+          where: {
+            organizationId: orgId,
+            cpEmploymentId: cpEmploymentId.trim(),
+          },
+          select: {
+            salary: true,
+            vacationDaysBalance: true,
+            employmentStatus: true,
+          },
+        }),
+    );
     if (!row) {
       return {
         salary: null,

@@ -20,7 +20,11 @@ export async function GET() {
   }
 }
 
-const createSchema = z.object({ code: z.string(), name: z.string() });
+const createSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  department: z.enum(['ROOMS', 'PUBLIC_AREA', 'LAUNDRY']).optional(),
+});
 const assignSchema = z.object({ taskId: z.string().uuid(), housekeeperId: z.string().uuid().nullable() });
 
 export async function POST(request: Request) {

@@ -155,6 +155,7 @@ export default function HkRosterPage() {
           onChange={(e) => setWeekStart(e.target.value)}
         />
       </label>
+      {order.length === 0 ? <p className="mb-4 text-sm text-[#7F8C8D]">{t('rosterEmpty')}</p> : null}
       <div className="space-y-4">
         {order.map((hid) => {
           const row = byPerson.get(hid);

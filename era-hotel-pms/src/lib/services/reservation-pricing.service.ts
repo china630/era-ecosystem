@@ -200,6 +200,7 @@ export async function recalcReservationDailyRates(
     ...rows.map((r) =>
       prisma.reservationDailyRate.create({
         data: {
+          organizationId: res.organizationId,
           reservationId,
           stayDate: r.stayDate,
           amount: toDecimal(r.amount),
@@ -245,6 +246,7 @@ export async function chargeAllRoomNights(reservationId: string) {
     const recalc = await recalcReservationDailyRates(reservationId);
     rates = recalc.dailyRates.map((r) => ({
       id: '',
+      organizationId: res.organizationId,
       reservationId,
       stayDate: r.stayDate,
       amount: toDecimal(r.amount),

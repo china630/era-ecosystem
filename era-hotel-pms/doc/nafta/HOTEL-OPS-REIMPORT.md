@@ -25,20 +25,21 @@ On droplet (from repo mount or copied script):
 
 ```bash
 docker exec \
-  -e ERA_SKIP_TENANT_FILTER=1 \
-  -e ERA_SATELLITE_ORGANIZATION_ID=6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b \
   -e DATABASE_URL="postgresql://era:${POSTGRES_PASSWORD}@era-postgres:5432/era_hotel_pms" \
-  era-hotel-pms npx tsx scripts/ops/wipe-hotel-ops-transactional.ts --dry-run
+  era-hotel-pms npx tsx scripts/ops/wipe-hotel-ops-transactional.ts \
+    --org=6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b --dry-run
 
 # then without --dry-run
 ```
 
+The script runs inside that org's tenant context; the kit filter stays on.
+
 **Verify:**
 
 ```sql
-SELECT count(*) FROM "Guest";          -- expect 0
-SELECT count(*) FROM "Reservation";    -- expect 0
-SELECT count(*) FROM "Folio";          -- expect 0
+SELECT count(*) FROM "Guest"       WHERE "organizationId" = '6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b';  -- expect 0
+SELECT count(*) FROM "Reservation" WHERE "organizationId" = '6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b';  -- expect 0
+SELECT count(*) FROM "Folio"       WHERE "organizationId" = '6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b';  -- expect 0
 ```
 
 ---
@@ -65,10 +66,8 @@ Canon: [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §3.2.
 ### CLI (pack directory on server)
 
 ```bash
-docker exec \
-  -e ERA_SKIP_TENANT_FILTER=1 \
-  -e ERA_SATELLITE_ORGANIZATION_ID=6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b \
-  era-hotel-pms npx tsx scripts/ops/import-hotel-pack.ts /import-data/hotel
+docker exec era-hotel-pms npx tsx scripts/ops/import-hotel-pack.ts /import-data/hotel \
+  --org=6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b
 ```
 
 Resume from guests only: `--from=guests`

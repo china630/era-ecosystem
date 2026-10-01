@@ -12,6 +12,7 @@ import {
   resolveGuestIdForBridgeReservation,
 } from '@/lib/integration/elektraweb-bridge/guest-bridge-resolve';
 import { resolveAgencyIdFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/resolve-agency-from-ew';
+import { bookingSourceIdFromAgency } from '@/lib/services/booking-source.service';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 import {
@@ -117,6 +118,10 @@ export async function upsertReservationFromElektrawebRow(
   });
 
   const agencyId = resolvedAgencyId ?? existing?.agencyId ?? undefined;
+  // EW has no sell-path column; fill only an empty source so FO edits survive re-sync.
+  const inferredSourceId = existing?.sourceId
+    ? null
+    : await bookingSourceIdFromAgency(bridgeRequestOrganizationId(), agencyId);
 
   const data = {
     organizationId: bridgeRequestOrganizationId(),
@@ -126,6 +131,7 @@ export async function upsertReservationFromElektrawebRow(
     guestId,
     ratePlanId,
     agencyId,
+    sourceId: inferredSourceId ?? undefined,
     checkInDate,
     checkOutDate,
     status,
@@ -146,6 +152,7 @@ export async function upsertReservationFromElektrawebRow(
       guestId: data.guestId,
       ratePlanId: data.ratePlanId,
       ...(resolvedAgencyId ? { agencyId: resolvedAgencyId } : {}),
+      ...(inferredSourceId ? { sourceId: inferredSourceId } : {}),
       checkInDate: data.checkInDate,
       checkOutDate: data.checkOutDate,
       status: data.status,

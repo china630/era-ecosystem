@@ -56,7 +56,7 @@ The product is published as the **`industry_banking`** satellite with pluggable 
 | Bundles | `banking_bundle_retail`, `banking_bundle_universal` | bundle |
 | Branch quota | metered `active_branches` | tier quota |
 
-Licensing per bank = activation of the satellite + a set of modules **per deployment** (one deployment = one bank). The **number of active branches is a metered quota** (see D5).
+Licensing per bank = activation of the satellite + a set of modules. An appliance is one bank per process; a SHARED pool is many banks in one process (D8). The **number of active branches is a metered quota** (see D5).
 
 ### D4 — MDM is shared, never duplicated; `banking-core` builds CIF on top of it
 
@@ -102,7 +102,7 @@ The BullMQ event bus remains, but only for **notifications, statements, analytic
 - **Current implementation:** one deployment = one bank (`ERA_BANK_ORGANIZATION_ID`) is the usual **appliance**, not a schema law and **not** the SHARED login SoT.
 - **Product intent:** Bank uses the **same** topology ladder as other satellites (`SHARED` / `DEDICATED` / `ONPREM`) until the owner writes an exception. Live SHARED pool is not built yet (same as hotel/clinic TENANT 🟡) — do **not** narrate a bank-only ban. Canon: [deployment-topology.md](./deployment-topology.md).
 - **Staff login:** `era-bank` local ops login follows [org-public-number-and-login-host.md](./org-public-number-and-login-host.md) (`orgNo` on SHARED, Host bind, JWT UUID). Branches are not a substitute org key.
-- **DBO:** customers do not type ERA ID; channel org comes from Host / bind. Engine request tenant is `X-Organization-Id` (ALS), not process env, on SHARED.
+- **DBO:** customers do not type ERA ID; channel org comes from Host / bind. Engine request tenant is `X-Organization-Id` (ALS), not process env, on SHARED. Boot, Sync bind, and runtime-config do not write `ERA_BANK_ORGANIZATION_ID` onto the process when topology is SHARED. DBO demo seed enters that lab bank and upserts the Open API key on `(organizationId, keyHash)`.
 - **On-prem / private-cloud capable**: AZ banks frequently require data inside their perimeter. The regulated engine (`era-bank-core`) must run isolated, including an **on-prem reference data mode** (no dependency on the public `data-hub`).
 - Crypto keys (`PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY`) held by the bank; identical across MDM resolve paths where cross-system resolution is used.
 - Licensing/activation through orchestrator (`industry_banking` gate + module set), but a bank license is a contract + activation key rather than SMB post-paid metering.

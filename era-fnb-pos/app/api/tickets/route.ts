@@ -118,6 +118,7 @@ export async function POST(request: Request) {
               menuItemId = menuItem?.id;
             }
             return {
+              organizationId: requestOrganizationId(),
               description: l.description,
               qty: l.qty,
               unitPriceAzn: l.unitPriceAzn,

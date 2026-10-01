@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       totalAzn: subtotal,
       lines: {
         create: body.lines.map((l) => ({
+          organizationId: requestOrganizationId(),
           description: l.description,
           qty: l.qty,
           unitPriceAzn: l.unitPriceAzn,

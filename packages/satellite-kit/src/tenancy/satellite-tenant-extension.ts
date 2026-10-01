@@ -180,11 +180,7 @@ export function createSatelliteTenantExtension(
           if (!TENANT_MODELS.has(model)) {
             return query(args);
           }
-          const filter = resolveSatelliteTenantFilter();
-          if (filter.mode === "skip") {
-            return query(args);
-          }
-          const orgId = filter.organizationId;
+          const orgId = resolveSatelliteTenantFilter().organizationId;
           const a = (args ?? {}) as Record<string, unknown>;
 
           switch (operation) {

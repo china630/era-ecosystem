@@ -2,7 +2,7 @@
 
 **Status:** Accepted (vocabulary + target architecture)  
 **Date:** 2026-08-17  
-**Implementation:** Not built. Current industry satellites are still mostly **one process + one DB + one org** (Nafta appliance).  
+**Implementation:** Nafta hotel, clinic, and retail run **SHARED** (one process + one DB of that satellite, many `organizationId`). DEDICATED and ONPREM stay placement options for other customers. Row isolation on hotel child/line tables is part of the hotel child-tenant wave; AC-*-TENANT stays 🟡 until field two-org UAT. Do not sell SHARED from placement alone. Other industry satellites are not implied SHARED by the Nafta pool.  
 **Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-organization-bind.md](./satellite-organization-bind.md) · [era-bank-core.md](./era-bank-core.md) D8 · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
 
 ## Context
@@ -156,7 +156,7 @@ Same topology vocabulary and `organizationId` discipline as other satellites. **
 
 ### 8. Git / deploy scopes
 
-Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR, then orchestrator placement, then finance SSO/config. Do not ship “all satellites + orch + Nafta compose” in one PR. Nafta appliance deploy ≠ SHARED pool deploy (same image, different values).
+Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR, then orchestrator placement, then finance SSO/config. Do not ship “all satellites + orch + Nafta compose” in one PR. Nafta hotel/clinic/retail already deploy as a SHARED pool (same image as DEDICATED; many `organizationId` in one DB). Do not collapse that into one PR with every other satellite.
 
 ## Consequences
 
@@ -174,6 +174,6 @@ Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR,
 | CP-CFG-01 | Runtime-config Sync fan-out to industry + Finance Nest (API — not SHIPPED) |
 | CP-LAUNCH-01 | Owner launcher base URL from SatelliteEndpoint + env fallback (API — not SHIPPED) |
 | CP-PLACE-01 | PlacementJob admin API + host agent poll + slice metadata stub (API — not SHIPPED; no live dump/migrate) |
-| CP-TENANT-01 | Additive `organizationId` on clinic/hotel/fnb tenant roots + kit Prisma filter (API; live SHARED pool not done) |
+| CP-TENANT-01 | `organizationId` on tenant roots + hotel child/line tables + kit Prisma filter (API). Nafta hotel/clinic/retail placement is SHARED. Field two-org UAT still open — not sellable as multi-tenant SaaS |
 
-Product-Readiness: do **not** sell SHARED pool or automated topology migrate. Edition stays `mvp`. Live SHARED pool ops remain open (Wave 17).
+Product-Readiness: do **not** sell SHARED pool or automated topology migrate. Edition stays `mvp`. Nafta hotel/clinic/retail already run as a SHARED placement; field two-org UAT and sell remain open (Wave 17).

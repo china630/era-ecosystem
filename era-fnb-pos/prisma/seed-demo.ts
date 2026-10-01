@@ -7,16 +7,25 @@
  *   ERA_LAB_DEMO_ORGANIZATION_ID=<uuid>
  *   or CONTROL_PLANE_SERVICE_TOKEN + orch URL to resolve orgNo 100000.
  */
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { ERA_LAB_DEMO } from "@era/contracts";
-import { hashPassword, isSentinelOrganizationId } from "@era/satellite-kit";
+import {
+  enterSatelliteTenant,
+  hashPassword,
+  isSentinelOrganizationId,
+} from "@era/satellite-kit";
+import {
+  asSatellitePrisma,
+  createSatelliteTenantExtension,
+} from "@era/satellite-kit/tenancy";
 import { ensureSystemFnbRoles } from "../src/lib/auth/ensure-system-fnb-roles";
 import { hashStaffPin } from "../src/lib/labor-pin";
 import { recordMenuItemPrice } from "../src/lib/menu-price-history";
 
-process.env.ERA_SKIP_TENANT_FILTER = "1";
-
-const prisma = new PrismaClient();
+const base = new PrismaClient();
+const prisma = asSatellitePrisma(
+  base.$extends(createSatelliteTenantExtension(Prisma as never) as never) as unknown as PrismaClient,
+);
 
 async function resolveLabOrganizationId(): Promise<string> {
   const envId = process.env.ERA_LAB_DEMO_ORGANIZATION_ID?.trim();
@@ -64,11 +73,12 @@ async function resolveLabOrganizationId(): Promise<string> {
 
 async function main() {
   const organizationId = await resolveLabOrganizationId();
+  enterSatelliteTenant({ organizationId });
 
   await ensureSystemFnbRoles(prisma, organizationId, "kafe");
 
   const managerRole = await prisma.role.findFirstOrThrow({
-    where: { organizationId, code: "FB_MANAGER" },
+    where: { code: "FB_MANAGER" },
   });
 
   const ownerHash = await hashPassword(ERA_LAB_DEMO.ownerPassword);
@@ -86,7 +96,6 @@ async function main() {
       fullName: "ERA Lab Owner",
     },
     create: {
-      organizationId,
       login: ERA_LAB_DEMO.ownerLogin,
       email: ERA_LAB_DEMO.ownerEmail,
       fullName: "ERA Lab Owner",
@@ -98,7 +107,6 @@ async function main() {
   await prisma.fnbOrgProfile.upsert({
     where: { organizationId },
     create: {
-      organizationId,
       edition: "kafe",
       hotelMode: false,
       waiterPinPacks: 1,
@@ -116,7 +124,6 @@ async function main() {
     where: { organizationId_code: { organizationId, code: "KAFE" } },
     update: { name: ERA_LAB_DEMO.cafeName, publicSlug: "era-lab-kafe", active: true },
     create: {
-      organizationId,
       code: "KAFE",
       name: ERA_LAB_DEMO.cafeName,
       revenueCenterCode: "FOOD",
@@ -125,7 +132,7 @@ async function main() {
   });
 
   const phantom = await prisma.outlet.findFirst({
-    where: { organizationId, code: "RESTAURANT" },
+    where: { code: "RESTAURANT" },
   });
   if (phantom) {
     const tickets = await prisma.ticket.count({ where: { outletId: phantom.id } });
@@ -145,7 +152,6 @@ async function main() {
       update: {},
       create: {
         outletId: outlet.id,
-        organizationId,
         code,
         name: `Masa ${code}`,
         seats: 4,
@@ -165,7 +171,6 @@ async function main() {
       fullName: "Lab Cashier",
     },
     create: {
-      organizationId,
       staffCode: "CASHIER-01",
       fullName: "Lab Cashier",
       pinHash: hashStaffPin(ERA_LAB_DEMO.cashierPin),
@@ -187,7 +192,6 @@ async function main() {
       fullName: "Lab Waiter",
     },
     create: {
-      organizationId,
       staffCode: "WAITER-01",
       fullName: "Lab Waiter",
       pinHash: hashStaffPin(ERA_LAB_DEMO.waiterPin),
@@ -197,19 +201,17 @@ async function main() {
     },
   });
 
-  let cat = await prisma.menuCategory.findFirst({
-    where: { organizationId, outletId: outlet.id, name: "Əsas" },
-  });
-  if (!cat) {
-    cat = await prisma.menuCategory.create({
+  const cat =
+    (await prisma.menuCategory.findFirst({
+      where: { outletId: outlet.id, name: "Əsas" },
+    })) ??
+    (await prisma.menuCategory.create({
       data: {
-        organizationId,
         outletId: outlet.id,
         name: "Əsas",
         sortOrder: 1,
       },
-    });
-  }
+    }));
 
   const dishes: Array<{ plu: string; name: string; priceAzn: number }> = [
     { plu: "KAFE-001", name: "Dönər", priceAzn: 6 },
@@ -222,7 +224,6 @@ async function main() {
       where: { categoryId_plu: { categoryId: cat.id, plu: d.plu } },
       update: { name: d.name, priceAzn: d.priceAzn },
       create: {
-        organizationId,
         categoryId: cat.id,
         plu: d.plu,
         name: d.name,
@@ -249,4 +250,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => base.$disconnect());

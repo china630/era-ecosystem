@@ -146,7 +146,11 @@ export async function listHousekeepers() {
   });
 }
 
-export async function createHousekeeper(input: { code: string; name: string }) {
+export async function createHousekeeper(input: {
+  code: string;
+  name: string;
+  department?: 'ROOMS' | 'PUBLIC_AREA' | 'LAUNDRY';
+}) {
   return prisma.housekeeper.create({ data: input });
 }
 
@@ -170,23 +174,30 @@ export async function postMinibar(input: {
 }) {
   const item = await prisma.minibarItem.findUnique({ where: { id: input.itemId } });
   if (!item) throw new Error('Minibar item not found');
+  const stay =
+    input.reservationId
+      ? { id: input.reservationId }
+      : await prisma.reservation.findFirst({
+          where: { roomId: input.roomId, status: 'IN_HOUSE' },
+          select: { id: true },
+        });
   const posting = await prisma.minibarPosting.create({
     data: {
       roomId: input.roomId,
       itemId: input.itemId,
       qty: input.qty,
-      reservationId: input.reservationId,
+      reservationId: stay?.id,
     },
     include: { item: true, room: true },
   });
 
-  if (input.reservationId) {
+  if (stay?.id) {
     const { postCharge } = await import('@/lib/services/folio.service');
     const fb = await prisma.revenueCode.findFirst({ where: { code: 'MINIBAR' } });
     const code = fb ?? (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
     if (code) {
       await postCharge({
-        reservationId: input.reservationId,
+        reservationId: stay.id,
         revenueCodeId: code.id,
         amount: decimalToNumber(item.price) * input.qty,
         description: `Minibar ${item.code}`,
@@ -209,10 +220,20 @@ export async function createLostFound(input: {
   foundDate: Date;
   location: string;
   description: string;
+  roomNumber?: string;
+  photoData?: string;
   guestId?: string;
 }) {
   return prisma.lostFoundItem.create({
     data: input,
+    include: { guest: true },
+  });
+}
+
+export async function updateLostFoundStatus(id: string, status: 'OPEN' | 'RETURNED' | 'DISPOSED') {
+  return prisma.lostFoundItem.update({
+    where: { id },
+    data: { status },
     include: { guest: true },
   });
 }

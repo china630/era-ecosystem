@@ -15,6 +15,10 @@ import {
   publicRuntimeConfigView,
   satelliteRuntimeConfig,
 } from "@era/satellite-kit";
+import {
+  isSharedBankProcess,
+  releaseSharedBankProcessBind,
+} from "../common/bank-org.config";
 import { PrismaService } from "../prisma/prisma.service";
 import { RuntimeConfigBodyDto } from "./runtime-config.dto";
 
@@ -52,6 +56,9 @@ export class RuntimeConfigController {
   ) {
     this.authorize(authorization, xServiceToken);
     await hydrateRuntimeConfigFromDb(this.prisma as never);
+    if (isSharedBankProcess()) {
+      releaseSharedBankProcessBind();
+    }
     return {
       ok: true,
       config: publicRuntimeConfigView(satelliteRuntimeConfig()),
@@ -66,7 +73,10 @@ export class RuntimeConfigController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     this.authorize(authorization, xServiceToken);
-    if (body.organizationId) {
+    const shared =
+      body.deploymentTopology === "SHARED" ||
+      (body.deploymentTopology == null && isSharedBankProcess());
+    if (body.organizationId && !shared) {
       await applyOrganizationBind({
         organizationId: body.organizationId,
         boundBy: body.updatedBy ?? "runtime-config",
@@ -75,7 +85,7 @@ export class RuntimeConfigController {
     }
     const cfg = await applySatelliteRuntimeConfig({
       config: {
-        organizationId: body.organizationId,
+        organizationId: shared ? undefined : body.organizationId,
         orchestratorEventUrl: body.orchestratorEventUrl,
         publicBaseUrl: body.publicBaseUrl,
         platformSuperAdminEmails: body.platformSuperAdminEmails,
@@ -89,6 +99,9 @@ export class RuntimeConfigController {
       updatedBy: body.updatedBy,
       prisma: this.prisma as never,
     });
+    if (shared || isSharedBankProcess()) {
+      releaseSharedBankProcessBind();
+    }
     return { ok: true, config: publicRuntimeConfigView(cfg) };
   }
 }

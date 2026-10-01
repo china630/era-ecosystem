@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CatalogField,
   EraListFilterBar,
   useDebouncedValue,
   Field,
@@ -34,6 +35,7 @@ export type SimpleCrudAddField = {
   type?: string;
   min?: string | number;
   step?: string | number;
+  options?: { value: string; label: string }[];
 };
 
 type Props<T extends Record<string, unknown>> = {
@@ -48,6 +50,8 @@ type Props<T extends Record<string, unknown>> = {
   postPath?: string;
   addLabel?: string;
   addModalTitle?: string;
+  subtitle?: string;
+  emptyMessage?: string;
 };
 
 function rowMatches(row: Record<string, unknown>, q: string): boolean {
@@ -77,6 +81,8 @@ export function SimpleCrudPage<T extends Record<string, unknown>>({
   postPath,
   addLabel = '+',
   addModalTitle,
+  subtitle,
+  emptyMessage,
 }: Props<T>) {
   const tc = useTranslations('common');
   const [rows, setRows] = useState<T[]>([]);
@@ -160,6 +166,7 @@ export function SimpleCrudPage<T extends Record<string, unknown>>({
     <>
       <PageHeader
         title={title}
+        subtitle={subtitle}
         actions={
           canAdd ? (
             <button
@@ -194,7 +201,7 @@ export function SimpleCrudPage<T extends Record<string, unknown>>({
         }))}
         rows={filtered}
         rowKey={(r) => String(r.id ?? JSON.stringify(r))}
-        emptyMessage={tc('empty')}
+        emptyMessage={emptyMessage ?? tc('empty')}
       />
 
       {useModalAdd ? (
@@ -215,7 +222,18 @@ export function SimpleCrudPage<T extends Record<string, unknown>>({
         >
           <div className="space-y-3">
             {addFields!.map((f) =>
-              f.multiline ? (
+              f.options?.length ? (
+                <CatalogField
+                  key={f.name}
+                  kind="CLOSED_SMALL"
+                  label={f.label}
+                  required={f.required}
+                  value={values[f.name] ?? ''}
+                  onChange={(v) => setValues((prev) => ({ ...prev, [f.name]: String(v) }))}
+                  options={f.options}
+                  emptyLabel={f.required ? null : '—'}
+                />
+              ) : f.multiline ? (
                 <FieldTextarea
                   key={f.name}
                   label={f.label}

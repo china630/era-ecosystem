@@ -3,6 +3,7 @@ import type {
   SettlementSourceSystem,
 } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 
@@ -55,7 +56,7 @@ function bridgeSecret(): string | null {
 }
 
 export async function findPendingByIdempotencyKey(idempotencyKey: string) {
-  return prisma.settlementPendingCharge.findUnique({ where: { idempotencyKey } });
+  return prisma.settlementPendingCharge.findFirst({ where: { idempotencyKey } });
 }
 
 export async function createPendingCharge(input: CreatePendingInput) {
@@ -67,6 +68,7 @@ export async function createPendingCharge(input: CreatePendingInput) {
   const businessDate = input.businessDate ?? (await getCurrentBusinessDate());
   const charge = await prisma.settlementPendingCharge.create({
     data: {
+      organizationId: requestOrganizationId(),
       sourceSystem: input.sourceSystem,
       sourceOrgId: input.sourceOrgId,
       sourceRef: input.sourceRef,

@@ -62,4 +62,4 @@ HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW roll
 - Sell text must not contradict the worst layer above (Pilot lab/field still open → not GA).
 - Forbidden: «ready» / «GA» while Pilot field open.
 - Allowed show language: «FO + City Ledger MVP showable (UI/Demo green; pilot open)» — not certified / not GA.
-- Forbidden: «SHARED hotel SaaS pool» / «automated on-prem migrate» — not this edition ([deployment-topology.md](../adr/deployment-topology.md)). Schema+filter 🟡 ≠ live pool (AC-HOT-TENANT stays out of BE rollup).
+- Forbidden: «SHARED hotel SaaS pool» / «automated on-prem migrate» — not this edition ([deployment-topology.md](../adr/deployment-topology.md)). Nafta already runs SHARED; AC-HOT-TENANT stays 🟡 out of BE rollup until field two-org UAT.

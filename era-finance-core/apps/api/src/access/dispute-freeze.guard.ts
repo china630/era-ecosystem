@@ -8,6 +8,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { SecurityMode } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 
 export const ALLOW_IN_DISPUTE_MODE = "allowInDisputeMode";
 
@@ -48,9 +49,13 @@ export class DisputeFreezeGuard implements CanActivate {
     if (!orgId) {
       return true;
     }
-    const state = await this.prisma.organizationSecurityState.findUnique({
-      where: { organizationId: orgId },
-    });
+    const state = await runWithTenantContextAsync(
+      { organizationId: orgId, skipTenantFilter: false },
+      () =>
+        this.prisma.organizationSecurityState.findUnique({
+          where: { organizationId: orgId },
+        }),
+    );
     const mode = state?.mode ?? SecurityMode.NORMAL;
 
     if (mode === SecurityMode.HARD_BLOCK_PLATFORM) {

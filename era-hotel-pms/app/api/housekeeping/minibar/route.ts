@@ -14,11 +14,16 @@ export async function GET() {
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const items = await listMinibarItems();
     const rooms = await prisma.room.findMany({
-      where: { status: { in: ['AVAILABLE', 'CLEAN', 'INSPECTED', 'DIRTY'] } },
+      where: { deleted: false, disabled: false },
       orderBy: { roomNumber: 'asc' },
-      take: 100,
+      select: { id: true, roomNumber: true },
     });
-    return jsonOk(serialize({ items, rooms }));
+    const postings = await prisma.minibarPosting.findMany({
+      orderBy: { postedAt: 'desc' },
+      take: 40,
+      include: { item: true, room: { select: { roomNumber: true } } },
+    });
+    return jsonOk(serialize({ items, rooms, postings }));
   } catch (err) {
     return handleRouteError(err);
   }

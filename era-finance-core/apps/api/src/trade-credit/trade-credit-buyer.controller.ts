@@ -23,6 +23,7 @@ import {
 } from "@era/satellite-kit";
 import { Public } from "../auth/decorators/public.decorator";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { BuyerSessionGuard, type BuyerRequest } from "./buyer-session.guard";
 import { BuyerIssueTradeCreditGrantDto } from "./dto/buyer-issue-trade-credit-grant.dto";
 import { TradeCreditPhase2Service } from "./trade-credit-phase2.service";
@@ -101,14 +102,18 @@ export class TradeCreditBuyerController {
       throw new UnauthorizedException("SSO ticket already used");
     }
 
-    const cp = await this.prisma.counterparty.findFirst({
-      where: {
-        id: body.counterpartyId,
-        organizationId: body.organizationId,
-        deletedAt: null,
-      },
-      select: { id: true },
-    });
+    const cp = await runWithTenantContextAsync(
+      { organizationId: body.organizationId, skipTenantFilter: false },
+      () =>
+        this.prisma.counterparty.findFirst({
+          where: {
+            id: body.counterpartyId,
+            organizationId: body.organizationId,
+            deletedAt: null,
+          },
+          select: { id: true },
+        }),
+    );
     if (!cp) {
       throw new UnauthorizedException("Counterparty not found");
     }
