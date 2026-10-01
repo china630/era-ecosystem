@@ -177,12 +177,44 @@ DECLARE
   first_org text;
   r record;
 BEGIN
-  SELECT COUNT(DISTINCT "organizationId") INTO n FROM "HotelProfile";
-  IF n = 0 THEN
-    RAISE EXCEPTION 'ChildPricingMatrix: no HotelProfile organization to copy';
+  IF NOT EXISTS (SELECT 1 FROM "ChildPricingMatrix" WHERE "organizationId" IS NULL) THEN
+    RETURN;
   END IF;
-  SELECT "organizationId" INTO first_org FROM "HotelProfile" ORDER BY "organizationId" LIMIT 1;
+
+  SELECT "organizationId" INTO first_org
+  FROM "HotelProfile"
+  WHERE "organizationId" IS NOT NULL
+  ORDER BY "organizationId"
+  LIMIT 1;
+
+  IF first_org IS NULL THEN
+    SELECT "organizationId" INTO first_org
+    FROM "Reservation"
+    WHERE "organizationId" IS NOT NULL
+    ORDER BY "organizationId"
+    LIMIT 1;
+  END IF;
+
+  IF first_org IS NULL THEN
+    SELECT "organizationId" INTO first_org
+    FROM "Guest"
+    WHERE "organizationId" IS NOT NULL
+    ORDER BY "organizationId"
+    LIMIT 1;
+  END IF;
+
+  -- No tenant on this database: unscoped matrix rows cannot be attributed.
+  IF first_org IS NULL THEN
+    DELETE FROM "ChildPricingMatrix" WHERE "organizationId" IS NULL;
+    RETURN;
+  END IF;
+
   UPDATE "ChildPricingMatrix" SET "organizationId" = first_org WHERE "organizationId" IS NULL;
+
+  SELECT COUNT(DISTINCT "organizationId") INTO n
+  FROM "HotelProfile"
+  WHERE "organizationId" IS NOT NULL;
+
   IF n > 1 THEN
     FOR r IN
       SELECT DISTINCT "organizationId" AS organization_id
