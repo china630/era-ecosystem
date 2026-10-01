@@ -25,6 +25,7 @@ export default function HomeDashboard() {
     void fetch("/api/edition")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
+        if (!d) return;
         const isKafe = d?.edition === "kafe" || d?.hotelMode === false;
         setKafe(Boolean(isKafe));
         setHasKds(
