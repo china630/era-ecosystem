@@ -36,11 +36,34 @@ export async function GET(request: Request) {
       businessDayStart: profile.businessDayStart,
     });
   }
+  const closed = await prisma.ticket.findMany({
+    where: {
+      outletId: shift.outletId,
+      status: "CLOSED",
+      closedAt: { gte: shift.openedAt, lte: new Date() },
+    },
+    select: { paymentMethod: true, totalAzn: true },
+  });
+  const till = { cash: 0, card: 0, transfer: 0, openChecks: 0 };
+  for (const row of closed) {
+    const amount = Number(row.totalAzn);
+    const method = (row.paymentMethod ?? "").toUpperCase();
+    if (method === "CASH") till.cash += amount;
+    else if (method === "CARD") till.card += amount;
+    else if (method === "TRANSFER") till.transfer += amount;
+  }
+  till.cash = Math.round(till.cash * 100) / 100;
+  till.card = Math.round(till.card * 100) / 100;
+  till.transfer = Math.round(till.transfer * 100) / 100;
+  till.openChecks = await prisma.ticket.count({
+    where: { outletId: shift.outletId, status: { in: ["OPEN", "HELD"] } },
+  });
   return NextResponse.json({
     ...shift,
     stale: isShiftStale(shift.openedAt, new Date(), profile.businessDayStart),
     businessDayStart: profile.businessDayStart,
     drawer: await cashDrawerForShift(shift),
+    till,
   });
 }
 

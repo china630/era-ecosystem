@@ -20,6 +20,15 @@ export function CashDrawerBlock({
     variance: string;
   };
 }) {
+  const rows: { label: string; value: number }[] = [
+    { label: labels.opening, value: drawer.opening },
+    { label: labels.cashSales, value: drawer.cashSales },
+    { label: labels.drops, value: drawer.dropsTotal },
+    { label: labels.expected, value: drawer.expected },
+  ];
+  if (drawer.counted != null) rows.push({ label: labels.counted, value: drawer.counted });
+  if (drawer.variance != null) rows.push({ label: labels.variance, value: drawer.variance });
+
   return (
     <div className="mb-3 rounded-md bg-[#F7F9FA] p-3 text-sm text-[#34495E]">
       <p className="mb-2 font-semibold">
@@ -27,28 +36,29 @@ export function CashDrawerBlock({
         {drawer.openedBy ? ` · ${drawer.openedBy}` : ""}
         {` · ${bakuTimeLabel(drawer.openedAt)}`}
       </p>
-      <p>
-        {labels.opening} {drawer.opening.toFixed(2)} {azn}
-        {" · "}
-        {labels.cashSales} {drawer.cashSales.toFixed(2)} {azn}
-        {" · "}
-        {labels.drops} {drawer.dropsTotal.toFixed(2)} {azn}
-      </p>
-      <p className="mt-1">
-        {labels.expected} {drawer.expected.toFixed(2)} {azn}
-        {drawer.counted != null ? ` · ${labels.counted} ${drawer.counted.toFixed(2)} ${azn}` : ""}
-        {drawer.variance != null ? ` · ${labels.variance} ${drawer.variance.toFixed(2)} ${azn}` : ""}
-      </p>
-      {drawer.drops.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-xs text-[#7F8C8D]">
-          {drawer.drops.map((drop) => (
-            <li key={drop.id}>
-              {bakuTimeLabel(drop.createdAt)} · {drop.amountAzn.toFixed(2)} {azn}
-              {drop.note ? ` · ${drop.note}` : ""}
-            </li>
+      <table className="w-full max-w-md">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label}>
+              <td className="py-0.5 pr-4">{row.label}</td>
+              <td className="py-0.5 text-right tabular-nums">
+                {row.value.toFixed(2)} {azn}
+              </td>
+            </tr>
           ))}
-        </ul>
-      ) : null}
+          {drawer.drops.map((drop) => (
+            <tr key={drop.id} className="text-xs text-[#7F8C8D]">
+              <td className="py-0.5 pr-4">
+                {bakuTimeLabel(drop.createdAt)}
+                {drop.note ? ` · ${drop.note}` : ""}
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                {drop.amountAzn.toFixed(2)} {azn}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

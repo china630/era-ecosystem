@@ -15,15 +15,11 @@ type Table = {
   code: string;
   name: string;
   status: string;
-  zone?: string | null;
+  hall?: { id: string; name: string; sortOrder?: number } | null;
   currentTicketId?: string | null;
   openTotalAzn?: number | null;
   openedAt?: string | null;
 };
-
-function tableZone(table: Table): string {
-  return table.zone?.trim() ?? "";
-}
 
 type MenuItem = {
   id: string;
@@ -87,7 +83,7 @@ export default function FloorPanel() {
   const tc = useTranslations("common");
 
   const [tables, setTables] = useState<Table[]>([]);
-  const [zoneFilter, setZoneFilter] = useState<string | null>(null);
+  const [hallFilter, setHallFilter] = useState<string | null>(null);
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [menuQuery, setMenuQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -96,6 +92,8 @@ export default function FloorPanel() {
   const [ticketCaption, setTicketCaption] = useState("");
   const [dayNo, setDayNo] = useState<number | null>(null);
   const [cashReceived, setCashReceived] = useState("");
+  const [discountInput, setDiscountInput] = useState("0");
+  const [storedDiscount, setStoredDiscount] = useState(0);
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
     amount: number;
@@ -131,6 +129,7 @@ export default function FloorPanel() {
       table?: { code?: string; name?: string | null } | null;
       walkInLabel?: string | null;
       serviceChannel?: string | null;
+      discountPercent?: string | number | null;
       status?: string;
       released?: boolean;
     }, caption?: string) => {
@@ -141,12 +140,14 @@ export default function FloorPanel() {
         setTicketTotal(null);
         setTicketCaption("");
         setDayNo(null);
+        setStoredDiscount(0);
         return;
       }
       if (typeof data.id === "string") setActiveTicketId(data.id);
       const lines = liveLines(Array.isArray(data.lines) ? data.lines : []);
       setTicketLines(lines);
       setTicketTotal(Number(data.totalAzn) || 0);
+      if (data.discountPercent != null) setStoredDiscount(Number(data.discountPercent) || 0);
       if (typeof data.dayNo === "number") setDayNo(data.dayNo);
       const tableCode = data.table?.name?.trim() || data.table?.code;
       const takeaway =
@@ -244,6 +245,7 @@ export default function FloorPanel() {
         banquetsData = await banquetsRes.json().catch(() => []);
       } else {
         await fetch("/api/tickets/void-empty", { method: "POST" }).catch(() => null);
+        window.dispatchEvent(new Event("era-fnb-shift-refresh"));
         const again = await fetch("/api/tables");
         const againData = await again.json().catch(() => null);
         if (Array.isArray(againData)) tableRows = againData;
@@ -363,6 +365,7 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, caption);
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     await load({ silent: true });
   }
 
@@ -469,13 +472,40 @@ export default function FloorPanel() {
     }
   }
 
+  async function persistDiscount(): Promise<number | null> {
+    if (!activeTicketId) return null;
+    const raw = discountInput.trim() === "" ? 0 : Number(discountInput);
+    if (!Number.isFinite(raw) || raw < 0 || raw > 100) {
+      showApiError({ error: t("discountPercent") });
+      return null;
+    }
+    if (Math.abs(raw - storedDiscount) < 0.001) return ticketTotal ?? 0;
+    const res = await fetch(`/api/tickets/${activeTicketId}/discount`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discountPercent: raw }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 403) showApiError({ error: t("discountDenied") });
+      else showApiError(data, t("discountPercent"));
+      return null;
+    }
+    setStoredDiscount(raw);
+    const total = Number(data.totalAzn) || 0;
+    setTicketTotal(total);
+    return total;
+  }
+
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (busy.current || !activeTicketId || !canPay) return;
-    if (ticketLines.length === 0 || (ticketTotal ?? 0) <= 0) {
+    const persisted = await persistDiscount();
+    if (persisted == null) return;
+    if (ticketLines.length === 0 || persisted <= 0) {
       showApiError({ error: t("nothingToPay") });
       return;
     }
-    const due = ticketTotal ?? 0;
+    const due = persisted;
     const got = Number(cashReceived);
     if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
       showApiError({ error: t("cashShort") });
@@ -488,12 +518,19 @@ export default function FloorPanel() {
     const res = await fetch(`/api/tickets/${ticketId}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({
+        method,
+        ...(method === "CASH" ? { cashTendered: got } : {}),
+      }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
       window.dispatchEvent(
         new CustomEvent("era-fnb-offline", {
-          detail: { kind: "pay", ticketId, payload: { method } },
+          detail: {
+            kind: "pay",
+            ticketId,
+            payload: { method, ...(method === "CASH" ? { cashTendered: got } : {}) },
+          },
         }),
       );
       showApiError({ error: t("queuedOffline") });
@@ -506,7 +543,11 @@ export default function FloorPanel() {
         return;
       }
       showApiError(
-        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
+        data.error === "Nothing to pay"
+          ? { error: t("nothingToPay") }
+          : data.error === "Cash tendered is less than the check"
+            ? { error: t("cashShort") }
+            : data,
         tc("failed"),
       );
       return;
@@ -515,8 +556,9 @@ export default function FloorPanel() {
     setLastPaid({
       dayNo: paidDay,
       amount,
-      change: method === "CASH" ? Math.round((got - amount) * 100) / 100 : null,
+      change: method === "CASH" ? Number(data.changeAzn ?? Math.round((got - amount) * 100) / 100) : null,
     });
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     setCashReceived("");
     setActiveTicketId(null);
     setDraft(null);
@@ -541,6 +583,7 @@ export default function FloorPanel() {
       return;
     }
     showSuccess(t("ticketCancelled"));
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     applyTicket({ id: activeTicketId, status: "VOID", released: true });
     await load({ silent: true });
     } finally {
@@ -627,6 +670,7 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, walkInLabel.trim() || t("walkInDefaultLabel"));
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     showSuccess(t("walkInOpened", { total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
@@ -654,6 +698,7 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, beo?.eventName);
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     showSuccess(t("banquetOpened", { name: beo?.eventName ?? "", total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
@@ -675,41 +720,42 @@ export default function FloorPanel() {
       ? t("ticketHeading", { name: ticketCaption, no: dayNo })
       : ticketCaption;
 
-  const zones = useMemo(() => {
-    const groups = new Map<string, string>();
+  useEffect(() => {
+    setDiscountInput(String(storedDiscount));
+  }, [activeTicketId, storedDiscount]);
+
+  const halls = useMemo(() => {
+    const groups = new Map<string, { label: string; sort: number }>();
     let hasBlank = false;
     for (const table of tables) {
-      const raw = tableZone(table);
-      if (!raw) {
+      if (!table.hall?.id) {
         hasBlank = true;
         continue;
       }
-      const key = raw.toLocaleLowerCase();
-      if (!groups.has(key)) groups.set(key, raw);
+      if (!groups.has(table.hall.id)) {
+        groups.set(table.hall.id, { label: table.hall.name, sort: table.hall.sortOrder ?? 0 });
+      }
     }
     const named = [...groups.entries()]
-      .map(([key, label]) => ({ key, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .map(([key, row]) => ({ key, label: row.label, sort: row.sort }))
+      .sort((a, b) => a.sort - b.sort || a.label.localeCompare(b.label));
     return { named, hasBlank, multiple: named.length + (hasBlank ? 1 : 0) > 1 };
   }, [tables]);
-  const activeZone =
-    zones.multiple &&
-    zoneFilter != null &&
-    (zoneFilter === "" ? zones.hasBlank : zones.named.some((zone) => zone.key === zoneFilter))
-      ? zoneFilter
+  const activeHall =
+    halls.multiple &&
+    hallFilter != null &&
+    (hallFilter === "" ? halls.hasBlank : halls.named.some((hall) => hall.key === hallFilter))
+      ? hallFilter
       : null;
   const visibleTables =
-    activeZone == null
+    activeHall == null
       ? tables
-      : tables.filter((table) =>
-          activeZone === "" ? tableZone(table) === "" : tableZone(table).toLocaleLowerCase() === activeZone,
-        );
-  const occupiedIn = (zone: string | null) =>
+      : tables.filter((table) => (activeHall === "" ? !table.hall?.id : table.hall?.id === activeHall));
+  const occupiedIn = (hallId: string | null) =>
     tables.filter(
       (table) =>
         table.status === "OCCUPIED" &&
-        (zone == null ||
-          (zone === "" ? tableZone(table) === "" : tableZone(table).toLocaleLowerCase() === zone)),
+        (hallId == null || (hallId === "" ? !table.hall?.id : table.hall?.id === hallId)),
     ).length;
 
   return (
@@ -806,21 +852,21 @@ export default function FloorPanel() {
                 {t("takeaway")}
               </button>
             )}
-            {zones.multiple ? (
+            {halls.multiple ? (
               <div className="flex max-h-[4.5rem] shrink-0 flex-wrap gap-1 overflow-y-auto">
                 {[
                   { key: null as string | null, label: t("allZones") },
-                  ...(zones.hasBlank ? [{ key: "", label: t("zoneMain") }] : []),
-                  ...zones.named,
-                ].map((zone) => {
-                  const selected = activeZone === zone.key;
-                  const count = occupiedIn(zone.key);
-                  const label = zone.label;
+                  ...(halls.hasBlank ? [{ key: "", label: t("zoneMain") }] : []),
+                  ...halls.named,
+                ].map((hall) => {
+                  const selected = activeHall === hall.key;
+                  const count = occupiedIn(hall.key);
+                  const label = hall.label;
                   return (
                     <button
-                      key={zone.key ?? "all"}
+                      key={hall.key ?? "all"}
                       type="button"
-                      onClick={() => setZoneFilter(zone.key)}
+                      onClick={() => setHallFilter(hall.key)}
                       title={label}
                       className={`inline-flex h-8 max-w-[7.25rem] items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${
                         selected ? "bg-[#2980B9] text-white" : "bg-white text-[#34495E] ring-1 ring-[#D5DADF]"
@@ -1004,7 +1050,7 @@ export default function FloorPanel() {
             {checkOpen ? (
               <>
                 <p className="mt-1 text-base font-semibold">{heading || t("ticketTitle")}</p>
-                <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+                <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
                   {ticketLines.length === 0 ? (
                     <p className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</p>
                   ) : (
@@ -1022,23 +1068,37 @@ export default function FloorPanel() {
                         plus: t("qtyPlus"),
                         remove: t("qtyMinus"),
                       }}
+                      discount={(() => {
+                        const gross = ticketLines.reduce(
+                          (sum, line) => sum + line.qty * Number(line.unitPriceAzn),
+                          0,
+                        );
+                        const pct = Math.min(100, Math.max(0, Number(discountInput) || 0));
+                        const net = Math.round(gross * (1 - pct / 100) * 100) / 100;
+                        const amount = Math.round((gross - net) * 100) / 100;
+                        return {
+                          label: t("discountPercent"),
+                          value: discountInput,
+                          onChange: setDiscountInput,
+                          onBlur: () => void persistDiscount(),
+                          amountText: pct > 0 ? `−${amount.toFixed(2)} ${tc("azn")}` : null,
+                          netText: `${net.toFixed(2)} ${tc("azn")}`,
+                        };
+                      })()}
+                      tender={
+                        canPay
+                          ? {
+                              label: t("cashReceived"),
+                              value: cashReceived,
+                              onChange: setCashReceived,
+                            }
+                          : undefined
+                      }
                     />
                   )}
                 </div>
-                <p className="mt-3 shrink-0 border-t border-[#D5DADF] pt-3 text-right text-2xl font-semibold tabular-nums">
-                  {(ticketTotal ?? 0).toFixed(2)} {tc("azn")}
-                </p>
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
                   <div className="mt-3 shrink-0 space-y-2">
-                    <label className="ml-auto block w-28 text-xs text-[#7F8C8D]">
-                      {t("cashReceived")}
-                      <input
-                        inputMode="decimal"
-                        value={cashReceived}
-                        onChange={(e) => setCashReceived(e.target.value)}
-                        className={`${INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
-                      />
-                    </label>
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
                         type="button"

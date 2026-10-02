@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { handleRouteError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
 import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -22,6 +22,8 @@ export async function GET(request: Request) {
         name: true,
         seats: true,
         zone: true,
+        hallId: true,
+        hall: { select: { id: true, name: true, sortOrder: true } },
         status: true,
         outletId: true,
         currentTicketId: true,
@@ -80,6 +82,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   seats: z.number().int().positive().optional(),
   zone: z.string().nullable().optional(),
+  hallId: z.string().nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -92,6 +95,10 @@ export async function POST(request: Request) {
     const body = createSchema.parse(await request.json());
     const organizationId = requestOrganizationId();
     const outlet = await resolveOpsOutlet(body.outletCode);
+    if (body.hallId) {
+      const hall = await prisma.posHall.findFirst({ where: { id: body.hallId, outletId: outlet.id } });
+      if (!hall) return jsonError("Hall not found", 404);
+    }
     const table = await prisma.posTable.create({
       data: {
         organizationId,
@@ -100,6 +107,7 @@ export async function POST(request: Request) {
         name: body.name,
         seats: body.seats ?? 4,
         zone: body.zone ?? null,
+        hallId: body.hallId ?? null,
       },
     });
     return jsonOk(table, 201);

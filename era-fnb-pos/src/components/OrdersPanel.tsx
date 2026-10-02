@@ -174,12 +174,19 @@ export default function OrdersPanel() {
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({
+        method,
+        ...(method === "CASH" ? { cashTendered: got } : {}),
+      }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
       window.dispatchEvent(
         new CustomEvent("era-fnb-offline", {
-          detail: { kind: "pay", ticketId: selected.id, payload: { method } },
+          detail: {
+            kind: "pay",
+            ticketId: selected.id,
+            payload: { method, ...(method === "CASH" ? { cashTendered: got } : {}) },
+          },
         }),
       );
       showApiError({ error: t("queuedOffline") });
@@ -192,7 +199,11 @@ export default function OrdersPanel() {
         return;
       }
       showApiError(
-        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
+        data.error === "Nothing to pay"
+          ? { error: t("nothingToPay") }
+          : data.error === "Cash tendered is less than the check"
+            ? { error: tf("cashShort") }
+            : data,
         tc("failed"),
       );
       return;
@@ -201,8 +212,9 @@ export default function OrdersPanel() {
     setLastPaid({
       dayNo: paidDay,
       amount,
-      change: method === "CASH" ? Math.round((got - amount) * 100) / 100 : null,
+      change: method === "CASH" ? Number(data.changeAzn ?? Math.round((got - amount) * 100) / 100) : null,
     });
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     setCashReceived("");
     setSelectedId(null);
     await load();
