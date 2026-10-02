@@ -18,7 +18,7 @@ import {
 } from "@/lib/fnb-module-gate";
 import { FnbSoldOutError } from "@/lib/fnb-sold-out";
 import { FnbWaiterNoPayError } from "@/lib/fnb-roles";
-import { ShiftRequiredError } from "@/lib/open-shift";
+import { ShiftRequiredError, ShiftStaleError } from "@/lib/open-shift";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -65,7 +65,7 @@ export function handleRouteError(err: unknown) {
       { status: 403 },
     );
   }
-  if (err instanceof ShiftRequiredError) {
+  if (err instanceof ShiftRequiredError || err instanceof ShiftStaleError) {
     return NextResponse.json(
       { error: err.message, code: err.code },
       { status: 409 },

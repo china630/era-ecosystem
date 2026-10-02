@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuTimeLabel, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CatalogField,
   type CatalogFieldKind,
@@ -24,6 +24,8 @@ type Report = {
 type CheckView = {
   dayNo: number | null;
   totalAzn: string | number;
+  openedAt?: string | null;
+  closedAt?: string | null;
   serviceChannel?: string | null;
   table?: { name?: string | null; code?: string | null } | null;
   lines: CheckLine[];
@@ -131,7 +133,6 @@ export default function SalesJournalPanel() {
             label={t("place")}
             value={channel}
             options={[
-              { value: "", label: t("allPlaces") },
               { value: "DINE_IN", label: t("dineIn") },
               { value: "TAKEAWAY", label: t("takeaway") },
             ]}
@@ -144,7 +145,6 @@ export default function SalesJournalPanel() {
             label={t("method")}
             value={method}
             options={[
-              { value: "", label: t("allMethods") },
               { value: "CASH", label: t("cash") },
               { value: "CARD", label: t("card") },
               { value: "TRANSFER", label: t("transfer") },
@@ -175,6 +175,11 @@ export default function SalesJournalPanel() {
       >
         {check ? (
           <>
+            <p className="mb-3 text-sm text-[#7F8C8D]">
+              {t("opened")}: {check.openedAt ? bakuTimeLabel(check.openedAt) : "—"}
+              {" · "}
+              {t("closed")}: {check.closedAt ? bakuTimeLabel(check.closedAt) : "—"}
+            </p>
             <CheckLines
               lines={check.lines}
               labels={{

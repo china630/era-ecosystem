@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
@@ -12,6 +12,8 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 export default function AdminSettingsPage() {
@@ -20,6 +22,34 @@ export default function AdminSettingsPage() {
   const [outletName, setOutletName] = useState(t("defaultOutletName"));
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(outletName);
+  const [dayStart, setDayStart] = useState("05:00");
+  const [dayOpen, setDayOpen] = useState(false);
+  const [dayDraft, setDayDraft] = useState("05:00");
+
+  useEffect(() => {
+    void fetch("/api/settings/business-day")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (typeof d?.businessDayStart === "string") setDayStart(d.businessDayStart);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  async function saveDayStart() {
+    const res = await fetch("/api/settings/business-day", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessDayStart: dayDraft }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("save"));
+      return;
+    }
+    setDayStart(typeof data?.businessDayStart === "string" ? data.businessDayStart : dayDraft);
+    setDayOpen(false);
+    showSuccess(t("saved"));
+  }
 
   return (
     <>
@@ -51,6 +81,25 @@ export default function AdminSettingsPage() {
               </button>
             </td>
           </tr>
+          <tr>
+            <td className="p-3 font-medium">{t("businessDayStart")}</td>
+            <td className="p-3">
+              {dayStart}
+              <p className="text-xs text-[#7F8C8D]">{t("businessDayHint")}</p>
+            </td>
+            <td className="p-3 text-right">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  setDayDraft(dayStart);
+                  setDayOpen(true);
+                }}
+              >
+                {t("edit")}
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
       <ModalShell open={open} title={t("editOutlet")} onClose={() => setOpen(false)}>
@@ -61,6 +110,16 @@ export default function AdminSettingsPage() {
           onChange={(e) => setDraft(e.target.value)}
         />
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setOutletName(draft.trim() || outletName); setOpen(false); }} submitLabel={t("save")} />
+      </ModalShell>
+      <ModalShell open={dayOpen} title={t("businessDayStart")} onClose={() => setDayOpen(false)}>
+        <Field
+          label={t("businessDayHint")}
+          preset="shortText"
+          type="time"
+          value={dayDraft}
+          onChange={(e) => setDayDraft(e.target.value)}
+        />
+        <ModalFooter onCancel={() => setDayOpen(false)} onSubmit={() => void saveDayStart()} submitLabel={t("save")} />
       </ModalShell>
     </>
   );

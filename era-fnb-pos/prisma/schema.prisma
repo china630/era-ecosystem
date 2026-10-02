@@ -119,10 +119,12 @@ model MenuCategory {
   organizationId String @map("organization_id")
   outletId  String     @map("outlet_id")
   name      String
+  code      String
   sortOrder Int        @default(0) @map("sort_order")
   items     MenuItem[]
   outlet    Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
 
+  @@unique([outletId, code])
   @@map("menu_categories")
   @@index([organizationId])
 }
@@ -277,8 +279,9 @@ model FnbOrgProfile {
   edition        String   @default("hotel")
   hotelMode      Boolean  @default(true) @map("hotel_mode")
   waiterPinPacks Int      @default(1) @map("waiter_pin_packs")
-  activeModules  String[] @default([]) @map("active_modules")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  activeModules    String[] @default([]) @map("active_modules")
+  businessDayStart String   @default("05:00") @map("business_day_start")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("fnb_org_profiles")
 }

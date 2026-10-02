@@ -177,9 +177,9 @@ const TILL_BASE: Permission[] = [
   PERMISSIONS.TICKETS_LINES,
   PERMISSIONS.TICKETS_FIRE,
   PERMISSIONS.TICKETS_OFFLINE_REPLAY,
-  PERMISSIONS.MENU_SOLD_OUT,
-  PERMISSIONS.SHIFTS_OPEN,
-];
+    PERMISSIONS.MENU_SOLD_OUT,
+    PERMISSIONS.SHIFTS_OPEN,
+  ];
 
 const HOTEL_TILL_EXTRA: Permission[] = [
   PERMISSIONS.SCREEN_CALENDAR,
@@ -206,6 +206,7 @@ export function cashierPermissions(edition: "hotel" | "kafe"): Permission[] {
   const base: Permission[] = [
     ...TILL_BASE,
     PERMISSIONS.TICKETS_PAY,
+    PERMISSIONS.SHIFTS_CLOSE,
   ];
   if (edition === "hotel") {
     return [...base, ...HOTEL_TILL_EXTRA];

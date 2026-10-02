@@ -14,7 +14,7 @@ import { handleRouteError } from "@/lib/api-utils";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { attachDayNos } from "@/lib/ticket-helpers";
-import { requireOpenShift } from "@/lib/open-shift";
+import { requireCurrentShift } from "@/lib/open-shift";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       await assertHotelFnbFeature("hotel-ticket");
     }
     const outlet = await resolveOpsOutlet(body.outletCode);
-    await requireOpenShift(outlet.id);
+    await requireCurrentShift(outlet.id);
 
     const lines = body.lines ?? [];
     for (const l of lines) {
