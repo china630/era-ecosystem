@@ -194,6 +194,7 @@ describe("fnb rbac catalog", () => {
       "kafe",
     );
     expect(t).toContain(PERMISSIONS.TICKETS_PAY);
+    expect(t).toContain(PERMISSIONS.SHIFTS_CLOSE);
     expect(t).not.toContain(PERMISSIONS.TICKETS_VOID);
   });
 

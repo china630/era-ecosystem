@@ -369,6 +369,10 @@ export default function FloorPanel() {
       showApiError({ error: t("shiftRequired") });
       return;
     }
+    if (data.code === "SHIFT_STALE") {
+      showApiError({ error: t("shiftStale") });
+      return;
+    }
     const err = data.error?.trim() ?? "";
     const prismaDump = err.includes("prisma.") || err.startsWith("Invalid `");
     showApiError(prismaDump ? { error: tc("failed") } : data, tc("failed"));
@@ -837,26 +841,27 @@ export default function FloorPanel() {
             </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto rounded-lg bg-[#D6DDE3] p-2">
-            {menuCategories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                className={`shrink-0 rounded-md px-5 py-2.5 text-base font-semibold ${
-                  !query && cat.id === activeCategoryId
-                    ? "bg-[#2980B9] text-white shadow-sm"
-                    : "bg-white text-[#2C3E50] ring-1 ring-[#8FA0AE]"
-                }`}
-                onClick={() => {
-                  setMenuQuery("");
-                  setActiveCategoryId(cat.id);
-                }}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-          <div className={`${CARD_CLASS} p-3`}>
+          <div className={`${CARD_CLASS} grid gap-3 p-3 lg:grid-cols-[12rem_minmax(0,1fr)]`}>
+            <div className="flex flex-col gap-2">
+              {menuCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`rounded-md px-3 py-2.5 text-left text-base font-semibold ${
+                    !query && cat.id === activeCategoryId
+                      ? "bg-[#2980B9] text-white"
+                      : "bg-[#F4F6F7] text-[#2C3E50]"
+                  }`}
+                  onClick={() => {
+                    setMenuQuery("");
+                    setActiveCategoryId(cat.id);
+                  }}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+            <div>
             <input
               type="search"
               value={menuQuery}
@@ -894,6 +899,7 @@ export default function FloorPanel() {
                 ) : null}
                 </div>
               ))}
+            </div>
             </div>
           </div>
 

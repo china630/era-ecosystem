@@ -7,6 +7,8 @@ import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import { isShiftStale } from "@/lib/business-day";
 
 const openSchema = z.object({
   outletCode: z.string().min(1).optional(),
@@ -25,7 +27,19 @@ export async function GET(request: Request) {
     include: { outlet: true },
     orderBy: { openedAt: "desc" },
   });
-  return NextResponse.json(shift ?? { status: "NONE" });
+  const profile = await getFnbOrgProfile();
+  if (!shift) {
+    return NextResponse.json({
+      status: "NONE",
+      stale: false,
+      businessDayStart: profile.businessDayStart,
+    });
+  }
+  return NextResponse.json({
+    ...shift,
+    stale: isShiftStale(shift.openedAt, new Date(), profile.businessDayStart),
+    businessDayStart: profile.businessDayStart,
+  });
 }
 
 export async function POST(request: Request) {

@@ -57,6 +57,7 @@ export async function POST(request: Request) {
             organizationId,
             outletId: created.id,
             name: cat.name,
+            code: cat.code,
             sortOrder: cat.sortOrder,
           },
         });

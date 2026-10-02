@@ -96,6 +96,7 @@
     "nothingToPay": "Ödəniləcək məbləğ yoxdur",
     "queuedOffline": "Oflayn saxlanıldı — şəbəkə qayıdanda göndəriləcək",
     "shiftRequired": "Əvvəl növbəni açın",
+    "shiftStale": "Növbə ötən ticarət günündəndir. Açıq çekləri ödəyin, sonra Z və yeni növbə.",
     "cashReceived": "Alındı",
     "cashShort": "Alınan məbləğ çekdən azdır",
     "changeDue": "qalıq {amount} AZN",
@@ -128,7 +129,10 @@
       "edit": "Redaktə",
       "editOutlet": "Outlet redaktə",
       "save": "Saxla",
-      "defaultOutletName": "Demo outlet"
+      "defaultOutletName": "Demo outlet",
+      "businessDayStart": "Ticarət günü başlayır",
+      "businessDayHint": "Asia/Baku. Bu saatdan əvvəl satışlar ötən günə aiddir.",
+      "saved": "Saxlanıldı"
     },
     "menu": {
       "title": "Menyu admin",
@@ -139,6 +143,7 @@
       "editItem": "Yeməyi redaktə et",
       "category": "Kateqoriya",
       "categoryName": "Kateqoriya adı",
+      "categoryCode": "Kod",
       "sortOrder": "Sıra",
       "plu": "PLU",
       "name": "Ad",
@@ -294,7 +299,9 @@
     "allPlaces": "Bütün yerlər",
     "dineIn": "Zal",
     "allMethods": "Bütün ödənişlər",
-    "checkTitle": "Çek #{no} · {place}"
+    "checkTitle": "Çek #{no} · {place}",
+    "opened": "Açılıb",
+    "closed": "Bağlanıb"
   },
   "shift": {
     "title": "POS növbəsi",
@@ -302,6 +309,7 @@
     "openStatus": "{outlet} · xırda {cash} AZN · {time}-dən",
     "openShift": "Növbəni aç",
     "zClose": "Z-close",
+    "staleNotice": "Növbə {time}-dən əvvəldir. Açıq çekləri ödəmək olar. Yeniləri — Z və yeni növbədən sonra.",
     "outletCode": "Outlet kodu",
     "openingCash": "Açılış nağdı (AZN)",
     "confirmOpen": "Aç",

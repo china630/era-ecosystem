@@ -10,6 +10,7 @@ import {
   slugCode,
 } from "@/lib/import/helpers";
 import type { ImportAdapter, ImportEntityMeta, ImportTx } from "@/lib/import/types";
+import { categoryCodeFromName } from "@/lib/business-day";
 
 function toDecimal(n: number) {
   return new Prisma.Decimal(n);
@@ -78,6 +79,7 @@ export const productGroupsAdapter: ImportAdapter<z.infer<typeof groupSchema>> = 
           organizationId: requestOrganizationId(),
           outletId: outlet.id,
           name: row.name,
+          code: categoryCodeFromName(row.name, `C${row.sortOrder}`),
           sortOrder: row.sortOrder,
         },
       });
@@ -137,6 +139,7 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
           organizationId: requestOrganizationId(),
           outletId: outlet.id,
           name: groupName,
+          code: categoryCodeFromName(groupName, "C99"),
           sortOrder: 99,
         },
       });

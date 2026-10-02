@@ -209,6 +209,7 @@ async function main() {
       data: {
         outletId: outlet.id,
         name: "Əsas",
+        code: "ESAS",
         sortOrder: 1,
       },
     }));

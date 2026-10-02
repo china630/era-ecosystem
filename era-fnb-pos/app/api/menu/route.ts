@@ -10,6 +10,7 @@ import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/requir
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_MENU } from "@/lib/auth/read-permission-sets";
 import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
+import { categoryCodeFromName } from "@/lib/business-day";
 
 export async function GET(request: Request) {
   await assertFnbEntitled();
@@ -121,6 +122,7 @@ export async function POST(request: Request) {
             organizationId,
             outletId: outlet.id,
             name: body.categoryName,
+            code: categoryCodeFromName(body.categoryName, "C99"),
             sortOrder: 99,
           },
         });

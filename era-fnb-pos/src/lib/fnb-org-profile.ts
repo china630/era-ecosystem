@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { DEFAULT_BUSINESS_DAY_START, normalizeBusinessDayStart } from "@/lib/business-day";
 
 export type FnbOrgProfileRow = {
   organizationId: string;
@@ -7,6 +8,7 @@ export type FnbOrgProfileRow = {
   hotelMode: boolean;
   waiterPinPacks: number;
   activeModules: string[];
+  businessDayStart: string;
 };
 
 const HOTEL_FALLBACK: Omit<FnbOrgProfileRow, "organizationId"> = {
@@ -14,6 +16,7 @@ const HOTEL_FALLBACK: Omit<FnbOrgProfileRow, "organizationId"> = {
   hotelMode: true,
   waiterPinPacks: 1,
   activeModules: [],
+  businessDayStart: DEFAULT_BUSINESS_DAY_START,
 };
 
 export async function upsertFnbOrgSnapshot(
@@ -60,6 +63,7 @@ export async function upsertFnbOrgSnapshot(
     hotelMode: row.hotelMode,
     waiterPinPacks: row.waiterPinPacks,
     activeModules: row.activeModules,
+    businessDayStart: normalizeBusinessDayStart(row.businessDayStart),
   };
 }
 
@@ -78,6 +82,7 @@ export async function getFnbOrgProfile(
     hotelMode: row.hotelMode,
     waiterPinPacks: row.waiterPinPacks,
     activeModules: row.activeModules,
+    businessDayStart: normalizeBusinessDayStart(row.businessDayStart),
   };
 }
 

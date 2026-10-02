@@ -1,8 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
 import {
+  PERMISSIONS,
+  ROLE_CODES,
   SYSTEM_FNB_ROLES,
   SYSTEM_ROLE_NAMES,
   isSystemFnbRoleCode,
+  parsePermissions,
   permissionsJsonNeedsTemplate,
   rolePermissionsForEdition,
   serializePermissions,
@@ -10,7 +13,7 @@ import {
   type RoleCode,
 } from "@/lib/auth/permissions";
 
-export const FNB_PERMISSION_CATALOG_VERSION = 1;
+export const FNB_PERMISSION_CATALOG_VERSION = 2;
 
 type RoleRow = {
   id: string;
@@ -130,6 +133,15 @@ async function upsertSystemRole(
   const ver = existing.permissionCatalogVersion ?? 0;
   if (ver < FNB_PERMISSION_CATALOG_VERSION) {
     patch.permissionCatalogVersion = FNB_PERMISSION_CATALOG_VERSION;
+    if (existing.code === ROLE_CODES.CASHIER) {
+      const current = parsePermissions(existing.permissionsJson);
+      if (current.length > 0 && !current.includes(PERMISSIONS.SHIFTS_CLOSE)) {
+        patch.permissionsJson = serializePermissions([
+          ...current,
+          PERMISSIONS.SHIFTS_CLOSE,
+        ]);
+      }
+    }
   }
 
   if (

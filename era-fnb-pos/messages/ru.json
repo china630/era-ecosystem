@@ -96,6 +96,7 @@
     "nothingToPay": "Нечего оплачивать",
     "queuedOffline": "Сохранено офлайн — уйдёт, когда сеть вернётся",
     "shiftRequired": "Сначала откройте смену",
+    "shiftStale": "Смена с прошлого торгового дня. Оплатите открытые чеки, затем Z и новая смена.",
     "cashReceived": "Получено",
     "cashShort": "Полученная сумма меньше чека",
     "changeDue": "сдача {amount} AZN",
@@ -128,7 +129,10 @@
       "edit": "Изменить",
       "editOutlet": "Редактировать outlet",
       "save": "Сохранить",
-      "defaultOutletName": "Demo outlet"
+      "defaultOutletName": "Demo outlet",
+      "businessDayStart": "Торговый день начинается",
+      "businessDayHint": "Asia/Baku. Продажи до этого часа относятся к предыдущему дню.",
+      "saved": "Сохранено"
     },
     "menu": {
       "title": "Админ меню",
@@ -139,6 +143,7 @@
       "editItem": "Изменить блюдо",
       "category": "Категория",
       "categoryName": "Название категории",
+      "categoryCode": "Код",
       "sortOrder": "Порядок",
       "plu": "PLU",
       "name": "Название",
@@ -294,7 +299,9 @@
     "allPlaces": "Все места",
     "dineIn": "Зал",
     "allMethods": "Все оплаты",
-    "checkTitle": "Чек #{no} · {place}"
+    "checkTitle": "Чек #{no} · {place}",
+    "opened": "Открыт",
+    "closed": "Закрыт"
   },
   "shift": {
     "title": "POS-смена",
@@ -302,6 +309,7 @@
     "openStatus": "{outlet} · размен {cash} AZN · с {time}",
     "openShift": "Открыть смену",
     "zClose": "Z-close",
+    "staleNotice": "Смена открыта до {time}. Открытые чеки можно оплатить. Новые — после Z и новой смены.",
     "outletCode": "Код outlet",
     "openingCash": "Размен (AZN)",
     "confirmOpen": "Открыть",

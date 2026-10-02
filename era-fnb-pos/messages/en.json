@@ -88,6 +88,7 @@
     "nothingToPay": "Nothing to pay",
     "queuedOffline": "Saved offline — will send when the network is back",
     "shiftRequired": "Open a shift first",
+    "shiftStale": "This shift is from the previous business day. Pay open checks, then close Z and open a new shift.",
     "cashReceived": "Received",
     "cashShort": "Received amount is less than the check",
     "changeDue": "change {amount} AZN",
@@ -120,7 +121,10 @@
       "edit": "Edit",
       "editOutlet": "Edit outlet",
       "save": "Save",
-      "defaultOutletName": "Demo outlet"
+      "defaultOutletName": "Demo outlet",
+      "businessDayStart": "Business day starts",
+      "businessDayHint": "Asia/Baku. Sales before this time belong to the previous day.",
+      "saved": "Saved"
     },
     "menu": {
       "title": "Menu admin",
@@ -131,6 +135,7 @@
       "editItem": "Edit dish",
       "category": "Category",
       "categoryName": "Category name",
+      "categoryCode": "Code",
       "sortOrder": "Sort order",
       "plu": "PLU",
       "name": "Name",
@@ -286,7 +291,9 @@
     "allPlaces": "All places",
     "dineIn": "Floor",
     "allMethods": "All tenders",
-    "checkTitle": "Check #{no} · {place}"
+    "checkTitle": "Check #{no} · {place}",
+    "opened": "Opened",
+    "closed": "Closed"
   },
   "shift": {
     "title": "POS shift",
@@ -294,6 +301,7 @@
     "openStatus": "{outlet} · float {cash} AZN · since {time}",
     "openShift": "Open shift",
     "zClose": "Z-close",
+    "staleNotice": "Shift is from before {time}. Open checks can be paid. New ones only after Z and a new shift.",
     "outletCode": "Outlet code",
     "openingCash": "Opening cash (AZN)",
     "confirmOpen": "Open",

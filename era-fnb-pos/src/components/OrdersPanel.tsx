@@ -339,6 +339,10 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
+      if (data.code === "SHIFT_STALE" || data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf(data.code === "SHIFT_STALE" ? "shiftStale" : "shiftRequired") });
+        return;
+      }
       showApiError(data, t("splitSelected"));
       return;
     }

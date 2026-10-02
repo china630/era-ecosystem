@@ -15,6 +15,8 @@ type OpenShift = {
   fiscalDeviceId?: string | null;
   bankTerminalId?: string | null;
   openedBy?: string | null;
+  stale?: boolean;
+  businessDayStart?: string;
   outlet: { code: string; name: string };
 };
 
@@ -210,6 +212,11 @@ export default function PosShiftPanel() {
               {t("zClose")}
             </button>
           )}
+          {shift?.stale ? (
+            <p className="max-w-xs text-sm text-[#C0392B]">
+              {t("staleNotice", { time: shift.businessDayStart ?? "05:00" })}
+            </p>
+          ) : null}
         </div>
       </div>
       {openModal && (
