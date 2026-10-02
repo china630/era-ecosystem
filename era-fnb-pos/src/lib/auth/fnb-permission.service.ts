@@ -24,12 +24,12 @@ export async function permissionsForRoleCode(
 
 export async function permissionsForUserId(
   userId: string,
-): Promise<Permission[]> {
-  const user = await prisma.user.findUnique({
+): Promise<Permission[] | null> {
+  const user = await prisma.user.findFirst({
     where: { id: userId },
     include: { role: true },
   });
-  if (!user) return [];
+  if (!user) return null;
   const profile = await getFnbOrgProfile(user.organizationId);
   const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
   return effectiveRolePermissions(

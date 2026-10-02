@@ -30,6 +30,7 @@ export default function FnbAccessPage() {
   const t = useTranslations("settingsAccess");
   const tc = useTranslations("common");
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [accountRole, setAccountRole] = useState("");
   const [selectedCode, setSelectedCode] = useState("");
   const [draft, setDraft] = useState<Set<Permission>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -143,6 +144,15 @@ export default function FnbAccessPage() {
     },
     [tc],
   );
+
+  useEffect(() => {
+    void fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (me && typeof me.role === "string") setAccountRole(me.role);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     void loadRoles();
@@ -293,6 +303,13 @@ export default function FnbAccessPage() {
                   onChange={(v) => setSelectedCode(String(v))}
                   options={roleOptions}
                 />
+                {accountRole ? (
+                  <p className="mt-1 text-xs text-[var(--era-muted)]">
+                    {t("signedIn", {
+                      role: roles.find((row) => row.code === accountRole)?.name ?? accountRole,
+                    })}
+                  </p>
+                ) : null}
               </div>
               <button
                 type="button"

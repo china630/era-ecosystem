@@ -10,6 +10,7 @@ export type SaleRowView = {
   place: string;
   method: string | null;
   totalAzn: number;
+  shiftOpenedAt?: string | null;
 };
 
 export type SaleTotalsView = {
@@ -41,6 +42,7 @@ export function SaleTable({
     closed: string;
     place: string;
     method: string;
+    shift: string;
     sum: string;
     empty: string;
     cash: string;
@@ -62,13 +64,14 @@ export function SaleTable({
             <th className="pb-2 font-medium">{labels.closed}</th>
             <th className="pb-2 font-medium">{labels.place}</th>
             <th className="pb-2 font-medium">{labels.method}</th>
+            <th className="pb-2 font-medium">{labels.shift}</th>
             <th className="pb-2 text-right font-medium">{labels.sum}</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-3 text-[#7F8C8D]">
+              <td colSpan={6} className="py-3 text-[#7F8C8D]">
                 {labels.empty}
               </td>
             </tr>
@@ -89,6 +92,9 @@ export function SaleTable({
                 <td className="py-2">{row.place === "TAKEAWAY" ? labels.takeaway : row.place}</td>
                 <td className="py-2">
                   {row.method && METHOD_KEY[row.method] ? labels[METHOD_KEY[row.method]] : "—"}
+                </td>
+                <td className="py-2 tabular-nums">
+                  {row.shiftOpenedAt ? bakuTimeLabel(row.shiftOpenedAt) : "—"}
                 </td>
                 <td className="py-2 text-right font-semibold tabular-nums">
                   {row.totalAzn.toFixed(2)} {azn}

@@ -13,6 +13,7 @@ export type SaleRow = {
   place: string;
   method: string | null;
   totalAzn: number;
+  shiftOpenedAt: string | null;
 };
 
 export type SaleTotals = {
@@ -96,7 +97,10 @@ export async function saleReportBetween(input: {
         : {}),
       ...(input.method ? { paymentMethod: input.method } : {}),
     },
-    include: { table: { select: { code: true } } },
+    include: {
+      table: { select: { code: true } },
+      shift: { select: { openedAt: true } },
+    },
     orderBy: { closedAt: "desc" },
     take: 300,
   });
@@ -109,6 +113,7 @@ export async function saleReportBetween(input: {
     place: placeOf(ticket),
     method: ticket.paymentMethod,
     totalAzn: Number(ticket.totalAzn),
+    shiftOpenedAt: ticket.shift?.openedAt?.toISOString() ?? null,
   }));
   return { rows, totals: totalsOf(rows), shift: input.shift ?? null, drawers: [] };
 }

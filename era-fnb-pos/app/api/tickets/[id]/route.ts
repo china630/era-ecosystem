@@ -21,6 +21,7 @@ export async function GET(
     include: {
       lines: true,
       table: true,
+      shift: { select: { openedAt: true } },
       outlet: { select: { code: true, name: true } },
     },
   });

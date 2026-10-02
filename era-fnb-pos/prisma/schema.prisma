@@ -241,15 +241,18 @@ model Ticket {
   paymentMethod           String?      @map("payment_method")
   cashTenderedAzn         Decimal?     @map("cash_tendered_azn") @db.Decimal(12, 2)
   changeAzn               Decimal?     @map("change_azn") @db.Decimal(12, 2)
+  shiftId                 String?      @map("shift_id")
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")
   externalRef             String?      @map("external_ref")
   outlet                  Outlet       @relation(fields: [outletId], references: [id], onDelete: Cascade)
   table                   PosTable?    @relation("TableTickets", fields: [tableId], references: [id])
+  shift                   PosShift?    @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   lines                   TicketLine[]
 
   @@index([outletId, status])
   @@index([beoId])
+  @@index([shiftId])
   @@unique([organizationId, externalRef])
   @@map("tickets")
   @@index([organizationId])
@@ -293,6 +296,7 @@ model PosShift {
   bankTerminalId String?     @map("bank_terminal_id")
   outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
   drops       PosCashDrop[]
+  tickets     Ticket[]
 
   @@index([outletId, status])
   @@map("pos_shifts")

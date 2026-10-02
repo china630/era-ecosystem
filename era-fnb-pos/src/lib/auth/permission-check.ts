@@ -56,3 +56,29 @@ export function sessionHasFnbPermission(
   if (hasFnbPermissionBypass(session)) return true;
   return resolveSessionPermissions(session).includes(permission);
 }
+
+/** Same grant the nav and the API use. A missing payload is denied. */
+export function fnbCan(
+  me: {
+    login?: string;
+    email?: string | null;
+    role?: string;
+    permissions?: string[];
+    isOwner?: boolean;
+    pin?: boolean;
+  } | null | undefined,
+  permission: Permission,
+): boolean {
+  if (!me) return false;
+  return sessionHasFnbPermission(
+    {
+      login: me.login ?? "",
+      email: me.email ?? undefined,
+      role: me.role ?? "",
+      permissions: Array.isArray(me.permissions) ? me.permissions : [],
+      isOwner: me.isOwner === true,
+      pin: me.pin === true,
+    },
+    permission,
+  );
+}

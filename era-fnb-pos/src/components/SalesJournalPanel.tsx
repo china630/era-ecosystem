@@ -35,6 +35,7 @@ type CheckView = {
   totalAzn: string | number;
   openedAt?: string | null;
   closedAt?: string | null;
+  shiftOpenedAt?: string | null;
   serviceChannel?: string | null;
   table?: { name?: string | null; code?: string | null } | null;
   lines: CheckLine[];
@@ -88,7 +89,12 @@ export default function SalesJournalPanel() {
           (line: { kitchenStatus?: string }) => line.kitchenStatus !== "VOID",
         )
       : [];
-    setCheck({ ...(data as CheckView), lines });
+    setCheck({
+      ...(data as CheckView),
+      lines,
+      shiftOpenedAt:
+        data.shift && typeof data.shift.openedAt === "string" ? data.shift.openedAt : null,
+    });
   }
 
   const labels = {
@@ -96,6 +102,7 @@ export default function SalesJournalPanel() {
     closed: t("closed"),
     place: t("place"),
     method: t("method"),
+    shift: t("shift"),
     sum: t("sum"),
     empty: t("empty"),
     cash: t("cash"),
@@ -217,6 +224,9 @@ export default function SalesJournalPanel() {
               {t("opened")}: {check.openedAt ? bakuTimeLabel(check.openedAt) : "—"}
               {" · "}
               {t("closed")}: {check.closedAt ? bakuTimeLabel(check.closedAt) : "—"}
+              {check.shiftOpenedAt
+                ? ` · ${t("shift")} ${bakuTimeLabel(check.shiftOpenedAt)}`
+                : ""}
             </p>
             <CheckLines
               lines={check.lines}

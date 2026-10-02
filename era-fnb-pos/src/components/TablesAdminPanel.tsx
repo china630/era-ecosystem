@@ -9,6 +9,7 @@ import {
   FieldRow,
   ModalFooter,
   ModalShell,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
@@ -179,12 +180,15 @@ export default function TablesAdminPanel() {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-          <Plus className="mr-1 inline h-4 w-4" />
-          {t("add")}
-        </button>
-      </div>
+      <PageHeader
+        title={t("title")}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="mr-1 inline h-4 w-4" />
+            {t("add")}
+          </button>
+        }
+      />
       <div className="grid items-start gap-3 lg:grid-cols-[24rem_minmax(0,1fr)]">
         <div className={`${CARD_CLASS} min-w-0 p-4`}>
           <div className="mb-3 flex items-center justify-between gap-2">
@@ -346,21 +350,19 @@ export default function TablesAdminPanel() {
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           />
-          {modal === "edit" ? (
-            <CatalogField
-              kind={"CLOSED_SMALL" as CatalogFieldKind}
-              label={t("halls")}
-              value={form.hallId}
-              options={hallOptions.filter((option) => option.value !== "")}
-              emptyLabel={t("mainHall")}
-              onChange={(next) =>
-                setForm((current) => ({
-                  ...current,
-                  hallId: Array.isArray(next) ? next[0] ?? "" : next,
-                }))
-              }
-            />
-          ) : null}
+          <CatalogField
+            kind={"CLOSED_SMALL" as CatalogFieldKind}
+            label={t("halls")}
+            value={form.hallId}
+            options={hallOptions.filter((option) => option.value !== "")}
+            emptyLabel={t("mainHall")}
+            onChange={(next) =>
+              setForm((current) => ({
+                ...current,
+                hallId: Array.isArray(next) ? next[0] ?? "" : next,
+              }))
+            }
+          />
           <ModalFooter onCancel={() => setModal(null)} onSubmit={() => void save()} submitLabel={t("save")} />
         </div>
       </ModalShell>

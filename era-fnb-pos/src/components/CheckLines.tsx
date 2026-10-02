@@ -17,7 +17,7 @@ export function CheckLines({
   onToggle,
   selectedIds,
   labels,
-  azn,
+  azn: _azn,
   discount,
   tender,
 }: {
@@ -45,15 +45,15 @@ export function CheckLines({
   const cols = (
     <colgroup>
       <col />
-      <col className="w-[7.5rem]" />
-      <col className="w-24" />
-      <col className="w-28" />
+      <col className="w-[6.25rem]" />
+      <col className="w-16" />
+      <col className="w-16" />
       {onRemove ? <col className="w-8" /> : null}
     </colgroup>
   );
   return (
     <div className={discount ? "flex min-h-0 flex-1 flex-col" : undefined}>
-    <div className={discount ? "min-h-0 flex-1 overflow-y-auto" : undefined}>
+    <div className={discount ? "min-h-0 flex-1 overflow-x-hidden overflow-y-auto" : undefined}>
     <table className={`w-full text-sm ${discount ? "table-fixed" : ""}`}>
       {discount ? cols : null}
       <thead className="sticky top-0 bg-white">
@@ -89,16 +89,16 @@ export function CheckLines({
                   <span className="flex items-center justify-center gap-1">
                     <button
                       type="button"
-                      className="flex h-7 w-7 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
+                      className="flex h-6 w-6 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
                       aria-label={labels.minus}
                       onClick={() => onQty(line, line.qty - 1)}
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="w-6 text-center tabular-nums">{line.qty}</span>
+                    <span className="w-5 text-center tabular-nums">{line.qty}</span>
                     <button
                       type="button"
-                      className="flex h-7 w-7 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
+                      className="flex h-6 w-6 items-center justify-center rounded border border-[#D5DADF] text-[#34495E]"
                       aria-label={labels.plus}
                       onClick={() => onQty(line, line.qty + 1)}
                     >
@@ -113,7 +113,7 @@ export function CheckLines({
                 {price.toFixed(2)}
               </td>
               <td className="py-2 text-right font-semibold tabular-nums text-[#2C3E50]">
-                {sum.toFixed(2)} {azn}
+                {sum.toFixed(2)}
               </td>
               {onRemove ? (
                 <td className="py-2 pl-1 text-right">
@@ -134,62 +134,40 @@ export function CheckLines({
     </table>
     </div>
       {discount ? (
-        <table className="w-full shrink-0 table-fixed text-sm">
-          {cols}
-          <tbody>
-          <tr>
-            <td />
-            <td />
-            <td className="pt-3">
-              <label className="flex items-center justify-end gap-2 text-xs text-[#7F8C8D]">
-                <span className="shrink-0">{discount.label}</span>
+        <div className="shrink-0 border-t border-[#F0F3F4] pt-3">
+          <div className="ml-auto flex w-full max-w-[18rem] flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-xs text-[#7F8C8D]">{discount.label}</span>
+              <input
+                className={`${MODAL_INPUT_CLASS} w-20 text-right tabular-nums`}
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={discount.value}
+                onChange={(e) => discount.onChange(e.target.value)}
+                onBlur={discount.onBlur}
+              />
+              <span className="w-16 text-right text-sm tabular-nums text-[#7F8C8D]">
+                {discount.amountText ?? ""}
+              </span>
+            </div>
+            <p className="whitespace-nowrap text-xl font-semibold tabular-nums text-[#2C3E50]">
+              {discount.netText}
+            </p>
+            {tender ? (
+              <label className="flex items-center gap-2 text-xs text-[#7F8C8D]">
+                <span className="shrink-0">{tender.label}</span>
                 <input
-                  className={`${MODAL_INPUT_CLASS} w-16 text-right tabular-nums`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={discount.value}
-                  onChange={(e) => discount.onChange(e.target.value)}
-                  onBlur={discount.onBlur}
+                  className={`${MODAL_INPUT_CLASS} w-28 text-right tabular-nums`}
+                  inputMode="decimal"
+                  value={tender.value}
+                  onChange={(e) => tender.onChange(e.target.value)}
                 />
               </label>
-            </td>
-            <td className="pt-3 text-right text-sm tabular-nums text-[#7F8C8D]">
-              {discount.amountText}
-            </td>
-            {onRemove ? <td /> : null}
-          </tr>
-          <tr>
-            <td />
-            <td />
-            <td />
-            <td className="pt-1 text-right text-2xl font-semibold tabular-nums text-[#2C3E50]">
-              {discount.netText}
-            </td>
-            {onRemove ? <td /> : null}
-          </tr>
-          {tender ? (
-            <tr>
-              <td />
-              <td />
-              <td />
-              <td className="pt-3">
-                <label className="block text-right text-xs text-[#7F8C8D]">
-                  {tender.label}
-                  <input
-                    className={`${MODAL_INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
-                    inputMode="decimal"
-                    value={tender.value}
-                    onChange={(e) => tender.onChange(e.target.value)}
-                  />
-                </label>
-              </td>
-              {onRemove ? <td /> : null}
-            </tr>
-          ) : null}
-          </tbody>
-        </table>
+            ) : null}
+          </div>
+        </div>
       ) : null}
     </div>
   );
