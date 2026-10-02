@@ -1,9 +1,6 @@
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { getSessionFromRequest } from "@/lib/session";
-import {
-  ensureSystemFnbRoles,
-  resolveFnbEdition,
-} from "@/lib/auth/ensure-system-fnb-roles";
+import { resolveFnbEdition } from "@/lib/auth/ensure-system-fnb-roles";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import {
   ALL_PERMISSIONS,
@@ -22,7 +19,6 @@ export async function GET(request: Request) {
     const organizationId = session.organizationId;
     const profile = await getFnbOrgProfile(organizationId);
     const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
-    await ensureSystemFnbRoles(prisma, organizationId, edition);
 
     let permissions = session.permissions ?? [];
     let fullName = session.fullName;

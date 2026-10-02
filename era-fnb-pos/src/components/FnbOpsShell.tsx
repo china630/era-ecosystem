@@ -85,7 +85,6 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
   const [edition, setEdition] = useState<string | null>(null);
   const [modules, setModules] = useState<string[]>([]);
   const [me, setMe] = useState<MePayload | null>(null);
-  const [meReady, setMeReady] = useState(false);
 
   useEffect(() => {
     void fetch("/api/edition")
@@ -102,8 +101,7 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
     void fetch("/api/auth/me")
       .then(async (r) => (r.ok ? ((await r.json()) as MePayload) : null))
       .then((d) => setMe(d))
-      .catch(() => setMe(null))
-      .finally(() => setMeReady(true));
+      .catch(() => setMe(null));
   }, []);
 
   const permSession: FnbPermissionSession = useMemo(
@@ -142,11 +140,11 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
     .filter((l) => {
       const screen = LINK_SCREENS[l.href];
       if (!screen) return true;
-      if (!meReady) return true;
-      if (me == null) return false;
       if (l.href === "/kds" && kafe && !modules.includes("fnb_kitchen_kds")) {
         return false;
       }
+      const grants = me?.permissions;
+      if (!Array.isArray(grants) || grants.length === 0) return true;
       return can(screen);
     })
     .map((l) => ({

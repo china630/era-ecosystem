@@ -64,21 +64,6 @@ export function EraAppRouteShell({
     closeMobileNav();
   }, [pathname, closeMobileNav]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem("era_app_sidebar_collapsed") === "1") {
-      setSidebarCollapsed(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      "era_app_sidebar_collapsed",
-      sidebarCollapsed ? "1" : "0",
-    );
-  }, [sidebarCollapsed]);
-
   if (isBare) {
     return <>{children}</>;
   }
