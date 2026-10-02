@@ -41,7 +41,8 @@
     "openNow": "Открытые чеки",
     "occupiedTables": "Занятые столы",
     "revenueToday": "Выручка за сегодня",
-    "topDishes": "Больше всего продано",
+    "topDishes": "Самые продаваемые блюда",
+    "topSections": "Самые продаваемые разделы",
     "topEmpty": "Сегодня нет закрытых чеков.",
     "loadFailed": "Не удалось загрузить день",
     "intro": "Чеки, столы и выручка за сегодня.",
@@ -288,7 +289,12 @@
     "card": "Карта",
     "transfer": "Перевод",
     "count": "Чеки",
-    "takeaway": "Take away"
+    "takeaway": "Take away",
+    "date": "Дата",
+    "allPlaces": "Все места",
+    "dineIn": "Зал",
+    "allMethods": "Все оплаты",
+    "checkTitle": "Чек #{no} · {place}"
   },
   "shift": {
     "title": "POS-смена",
@@ -337,6 +343,7 @@
     "name": "Название",
     "status": "Статус",
     "date": "Дата",
+    "datePlaceholder": "дд.мм.гггг",
     "guest": "Гость",
     "notes": "Заметка",
     "complete": "Готово",

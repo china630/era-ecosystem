@@ -30,6 +30,7 @@ export function SaleTable({
   totals,
   labels,
   azn,
+  onOpen,
 }: {
   rows: SaleRowView[];
   totals: SaleTotalsView;
@@ -46,6 +47,7 @@ export function SaleTable({
     takeaway: string;
   };
   azn: string;
+  onOpen?: (id: string) => void;
 }) {
   return (
     <div>
@@ -67,7 +69,11 @@ export function SaleTable({
             </tr>
           ) : (
             rows.map((row) => (
-              <tr key={row.id} className="border-t border-[#F0F3F4]">
+              <tr
+                key={row.id}
+                className={`border-t border-[#F0F3F4] ${onOpen ? "cursor-pointer hover:bg-[#F7F9FA]" : ""}`}
+                onClick={onOpen ? () => onOpen(row.id) : undefined}
+              >
                 <td className="py-2 tabular-nums">
                   {row.closedAt ? bakuTimeLabel(row.closedAt) : ""}
                   {row.dayNo ? ` #${row.dayNo}` : ""}

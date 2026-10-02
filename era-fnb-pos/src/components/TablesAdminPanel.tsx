@@ -10,7 +10,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type TableRow = {
@@ -121,6 +121,7 @@ export default function TablesAdminPanel() {
       <div className="mb-4 flex justify-between gap-2">
         <p className="text-sm text-[#7F8C8D]">{t("subtitle")}</p>
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+          <Plus className="mr-1 inline h-4 w-4" />
           {t("add")}
         </button>
       </div>

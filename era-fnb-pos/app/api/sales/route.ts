@@ -10,8 +10,15 @@ export async function GET(request: Request) {
     const session = await getSessionFromRequest(request);
     const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
     if (denied) return denied;
-    const scope = new URL(request.url).searchParams.get("scope") === "shift" ? "shift" : "today";
-    return jsonOk(await saleReportForScope(scope));
+    const url = new URL(request.url);
+    const scope = url.searchParams.get("scope") === "shift" ? "shift" : "today";
+    const channelRaw = url.searchParams.get("channel");
+    const methodRaw = url.searchParams.get("method");
+    const channel = channelRaw === "TAKEAWAY" || channelRaw === "DINE_IN" ? channelRaw : undefined;
+    const method =
+      methodRaw === "CASH" || methodRaw === "CARD" || methodRaw === "TRANSFER" ? methodRaw : undefined;
+    const date = url.searchParams.get("date") ?? undefined;
+    return jsonOk(await saleReportForScope(scope, { date, channel, method }));
   } catch (err) {
     return handleRouteError(err);
   }
