@@ -321,6 +321,19 @@ export default function MenuAdminPanel() {
               <Download className="mr-1 inline h-4 w-4" />
               {t("exportExcel")}
             </a>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateCategory}>
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("addCategory")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!selectedCategoryId}
+              onClick={() => openCreateItem(selectedCategoryId)}
+            >
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("addItem")}
+            </button>
           </div>
         }
       />
@@ -342,22 +355,9 @@ export default function MenuAdminPanel() {
         </label>
       </div>
 
-      <div className="grid items-start gap-3 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div className={`${CARD_CLASS} p-2`}>
-          <div className="mb-2 flex items-center justify-between px-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
-              {t("category")}
-            </p>
-            <button
-              type="button"
-              aria-label={t("addCategory")}
-              title={t("addCategory")}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-[#34495E] hover:bg-[#EBEDF0]"
-              onClick={openCreateCategory}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
+      <div className="grid items-start gap-3 lg:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className={`${CARD_CLASS} p-3`}>
+          <p className="mb-2 px-1 text-sm font-semibold text-[#34495E]">{t("category")}</p>
           {categories.length === 0 && (
             <p className="px-2 py-3 text-sm text-[#7F8C8D]">{t("emptyCategories")}</p>
           )}
@@ -419,19 +419,10 @@ export default function MenuAdminPanel() {
         </div>
 
         <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-3">
             <h2 className="text-sm font-semibold text-[#34495E]">
               {needle ? t("searchResults") : (selectedCategory?.name ?? t("category"))}
             </h2>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={!selectedCategoryId}
-              onClick={() => openCreateItem(selectedCategoryId)}
-            >
-              <Plus className="mr-1 inline h-4 w-4" />
-              {t("addItem")}
-            </button>
           </div>
           <table className={DATA_TABLE_CLASS}>
             <thead>

@@ -29,7 +29,11 @@ export async function GET(request: Request) {
           totalAzn: true,
           lines: {
             where: { kitchenStatus: { not: "VOID" } },
-            select: { description: true, qty: true },
+            select: {
+              description: true,
+              qty: true,
+              menuItem: { select: { category: { select: { name: true } } } },
+            },
           },
         },
       }),
@@ -37,15 +41,22 @@ export async function GET(request: Request) {
 
     let revenueAzn = 0;
     const qtyByName = new Map<string, number>();
+    const qtyBySection = new Map<string, number>();
     for (const ticket of closed) {
       revenueAzn += Number(ticket.totalAzn);
       for (const line of ticket.lines) {
         const name = line.description.trim() || "—";
         qtyByName.set(name, (qtyByName.get(name) ?? 0) + line.qty);
+        const section = line.menuItem?.category?.name?.trim();
+        if (section) qtyBySection.set(section, (qtyBySection.get(section) ?? 0) + line.qty);
       }
     }
 
     const topDishes = [...qtyByName.entries()]
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+    const topSections = [...qtyBySection.entries()]
       .map(([name, qty]) => ({ name, qty }))
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 5);
@@ -57,6 +68,7 @@ export async function GET(request: Request) {
       occupiedTables,
       revenueAzn,
       topDishes,
+      topSections,
     });
   } catch (err) {
     return handleRouteError(err);

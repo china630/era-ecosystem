@@ -75,6 +75,8 @@ export async function saleReportBetween(input: {
   to: Date;
   outletId?: string;
   shift?: SaleShift | null;
+  channel?: "TAKEAWAY" | "DINE_IN";
+  method?: "CASH" | "CARD" | "TRANSFER";
 }): Promise<SaleReport> {
   const organizationId = requestOrganizationId();
   const tickets = await prisma.ticket.findMany({
@@ -82,6 +84,11 @@ export async function saleReportBetween(input: {
       status: "CLOSED",
       closedAt: { gte: input.from, lte: input.to },
       ...(input.outletId ? { outletId: input.outletId } : {}),
+      ...(input.channel === "TAKEAWAY" ? { serviceChannel: "TAKEAWAY" } : {}),
+      ...(input.channel === "DINE_IN"
+        ? { OR: [{ serviceChannel: null }, { serviceChannel: { not: "TAKEAWAY" } }] }
+        : {}),
+      ...(input.method ? { paymentMethod: input.method } : {}),
     },
     include: { table: { select: { code: true } } },
     orderBy: { closedAt: "desc" },
@@ -99,7 +106,16 @@ export async function saleReportBetween(input: {
   return { rows, totals: totalsOf(rows), shift: input.shift ?? null };
 }
 
-export async function saleReportForScope(scope: "today" | "shift"): Promise<SaleReport> {
+export async function saleReportForScope(
+  scope: "today" | "shift",
+  filters?: {
+    date?: string;
+    channel?: "TAKEAWAY" | "DINE_IN";
+    method?: "CASH" | "CARD" | "TRANSFER";
+  },
+): Promise<SaleReport> {
+  const channel = filters?.channel;
+  const method = filters?.method;
   if (scope === "shift") {
     const shift = await prisma.posShift.findFirst({
       where: { status: "OPEN" },
@@ -113,6 +129,8 @@ export async function saleReportForScope(scope: "today" | "shift"): Promise<Sale
       from: shift.openedAt,
       to: new Date(),
       outletId: shift.outletId,
+      channel,
+      method,
       shift: {
         id: shift.id,
         openedAt: shift.openedAt.toISOString(),
@@ -122,8 +140,9 @@ export async function saleReportForScope(scope: "today" | "shift"): Promise<Sale
       },
     });
   }
-  const { start, end } = bakuDayBounds(todayBakuYmd());
-  return saleReportBetween({ from: start, to: end });
+  const day = filters?.date && /^\d{4}-\d{2}-\d{2}$/.test(filters.date) ? filters.date : todayBakuYmd();
+  const { start, end } = bakuDayBounds(day);
+  return saleReportBetween({ from: start, to: end, channel, method });
 }
 
 export async function saleReportForShift(shiftId: string): Promise<SaleReport> {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { Ban } from "lucide-react";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { CheckLines } from "@/components/CheckLines";
@@ -16,6 +17,7 @@ type Table = {
   status: string;
   currentTicketId?: string | null;
   openTotalAzn?: number | null;
+  openedAt?: string | null;
 };
 
 type MenuItem = {
@@ -48,6 +50,7 @@ type OpenChip = {
   totalAzn: string | number;
   serviceChannel?: string | null;
   tableId?: string | null;
+  openedAt?: string | null;
 };
 
 type Outlet = {
@@ -102,6 +105,7 @@ export default function FloorPanel() {
   const [outletSaving, setOutletSaving] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const hotelModeRef = useRef(false);
+  const autoOpenedRef = useRef(false);
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
@@ -118,7 +122,7 @@ export default function FloorPanel() {
       lines?: TicketLineView[];
       totalAzn?: string | number;
       dayNo?: number | null;
-      table?: { code?: string } | null;
+      table?: { code?: string; name?: string | null } | null;
       walkInLabel?: string | null;
       serviceChannel?: string | null;
       status?: string;
@@ -138,7 +142,7 @@ export default function FloorPanel() {
       setTicketLines(lines);
       setTicketTotal(Number(data.totalAzn) || 0);
       if (typeof data.dayNo === "number") setDayNo(data.dayNo);
-      const tableCode = data.table?.code;
+      const tableCode = data.table?.name?.trim() || data.table?.code;
       const takeaway =
         data.serviceChannel === "TAKEAWAY" || data.serviceChannel === "WALK_IN";
       setTicketCaption(
@@ -157,31 +161,33 @@ export default function FloorPanel() {
     const data = await res.json().catch(() => null);
     if (!Array.isArray(data)) {
       setOpenChips([]);
-      return;
+      return [] as OpenChip[];
     }
-    setOpenChips(
-      data
-        .filter(
-          (ticket: { serviceChannel?: string | null; table?: { id?: string } | null }) =>
-            ticket.serviceChannel === "TAKEAWAY" ||
-            (ticket.serviceChannel === "WALK_IN" && !ticket.table),
-        )
-        .map(
-          (ticket: {
-            id: string;
-            dayNo?: number | null;
-            totalAzn: string | number;
-            serviceChannel?: string | null;
-            table?: { id?: string } | null;
-          }) => ({
-            id: ticket.id,
-            dayNo: ticket.dayNo ?? null,
-            totalAzn: ticket.totalAzn,
-            serviceChannel: ticket.serviceChannel,
-            tableId: ticket.table?.id ?? null,
-          }),
-        ),
-    );
+    const chips: OpenChip[] = data
+      .filter(
+        (ticket: { serviceChannel?: string | null; table?: { id?: string } | null }) =>
+          ticket.serviceChannel === "TAKEAWAY" ||
+          (ticket.serviceChannel === "WALK_IN" && !ticket.table),
+      )
+      .map(
+        (ticket: {
+          id: string;
+          dayNo?: number | null;
+          totalAzn: string | number;
+          serviceChannel?: string | null;
+          openedAt?: string | null;
+          table?: { id?: string } | null;
+        }) => ({
+          id: ticket.id,
+          dayNo: ticket.dayNo ?? null,
+          totalAzn: ticket.totalAzn,
+          serviceChannel: ticket.serviceChannel,
+          tableId: ticket.table?.id ?? null,
+          openedAt: ticket.openedAt ?? null,
+        }),
+      );
+    setOpenChips(chips);
+    return chips;
   }, []);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -266,13 +272,26 @@ export default function FloorPanel() {
         const list = Array.isArray(banquetsData) ? banquetsData : [];
         return list[0]?.id ?? "";
       });
-      await loadChips();
+      const chips = await loadChips();
+      if (!autoOpenedRef.current) {
+        autoOpenedRef.current = true;
+        const occupied = tableRows.filter(
+          (row: Table) => row.status === "OCCUPIED" && row.currentTicketId,
+        );
+        if (occupied.length + chips.length === 1) {
+          if (occupied.length === 1 && occupied[0].currentTicketId) {
+            void focusTicket(occupied[0].currentTicketId, occupied[0].name || occupied[0].code);
+          } else if (chips[0]) {
+            void focusTicket(chips[0].id, t("takeaway"));
+          }
+        }
+      }
     } catch (err) {
       showApiError(err instanceof Error ? { error: err.message } : {}, tc("failed"));
     } finally {
       setLoading(false);
     }
-  }, [loadChips, tc]);
+  }, [loadChips, t, tc]);
 
   useEffect(() => {
     void load();
@@ -537,12 +556,12 @@ export default function FloorPanel() {
   function selectTable(table: Table) {
     if (table.status === "OCCUPIED") {
       if (table.currentTicketId) {
-        void focusTicket(table.currentTicketId, table.code);
+        void focusTicket(table.currentTicketId, table.name || table.code);
         return;
       }
       const found = openChips.find((chip) => chip.tableId === table.id);
       if (found) {
-        void focusTicket(found.id, table.code);
+        void focusTicket(found.id, table.name || table.code);
         return;
       }
       void (async () => {
@@ -555,7 +574,7 @@ export default function FloorPanel() {
             )
           : null;
         if (match?.id) {
-          await focusTicket(match.id, table.code);
+          await focusTicket(match.id, table.name || table.code);
           return;
         }
         showApiError({ error: t("occupiedHint") });
@@ -748,16 +767,21 @@ export default function FloorPanel() {
                         key={chip.id}
                         type="button"
                         onClick={() => void focusTicket(chip.id, t("takeaway"))}
-                        className={`${CARD_CLASS} px-3 py-2 text-left text-sm ${
-                          chip.id === activeTicketId ? "border-[#2980B9]" : ""
+                        className={`${CARD_CLASS} flex h-24 w-full flex-col px-3 py-2 text-left ${
+                          chip.id === activeTicketId ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                         }`}
                       >
-                        <span className="font-medium">
+                        <span className="text-base font-semibold">
                           {t("takeaway")}
                           {chip.dayNo ? ` #${chip.dayNo}` : ""}
                         </span>
-                        <span className="mt-0.5 block text-[#34495E]">
-                          {Number(chip.totalAzn).toFixed(2)} {tc("azn")}
+                        <span className="mt-auto flex items-end justify-between gap-2">
+                          <span className="text-xs text-[#7F8C8D]">
+                            {chip.openedAt ? bakuTimeLabel(chip.openedAt) : ""}
+                          </span>
+                          <span className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                            {Number(chip.totalAzn).toFixed(2)} {tc("azn")}
+                          </span>
                         </span>
                       </button>
                     ))}
@@ -780,14 +804,14 @@ export default function FloorPanel() {
                   key={table.id}
                   type="button"
                   onClick={() => selectTable(table)}
-                  className={`${CARD_CLASS} p-3 text-left transition hover:border-[#2980B9] ${
+                  className={`${CARD_CLASS} flex h-24 w-full flex-col p-3 text-left transition hover:border-[#2980B9] ${
                     table.status === "OCCUPIED" ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                   } ${draft?.kind === "table" && draft.tableId === table.id ? "border-[#2980B9]" : ""}`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-base font-semibold">{table.code}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-base font-semibold leading-5">{table.name}</span>
                     <span
-                      className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                      className={`shrink-0 rounded-lg px-2 py-0.5 text-xs font-semibold ${
                         table.status === "OCCUPIED"
                           ? "bg-[#2980B9] text-white"
                           : "bg-[#EBEDF0] text-[#34495E]"
@@ -796,44 +820,50 @@ export default function FloorPanel() {
                       {table.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-[#7F8C8D]">{table.name}</p>
-                  {table.status === "OCCUPIED" && table.openTotalAzn != null ? (
-                    <p className="mt-1 text-right text-sm font-semibold tabular-nums text-[#2C3E50]">
-                      {Number(table.openTotalAzn).toFixed(2)} {tc("azn")}
-                    </p>
-                  ) : null}
+                  <span className="mt-auto flex items-end justify-between gap-2">
+                    <span className="text-xs text-[#7F8C8D]">
+                      {table.openedAt ? bakuTimeLabel(table.openedAt) : ""}
+                    </span>
+                    {table.status === "OCCUPIED" && table.openTotalAzn != null ? (
+                      <span className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                        {Number(table.openTotalAzn).toFixed(2)} {tc("azn")}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
+          <div className="flex gap-2 overflow-x-auto rounded-lg bg-[#D6DDE3] p-2">
+            {menuCategories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`shrink-0 rounded-md px-5 py-2.5 text-base font-semibold ${
+                  !query && cat.id === activeCategoryId
+                    ? "bg-[#2980B9] text-white shadow-sm"
+                    : "bg-white text-[#2C3E50] ring-1 ring-[#8FA0AE]"
+                }`}
+                onClick={() => {
+                  setMenuQuery("");
+                  setActiveCategoryId(cat.id);
+                }}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
           <div className={`${CARD_CLASS} p-3`}>
             <input
               type="search"
               value={menuQuery}
               onChange={(e) => setMenuQuery(e.target.value)}
               placeholder={t("menuSearch")}
-              className={`${INPUT_CLASS} mb-2 w-full`}
+              className={`${INPUT_CLASS} mb-3 w-full`}
             />
-            <div className="mb-3 flex gap-2 overflow-x-auto">
-              {menuCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold ${
-                    !query && cat.id === activeCategoryId
-                      ? "bg-[#2980B9] text-white"
-                      : "bg-white text-[#2C3E50] ring-1 ring-[#B7C3CE]"
-                  }`}
-                  onClick={() => {
-                    setMenuQuery("");
-                    setActiveCategoryId(cat.id);
-                  }}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {visibleDishes.map((m) => (
                 <div key={m.id} className="relative">
@@ -841,14 +871,14 @@ export default function FloorPanel() {
                   type="button"
                   onClick={() => void addDish(m)}
                   disabled={soldOutIds.has(m.id)}
-                  className={`flex h-28 w-full flex-col items-center justify-center rounded-md border border-[#D5DADF] bg-white px-2 text-center ${
+                  className={`flex h-32 w-full flex-col items-center justify-center rounded-md border border-[#D5DADF] bg-white px-2 text-center ${
                     soldOutIds.has(m.id) ? "opacity-40" : "hover:border-[#2980B9]"
                   }`}
                 >
-                  <span className="line-clamp-2 text-base font-semibold leading-5 text-[#2C3E50]">
+                  <span className="line-clamp-2 text-lg font-semibold leading-6 text-[#2C3E50]">
                     {m.name}
                   </span>
-                  <span className="mt-2 text-sm font-bold tabular-nums text-[#1E8449]">
+                  <span className="mt-2 text-base font-bold tabular-nums text-[#1E8449]">
                     {Number(m.priceAzn).toFixed(2)} {tc("azn")}
                   </span>
                 </button>

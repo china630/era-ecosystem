@@ -3,7 +3,7 @@
 | Route | API | Role |
 |-------|-----|------|
 | `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — category tabs, 4 dish tiles, check columns, shift strip |
-| `/sales` | `GET /api/sales?scope=today\|shift` | Sales journal — same closed-check rows as X/Z |
+| `/sales` | `GET /api/sales?scope=today\|shift&date=&channel=&method=` | Sales journal — filters and check lines |
 | `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
 | `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order). Outlet by `publicSlug` per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |

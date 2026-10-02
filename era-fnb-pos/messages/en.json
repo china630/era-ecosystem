@@ -33,7 +33,8 @@
     "openNow": "Open tickets",
     "occupiedTables": "Occupied tables",
     "revenueToday": "Today's takings",
-    "topDishes": "Best sellers",
+    "topDishes": "Best-selling dishes",
+    "topSections": "Best-selling sections",
     "topEmpty": "No closed tickets today.",
     "loadFailed": "Could not load today's board",
     "intro": "MVP operational shell per DESIGN.md.",
@@ -280,7 +281,12 @@
     "card": "Card",
     "transfer": "Transfer",
     "count": "Checks",
-    "takeaway": "Take away"
+    "takeaway": "Take away",
+    "date": "Date",
+    "allPlaces": "All places",
+    "dineIn": "Floor",
+    "allMethods": "All tenders",
+    "checkTitle": "Check #{no} · {place}"
   },
   "shift": {
     "title": "POS shift",

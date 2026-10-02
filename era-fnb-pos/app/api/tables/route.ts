@@ -32,17 +32,29 @@ export async function GET(request: Request) {
         status: { in: ["OPEN", "HELD"] },
         tableId: { not: null },
       },
-      select: { id: true, tableId: true, totalAzn: true },
+      select: { id: true, tableId: true, totalAzn: true, openedAt: true },
     });
+    const ticketIdByTable = new Map(
+      openTickets
+        .filter((row) => row.tableId)
+        .map((row) => [row.tableId as string, row.id]),
+    );
     const totalByTicket = new Map(openTickets.map((row) => [row.id, Number(row.totalAzn)]));
+    const openedByTicket = new Map(openTickets.map((row) => [row.id, row.openedAt.toISOString()]));
     const totalByTable = new Map(
       openTickets
         .filter((row) => row.tableId)
         .map((row) => [row.tableId as string, Number(row.totalAzn)]),
     );
+    const openedByTable = new Map(
+      openTickets
+        .filter((row) => row.tableId)
+        .map((row) => [row.tableId as string, row.openedAt.toISOString()]),
+    );
     return jsonOk(
       tables.map((table) => ({
         ...table,
+        currentTicketId: table.currentTicketId ?? ticketIdByTable.get(table.id) ?? null,
         status:
           table.status === "OCCUPIED" || table.currentTicketId || totalByTable.has(table.id)
             ? "OCCUPIED"
@@ -50,6 +62,10 @@ export async function GET(request: Request) {
         openTotalAzn:
           (table.currentTicketId ? totalByTicket.get(table.currentTicketId) : undefined) ??
           totalByTable.get(table.id) ??
+          null,
+        openedAt:
+          (table.currentTicketId ? openedByTicket.get(table.currentTicketId) : undefined) ??
+          openedByTable.get(table.id) ??
           null,
       })),
     );

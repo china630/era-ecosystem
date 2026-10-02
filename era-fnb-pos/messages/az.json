@@ -41,7 +41,8 @@
     "openNow": "Açıq çeklər",
     "occupiedTables": "Dolu masalar",
     "revenueToday": "Bu günün gəliri",
-    "topDishes": "Ən çox satılan",
+    "topDishes": "Ən çox satılan yemək",
+    "topSections": "Ən çox satılan bölmə",
     "topEmpty": "Bu gün bağlanmış çek yoxdur.",
     "loadFailed": "Günlük yüklənmədi",
     "intro": "Bu günün çekləri, masalar və gəlir.",
@@ -288,7 +289,12 @@
     "card": "Kart",
     "transfer": "Köçürmə",
     "count": "Çek",
-    "takeaway": "Take away"
+    "takeaway": "Take away",
+    "date": "Tarix",
+    "allPlaces": "Bütün yerlər",
+    "dineIn": "Zal",
+    "allMethods": "Bütün ödənişlər",
+    "checkTitle": "Çek #{no} · {place}"
   },
   "shift": {
     "title": "POS növbəsi",

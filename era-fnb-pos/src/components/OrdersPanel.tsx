@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { CheckLines } from "@/components/CheckLines";
 
@@ -40,13 +41,14 @@ type Ticket = {
   beoId?: string | null;
   roomChargeReservationId?: string | null;
   guestName?: string | null;
-  table?: { code: string } | null;
+  openedAt?: string | null;
+  table?: { code: string; name?: string | null } | null;
   outlet: { code: string };
   lines: TicketLine[];
 };
 
 function ticketLabel(ticket: Ticket, takeaway: string, walkIn: string): string {
-  if (ticket.table?.code) return ticket.table.code;
+  if (ticket.table) return ticket.table.name?.trim() || ticket.table.code;
   if (ticket.serviceChannel === "TAKEAWAY" || ticket.serviceChannel === "WALK_IN") {
     return takeaway;
   }
@@ -374,21 +376,28 @@ export default function OrdersPanel() {
               key={ticket.id}
               type="button"
               onClick={() => setSelectedId(ticket.id)}
-              className={`${CARD_CLASS} w-full p-4 text-left ${
-                selected?.id === ticket.id ? "border-[#2980B9] ring-2 ring-[#2980B9]" : ""
+              className={`${CARD_CLASS} flex h-24 w-full flex-col p-3 text-left ${
+                selected?.id === ticket.id ? "border-[#2980B9] bg-[#EAF3FB]" : ""
               }`}
             >
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-base font-semibold">
                   {ticketLabel(ticket, t("channelTakeaway"), t("channelWalkIn"))}
-                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""} · {ticket.outlet?.code ?? ""}
+                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""}
                   {ticket.beoId ? " · BEO" : ""}
                 </span>
-                <span>{statusLabel(ticket.status)}</span>
-              </div>
-              <p className="mt-1 text-lg font-semibold">
-                {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
-              </p>
+                {ticket.status !== "OPEN" ? (
+                  <span className="shrink-0 text-xs text-[#7F8C8D]">{statusLabel(ticket.status)}</span>
+                ) : null}
+              </span>
+              <span className="mt-auto flex items-end justify-between gap-2">
+                <span className="text-xs text-[#7F8C8D]">
+                  {ticket.openedAt ? bakuTimeLabel(ticket.openedAt) : statusLabel(ticket.status)}
+                </span>
+                <span className="text-sm font-semibold tabular-nums">
+                  {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
+                </span>
+              </span>
             </button>
           ))
         )}
@@ -625,7 +634,6 @@ export default function OrdersPanel() {
         {selected && hotelMode && inHouse && (
           <p className="mt-2 text-xs text-[#8E44AD]">{t("inHouseHint")}</p>
         )}
-        <p className="mt-3 text-xs text-[#7F8C8D]">{t("roleHint")}</p>
       </div>
     </div>
   );
