@@ -82,7 +82,7 @@ export async function POST(
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }
   const organizationId = requestOrganizationId();
-  await requireOpenShift(ticket.outletId);
+  const openShift = await requireOpenShift(ticket.outletId);
 
   const settlement = await resolveTicketSettlement(ticket);
   const payBlock = payBlockedReason(settlement);
@@ -145,6 +145,7 @@ export async function POST(
       paymentMethod: body.method,
       cashTenderedAzn: cashTendered,
       changeAzn,
+      shiftId: openShift.id,
     },
   });
   await releaseTableForTicket(id, ticket.tableId);

@@ -35,7 +35,7 @@ export async function GET(request: Request) {
         permissions = await permissionsForRoleCode(organizationId, session.role);
       }
     } else {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.user.findFirst({
         where: { id: session.sub },
         include: { role: true },
       });
@@ -48,7 +48,8 @@ export async function GET(request: Request) {
           login: user.login,
           email: user.email ?? undefined,
           role: user.role.code,
-          isOwner: session.isOwner,
+          isOwner: session.isOwner === true || user.role.code === "BUSINESS_OWNER",
+          pin: false,
         });
         permissions = bypass
           ? [...ALL_PERMISSIONS]
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
       permissions,
       pin: session.pin === true,
       outletId: session.outletId ?? null,
-      isOwner: session.isOwner === true,
+      isOwner: session.isOwner === true || role === "BUSINESS_OWNER",
     });
   } catch (err) {
     return handleRouteError(err);

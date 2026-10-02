@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
+import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { isShiftStale } from "@/lib/business-day";
@@ -29,11 +30,15 @@ export async function GET(request: Request) {
     orderBy: { openedAt: "desc" },
   });
   const profile = await getFnbOrgProfile();
+  const mayClose = session
+    ? sessionHasFnbPermission(session, PERMISSIONS.SHIFTS_CLOSE)
+    : false;
   if (!shift) {
     return NextResponse.json({
       status: "NONE",
       stale: false,
       businessDayStart: profile.businessDayStart,
+      mayClose,
     });
   }
   const closed = await prisma.ticket.findMany({
@@ -64,6 +69,7 @@ export async function GET(request: Request) {
     businessDayStart: profile.businessDayStart,
     drawer: await cashDrawerForShift(shift),
     till,
+    mayClose,
   });
 }
 

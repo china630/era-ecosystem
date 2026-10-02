@@ -7,6 +7,8 @@ import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { CheckLines } from "@/components/CheckLines";
+import { fnbCan } from "@/lib/auth/permission-check";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type TicketLine = {
   id: string;
@@ -77,6 +79,7 @@ export default function OrdersPanel() {
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const [hasKds, setHasKds] = useState(false);
+  const [canPay, setCanPay] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
@@ -90,6 +93,13 @@ export default function OrdersPanel() {
     const data = await res.json();
     setTickets(Array.isArray(data) ? data : []);
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => setCanPay(fnbCan(me, PERMISSIONS.TICKETS_PAY)))
+      .catch(() => setCanPay(false));
   }, []);
 
   useEffect(() => {
@@ -161,7 +171,7 @@ export default function OrdersPanel() {
   }
 
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
-    if (!selected) return;
+    if (!selected || !canPay) return;
     const persisted = await persistDiscount();
     if (persisted == null) return;
     const due = persisted;
@@ -477,12 +487,13 @@ export default function OrdersPanel() {
                     value: discountInput,
                     onChange: setDiscountInput,
                     onBlur: () => void persistDiscount(),
-                    amountText: pct > 0 ? `−${amount.toFixed(2)} ${tc("azn")}` : null,
+                    amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
                     netText: `${net.toFixed(2)} ${tc("azn")}`,
                   };
                 })()}
                 tender={
-                  hotelMode && (inHouse || selected.roomChargeReservationId || deferWalkInToHub)
+                  !canPay ||
+                  (hotelMode && (inHouse || selected.roomChargeReservationId || deferWalkInToHub))
                     ? undefined
                     : {
                         label: tf("cashReceived"),
@@ -613,7 +624,7 @@ export default function OrdersPanel() {
                 >
                   {t("sendToReception")}
                 </button>
-              ) : (
+              ) : canPay ? (
                 <div className="flex w-full shrink-0 flex-col items-end gap-2">
                   <div className="flex flex-wrap justify-end gap-2">
                   <button
@@ -639,7 +650,7 @@ export default function OrdersPanel() {
                   </button>
                   </div>
                 </div>
-              )}
+              ) : null}
               {hasKds ? (
               <Link
                 href="/kds"

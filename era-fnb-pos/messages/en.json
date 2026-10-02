@@ -316,7 +316,8 @@
     "allMethods": "All tenders",
     "checkTitle": "Check #{no} · {place}",
     "opened": "Opened",
-    "closed": "Closed"
+    "closed": "Closed",
+    "shift": "Shift"
   },
   "shift": {
     "title": "POS shift",
@@ -332,6 +333,8 @@
     "dropSaved": "Drop saved",
     "dropOver": "This is more than the {expected} AZN in the drawer. The drop is still saved.",
     "openChecks": "{count} open",
+    "float": "Float",
+    "openShort": "Open",
     "countedCash": "Counted cash",
     "expected": "Expected",
     "variance": "Variance",
@@ -513,6 +516,7 @@
     "created": "Role created",
     "deleted": "Role deleted",
     "sessionRefreshed": "Session permissions refreshed",
+    "signedIn": "This account: {role}",
     "groupScreens": "Screens",
     "groupTill": "Till / tickets",
     "groupHotel": "Hotel bridge",

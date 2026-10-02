@@ -344,8 +344,8 @@ export default function MenuAdminPanel() {
         }
       />
       <EraListFilterBar>
-        <label className="text-sm text-[#34495E]">
-          <span className="mb-1 block text-xs text-[#7F8C8D]">{t("search")}</span>
+        <label className="flex items-center gap-2 text-sm text-[#34495E]">
+          <span className="shrink-0 text-xs text-[#7F8C8D]">{t("search")}</span>
           <input
             type="search"
             value={query}

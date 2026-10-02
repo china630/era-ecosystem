@@ -66,6 +66,7 @@ Property
 | guestName | walk-in text |
 | roomChargeReservationId | при оплате на номер |
 | openedAt, closedAt | |
+| shiftId | Shift that closed the check. Set on pay. Older checks are matched by close time inside the shift interval |
 | subtotal, discount, total | |
 | externalRef | Для печати |
 

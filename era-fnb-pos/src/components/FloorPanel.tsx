@@ -6,6 +6,7 @@ import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { Ban } from "lucide-react";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { fnbCan } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { CheckLines } from "@/components/CheckLines";
 import PosShiftPanel from "@/components/PosShiftPanel";
@@ -215,11 +216,9 @@ export default function FloorPanel() {
         ? await editionRes.json().catch(() => null)
         : null;
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
-      const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
-      const perms: string[] = Array.isArray(me.permissions) ? me.permissions : [];
-      const owner = me.isOwner === true || me.role === "BUSINESS_OWNER";
-      setCanPay(owner || perms.includes(PERMISSIONS.TICKETS_PAY));
-      setCanSoldOut(owner || perms.includes(PERMISSIONS.MENU_SOLD_OUT));
+      const me = meRes.ok ? await meRes.json().catch(() => null) : null;
+      setCanPay(fnbCan(me, PERMISSIONS.TICKETS_PAY));
+      setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
       const kafe = editionData
         ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
           editionData.hotelMode === false
@@ -1081,7 +1080,7 @@ export default function FloorPanel() {
                           value: discountInput,
                           onChange: setDiscountInput,
                           onBlur: () => void persistDiscount(),
-                          amountText: pct > 0 ? `−${amount.toFixed(2)} ${tc("azn")}` : null,
+                          amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
                           netText: `${net.toFixed(2)} ${tc("azn")}`,
                         };
                       })()}

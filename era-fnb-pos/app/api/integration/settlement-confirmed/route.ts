@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
+import { shiftIdCovering } from "@/lib/open-shift";
 
 const bodySchema = z.object({
   pendingId: z.string().min(1),
@@ -38,11 +39,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, alreadyClosed: true });
   }
 
+  const closedAt = new Date();
   await prisma.ticket.update({
     where: { id: ticket.id },
     data: {
       status: "CLOSED",
-      closedAt: new Date(),
+      closedAt,
+      shiftId: await shiftIdCovering(ticket.outletId, closedAt),
       settlementPendingId: body.pendingId,
       hubFiscalReceiptId: body.fiscalReceiptId ?? null,
     },

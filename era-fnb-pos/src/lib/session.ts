@@ -28,6 +28,7 @@ export async function getSessionFromRequest(
     if (session.organizationId && session.pin !== true) {
       try {
         const permissions = await permissionsForUserId(session.sub);
+        if (!permissions) return session;
         return { ...session, permissions };
       } catch {
         return session;

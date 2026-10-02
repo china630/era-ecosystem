@@ -8,7 +8,6 @@ import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
 import { CashDrawerBlock } from "@/components/CashDrawerBlock";
 import type { CashDrawerView } from "@/lib/cash-drawer";
-import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type OpenShift = {
   id: string;
@@ -61,8 +60,9 @@ export default function PosShiftPanel() {
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
     const res = await fetch("/api/shifts/open");
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
     setDayStart(typeof data?.businessDayStart === "string" ? data.businessDayStart : "05:00");
+    setCanClose(res.ok && data?.mayClose === true);
     if (data?.status === "NONE" || !data?.id) {
       setShift(null);
       setNone(true);
@@ -102,17 +102,6 @@ export default function PosShiftPanel() {
     window.addEventListener("era-fnb-shift-refresh", refresh);
     return () => window.removeEventListener("era-fnb-shift-refresh", refresh);
   }, [load]);
-
-  useEffect(() => {
-    void fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((me) => {
-        const perms: string[] = Array.isArray(me?.permissions) ? me.permissions : [];
-        const owner = me?.isOwner === true || me?.role === "BUSINESS_OWNER";
-        setCanClose(owner || perms.includes(PERMISSIONS.SHIFTS_CLOSE));
-      })
-      .catch(() => setCanClose(false));
-  }, []);
 
   useEffect(() => {
     void fetch("/api/outlets")
@@ -242,37 +231,52 @@ export default function PosShiftPanel() {
 
   return (
     <div className={`${CARD_CLASS} mb-3 shrink-0 p-3`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
-            {t("title")}
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-end gap-4">
           {loading ? (
             <p className="text-sm text-[#7F8C8D]">{tc("loading", { defaultValue: "Loading…" })}</p>
           ) : shift ? (
-            <p className="text-sm text-[#34495E]">
-              {t("openStatus", {
-                outlet: shift.outlet.code,
-                cash: Number(shift.openingCash).toFixed(2),
-                time: bakuTimeLabel(shift.openedAt),
-              })}
-              {shift.openedBy ? ` · ${shift.openedBy}` : ""}
-              {shift.fiscalDeviceId ? ` · KKM ${shift.fiscalDeviceId.slice(0, 8)}` : ""}
-            </p>
+            <>
+              <div className="min-w-[7rem]">
+                <p className="text-sm font-semibold text-[#2C3E50]">{shift.outlet.code}</p>
+                <p className="text-xs text-[#7F8C8D]">
+                  {bakuTimeLabel(shift.openedAt)}
+                  {shift.openedBy ? ` · ${shift.openedBy}` : ""}
+                </p>
+              </div>
+              <div className="w-16 text-center">
+                <p className="text-[11px] text-[#7F8C8D]">{t("float")}</p>
+                <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                  {Number(shift.openingCash).toFixed(2)}
+                </p>
+              </div>
+              <div className="flex items-end gap-1">
+                <span className="pb-0.5 text-[10px] text-[#7F8C8D]">{tc("azn")}</span>
+                {(
+                  [
+                    [ts("cash"), shift.till?.cash],
+                    [ts("card"), shift.till?.card],
+                    [ts("transfer"), shift.till?.transfer],
+                  ] as const
+                ).map(([label, amount]) => (
+                  <div key={label} className="w-16 text-center">
+                    <p className="text-[11px] text-[#7F8C8D]">{label}</p>
+                    <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                      {(amount ?? 0).toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+                <div className="w-14 text-center">
+                  <p className="text-[11px] text-[#7F8C8D]">{t("openShort")}</p>
+                  <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                    {shift.till?.openChecks ?? 0}
+                  </p>
+                </div>
+              </div>
+            </>
           ) : (
             <p className="text-sm text-[#7F8C8D]">{t("noShift")}</p>
           )}
-          {shift?.till ? (
-            <p className="text-sm tabular-nums text-[#34495E]">
-              {ts("cash")} {shift.till.cash.toFixed(2)} {tc("azn")}
-              {" · "}
-              {ts("card")} {shift.till.card.toFixed(2)} {tc("azn")}
-              {" · "}
-              {ts("transfer")} {shift.till.transfer.toFixed(2)} {tc("azn")}
-              {" · "}
-              {t("openChecks", { count: shift.till.openChecks })}
-            </p>
-          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {!shift && none && (
@@ -515,6 +519,7 @@ export default function PosShiftPanel() {
                 closed: ts("closed"),
                 place: ts("place"),
                 method: ts("method"),
+                shift: ts("shift"),
                 sum: ts("sum"),
                 empty: ts("empty"),
                 cash: ts("cash"),

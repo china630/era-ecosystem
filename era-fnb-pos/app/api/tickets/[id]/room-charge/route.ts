@@ -10,6 +10,7 @@ import {
 } from "@/lib/billing-router";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
+import { shiftIdCovering } from "@/lib/open-shift";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
@@ -118,9 +119,14 @@ export async function POST(
     );
   }
 
+  const closedAt = new Date();
   await prisma.ticket.update({
     where: { id },
-    data: { status: "CLOSED", closedAt: new Date() },
+    data: {
+      status: "CLOSED",
+      closedAt,
+      shiftId: await shiftIdCovering(ticket.outletId, closedAt),
+    },
   });
   await releaseTableForTicket(id, ticket.tableId);
 
