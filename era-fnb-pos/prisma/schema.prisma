@@ -262,16 +262,34 @@ model PosShift {
   openedAt    DateTime       @default(now()) @map("opened_at")
   closedAt    DateTime?      @map("closed_at")
   openingCash Decimal        @default(0) @map("opening_cash") @db.Decimal(12, 2)
+  countedCash Decimal?       @map("counted_cash") @db.Decimal(12, 2)
+  expectedCash Decimal?      @map("expected_cash") @db.Decimal(12, 2)
+  cashVariance Decimal?      @map("cash_variance") @db.Decimal(12, 2)
   openedBy    String?        @map("opened_by")
   /** Bound fiscal KKM for this ops shift (F3). */
   fiscalDeviceId String?     @map("fiscal_device_id")
   /** Bound bank POS for card tenders (F3). */
   bankTerminalId String?     @map("bank_terminal_id")
   outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  drops       PosCashDrop[]
 
   @@index([outletId, status])
   @@map("pos_shifts")
   @@index([organizationId])
+}
+
+model PosCashDrop {
+  id             String   @id @default(cuid())
+  organizationId String
+  shiftId        String   @map("shift_id")
+  amountAzn      Decimal  @map("amount_azn") @db.Decimal(12, 2)
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  shift          PosShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([shiftId])
+  @@index([organizationId])
+  @@map("pos_cash_drops")
 }
 
 model FnbOrgProfile {

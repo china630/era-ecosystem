@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { Ban } from "lucide-react";
@@ -15,10 +15,15 @@ type Table = {
   code: string;
   name: string;
   status: string;
+  zone?: string | null;
   currentTicketId?: string | null;
   openTotalAzn?: number | null;
   openedAt?: string | null;
 };
+
+function tableZone(table: Table): string {
+  return table.zone?.trim() ?? "";
+}
 
 type MenuItem = {
   id: string;
@@ -82,6 +87,7 @@ export default function FloorPanel() {
   const tc = useTranslations("common");
 
   const [tables, setTables] = useState<Table[]>([]);
+  const [zoneFilter, setZoneFilter] = useState<string | null>(null);
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [menuQuery, setMenuQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -669,8 +675,45 @@ export default function FloorPanel() {
       ? t("ticketHeading", { name: ticketCaption, no: dayNo })
       : ticketCaption;
 
+  const zones = useMemo(() => {
+    const groups = new Map<string, string>();
+    let hasBlank = false;
+    for (const table of tables) {
+      const raw = tableZone(table);
+      if (!raw) {
+        hasBlank = true;
+        continue;
+      }
+      const key = raw.toLocaleLowerCase();
+      if (!groups.has(key)) groups.set(key, raw);
+    }
+    const named = [...groups.entries()]
+      .map(([key, label]) => ({ key, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    return { named, hasBlank, multiple: named.length + (hasBlank ? 1 : 0) > 1 };
+  }, [tables]);
+  const activeZone =
+    zones.multiple &&
+    zoneFilter != null &&
+    (zoneFilter === "" ? zones.hasBlank : zones.named.some((zone) => zone.key === zoneFilter))
+      ? zoneFilter
+      : null;
+  const visibleTables =
+    activeZone == null
+      ? tables
+      : tables.filter((table) =>
+          activeZone === "" ? tableZone(table) === "" : tableZone(table).toLocaleLowerCase() === activeZone,
+        );
+  const occupiedIn = (zone: string | null) =>
+    tables.filter(
+      (table) =>
+        table.status === "OCCUPIED" &&
+        (zone == null ||
+          (zone === "" ? tableZone(table) === "" : tableZone(table).toLocaleLowerCase() === zone)),
+    ).length;
+
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:overflow-hidden">
       {outlets.length > 1 && (
         <div className={`${CARD_CLASS} mb-4 p-4`}>
           <div className="flex flex-wrap items-end gap-3">
@@ -689,7 +732,6 @@ export default function FloorPanel() {
                 ))}
               </select>
             </label>
-            <p className="text-xs text-[#7F8C8D]">{t("outletHint")}</p>
           </div>
         </div>
       )}
@@ -751,20 +793,56 @@ export default function FloorPanel() {
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
-        <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-hidden">
           <PosShiftPanel />
-          <div className="grid items-stretch gap-3 lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
-          <div className="space-y-3">
+          <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:overflow-hidden lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
+          <div className="flex min-h-0 flex-col gap-2 overflow-hidden">
             {!hotelMode && (
-              <>
-                <button
-                  type="button"
-                  className="w-full rounded bg-[#27AE60] px-3 py-2 text-sm font-medium text-white"
-                  onClick={startTakeaway}
-                >
-                  {t("takeaway")}
-                </button>
-                {openChips.length > 0 && (
+              <button
+                type="button"
+                className="w-full shrink-0 rounded bg-[#27AE60] px-3 py-2 text-sm font-medium text-white"
+                onClick={startTakeaway}
+              >
+                {t("takeaway")}
+              </button>
+            )}
+            {zones.multiple ? (
+              <div className="flex max-h-[4.5rem] shrink-0 flex-wrap gap-1 overflow-y-auto">
+                {[
+                  { key: null as string | null, label: t("allZones") },
+                  ...(zones.hasBlank ? [{ key: "", label: t("zoneMain") }] : []),
+                  ...zones.named,
+                ].map((zone) => {
+                  const selected = activeZone === zone.key;
+                  const count = occupiedIn(zone.key);
+                  const label = zone.label;
+                  return (
+                    <button
+                      key={zone.key ?? "all"}
+                      type="button"
+                      onClick={() => setZoneFilter(zone.key)}
+                      title={label}
+                      className={`inline-flex h-8 max-w-[7.25rem] items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${
+                        selected ? "bg-[#2980B9] text-white" : "bg-white text-[#34495E] ring-1 ring-[#D5DADF]"
+                      }`}
+                    >
+                      <span className="truncate">{label}</span>
+                      {count > 0 ? (
+                        <span
+                          className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                            selected ? "bg-white text-[#2980B9]" : "bg-[#2980B9] text-white"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+            {!hotelMode && openChips.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {openChips.map((chip) => (
                       <button
@@ -790,8 +868,6 @@ export default function FloorPanel() {
                       </button>
                     ))}
                   </div>
-                )}
-              </>
             )}
             <ColorLegend
               items={[
@@ -803,7 +879,10 @@ export default function FloorPanel() {
               {tables.length === 0 && (
                 <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTables")}</p>
               )}
-              {tables.map((table) => (
+              {tables.length > 0 && visibleTables.length === 0 && (
+                <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTablesInZone")}</p>
+              )}
+              {visibleTables.map((table) => (
                 <button
                   key={table.id}
                   type="button"
@@ -839,10 +918,11 @@ export default function FloorPanel() {
                 </button>
               ))}
             </div>
+            </div>
           </div>
 
-          <div className={`${CARD_CLASS} grid gap-3 p-3 lg:grid-cols-[12rem_minmax(0,1fr)]`}>
-            <div className="flex flex-col gap-2">
+          <div className={`${CARD_CLASS} grid min-h-0 gap-3 overflow-hidden p-3 lg:grid-cols-[12rem_minmax(0,1fr)]`}>
+            <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
               {menuCategories.map((cat) => (
                 <button
                   key={cat.id}
@@ -861,14 +941,15 @@ export default function FloorPanel() {
                 </button>
               ))}
             </div>
-            <div>
+            <div className="flex min-h-0 flex-col">
             <input
               type="search"
               value={menuQuery}
               onChange={(e) => setMenuQuery(e.target.value)}
               placeholder={t("menuSearch")}
-              className={`${INPUT_CLASS} mb-3 w-full`}
+              className={`${INPUT_CLASS} mb-3 w-full shrink-0`}
             />
+            <div className="min-h-0 overflow-y-auto">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {visibleDishes.map((m) => (
                 <div key={m.id} className="relative">
@@ -901,9 +982,10 @@ export default function FloorPanel() {
               ))}
             </div>
             </div>
+            </div>
           </div>
 
-          <div className={`${CARD_CLASS} flex min-h-[32rem] flex-col p-4`}>
+          <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
               {t("ticketTitle")}
             </p>
@@ -922,7 +1004,7 @@ export default function FloorPanel() {
             {checkOpen ? (
               <>
                 <p className="mt-1 text-base font-semibold">{heading || t("ticketTitle")}</p>
-                <div className="mt-3 flex-1">
+                <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
                   {ticketLines.length === 0 ? (
                     <p className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</p>
                   ) : (
@@ -943,12 +1025,12 @@ export default function FloorPanel() {
                     />
                   )}
                 </div>
-                <p className="mt-3 border-t border-[#D5DADF] pt-3 text-right text-2xl font-semibold tabular-nums">
+                <p className="mt-3 shrink-0 border-t border-[#D5DADF] pt-3 text-right text-2xl font-semibold tabular-nums">
                   {(ticketTotal ?? 0).toFixed(2)} {tc("azn")}
                 </p>
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <label className="block text-xs text-[#7F8C8D]">
+                  <div className="mt-3 shrink-0 space-y-2">
+                    <label className="ml-auto block w-28 text-xs text-[#7F8C8D]">
                       {t("cashReceived")}
                       <input
                         inputMode="decimal"
@@ -997,6 +1079,6 @@ export default function FloorPanel() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

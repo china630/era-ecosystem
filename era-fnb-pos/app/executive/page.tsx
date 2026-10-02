@@ -32,7 +32,7 @@ export default async function ExecutivePage() {
   return (
     <>
       <FbPosNav />
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} />
       {!canView ? (
         <p className="mt-4 text-sm text-red-600">{t("restricted")}</p>
       ) : (

@@ -9,6 +9,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { isShiftStale } from "@/lib/business-day";
+import { cashDrawerForShift } from "@/lib/cash-drawer";
 
 const openSchema = z.object({
   outletCode: z.string().min(1).optional(),
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
     ...shift,
     stale: isShiftStale(shift.openedAt, new Date(), profile.businessDayStart),
     businessDayStart: profile.businessDayStart,
+    drawer: await cashDrawerForShift(shift),
   });
 }
 

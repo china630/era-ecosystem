@@ -46,7 +46,7 @@ export default function FnbImportPage() {
 
   return (
     <div className="max-w-3xl">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} />
       <ImportWizard entities={entities} />
     </div>
   );

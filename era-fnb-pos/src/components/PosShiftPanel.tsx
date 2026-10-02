@@ -6,6 +6,8 @@ import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { MODAL_INPUT_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
+import { CashDrawerBlock } from "@/components/CashDrawerBlock";
+import type { CashDrawerView } from "@/lib/cash-drawer";
 
 type OpenShift = {
   id: string;
@@ -17,6 +19,7 @@ type OpenShift = {
   openedBy?: string | null;
   stale?: boolean;
   businessDayStart?: string;
+  drawer?: CashDrawerView;
   outlet: { code: string; name: string };
 };
 
@@ -32,6 +35,7 @@ export default function PosShiftPanel() {
   const tc = useTranslations("common");
   const [shift, setShift] = useState<OpenShift | null>(null);
   const [none, setNone] = useState(false);
+  const [dayStart, setDayStart] = useState("05:00");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [openModal, setOpenModal] = useState(false);
@@ -42,12 +46,20 @@ export default function PosShiftPanel() {
   const [fiscalDeviceId, setFiscalDeviceId] = useState("");
   const [bankTerminalId, setBankTerminalId] = useState("");
   const [report, setReport] = useState<{ rows: SaleRowView[]; totals: SaleTotalsView } | null>(null);
+  const [reportDrawer, setReportDrawer] = useState<CashDrawerView | null>(null);
+  const [reportKind, setReportKind] = useState<"x" | "z">("x");
+  const [closeModal, setCloseModal] = useState(false);
+  const [countedCash, setCountedCash] = useState("");
+  const [dropModal, setDropModal] = useState(false);
+  const [dropAmount, setDropAmount] = useState("");
+  const [dropNote, setDropNote] = useState("");
   const ts = useTranslations("sales");
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/shifts/open");
     const data = await res.json();
+    setDayStart(typeof data?.businessDayStart === "string" ? data.businessDayStart : "05:00");
     if (data?.status === "NONE" || !data?.id) {
       setShift(null);
       setNone(true);
@@ -128,7 +140,10 @@ export default function PosShiftPanel() {
     const res = await fetch("/api/shifts/close", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shiftId: shift?.id }),
+      body: JSON.stringify({
+        shiftId: shift?.id,
+        countedCash: Number(countedCash),
+      }),
     });
     const data = await res.json();
     setBusy(false);
@@ -143,9 +158,43 @@ export default function PosShiftPanel() {
       return;
     }
     showSuccess(t("closed"));
+    setCloseModal(false);
+    setCountedCash("");
     if (data.report?.rows && data.report?.totals) {
+      setReportKind("z");
       setReport({ rows: data.report.rows, totals: data.report.totals });
+      setReportDrawer(data.drawer ?? null);
     }
+    await load();
+  }
+
+  async function saveDrop() {
+    const amount = Number(dropAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showApiError({ error: t("dropAmount") });
+      return;
+    }
+    setBusy(true);
+    const res = await fetch("/api/shifts/drop", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shiftId: shift?.id,
+        amountAzn: amount,
+        note: dropNote.trim() || undefined,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    setBusy(false);
+    if (!res.ok) {
+      if (res.status === 403) showApiError({ error: t("managerRequired") });
+      else showApiError(data, t("closeFailed"));
+      return;
+    }
+    setDropModal(false);
+    setDropAmount("");
+    setDropNote("");
+    showSuccess(t("dropSaved"));
     await load();
   }
 
@@ -156,11 +205,23 @@ export default function PosShiftPanel() {
       showApiError(data, t("closeFailed"));
       return;
     }
+    setReportKind("x");
     setReport({ rows: data.rows ?? [], totals: data.totals });
+    setReportDrawer(Array.isArray(data.drawers) ? data.drawers[0] ?? null : null);
   }
 
+  const drawerLabels = {
+    title: t("drawerTitle"),
+    opening: t("openingCash"),
+    cashSales: t("cashSales"),
+    drops: t("dropsTotal"),
+    expected: t("expected"),
+    counted: t("countedCash"),
+    variance: t("variance"),
+  };
+
   return (
-    <div className={`${CARD_CLASS} mb-4 p-3`}>
+    <div className={`${CARD_CLASS} mb-3 shrink-0 p-3`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
@@ -205,9 +266,23 @@ export default function PosShiftPanel() {
           {shift && (
             <button
               type="button"
+              className="rounded border border-[#34495E] px-3 py-1.5 text-sm text-[#34495E]"
+              disabled={busy}
+              onClick={() => setDropModal(true)}
+            >
+              {t("drop")}
+            </button>
+          )}
+          <p className="self-center text-sm text-[#34495E]">{t("dayStart", { time: dayStart })}</p>
+          {shift && (
+            <button
+              type="button"
               className="rounded border border-[#E74C3C] px-3 py-1.5 text-sm text-[#E74C3C]"
               disabled={busy}
-              onClick={() => void closeShift()}
+              onClick={() => {
+                setCountedCash("");
+                setCloseModal(true);
+              }}
             >
               {t("zClose")}
             </button>
@@ -219,6 +294,7 @@ export default function PosShiftPanel() {
           ) : null}
         </div>
       </div>
+      {shift?.drawer ? <CashDrawerBlock drawer={shift.drawer} azn={tc("azn")} labels={drawerLabels} /> : null}
       {openModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className={`${CARD_CLASS} w-full max-w-sm p-4`}>
@@ -296,16 +372,110 @@ export default function PosShiftPanel() {
           </div>
         </div>
       )}
+      {dropModal && shift && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className={`${CARD_CLASS} w-full max-w-sm p-4`}>
+            <h3 className="mb-3 text-sm font-semibold text-[#34495E]">{t("dropTitle")}</h3>
+            {shift.drawer ? (
+              <p className="mb-2 text-sm text-[#34495E]">
+                {t("expected")} {shift.drawer.expected.toFixed(2)} {tc("azn")}
+              </p>
+            ) : null}
+            <label className="mb-2 block text-xs text-[#7F8C8D]">
+              {t("dropAmount")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={dropAmount}
+                onChange={(e) => setDropAmount(e.target.value)}
+              />
+            </label>
+            <label className="mb-3 block text-xs text-[#7F8C8D]">
+              {t("dropNote")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                value={dropNote}
+                onChange={(e) => setDropNote(e.target.value)}
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => setDropModal(false)}>
+                {tc("cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
+                disabled={busy}
+                onClick={() => void saveDrop()}
+              >
+                {t("drop")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {closeModal && shift && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className={`${CARD_CLASS} w-full max-w-sm p-4`}>
+            <h3 className="mb-3 text-sm font-semibold text-[#34495E]">{t("zClose")}</h3>
+            {shift.drawer ? (
+              <p className="mb-2 text-sm text-[#34495E]">
+                {t("expected")} {shift.drawer.expected.toFixed(2)} {tc("azn")}
+              </p>
+            ) : null}
+            <label className="mb-3 block text-xs text-[#7F8C8D]">
+              {t("countedCash")}
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+                type="number"
+                min={0}
+                step={0.01}
+                value={countedCash}
+                onChange={(e) => setCountedCash(e.target.value)}
+              />
+            </label>
+            {shift.drawer && countedCash.trim() !== "" && Number.isFinite(Number(countedCash)) ? (
+              <p className="mb-3 text-sm text-[#34495E]">
+                {t("variance")} {(Number(countedCash) - shift.drawer.expected).toFixed(2)} {tc("azn")}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => setCloseModal(false)}>
+                {tc("cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="rounded bg-[#E74C3C] px-3 py-1.5 text-sm text-white"
+                disabled={
+                  busy ||
+                  countedCash.trim() === "" ||
+                  !Number.isFinite(Number(countedCash)) ||
+                  Number(countedCash) < 0
+                }
+                onClick={() => void closeShift()}
+              >
+                {t("zClose")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {report && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-lg overflow-auto p-4`}>
-            <h3 className="mb-3 text-sm font-semibold text-[#34495E]">{t("xReport")}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-[#34495E]">
+              {reportKind === "z" ? t("zReport") : t("xReport")}
+            </h3>
+            {reportDrawer ? <CashDrawerBlock drawer={reportDrawer} azn={tc("azn")} labels={drawerLabels} /> : null}
             <SaleTable
               rows={report.rows}
               totals={report.totals}
               azn={tc("azn")}
               labels={{
-                time: ts("time"),
+                opened: ts("opened"),
+                closed: ts("closed"),
                 place: ts("place"),
                 method: ts("method"),
                 sum: ts("sum"),
@@ -321,7 +491,10 @@ export default function PosShiftPanel() {
               <button
                 type="button"
                 className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
-                onClick={() => setReport(null)}
+                onClick={() => {
+                  setReport(null);
+                  setReportDrawer(null);
+                }}
               >
                 {tc("cancel", { defaultValue: "Cancel" })}
               </button>

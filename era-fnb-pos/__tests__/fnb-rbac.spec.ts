@@ -195,6 +195,7 @@ describe("fnb rbac catalog", () => {
     );
     expect(t).toContain(PERMISSIONS.TICKETS_PAY);
     expect(t).toContain(PERMISSIONS.SHIFTS_CLOSE);
+    expect(t).toContain(PERMISSIONS.TICKETS_DISCOUNT);
     expect(t).not.toContain(PERMISSIONS.TICKETS_VOID);
   });
 

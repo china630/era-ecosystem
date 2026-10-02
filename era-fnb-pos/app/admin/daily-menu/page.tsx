@@ -9,7 +9,7 @@ export default async function DailyMenuAdminPage() {
   return (
     <>
       <FbPosNav />
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} />
       <DailyMenuAdminPanel />
     </>
   );

@@ -162,7 +162,9 @@ export default function OrdersPanel() {
 
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (!selected) return;
-    const due = Number(selected.totalAzn);
+    const persisted = await persistDiscount();
+    if (persisted == null) return;
+    const due = persisted;
     const got = Number(cashReceived);
     if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
       showApiError({ error: tf("cashShort") });
@@ -312,22 +314,28 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function applyDiscount() {
-    if (!selected) return;
-    const discountPercent = parseFloat(discountInput);
-    if (Number.isNaN(discountPercent)) return;
+  async function persistDiscount(): Promise<number | null> {
+    if (!selected) return null;
+    const raw = discountInput.trim() === "" ? 0 : Number(discountInput);
+    if (!Number.isFinite(raw) || raw < 0 || raw > 100) {
+      showApiError({ error: t("discountPercent") });
+      return null;
+    }
+    const stored = Number(selected.discountPercent ?? 0);
+    if (Math.abs(raw - stored) < 0.001) return Number(selected.totalAzn);
     const res = await fetch(`/api/tickets/${selected.id}/discount`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discountPercent }),
+      body: JSON.stringify({ discountPercent: raw }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showApiError(data, t("applyDiscount"));
-      return;
+      if (res.status === 403) showApiError({ error: t("discountDenied") });
+      else showApiError(data, t("discountPercent"));
+      return null;
     }
-    showSuccess(`${discountPercent}%`);
     await load();
+    return Number(data.totalAzn);
   }
 
   async function splitTicket() {
@@ -367,8 +375,8 @@ export default function OrdersPanel() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="space-y-3">
+    <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-2">
+      <div className="min-h-0 space-y-3 overflow-y-auto">
         <h2 className="text-sm font-semibold text-[#34495E]">{t("openTickets")}</h2>
         {loading ? (
           <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
@@ -407,7 +415,7 @@ export default function OrdersPanel() {
         )}
       </div>
 
-      <div className={`${CARD_CLASS} p-4`}>
+      <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
         {!selected ? (
           <p className="text-sm text-[#7F8C8D]">
@@ -428,7 +436,7 @@ export default function OrdersPanel() {
               {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
               {selected.dayNo ? ` #${selected.dayNo}` : ""}
             </p>
-            <div className="mb-2">
+            <div className="mb-2 flex min-h-0 flex-1 flex-col overflow-hidden">
               <CheckLines
                 lines={selected.lines.filter((l) => l.kitchenStatus !== "VOID")}
                 onQty={(line, qty) => void changeQty(line.id, qty)}
@@ -445,31 +453,35 @@ export default function OrdersPanel() {
                   plus: t("qtyPlus"),
                   remove: t("void"),
                 }}
+                discount={(() => {
+                  const gross = selected.lines
+                    .filter((l) => l.kitchenStatus !== "VOID")
+                    .reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
+                  const pct = Math.min(100, Math.max(0, Number(discountInput) || 0));
+                  const net = Math.round(gross * (1 - pct / 100) * 100) / 100;
+                  const amount = Math.round((gross - net) * 100) / 100;
+                  return {
+                    label: t("discountPercent"),
+                    value: discountInput,
+                    onChange: setDiscountInput,
+                    onBlur: () => void persistDiscount(),
+                    amountText: pct > 0 ? `−${amount.toFixed(2)} ${tc("azn")}` : null,
+                    netText: `${net.toFixed(2)} ${tc("azn")}`,
+                  };
+                })()}
+                tender={
+                  hotelMode && (inHouse || selected.roomChargeReservationId || deferWalkInToHub)
+                    ? undefined
+                    : {
+                        label: tf("cashReceived"),
+                        value: cashReceived,
+                        onChange: setCashReceived,
+                      }
+                }
               />
             </div>
-            <p className="mb-4 text-right text-2xl font-semibold tabular-nums">
-              {Number(selected.totalAzn).toFixed(2)} {tc("azn")}
-            </p>
-            <div className="mb-3 flex flex-wrap items-end gap-2">
-              <label className="text-xs text-[#7F8C8D]">
-                {t("applyDiscount")}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={discountInput}
-                  onChange={(e) => setDiscountInput(e.target.value)}
-                  className={`${INPUT_CLASS} mt-1 w-20`}
-                />
-              </label>
-              <button
-                type="button"
-                className="rounded border px-3 py-1.5 text-sm text-[#2980B9]"
-                onClick={() => void applyDiscount()}
-              >
-                {t("applyDiscount")}
-              </button>
+            {hotelMode ? (
+            <div className="mb-3 shrink-0">
               <button
                 type="button"
                 className="rounded border px-3 py-1.5 text-sm text-[#2980B9]"
@@ -479,6 +491,7 @@ export default function OrdersPanel() {
                 {t("splitSelected")}
               </button>
             </div>
+            ) : null}
             {hotelMode ? (
             <div className="mb-3 rounded border border-[#ECF0F1] bg-[#FAFBFC] p-3">
               <p className="mb-2 text-xs font-medium text-[#7F8C8D]">{t("inHouseGuest")}</p>
@@ -562,7 +575,7 @@ export default function OrdersPanel() {
               )}
             </div>
             ) : null}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2">
               {hasKds ? (
               <button
                 type="button"
@@ -589,16 +602,7 @@ export default function OrdersPanel() {
                   {t("sendToReception")}
                 </button>
               ) : (
-                <div className="flex w-full flex-col items-end gap-2">
-                  <label className="block w-full text-xs text-[#7F8C8D]">
-                    {tf("cashReceived")}
-                    <input
-                      inputMode="decimal"
-                      value={cashReceived}
-                      onChange={(e) => setCashReceived(e.target.value)}
-                      className={`${INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
-                    />
-                  </label>
+                <div className="flex w-full shrink-0 flex-col items-end gap-2">
                   <div className="flex flex-wrap justify-end gap-2">
                   <button
                     type="button"

@@ -2,10 +2,12 @@ import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
 import { prisma } from "@/lib/prisma";
 import { daySeqMap } from "@/lib/ticket-helpers";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { cashDrawerForShift, type CashDrawerView } from "@/lib/cash-drawer";
 
 export type SaleRow = {
   id: string;
   dayNo: number | null;
+  openedAt: string;
   closedAt: string;
   place: string;
   method: string | null;
@@ -33,6 +35,7 @@ export type SaleReport = {
   rows: SaleRow[];
   totals: SaleTotals;
   shift: SaleShift | null;
+  drawers: CashDrawerView[];
 };
 
 function placeOf(ticket: {
@@ -98,12 +101,13 @@ export async function saleReportBetween(input: {
   const rows: SaleRow[] = tickets.map((ticket) => ({
     id: ticket.id,
     dayNo: dayNos.get(ticket.id) ?? null,
+    openedAt: ticket.openedAt?.toISOString() ?? "",
     closedAt: ticket.closedAt?.toISOString() ?? "",
     place: placeOf(ticket),
     method: ticket.paymentMethod,
     totalAzn: Number(ticket.totalAzn),
   }));
-  return { rows, totals: totalsOf(rows), shift: input.shift ?? null };
+  return { rows, totals: totalsOf(rows), shift: input.shift ?? null, drawers: [] };
 }
 
 export async function saleReportForScope(
@@ -123,9 +127,9 @@ export async function saleReportForScope(
       orderBy: { openedAt: "desc" },
     });
     if (!shift) {
-      return { rows: [], totals: totalsOf([]), shift: null };
+      return { rows: [], totals: totalsOf([]), shift: null, drawers: [] };
     }
-    return saleReportBetween({
+    const report = await saleReportBetween({
       from: shift.openedAt,
       to: new Date(),
       outletId: shift.outletId,
@@ -139,10 +143,17 @@ export async function saleReportForScope(
         outletCode: shift.outlet.code,
       },
     });
+    return { ...report, drawers: [await cashDrawerForShift(shift)] };
   }
   const day = filters?.date && /^\d{4}-\d{2}-\d{2}$/.test(filters.date) ? filters.date : todayBakuYmd();
   const { start, end } = bakuDayBounds(day);
-  return saleReportBetween({ from: start, to: end, channel, method });
+  const report = await saleReportBetween({ from: start, to: end, channel, method });
+  const closed = await prisma.posShift.findMany({
+    where: { status: "CLOSED", closedAt: { gte: start, lte: end } },
+    include: { outlet: true },
+    orderBy: { closedAt: "desc" },
+  });
+  return { ...report, drawers: await Promise.all(closed.map((row) => cashDrawerForShift(row))) };
 }
 
 export async function saleReportForShift(shiftId: string): Promise<SaleReport> {
@@ -150,7 +161,7 @@ export async function saleReportForShift(shiftId: string): Promise<SaleReport> {
     where: { id: shiftId },
     include: { outlet: true },
   });
-  if (!shift) return { rows: [], totals: totalsOf([]), shift: null };
+  if (!shift) return { rows: [], totals: totalsOf([]), shift: null, drawers: [] };
   const to = shift.closedAt ?? new Date();
   return saleReportBetween({
     from: shift.openedAt,

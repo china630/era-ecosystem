@@ -56,7 +56,6 @@ export default function AdminSettingsPage() {
       <FbPosNav />
       <PageHeader
         title={t("title")}
-        subtitle={t("subtitle")}
         actions={
           <Link href="/admin/menu" className={SECONDARY_BUTTON_CLASS}>
             {tNav("menu")}
@@ -85,7 +84,6 @@ export default function AdminSettingsPage() {
             <td className="p-3 font-medium">{t("businessDayStart")}</td>
             <td className="p-3">
               {dayStart}
-              <p className="text-xs text-[#7F8C8D]">{t("businessDayHint")}</p>
             </td>
             <td className="p-3 text-right">
               <button
@@ -113,7 +111,7 @@ export default function AdminSettingsPage() {
       </ModalShell>
       <ModalShell open={dayOpen} title={t("businessDayStart")} onClose={() => setDayOpen(false)}>
         <Field
-          label={t("businessDayHint")}
+          label={t("businessDayStart")}
           preset="shortText"
           type="time"
           value={dayDraft}

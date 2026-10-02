@@ -1,4 +1,4 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
+import { assertFnbEntitled, jsonError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dispatchFbShiftClosed } from "@/lib/fb-finance-events";
@@ -8,9 +8,11 @@ import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { saleReportForShift } from "@/lib/sales-report";
+import { cashDrawerForShift } from "@/lib/cash-drawer";
 
 const closeSchema = z.object({
   shiftId: z.string().optional(),
+  countedCash: z.number().nonnegative(),
 });
 
 export async function POST(request: Request) {
@@ -19,7 +21,9 @@ export async function POST(request: Request) {
   const denied = denyUnlessPermission(session, PERMISSIONS.SHIFTS_CLOSE);
   if (denied) return denied;
 
-  const body = closeSchema.parse(await request.json().catch(() => ({})));
+  const parsed = closeSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) return jsonError("Counted cash is required", 400);
+  const body = parsed.data;
 
   const shift = body.shiftId
     ? await prisma.posShift.findUnique({
@@ -53,10 +57,22 @@ export async function POST(request: Request) {
   }
 
   const report = await saleReportForShift(shift.id);
+  const closedAt = new Date();
+  const drawer = await cashDrawerForShift({
+    ...shift,
+    closedAt,
+    countedCash: body.countedCash,
+  });
 
   const closed = await prisma.posShift.update({
     where: { id: shift.id },
-    data: { status: "CLOSED", closedAt: new Date() },
+    data: {
+      status: "CLOSED",
+      closedAt,
+      countedCash: body.countedCash,
+      expectedCash: drawer.expected,
+      cashVariance: drawer.variance,
+    },
     include: { outlet: true },
   });
 
@@ -79,5 +95,5 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ ...closed, report });
+  return NextResponse.json({ ...closed, report, drawer });
 }

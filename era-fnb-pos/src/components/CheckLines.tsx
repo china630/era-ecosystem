@@ -1,6 +1,7 @@
 "use client";
 
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { MODAL_CHECKBOX_CLASS, MODAL_INPUT_CLASS } from "@era/satellite-kit/ui";
 
 export type CheckLine = {
   id: string;
@@ -17,6 +18,8 @@ export function CheckLines({
   selectedIds,
   labels,
   azn,
+  discount,
+  tender,
 }: {
   lines: CheckLine[];
   onQty?: (line: CheckLine, qty: number) => void;
@@ -25,10 +28,35 @@ export function CheckLines({
   selectedIds?: string[];
   labels: { name: string; qty: string; price: string; sum: string; minus: string; plus: string; remove?: string };
   azn: string;
+  discount?: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    onBlur: () => void;
+    amountText: string | null;
+    netText: string;
+  };
+  tender?: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+  };
 }) {
+  const cols = (
+    <colgroup>
+      <col />
+      <col className="w-[7.5rem]" />
+      <col className="w-24" />
+      <col className="w-28" />
+      {onRemove ? <col className="w-8" /> : null}
+    </colgroup>
+  );
   return (
-    <table className="w-full text-sm">
-      <thead>
+    <div className={discount ? "flex min-h-0 flex-1 flex-col" : undefined}>
+    <div className={discount ? "min-h-0 flex-1 overflow-y-auto" : undefined}>
+    <table className={`w-full text-sm ${discount ? "table-fixed" : ""}`}>
+      {discount ? cols : null}
+      <thead className="sticky top-0 bg-white">
         <tr className="text-left text-xs font-medium text-[#7F8C8D]">
           <th className="pb-2 font-medium">{labels.name}</th>
           <th className="pb-2 text-center font-medium">{labels.qty}</th>
@@ -48,6 +76,7 @@ export function CheckLines({
                   {onToggle ? (
                     <input
                       type="checkbox"
+                      className={MODAL_CHECKBOX_CLASS}
                       checked={selectedIds?.includes(line.id) ?? false}
                       onChange={() => onToggle(line)}
                     />
@@ -103,5 +132,59 @@ export function CheckLines({
         })}
       </tbody>
     </table>
+    </div>
+      {discount ? (
+        <table className="w-full shrink-0 table-fixed text-sm">
+          {cols}
+          <tbody>
+          <tr>
+            <td />
+            <td />
+            <td className="pt-3 align-top">
+              <label className="block text-right text-xs text-[#7F8C8D]">
+                {discount.label}
+                <input
+                  className={`${MODAL_INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={discount.value}
+                  onChange={(e) => discount.onChange(e.target.value)}
+                  onBlur={discount.onBlur}
+                />
+              </label>
+            </td>
+            <td className="pt-3 text-right align-bottom">
+              {discount.amountText ? (
+                <p className="text-sm tabular-nums text-[#7F8C8D]">{discount.amountText}</p>
+              ) : null}
+              <p className="text-2xl font-semibold tabular-nums text-[#2C3E50]">{discount.netText}</p>
+            </td>
+            {onRemove ? <td /> : null}
+          </tr>
+          {tender ? (
+            <tr>
+              <td />
+              <td />
+              <td />
+              <td className="pt-3">
+                <label className="block text-right text-xs text-[#7F8C8D]">
+                  {tender.label}
+                  <input
+                    className={`${MODAL_INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
+                    inputMode="decimal"
+                    value={tender.value}
+                    onChange={(e) => tender.onChange(e.target.value)}
+                  />
+                </label>
+              </td>
+              {onRemove ? <td /> : null}
+            </tr>
+          ) : null}
+          </tbody>
+        </table>
+      ) : null}
+    </div>
   );
 }

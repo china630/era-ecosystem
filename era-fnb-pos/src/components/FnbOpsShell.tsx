@@ -12,6 +12,7 @@ import {
   UtensilsCrossed,
   LayoutPanelTop,
   ScrollText,
+  Settings,
   Shield,
 } from "lucide-react";
 import {
@@ -39,6 +40,7 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/kds": PERMISSIONS.SCREEN_KDS,
   "/admin/menu": PERMISSIONS.SCREEN_ADMIN_MENU,
   "/admin/tables": PERMISSIONS.SCREEN_ADMIN_TABLES,
+  "/admin/settings": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
   "/sales": PERMISSIONS.SCREEN_ORDERS,
 };
@@ -51,6 +53,7 @@ const hotelLinks = [
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
   { href: "/sales", key: "sales", icon: ScrollText },
+  { href: "/admin/settings", key: "settings", icon: Settings },
   { href: "/admin/access", key: "access", icon: Shield },
 ] as const;
 
@@ -61,6 +64,7 @@ const kafeLinks = [
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
   { href: "/sales", key: "sales", icon: ScrollText },
+  { href: "/admin/settings", key: "settings", icon: Settings },
   { href: "/admin/access", key: "access", icon: Shield },
 ] as const;
 
@@ -154,6 +158,9 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
   }
 
   const profileItems: HeaderProfileMenuItem[] = [];
+  if (can(PERMISSIONS.SCREEN_ADMIN_SETTINGS)) {
+    profileItems.push({ label: t("settings"), href: "/admin/settings" });
+  }
   if (can(PERMISSIONS.SCREEN_ADMIN_MENU)) {
     profileItems.push({ label: t("menu"), href: "/admin/menu" });
   }

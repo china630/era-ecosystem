@@ -278,7 +278,7 @@ export default function FnbAccessPage() {
 
   return (
     <main className="space-y-4 p-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} />
       <div className={CARD_CONTAINER_CLASS}>
         {loading ? (
           <p className="text-sm text-[var(--era-muted)]">{tc("loading")}</p>
