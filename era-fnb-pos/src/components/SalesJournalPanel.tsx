@@ -6,11 +6,12 @@ import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CatalogField,
   type CatalogFieldKind,
+  DatePicker,
   ModalShell,
   PageHeader,
   showApiError,
 } from "@era/satellite-kit/ui";
-import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { CARD_CLASS } from "@/lib/design-system";
 import { CheckLines, type CheckLine } from "@/components/CheckLines";
 import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
 
@@ -114,19 +115,15 @@ export default function SalesJournalPanel() {
         >
           {t("thisShift")}
         </button>
-        <label className="text-sm text-[#34495E]">
-          <span className="mb-1 block text-xs text-[#7F8C8D]">{t("date")}</span>
-          <input
-            type="date"
-            value={date}
-            disabled={scope === "shift"}
-            onChange={(e) => {
-              setScope("today");
-              setDate(e.target.value);
-            }}
-            className={INPUT_CLASS}
-          />
-        </label>
+        <DatePicker
+          label={t("date")}
+          value={date}
+          disabled={scope === "shift"}
+          onChange={(next) => {
+            setScope("today");
+            if (next) setDate(next);
+          }}
+        />
         <div className="min-w-[12rem]">
           <CatalogField
             kind={"CLOSED_SMALL" as CatalogFieldKind}
