@@ -16,6 +16,7 @@ export type SaleTotalsView = {
   cash: number;
   card: number;
   transfer: number;
+  other?: number;
   count: number;
   sum: number;
 };
@@ -45,6 +46,7 @@ export function SaleTable({
     cash: string;
     card: string;
     transfer: string;
+    other: string;
     count: string;
     takeaway: string;
   };
@@ -104,6 +106,8 @@ export function SaleTable({
         {labels.card} {totals.card.toFixed(2)}
         {" · "}
         {labels.transfer} {totals.transfer.toFixed(2)}
+        {" · "}
+        {labels.other} {(totals.other ?? 0).toFixed(2)}
       </p>
       <p className="text-right text-xl font-semibold tabular-nums text-[#2C3E50]">
         {totals.sum.toFixed(2)} {azn}

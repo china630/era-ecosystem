@@ -140,11 +140,11 @@ export function CheckLines({
           <tr>
             <td />
             <td />
-            <td className="pt-3 align-top">
-              <label className="block text-right text-xs text-[#7F8C8D]">
-                {discount.label}
+            <td className="pt-3">
+              <label className="flex items-center justify-end gap-2 text-xs text-[#7F8C8D]">
+                <span className="shrink-0">{discount.label}</span>
                 <input
-                  className={`${MODAL_INPUT_CLASS} mt-1 w-full text-right tabular-nums`}
+                  className={`${MODAL_INPUT_CLASS} w-16 text-right tabular-nums`}
                   type="number"
                   min={0}
                   max={100}
@@ -155,11 +155,17 @@ export function CheckLines({
                 />
               </label>
             </td>
-            <td className="pt-3 text-right align-bottom">
-              {discount.amountText ? (
-                <p className="text-sm tabular-nums text-[#7F8C8D]">{discount.amountText}</p>
-              ) : null}
-              <p className="text-2xl font-semibold tabular-nums text-[#2C3E50]">{discount.netText}</p>
+            <td className="pt-3 text-right text-sm tabular-nums text-[#7F8C8D]">
+              {discount.amountText}
+            </td>
+            {onRemove ? <td /> : null}
+          </tr>
+          <tr>
+            <td />
+            <td />
+            <td />
+            <td className="pt-1 text-right text-2xl font-semibold tabular-nums text-[#2C3E50]">
+              {discount.netText}
             </td>
             {onRemove ? <td /> : null}
           </tr>

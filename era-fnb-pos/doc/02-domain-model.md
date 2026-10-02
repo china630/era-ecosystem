@@ -34,7 +34,8 @@ Property
 |------|----------|
 | code | `T-01` … |
 | seats | Вместимость |
-| zone | Зал / терраса |
+| hallId | Зал (`PosHall`). Пусто — основной зал. Чипы на зале читают это поле |
+| zone | Старый текст. Чипы его не читают |
 | status | FREE, OCCUPIED, RESERVED, DIRTY |
 | currentTicketId | nullable |
 

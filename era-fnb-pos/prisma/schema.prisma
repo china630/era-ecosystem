@@ -49,6 +49,7 @@ model Outlet {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
   tables             PosTable[]
+  halls              PosHall[]
   tickets            Ticket[]
   shifts             PosShift[]
   menuCategories     MenuCategory[]
@@ -77,10 +78,26 @@ model DeliveryInboxOrder {
   @@index([organizationId])
 }
 
+model PosHall {
+  id             String     @id @default(cuid())
+  organizationId String
+  outletId       String     @map("outlet_id")
+  name           String
+  sortOrder      Int        @default(0) @map("sort_order")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  outlet         Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tables         PosTable[]
+
+  @@index([outletId, sortOrder])
+  @@index([organizationId])
+  @@map("pos_halls")
+}
+
 model PosTable {
   id              String      @id @default(cuid())
   organizationId String @map("organization_id")
   outletId        String      @map("outlet_id")
+  hallId          String?     @map("hall_id")
   code            String
   name            String
   seats           Int         @default(4)
@@ -90,10 +107,12 @@ model PosTable {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   outlet          Outlet      @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  hall            PosHall?    @relation(fields: [hallId], references: [id], onDelete: SetNull)
   tickets         Ticket[]    @relation("TableTickets")
   reservations    TableReservation[]
 
   @@unique([outletId, code])
+  @@index([hallId])
   @@map("pos_tables")
   @@index([organizationId])
 }
@@ -220,6 +239,8 @@ model Ticket {
   discountPercent         Decimal      @default(0) @map("discount_percent") @db.Decimal(5, 2)
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
   paymentMethod           String?      @map("payment_method")
+  cashTenderedAzn         Decimal?     @map("cash_tendered_azn") @db.Decimal(12, 2)
+  changeAzn               Decimal?     @map("change_azn") @db.Decimal(12, 2)
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")
   externalRef             String?      @map("external_ref")

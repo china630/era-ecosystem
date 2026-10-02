@@ -8,6 +8,7 @@ import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
 import { CashDrawerBlock } from "@/components/CashDrawerBlock";
 import type { CashDrawerView } from "@/lib/cash-drawer";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type OpenShift = {
   id: string;
@@ -20,6 +21,7 @@ type OpenShift = {
   stale?: boolean;
   businessDayStart?: string;
   drawer?: CashDrawerView;
+  till?: { cash: number; card: number; transfer: number; openChecks: number };
   outlet: { code: string; name: string };
 };
 
@@ -53,10 +55,11 @@ export default function PosShiftPanel() {
   const [dropModal, setDropModal] = useState(false);
   const [dropAmount, setDropAmount] = useState("");
   const [dropNote, setDropNote] = useState("");
+  const [canClose, setCanClose] = useState(false);
   const ts = useTranslations("sales");
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     const res = await fetch("/api/shifts/open");
     const data = await res.json();
     setDayStart(typeof data?.businessDayStart === "string" ? data.businessDayStart : "05:00");
@@ -93,6 +96,23 @@ export default function PosShiftPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const refresh = () => void load({ silent: true });
+    window.addEventListener("era-fnb-shift-refresh", refresh);
+    return () => window.removeEventListener("era-fnb-shift-refresh", refresh);
+  }, [load]);
+
+  useEffect(() => {
+    void fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => {
+        const perms: string[] = Array.isArray(me?.permissions) ? me.permissions : [];
+        const owner = me?.isOwner === true || me?.role === "BUSINESS_OWNER";
+        setCanClose(owner || perms.includes(PERMISSIONS.SHIFTS_CLOSE));
+      })
+      .catch(() => setCanClose(false));
+  }, []);
 
   useEffect(() => {
     void fetch("/api/outlets")
@@ -212,7 +232,7 @@ export default function PosShiftPanel() {
 
   const drawerLabels = {
     title: t("drawerTitle"),
-    opening: t("openingCash"),
+    opening: t("opening"),
     cashSales: t("cashSales"),
     drops: t("dropsTotal"),
     expected: t("expected"),
@@ -242,6 +262,17 @@ export default function PosShiftPanel() {
           ) : (
             <p className="text-sm text-[#7F8C8D]">{t("noShift")}</p>
           )}
+          {shift?.till ? (
+            <p className="text-sm tabular-nums text-[#34495E]">
+              {ts("cash")} {shift.till.cash.toFixed(2)} {tc("azn")}
+              {" · "}
+              {ts("card")} {shift.till.card.toFixed(2)} {tc("azn")}
+              {" · "}
+              {ts("transfer")} {shift.till.transfer.toFixed(2)} {tc("azn")}
+              {" · "}
+              {t("openChecks", { count: shift.till.openChecks })}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {!shift && none && (
@@ -263,7 +294,7 @@ export default function PosShiftPanel() {
               {t("xReport")}
             </button>
           )}
-          {shift && (
+          {shift && canClose && (
             <button
               type="button"
               className="rounded border border-[#34495E] px-3 py-1.5 text-sm text-[#34495E]"
@@ -274,7 +305,7 @@ export default function PosShiftPanel() {
             </button>
           )}
           <p className="self-center text-sm text-[#34495E]">{t("dayStart", { time: dayStart })}</p>
-          {shift && (
+          {shift && canClose && (
             <button
               type="button"
               className="rounded border border-[#E74C3C] px-3 py-1.5 text-sm text-[#E74C3C]"
@@ -294,7 +325,6 @@ export default function PosShiftPanel() {
           ) : null}
         </div>
       </div>
-      {shift?.drawer ? <CashDrawerBlock drawer={shift.drawer} azn={tc("azn")} labels={drawerLabels} /> : null}
       {openModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className={`${CARD_CLASS} w-full max-w-sm p-4`}>
@@ -392,6 +422,13 @@ export default function PosShiftPanel() {
                 onChange={(e) => setDropAmount(e.target.value)}
               />
             </label>
+            {shift?.drawer &&
+            Number.isFinite(Number(dropAmount)) &&
+            Number(dropAmount) > shift.drawer.expected + 0.001 ? (
+              <p className="mb-2 text-sm text-[#C0392B]">
+                {t("dropOver", { expected: shift.drawer.expected.toFixed(2) })}
+              </p>
+            ) : null}
             <label className="mb-3 block text-xs text-[#7F8C8D]">
               {t("dropNote")}
               <input
@@ -483,6 +520,7 @@ export default function PosShiftPanel() {
                 cash: ts("cash"),
                 card: ts("card"),
                 transfer: ts("transfer"),
+                other: ts("other"),
                 count: ts("count"),
                 takeaway: ts("takeaway"),
               }}

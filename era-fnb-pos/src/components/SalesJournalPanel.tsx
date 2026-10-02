@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { bakuTimeLabel, todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 import {
   CatalogField,
   type CatalogFieldKind,
@@ -27,6 +27,11 @@ type Report = {
 
 type CheckView = {
   dayNo: number | null;
+  subtotalAzn?: string | number | null;
+  discountPercent?: string | number | null;
+  paymentMethod?: string | null;
+  cashTenderedAzn?: string | number | null;
+  changeAzn?: string | number | null;
   totalAzn: string | number;
   openedAt?: string | null;
   closedAt?: string | null;
@@ -43,7 +48,8 @@ export default function SalesJournalPanel() {
   const tsh = useTranslations("shift");
   const tc = useTranslations("common");
   const [scope, setScope] = useState<"today" | "shift">("today");
-  const [date, setDate] = useState(todayBakuYmd);
+  const [date, setDate] = useState("");
+  const datePinned = useRef(false);
   const [channel, setChannel] = useState("");
   const [method, setMethod] = useState("");
   const [report, setReport] = useState<Report | null>(null);
@@ -51,7 +57,7 @@ export default function SalesJournalPanel() {
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ scope });
-    if (scope === "today") params.set("date", date);
+    if (scope === "today" && date) params.set("date", date);
     if (channel) params.set("channel", channel);
     if (method) params.set("method", method);
     const res = await fetch(`/api/sales?${params.toString()}`);
@@ -61,6 +67,9 @@ export default function SalesJournalPanel() {
       return;
     }
     setReport(data as Report);
+    if (scope === "today" && !date && !datePinned.current && typeof data.day === "string") {
+      setDate(data.day);
+    }
   }, [scope, date, channel, method]);
 
   useEffect(() => {
@@ -92,6 +101,7 @@ export default function SalesJournalPanel() {
     cash: t("cash"),
     card: t("card"),
     transfer: t("transfer"),
+    other: t("other"),
     count: t("count"),
     takeaway: t("takeaway"),
   };
@@ -110,7 +120,11 @@ export default function SalesJournalPanel() {
           className={`rounded px-3 py-2 text-sm font-medium ${
             scope === "today" ? "bg-[#2980B9] text-white" : "bg-[#EBEDF0] text-[#34495E]"
           }`}
-          onClick={() => setScope("today")}
+          onClick={() => {
+            datePinned.current = false;
+            setDate("");
+            setScope("today");
+          }}
         >
           {t("today")}
         </button>
@@ -129,8 +143,10 @@ export default function SalesJournalPanel() {
           placeholder={tc("datePlaceholder")}
           disabled={scope === "shift"}
           onChange={(next) => {
+            if (!next) return;
+            datePinned.current = true;
             setScope("today");
-            if (next) setDate(next);
+            setDate(next);
           }}
         />
         <div className="min-w-[12rem]">
@@ -166,7 +182,7 @@ export default function SalesJournalPanel() {
           azn={tc("azn")}
           labels={{
             title: tsh("drawerTitle"),
-            opening: tsh("openingCash"),
+            opening: tsh("opening"),
             cashSales: tsh("cashSales"),
             drops: tsh("dropsTotal"),
             expected: tsh("expected"),
@@ -214,9 +230,37 @@ export default function SalesJournalPanel() {
               }}
               azn={tc("azn")}
             />
-            <p className="mt-3 text-right text-2xl font-semibold tabular-nums text-[#2C3E50]">
-              {Number(check.totalAzn).toFixed(2)} {tc("azn")}
-            </p>
+            {(() => {
+              const gross =
+                check.subtotalAzn != null
+                  ? Number(check.subtotalAzn)
+                  : check.lines.reduce((sum, line) => sum + Number(line.unitPriceAzn) * line.qty, 0);
+              const net = Number(check.totalAzn);
+              const pct = Number(check.discountPercent ?? 0);
+              const off = Math.round((gross - net) * 100) / 100;
+              return (
+                <div className="mt-3 space-y-1 text-right tabular-nums text-[#34495E]">
+                  <p>
+                    {t("linesTotal")} {gross.toFixed(2)} {tc("azn")}
+                  </p>
+                  {pct > 0 || off > 0.001 ? (
+                    <p className="text-[#7F8C8D]">
+                      {t("discountLine", { pct: String(pct) })} −{off.toFixed(2)} {tc("azn")}
+                    </p>
+                  ) : null}
+                  <p className="text-2xl font-semibold text-[#2C3E50]">
+                    {net.toFixed(2)} {tc("azn")}
+                  </p>
+                  {check.paymentMethod === "CASH" && check.cashTenderedAzn != null ? (
+                    <p className="text-sm text-[#34495E]">
+                      {t("received")} {Number(check.cashTenderedAzn).toFixed(2)} {tc("azn")}
+                      {" · "}
+                      {t("change")} {Number(check.changeAzn ?? 0).toFixed(2)} {tc("azn")}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })()}
           </>
         ) : null}
       </ModalShell>

@@ -2,8 +2,8 @@
 
 | Route | API | Role |
 |-------|-----|------|
-| `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — hall chips (table `zone`) above the table cards, vertical category rail and dishes in one block, check on the right |
-| `/sales` | `GET /api/sales?scope=today\|shift&date=&channel=&method=` | Sales journal — check rows plus a cash-drawer block (float, drops, counted Z) |
+| `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — hall chips (`PosHall`, blank hall = main) above the table cards, vertical category rail and dishes in one block, check on the right |
+| `/sales` | `GET /api/sales?scope=today\|shift&date=&channel=&method=` | Sales journal — “today” is the business day (org start hour, not midnight). Check rows, other tender in the footer, cash-drawer table per closed shift |
 | `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
 | `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order). Outlet by `publicSlug` per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |
@@ -22,7 +22,7 @@ Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet
 | `/kds` | kds fire | Kitchen |
 | `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — category rail + one dish table (name, price); search; inactive hidden; PLU/recipe/image inside dish modal |
 | `/admin/import` | `/api/import`, `/api/import/[entity]` | Manager / super-admin — Nafta cutover `#30`–`#32` (groups, cards, walk-in cheques) |
-| `/admin/tables` | `/api/tables`, `/api/tables/[id]` | Manager — static table master CRUD |
+| `/admin/tables` | `/api/halls`, `/api/halls/[id]`, `/api/tables`, `/api/tables/[id]` | Manager — halls on the left, tables of the selected hall on the right. `hallId` null is the main hall. |
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
 | `/admin/settings` | `GET/PATCH /api/settings/business-day` | Café nav «Parametrlər». Business day start (Asia/Baku, default 05:00), also shown beside Z |
 

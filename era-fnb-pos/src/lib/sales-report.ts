@@ -1,8 +1,9 @@
-import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
 import { prisma } from "@/lib/prisma";
 import { daySeqMap } from "@/lib/ticket-helpers";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { cashDrawerForShift, type CashDrawerView } from "@/lib/cash-drawer";
+import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import { businessDayBounds, currentBusinessDayKey } from "@/lib/business-day";
 
 export type SaleRow = {
   id: string;
@@ -36,6 +37,8 @@ export type SaleReport = {
   totals: SaleTotals;
   shift: SaleShift | null;
   drawers: CashDrawerView[];
+  day?: string;
+  businessDayStart?: string;
 };
 
 function placeOf(ticket: {
@@ -145,15 +148,24 @@ export async function saleReportForScope(
     });
     return { ...report, drawers: [await cashDrawerForShift(shift)] };
   }
-  const day = filters?.date && /^\d{4}-\d{2}-\d{2}$/.test(filters.date) ? filters.date : todayBakuYmd();
-  const { start, end } = bakuDayBounds(day);
+  const profile = await getFnbOrgProfile();
+  const day =
+    filters?.date && /^\d{4}-\d{2}-\d{2}$/.test(filters.date)
+      ? filters.date
+      : currentBusinessDayKey(new Date(), profile.businessDayStart);
+  const { start, end } = businessDayBounds(day, profile.businessDayStart);
   const report = await saleReportBetween({ from: start, to: end, channel, method });
   const closed = await prisma.posShift.findMany({
     where: { status: "CLOSED", closedAt: { gte: start, lte: end } },
     include: { outlet: true },
     orderBy: { closedAt: "desc" },
   });
-  return { ...report, drawers: await Promise.all(closed.map((row) => cashDrawerForShift(row))) };
+  return {
+    ...report,
+    day,
+    businessDayStart: profile.businessDayStart,
+    drawers: await Promise.all(closed.map((row) => cashDrawerForShift(row))),
+  };
 }
 
 export async function saleReportForShift(shiftId: string): Promise<SaleReport> {

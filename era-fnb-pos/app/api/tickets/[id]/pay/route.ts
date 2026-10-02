@@ -23,6 +23,7 @@ import { requireOpenShift } from "@/lib/open-shift";
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD", "TRANSFER"]),
   amount: z.number().positive().optional(),
+  cashTendered: z.number().nonnegative().optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),
   fiscalDeviceId: z.string().min(1).max(64).optional(),
@@ -67,6 +68,16 @@ export async function POST(
 
   const liveLines = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID");
   const amount = body.amount ?? Number(ticket.totalAzn);
+  const due = Number(ticket.totalAzn);
+  let cashTendered: number | null = null;
+  let changeAzn: number | null = null;
+  if (body.method === "CASH") {
+    cashTendered = body.cashTendered ?? due;
+    if (cashTendered + 0.001 < due) {
+      return NextResponse.json({ error: "Cash tendered is less than the check" }, { status: 400 });
+    }
+    changeAzn = Math.round((cashTendered - due) * 100) / 100;
+  }
   if (liveLines.length === 0 || amount <= 0) {
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }
@@ -128,7 +139,13 @@ export async function POST(
 
   await prisma.ticket.update({
     where: { id },
-    data: { status: "CLOSED", closedAt: new Date(), paymentMethod: body.method },
+    data: {
+      status: "CLOSED",
+      closedAt: new Date(),
+      paymentMethod: body.method,
+      cashTenderedAzn: cashTendered,
+      changeAzn,
+    },
   });
   await releaseTableForTicket(id, ticket.tableId);
 
@@ -218,6 +235,8 @@ export async function POST(
       ticketId: id,
       method: body.method,
       amount,
+      cashTendered,
+      changeAzn,
       status: "PAID",
       fiscal: {
         receiptId: fiscal.receiptId,

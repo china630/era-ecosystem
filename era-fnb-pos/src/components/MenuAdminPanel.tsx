@@ -363,8 +363,8 @@ export default function MenuAdminPanel() {
         </label>
       </EraListFilterBar>
 
-      <div className="grid items-start gap-3 lg:grid-cols-[22rem_minmax(0,1fr)]">
-        <div className={`${CARD_CLASS} min-w-0 overflow-hidden p-3`}>
+      <div className="grid items-start gap-3 lg:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className={`${CARD_CLASS} min-w-0 overflow-hidden p-4`}>
           <p className="mb-2 px-1 text-sm font-semibold text-[#34495E]">{t("category")}</p>
           {categories.length === 0 && (
             <p className="px-2 py-3 text-sm text-[#7F8C8D]">{t("emptyCategories")}</p>
@@ -384,7 +384,6 @@ export default function MenuAdminPanel() {
                       selected ? "bg-[#2980B9] text-white" : "text-[#34495E] hover:bg-[#EBEDF0]"
                     }`}
                   >
-                    {cat.code ? <span className="mr-1 opacity-70">{cat.code}</span> : null}
                     {cat.name}
                   </button>
                   <button
@@ -427,12 +426,11 @@ export default function MenuAdminPanel() {
           </ul>
         </div>
 
-        <div className={`${CARD_CONTAINER_CLASS} min-w-0 overflow-x-auto`}>
-          <div className="mb-3">
-            <h2 className="text-sm font-semibold text-[#34495E]">
-              {needle ? t("searchResults") : (selectedCategory?.name ?? t("category"))}
-            </h2>
-          </div>
+        <div className={`${CARD_CONTAINER_CLASS} min-w-0 overflow-hidden p-4`}>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">
+            {needle ? t("searchResults") : (selectedCategory?.name ?? t("category"))}
+          </h2>
+          <div className="overflow-x-auto">
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className="border-b border-[#D5DADF] text-left text-[#7F8C8D]">
@@ -484,6 +482,7 @@ export default function MenuAdminPanel() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

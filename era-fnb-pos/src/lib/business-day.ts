@@ -21,6 +21,19 @@ export function currentBusinessDayStart(now: Date, hhmm: string): Date {
   return parseBakuDateTime(yesterday, start);
 }
 
+export function currentBusinessDayKey(now: Date, hhmm: string): string {
+  return bakuDateKey(currentBusinessDayStart(now, hhmm));
+}
+
+/** Business day that starts at `hhmm` on `dayYmd` and ends just before the next start. */
+export function businessDayBounds(dayYmd: string, hhmm: string): { start: Date; end: Date } {
+  const startHm = normalizeBusinessDayStart(hhmm);
+  const start = parseBakuDateTime(dayYmd, startHm);
+  const nextKey = bakuDateKey(new Date(start.getTime() + 26 * 60 * 60 * 1000));
+  const nextStart = parseBakuDateTime(nextKey, startHm);
+  return { start, end: new Date(nextStart.getTime() - 1) };
+}
+
 export function isShiftStale(openedAt: Date, now: Date, hhmm: string): boolean {
   return openedAt.getTime() < currentBusinessDayStart(now, hhmm).getTime();
 }
