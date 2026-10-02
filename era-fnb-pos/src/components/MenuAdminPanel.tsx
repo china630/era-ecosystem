@@ -19,6 +19,7 @@ import {
   Field,
   ModalFooter,
   ModalShell,
+  EraListFilterBar,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -315,7 +316,6 @@ export default function MenuAdminPanel() {
     <>
       <PageHeader
         title={t("title")}
-        subtitle={t("subtitle")}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {recipesHref ? (
@@ -343,7 +343,7 @@ export default function MenuAdminPanel() {
           </div>
         }
       />
-      <div className="mb-3 flex flex-wrap items-end gap-3">
+      <EraListFilterBar>
         <label className="text-sm text-[#34495E]">
           <span className="mb-1 block text-xs text-[#7F8C8D]">{t("search")}</span>
           <input
@@ -361,9 +361,9 @@ export default function MenuAdminPanel() {
           />
           {t("showInactive")}
         </label>
-      </div>
+      </EraListFilterBar>
 
-      <div className="grid items-start gap-3 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <div className="grid items-start gap-3 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <div className={`${CARD_CLASS} min-w-0 overflow-hidden p-3`}>
           <p className="mb-2 px-1 text-sm font-semibold text-[#34495E]">{t("category")}</p>
           {categories.length === 0 && (
@@ -492,6 +492,7 @@ export default function MenuAdminPanel() {
         title={catModal === "create" ? t("addCategory") : t("editCategory")}
         onClose={() => setCatModal(null)}
       >
+        <div className="flex flex-col gap-5">
         <Field
           label={t("categoryName")}
           preset="shortText"
@@ -504,6 +505,7 @@ export default function MenuAdminPanel() {
           value={catDraft.code}
           onChange={(e) => setCatDraft((d) => ({ ...d, code: e.target.value }))}
         />
+        </div>
         <ModalFooter
           onCancel={() => setCatModal(null)}
           onSubmit={() => void saveCategory()}
@@ -582,7 +584,6 @@ export default function MenuAdminPanel() {
                   setItemForm((f) => ({ ...f, recipeSku: e.target.value }))
                 }
               />
-              <p className="text-xs text-[#7F8C8D]">{t("recipeSkuHint")}</p>
               <Field
                 label={t("imageUrl")}
                 preset="shortText"

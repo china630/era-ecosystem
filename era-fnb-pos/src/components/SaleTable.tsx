@@ -5,6 +5,7 @@ import { bakuTimeLabel } from "@era/satellite-kit/time";
 export type SaleRowView = {
   id: string;
   dayNo: number | null;
+  openedAt?: string;
   closedAt: string;
   place: string;
   method: string | null;
@@ -35,7 +36,8 @@ export function SaleTable({
   rows: SaleRowView[];
   totals: SaleTotalsView;
   labels: {
-    time: string;
+    opened: string;
+    closed: string;
     place: string;
     method: string;
     sum: string;
@@ -54,7 +56,8 @@ export function SaleTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs font-medium text-[#7F8C8D]">
-            <th className="pb-2 font-medium">{labels.time}</th>
+            <th className="pb-2 font-medium">{labels.opened}</th>
+            <th className="pb-2 font-medium">{labels.closed}</th>
             <th className="pb-2 font-medium">{labels.place}</th>
             <th className="pb-2 font-medium">{labels.method}</th>
             <th className="pb-2 text-right font-medium">{labels.sum}</th>
@@ -63,7 +66,7 @@ export function SaleTable({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={4} className="py-3 text-[#7F8C8D]">
+              <td colSpan={5} className="py-3 text-[#7F8C8D]">
                 {labels.empty}
               </td>
             </tr>
@@ -75,8 +78,11 @@ export function SaleTable({
                 onClick={onOpen ? () => onOpen(row.id) : undefined}
               >
                 <td className="py-2 tabular-nums">
-                  {row.closedAt ? bakuTimeLabel(row.closedAt) : ""}
+                  {row.openedAt ? bakuTimeLabel(row.openedAt) : "—"}
                   {row.dayNo ? ` #${row.dayNo}` : ""}
+                </td>
+                <td className="py-2 tabular-nums">
+                  {row.closedAt ? bakuTimeLabel(row.closedAt) : "—"}
                 </td>
                 <td className="py-2">{row.place === "TAKEAWAY" ? labels.takeaway : row.place}</td>
                 <td className="py-2">

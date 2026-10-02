@@ -8,17 +8,21 @@ import {
   type CatalogFieldKind,
   DatePicker,
   ModalShell,
+  EraListFilterBar,
   PageHeader,
   showApiError,
 } from "@era/satellite-kit/ui";
 import { CARD_CLASS } from "@/lib/design-system";
 import { CheckLines, type CheckLine } from "@/components/CheckLines";
 import { SaleTable, type SaleRowView, type SaleTotalsView } from "@/components/SaleTable";
+import { CashDrawerBlock } from "@/components/CashDrawerBlock";
+import type { CashDrawerView } from "@/lib/cash-drawer";
 
 type Report = {
   rows: SaleRowView[];
   totals: SaleTotalsView;
   shift: { openedBy: string | null; outletCode: string } | null;
+  drawers?: CashDrawerView[];
 };
 
 type CheckView = {
@@ -36,6 +40,7 @@ const EMPTY: SaleTotalsView = { cash: 0, card: 0, transfer: 0, count: 0, sum: 0 
 export default function SalesJournalPanel() {
   const t = useTranslations("sales");
   const tf = useTranslations("floor");
+  const tsh = useTranslations("shift");
   const tc = useTranslations("common");
   const [scope, setScope] = useState<"today" | "shift">("today");
   const [date, setDate] = useState(todayBakuYmd);
@@ -78,7 +83,8 @@ export default function SalesJournalPanel() {
   }
 
   const labels = {
-    time: t("time"),
+    opened: t("opened"),
+    closed: t("closed"),
     place: t("place"),
     method: t("method"),
     sum: t("sum"),
@@ -97,8 +103,8 @@ export default function SalesJournalPanel() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className="flex flex-wrap items-end gap-3">
+      <PageHeader title={t("title")} />
+      <EraListFilterBar>
         <button
           type="button"
           className={`rounded px-3 py-2 text-sm font-medium ${
@@ -152,7 +158,23 @@ export default function SalesJournalPanel() {
             onChange={(next) => setMethod(Array.isArray(next) ? next[0] ?? "" : next)}
           />
         </div>
-      </div>
+      </EraListFilterBar>
+      {(report?.drawers ?? []).map((drawer) => (
+        <CashDrawerBlock
+          key={drawer.shiftId}
+          drawer={drawer}
+          azn={tc("azn")}
+          labels={{
+            title: tsh("drawerTitle"),
+            opening: tsh("openingCash"),
+            cashSales: tsh("cashSales"),
+            drops: tsh("dropsTotal"),
+            expected: tsh("expected"),
+            counted: tsh("countedCash"),
+            variance: tsh("variance"),
+          }}
+        />
+      ))}
       <div className={`${CARD_CLASS} p-4`}>
         {report?.shift?.openedBy ? (
           <p className="mb-2 text-sm text-[#7F8C8D]">

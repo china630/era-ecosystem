@@ -206,6 +206,7 @@ export function cashierPermissions(edition: "hotel" | "kafe"): Permission[] {
   const base: Permission[] = [
     ...TILL_BASE,
     PERMISSIONS.TICKETS_PAY,
+    PERMISSIONS.TICKETS_DISCOUNT,
     PERMISSIONS.SHIFTS_CLOSE,
   ];
   if (edition === "hotel") {

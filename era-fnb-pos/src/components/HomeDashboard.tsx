@@ -56,9 +56,6 @@ export default function HomeDashboard() {
         <h1 className="text-2xl font-semibold text-[#2C3E50]">
           {kafe ? t("titleKafe") : t("title")}
         </h1>
-        <p className="mt-1 text-sm text-[#7F8C8D]">
-          {kafe ? t("subtitleKafe") : t("subtitlePlain")}
-        </p>
       </div>
 
       {error ? <p className="text-sm text-[#C0392B]">{error}</p> : null}

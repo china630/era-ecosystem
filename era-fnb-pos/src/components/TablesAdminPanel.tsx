@@ -118,8 +118,7 @@ export default function TablesAdminPanel() {
 
   return (
     <>
-      <div className="mb-4 flex justify-between gap-2">
-        <p className="text-sm text-[#7F8C8D]">{t("subtitle")}</p>
+      <div className="mb-4 flex justify-end gap-2">
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
           <Plus className="mr-1 inline h-4 w-4" />
           {t("add")}
