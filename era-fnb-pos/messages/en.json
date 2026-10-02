@@ -335,6 +335,7 @@
     "name": "Name",
     "status": "Status",
     "date": "Date",
+    "datePlaceholder": "dd.mm.yyyy",
     "guest": "Guest",
     "notes": "Notes",
     "complete": "Complete",

@@ -343,6 +343,7 @@
     "name": "Название",
     "status": "Статус",
     "date": "Дата",
+    "datePlaceholder": "дд.мм.гггг",
     "guest": "Гость",
     "notes": "Заметка",
     "complete": "Готово",

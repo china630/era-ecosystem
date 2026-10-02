@@ -118,6 +118,7 @@ export default function SalesJournalPanel() {
         <DatePicker
           label={t("date")}
           value={date}
+          placeholder={tc("datePlaceholder")}
           disabled={scope === "shift"}
           onChange={(next) => {
             setScope("today");

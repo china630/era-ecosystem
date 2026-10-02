@@ -343,6 +343,7 @@
     "name": "Ad",
     "status": "Status",
     "date": "Tarix",
+    "datePlaceholder": "gg.aa.iiii",
     "guest": "Qonaq",
     "notes": "Qeyd",
     "complete": "Tamamla",
