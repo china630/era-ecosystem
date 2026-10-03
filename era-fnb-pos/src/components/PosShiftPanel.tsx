@@ -505,11 +505,15 @@ export default function PosShiftPanel() {
       )}
       {report && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-lg overflow-auto p-4`}>
+          <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-5xl overflow-auto p-4`}>
             <h3 className="mb-3 text-sm font-semibold text-[#34495E]">
               {reportKind === "z" ? t("zReport") : t("xReport")}
             </h3>
-            {reportDrawer ? <CashDrawerBlock drawer={reportDrawer} azn={tc("azn")} labels={drawerLabels} /> : null}
+            {reportDrawer ? (
+              <div className="mb-3">
+                <CashDrawerBlock drawer={reportDrawer} azn={tc("azn")} labels={drawerLabels} />
+              </div>
+            ) : null}
             <SaleTable
               rows={report.rows}
               totals={report.totals}
@@ -519,7 +523,7 @@ export default function PosShiftPanel() {
                 closed: ts("closed"),
                 place: ts("place"),
                 method: ts("method"),
-                shift: ts("shift"),
+                shift: ts("closedBy"),
                 sum: ts("sum"),
                 empty: ts("empty"),
                 cash: ts("cash"),

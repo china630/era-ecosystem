@@ -14,7 +14,7 @@ import {
   resolveTicketSettlement,
   shouldFiscalizeAtPos,
 } from "@/lib/billing-router";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
@@ -146,6 +146,7 @@ export async function POST(
       cashTenderedAzn: cashTendered,
       changeAzn,
       shiftId: openShift.id,
+      closedByName: sessionActorName(session),
     },
   });
   await releaseTableForTicket(id, ticket.tableId);

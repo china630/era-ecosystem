@@ -325,7 +325,11 @@
     "checkTitle": "Чек #{no} · {place}",
     "opened": "Открыт",
     "closed": "Закрыт",
-    "shift": "Смена"
+    "shift": "Смена",
+    "closedBy": "Закрыл",
+    "openedBy": "Открыл",
+    "drawer": "Касса",
+    "allDrawers": "Все кассы"
   },
   "shift": {
     "title": "POS-смена",

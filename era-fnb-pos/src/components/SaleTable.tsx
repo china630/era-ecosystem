@@ -11,6 +11,7 @@ export type SaleRowView = {
   method: string | null;
   totalAzn: number;
   shiftOpenedAt?: string | null;
+  closedByName?: string | null;
 };
 
 export type SaleTotalsView = {
@@ -93,8 +94,19 @@ export function SaleTable({
                 <td className="py-2">
                   {row.method && METHOD_KEY[row.method] ? labels[METHOD_KEY[row.method]] : "—"}
                 </td>
-                <td className="py-2 tabular-nums">
-                  {row.shiftOpenedAt ? bakuTimeLabel(row.shiftOpenedAt) : "—"}
+                <td className="py-2">
+                  {row.closedByName ? (
+                    <>
+                      {row.closedByName}
+                      {row.shiftOpenedAt ? (
+                        <span className="text-[#7F8C8D]"> · {bakuTimeLabel(row.shiftOpenedAt)}</span>
+                      ) : null}
+                    </>
+                  ) : row.shiftOpenedAt ? (
+                    bakuTimeLabel(row.shiftOpenedAt)
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="py-2 text-right font-semibold tabular-nums">
                   {row.totalAzn.toFixed(2)} {azn}

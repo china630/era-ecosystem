@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
@@ -63,6 +63,7 @@ export async function POST(
         tableId: null,
         covers: source.covers,
         guestName: source.guestName,
+        openedByName: source.openedByName ?? sessionActorName(session),
         discountPercent: 0,
         subtotalAzn: 0,
         totalAzn: 0,

@@ -5,7 +5,7 @@ import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       serviceChannel: "ROOM_SERVICE",
       guestName: body.guestName ?? `Room ${body.roomNumber}`,
       roomChargeReservationId: null,
+      openedByName: sessionActorName(session),
       subtotalAzn: subtotal,
       totalAzn: subtotal,
       lines: {

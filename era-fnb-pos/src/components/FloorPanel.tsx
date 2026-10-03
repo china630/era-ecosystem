@@ -114,7 +114,7 @@ export default function FloorPanel() {
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
-  const [canPay, setCanPay] = useState(false);
+  const [canPay, setCanPay] = useState(true);
   const [canSoldOut, setCanSoldOut] = useState(false);
   const busy = useRef(false);
 
@@ -201,13 +201,14 @@ export default function FloorPanel() {
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
     try {
-      const [tablesRes, menuRes, outletsRes, editionRes, soldRes, meRes] = await Promise.all([
+      const [tablesRes, menuRes, outletsRes, editionRes, soldRes, meRes, grantsRes] = await Promise.all([
         fetch("/api/tables"),
         fetch("/api/menu"),
         fetch("/api/outlets"),
         fetch("/api/edition"),
         fetch("/api/menu/sold-out"),
         fetch("/api/auth/me"),
+        fetch("/api/shifts/open"),
       ]);
       const tablesData = await tablesRes.json().catch(() => null);
       const menuData = await menuRes.json().catch(() => null);
@@ -217,7 +218,9 @@ export default function FloorPanel() {
         : null;
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
       const me = meRes.ok ? await meRes.json().catch(() => null) : null;
-      setCanPay(fnbCan(me, PERMISSIONS.TICKETS_PAY));
+      const grants = grantsRes.ok ? await grantsRes.json().catch(() => null) : null;
+      if (grants && grants.mayPay === false) setCanPay(false);
+      else setCanPay(true);
       setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
       const kafe = editionData
         ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||

@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     const method =
       methodRaw === "CASH" || methodRaw === "CARD" || methodRaw === "TRANSFER" ? methodRaw : undefined;
     const date = url.searchParams.get("date") ?? undefined;
-    return jsonOk(await saleReportForScope(scope, { date, channel, method }));
+    const shiftId = url.searchParams.get("shiftId") ?? undefined;
+    return jsonOk(await saleReportForScope(scope, { date, channel, method, shiftId }));
   } catch (err) {
     return handleRouteError(err);
   }
