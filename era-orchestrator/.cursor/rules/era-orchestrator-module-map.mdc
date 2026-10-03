@@ -41,7 +41,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership; invite `organizationRoleCode` from org roles |
 | `/settings/access` | `app/settings/access/page.tsx` | CP Variant A matrix — `GET/PATCH /platform/v1/access/roles`, catalog, clone/delete, `POST …/session/refresh-permissions`; ADR cp-domain-permissions |
-| `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium) |
+| `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium). Card «F&B edition» (`components/settings/fnb-edition-card.tsx`): `GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade` (owner, ERA Kafe → full F&B, no new price line, re-runs Sync) |
 | `/settings/invoices` | `app/settings/invoices/page.tsx` | Platform subscription invoices + PDF |
 | `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
 | `/super-admin/**` | `app/super-admin/**` | Platform admin |

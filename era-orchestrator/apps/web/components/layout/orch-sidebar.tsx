@@ -35,7 +35,18 @@ import {
   Radio,
 } from "lucide-react";
 import { EraAppSidebar } from "@era/satellite-kit/ui";
+import {
+  opsNavProfileFromMe,
+  opsNavRowVisible,
+  type OpsNavCondition,
+  type OpsNavProfile,
+} from "@era/satellite-kit/ui/nav";
 import { useAuth } from "../../lib/auth-context";
+
+/** Same bypass as `useAuth().can`: platform super admin and org owner pass every screen key. */
+function allowOrch(permission: string, profile: OpsNavProfile): boolean {
+  return profile.isPlatformSuperAdmin || profile.isOwner || profile.permissions.includes(permission);
+}
 import {
   CollapsibleNavSection,
   SideNavItem,
@@ -48,17 +59,22 @@ export function OrchSidebar({
   onNavClick,
   sidebarCollapsed,
   onToggleSidebarCollapsed,
-  isSuperAdmin,
 }: {
   mobileNavOpen: boolean;
   onNavClick: () => void;
   sidebarCollapsed: boolean;
   onToggleSidebarCollapsed: () => void;
-  isSuperAdmin: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const t = useTranslations("nav");
-  const { can } = useAuth();
+  const { ready, user } = useAuth();
+  /** The menu paints once the session is known; until then it stays empty. */
+  const navProfile = useMemo(
+    () => (ready && user ? opsNavProfileFromMe(user) : null),
+    [ready, user],
+  );
+  const show = (row: OpsNavCondition) =>
+    navProfile != null && opsNavRowVisible(row, navProfile, allowOrch);
   const [layoutWide, setLayoutWide] = useState(false);
 
   useEffect(() => {
@@ -128,6 +144,8 @@ export function OrchSidebar({
       }
     >
       <SidebarLayoutProvider layoutCollapsed={layoutCollapsed}>
+        {navProfile ? (
+        <>
         <SideNavItem
           href="/workspace"
           label={t("workspace")}
@@ -135,7 +153,7 @@ export function OrchSidebar({
           icon={LayoutGrid}
           onNavClick={onNavClick}
         />
-        {can("screen:workspace.me") ? (
+        {show({ permission: "screen:workspace.me" }) ? (
           <SideNavItem
             href="/workspace/me"
             label={t("wfMe")}
@@ -161,7 +179,7 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
-          {can("screen:holdings") ? (
+          {show({ permission: "screen:holdings" }) ? (
             <SideNavItem
               href="/holdings"
               label={t("holdings")}
@@ -173,7 +191,7 @@ export function OrchSidebar({
           ) : null}
         </CollapsibleNavSection>
 
-        {can("screen:workspace.workforce") ? (
+        {show({ permission: "screen:workspace.workforce" }) ? (
         <CollapsibleNavSection
           sectionKey="workforce"
           title={t("sectionWorkforce")}
@@ -423,7 +441,7 @@ export function OrchSidebar({
             nested
             onNavClick={onNavClick}
           />
-          {can("screen:settings.team") ? (
+          {show({ permission: "screen:settings.team" }) ? (
             <SideNavItem
               href="/settings/team"
               label={t("team")}
@@ -433,7 +451,7 @@ export function OrchSidebar({
               onNavClick={onNavClick}
             />
           ) : null}
-          {can("screen:settings.access") ? (
+          {show({ permission: "screen:settings.access" }) ? (
             <SideNavItem
               href="/settings/access"
               label={t("access")}
@@ -445,7 +463,7 @@ export function OrchSidebar({
           ) : null}
         </CollapsibleNavSection>
 
-        {isSuperAdmin ? (
+        {show({ when: navProfile?.isPlatformSuperAdmin === true }) ? (
           <CollapsibleNavSection
             sectionKey="platform"
             title={t("sectionPlatform")}
@@ -590,6 +608,8 @@ export function OrchSidebar({
               onNavClick={onNavClick}
             />
           </CollapsibleNavSection>
+        ) : null}
+        </>
         ) : null}
       </SidebarLayoutProvider>
     </EraAppSidebar>
