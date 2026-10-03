@@ -27,6 +27,7 @@ Property
 | departmentCode | → ERP department |
 | active | |
 | propertyCode | Связь с hotel property |
+| terminalRevokedAt | Set on Z. Tablet pairing cookies issued before this moment stop listing names |
 
 ### Table (Resource)
 

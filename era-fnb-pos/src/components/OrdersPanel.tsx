@@ -77,7 +77,8 @@ export default function OrdersPanel() {
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const [hasKds, setHasKds] = useState(false);
-  const [canPay, setCanPay] = useState(true);
+  const [canPay, setCanPay] = useState<boolean | null>(null);
+  const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
   const [cashReceived, setCashReceived] = useState("");
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
@@ -94,13 +95,22 @@ export default function OrdersPanel() {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/shifts/open")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && data.mayPay === false) setCanPay(false);
-        else setCanPay(true);
-      })
-      .catch(() => setCanPay(true));
+    void (async () => {
+      try {
+        const res = await fetch("/api/shifts/open");
+        const data = res.ok ? await res.json().catch(() => null) : null;
+        if (!res.ok || !data) {
+          setCanPay(true);
+          setCanDiscount(true);
+          return;
+        }
+        setCanPay(data.mayPay === false ? false : true);
+        setCanDiscount(data.mayDiscount === false ? false : true);
+      } catch {
+        setCanPay(true);
+        setCanDiscount(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -476,7 +486,9 @@ export default function OrdersPanel() {
                   plus: t("qtyPlus"),
                   remove: t("void"),
                 }}
-                discount={(() => {
+                discount={
+                  canDiscount
+                    ? (() => {
                   const gross = selected.lines
                     .filter((l) => l.kitchenStatus !== "VOID")
                     .reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
@@ -491,7 +503,9 @@ export default function OrdersPanel() {
                     amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
                     netText: `${net.toFixed(2)} ${tc("azn")}`,
                   };
-                })()}
+                })()
+                    : undefined
+                }
                 tender={
                   !canPay ||
                   (hotelMode && (inHouse || selected.roomChargeReservationId || deferWalkInToHub))

@@ -77,7 +77,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     if (!role) throw new UnknownSatelliteRoleError(p.satelliteRole);
 
     const pinRole = roleCodeToPinRole(roleCode);
-    const pin = p.pin ?? "0000";
+    const pin = p.pin ?? "000000";
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const cpEmploymentId = p.cpEmploymentId;
     const pinHash = hashStaffPin(pin);

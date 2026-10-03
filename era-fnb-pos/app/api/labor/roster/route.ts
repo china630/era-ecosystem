@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 const bodySchema = z.object({
   staffCode: z.string(),
   fullName: z.string(),
-  pin: z.string().min(4).max(8),
+  pin: z.string().min(6).max(8),
   pinRole: z.enum(["CASHIER", "WAITER", "KITCHEN", "MANAGER"]).default("CASHIER"),
   outletId: z.string().min(1),
   globalPersonId: z.string().uuid().optional(),

@@ -55,6 +55,7 @@ export default function PosShiftPanel() {
   const [dropAmount, setDropAmount] = useState("");
   const [dropNote, setDropNote] = useState("");
   const [canClose, setCanClose] = useState(false);
+  const [canSales, setCanSales] = useState(false);
   const ts = useTranslations("sales");
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -63,6 +64,7 @@ export default function PosShiftPanel() {
     const data = await res.json().catch(() => null);
     setDayStart(typeof data?.businessDayStart === "string" ? data.businessDayStart : "05:00");
     setCanClose(res.ok && data?.mayClose === true);
+    setCanSales(res.ok && data?.maySales === true);
     if (data?.status === "NONE" || !data?.id) {
       setShift(null);
       setNone(true);
@@ -289,7 +291,7 @@ export default function PosShiftPanel() {
               {t("openShift")}
             </button>
           )}
-          {shift && (
+          {shift && canSales && (
             <button
               type="button"
               className="rounded border border-[#2980B9] px-3 py-1.5 text-sm text-[#2980B9]"
@@ -505,7 +507,7 @@ export default function PosShiftPanel() {
       )}
       {report && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-5xl overflow-auto p-4`}>
+          <div className={`${CARD_CLASS} max-h-[80vh] w-full max-w-3xl overflow-auto p-4`}>
             <h3 className="mb-3 text-sm font-semibold text-[#34495E]">
               {reportKind === "z" ? t("zReport") : t("xReport")}
             </h3>

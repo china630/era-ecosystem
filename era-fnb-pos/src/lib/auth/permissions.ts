@@ -8,6 +8,7 @@ export const PERMISSIONS = {
   SCREEN_HOME: "screen:home",
   SCREEN_FLOOR: "screen:floor",
   SCREEN_ORDERS: "screen:orders",
+  SCREEN_SALES: "screen:sales",
   SCREEN_KDS: "screen:kds",
   SCREEN_CALENDAR: "screen:calendar",
   SCREEN_EXECUTIVE: "screen:executive",
@@ -102,6 +103,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.SCREEN_HOME,
       PERMISSIONS.SCREEN_FLOOR,
       PERMISSIONS.SCREEN_ORDERS,
+      PERMISSIONS.SCREEN_SALES,
       PERMISSIONS.SCREEN_KDS,
       PERMISSIONS.SCREEN_CALENDAR,
       PERMISSIONS.SCREEN_EXECUTIVE,
@@ -208,6 +210,7 @@ export function cashierPermissions(edition: "hotel" | "kafe"): Permission[] {
     PERMISSIONS.TICKETS_PAY,
     PERMISSIONS.TICKETS_DISCOUNT,
     PERMISSIONS.SHIFTS_CLOSE,
+    PERMISSIONS.SCREEN_SALES,
   ];
   if (edition === "hotel") {
     return [...base, ...HOTEL_TILL_EXTRA];

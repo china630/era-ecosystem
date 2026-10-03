@@ -114,7 +114,8 @@ export default function FloorPanel() {
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
-  const [canPay, setCanPay] = useState(true);
+  const [canPay, setCanPay] = useState<boolean | null>(null);
+  const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
   const [canSoldOut, setCanSoldOut] = useState(false);
   const busy = useRef(false);
 
@@ -219,8 +220,13 @@ export default function FloorPanel() {
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
       const me = meRes.ok ? await meRes.json().catch(() => null) : null;
       const grants = grantsRes.ok ? await grantsRes.json().catch(() => null) : null;
-      if (grants && grants.mayPay === false) setCanPay(false);
-      else setCanPay(true);
+      if (!grantsRes.ok) {
+        setCanPay(true);
+        setCanDiscount(true);
+      } else {
+        setCanPay(grants?.mayPay === false ? false : true);
+        setCanDiscount(grants?.mayDiscount === false ? false : true);
+      }
       setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
       const kafe = editionData
         ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
@@ -1070,7 +1076,9 @@ export default function FloorPanel() {
                         plus: t("qtyPlus"),
                         remove: t("qtyMinus"),
                       }}
-                      discount={(() => {
+                      discount={
+                        canDiscount
+                          ? (() => {
                         const gross = ticketLines.reduce(
                           (sum, line) => sum + line.qty * Number(line.unitPriceAzn),
                           0,
@@ -1086,7 +1094,9 @@ export default function FloorPanel() {
                           amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
                           netText: `${net.toFixed(2)} ${tc("azn")}`,
                         };
-                      })()}
+                      })()
+                          : undefined
+                      }
                       tender={
                         canPay
                           ? {
