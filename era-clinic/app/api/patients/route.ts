@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   jsonError,
   requireClinicPermission,
 } from "@/lib/api-utils";
@@ -83,7 +83,7 @@ function parseHasMdm(raw: string | null): 0 | 1 | undefined {
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
     if (!session) return jsonError("Unauthorized", 401);
@@ -140,7 +140,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
 

@@ -1,6 +1,6 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -17,7 +17,7 @@ const TABS: FolioBalanceTab[] = [
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const tabRaw = new URL(request.url).searchParams.get('tab') ?? 'inHouse';
     const tab = (TABS.includes(tabRaw as FolioBalanceTab) ? tabRaw : 'inHouse') as FolioBalanceTab;

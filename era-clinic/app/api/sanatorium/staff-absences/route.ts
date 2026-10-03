@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -23,7 +23,7 @@ const createSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES);
     if (denied) return denied;
     const body = createSchema.parse(await req.json());
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES);
     if (denied) return denied;
     const id = new URL(req.url).searchParams.get("id");

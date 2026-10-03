@@ -34,6 +34,7 @@ npm run ship:prepush:strict
 |------|------|--------|
 | Acceptance | `check-acceptance-consistency.mjs` | False-green docs / false `ga` / missing SSOT |
 | Satellite raw SQL | `check:satellite-raw-sql` | `$queryRaw` / `$executeRaw` in satellite runtime (no tenant filter) |
+| Satellite session standard | `check:satellite-session` | `assert<App>Entitled` helpers; more than one session read per route handler or a read outside `try`; `x-era-organization-id` in module gates / kit session; `requireHotelModule` / `requireClinicModule` without the organization |
 | Integration | `audit:integration:strict` | MDM/hub/workforce contract drift |
 | Design tokens | `lint:design-tokens`, `lint:token-layers` | Token layer violations |
 | Baku clock | `lint:baku-clock` | UTC “today”, `toLocale*` without TZ, `setHours(0)`, `TZ=` env |

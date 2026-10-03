@@ -117,7 +117,7 @@ Fill **Control** / **Gap** during Phase 2; open Appendix A rows when Gap ≠ non
 | ID | Scenario | Expected control | Control | Gap | Finding |
 |----|----------|------------------|---------|-----|---------|
 | T01 | Local staff escalate to OrgOwner / admin | Role separation; SSO-only owner paths | partial | RolesGuard OWNER collapse; PSA allowlist defaults | SEC-CP-02, SEC-SSO-04 |
-| T02 | SSO HMAC forge / replay / wrong `organizationId` | Signed payload + expiry + org bind | partial | Replay (no jti); v2 role HMAC shipped; membership mint shipped | SEC-SSO-01, SEC-SSO-02✓, SEC-SSO-03✓, SEC-SSO-05✓ |
+| T02 | SSO HMAC forge / replay / wrong `organizationId` | Signed payload + expiry + ticket org | partial | Replay (no jti); v2 role HMAC shipped; membership mint shipped | SEC-SSO-01, SEC-SSO-02✓, SEC-SSO-03✓, SEC-SSO-05✓ |
 | T03 | Leaked service token writes events / MDM | Bearer required; rotate; least privilege | partial | Shared token; BFF now requires caller JWT | SEC-TOK-02✓, SEC-TOK-03 |
 | T04 | Cross-tenant read/write (missing `organizationId`) | Prisma tenant extension / SQL filter | partial | Raw SQL + workers without ALS | SEC-FIN-05, SEC-FIN-06 |
 | T05 | Satellite stores PII despite MDM link | No duplicate FIN/passport; integration audit | partial | Guest PII + passport in refCode | SEC-HOT-04, SEC-CLI-05 |
@@ -339,7 +339,7 @@ Not a global refactor. Format = **one defect class × 1–2 apps × PR stack × 
 | SEC-CLI-01 | P0 | clinic | Bridge secret fail-open from-stay | `sanatorium/episodes/from-stay` | R0 | closed ✓ | — |
 | SEC-HOT-02 | P0 | hotel | Default cron secret | `admin/reports/email-cron` | R0 | closed ✓ | — |
 | SEC-FIN-01 | P0 | finance | Internal token fail-open | `InternalServiceTokenGuard` | R0 | closed ✓ | — |
-| SEC-SSO-05 | P1 | satellites | Ticket org ≠ deploy org | SSO exchange bind to `ERA_SATELLITE_ORGANIZATION_ID` | R1 | closed ✓ | — |
+| SEC-SSO-05 | P1 | satellites | Ticket org ≠ deploy org | Superseded 2026-10-04: the session org is the signed ticket org (orch membership check SEC-SSO-03); entitlement for that org is checked per staff request; no process-bind comparison ([ADR saas-request-tenant §2](adr/saas-request-tenant-and-vendor-bridges.md)) | R1 | closed ✓ | — |
 | SEC-SSO-01 | P1 | orch / kit | SSO replay (no jti) | HMAC v3 jti + `consumeSsoSignatureOnce` (process-local; Redis later) | R1 | closed ✓ | — |
 | SEC-SSO-04 | P1 | kit | PSA allowlist / default password | prod fail-closed in `platform-super-admin.ts` | R1 | closed ✓ | — |
 | SEC-TOK-03 | P1 | orch | Shared event/MDM token | no prod alias to `SATELLITE_EVENT_SERVICE_TOKEN` | R1 | closed ✓ | — |
@@ -361,6 +361,8 @@ Not a global refactor. Format = **one defect class × 1–2 apps × PR stack × 
 | SEC-HOT-04 | P1 | hotel | Guest PII + globalPersonId | `schema.prisma` Guest | R3 | open | — |
 | SEC-CLI-05 | P1 | clinic | Passport in `refCode` | sanatorium.service | R3 | open | — |
 | SEC-KIT-01 | P2 | kit | Half-exported UI / contamination | managed-lists lesson | R4 | open | — |
+| SEC-SAT-02 | P1 | kit / satellites | Client `x-era-organization-id` on public paths reaches handlers; session and module gates read the header | Kit middleware strips identity headers on every path (only `serviceApiPrefixes` keep the caller org); kit session takes the org from the token only; gates take the org as an argument; guard `check:satellite-session` ([ADR saas-request-tenant §2](adr/saas-request-tenant-and-vendor-bridges.md)) | R1 | closed ✓ | — |
+| SEC-SAT-03 | P1 | kit / satellites | Deactivated staff keeps a working session until token expiry; bank inactive `OpsUser` got an empty-permission session | Kit `readSatelliteStaffSession` loads the staff row in the token tenant; missing / inactive / other-org row → no session (401) | R1 | closed ✓ | — |
 
 ---
 
@@ -404,6 +406,7 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 | 2026-08-04 | Full program pass: Waves A–C audit; R0/R1 remediations (tokens, BFF, SSO v2, dispatch, bridges); SAST workflow; DAST scripts; PR template; Appendix A filled |
 | 2026-08-04 | R2 finance atomic claim: cash/payroll/advance/invoice FOR UPDATE + updateMany (SEC-FIN-02/03/04/07/10) |
 | 2026-08-04 | R1/R3 closeout: SSO replay/jti, PSA/prod tokens, CP AuthZ, CLI-02 booking harden, HOT-03/CLI-04 admin guards, FIN-08 DTO; SAST tune-in non-blocking |
+| 2026-10-04 | Staff session standard: SEC-SAT-02 (org header only from the token; S2S service prefixes) and SEC-SAT-03 (inactive staff → no session) closed; `check:satellite-session` in `run:quality-gates` |
 
 ---
 

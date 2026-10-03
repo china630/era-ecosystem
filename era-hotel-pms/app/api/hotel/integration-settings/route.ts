@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -43,7 +43,7 @@ const patchSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const settings = await getOutboundSettings();
     const organizationId = requestOrganizationId();
@@ -63,7 +63,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const partial = patchSchema.parse(await request.json());
     const current = await getOutboundSettings();
@@ -96,7 +96,7 @@ export async function PATCH(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const body = patchSchema.parse(await request.json()) as Partial<OutboundSettings>;
     const merged: OutboundSettings = {

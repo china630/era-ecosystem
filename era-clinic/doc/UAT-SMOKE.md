@@ -291,7 +291,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 ## Deny (Scaffold BE negative paths)
 
-1. **Module off → 403:** With `industry_clinic` inactive (or unbound org / source=fallback), operational routes that call `assertClinicEntitled` / `getRouteSession` return **403** (`Industry module not active: industry_clinic`). Proof: `__tests__/cli-*-negative.spec.ts`.
+1. **Module off → 403:** With `industry_clinic` inactive for the session org, operational routes (module gate inside `getSatelliteSession()`) return **403** (`Industry module not active: industry_clinic`). Proof: `__tests__/cli-*-negative.spec.ts`.
 2. **OPS:** Cancel COMPLETED appointment refused; double-book / off-shift → 409; reschedule on CANCELLED/COMPLETED denied.
 3. **PT / MD:** Patient without FIN/passport/MDM identifier refused; inactive practitioner not bookable.
 4. **SAN:** Doctor-confirm skipping earlier PROPOSED → **409** FIFO.

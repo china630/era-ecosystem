@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -24,9 +24,9 @@ const rateMappingSchema = z.object({
 
 export async function GET() {
   try {
-    await requireHotelModule('hotel_distribution');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     return jsonOk(serialize(await listChannels()));
   } catch (err) {
     return handleRouteError(err);
@@ -35,9 +35,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireHotelModule('hotel_distribution');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const body = await request.json();
     if (body.channelId && body.ratePlanId) {
       const parsed = rateMappingSchema.parse(body);

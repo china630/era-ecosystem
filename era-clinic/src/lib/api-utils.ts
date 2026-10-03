@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
-  authCookieName,
-  enterSatelliteTenant,
-  getBearerOrCookieToken,
+  readSatelliteStaffSession,
+  type SatelliteStaffSessionPayload,
   SATELLITE_ROLE,
   sessionHasRole,
-  verifySatelliteSession,
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
-import { hasClinicAdminAccess } from "@/lib/auth/clinic-admin-access";
+import {
+  hasClinicAdminAccess,
+  hasClinicPermissionBypass,
+} from "@/lib/auth/clinic-admin-access";
 import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
 import { assertClinicPermission } from "@/lib/auth/clinic-permission.service";
-import type { ClinicPermission } from "@/lib/auth/clinic-permissions";
+import {
+  ALL_CLINIC_PERMISSIONS,
+  effectiveRolePermissions,
+  type ClinicPermission,
+} from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
 export function jsonOk<T>(data: T, status = 200) {
@@ -90,53 +95,48 @@ export function handleRouteError(err: unknown) {
   return jsonError(msg, 500);
 }
 
-/** Call at the start of operational clinic API handlers. */
-export async function assertClinicEntitled(): Promise<void> {
-  const { assertClinicEntitled: gate } = await import("@/lib/clinic-module-gate");
-  await gate();
-}
-
-export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const token = getBearerOrCookieToken(
-    cookieStore,
-    headerStore,
-    authCookieName(),
-  );
-  if (!token) return null;
-  let session: SatelliteSessionPayload;
+/**
+ * Staff session: org from the signed token, active user row, clinic gate
+ * (plus the submodule for the request path), grants from the DB.
+ * No session → null (401); module off → IndustryModuleInactiveError (403).
+ * Call once per handler, inside try, and pass the session on.
+ */
+export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
+  let cookieStore: Awaited<ReturnType<typeof cookies>>;
+  let headerStore: Awaited<ReturnType<typeof headers>>;
   try {
-    session = await verifySatelliteSession(token);
+    cookieStore = await cookies();
+    headerStore = await headers();
   } catch {
     return null;
   }
-
-  let organizationId =
-    session.organizationId?.trim() ||
-    headerStore.get("x-era-organization-id")?.trim() ||
-    undefined;
-
-  // Legacy tokens (pre-org claim): resolve from user row only (no process bind).
-  if (!organizationId) {
-    const row = await prisma.user.findUnique({
-      where: { id: session.sub },
-      select: { organizationId: true },
-    });
-    organizationId = row?.organizationId || undefined;
-  }
-  if (!organizationId) {
-    // SHARED / multi-tenant: refuse silent process-bind; client must re-login.
-    return null;
-  }
-
-  enterSatelliteTenant({ organizationId });
-  session = { ...session, organizationId };
+  const staff = await readSatelliteStaffSession({
+    cookies: cookieStore,
+    headers: headerStore,
+    loadUser: async ({ sub }) => {
+      const user = await prisma.user.findUnique({
+        where: { id: sub },
+        select: {
+          organizationId: true,
+          status: true,
+          role: { select: { code: true, permissionsJson: true } },
+        },
+      });
+      return user
+        ? { organizationId: user.organizationId, active: user.status === "ACTIVE", role: user.role }
+        : null;
+    },
+  });
+  if (!staff) return null;
+  const { session, user } = staff;
 
   const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
-  await assertClinicApiEntitled(undefined, organizationId);
+  await assertClinicApiEntitled(undefined, session.organizationId);
 
-  return session;
+  const permissions = hasClinicPermissionBypass(session)
+    ? [...ALL_CLINIC_PERMISSIONS]
+    : effectiveRolePermissions(user.role.code, user.role.permissionsJson);
+  return { ...session, permissions };
 }
 
 /** @deprecated Prefer hasClinicAdminAccess — name implies role-code bypass. */

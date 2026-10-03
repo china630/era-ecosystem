@@ -3,7 +3,7 @@ import { requestOrganizationId } from "@/lib/request-organization";
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
   jsonError,
 } from "@/lib/api-utils";
@@ -72,7 +72,7 @@ const walkInSchema = z
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
@@ -104,7 +104,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,

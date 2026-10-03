@@ -25,7 +25,7 @@
 
 ## C2 — Field & inbox
 
-- [ ] Login as user with `SALES_LEAD` or `BUSINESS_OWNER`
+- [ ] Login as a user whose role holds `api:leads.assign` (default `SALES_LEAD`) or as the owner
 - [ ] Open `/leads` — pipeline loads; toggle **My leads** filters by owner
 - [ ] Assign lead via dropdown → `PATCH /api/leads/:id/assign` with `{ "ownerId": "<userId>" }`
 - [ ] Open `/visits` — log visit with lead + notes → `POST /api/visits`
@@ -105,8 +105,18 @@ curl -X POST "http://localhost:3207/api/leads/import?mode=upsert" \
 
 ## Deny (Scaffold BE negative paths — PIPE / PARTY only)
 
-1. **Module off → 403:** With `industry_crm` inactive (or unbound org / source=fallback), routes that call `assertCrmEntitled` return **403**. Proof: `__tests__/crm-pipe-negative.spec.ts`, `crm-party-negative.spec.ts`.
-2. **Domain denies (PIPE):** assign without `SALES_LEAD` / `BUSINESS_OWNER` → **403**; stage advance to QUALIFIED+ without party VÖEN/phone denied.
+1. **Module off → 403:** With `industry_crm` inactive for the session org, routes (module gate inside `getSatelliteSession()`) return **403**. Proof: `__tests__/crm-pipe-negative.spec.ts`, `crm-party-negative.spec.ts`.
+2. **Domain denies (PIPE):** assign without `api:leads.assign` → **403**; stage advance to QUALIFIED+ without party VÖEN/phone denied.
 3. **Domain denies (PARTY):** legal entity missing company name; individual missing phone; import row without phone denied.
 4. **WA:** not in this deny section — AC-CRM-WA remains External vendor (not Scaffold ✅).
+
+## CRM-RBAC-01 — access matrix (SCREEN; not SHIPPED)
+
+ADR: [crm-domain-permissions-and-rbac.md](../../docs/adr/crm-domain-permissions-and-rbac.md). Proof: `__tests__/crm-rbac*.spec.ts`.
+
+- [ ] Log in as `SALES_LEAD` → nav shows **Access** → `/admin/access` lists the six system packages (`SALES_AGENT`, `SALES_LEAD`, `FIELD_REP`, `BUSINESS_OWNER`, `PLATFORM_MEMBER`, `SATELLITE_OPERATOR`).
+- [ ] Log in as `SALES_AGENT` → nav has no Import / Settings / Access; opening `/admin/import` lands on `/login` with the "no access" message; `/leads` shows no assign control.
+- [ ] As `SALES_LEAD`: untick `api:leads.assign` on `SALES_LEAD` → Save → the assign control disappears and assign returns 403; **Reset to defaults** restores it.
+- [ ] Clone `SALES_AGENT` as `KEY_ACCOUNT`, tick `api:leads.assign` → assign an agent user to it in **Assign a role to a user** → that user can assign leads; delete `KEY_ACCOUNT` is refused while the user holds it.
+- [ ] `SALES_LEAD` cannot assign `BUSINESS_OWNER` (403); SSO owner can.
 

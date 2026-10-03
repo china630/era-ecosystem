@@ -2,7 +2,7 @@ jest.mock('@/lib/hotel-module-gate', () => ({
   requireHotelModule: jest.fn(),
 }));
 jest.mock('@/lib/auth/session', () => ({
-  getSessionFromHeaders: jest.fn(async () => ({ role: 'Hotel_Admin' })),
+  getSatelliteSession: jest.fn(async () => ({ role: 'Hotel_Admin' })),
 }));
 jest.mock('@/lib/auth/require', () => ({
   assertPermission: jest.fn(),

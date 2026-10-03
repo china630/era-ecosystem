@@ -1,6 +1,6 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { todayBakuYmd } from '@era/satellite-kit/time';
@@ -8,7 +8,7 @@ import { reportBookingSourceRevenue } from '@/lib/services/reports-analytics.ser
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const params = new URL(request.url).searchParams;
     const from = new Date(params.get('from') ?? todayBakuYmd());

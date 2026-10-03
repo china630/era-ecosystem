@@ -15,7 +15,7 @@ export async function POST(
       return jsonError(`Unknown import entity: ${entity}`, 404);
     }
 
-    const access = await assertFnbImportAccess(request);
+    const access = await assertFnbImportAccess();
 
     const url = new URL(request.url);
     const dryRun = url.searchParams.get("dryRun") === "1";

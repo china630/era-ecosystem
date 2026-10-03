@@ -68,6 +68,11 @@ import {
   type SubscriptionSnapshot,
 } from "../../lib/subscription-context";
 import { EraAppSidebar } from "@era/satellite-kit/ui";
+import {
+  opsNavProfileFromMe,
+  opsNavRowVisible,
+  type OpsNavCondition,
+} from "@era/satellite-kit/ui/nav";
 
 /** Mirror SubscriptionAccessService.hasModule(..., "platform_workforce") for nav. */
 function isCpAttendanceMaster(snapshot: SubscriptionSnapshot | null): boolean {
@@ -490,19 +495,29 @@ export function MainSidebar({
   const pathname = usePathname();
   const { t } = useTranslation();
   const perms = useOrgPermissions();
-  const { effectiveSnapshot } = useSubscription();
+  const { effectiveSnapshot, ready: navReady } = useSubscription();
+  /** The menu paints once session and subscription are known; until then it stays empty. */
+  const navProfile =
+    navReady && user ? opsNavProfileFromMe({ ...user, permissions: perms.permissions }) : null;
+  const allowFinance = (permission: string) => perms.can(permission);
+  const show = (row: OpsNavCondition) =>
+    navProfile != null && opsNavRowVisible(row, navProfile, allowFinance);
   const showFinanceTimesheetNav =
     effectiveSnapshot != null && !isCpAttendanceMaster(effectiveSnapshot);
-  const canSeeAuditHubNav =
-    perms.can(CP_PERMISSION.API_LEDGER_READ) ||
-    perms.can(CP_PERMISSION.API_REPORTS_NAS) ||
-    perms.isOwner;
-  const canSeeCompareBooks = perms.can(CP_PERMISSION.API_BOOK_MGMT);
+  const canSeeAuditHubNav = show({
+    anyPermission: [CP_PERMISSION.API_LEDGER_READ, CP_PERMISSION.API_REPORTS_NAS],
+  });
+  const canSeeCompareBooks = show({ permission: CP_PERMISSION.API_BOOK_MGMT });
   const canSeeMgmtLaborDelta = canSeeCompareBooks;
-  const canSeeComplianceNav =
-    canSeeAuditHubNav || perms.can(CP_PERMISSION.API_BOOK_MGMT);
-  const canSeePayrollMoney = perms.canAccessPayrollMoney;
-  const canManageOrgSettings = perms.can(CP_PERMISSION.ADMIN_ORG_SETTINGS);
+  const canSeeComplianceNav = show({
+    anyPermission: [
+      CP_PERMISSION.API_LEDGER_READ,
+      CP_PERMISSION.API_REPORTS_NAS,
+      CP_PERMISSION.API_BOOK_MGMT,
+    ],
+  });
+  const canSeePayrollMoney = show({ permission: CP_PERMISSION.API_PAYROLL_MONEY });
+  const canManageOrgSettings = show({ permission: CP_PERMISSION.ADMIN_ORG_SETTINGS });
   const showAuditNavSection = Boolean(token) || canSeeAuditHubNav;
   const [layoutWide, setLayoutWide] = useState(false);
   const [openFlyoutKey, setOpenFlyoutKey] = useState<string | null>(null);
@@ -557,6 +572,8 @@ export function MainSidebar({
       }
     >
       <SidebarLayoutContext.Provider value={sidebarLayout}>
+        {navProfile ? (
+        <>
         <SideNavItem
           href="/home"
           label={t("nav.home")}
@@ -658,8 +675,9 @@ export function MainSidebar({
           />
           {user &&
           (canPostAccounting ||
-            perms.can(CP_PERMISSION.API_LEDGER_READ) ||
-            perms.can(CP_PERMISSION.API_INVOICES_UPDATE)) ? (
+            show({
+              anyPermission: [CP_PERMISSION.API_LEDGER_READ, CP_PERMISSION.API_INVOICES_UPDATE],
+            })) ? (
             <SideNavSubItem
               href="/crm/trade-credit"
               label={t("nav.tradeCredit", { defaultValue: "Trade credit" })}
@@ -1230,7 +1248,7 @@ export function MainSidebar({
                   onNavClick={onNavClick}
                 />
             </>
-            {user && (canPostAccounting || canManageOrgSettings || perms.can(CP_PERMISSION.API_ORG_MEMBERS_READ)) ? (
+            {user && (canPostAccounting || canManageOrgSettings || show({ permission: CP_PERMISSION.API_ORG_MEMBERS_READ })) ? (
               <>
                 {canManageOrgSettings && (
                   <>
@@ -1340,6 +1358,8 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
           </CollapsibleNavSection>
+        ) : null}
+        </>
         ) : null}
       </SidebarLayoutContext.Provider>
     </EraAppSidebar>

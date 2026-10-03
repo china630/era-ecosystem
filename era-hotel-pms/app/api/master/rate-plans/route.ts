@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createRatePlan, listRatePlans } from '@/lib/services/master-data.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 
 const schema = z.object({
@@ -20,7 +20,7 @@ const schema = z.object({
 
 export async function GET() {
   try {
-    assertMasterDataRead(await getSessionFromHeaders());
+    assertMasterDataRead(await getSatelliteSession());
     return jsonOk(serialize(await listRatePlans()));
   } catch (err) {
     return handleRouteError(err);
@@ -29,7 +29,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    assertMasterDataWrite(await getSessionFromHeaders());
+    assertMasterDataWrite(await getSatelliteSession());
     const body = schema.parse(await request.json());
     return jsonOk(serialize(await createRatePlan(body)), 201);
   } catch (err) {

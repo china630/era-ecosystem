@@ -1,5 +1,11 @@
-import { jsonOk } from '@/lib/api-utils';
+import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
+import { getSatelliteSession } from '@/lib/auth/session';
 
 export async function PATCH() {
-  return jsonOk({ ok: true });
+  try {
+    if (!(await getSatelliteSession())) return jsonError('Unauthorized', 401);
+    return jsonOk({ ok: true });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getOccupancyForecast } from '@/lib/services/forecast.service';
@@ -19,7 +19,7 @@ const querySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    assertAnyPermission(await getSessionFromHeaders(), [
+    assertAnyPermission(await getSatelliteSession(), [
       PERMISSIONS.REPORTS_READ,
       PERMISSIONS.RESERVATIONS_READ,
     ]);

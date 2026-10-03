@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CrmLookupKind } from "@prisma/client";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const kindSchema = z.nativeEnum(CrmLookupKind);
@@ -14,6 +14,7 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const url = new URL(req.url);
     const kindRaw = url.searchParams.get("kind");
     const activeOnly = url.searchParams.get("activeOnly") !== "0";
@@ -33,6 +34,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const row = await prisma.crmLookup.create({
       data: {

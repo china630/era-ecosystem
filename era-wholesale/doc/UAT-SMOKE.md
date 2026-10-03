@@ -38,3 +38,12 @@ Automated proof: `npm test` in `era-wholesale` (`__tests__/ws-*-negative.spec.ts
 - [ ] AC-WS-CREDIT: missing `counterpartyId` → 400; Finance down with `FINANCE_API_URL` set → 200 with `source: env_stub_fallback` (not `finance_api`)
 - [ ] AC-WS-PLAT: `POST /api/events/dispatch` without service token → 401
 
+## WS-RBAC-01 — access matrix (SCREEN; not SHIPPED)
+
+ADR: [wholesale-domain-permissions-and-rbac.md](../../docs/adr/wholesale-domain-permissions-and-rbac.md). Proof: `__tests__/wholesale-rbac*.spec.ts`.
+
+- [ ] Log in as `WHOLESALE_MANAGER` → nav shows **Access** → `/admin/access` lists the six system packages (`SALES_REP`, `WAREHOUSE_PICKER`, `WHOLESALE_MANAGER`, `BUSINESS_OWNER`, `PLATFORM_MEMBER`, `SATELLITE_OPERATOR`).
+- [ ] Log in as `SALES_REP` → nav has Orders and Pick lists, no Settings / Access; opening `/admin/import-orders` lands on `/login` with the "no access" message.
+- [ ] As `WHOLESALE_MANAGER`: untick `api:orders.confirm` on `WAREHOUSE_PICKER` → Save → a picker's **Confirm** on `/orders` returns 403; **Reset to defaults** restores it.
+- [ ] Clone `SALES_REP` as `KEY_ACCOUNT`, tick `admin:import_orders` and `screen:admin.import_orders` → assign a rep user to it in **Assign a role to a user** → that user opens `/admin/import-orders`; delete `KEY_ACCOUNT` is refused while the user holds it.
+- [ ] `WHOLESALE_MANAGER` cannot assign `BUSINESS_OWNER` (403); SSO owner can.

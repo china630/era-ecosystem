@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { assertBankEntitled, jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getRouteSession } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/api-utils";
 import { assertPermission } from "@/lib/auth/require";
 import {
   PERMISSIONS,
@@ -17,7 +17,6 @@ import {
   templatePermissionsForReset,
 } from "@/lib/auth/ensure-system-bank-roles";
 import { prisma } from "@/lib/prisma";
-import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
 
 const patchSchema = z.object({
   permissions: z.array(z.string()).optional(),
@@ -28,11 +27,9 @@ type RouteParams = { params: Promise<{ code: string }> };
 
 export async function GET(_req: Request, { params }: RouteParams) {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const sessionPerms = await permissionsForUserId(session.sub);
-    assertPermission({ ...session, permissions: sessionPerms }, PERMISSIONS.ACCESS_MANAGE);
+    assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
     const organizationId = session.organizationId;
@@ -61,11 +58,9 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const sessionPerms = await permissionsForUserId(session.sub);
-    assertPermission({ ...session, permissions: sessionPerms }, PERMISSIONS.ACCESS_MANAGE);
+    assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
     const organizationId = session.organizationId;

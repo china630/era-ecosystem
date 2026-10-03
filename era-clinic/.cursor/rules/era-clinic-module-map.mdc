@@ -11,7 +11,7 @@ Architecture: [doc/ARCHITECTURE.md](../../doc/ARCHITECTURE.md) · ADR: [clinic-p
 
 ## Sidebar navigation (role + preset lens)
 
-Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) → [ClinicOpsShell.tsx](../../src/components/ClinicOpsShell.tsx).
+Built by [clinic-nav.ts](../../src/domain/nav/clinic-nav.ts) (`clinicNavCatalog`: rows carry kit conditions `permission` + `preset`, module sections carry `preset`) → [ClinicOpsShell.tsx](../../src/components/ClinicOpsShell.tsx) (one kit `useOpsNavProfile` read of `/api/auth/me`, re-read on `clinic-auth-refresh`; `visibleOpsNavItems` / `visibleOpsNavSections` paint once).
 
 | Group | Visibility | Routes |
 |-------|------------|--------|
@@ -29,7 +29,7 @@ Nafta appliance tenant `code=default` keeps preset `sanatorium_clinical` only (m
 
 Internal: `GET/POST /api/internal/v1/organization/bind` (orch Sync bindings; ADR satellite-organization-bind); `POST /api/internal/v1/procedure-validate`; `GET/POST /api/internal/v1/runtime-config` (incl. `clinicCutover` upsert). Cutover `#21` calls hotel `GET /api/internal/v1/stays/by-external-ref` then MDM `linkPersonIdentity`.
 
-**SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware `x-era-organization-id`; `getRouteSession` → `enterSatelliteTenant`; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron org list: kit `listCronOrganizationIds` (SHARED = orch pool registry with backoff, 503 when empty/unreachable; DEDICATED/ONPREM = process org). Not SHIPPED pool / AC-CLI-TENANT still 🟡.
+**SaaS Wave 2 request tenant:** staff `/api/auth/login` (+ optional `organizationId`) and SSO put org on JWT; middleware stamps `x-era-organization-id` from the token; `getSatelliteSession` takes the org from the token, gates `industry_clinic`, and loads grants; lifecycle/from-stay/settlement enter ALS from event/body org; ops stamps via `requestOrganizationId()`. Cron org list: kit `listCronOrganizationIds` (SHARED = orch pool registry with backoff, 503 when empty/unreachable; DEDICATED/ONPREM = process org). Not SHIPPED pool / AC-CLI-TENANT still 🟡.
 
 Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-favorites` (now a tab on `/admin/diagnostic-catalog`). Both routes deleted — no redirect.
 
@@ -85,7 +85,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/admin/diagnostic-catalog` (tab `favorites`) | `/api/admin/catalog-favorites` — favorite modalities/categories (`first` \| `only`); no standalone `/admin/catalog-favorites` route |
 | `/admin/icd-favorites` | `GET/PUT /api/admin/icd-favorites`; `POST ?action=sync` (orch gateway or local generator); `POST ?action=retire` (`active=false` + `retiredAt`). SatAdmin does **not** CRUD 14k WHO titles |
 | `/admin/diagnostic-catalog` | Single form SoT — modalities/services/analytes/favorites + field designer; visit templates = `kind=visit`. See [CLINICAL_AND_PROGRAM_TEMPLATES](../../doc/CLINICAL_AND_PROGRAM_TEMPLATES.md) |
-| `/admin/program-templates` | Sanatoriya paketləri — `/api/admin/program-templates` (+ PATCH `[id]` procedures/knots/minNights/maxNights/**effectiveFrom**/**effectiveTo**/block axes) — CLI-51. Blocks + quota matrix in one card (nested block modal, `CatalogField` SEARCHABLE members **cascaded by `kind`**: ProcedureType family vs diagnostic lab/visit; CLOSED_SMALL **assignMode/quotaBasis/requiresDoctor**; **`fulfillment` derived from kind**, not shown). Validity window: create defaults `effectiveFrom=today`; date edits never bump version; `DELETE ?id=` hard-deletes only when unpinned, otherwise closes with `effectiveTo=today`. ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md) |
+| `/admin/program-templates` | Sanatoriya paketləri — `/api/admin/program-templates`. Procedure picker reads `GET /api/admin/procedure-types` (master data **or** program templates). (+ PATCH `[id]` procedures/knots/minNights/maxNights/**effectiveFrom**/**effectiveTo**/block axes) — CLI-51. Blocks + quota matrix in one card (nested block modal, `CatalogField` SEARCHABLE members **cascaded by `kind`**: ProcedureType family vs diagnostic lab/visit; CLOSED_SMALL **assignMode/quotaBasis/requiresDoctor**; **`fulfillment` derived from kind**, not shown). Validity window: create defaults `effectiveFrom=today`; date edits never bump version; `DELETE ?id=` hard-deletes only when unpinned, otherwise closes with `effectiveTo=today`. ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md) |
 | `/admin/import` | Nafta cutover xlsx — clinic 21–40 incl. `procedure-requirements` ([NAFTA-CUTOVER-IMPORT](../../doc/NAFTA-CUTOVER-IMPORT.md)) |
 | `/admin/procedure-rules` | `/api/admin/procedure-rules`, procedure-compatibility-rules (+ PATCH `[id]`), `/api/admin/procedure-rotation-rules` (+ `[id]`), `/api/admin/procedure-substitution-rules` (+ `[id]`) |
 | `/admin/settings` | `/api/admin/settings` (name, presets, **Tenant working hours**, peak mode, **`dailyPackageProcedureCap`** (default 3; distinct in-package SKUs per Baku day), card limits, **`programSchedulingMode`** AFTER_CHECKUP \| ON_CHECKIN — Wave C / CLI-52; Nafta default AFTER_CHECKUP; **`doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn`** — Wave D / CLI-53, default 0) |
@@ -124,7 +124,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `PATCH /api/sanatorium/episodes/[id]` | session — OPEN episode anamnesis |
 | `/api/procedures/[id]/no-show` | session NURSE — burns quota + may charge folio |
 | `/api/sanatorium/resources/available-slots` | session RECEPTION — free inventory (exhausted omitted) |
-| `/api/capacity/summary` | bridge secret — GET remaining%/risk (`x-era-organization-id` or process bind); POST `runCronForEachTenant` (orch pool registry) → `byOrganization` |
+| `/api/capacity/summary` | public + `serviceApiPrefixes` in middleware; bridge secret — GET remaining%/risk for the caller's `x-era-organization-id` (400 without it; hotel proxy sends its session org); POST `runCronForEachTenant` (orch pool registry) → `byOrganization` |
 
 ## Preset gating
 

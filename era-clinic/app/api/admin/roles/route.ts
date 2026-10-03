@@ -22,7 +22,6 @@ import {
   parseClinicRoleStaffKind,
 } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const createSchema = z.object({
@@ -36,7 +35,7 @@ export async function GET(req: Request) {
     const gate = await assertClinicAdminRoute(req);
     if (gate.error) return gate.error;
 
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     await ensureSystemClinicRoles(prisma, organizationId);
 
     const roles = await prisma.role.findMany({
@@ -84,7 +83,7 @@ export async function POST(req: Request) {
     );
     if (denied) return denied;
 
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     await ensureSystemClinicRoles(prisma, organizationId);
 
     const body = createSchema.parse(await req.json());

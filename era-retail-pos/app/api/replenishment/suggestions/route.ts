@@ -1,9 +1,9 @@
 import { financeReplenishmentSuggestions } from "@era/satellite-kit";
-import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 
 export async function GET(req: Request) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const result = await financeReplenishmentSuggestions({
       authHeader: req.headers.get("authorization"),
     });

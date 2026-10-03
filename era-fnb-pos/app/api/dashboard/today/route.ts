@@ -1,16 +1,15 @@
-import { assertFnbEntitled, handleRouteError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonOk } from "@/lib/api-utils";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { businessDayBounds, currentBusinessDayKey } from "@/lib/business-day";
 
 /** Café day board: current business day, closed-ticket revenue, open floor. */
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
     if (denied) return denied;
 

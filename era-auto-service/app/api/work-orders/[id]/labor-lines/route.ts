@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { lineAmount, recalcWorkOrderTotals } from "@/lib/work-order-lines";
 import { workOrderMutationDenied } from "@/lib/work-order-status";
@@ -15,6 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const lines = await prisma.workOrderLaborLine.findMany({
       where: { workOrderId: id },
@@ -31,6 +32,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const wo = await prisma.workOrder.findUnique({ where: { id } });
     if (!wo) return jsonError("Work order not found", 404);

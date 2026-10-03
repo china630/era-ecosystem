@@ -204,6 +204,11 @@ model Role {
   code String
   name            String
   permissionsJson String   @default("[]")
+  /// System package seeded by `ensureSystemRoles`; cannot be renamed or deleted.
+  isSystem                 Boolean @default(false) @map("is_system")
+  cloneFromCode            String? @map("clone_from_code")
+  /// 0 = pre-matrix row; its `[]` is the column default and takes a template once.
+  permissionCatalogVersion Int     @default(0) @map("permission_catalog_version")
   users           User[]
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -226,4 +231,22 @@ model User {
   @@unique([organizationId, login])
   @@unique([organizationId, phone])
   @@index([organizationId])
+}
+
+model SatelliteAuditLog {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  userId         String?  @map("user_id")
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  action         String
+  changesJson    String   @default("{}") @map("changes_json")
+  ipAddress      String?  @map("ip_address")
+  integrityHash  String?  @map("integrity_hash")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("satellite_audit_logs")
 }

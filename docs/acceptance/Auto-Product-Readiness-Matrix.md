@@ -28,6 +28,7 @@
 |---------|------|-------|
 | Work orders | `/work-orders` | 🟡 |
 | Appointments | `/appointments` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (AS-RBAC-01; not SHOW) |
 
 Admin modal CRUD is now in place for settings, appointments, and work-order creation; Demo/TE stays 🟡 until live sign-off.
 

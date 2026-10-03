@@ -1,5 +1,5 @@
 import {
-  getRouteSession,
+  getSatelliteSession,
   jsonError,
   requireClinicPermission,
 } from "@/lib/api-utils";
@@ -8,9 +8,9 @@ import {
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
 import type { NextResponse } from "next/server";
-import type { SatelliteSessionPayload } from "@era/satellite-kit";
+import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 
-type GuardOk = { session: SatelliteSessionPayload; error?: undefined };
+type GuardOk = { session: SatelliteStaffSessionPayload; error?: undefined };
 type GuardFail = { session?: undefined; error: NextResponse };
 
 /** Staff API gate via opsApiRoutePermission (Wave 3). */
@@ -18,7 +18,7 @@ export async function assertOpsApiPermission(
   req: Request,
   permissionOverride?: ClinicPermission,
 ): Promise<GuardOk | GuardFail> {
-  const session = await getRouteSession();
+  const session = await getSatelliteSession();
   if (!session) return { error: jsonError("Unauthorized", 401) };
   const permission =
     permissionOverride ??

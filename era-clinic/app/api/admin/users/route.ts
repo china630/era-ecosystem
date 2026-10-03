@@ -6,7 +6,6 @@ import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 import { parseClinicRoleStaffKind } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 
 /** List local staff users for role assignment on /admin/access. */
 export async function GET(req: Request) {
@@ -14,7 +13,7 @@ export async function GET(req: Request) {
     const gate = await assertClinicAdminRoute(req);
     if (gate.error) return gate.error;
 
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     await ensureSystemClinicRoles(prisma, organizationId);
 
     const users = await prisma.user.findMany({

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { mergePersonRecords } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -17,7 +17,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = schema.parse(await request.json());
     const merged = await mergePersonRecords(body.sourcePersonId, body.targetPersonId);

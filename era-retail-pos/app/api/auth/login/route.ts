@@ -13,11 +13,14 @@ import {
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemRoles } from "@/lib/auth/ensure-system-retail-roles";
+import { OWNER_ROLE_CODE } from "@/lib/auth/permission-check";
+import { grantsForUser } from "@/lib/auth/retail-permission.service";
 
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
-  /** SHARED pool: which retail org. Appliance: omit → process bind only. */
+  /** Required unless the host already names the organization. */
   orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
@@ -36,13 +39,27 @@ export async function POST(request: Request) {
     if (!tenant.ok) {
       return jsonError(tenant.error, tenant.status);
     }
-    const user = await findUserByCredential(prisma, body.login, tenant.organizationId);
-    if (!(await verifySatelliteUserPassword(body.password, user)) || !user) {
+    const found = await findUserByCredential(prisma, body.login, tenant.organizationId);
+    if (!(await verifySatelliteUserPassword(body.password, found)) || !found) {
       return jsonError("Invalid credentials", 401);
     }
 
-    const organizationId = user.organizationId;
+    const organizationId = found.organizationId;
     enterSatelliteTenant({ organizationId });
+    await ensureSystemRoles(prisma, organizationId);
+
+    const user = await prisma.user.findUnique({
+      where: { id: found.id },
+      include: { role: true },
+    });
+    if (!user) return jsonError("Invalid credentials", 401);
+    const isOwner = user.role.code === OWNER_ROLE_CODE;
+    const permissions = grantsForUser({
+      login: user.login,
+      email: user.email,
+      role: user.role,
+      isOwner,
+    });
 
     const token = await signSatelliteSession({
       sub: user.id,
@@ -51,6 +68,8 @@ export async function POST(request: Request) {
       role: user.role.code,
       fullName: user.fullName,
       organizationId,
+      isOwner,
+      permissions,
     });
     const res = jsonOk({
       user: {
@@ -59,6 +78,7 @@ export async function POST(request: Request) {
         fullName: user.fullName,
         role: user.role.code,
         organizationId,
+        permissions,
       },
       token,
     });

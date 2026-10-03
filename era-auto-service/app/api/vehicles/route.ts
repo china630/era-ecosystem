@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -12,6 +12,7 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const plate = new URL(req.url).searchParams.get("plate")?.trim();
     const vehicles = await prisma.customerVehicle.findMany({
       where: plate ? { plate: { contains: plate, mode: "insensitive" } } : undefined,
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const vehicle = await prisma.customerVehicle.upsert({
       where: { plate: body.plate.toUpperCase() },

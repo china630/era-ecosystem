@@ -80,7 +80,8 @@ export async function publishToOrchestratorGateway(
 }
 
 /**
- * Deployment org UUID for events, SSO SEC-SSO-05, billing.
+ * Deployment org UUID for process-level work (events without a request, billing push).
+ * Staff requests and SSO exchange take the org from the session or the signed ticket.
  * Unbound throws — bind via Sync or set a real org UUID (never `demo-org`).
  */
 export function satelliteOrganizationId(): string {

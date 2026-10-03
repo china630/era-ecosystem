@@ -1,6 +1,5 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
-import { requestOrganizationId } from "@/lib/request-organization";
 
 type FinanceProductRow = {
   id: string;
@@ -31,7 +30,7 @@ export async function GET(req: Request) {
     const token =
       process.env.FINANCE_SERVICE_TOKEN ??
       process.env.SATELLITE_EVENT_SERVICE_TOKEN;
-    const orgId = requestOrganizationId();
+    const orgId = guard.session.organizationId;
 
     const params = new URLSearchParams({
       isService: "false",

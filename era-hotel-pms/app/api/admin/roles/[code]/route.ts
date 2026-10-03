@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getSessionFromHeaders } from "@/lib/auth/session";
+import { getSatelliteSession } from "@/lib/auth/session";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import {
@@ -9,7 +9,6 @@ import {
   canMutateCustomRoleMeta,
 } from "@/lib/auth/hotel-role-admin";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordHotelAudit } from "@/lib/satellite-audit";
 
 type RouteParams = { params: Promise<{ code: string }> };
@@ -20,11 +19,11 @@ const patchSchema = z.object({
 
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const body = patchSchema.parse(await req.json());
 
     const role = await prisma.role.findFirst({
@@ -63,11 +62,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
 export async function DELETE(req: Request, { params }: RouteParams) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const role = await prisma.role.findFirst({
       where: { organizationId, code },
       include: { _count: { select: { users: true } } },

@@ -4,7 +4,7 @@ import {
   getHotelPolicy,
   updateHotelPolicy,
 } from '@/lib/services/hotel-policy.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { recordHotelAudit } from '@/lib/satellite-audit';
 
@@ -28,7 +28,7 @@ const patchSchema = z.object({
 
 export async function GET() {
   try {
-    assertMasterDataRead(await getSessionFromHeaders());
+    assertMasterDataRead(await getSatelliteSession());
     return jsonOk(await getHotelPolicy());
   } catch (err) {
     return handleRouteError(err);
@@ -37,7 +37,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertMasterDataWrite(session);
     const body = patchSchema.parse(await request.json());
     const before = await getHotelPolicy();

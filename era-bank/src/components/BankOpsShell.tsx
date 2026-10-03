@@ -31,20 +31,80 @@ import {
   HeaderProfileMenu,
   SatelliteHeaderLocale,
   SatelliteNotificationBell,
-  useSatelliteOpsSession,
+  useOpsNavProfile,
+  visibleOpsNavSections,
   type EraOpsNavItem,
   type EraOpsNavSection,
   type HeaderProfileMenuItem,
+  type OpsNavAllow,
+  type OpsNavCondition,
 } from "@era/satellite-kit/ui";
 import { BankHeaderTierBar } from "@/components/BankHeaderTierBar";
 import { EodLockProvider } from "@/components/ops/EodLockProvider";
-import { useBankEntitlements } from "@/components/ops/useBankEntitlements";
+import { screenPermissionForNavHref } from "@/lib/auth/page-route-permissions";
+import { sessionHasBankPermission } from "@/lib/auth/permission-check";
+import type { Permission } from "@/lib/auth/permissions";
 
 type NavDef = {
   id: string;
   href: string;
   labelKey: string;
   icon: LucideIcon;
+};
+
+type BankNavItem = EraOpsNavItem & OpsNavCondition;
+type BankNavSection = Omit<EraOpsNavSection, "items"> & { items: BankNavItem[] };
+
+const NAV_MODULE_MAP: Record<string, string> = {
+  "/cif": "banking_core",
+  "/accounts": "banking_core",
+  "/postings": "banking_core",
+  "/gl": "banking_core",
+  "/admin/branches": "banking_core",
+  "/admin/eod": "banking_core",
+  "/admin/audit": "banking_core",
+  "/admin/access": "banking_core",
+  "/aml": "banking_aml",
+  "/deposits": "banking_deposits",
+  "/loans": "banking_loans",
+  "/payments": "banking_payments",
+  "/cash": "banking_cash",
+  "/fees": "banking_core",
+  "/collections": "banking_collections",
+  "/trade": "banking_trade",
+  "/islamic": "banking_islamic",
+  "/wealth": "banking_wealth",
+  "/reports": "banking_regreporting",
+  "/cards": "banking_cards",
+  "/card-txns": "banking_cards",
+  "/markets": "banking_markets",
+  "/treasury": "banking_treasury",
+  "/risk": "banking_risk",
+  "/admin/product-factory": "banking_core",
+  "/dashboard": "industry_banking",
+};
+
+function navModule(href: string): string | undefined {
+  const prefix = Object.keys(NAV_MODULE_MAP).find((p) => href.startsWith(p));
+  return prefix ? NAV_MODULE_MAP[prefix] : undefined;
+}
+
+/** Screen grants as the API checks them; platform super admin sees every screen. The satellite gate opens every module. */
+const BANK_NAV_ALLOW: OpsNavAllow = {
+  permission: (permission, profile) =>
+    profile.isPlatformSuperAdmin ||
+    sessionHasBankPermission(
+      {
+        login: profile.login,
+        email: profile.email ?? undefined,
+        role: profile.role,
+        permissions: profile.permissions,
+        isOwner: profile.isOwner || profile.role === "BUSINESS_OWNER",
+      },
+      permission as Permission,
+    ),
+  module: (module, profile) =>
+    profile.modules.includes("industry_banking") || profile.modules.includes(module),
 };
 
 export default function BankOpsShell({
@@ -57,25 +117,22 @@ export default function BankOpsShell({
   const tMeta = useTranslations("meta");
   const tNotify = useTranslations("notifications");
   const locale = useLocale() as Locale;
-  const { session } = useSatelliteOpsSession();
-  const { isNavVisible, role } = useBankEntitlements();
+  const { profile, status } = useOpsNavProfile();
+  const isSuperAdmin = profile?.isPlatformSuperAdmin === true;
+  const role = profile?.role || null;
 
-  if (
-    pathname === "/login" ||
-    pathname.startsWith("/sso/") ||
-    pathname.startsWith("/help")
-  ) {
-    return <>{children}</>;
-  }
-
-  function mapItem(def: NavDef): EraOpsNavItem | null {
-    if (!isNavVisible(def.href)) return null;
+  function mapItem(def: NavDef): BankNavItem {
+    const permission = screenPermissionForNavHref(def.href) ?? undefined;
     return {
       id: def.id,
       href: def.href,
       label: t(def.labelKey as "dashboard"),
       // Dual lucide-react copies (app vs satellite-kit) — cast for nav contract.
       icon: def.icon as EraOpsNavItem["icon"],
+      permission,
+      module: navModule(def.href),
+      // A screen without a grant key opens only for platform super admin.
+      ...(permission ? {} : { when: isSuperAdmin }),
     };
   }
 
@@ -84,18 +141,16 @@ export default function BankOpsShell({
     titleKey: string,
     icon: LucideIcon,
     defs: NavDef[],
-  ): EraOpsNavSection | null {
-    const items = defs.map(mapItem).filter(Boolean) as EraOpsNavItem[];
-    if (items.length === 0) return null;
+  ): BankNavSection {
     return {
       id,
       title: t(titleKey as "sectionCore"),
       icon: icon as EraOpsNavSection["icon"],
-      items,
+      items: defs.map(mapItem),
     };
   }
 
-  const navSections = useMemo(() => {
+  const catalog = useMemo((): BankNavSection[] => {
     const sections = [
       section("core", "sectionCore", LayoutDashboard, [
         { id: "dashboard", href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
@@ -306,10 +361,23 @@ export default function BankOpsShell({
           icon: ShieldAlert,
         },
       ]),
-    ].filter(Boolean) as EraOpsNavSection[];
+    ];
     return sections;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- t + isNavVisible stable enough per render
-  }, [t, isNavVisible, role]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t stable enough per render
+  }, [t, isSuperAdmin]);
+
+  const navSections = useMemo(
+    () => visibleOpsNavSections(catalog, status, profile, BANK_NAV_ALLOW),
+    [catalog, status, profile],
+  );
+
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/sso/") ||
+    pathname.startsWith("/help")
+  ) {
+    return <>{children}</>;
+  }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -326,10 +394,10 @@ export default function BankOpsShell({
         <HeaderProfileMenu
           displayName={
             role
-              ? `${session?.displayName ?? tMeta("title")} · ${role}`
-              : (session?.displayName ?? tMeta("title"))
+              ? `${profile?.displayName || tMeta("title")} · ${role}`
+              : profile?.displayName || ""
           }
-          email={session?.email ?? undefined}
+          email={profile?.email ?? undefined}
           items={profileItems}
           onLogout={() => void logout()}
           logoutLabel={t("logout")}
@@ -338,7 +406,7 @@ export default function BankOpsShell({
       organization={
         <HeaderOrganization
           variant="label"
-          organizationName={session?.organizationName}
+          organizationName={profile?.organizationName}
         />
       }
       notifications={

@@ -53,7 +53,8 @@
     "inbox": "Inbox",
     "settings": "Parametrlər",
     "import": "İmport",
-    "logout": "Çıxış"
+    "logout": "Çıxış",
+    "access": "Giriş hüquqları"
   },
   "leads": {
     "title": "ERA CRM Field",
@@ -186,6 +187,60 @@
     "localeToggleAria": "Dil",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "Bu səhifəyə girişiniz yoxdur"
+  },
+  "settingsAccess": {
+    "title": "Rollar və giriş",
+    "subtitle": "Rol paketləri və onların verdiyi ekranlar və əməliyyatlar",
+    "loading": "Yüklənir…",
+    "loadFailed": "Rolları yükləmək mümkün olmadı",
+    "saveFailed": "Yadda saxlamaq mümkün olmadı",
+    "role": "Rol",
+    "clone": "Rolu klonla",
+    "save": "Yadda saxla",
+    "reset": "Standartlara qaytar",
+    "delete": "Rolu sil",
+    "newCode": "Yeni rol kodu",
+    "newName": "Ad",
+    "cloneFrom": "İcazələri buradan köçür",
+    "create": "Yarat",
+    "saved": "İcazələr yadda saxlanıldı",
+    "resetDone": "Standartlar bərpa edildi",
+    "created": "Rol yaradıldı",
+    "deleted": "Rol silindi",
+    "deleteInUse": "Silməzdən əvvəl bu rolun istifadəçilərini başqa rola keçirin",
+    "assignTitle": "İstifadəçiyə rol təyin et",
+    "assignUser": "İstifadəçi",
+    "assignRole": "Rol",
+    "assign": "Təyin et",
+    "assigned": "Rol təyin edildi",
+    "groups": {
+      "screens": "Ekranlar",
+      "leads": "Lidlər və satış qıfı",
+      "field": "Sahə işi",
+      "admin": "İdarəetmə"
+    },
+    "perms": {
+      "screen_home": "Ana səhifə",
+      "screen_leads": "Satış qıfı",
+      "screen_leads_detail": "Lid kartı",
+      "screen_inbox": "Gələnlər qutusu",
+      "screen_visits": "Vizitlər",
+      "screen_admin_access": "Giriş hüquqları ekranı",
+      "api_leads_read": "Lidlərə bax",
+      "api_leads_write": "Lid yarat və redaktə et",
+      "api_leads_stage": "Mərhələni dəyiş",
+      "api_leads_convert": "Lidi çevir",
+      "api_leads_follow_up": "Növbəti əlaqəni planla",
+      "api_leads_assign": "Lidə məsul təyin et",
+      "api_inbox": "Gələn mesajlar",
+      "api_visits": "Vizitləri qeyd et",
+      "api_lookups": "Soraq siyahıları",
+      "api_users_list": "Məsullar siyahısı",
+      "admin_import": "Lid idxalı",
+      "admin_pipeline": "Qıf qaydaları və ayarlar",
+      "admin_access_manage": "Rolları və girişi idarə et"
+    }
   }
 }

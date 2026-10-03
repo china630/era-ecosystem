@@ -1,5 +1,5 @@
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonOk,
   requireClinicPermission,
@@ -13,7 +13,7 @@ import {
 
 export async function GET() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 
@@ -28,7 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 

@@ -1,4 +1,4 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
 import { prisma } from "@/lib/prisma";
 
@@ -7,6 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },

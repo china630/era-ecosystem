@@ -1,17 +1,16 @@
 import { prisma } from '@/lib/prisma';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { requestOrganizationId } from '@/lib/request-organization';
 import { ensureFoBookingSources } from '@/lib/services/booking-source.service';
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     try {
-      await ensureFoBookingSources(requestOrganizationId());
+      await ensureFoBookingSources(session.organizationId);
     } catch {
       /* list still returns existing rows */
     }

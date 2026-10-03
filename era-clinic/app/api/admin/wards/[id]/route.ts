@@ -12,9 +12,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminRoute(request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(request);
+    if (guard.error) return guard.error;
     const { id } = await params;
     const body = patchSchema.parse(await request.json());
     const ward = await updateWard(id, body);
@@ -28,9 +28,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminRoute(_request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(_request);
+    if (guard.error) return guard.error;
     const { id } = await params;
     await deleteWard(id);
     return jsonOk({ ok: true });

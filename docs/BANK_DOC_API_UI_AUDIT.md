@@ -41,7 +41,7 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | API→UI (ops, excl. headless/DBO) | ~70% (API-only endpoints) | **~98%** | +28% |
 | Modal CRUD playbook compliance | **0%** (full pages only) | **100%** | +100% |
 | GL BFF path | ❌ `/api/accounts/gl/*` (404/wrong) | ✅ `/api/gl/*` | fixed |
-| Entitlement nav filter | ❌ all items always visible | ✅ `useBankEntitlements` + `/api/entitlements` | fixed |
+| Entitlement nav filter | ❌ all items always visible | ✅ kit row condition `module` from `GET /api/auth/me` `activeModules` (same source as `/api/entitlements`) | fixed |
 | EOD mutation lock | ⚠️ banner only / partial | ✅ `EodLockProvider` + modal disable + confirm | fixed |
 | i18n ru/az parity | ⚠️ ~30 keys (titles only) | ✅ full `en.json` structure | fixed |
 | `era-bank-core` tests | 41 | **46** | +5 |
@@ -105,7 +105,7 @@ Living matrix for **era-bank-core** (headless CBS) + **era-bank** (ops satellite
 | `useOpsModal.ts` | mode/create/detail + URL sync `?modal=` / `?id=` |
 | `OpsDataTable.tsx` | table + row click → detail; Add → create |
 | `EodLockProvider.tsx` | poll EOD status; `mutationsDisabled`; banner |
-| `useBankEntitlements.ts` | `banking_*` module flags for nav |
+| `src/lib/bank-entitlement-modules.ts` | `banking_*` module list for `/api/auth/me` and `/api/entitlements` (replaced `useBankEntitlements.ts`; the shell reads modules through kit `useOpsNavProfile`) |
 | `useOpsMe.ts` | session role + `canApprove` from `limitsJson` |
 | `modals/*.tsx` (8 files) | domain create/detail/workflow modals |
 | `GET /api/entitlements` | expose module flags to client |

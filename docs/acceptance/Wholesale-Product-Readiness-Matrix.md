@@ -30,6 +30,7 @@
 |---------|------|-------|
 | Orders | `/orders` | 🟡 |
 | Pick lists | `/pick-lists` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (WS-RBAC-01; not SHOW) |
 
 Import-order admin now follows the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
 

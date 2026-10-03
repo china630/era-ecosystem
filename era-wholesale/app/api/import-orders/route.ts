@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { financeExternalPurchase } from "@era/satellite-kit";
 import { todayBakuYmd } from "@era/satellite-kit/time";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { wholesaleTermDueDate } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
 
@@ -26,6 +26,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const rows = await prisma.importPurchaseOrder.findMany({
       include: { lines: true },
       orderBy: { createdAt: "desc" },
@@ -39,6 +40,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const orderDate = todayBakuYmd();
     const dueDate = await wholesaleTermDueDate(orderDate, body.paymentTermDays);
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = z
       .object({
         id: z.string(),

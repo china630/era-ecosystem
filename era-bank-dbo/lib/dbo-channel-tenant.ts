@@ -3,6 +3,7 @@ import {
   ORG_NO_RE,
   readStaffLoginJson,
   resolveStaffLoginTenant,
+  satelliteOrganizationId,
   satelliteRuntimeConfig,
   type StaffLoginTenantResult,
 } from "@era/satellite-kit";
@@ -46,19 +47,37 @@ export async function readDboAuthJson(request: Request): Promise<
   return { ok: true, raw, orgNo: orgNo || undefined };
 }
 
-/** DBO customers never type ERA ID. Resolve via Host / bind / optional lab orgNo. */
+/**
+ * DBO customers never type ERA ID. Resolve via Host or optional lab orgNo; a
+ * DEDICATED/ONPREM DBO instance serves one bank, so its deployment org is the
+ * channel org when neither is present. SHARED never falls back.
+ */
 export async function resolveDboChannelTenant(
   request: Request,
   orgNo?: string,
 ): Promise<StaffLoginTenantResult> {
+  const isShared = satelliteRuntimeConfig().deploymentTopology === "SHARED";
   const result = await resolveStaffLoginTenant({
     orgNo,
-    isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+    isShared,
     request,
     satelliteKey: dboSatelliteKey(),
   });
-  if (!result.ok) return dboPublicTenantError(result);
-  return result;
+  if (result.ok) return result;
+  if (!isShared && !orgNo && result.error === "orgNo is required") {
+    const deploymentOrg = dedicatedDeploymentOrganizationId();
+    if (deploymentOrg) return { ok: true, organizationId: deploymentOrg };
+  }
+  return dboPublicTenantError(result);
+}
+
+function dedicatedDeploymentOrganizationId(): string | null {
+  try {
+    const id = satelliteOrganizationId().trim();
+    return id && id !== "demo-org" ? id : null;
+  } catch {
+    return null;
+  }
 }
 
 export function enterDboTenant(organizationId: string | undefined | null): void {

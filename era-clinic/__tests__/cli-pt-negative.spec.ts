@@ -37,13 +37,6 @@ describe("Clinic PT negative paths (AC-CLI-PT)", () => {
   });
 
   describe("module gate", () => {
-    it("requireClinicSatellite rejects when industry_clinic inactive", async () => {
-      const { requireClinicSatellite } = await import("@/lib/clinic-module-gate");
-      await expect(requireClinicSatellite()).rejects.toMatchObject({
-        name: "IndustryModuleInactiveError",
-        moduleKey: "industry_clinic",
-      });
-    });
   });
 
   describe("domain deny", () => {

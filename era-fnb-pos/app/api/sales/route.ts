@@ -1,13 +1,12 @@
-import { assertFnbEntitled, handleRouteError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { handleRouteError, jsonOk } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { saleReportForScope } from "@/lib/sales-report";
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_SALES);
     if (denied) return denied;
     const url = new URL(request.url);

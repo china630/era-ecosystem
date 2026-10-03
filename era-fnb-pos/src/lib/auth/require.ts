@@ -18,20 +18,20 @@ function toCheckSession(
   };
 }
 
-export function assertPermission(
-  session: SatelliteSessionPayload | FnbPermissionSession | null,
+export function assertPermission<S extends SatelliteSessionPayload | FnbPermissionSession>(
+  session: S | null,
   permission: Permission,
-): void {
+): asserts session is S {
   if (!session) throw new Error("Unauthorized");
   if (!sessionHasFnbPermission(toCheckSession(session), permission)) {
     throw new Error("Forbidden: insufficient permissions");
   }
 }
 
-export function assertAnyPermission(
-  session: SatelliteSessionPayload | FnbPermissionSession | null,
+export function assertAnyPermission<S extends SatelliteSessionPayload | FnbPermissionSession>(
+  session: S | null,
   permissions: Permission[],
-): void {
+): asserts session is S {
   if (!session) throw new Error("Unauthorized");
   const check = toCheckSession(session);
   if (!permissions.some((p) => sessionHasFnbPermission(check, p))) {

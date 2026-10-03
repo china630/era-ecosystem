@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { afterEach, describe, it } from "node:test";
 import {
+  SatelliteOrganizationUnboundError,
   clearProcessOrganizationBind,
   getRuntimeOrganizationId,
   resetOrganizationBindRuntimeForTests,
@@ -10,6 +11,8 @@ import {
 import {
   enterSatelliteTenant,
   getSatelliteTenantContext,
+  organizationIdOnIncomingRequest,
+  peekSatelliteRequestOrganizationId,
   resolveSatelliteTenantOrgId,
   runWithSatelliteTenant,
 } from "./satellite-tenant-context";
@@ -17,6 +20,7 @@ import {
 const nodeRequire = createRequire(__filename);
 const HEADER_ORG = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const STORE_ORG = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+const PROCESS_ORG = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const WORK_STORE = "next/dist/server/app-render/work-unit-async-storage.external";
 
 describe("enterSatelliteTenant", () => {
@@ -87,17 +91,18 @@ describe("org after ALS is dropped", () => {
     clearProcessOrganizationBind();
   }
 
-  it("reads x-era-organization-id when the request store is empty", () => {
-    stub("next/headers", {
-      headers: () => ({
-        get: (name: string) => (name === "x-era-organization-id" ? HEADER_ORG : null),
-      }),
+  it("throws inside a Next request when the tenant was not entered", () => {
+    stub(WORK_STORE, {
+      workUnitAsyncStorage: { getStore: () => ({}) },
     });
-    dropProcessBind();
-    assert.equal(blankAls(() => resolveSatelliteTenantOrgId()), HEADER_ORG);
+    setRuntimeOrganizationId(PROCESS_ORG);
+    assert.throws(
+      () => blankAls(() => resolveSatelliteTenantOrgId()),
+      SatelliteOrganizationUnboundError,
+    );
   });
 
-  it("reads the org remembered on the Next request store when the header is absent", () => {
+  it("reads the org remembered on the Next request store when ALS is empty", () => {
     const requestStore = {};
     stub("next/headers", {
       headers: () => ({
@@ -110,5 +115,21 @@ describe("org after ALS is dropped", () => {
     dropProcessBind();
     enterSatelliteTenant({ organizationId: STORE_ORG });
     assert.equal(blankAls(() => resolveSatelliteTenantOrgId()), STORE_ORG);
+  });
+
+  it("peek ignores the process bind when the request has no org", () => {
+    stub("next/headers", {
+      headers: () => Promise.resolve({ get: () => HEADER_ORG }),
+    });
+    setRuntimeOrganizationId(PROCESS_ORG);
+    const incoming = new Request("http://localhost/api/events/dispatch", {
+      headers: { "x-era-organization-id": HEADER_ORG },
+    });
+    assert.equal(blankAls(() => peekSatelliteRequestOrganizationId()), undefined);
+    assert.equal(blankAls(() => organizationIdOnIncomingRequest(incoming)), HEADER_ORG);
+    assert.equal(
+      blankAls(() => resolveSatelliteTenantOrgId()),
+      PROCESS_ORG,
+    );
   });
 });

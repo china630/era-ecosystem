@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server';
 import {
   agencyAuthCookieName,
-  authCookieName,
+  createSatelliteStaffMiddleware,
   eraPathnameRequestHeaders,
   getBearerOrCookieToken,
-  isPublicApiPath,
   redirectNoStore,
-  nextWithOptionalHostBoundOrg,
+  stripSessionHeaders,
   verifyAgencySession,
-  verifySatelliteSession,
 } from '@era/satellite-kit/auth/middleware-edge';
-import { encodeSessionHeaderUtf8 } from '@/lib/auth/session-header-utf8';
 import type { NextRequest } from 'next/server';
 import {
   isPosBridgeApiPath,
@@ -19,20 +16,7 @@ import {
 import { routePermissions } from '@/lib/auth/page-route-permissions';
 import { sessionHasHotelPermission } from '@/lib/auth/permission-check';
 
-const STAFF_COOKIE = authCookieName();
 const AGENCY_COOKIE = agencyAuthCookieName();
-
-const PUBLIC_API_EXTRA = [
-  '/api/integration/mock-receiver',
-  '/api/integration/mock-licensing',
-  '/api/integration/erp/inbound',
-  '/api/integration/staff-provision',
-  '/api/auth/agency-sso/exchange',
-  '/api/integrations/elektraweb-bridge',
-  '/api/integrations/channex',
-  '/api/integrations/ota',
-  '/api/public',
-];
 
 function isAgencyPath(pathname: string): boolean {
   return (
@@ -43,118 +27,9 @@ function isAgencyPath(pathname: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const reqHeaders = eraPathnameRequestHeaders(request.headers, pathname);
-
-  // Placement FREEZE: block mutating ops for listed orgs (host sets ERA_PLACEMENT_FROZEN_ORG_IDS).
-  const method = request.method.toUpperCase();
-  if (
-    method !== "GET" &&
-    method !== "HEAD" &&
-    method !== "OPTIONS" &&
-    pathname.startsWith("/api") &&
-    !pathname.startsWith("/api/internal/") &&
-    !pathname.startsWith("/api/auth/")
-  ) {
-    const frozen =
-      process.env.ERA_PLACEMENT_FROZEN_ORG_IDS?.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean) ?? [];
-    if (frozen.length) {
-      const org =
-        request.headers.get("x-era-organization-id")?.trim() ||
-        "";
-      if (org && frozen.includes(org)) {
-        return NextResponse.json(
-          { error: "Organization frozen for placement hop" },
-          { status: 423 },
-        );
-      }
-    }
-  }
-
-  // Agency SSO callback is public HTML
-  if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {
-    return NextResponse.next({ request: { headers: reqHeaders } });
-  }
-
-  if (pathname.startsWith('/api')) {
-    if (isPublicApiPath(pathname, PUBLIC_API_EXTRA)) {
-      return NextResponse.next({ request: { headers: reqHeaders } });
-    }
-
-    if (
-      isPosBridgeApiPath(pathname) &&
-      verifyPosBridgeFromHeaders(
-        request.headers.get('x-pos-bridge-secret'),
-        request.headers.get('authorization'),
-      )
-    ) {
-      return NextResponse.next({ request: { headers: reqHeaders } });
-    }
-
-    // Agency API: only agency session
-    if (pathname.startsWith('/api/agency')) {
-      const agencyToken = getBearerOrCookieToken(
-        request.cookies,
-        request.headers,
-        AGENCY_COOKIE,
-      );
-      if (!agencyToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      try {
-        const session = await verifyAgencySession(agencyToken);
-        const headers = new Headers(reqHeaders);
-        headers.set('x-agency-id', session.agencyId);
-        headers.set('x-agency-email', session.email);
-        headers.set('x-user-actor', 'agency');
-        return NextResponse.next({ request: { headers } });
-      } catch {
-        return NextResponse.json({ error: 'Invalid agency session' }, { status: 401 });
-      }
-    }
-
-    // Staff API: reject pure agency sessions
-    const staffToken = getBearerOrCookieToken(
-      request.cookies,
-      request.headers,
-      STAFF_COOKIE,
-    );
-    if (!staffToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    try {
-      const session = await verifySatelliteSession(staffToken);
-      const headers = new Headers(reqHeaders);
-      headers.set('x-user-id', session.sub);
-      headers.set('x-user-role', session.role);
-      headers.set('x-user-login', encodeSessionHeaderUtf8(session.login));
-      headers.set('x-user-fullname', encodeSessionHeaderUtf8(session.fullName));
-      if (session.email) headers.set('x-user-email', session.email);
-      if (session.organizationId) {
-        headers.set('x-era-organization-id', session.organizationId);
-      }
-      if (session.isOwner === true) {
-        headers.set('x-user-is-owner', '1');
-      }
-      headers.set('x-user-actor', 'staff');
-      return NextResponse.next({ request: { headers } });
-    } catch {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
-    }
-  }
-
-  if (pathname === '/login') {
-    return nextWithOptionalHostBoundOrg(
-      reqHeaders,
-      request.headers.get('x-forwarded-host') || request.headers.get('host'),
-      'industry_hotel_pms',
-    );
-  }
-
-  if (
+function isPublicStaffPage(pathname: string): boolean {
+  return (
+    pathname === '/login' ||
     pathname === '/sso/callback' ||
     pathname === '/help' ||
     pathname.startsWith('/help/') ||
@@ -162,38 +37,27 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/b2c/') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
-  ) {
-    return NextResponse.next({ request: { headers: reqHeaders } });
-  }
+  );
+}
 
-  // Agency UI pages
-  if (isAgencyPath(pathname)) {
-    const agencyToken = getBearerOrCookieToken(
-      request.cookies,
-      request.headers,
-      AGENCY_COOKIE,
-    );
-    if (!agencyToken) {
-      return redirectNoStore(new URL('/agency/sso/callback?error=login', request.url));
-    }
-    try {
-      await verifyAgencySession(agencyToken);
-      return NextResponse.next({ request: { headers: reqHeaders } });
-    } catch {
-      return redirectNoStore(new URL('/agency/sso/callback?error=session', request.url));
-    }
-  }
-
-  // Staff UI — agency cookie alone is not enough
-  const token = getBearerOrCookieToken(request.cookies, request.headers, STAFF_COOKIE);
-  if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
-    return redirectNoStore(loginUrl);
-  }
-
-  try {
-    const session = await verifySatelliteSession(token);
+const staffGate = createSatelliteStaffMiddleware<NextRequest>({
+  satelliteKey: 'industry_hotel_pms',
+  publicApiPrefixes: [
+    '/api/integration/mock-receiver',
+    '/api/integration/mock-licensing',
+    '/api/integration/erp/inbound',
+    '/api/integrations/elektraweb-bridge',
+    '/api/integrations/channex',
+    '/api/integrations/ota',
+    '/api/public',
+  ],
+  isPublicPage: isPublicStaffPage,
+  loginRedirectPath: (request, reason) =>
+    reason === 'missing'
+      ? `/login?from=${encodeURIComponent(request.nextUrl.pathname)}`
+      : '/login',
+  // Fail-closed: every staff page must map to a permission (see page inventory test).
+  authorizePage: ({ request, pathname, session }) => {
     const required = routePermissions(pathname);
     const sessionView = {
       login: session.login,
@@ -202,20 +66,92 @@ export async function middleware(request: NextRequest) {
       permissions: session.permissions,
       isOwner: session.isOwner,
     };
-    // Fail-closed: every staff page must map to a permission (see page inventory test).
-    if (
-      !required ||
-      !required.some((p) => sessionHasHotelPermission(sessionView, p))
-    ) {
-      const forbiddenUrl = new URL('/login', request.url);
-      forbiddenUrl.searchParams.set('error', 'forbidden');
-      return redirectNoStore(forbiddenUrl);
+    if (required && required.some((p) => sessionHasHotelPermission(sessionView, p))) {
+      return null;
     }
-    return NextResponse.next({ request: { headers: reqHeaders } });
-  } catch {
-    const loginUrl = new URL('/login', request.url);
-    return redirectNoStore(loginUrl);
+    const forbiddenUrl = new URL('/login', request.url);
+    forbiddenUrl.searchParams.set('error', 'forbidden');
+    return redirectNoStore(forbiddenUrl);
+  },
+  authorizeApi: ({ request, pathname, session }) =>
+    frozenOrgResponse(request.method, pathname, session.organizationId),
+});
+
+/** Placement hop: writes for a frozen org get 423. The org comes from the verified token. */
+function frozenOrgResponse(
+  method: string,
+  pathname: string,
+  organizationId: string | undefined,
+): Response | null {
+  const verb = method.toUpperCase();
+  if (verb === 'GET' || verb === 'HEAD' || verb === 'OPTIONS') return null;
+  if (pathname.startsWith('/api/auth/')) return null;
+  const frozen =
+    process.env.ERA_PLACEMENT_FROZEN_ORG_IDS?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) ?? [];
+  if (!frozen.length) return null;
+  const org = organizationId?.trim() || '';
+  if (org && frozen.includes(org)) {
+    return NextResponse.json(
+      { error: 'Organization frozen for placement hop' },
+      { status: 423 },
+    );
   }
+  return null;
+}
+
+async function agencyResponse(request: NextRequest, pathname: string): Promise<Response> {
+  const reqHeaders = stripSessionHeaders(eraPathnameRequestHeaders(request.headers, pathname));
+  const agencyToken = getBearerOrCookieToken(request.cookies, request.headers, AGENCY_COOKIE);
+  const isApi = pathname.startsWith('/api/');
+  if (!agencyToken) {
+    return isApi
+      ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      : redirectNoStore(new URL('/agency/sso/callback?error=login', request.url));
+  }
+  try {
+    const session = await verifyAgencySession(agencyToken);
+    if (!isApi) return NextResponse.next({ request: { headers: reqHeaders } });
+    const headers = new Headers(reqHeaders);
+    headers.set('x-agency-id', session.agencyId);
+    headers.set('x-agency-email', session.email);
+    headers.set('x-user-actor', 'agency');
+    return NextResponse.next({ request: { headers } });
+  } catch {
+    return isApi
+      ? NextResponse.json({ error: 'Invalid agency session' }, { status: 401 })
+      : redirectNoStore(new URL('/agency/sso/callback?error=session', request.url));
+  }
+}
+
+export async function middleware(request: NextRequest): Promise<Response> {
+  const { pathname } = request.nextUrl;
+
+  if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {
+    return NextResponse.next({
+      request: {
+        headers: stripSessionHeaders(eraPathnameRequestHeaders(request.headers, pathname)),
+      },
+    });
+  }
+
+  if (
+    isPosBridgeApiPath(pathname) &&
+    verifyPosBridgeFromHeaders(
+      request.headers.get('x-pos-bridge-secret'),
+      request.headers.get('authorization'),
+    )
+  ) {
+    return NextResponse.next({
+      request: { headers: eraPathnameRequestHeaders(request.headers, pathname) },
+    });
+  }
+
+  // Agency cookie alone never opens staff API or pages, and vice versa.
+  if (isAgencyPath(pathname)) return agencyResponse(request, pathname);
+
+  return staffGate(request);
 }
 
 export const config = {

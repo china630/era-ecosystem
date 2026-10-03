@@ -1,8 +1,11 @@
 import type { Permission } from './permissions';
-import type { SessionPayload } from './jwt';
+import type { SatelliteSessionPayload } from '@era/satellite-kit';
 import { sessionHasHotelPermission } from './permission-check';
 
-export function assertPermission(session: SessionPayload | null, permission: Permission): void {
+export function assertPermission<S extends SatelliteSessionPayload>(
+  session: S | null,
+  permission: Permission,
+): asserts session is S {
   if (!session) throw new Error('Unauthorized');
   if (
     !sessionHasHotelPermission(
@@ -20,10 +23,10 @@ export function assertPermission(session: SessionPayload | null, permission: Per
   }
 }
 
-export function assertAnyPermission(
-  session: SessionPayload | null,
+export function assertAnyPermission<S extends SatelliteSessionPayload>(
+  session: S | null,
   permissions: Permission[],
-): void {
+): asserts session is S {
   if (!session) throw new Error('Unauthorized');
   if (
     !permissions.some((p) =>

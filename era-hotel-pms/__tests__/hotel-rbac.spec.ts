@@ -7,7 +7,7 @@ import {
   parsePermissions,
 } from "@/lib/auth/permissions";
 import { assertPermission, assertAnyPermission } from "@/lib/auth/require";
-import type { SessionPayload } from "@/lib/auth/jwt";
+import type { SatelliteSessionPayload } from "@era/satellite-kit";
 import { ensureSystemHotelRoles, HOTEL_PERMISSION_CATALOG_VERSION } from "@/lib/auth/ensure-system-hotel-roles";
 import {
   canDeleteHotelRole,
@@ -63,7 +63,7 @@ describe("hotel page route permissions", () => {
 
 describe("hotel RBAC Variant A", () => {
   it("assertPermission uses session permissions, not role code template", () => {
-    const session: SessionPayload = {
+    const session: SatelliteSessionPayload = {
       sub: "u1",
       login: "admin",
       role: ROLE_CODES.HOTEL_ADMIN,
@@ -79,7 +79,7 @@ describe("hotel RBAC Variant A", () => {
   });
 
   it("Hotel_Admin without grants is denied (no role-name bypass)", () => {
-    const session: SessionPayload = {
+    const session: SatelliteSessionPayload = {
       sub: "u1",
       login: "admin",
       role: ROLE_CODES.HOTEL_ADMIN,
@@ -92,7 +92,7 @@ describe("hotel RBAC Variant A", () => {
   });
 
   it("OrgOwner bypasses matrix", () => {
-    const session: SessionPayload = {
+    const session: SatelliteSessionPayload = {
       sub: "u1",
       login: "owner",
       role: "BUSINESS_OWNER",
@@ -106,7 +106,7 @@ describe("hotel RBAC Variant A", () => {
   });
 
   it("assertAnyPermission accepts any listed grant", () => {
-    const session: SessionPayload = {
+    const session: SatelliteSessionPayload = {
       sub: "u1",
       login: "hk",
       role: ROLE_CODES.HOUSEKEEPER,

@@ -1,4 +1,4 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   createTradeCreditRequestCache,
@@ -9,6 +9,7 @@ import {
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const url = new URL(req.url);
     const counterpartyId = url.searchParams.get("counterpartyId");
     if (!counterpartyId) {

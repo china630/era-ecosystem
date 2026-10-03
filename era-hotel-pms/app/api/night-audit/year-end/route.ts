@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -11,7 +11,7 @@ import {
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.NIGHT_AUDIT_RUN);
     return jsonOk(serialize(await getYearEndPreview()));
   } catch (err) {
@@ -25,7 +25,7 @@ const bodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.NIGHT_AUDIT_RUN);
     const body = bodySchema.parse(await request.json());
     // Honest staged response (200): menu is live, posting not enabled yet.

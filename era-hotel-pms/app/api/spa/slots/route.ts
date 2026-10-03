@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { requestOrganizationId } from '@/lib/request-organization';
+import { getSatelliteSession } from "@/lib/auth/session";
 import { requireHotelModule } from "@/lib/hotel-module-gate";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { createBookingSlot } from "@/integration/control-plane-platform.client";
 
 const bodySchema = z.object({
@@ -14,13 +14,10 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await requireHotelModule("industry_hotel_pms");
-    await requireHotelModule("hotel_spa_scheduling");
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    await requireHotelModule("hotel_spa_scheduling", session.organizationId);
     const body = bodySchema.parse(await req.json());
-    const organizationId = requestOrganizationId();
-    if (!organizationId) {
-      return jsonOk({ skipped: true, reason: "ERA_SATELLITE_ORGANIZATION_ID not set" });
-    }
 
     const slot = await createBookingSlot(
       {
@@ -30,7 +27,7 @@ export async function POST(req: Request) {
         endsAt: body.endsAt,
         capacity: body.capacity ?? 1,
       },
-      { organizationId },
+      { organizationId: session.organizationId },
     );
 
     return jsonOk(slot);

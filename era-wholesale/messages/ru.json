@@ -109,6 +109,62 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
+  },
+  "nav": {
+    "importOrders": "Импортные заказы",
+    "access": "Доступ"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "orders": "Заказы",
+      "warehouse": "Склад",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_orders": "Заказы",
+      "screen_pick_lists": "Листы сборки",
+      "screen_admin_import_orders": "Экран импортных заказов",
+      "screen_admin_settings": "Настройки",
+      "screen_admin_access": "Экран доступа",
+      "api_orders": "Создание и просмотр заказов",
+      "api_orders_confirm": "Подтверждение заказа",
+      "api_orders_pay": "Регистрация оплаты",
+      "api_orders_ttn": "Накладная (ТТН)",
+      "api_pick": "Листы сборки",
+      "api_pick_waves": "Волны сборки",
+      "api_credit_limit": "Проверка кредитного лимита",
+      "api_edi_export": "Экспорт EDI",
+      "api_fx_preview": "Предпросмотр курса",
+      "admin_import_orders": "Импортные заказы",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

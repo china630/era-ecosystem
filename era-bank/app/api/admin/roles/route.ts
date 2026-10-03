@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { assertBankEntitled, jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getRouteSession } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/api-utils";
 import { assertAnyPermission, assertPermission } from "@/lib/auth/require";
 import {
   PERMISSIONS,
@@ -18,7 +18,6 @@ import {
   normalizeBankRoleCode,
 } from "@/lib/auth/bank-role-admin";
 import { prisma } from "@/lib/prisma";
-import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
 
 const createSchema = z.object({
   code: z.string().regex(BANK_CUSTOM_ROLE_CODE_RE, "Invalid role code"),
@@ -28,11 +27,9 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const permissions = await permissionsForUserId(session.sub);
-    assertAnyPermission({ ...session, permissions }, [PERMISSIONS.ACCESS_MANAGE]);
+    assertAnyPermission(session, [PERMISSIONS.ACCESS_MANAGE]);
 
     const organizationId = session.organizationId;
     if (!organizationId) return jsonError("Unauthorized", 401);
@@ -70,11 +67,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const permissions = await permissionsForUserId(session.sub);
-    assertPermission({ ...session, permissions }, PERMISSIONS.ACCESS_MANAGE);
+    assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const organizationId = session.organizationId;
     if (!organizationId) return jsonError("Unauthorized", 401);

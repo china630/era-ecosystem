@@ -31,7 +31,7 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 
 | Check | Mechanism |
 |-------|-----------|
-| Which ERA org | Bridge/staff JWT claim `organizationId` (login sends `orgNo` → resolved UUID). Appliance may omit org on login → process bind only for that user lookup |
+| Which ERA org | Bridge/staff JWT claim `organizationId` (login sends `orgNo` → resolved UUID, or the Host already names the org). Login without either returns 400 |
 | Which Elektraweb property | Super-Admin / Sync `ElektrawebBridgePolicy.elektrawebHotelId` for **that** org |
 | Extension session | Options: ERA Hotel URL + **orgNo** (ERA ID) + staff login → JWT embeds org + policy hotel id |
 | Every row | `HOTELID` in payload must equal **that org’s** policy hotel id or ingest returns **409** |

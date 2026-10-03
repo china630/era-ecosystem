@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const projectId = new URL(req.url).searchParams.get("projectId");
     const rows = await prisma.drawingRevision.findMany({
       where: projectId ? { projectId } : undefined,
@@ -25,6 +26,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const row = await prisma.drawingRevision.create({ data: body });
     return jsonOk(row, 201);

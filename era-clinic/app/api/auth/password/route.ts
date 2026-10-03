@@ -3,7 +3,7 @@ import {
   jsonError,
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
 } from "@/lib/api-utils";
 import {
   changeLocalPassword,
@@ -18,7 +18,7 @@ const schema = z.object({
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const body = schema.parse(await request.json());
     await changeLocalPassword({

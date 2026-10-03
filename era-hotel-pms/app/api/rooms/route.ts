@@ -3,7 +3,7 @@ import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createRoom, listRoomsMaster } from '@/lib/services/room.service';
 import { listRoomsForRack } from '@/lib/services/room-rack.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -20,7 +20,7 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     const scope = new URL(request.url).searchParams.get('scope');
     if (scope === 'master') {
       assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const body = createSchema.parse(await request.json());
     const room = await createRoom(body);

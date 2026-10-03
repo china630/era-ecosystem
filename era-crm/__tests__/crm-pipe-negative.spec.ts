@@ -9,8 +9,12 @@ jest.mock("next/server", () => ({
 
 jest.mock("next/headers", () => ({
   cookies: jest.fn(async () => ({ get: () => undefined })),
-  headers: jest.fn(async () => ({ get: () => null })),
+  headers: jest.fn(async () => ({
+    get: (name: string) => (name === "x-era-pathname" ? "/api/auth/me" : null),
+  })),
 }));
+
+jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
@@ -27,13 +31,15 @@ jest.mock("@era/satellite-kit", () => {
     requireSatelliteModule: jest.fn(async (moduleKey: string) => {
       throw new IndustryModuleInactiveError(moduleKey);
     }),
-    authCookieName: () => "era_session",
-    getBearerOrCookieToken: () => null,
-    verifySatelliteSession: jest.fn(),
+    readSatelliteStaffSession: jest.fn(async () => null),
   };
 });
 
-import { IndustryModuleInactiveError, requireSatelliteModule } from "@era/satellite-kit";
+import {
+  IndustryModuleInactiveError,
+  readSatelliteStaffSession,
+  requireSatelliteModule,
+} from "@era/satellite-kit";
 
 describe("CRM PIPE negative paths (AC-CRM-PIPE)", () => {
   beforeEach(() => {
@@ -44,22 +50,34 @@ describe("CRM PIPE negative paths (AC-CRM-PIPE)", () => {
   });
 
   describe("module gate", () => {
-    it("assertCrmEntitled rejects when requireSatelliteModule throws", async () => {
-      const { assertCrmEntitled } = await import("@/lib/api-utils");
-      await expect(assertCrmEntitled()).rejects.toMatchObject({
-        name: "IndustryModuleInactiveError",
-        moduleKey: "industry_crm",
-      });
-      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_crm");
+    it("getSatelliteSession: no staff session -> null, module gate not reached", async () => {
+      const { getSatelliteSession } = await import("@/lib/api-utils");
+      await expect(getSatelliteSession()).resolves.toBeNull();
+      expect(requireSatelliteModule).not.toHaveBeenCalled();
     });
 
-    it("requireCrmSatellite rejects on unbound/fallback org", async () => {
-      const { requireCrmSatellite } = await import("@/lib/crm-module-gate");
-      await expect(requireCrmSatellite()).rejects.toMatchObject({
+    it("getSatelliteSession: inactive module -> IndustryModuleInactiveError for the token org", async () => {
+      (readSatelliteStaffSession as jest.Mock).mockResolvedValueOnce({
+        session: { sub: "u-1", login: "staff", role: "STAFF", organizationId: "org-1" },
+        user: { organizationId: "org-1", active: true },
+      });
+      const { getSatelliteSession } = await import("@/lib/api-utils");
+      await expect(getSatelliteSession()).rejects.toMatchObject({
         name: "IndustryModuleInactiveError",
         moduleKey: "industry_crm",
       });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_crm", { organizationId: "org-1" });
     });
+
+    it("requireCrmSatellite checks the module for the given org", async () => {
+      const { requireCrmSatellite } = await import("@/lib/crm-module-gate");
+      await expect(requireCrmSatellite("org-1")).rejects.toMatchObject({
+        name: "IndustryModuleInactiveError",
+        moduleKey: "industry_crm",
+      });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_crm", { organizationId: "org-1" });
+    });
+
 
     it("handleRouteError maps IndustryModuleInactiveError to 403", async () => {
       const { handleRouteError } = await import("@/lib/api-utils");
@@ -71,12 +89,26 @@ describe("CRM PIPE negative paths (AC-CRM-PIPE)", () => {
   });
 
   describe("domain deny", () => {
-    it("refuses lead assign without SALES_LEAD or BUSINESS_OWNER", async () => {
-      const { assignLeadDenied } = await import("@/lib/lead-assign-gates");
-      expect(assignLeadDenied(null)).toMatch(/SALES_LEAD/);
-      expect(assignLeadDenied("SALES_REP")).toMatch(/Forbidden/);
-      expect(assignLeadDenied("SALES_LEAD")).toBeNull();
-      expect(assignLeadDenied("BUSINESS_OWNER")).toBeNull();
+    it("refuses lead assign without api:leads.assign; seed grants it to SALES_LEAD only", async () => {
+      const { assertApiRouteGrant } = await import("@/lib/auth/require");
+      const { ROLE_TEMPLATES, PERMISSIONS } = await import("@/lib/auth/permissions");
+      const path = "/api/leads/lead-1/assign";
+      const as = (role: keyof typeof ROLE_TEMPLATES) => ({
+        login: "staff",
+        role,
+        permissions: [...ROLE_TEMPLATES[role]],
+      });
+      expect(() => assertApiRouteGrant(as("SALES_AGENT"), path)).toThrow(
+        expect.objectContaining({ status: 403 }),
+      );
+      expect(() => assertApiRouteGrant(as("FIELD_REP"), path)).toThrow(
+        expect.objectContaining({ status: 403 }),
+      );
+      expect(() => assertApiRouteGrant(as("SALES_LEAD"), path)).not.toThrow();
+      expect(() =>
+        assertApiRouteGrant({ login: "owner", role: "BUSINESS_OWNER", permissions: [] }, path),
+      ).not.toThrow();
+      expect(ROLE_TEMPLATES.SALES_AGENT).not.toContain(PERMISSIONS.LEADS_ASSIGN);
     });
 
     it("blocks stage advance to QUALIFIED without party VÖEN", async () => {

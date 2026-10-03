@@ -40,6 +40,7 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] Platform session via SSO — `PlatformSessionBarServer`
 - [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A)
+- [~] CRM-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/crm-domain-permissions-and-rbac.md))
 
 ## Operations (v1.0)
 

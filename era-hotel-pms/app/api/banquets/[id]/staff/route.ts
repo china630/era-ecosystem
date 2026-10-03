@@ -6,7 +6,7 @@ import {
   listEventStaffAssignments,
   upsertEventStaffAssignment,
 } from '@/lib/services/event-order.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -23,9 +23,9 @@ const upsertSchema = z.object({
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireHotelModule('hotel_banquets');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
+    await requireHotelModule('hotel_banquets', session.organizationId);
     const { id } = await ctx.params;
     return jsonOk(serialize(await listEventStaffAssignments(id)));
   } catch (err) {
@@ -35,9 +35,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireHotelModule('hotel_banquets');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    await requireHotelModule('hotel_banquets', session.organizationId);
     const { id } = await ctx.params;
     const body = upsertSchema.parse(await req.json());
     return jsonOk(serialize(await upsertEventStaffAssignment({ ...body, banquetEventId: id })), 201);
@@ -48,9 +48,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function DELETE(req: Request) {
   try {
-    await requireHotelModule('hotel_banquets');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    await requireHotelModule('hotel_banquets', session.organizationId);
     const url = new URL(req.url);
     const assignmentId = url.searchParams.get('assignmentId');
     if (!assignmentId) throw new Error('assignmentId query param required');

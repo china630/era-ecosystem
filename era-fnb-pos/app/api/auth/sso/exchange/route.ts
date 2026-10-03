@@ -4,8 +4,6 @@ import {
   enterSatelliteTenant,
   executeSatelliteSsoExchange,
   resolveVerifiedSsoFinanceRole,
-  satelliteOrganizationId,
-  satelliteRuntimeConfig,
   signSatelliteSession,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
@@ -24,7 +22,6 @@ import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 
 /**
  * SEC-SSO-02 + SEC-SSO-01.
- * SEC-SSO-05: DEDICATED/ONPREM require ticket org == process bind; SHARED accepts ticket org.
  */
 export async function POST(request: Request) {
   try {
@@ -45,22 +42,6 @@ export async function POST(request: Request) {
     }
     if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
       return jsonError("SSO ticket already used", 401);
-    }
-
-    const topology = satelliteRuntimeConfig().deploymentTopology;
-    let deployOrg: string | null = null;
-    try {
-      deployOrg = satelliteOrganizationId();
-    } catch {
-      deployOrg = null;
-    }
-    if (
-      topology !== "SHARED" &&
-      deployOrg &&
-      deployOrg !== "demo-org" &&
-      body.organizationId !== deployOrg
-    ) {
-      return jsonError("SSO organization mismatch", 401);
     }
 
     enterSatelliteTenant({ organizationId: body.organizationId });

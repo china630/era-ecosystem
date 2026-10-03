@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getPractitionerById,
@@ -53,10 +53,10 @@ const putSchema = z.object({
   exceptions: z.array(exceptionSchema),
 });
 
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
     const { id } = await ctx.params;
     const existing = await getPractitionerById(id);
     if (!existing) return jsonError("Not found", 404);

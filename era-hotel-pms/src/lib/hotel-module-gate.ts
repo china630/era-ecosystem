@@ -4,7 +4,6 @@ import {
   IndustryModuleInactiveError,
   resolveHotelModuleKey,
   resolveHotelModuleForPathname,
-  enterSatelliteTenant,
 } from "@era/satellite-kit";
 
 export { IndustryModuleInactiveError };
@@ -18,43 +17,23 @@ const AUTH_EXEMPT_PREFIXES = [
   "/sso",
 ];
 
-async function requestOrganizationIdFromHeaders(): Promise<string | undefined> {
-  try {
-    return (await headers()).get("x-era-organization-id")?.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-async function enterTenantFromRequestHeaders(): Promise<string | undefined> {
-  const org = await requestOrganizationIdFromHeaders();
-  if (org) enterSatelliteTenant({ organizationId: org });
-  return org;
-}
-
-/**
- * Fail-closed hotel submodule gate. Bound org required
- * (no silent skip on env fallback).
- */
+/** Fail-closed hotel submodule gate. The org comes from the session (or S2S caller). */
 export async function requireHotelModule(
   moduleKey: string,
-  organizationId?: string,
+  organizationId: string,
 ): Promise<void> {
-  const org = organizationId?.trim() || (await enterTenantFromRequestHeaders());
+  const org = organizationId?.trim();
   const key = resolveHotelModuleKey(moduleKey);
-  if (org) {
-    await requireSatelliteModule(key, { organizationId: org });
-    return;
-  }
-  await requireSatelliteModule(key);
+  if (!org) throw new IndustryModuleInactiveError(key);
+  await requireSatelliteModule(key, { organizationId: org });
 }
 
 /** Always require satellite gate; submodule when path maps. */
 export async function assertHotelApiEntitled(
-  pathname?: string | null,
-  organizationId?: string,
+  pathname: string | null | undefined,
+  organizationId: string,
 ): Promise<void> {
-  const org = organizationId?.trim() || (await enterTenantFromRequestHeaders());
+  const org = organizationId?.trim();
   let path = pathname?.trim() || "";
   if (!path) {
     try {
@@ -66,11 +45,8 @@ export async function assertHotelApiEntitled(
   if (!path || AUTH_EXEMPT_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {
     return;
   }
-  if (org) {
-    await requireSatelliteModule("industry_hotel_pms", { organizationId: org });
-  } else {
-    await requireSatelliteModule("industry_hotel_pms");
-  }
+  if (!org) throw new IndustryModuleInactiveError("industry_hotel_pms");
+  await requireSatelliteModule("industry_hotel_pms", { organizationId: org });
   const moduleKey = resolveHotelModuleForPathname(path);
   if (moduleKey) {
     await requireHotelModule(moduleKey, org);

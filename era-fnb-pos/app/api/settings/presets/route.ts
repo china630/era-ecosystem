@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { assertFnbEntitled, handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getFnbOrgProfile, setFnbEnabledPresets } from "@/lib/fnb-org-profile";
@@ -16,8 +16,7 @@ function selectable(edition: Parameters<typeof allowedFnbPresets>[0]) {
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_ADMIN_SETTINGS);
     if (denied) return denied;
     const profile = await getFnbOrgProfile();
@@ -37,8 +36,7 @@ const patchSchema = z.object({
 
 export async function PATCH(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_ADMIN_SETTINGS);
     if (denied) return denied;
     const body = patchSchema.parse(await request.json());

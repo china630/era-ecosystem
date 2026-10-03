@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  OPS_NAV_PROFILE_REFRESH_EVENT,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -115,6 +116,7 @@ export default function HotelAccessPage() {
   async function refreshSessionAndNav() {
     await fetch("/api/auth/session/refresh-permissions", { method: "POST" });
     await refresh();
+    window.dispatchEvent(new Event(OPS_NAV_PROFILE_REFRESH_EVENT));
     showSuccess(t("sessionRefreshed"));
   }
 

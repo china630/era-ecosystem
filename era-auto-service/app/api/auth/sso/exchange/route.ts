@@ -4,16 +4,18 @@ import {
   enterSatelliteTenant,
   executeSatelliteSsoExchange,
   resolveVerifiedSsoFinanceRole,
-  satelliteOrganizationId,
-  satelliteRuntimeConfig,
+  signSatelliteSession,
   ssoExchangeBodySchema,
 } from "@era/satellite-kit";
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemRoles } from "@/lib/auth/ensure-system-auto-roles";
+import { OWNER_ROLE_CODE } from "@/lib/auth/permission-check";
+import { grantsForUser } from "@/lib/auth/auto-permission.service";
 
 /**
  * SEC-SSO-02 + SEC-SSO-01: HMAC role bind + one-time signature consume.
- * SEC-SSO-05: on DEDICATED/ONPREM, ticket org must match process bind; SHARED accepts ticket org.
+ * System role packages are seeded before the kit binds the CP role.
  */
 export async function POST(request: Request) {
   try {
@@ -36,30 +38,38 @@ export async function POST(request: Request) {
       return jsonError("SSO ticket already used", 401);
     }
 
-    const topology = satelliteRuntimeConfig().deploymentTopology;
-    let deployOrg: string | null = null;
-    try {
-      deployOrg = satelliteOrganizationId();
-    } catch {
-      deployOrg = null;
-    }
-    if (
-      topology !== "SHARED" &&
-      deployOrg &&
-      deployOrg !== "demo-org" &&
-      body.organizationId !== deployOrg
-    ) {
-      return jsonError("SSO organization mismatch", 401);
-    }
-
     enterSatelliteTenant({ organizationId: body.organizationId });
+    await ensureSystemRoles(prisma, body.organizationId);
 
-    const { token, user } = await executeSatelliteSsoExchange(
-      { ...body, financeRole },
-      prisma,
-    );
+    const { user } = await executeSatelliteSsoExchange({ ...body, financeRole }, prisma);
 
-    const res = jsonOk({ user, token });
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { role: true },
+    });
+    if (!dbUser) return jsonError("SSO user missing", 500);
+
+    const isOwner = user.isOwner === true || dbUser.role.code === OWNER_ROLE_CODE;
+    const permissions = grantsForUser({
+      login: dbUser.login,
+      email: body.email,
+      role: dbUser.role,
+      isOwner,
+    });
+    const token = await signSatelliteSession({
+      sub: user.id,
+      login: user.login,
+      email: body.email,
+      role: dbUser.role.code,
+      roles: user.roles,
+      fullName: user.fullName,
+      organizationId: body.organizationId,
+      isOwner,
+      financeRole: user.financeRole,
+      permissions,
+    });
+
+    const res = jsonOk({ user: { ...user, permissions }, token });
     res.cookies.set(authCookieName(), token, {
       httpOnly: true,
       sameSite: "lax",

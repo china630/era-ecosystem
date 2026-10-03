@@ -6,7 +6,7 @@ import {
   getAllotmentBlockPickup,
   updateAllotmentBlock,
 } from '@/lib/services/allotment-block.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
@@ -32,8 +32,9 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: Ctx) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataRead(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataRead(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const url = new URL(req.url);
     if (url.searchParams.get('pickup') === '1') {
@@ -51,8 +52,9 @@ export async function GET(req: Request, ctx: Ctx) {
 
 export async function PATCH(request: Request, ctx: Ctx) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataWrite(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataWrite(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const body = patchSchema.parse(await request.json());
     const row = await updateAllotmentBlock(id, body);

@@ -1,10 +1,12 @@
+import { IndustryModuleInactiveError } from "@era/satellite-kit";
 import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { NextResponse } from "next/server";
-import { enterFnbRequestTenant } from "@/lib/api-utils";
 import { findOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
+import { getSatelliteSession } from "@/lib/session";
+import { handleRouteError } from "@/lib/api-utils";
 
-/** Read-only today's board. Logged-in session picks KAFE (or the outlet query). */
+/** Read-only today's board. No session or a missing outlet returns an empty board. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const outletParam = url.searchParams.get("outlet");
@@ -13,7 +15,7 @@ export async function GET(request: Request) {
   const empty = { outletCode: outletParam, date: dateYmd, items: [] as unknown[] };
 
   try {
-    await enterFnbRequestTenant();
+    if (!(await getSatelliteSession())) return NextResponse.json(empty);
     const outlet = await findOpsOutlet(outletParam);
     if (!outlet) return NextResponse.json(empty);
 
@@ -33,7 +35,8 @@ export async function GET(request: Request) {
         featured: e.isFeatured,
       })),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof IndustryModuleInactiveError) return handleRouteError(err);
     return NextResponse.json(empty);
   }
 }

@@ -1,9 +1,6 @@
-import { jsonError, jsonOk, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { jsonError, jsonOk, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { hasClinicPermissionBypass } from "@/lib/auth/clinic-admin-access";
-import {
-  resolveSessionPermissions,
-  permissionsForUser,
-} from "@/lib/auth/clinic-permission.service";
+import { resolveSessionPermissions } from "@/lib/auth/clinic-permission.service";
 import { ALL_CLINIC_PERMISSIONS } from "@/lib/auth/clinic-permissions";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
 import { getEnabledPresets } from "@/domain/settings/settings.service";
@@ -17,28 +14,22 @@ import { fetchControlPlaneOrganizationName } from "@era/satellite-kit";
 
 export async function GET() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
 
     const user = await prisma.user.findUnique({
       where: { id: session.sub },
       include: { role: true },
     });
-    if (!user || user.status !== "ACTIVE") {
-      return jsonError("Unauthorized", 401);
-    }
+    if (!user) return jsonError("Unauthorized", 401);
 
     const tenant = await prisma.tenant.findFirst({
       where: { code: "default" },
       select: { name: true, checkInRequiresQr: true, procedureCheckInMode: true },
     });
 
-    // Company name from control plane using session org (not process bind).
-    const organizationId =
-      session.organizationId?.trim() || user.organizationId?.trim() || "";
-    const controlPlaneName = organizationId
-      ? await fetchControlPlaneOrganizationName(organizationId)
-      : null;
+    const organizationId = session.organizationId;
+    const controlPlaneName = await fetchControlPlaneOrganizationName(organizationId);
 
     const enabledPresets = await getEnabledPresets();
 
@@ -46,11 +37,10 @@ export async function GET() {
       ...session,
       email: session.email ?? user.email ?? undefined,
       login: session.login || user.login,
-      organizationId: organizationId || session.organizationId,
     };
 
     const bypass = hasClinicPermissionBypass(mergedSession);
-    const dbPermissions = await permissionsForUser(user.id);
+    const dbPermissions = session.permissions ?? [];
     const permissions = bypass
       ? [...ALL_CLINIC_PERMISSIONS]
       : resolveSessionPermissions({
@@ -67,7 +57,7 @@ export async function GET() {
       role: user.role.code,
       staffKind: parseClinicRoleStaffKind(user.role.staffKind),
       permissions,
-      organizationId: organizationId || null,
+      organizationId,
       organizationName: controlPlaneName ?? tenant?.name ?? null,
       canViewClinicAdmin:
         bypass || permissions.some((p) => p.startsWith("screen:admin.")),

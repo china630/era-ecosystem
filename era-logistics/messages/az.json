@@ -161,6 +161,64 @@
     "localeToggleAria": "Dil",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "Bu səhifəyə girişiniz yoxdur"
+  },
+  "nav": {
+    "access": "Giriş hüquqları"
+  },
+  "settingsAccess": {
+    "title": "Rollar və giriş",
+    "subtitle": "Rol paketləri və onların verdiyi ekranlar və əməliyyatlar",
+    "loading": "Yüklənir…",
+    "loadFailed": "Rolları yükləmək mümkün olmadı",
+    "saveFailed": "Yadda saxlamaq mümkün olmadı",
+    "role": "Rol",
+    "clone": "Rolu klonla",
+    "save": "Yadda saxla",
+    "reset": "Standartlara qaytar",
+    "delete": "Rolu sil",
+    "newCode": "Yeni rol kodu",
+    "newName": "Ad",
+    "cloneFrom": "İcazələri buradan köçür",
+    "create": "Yarat",
+    "saved": "İcazələr yadda saxlanıldı",
+    "resetDone": "Standartlar bərpa edildi",
+    "created": "Rol yaradıldı",
+    "deleted": "Rol silindi",
+    "deleteInUse": "Silməzdən əvvəl bu rolun istifadəçilərini başqa rola keçirin",
+    "assignTitle": "İstifadəçiyə rol təyin et",
+    "assignUser": "İstifadəçi",
+    "assignRole": "Rol",
+    "assign": "Təyin et",
+    "assigned": "Rol təyin edildi",
+    "groups": {
+      "screens": "Ekranlar",
+      "trips": "Reyslər",
+      "operations": "Əməliyyatlar",
+      "admin": "İdarəetmə"
+    },
+    "perms": {
+      "screen_home": "Ana səhifə",
+      "screen_trips": "Reyslər",
+      "screen_trips_detail": "Reys kartı",
+      "screen_fleet": "Avtopark",
+      "screen_customs": "Gömrük",
+      "screen_reports_fuel": "Yanacaq hesabatı",
+      "screen_admin_settings": "Ayarlar",
+      "screen_admin_access": "Giriş hüquqları ekranı",
+      "api_trips": "Reyslər (siyahı, redaktə, tarif, ETA)",
+      "api_trips_waybill": "Yol vərəqəsi",
+      "api_trips_pod": "Çatdırılma təsdiqi",
+      "api_trips_complete": "Reysi tamamla",
+      "api_trips_points": "Marşrut nöqtələri",
+      "api_driver_trips": "Sürücü reys siyahısı",
+      "api_fleet_alerts": "Avtopark xəbərdarlıqları",
+      "api_hub_scan": "Hab skanı",
+      "api_cod_settle": "Nağd ödənişin hesablaşması",
+      "api_reports_fuel": "Yanacaq hesabatları",
+      "api_customs_preview": "HS / valyuta baxışı",
+      "admin_access_manage": "Rolları və girişi idarə et"
+    }
   }
 }

@@ -11,7 +11,8 @@ alwaysApply: false
 
 | Domain | API prefix | Models |
 |--------|------------|--------|
-| Auth / SSO | `app/api/auth/` | `User`, `Role` |
+| Auth / SSO | `app/api/auth/` (`login`, `sso/exchange`, `me`, `session/refresh-permissions`) | `User`, `Role` |
+| Access matrix (RET-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `admin/users`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
 | Receipts / pay | `app/api/receipts/` | `Receipt`, lines, fiscal, room charge |
 | Shifts | `app/api/shifts/` | open/close, X-report |
 | Products / stock | `products/`, `stock/`, `/api/import` (`stock-cards`) | search, check, replenishment; Nafta `#33` cutover wizard `/admin/import` |
@@ -22,4 +23,6 @@ alwaysApply: false
 
 Room charge when `shouldRouteRevenueToParent`; fiscal via `fiscalizeForSatellite`.
 
-**SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware `x-era-organization-id`; `assertRetailEntitled` → ALS; ops stamps via `requestOrganizationId()`. AC-RET-TENANT stays 🟡 — not sellable SHARED pool.
+**SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware `x-era-organization-id`; `getSatelliteSession()` (token org, active user, `requireRetailSatellite(org)`; one call per handler inside `try`); ops stamps via `requestOrganizationId()`. AC-RET-TENANT stays 🟡 — not sellable SHARED pool.
+
+**RBAC Variant A (RET-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. ADR retail-domain-permissions-and-rbac.

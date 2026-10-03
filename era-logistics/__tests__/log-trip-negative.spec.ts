@@ -1,3 +1,10 @@
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(async () => ({ get: () => undefined })),
+  headers: jest.fn(async () => ({
+    get: (name: string) => (name === "x-era-pathname" ? "/api/auth/me" : null),
+  })),
+}));
+
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
     status = 403;
@@ -11,9 +18,10 @@ jest.mock("@era/satellite-kit", () => {
   return {
     IndustryModuleInactiveError,
     requireSatelliteModule: jest.fn(),
-    authCookieName: () => "era_session",
-    getBearerOrCookieToken: jest.fn(() => null),
-    verifySatelliteSession: jest.fn(),
+    readSatelliteStaffSession: jest.fn(async () => ({
+      session: { sub: "u-1", login: "staff", role: "STAFF", organizationId: "org-1" },
+      user: { organizationId: "org-1", active: true },
+    })),
     satelliteOrganizationId: jest.fn(() => null),
   };
 });
@@ -65,13 +73,13 @@ describe("Logistics trip negative paths (AC-LOG-TRIP)", () => {
     jest.clearAllMocks();
   });
 
-  describe("assertLogisticsEntitled / module gate", () => {
+  describe("getSatelliteSession / module gate", () => {
     it("denies trip list when industry_logistics inactive", async () => {
       const gate = jest.requireMock("@/lib/logistics-module-gate") as {
         requireLogisticsSatellite: jest.Mock;
         IndustryModuleInactiveError: new (k: string) => Error;
       };
-      gate.requireLogisticsSatellite.mockRejectedValue(
+      gate.requireLogisticsSatellite.mockRejectedValueOnce(
         new gate.IndustryModuleInactiveError("industry_logistics"),
       );
       const { GET } = await import("../app/api/trips/route");

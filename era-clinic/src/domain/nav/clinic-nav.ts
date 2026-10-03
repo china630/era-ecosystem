@@ -28,6 +28,12 @@ import {
   CalendarRange,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
+import {
+  opsNavProfileFromMe,
+  visibleOpsNavItems,
+  visibleOpsNavSections,
+  type OpsNavCondition,
+} from "@era/satellite-kit/ui/nav";
 import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
 import {
   CLINIC_PERMISSION,
@@ -55,8 +61,12 @@ export type ClinicNavEntry = {
    * Visible when any listed preset is on.
    * Omit for the shared core (home, patients, lab, catalogs, platform).
    */
-  presets?: ClinicPresetCode[];
+  preset?: readonly ClinicPresetCode[];
 };
+
+export type ClinicNavItem = EraOpsNavItem & OpsNavCondition;
+export type ClinicNavSection = Omit<EraOpsNavSection, "items"> &
+  OpsNavCondition & { items: ClinicNavItem[] };
 
 export type ClinicNavBuildCtx = {
   permissions: string[];
@@ -116,7 +126,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Stethoscope,
     group: "frontdesk",
     permission: CLINIC_PERMISSION.SCREEN_APPOINTMENTS,
-    presets: [CLINIC_PRESET.OUTPATIENT, CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.OUTPATIENT, CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/reception/queue",
@@ -124,7 +134,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ListOrdered,
     group: "frontdesk",
     permission: CLINIC_PERMISSION.SCREEN_RECEPTION_QUEUE,
-    presets: [CLINIC_PRESET.OUTPATIENT],
+    preset: [CLINIC_PRESET.OUTPATIENT],
   },
   {
     href: "/cashier",
@@ -132,7 +142,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Wallet,
     group: "frontdesk",
     permission: CLINIC_PERMISSION.SCREEN_CASHIER,
-    presets: [CLINIC_PRESET.OUTPATIENT],
+    preset: [CLINIC_PRESET.OUTPATIENT],
   },
   {
     href: "/reception/extra-tickets",
@@ -140,7 +150,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ScrollText,
     group: "frontdesk",
     permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
 
   // Clinical — DOCTOR / NURSE
@@ -150,7 +160,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: UserRound,
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_DOCTOR,
-    presets: [CLINIC_PRESET.OUTPATIENT],
+    preset: [CLINIC_PRESET.OUTPATIENT],
   },
   {
     href: "/nurse",
@@ -158,7 +168,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Syringe,
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_NURSE,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/check-in",
@@ -166,7 +176,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ClipboardList,
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_CHECK_IN,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/lab-orders",
@@ -188,7 +198,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: FileSpreadsheet,
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
 
   // Module: Sanatoriya
@@ -198,7 +208,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: HeartPulse,
     group: "mod:sanatorium",
     permission: CLINIC_PERMISSION.SCREEN_SANATORIUM,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/sanatorium/resources",
@@ -206,7 +216,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Grid3x3,
     group: "mod:sanatorium",
     permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/sanatorium/nurse-roster",
@@ -214,7 +224,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: CalendarRange,
     group: "mod:sanatorium",
     permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
 
   // Module: Stasionar
@@ -224,7 +234,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: BedDouble,
     group: "mod:inpatient",
     permission: CLINIC_PERMISSION.SCREEN_INPATIENT,
-    presets: [CLINIC_PRESET.INPATIENT_DAY],
+    preset: [CLINIC_PRESET.INPATIENT_DAY],
   },
   {
     href: "/inpatient/census",
@@ -232,7 +242,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ClipboardList,
     group: "mod:inpatient",
     permission: CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
-    presets: [CLINIC_PRESET.INPATIENT_DAY],
+    preset: [CLINIC_PRESET.INPATIENT_DAY],
   },
   {
     href: "/admin/wards",
@@ -240,7 +250,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: BedDouble,
     group: "mod:inpatient",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS,
-    presets: [CLINIC_PRESET.INPATIENT_DAY],
+    preset: [CLINIC_PRESET.INPATIENT_DAY],
   },
 
   // Setup — Catalogs (admin/owner)
@@ -271,7 +281,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: Package,
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/admin/import",
@@ -279,7 +289,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: FileInput,
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
 
   // Setup — Rules & data (admin/owner)
@@ -289,7 +299,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: GitBranch,
     group: "setup:rules",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/admin/lis-profiles",
@@ -311,7 +321,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: BookOpen,
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/admin/physio-sites",
@@ -319,7 +329,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: MapPin,
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
-    presets: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
     href: "/admin/audit",
@@ -344,54 +354,57 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
   },
 ];
 
-function entryVisible(entry: ClinicNavEntry, ctx: ClinicNavBuildCtx): boolean {
-  if (entry.presets?.length && !entry.presets.some((code) => ctx.presetEnabled(code))) {
-    return false;
-  }
-  const perm = entry.permission;
-  if (!perm) return true;
-  return ctx.permissions.includes(perm);
-}
-
-function toNavItem(entry: ClinicNavEntry, t: NavTranslator): EraOpsNavItem {
+function toNavItem(entry: ClinicNavEntry, t: NavTranslator): ClinicNavItem {
   return {
     href: entry.href,
     label: t(entry.labelKey),
     icon: entry.icon,
+    permission: entry.permission,
+    preset: entry.preset,
   };
 }
 
-export function buildClinicNav(
-  ctx: ClinicNavBuildCtx,
-  t: NavTranslator,
-): { topItems: EraOpsNavItem[]; sections: EraOpsNavSection[] } {
-  const topItems = CLINIC_TOP_NAV.filter((e) => entryVisible(e, ctx)).map((e) =>
-    toNavItem(e, t),
-  );
-
-  const visible = CLINIC_NAV.filter((e) => entryVisible(e, ctx));
-  const byGroup = new Map<ClinicNavGroupId, EraOpsNavItem[]>();
-  for (const entry of visible) {
+/** Full catalog with row and section conditions; the shell filters it with the kit. */
+export function clinicNavCatalog(t: NavTranslator): {
+  topItems: ClinicNavItem[];
+  sections: ClinicNavSection[];
+} {
+  const topItems = CLINIC_TOP_NAV.map((e) => toNavItem(e, t));
+  const byGroup = new Map<ClinicNavGroupId, ClinicNavItem[]>();
+  for (const entry of CLINIC_NAV) {
     const list = byGroup.get(entry.group) ?? [];
     list.push(toNavItem(entry, t));
     byGroup.set(entry.group, list);
   }
-
-  const sections: EraOpsNavSection[] = [];
+  const sections: ClinicNavSection[] = [];
   for (const groupId of GROUP_ORDER) {
     const meta = GROUP_META[groupId];
-    if (meta.modulePreset && !ctx.presetEnabled(meta.modulePreset)) continue;
     const items = byGroup.get(groupId);
     if (!items || items.length === 0) continue;
     sections.push({
       id: groupId,
       title: t(meta.titleKey),
       icon: meta.icon,
+      ...(meta.modulePreset ? { preset: meta.modulePreset } : {}),
       items,
     });
   }
-
   return { topItems, sections };
+}
+
+export function buildClinicNav(
+  ctx: ClinicNavBuildCtx,
+  t: NavTranslator,
+): { topItems: EraOpsNavItem[]; sections: EraOpsNavSection[] } {
+  const profile = opsNavProfileFromMe({
+    permissions: ctx.permissions,
+    enabledPresets: Object.values(CLINIC_PRESET).filter((code) => ctx.presetEnabled(code)),
+  });
+  const catalog = clinicNavCatalog(t);
+  return {
+    topItems: visibleOpsNavItems(catalog.topItems, "ready", profile),
+    sections: visibleOpsNavSections(catalog.sections, "ready", profile),
+  };
 }
 
 /** First admin href the session may open (nav order). */

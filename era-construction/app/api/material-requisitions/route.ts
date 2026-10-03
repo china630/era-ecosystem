@@ -1,6 +1,6 @@
 import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { createShipment } from "@/integration/control-plane-platform.client";
 import { materialRequisitionDenied } from "@/lib/material-gates";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +14,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const requisitions = await prisma.materialRequisition.findMany({
       include: { project: true },
       orderBy: { createdAt: "desc" },
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const project = await prisma.project.findUnique({
       where: { code: body.projectCode } as never,

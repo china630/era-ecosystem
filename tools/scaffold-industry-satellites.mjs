@@ -316,14 +316,21 @@ export async function GET() {
   w(
     `${base}/app/api/events/dispatch/route.ts`,
     `import { NextResponse } from "next/server";
-import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
+import { organizationIdOnIncomingRequest, publishToOrchestratorGateway } from "@era/satellite-kit";
 import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
+  const organizationId = organizationIdOnIncomingRequest(req);
+  if (!organizationId) {
+    return NextResponse.json(
+      { ok: false, error: "organizationId is not bound on this request" },
+      { status: 400 },
+    );
+  }
   const body = (await req.json()) as { type: string; payload?: Record<string, unknown> };
   const event = {
     type: body.type,
-    organizationId: satelliteOrganizationId(),
+    organizationId,
     correlationId: randomUUID(),
     occurredAt: new Date().toISOString(),
     payload: body.payload ?? {},

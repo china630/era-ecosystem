@@ -44,7 +44,7 @@
 
 ## R3 — Returns & shift event
 
-- [ ] Void line: `POST /api/receipts/{id}/lines/{lineId}/void` on OPEN receipt → line `VOID`, `amountNet` recalculated (requires `SHIFT_SUPERVISOR` or `OUTLET_ADMIN`)
+- [ ] Void line: `POST /api/receipts/{id}/lines/{lineId}/void` on OPEN receipt → line `VOID`, `amountNet` recalculated (requires grant `api:receipts.void_line`; seeded on `SHIFT_SUPERVISOR` and `OUTLET_ADMIN`)
 - [ ] Return receipt: `POST /api/receipts/{id}/return` on PAID receipt → negative return receipt with `originalReceiptId` + `SATELLITE_RETAIL_SALE_COMPLETED` (negative `amountNet`)
 - [ ] Close shift: `POST /api/shifts/close` → `totalSales`, `receiptCount`, `SATELLITE_RETAIL_SHIFT_CLOSED`
 - [ ] `/pos` UI: void line button, return on paid receipt, close shift with Z-summary
@@ -72,7 +72,17 @@
 
 ## Deny (Scaffold BE negative paths — POS / STOCK only)
 
-1. **Module off → 403:** With `industry_retail` inactive (or unbound org / source=fallback), operational routes that call `assertRetailEntitled` return **403** (`Industry module not active: industry_retail`). Proof: `__tests__/ret-pos-negative.spec.ts`, `ret-stock-negative.spec.ts`.
+1. **Module off → 403:** With `industry_retail` inactive for the session org, operational routes (module gate inside `getSatelliteSession()`) return **403** (`Industry module not active: industry_retail`). Proof: `__tests__/ret-pos-negative.spec.ts`, `ret-stock-negative.spec.ts`.
 2. **Domain denies (POS):** PAID receipt refuses void (must return); promo / line-void only on OPEN; apparel line missing size/color rejected.
 3. **Domain denies (STOCK):** stock write-off with empty `lines` → **400** `lines required`.
 4. **FISCAL:** not in this deny section — AC-RET-FISCAL remains External stub (not Scaffold ✅).
+
+## RET-RBAC-01 — access matrix (SCREEN; not SHIPPED)
+
+ADR: [retail-domain-permissions-and-rbac.md](../../docs/adr/retail-domain-permissions-and-rbac.md). Proof: `__tests__/retail-rbac*.spec.ts`.
+
+- [ ] Log in as `OUTLET_ADMIN` → nav shows **Access** → `/admin/access` lists the six system packages (`CASHIER`, `SHIFT_SUPERVISOR`, `OUTLET_ADMIN`, `BUSINESS_OWNER`, `PLATFORM_MEMBER`, `SATELLITE_OPERATOR`).
+- [ ] Log in as `CASHIER` → nav has no Import / Replenishment / Access; opening `/admin/import` lands on `/login` with the "no access" message; on `/pos` the line void button returns 403.
+- [ ] As `OUTLET_ADMIN`: untick `api:receipts.void_line` on `SHIFT_SUPERVISOR` → Save → supervisor line void and receipt void return 403; **Reset to defaults** restores both.
+- [ ] Clone `SHIFT_SUPERVISOR` as `NIGHT_DESK` → assign a cashier user to it in **Assign a role to a user** → that user can void; delete `NIGHT_DESK` is refused while the user holds it.
+- [ ] `OUTLET_ADMIN` cannot assign `BUSINESS_OWNER` (403); SSO owner can.

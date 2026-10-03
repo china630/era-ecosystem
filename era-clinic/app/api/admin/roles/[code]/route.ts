@@ -17,7 +17,6 @@ import {
   type ClinicRoleStaffKind,
 } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 type RouteParams = { params: Promise<{ code: string }> };
@@ -39,7 +38,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (denied) return denied;
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     const body = patchSchema.parse(await req.json());
     if (body.name === undefined && body.staffKind === undefined) {
       return jsonError("name or staffKind required", 400);
@@ -113,7 +112,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     if (denied) return denied;
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     const role = await prisma.role.findFirst({
       where: { organizationId, code },
       include: { _count: { select: { users: true } } },

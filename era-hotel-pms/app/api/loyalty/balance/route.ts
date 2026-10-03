@@ -1,7 +1,7 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -12,7 +12,7 @@ const CP_TOKEN =
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const customerRef = new URL(request.url).searchParams.get('customerRef');
     if (!customerRef) throw new Error('customerRef required');

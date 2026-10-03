@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { verifyGuestQrToken } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
@@ -12,7 +12,7 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_NURSE_QR_SCAN);
     if (denied) return denied;
 

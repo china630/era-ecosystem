@@ -257,16 +257,20 @@ export default function LoginPage() {
 const eventDispatch = `import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { isSatelliteEvent } from "@era/contracts";
-import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
+import { organizationIdOnIncomingRequest, publishToOrchestratorGateway } from "@era/satellite-kit";
 
 export async function POST(req: Request) {
+  const organizationId = organizationIdOnIncomingRequest(req);
+  if (!organizationId) {
+    return NextResponse.json(
+      { ok: false, error: "organizationId is not bound on this request" },
+      { status: 400 },
+    );
+  }
   const body = (await req.json()) as Record<string, unknown>;
   const event = {
     ...body,
-    organizationId:
-      typeof body.organizationId === "string"
-        ? body.organizationId
-        : satelliteOrganizationId(),
+    organizationId,
     correlationId:
       typeof body.correlationId === "string" ? body.correlationId : randomUUID(),
     occurredAt:

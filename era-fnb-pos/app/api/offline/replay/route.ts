@@ -1,9 +1,9 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { handleRouteError } from "@/lib/api-utils";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -18,30 +18,33 @@ const bodySchema = z.object({
 
 /** Replay queued pay/fire from offline client. */
 export async function POST(request: Request) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_OFFLINE_REPLAY);
-  if (denied) return denied;
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_OFFLINE_REPLAY);
+    if (denied) return denied;
 
-  const { actions } = bodySchema.parse(await request.json());
-  const origin = new URL(request.url).origin;
-  const results: { id: string; ok: boolean; status: number }[] = [];
+    const { actions } = bodySchema.parse(await request.json());
+    const origin = new URL(request.url).origin;
+    const results: { id: string; ok: boolean; status: number }[] = [];
 
-  for (const action of actions) {
-    const path =
-      action.kind === "pay"
-        ? `/api/tickets/${action.ticketId}/pay`
-        : `/api/tickets/${action.ticketId}/fire`;
-    const res = await fetch(`${origin}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: request.headers.get("cookie") ?? "",
-      },
-      body: JSON.stringify(action.payload),
-    });
-    results.push({ id: action.id, ok: res.ok, status: res.status });
+    for (const action of actions) {
+      const path =
+        action.kind === "pay"
+          ? `/api/tickets/${action.ticketId}/pay`
+          : `/api/tickets/${action.ticketId}/fire`;
+      const res = await fetch(`${origin}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie: request.headers.get("cookie") ?? "",
+        },
+        body: JSON.stringify(action.payload),
+      });
+      results.push({ id: action.id, ok: res.ok, status: res.status });
+    }
+
+    return NextResponse.json({ replayed: results.length, results });
+  } catch (err) {
+    return handleRouteError(err);
   }
-
-  return NextResponse.json({ replayed: results.length, results });
 }

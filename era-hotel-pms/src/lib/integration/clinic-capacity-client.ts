@@ -16,6 +16,7 @@ export type ClinicCapacitySummary = {
 };
 
 export async function fetchClinicCapacitySummary(
+  organizationId: string,
   refDate = new Date(),
 ): Promise<ClinicCapacitySummary | null> {
   const base = (process.env.CLINIC_URL ?? process.env.ERA_CLINIC_URL ?? '').replace(
@@ -27,7 +28,10 @@ export async function fetchClinicCapacitySummary(
   try {
     const qs = `date=${encodeURIComponent(todayBakuYmd(refDate))}`;
     const res = await fetch(`${base}/api/capacity/summary?${qs}`, {
-      headers: { 'x-clinic-bridge-secret': secret },
+      headers: {
+        'x-clinic-bridge-secret': secret,
+        'x-era-organization-id': organizationId,
+      },
       cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -38,8 +42,11 @@ export async function fetchClinicCapacitySummary(
   }
 }
 
-export async function assertSanatoriumBookingAllowed(refDate = new Date()): Promise<void> {
-  const cap = await fetchClinicCapacitySummary(refDate);
+export async function assertSanatoriumBookingAllowed(
+  organizationId: string,
+  refDate = new Date(),
+): Promise<void> {
+  const cap = await fetchClinicCapacitySummary(organizationId, refDate);
   if (cap && !cap.bookingAllowed) {
     const detail =
       cap.message ??

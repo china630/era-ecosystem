@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
-import { assignLeadDenied } from "@/lib/lead-assign-gates";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { assertPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const bodySchema = z.object({
   ownerId: z.string().nullable(),
@@ -12,9 +13,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const role = req.headers.get("x-user-role");
-    const assignDenied = assignLeadDenied(role);
-    if (assignDenied) return jsonError(assignDenied, 403);
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    assertPermission(session, PERMISSIONS.LEADS_ASSIGN);
 
     const { id } = await params;
     const body = bodySchema.parse(await req.json());

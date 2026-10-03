@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -20,9 +20,9 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
-    await requireHotelModule('hotel_distribution');
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
@@ -38,9 +38,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
-    await requireHotelModule('hotel_distribution');
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const body = createSchema.parse(await request.json());
     const row = await createStopSell({
       date: new Date(body.date),
@@ -56,9 +56,9 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
-    await requireHotelModule('hotel_distribution');
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const id = new URL(request.url).searchParams.get('id');
     if (!id) throw new Error('id query param required');
     await removeStopSell(id);

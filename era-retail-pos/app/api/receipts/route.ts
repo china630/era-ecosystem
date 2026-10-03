@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import {
   computeLineTotal,
   validateReceiptLines,
@@ -30,7 +30,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const shift = await prisma.shift.findUnique({
       where: { id: body.shiftId },

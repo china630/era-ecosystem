@@ -1,8 +1,8 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { DELIVERY_ACCEPT } from "@/lib/auth/read-permission-sets";
 
@@ -14,8 +14,7 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, DELIVERY_ACCEPT);
     if (denied) return denied;
     const orders = await prisma.deliveryInboxOrder.findMany({
@@ -31,8 +30,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, DELIVERY_ACCEPT);
     if (denied) return denied;
     const body = createSchema.parse(await request.json());

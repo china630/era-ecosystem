@@ -41,6 +41,28 @@ export async function permissionsForUserId(
   return effectiveRolePermissions(role.code, role.permissionsJson);
 }
 
+/**
+ * API grants for a staff session and its (active) OpsUser role: owner and
+ * platform super-admin get all; others get their OpsRole grants.
+ */
+export function permissionsForSession(
+  session: { login: string; email?: string; role: string; isOwner?: boolean },
+  opsRole: { code: string; permissionsJson: string },
+): Permission[] {
+  if (
+    hasBankPermissionBypass({
+      login: session.login,
+      email: session.email,
+      role: session.role,
+      isOwner: session.isOwner,
+    })
+  ) {
+    return [...ALL_PERMISSIONS];
+  }
+  if (opsRole.code === "BUSINESS_OWNER") return [...ALL_PERMISSIONS];
+  return effectiveRolePermissions(opsRole.code, opsRole.permissionsJson);
+}
+
 export async function resolveSessionGrantList(input: {
   organizationId: string;
   userId: string;

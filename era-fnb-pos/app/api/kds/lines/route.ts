@@ -1,18 +1,17 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.KDS_BUMP);
     if (denied) return denied;
-    await requireFnbSubmodule("fnb_kitchen_kds");
+    await requireFnbSubmodule("fnb_kitchen_kds", session?.organizationId);
     const lines = await prisma.ticketLine.findMany({
       where: { kitchenStatus: { in: ["NEW", "FIRED", "IN_PREP"] } },
       include: { ticket: { include: { table: true, outlet: true } } },

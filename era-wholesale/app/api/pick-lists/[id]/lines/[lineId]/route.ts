@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 type PickListWithLines = Prisma.PickListGetPayload<{ include: { order: true; lines: true } }>;
@@ -14,6 +14,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; lineId: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id, lineId } = await params;
     const body = patchSchema.parse(await req.json());
 

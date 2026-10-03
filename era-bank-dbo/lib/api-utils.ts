@@ -40,10 +40,6 @@ export function handleRouteError(err: unknown) {
   return jsonError(msg, 500);
 }
 
-export async function assertDboEntitled(): Promise<void> {
-  await requireDboSatellite();
-}
-
 export async function getSessionTokenFromRequest(): Promise<string | null> {
   const cookieStore = await cookies();
   const headerStore = await headers();
@@ -57,13 +53,11 @@ export async function getSessionTokenFromRequest(): Promise<string | null> {
 export async function requireCustomerSession(): Promise<
   { session: CustomerSession } | NextResponse
 > {
-  await assertDboEntitled();
   const token = await getSessionTokenFromRequest();
   const session = await resolveCustomerSession(token);
   if (!session) return jsonError("Unauthorized", 401);
-  if (session.organizationId) {
-    enterSatelliteTenant({ organizationId: session.organizationId });
-  }
+  await requireDboSatellite(session.organizationId);
+  enterSatelliteTenant({ organizationId: session.organizationId });
   return { session };
 }
 

@@ -187,6 +187,7 @@ With stack up and `SATELLITE_EVENT_SERVICE_TOKEN` set:
 ```bash
 curl -X POST http://retail-pos.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
+  -H "x-era-organization-id: <org-uuid>" \
   -d "{\"type\":\"SATELLITE_RETAIL_SALE_COMPLETED\",\"payload\":{\"outletId\":\"o1\",\"registerId\":\"r1\",\"shiftId\":\"s1\",\"receiptId\":\"rc1\",\"preset\":\"grocery\",\"amountNet\":10,\"currency\":\"AZN\",\"paymentMethod\":\"CASH\",\"lineCount\":1}}"
 ```
 
@@ -194,7 +195,7 @@ Check orchestrator and finance-core logs for enqueue/worker log line with `trans
 
 ## All 13 ingress event types — dispatch smoke
 
-Set `ERA_SATELLITE_ORGANIZATION_ID` to a valid finance org UUID and ensure org has at least one counterparty for invoice handlers.
+Send `x-era-organization-id` with a valid finance org UUID on every dispatch curl below. The route ignores `organizationId` in the JSON body and does not read the process bind. The org needs at least one counterparty for invoice handlers.
 
 | # | Host | `type` | Worker log hint |
 |---|------|--------|-----------------|
@@ -224,6 +225,7 @@ Example payloads:
 # Logistics trip
 curl -X POST http://logistics.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
+  -H "x-era-organization-id: <org-uuid>" \
   -d "{\"type\":\"SATELLITE_LOGISTICS_TRIP_COMPLETED\",\"payload\":{\"tripId\":\"t1\",\"vehicleId\":\"v1\",\"freightAmount\":100,\"currency\":\"AZN\"}}"
 
 # Logistics L2 — POD + fuel + rollup (after trip created)
@@ -236,16 +238,19 @@ curl "http://logistics.era-365.online/api/reports/fuel?from=2026-05-01&to=2026-0
 # Retail shift closed
 curl -X POST http://retail-pos.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
+  -H "x-era-organization-id: <org-uuid>" \
   -d "{\"type\":\"SATELLITE_RETAIL_SHIFT_CLOSED\",\"payload\":{\"shiftId\":\"s1\",\"outletId\":\"o1\",\"registerId\":\"r1\",\"preset\":\"grocery\",\"totalSales\":500,\"receiptCount\":12,\"currency\":\"AZN\"}}"
 
 # CRM visit logged
 curl -X POST http://crm.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
+  -H "x-era-organization-id: <org-uuid>" \
   -d "{\"type\":\"SATELLITE_CRM_VISIT_LOGGED\",\"payload\":{\"visitId\":\"v1\",\"leadId\":\"l1\",\"channel\":\"visit\"}}"
 
 # Clinic lab order completed
 curl -X POST http://clinic.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
+  -H "x-era-organization-id: <org-uuid>" \
   -d "{\"type\":\"SATELLITE_CLINIC_LAB_ORDER_COMPLETED\",\"payload\":{\"labOrderId\":\"lo1\",\"patientRef\":\"p1\",\"testCode\":\"CBC\",\"amountNet\":25,\"currency\":\"AZN\"}}"
 ```
 
@@ -278,8 +283,7 @@ Finance worker idempotency: table `satellite_events_processed` — replay same `
 With `docker compose up -d fb-pos hotel-pms` (or local `:3200` / `:3000`):
 
 ```bash
-# FB login (session cookie for RBAC). SHARED pool: orgNo required.
-# Appliance / DEDICATED: you may omit orgNo.
+# FB login (session cookie for RBAC). orgNo required unless the host already names the org.
 curl -c /tmp/fb-cookies.txt -X POST http://localhost:3200/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"login":"waiter","password":"waiter","orgNo":"104221"}'

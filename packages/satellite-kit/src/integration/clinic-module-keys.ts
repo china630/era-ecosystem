@@ -23,7 +23,7 @@ export function isClinicModuleActive(
 /**
  * UI/API path prefix → required clinic or platform module key.
  * Gate-only screens (schedule, appointments, catalog) are omitted — satellite gate is enough.
- * Cron handlers map separately via runCronIfEntitled.
+ * Cron handlers map separately via runCronForEachTenant.
  */
 export const CLINIC_MODULE_BY_ROUTE: Record<string, string> = {
   "/patients": "clinic_registry_emr",

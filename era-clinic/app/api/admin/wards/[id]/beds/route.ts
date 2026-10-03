@@ -13,9 +13,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminRoute(_request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(_request);
+    if (guard.error) return guard.error;
     const { id } = await params;
     const beds = await prisma.bed.findMany({
       where: { wardId: id },
@@ -31,9 +31,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await assertClinicAdminRoute(request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(request);
+    if (guard.error) return guard.error;
     const { id: wardId } = await params;
     const body = createSchema.parse(await request.json());
     const bed = await createBed({ wardId, code: body.code, status: body.status });

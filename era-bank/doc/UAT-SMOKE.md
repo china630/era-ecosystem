@@ -25,11 +25,11 @@ Set `ERA_BANK_CORE_URL=http://localhost:4300` and a real `ERA_BANK_ORGANIZATION_
 ## Platform
 
 - [ ] `GET /api/health` → 200 `{ status: "ok", service: "era-bank" }`
-- [ ] `/login` loads; `teller-a` / `demo1234` → `/dashboard` (appliance: no ERA ID. SHARED pool: 6-digit org code / `{orgNo}.bank.era-365.online`)
+- [ ] `/login` loads; `teller-a` / `demo1234` plus the 6-digit org code, or a host that already carries it (`{orgNo}.bank.era-365.online`), → `/dashboard`. Login without that org is rejected.
 - [ ] EOD lock banner hidden when no RUNNING EOD
 - [ ] **Clock (Asia/Baku):** `/admin/eod` default business date and EOD lock poll use `todayBakuYmd()` — not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the picker already shows the new Baku day when Node `TZ=UTC`.
 - [ ] Logout → `/login`
-- [ ] `/api/entitlements` returns `banking_*` flags; nav hides inactive modules
+- [ ] `/api/entitlements` and `/api/auth/me` `activeModules` return the same `banking_*` list; nav paints once and hides inactive modules (no flash of the full menu)
 
 ## Teller day walkthrough (modal CRUD)
 

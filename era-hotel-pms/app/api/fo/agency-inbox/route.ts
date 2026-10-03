@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -13,9 +13,9 @@ import {
 
 export async function GET() {
   try {
-    await requireHotelModule('hotel_core');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
+    await requireHotelModule('hotel_core', session.organizationId);
     return jsonOk(serialize(await listAgencyInbox()));
   } catch (err) {
     return handleRouteError(err);
@@ -30,9 +30,9 @@ const actionSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await requireHotelModule('hotel_core');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    await requireHotelModule('hotel_core', session.organizationId);
     const body = actionSchema.parse(await request.json());
     if (body.action === 'confirm') {
       return jsonOk(serialize(await confirmAgencyInboxItem(body.reservationId)));

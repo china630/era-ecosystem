@@ -10,9 +10,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const guard = await assertClinicAdminRoute(request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(request);
+    if (guard.error) return guard.error;
     const wards = await listWards();
     return jsonOk({ data: wards });
   } catch (err) {
@@ -21,9 +21,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const guard = await assertClinicAdminRoute(request);
-  if (guard.error) return guard.error;
   try {
+    const guard = await assertClinicAdminRoute(request);
+    if (guard.error) return guard.error;
     const body = createSchema.parse(await request.json());
     const ward = await createWard(body);
     return jsonOk({ data: ward }, 201);

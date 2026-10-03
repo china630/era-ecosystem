@@ -35,13 +35,10 @@ export class FnbQuotaError extends Error {
 }
 
 /** F&B satellite gate. Submodules (KDS, Zal, QR) are checked separately. */
-export async function requireFnbSatellite(organizationId?: string): Promise<void> {
+export async function requireFnbSatellite(organizationId: string): Promise<void> {
   const org = organizationId?.trim();
-  if (org) {
-    await requireSatelliteModule("industry_fnb_pos", { organizationId: org });
-    return;
-  }
-  await requireSatelliteModule("industry_fnb_pos");
+  if (!org) throw new IndustryModuleInactiveError("industry_fnb_pos");
+  await requireSatelliteModule("industry_fnb_pos", { organizationId: org });
 }
 
 export async function requireFnbSubmodule(

@@ -63,7 +63,7 @@ describe('agency portal policy defaults', () => {
 
 describe('agency portal CL scope', () => {
   it('ledger API must not accept party id from query (documented contract)', () => {
-    // Route uses getAgencySession().agencyId only — see app/api/agency/ledger/route.ts
+    // Route uses requireAgencyPortalSession().agencyId only — see app/api/agency/ledger/route.ts
     const forbiddenQueryKeys = ['agencyId', 'partyId', 'id'];
     expect(forbiddenQueryKeys.every((k) => typeof k === 'string')).toBe(true);
   });

@@ -1,4 +1,4 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import {
   IMPORT_ROW_CAP,
   mapHeaders,
@@ -146,10 +146,12 @@ async function runImport(
 
 export async function POST(req: Request) {
   try {
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const { searchParams } = new URL(req.url);
     const mode =
       searchParams.get("mode") === "create-only" ? "create-only" : "upsert";
-    const userId = req.headers.get("x-user-id");
+    const userId = session.sub;
 
     const form = await req.formData();
     const file = form.get("file");

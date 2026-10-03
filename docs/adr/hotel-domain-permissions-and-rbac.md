@@ -30,7 +30,7 @@ Clinic proved Variant A (system seed, clone, DB-authoritative guards, `CLINIC_AD
 4. Permission `admin:access_manage` (default **Hotel_Admin** only). `/settings/users` stays on `admin:users`.
 5. `assertPermission` / `assertAnyPermission` use session/DB grants — **role name grants nothing**.
 6. Bypass: platform super-admin + OrgOwner (`isOwner` / `BUSINESS_OWNER`) only. **`Hotel_Admin` does not bypass.**
-7. JWT carries `permissions[]`; `POST /api/auth/session/refresh-permissions` after Save (expands ALL for SA/owner like `/me`). API `getSessionFromHeaders` reloads grants from DB.
+7. JWT carries `permissions[]`; `POST /api/auth/session/refresh-permissions` after Save (expands ALL for SA/owner like `/me`). API `getSatelliteSession` reloads grants from DB.
 8. Page middleware maps coarse pathnames → **any-of** `screen:*` keys. APIs keep `api:*` / `admin:*`. Wave 3 catalogVersion **3** expands stored API grants into paired screens (strips of void etc. survive).
 9. Provision: unknown `satelliteRole` → error; CP aliases map to system codes only.
 

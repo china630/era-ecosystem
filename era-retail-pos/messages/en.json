@@ -10,7 +10,8 @@
     "replenishment": "Replenishment",
     "settings": "Settings",
     "import": "Cutover import",
-    "executive": "Executive"
+    "executive": "Executive",
+    "access": "Access"
   },
   "login": {
     "title": "Sign in",
@@ -136,7 +137,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "You do not have access to that page"
   },
   "admin": {
     "supplierMatch": {
@@ -201,5 +203,59 @@
     "nextPhase": "Next phase",
     "prevPhase": "Previous phase",
     "phaseProgress": "Phase {current} of {total}"
+  },
+  "settingsAccess": {
+    "title": "Roles and access",
+    "subtitle": "Role packages and the screens and actions they grant",
+    "loading": "Loading…",
+    "loadFailed": "Could not load roles",
+    "saveFailed": "Could not save",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "delete": "Delete role",
+    "newCode": "New role code",
+    "newName": "Name",
+    "cloneFrom": "Copy grants from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "deleteInUse": "Reassign the users of this role before deleting it",
+    "assignTitle": "Assign a role to a user",
+    "assignUser": "User",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groups": {
+      "screens": "Screens",
+      "sales": "Sales",
+      "shifts": "Shifts",
+      "stock": "Stock",
+      "admin": "Administration"
+    },
+    "perms": {
+      "screen_home": "Home",
+      "screen_pos": "POS terminal",
+      "screen_stock_check": "Stock check",
+      "screen_settings": "Store settings",
+      "screen_admin_access": "Access screen",
+      "api_receipts_sell": "Sell (receipts, payment, returns, promo)",
+      "api_receipts_void_line": "Void a receipt or a line",
+      "api_shifts_open": "Open shift",
+      "api_shifts_close": "Close shift",
+      "api_shifts_x_report": "X-report",
+      "api_stock_check": "Check stock",
+      "api_presets": "Vertical presets",
+      "api_offline_sync": "Offline sync",
+      "api_fiscal_devices": "Fiscal devices",
+      "api_uploads": "Upload attachments",
+      "api_integrations_stock": "Clinic stock hooks",
+      "admin_import": "Import, supplier match, replenishment",
+      "admin_settings": "Outlet integrations",
+      "admin_access_manage": "Manage roles and access"
+    }
   }
 }
