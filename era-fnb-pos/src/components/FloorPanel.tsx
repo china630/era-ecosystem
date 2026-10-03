@@ -228,13 +228,10 @@ export default function FloorPanel() {
         setCanDiscount(grants?.mayDiscount === false ? false : true);
       }
       setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
-      const kafe = editionData
-        ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
-          editionData.hotelMode === false
-        : !hotelModeRef.current;
+      const hotel = editionData ? editionData.hotelMode === true : hotelModeRef.current;
       if (editionData) {
-        hotelModeRef.current = !kafe;
-        setHotelMode(!kafe);
+        hotelModeRef.current = hotel;
+        setHotelMode(hotel);
       }
       if (!tablesRes.ok) {
         showApiError(tablesData, tc("failed"));
@@ -248,7 +245,7 @@ export default function FloorPanel() {
       );
       let banquetsData: BanquetEvent[] = [];
       let tableRows = Array.isArray(tablesData) ? tablesData : [];
-      if (!kafe) {
+      if (hotel) {
         const banquetsRes = await fetch("/api/banquets");
         banquetsData = await banquetsRes.json().catch(() => []);
       } else {

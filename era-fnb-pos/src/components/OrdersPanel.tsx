@@ -122,13 +122,8 @@ export default function OrdersPanel() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        const kafe = d.edition === "kafe" || d.hotelMode === false;
-        setHotelMode(!kafe);
-        setHasKds(
-          !kafe ||
-            (Array.isArray(d.activeModules) &&
-              d.activeModules.includes("fnb_kitchen_kds")),
-        );
+        setHotelMode(d.hotelMode === true);
+        setHasKds(d.kitchen === true);
       })
       .catch(() => undefined);
     void fetch("/api/billing/context")

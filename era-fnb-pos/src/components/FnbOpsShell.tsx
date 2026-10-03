@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
@@ -22,17 +22,17 @@ import {
   SatelliteHeaderLocale,
   SatelliteNotificationBell,
   SATELLITE_NOTIFICATION_LABELS_EN,
-  useSatelliteOpsSession,
+  useOpsNavProfile,
+  visibleOpsNavItems,
   type EraOpsNavItem,
   type HeaderProfileMenuItem,
+  type OpsNavCondition,
+  type OpsNavProfile,
 } from "@era/satellite-kit/ui";
 import OfflineReplayBridge from "@/components/OfflineReplayBridge";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
-import {
-  sessionHasFnbPermission,
-  type FnbPermissionSession,
-} from "@/lib/auth/permission-check";
+import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 
 const LINK_SCREENS: Record<string, Permission> = {
   "/": PERMISSIONS.SCREEN_HOME,
@@ -46,37 +46,20 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/sales": PERMISSIONS.SCREEN_SALES,
 };
 
-const hotelLinks = [
-  { href: "/", key: "dashboard", icon: LayoutDashboard },
-  { href: "/floor", key: "floor", icon: LayoutGrid },
-  { href: "/orders", key: "orders", icon: Receipt },
-  { href: "/kds", key: "kds", icon: ChefHat },
-  { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
-  { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
-  { href: "/sales", key: "sales", icon: ScrollText },
-  { href: "/admin/settings", key: "settings", icon: Settings },
-  { href: "/admin/access", key: "access", icon: Shield },
-] as const;
+const HALLS = ["cafe", "restaurant"] as const;
 
-const kafeLinks = [
-  { href: "/", key: "dashboard", icon: LayoutDashboard },
-  { href: "/floor", key: "floor", icon: LayoutGrid },
-  { href: "/orders", key: "orders", icon: Receipt },
-  { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
-  { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
-  { href: "/sales", key: "sales", icon: ScrollText },
-  { href: "/admin/settings", key: "settings", icon: Settings },
-  { href: "/admin/access", key: "access", icon: Shield },
-] as const;
-
-type MePayload = {
-  permissions?: string[];
-  role?: string;
-  login?: string;
-  email?: string | null;
-  isOwner?: boolean;
-  pin?: boolean;
-};
+/** Catalog order. Several enabled halls give the union of their screens. */
+const SHELL_LINKS: (OpsNavCondition & { href: string; key: string; icon: typeof LayoutDashboard })[] = [
+  { href: "/", key: "dashboard", icon: LayoutDashboard, preset: HALLS },
+  { href: "/floor", key: "floor", icon: LayoutGrid, preset: HALLS },
+  { href: "/orders", key: "orders", icon: Receipt, preset: HALLS },
+  { href: "/kds", key: "kds", icon: ChefHat, preset: HALLS, module: "fnb_kitchen_kds" },
+  { href: "/admin/menu", key: "menu", icon: UtensilsCrossed, preset: HALLS },
+  { href: "/admin/tables", key: "tables", icon: LayoutPanelTop, preset: HALLS },
+  { href: "/sales", key: "sales", icon: ScrollText, preset: HALLS },
+  { href: "/admin/settings", key: "settings", icon: Settings, preset: HALLS },
+  { href: "/admin/access", key: "access", icon: Shield, preset: HALLS },
+];
 
 function BakuNow() {
   const [label, setLabel] = useState("");
@@ -92,92 +75,40 @@ function BakuNow() {
   );
 }
 
+function allowLink(permission: string, profile: OpsNavProfile): boolean {
+  return sessionHasFnbPermission(
+    {
+      login: profile.login,
+      email: profile.email ?? undefined,
+      role: profile.role,
+      permissions: profile.permissions,
+      isOwner: profile.isOwner,
+      pin: profile.pin,
+    },
+    permission as Permission,
+  );
+}
+
 export default function FnbOpsShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("nav");
   const locale = useLocale() as Locale;
   const pathname = usePathname();
-  const { session } = useSatelliteOpsSession();
-  const [edition, setEdition] = useState<string | null>(null);
-  const [modules, setModules] = useState<string[]>([]);
-  const [me, setMe] = useState<MePayload | null>(null);
-  const [navReady, setNavReady] = useState(false);
+  const { profile, status: navStatus } = useOpsNavProfile();
 
-  useEffect(() => {
-    void fetch("/api/edition")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!d) return;
-        setEdition(String(d.edition ?? "hotel"));
-        setModules(Array.isArray(d.activeModules) ? d.activeModules : []);
-      })
-      .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    void fetch("/api/auth/me")
-      .then(async (r) => (r.ok ? ((await r.json()) as MePayload) : null))
-      .then((d) => setMe(d))
-      .catch(() => setMe(null))
-      .finally(() => setNavReady(true));
-  }, []);
-
-  const permSession: FnbPermissionSession = useMemo(
-    () => ({
-      login: me?.login ?? session?.displayName ?? "",
-      email: me?.email ?? session?.email ?? undefined,
-      role: me?.role ?? "",
-      permissions: me?.permissions,
-      isOwner: me?.isOwner,
-      pin: me?.pin,
-    }),
-    [me, session],
-  );
-
-  const bare =
-    pathname === "/login" ||
-    pathname === "/pin" ||
-    pathname.startsWith("/m/");
-  if (bare) {
-    return <>{children}</>;
-  }
-
-  const can = (p: Permission) =>
-    me != null && sessionHasFnbPermission(permSession, p);
-
-  const kafe = edition == null || edition.toLowerCase() === "kafe";
-  const links = kafe ? [...kafeLinks] : [...hotelLinks];
-  if (kafe && modules.includes("fnb_kitchen_kds")) {
-    const hasKds = links.some((l) => l.href === "/kds");
-    if (!hasKds) {
-      links.splice(3, 0, { href: "/kds", key: "kds", icon: ChefHat });
+  const logout = useCallback(async () => {
+    let pin = profile?.pin === true;
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      const data = (await res.json()) as { pin?: boolean };
+      if (data?.pin === true) pin = true;
+    } catch {
+      /* keep the flag we already have */
     }
-  }
-
-  const navItems: EraOpsNavItem[] = !navReady
-    ? []
-    : links
-    .filter((l) => {
-      const screen = LINK_SCREENS[l.href];
-      if (!screen) return true;
-      if (l.href === "/kds" && kafe && !modules.includes("fnb_kitchen_kds")) {
-        return false;
-      }
-      if (!me) return false;
-      return can(screen);
-    })
-    .map((l) => ({
-      href: l.href,
-      label: t(l.key),
-      icon: l.icon,
-    }));
-
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = me?.pin ? "/pin" : "/login";
-  }
+    window.location.href = pin ? "/pin" : "/login";
+  }, [profile?.pin]);
 
   useEffect(() => {
-    if (!me?.pin) return;
+    if (!profile?.pin) return;
     const idleMs = 5 * 60 * 1000;
     let timer = window.setTimeout(() => {
       void logout();
@@ -195,7 +126,40 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
       window.removeEventListener("pointerdown", bump);
       window.removeEventListener("keydown", bump);
     };
-  }, [me?.pin]);
+  }, [profile?.pin, logout]);
+
+  const bare =
+    pathname === "/login" ||
+    pathname === "/pin" ||
+    pathname.startsWith("/m/");
+  if (bare) {
+    return <>{children}</>;
+  }
+
+  const editionKnown = navStatus === "ready" && profile != null;
+  const kafe = profile?.edition === "kafe";
+
+  const catalog = SHELL_LINKS.map(({ key, ...row }) => ({
+    ...row,
+    label: t(key),
+    permission: LINK_SCREENS[row.href],
+  }));
+  const navItems: EraOpsNavItem[] = visibleOpsNavItems(catalog, navStatus, profile, allowLink);
+
+  const personName =
+    navStatus !== "ready"
+      ? ""
+      : profile?.displayName ||
+        (profile?.role === "FB_CASHIER"
+          ? t("cashier")
+          : profile?.role === "FB_WAITER"
+            ? t("waiter")
+            : profile?.role === "FB_MANAGER"
+              ? t("manager")
+              : t("staff"));
+
+  const can = (permission: Permission) =>
+    navStatus === "ready" && profile != null && allowLink(permission, profile);
 
   const profileItems: HeaderProfileMenuItem[] = [];
   if (can(PERMISSIONS.SCREEN_ADMIN_SETTINGS)) {
@@ -213,19 +177,19 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
 
   return (
     <EraAppRouteShell
-      brandTitle={kafe ? t("brandKafe") : t("brand")}
+      brandTitle={editionKnown ? (kafe ? t("brandKafe") : t("brand")) : ""}
       navItems={navItems}
       profile={
         <HeaderProfileMenu
-          displayName={session?.displayName ?? t("brand")}
-          email={session?.email ?? undefined}
+          displayName={personName}
+          email={profile?.email ?? undefined}
           items={profileItems}
           onLogout={() => void logout()}
           logoutLabel={t("logout", { defaultValue: "Logout" })}
         />
       }
       organization={
-        <HeaderOrganization variant="label" organizationName={session?.organizationName} />
+        <HeaderOrganization variant="label" organizationName={profile?.organizationName} />
       }
       notifications={<SatelliteNotificationBell labels={SATELLITE_NOTIFICATION_LABELS_EN} />}
       locale={<SatelliteHeaderLocale locale={locale} />}

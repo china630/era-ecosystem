@@ -29,13 +29,9 @@ export default function HomeDashboard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        const isKafe = d?.edition === "kafe" || d?.hotelMode === false;
-        setKafe(Boolean(isKafe));
-        setHasKds(
-          !isKafe ||
-            (Array.isArray(d?.activeModules) &&
-              d.activeModules.includes("fnb_kitchen_kds")),
-        );
+        const presets: unknown[] = Array.isArray(d.enabledPresets) ? d.enabledPresets : [];
+        setKafe(!presets.includes("restaurant"));
+        setHasKds(d.kitchen === true);
       })
       .catch(() => undefined);
     void fetch("/api/dashboard/today")

@@ -2,6 +2,7 @@
  * F&B Variant A permission catalog (catalogVersion 1).
  * Keys: api: / screen: / admin: only — role name grants nothing.
  */
+import type { FnbEdition } from "@/lib/fnb-edition";
 
 export const PERMISSIONS = {
   // Screens
@@ -192,19 +193,19 @@ const HOTEL_TILL_EXTRA: Permission[] = [
   PERMISSIONS.PMS_ENTITLEMENTS,
 ];
 
-/** Hotel-edition waiter may settle; Kafe waiter may not. */
-export function waiterPermissions(edition: "hotel" | "kafe"): Permission[] {
+/** Full F&B waiter may settle; Kafe waiter may not. Hotel APIs stay closed by hotel mode, not by this list. */
+export function waiterPermissions(edition: FnbEdition): Permission[] {
   const base: Permission[] = [
     ...TILL_BASE,
     PERMISSIONS.TICKETS_SPLIT,
   ];
-  if (edition === "hotel") {
+  if (edition === "fnb") {
     return [...base, PERMISSIONS.TICKETS_PAY, ...HOTEL_TILL_EXTRA];
   }
   return base;
 }
 
-export function cashierPermissions(edition: "hotel" | "kafe"): Permission[] {
+export function cashierPermissions(edition: FnbEdition): Permission[] {
   const base: Permission[] = [
     ...TILL_BASE,
     PERMISSIONS.TICKETS_PAY,
@@ -212,7 +213,7 @@ export function cashierPermissions(edition: "hotel" | "kafe"): Permission[] {
     PERMISSIONS.SHIFTS_CLOSE,
     PERMISSIONS.SCREEN_SALES,
   ];
-  if (edition === "hotel") {
+  if (edition === "fnb") {
     return [...base, ...HOTEL_TILL_EXTRA];
   }
   return base;
@@ -226,7 +227,7 @@ export function kitchenPermissions(): Permission[] {
   ];
 }
 
-export function managerPermissions(edition: "hotel" | "kafe"): Permission[] {
+export function managerPermissions(edition: FnbEdition): Permission[] {
   const all = [...ALL_PERMISSIONS];
   if (edition === "kafe") {
     return all.filter(
@@ -242,7 +243,7 @@ export function managerPermissions(edition: "hotel" | "kafe"): Permission[] {
   return all;
 }
 
-export type FnbEdition = "hotel" | "kafe";
+export type { FnbEdition };
 
 export function rolePermissionsForEdition(
   roleCode: string,
@@ -262,9 +263,9 @@ export function rolePermissionsForEdition(
   }
 }
 
-/** Template for ensure — defaults to hotel until profile is known. */
+/** Template for ensure — defaults to full F&B until profile is known. */
 export function permissionsForRole(roleCode: string): Permission[] {
-  return rolePermissionsForEdition(roleCode, "hotel");
+  return rolePermissionsForEdition(roleCode, "fnb");
 }
 
 export function serializePermissions(perms: Permission[]): string {
@@ -300,7 +301,7 @@ export function coerceFnbPermission(raw: string): Permission | null {
 export function effectiveRolePermissions(
   roleCode: string,
   permissionsJson: string,
-  edition: FnbEdition = "hotel",
+  edition: FnbEdition = "fnb",
 ): Permission[] {
   try {
     const parsed = JSON.parse(permissionsJson) as unknown;

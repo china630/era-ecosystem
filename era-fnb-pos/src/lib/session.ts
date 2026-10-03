@@ -36,6 +36,9 @@ export async function getSessionFromRequest(
       try {
         const permissions = await permissionsForUserId(session.sub);
         if (!permissions) return session;
+        if (permissions.length === 0 && (session.permissions?.length ?? 0) > 0) {
+          return session;
+        }
         return { ...session, permissions };
       } catch {
         return session;
@@ -47,6 +50,9 @@ export async function getSessionFromRequest(
           session.organizationId,
           session.role,
         );
+        if (permissions.length === 0 && (session.permissions?.length ?? 0) > 0) {
+          return session;
+        }
         return { ...session, permissions };
       } catch {
         return session;

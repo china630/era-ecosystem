@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     enterSatelliteTenant({ organizationId: body.organizationId });
 
     const profile = await getFnbOrgProfile(body.organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, body.organizationId, edition);
 
     const { token: _baseToken, user } = await executeSatelliteSsoExchange(

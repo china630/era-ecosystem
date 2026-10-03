@@ -25,6 +25,10 @@
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
     "logout": "Çıxış",
+    "cashier": "Kassir",
+    "waiter": "Ofisiant",
+    "manager": "Menecer",
+    "staff": "İşçi",
     "sales": "Satış jurnalı",
     "settings": "Parametrlər",
     "access": "Giriş"
@@ -138,7 +142,15 @@
       "defaultOutletName": "Demo outlet",
       "businessDayStart": "Ticarət günü başlayır",
       "businessDayHint": "Asia/Baku. Bu saatdan əvvəl satışlar ötən günə aiddir.",
-      "saved": "Saxlanıldı"
+      "saved": "Saxlanıldı",
+      "edition": "Redaksiya",
+      "editionKafe": "ERA Kafe",
+      "editionFnb": "Tam F&B",
+      "presets": "Zallar",
+      "presetsHint": "Hansı zallar işləyir. İcazə verilən zalları redaksiya müəyyən edir.",
+      "presetCafe": "Kafe",
+      "presetRestaurant": "Restoran",
+      "presetBanquet": "Banket zalı"
     },
     "menu": {
       "title": "Menyu admin",

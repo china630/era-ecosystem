@@ -64,7 +64,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const organizationId = requestOrganizationId();
 
     const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
     const roleCode = resolveFnbRoleCode(p.satelliteRole);

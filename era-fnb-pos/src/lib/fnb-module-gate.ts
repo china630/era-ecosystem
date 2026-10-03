@@ -2,7 +2,8 @@ import {
   requireSatelliteModule,
   IndustryModuleInactiveError,
 } from "@era/satellite-kit";
-import { getFnbOrgProfile, isKafeHotelModeOff } from "@/lib/fnb-org-profile";
+import { getFnbOrgProfile, isHotelModeOff } from "@/lib/fnb-org-profile";
+import { fnbSubmodulesMetered } from "@/lib/fnb-edition";
 
 export { IndustryModuleInactiveError };
 
@@ -10,7 +11,7 @@ export class FnbHotelModeError extends Error {
   readonly status = 403;
   readonly code = "FNB_HOTEL_MODE_OFF";
   constructor(feature: string) {
-    super(`Hotel F&B feature is off for this café: ${feature}`);
+    super(`Hotel F&B feature is off for this organization: ${feature}`);
     this.name = "FnbHotelModeError";
   }
 }
@@ -48,8 +49,7 @@ export async function requireFnbSubmodule(
   organizationId?: string,
 ): Promise<void> {
   const profile = await getFnbOrgProfile(organizationId);
-  const kafe = profile.edition.toLowerCase() === "kafe" || profile.hotelMode === false;
-  if (!kafe && profile.activeModules.length === 0) {
+  if (!fnbSubmodulesMetered(profile)) {
     return;
   }
   if (!profile.activeModules.includes(moduleKey)) {
@@ -58,7 +58,7 @@ export async function requireFnbSubmodule(
 }
 
 export async function assertHotelFnbFeature(feature: string): Promise<void> {
-  if (await isKafeHotelModeOff()) {
+  if (await isHotelModeOff()) {
     throw new FnbHotelModeError(feature);
   }
 }

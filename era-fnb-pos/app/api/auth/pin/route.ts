@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     const profile = await getFnbOrgProfile(terminal.organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, terminal.organizationId, edition);
 
     const staff = await prisma.staffRoster.findFirst({
