@@ -193,7 +193,6 @@ export default function SalesJournalPanel() {
             kind={"CLOSED_SMALL" as CatalogFieldKind}
             label={t("drawer")}
             value={scope === "shift" ? "" : shiftId}
-            emptyLabel={t("allDrawers")}
             disabled={scope === "shift"}
             options={(report?.shiftChoices ?? []).map((choice) => ({
               value: choice.id,

@@ -84,6 +84,10 @@ export async function POST(request: Request) {
   });
 
   if (closed.closedAt) {
+    await prisma.outlet.update({
+      where: { id: closed.outletId },
+      data: { terminalRevokedAt: closed.closedAt },
+    });
     void dispatchFbShiftClosed({
       shiftId: closed.id,
       outletId: closed.outletId,

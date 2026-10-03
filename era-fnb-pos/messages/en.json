@@ -320,8 +320,7 @@
     "shift": "Shift",
     "closedBy": "Closed by",
     "openedBy": "Opened by",
-    "drawer": "Drawer",
-    "allDrawers": "All drawers"
+    "drawer": "Drawer"
   },
   "shift": {
     "title": "POS shift",
@@ -435,7 +434,15 @@
     "submitBusy": "…",
     "invalid": "Invalid PIN",
     "unbound": "PIN is not bound to an outlet — ask the owner",
-    "backToLogin": "Password sign-in"
+    "backToLogin": "Password sign-in",
+    "pairHint": "Owner or manager pairs this tablet for the shift.",
+    "pairSubmit": "Show names",
+    "namesHint": "Choose your name, then enter your PIN.",
+    "pickName": "Choose your name",
+    "noStaff": "No one is assigned to this point yet.",
+    "locked": "Too many attempts. Try again in 15 minutes.",
+    "terminalRequired": "This tablet is not paired. Ask the owner to sign in.",
+    "bindDenied": "Only the owner or a manager can pair this tablet."
   },
   "login": {
     "title": "Sign in",
@@ -530,6 +537,7 @@
       "screen_home": "Home",
       "screen_floor": "Floor",
       "screen_orders": "Orders",
+      "screen_sales": "Sales journal",
       "screen_kds": "Kitchen display",
       "screen_calendar": "Calendar",
       "screen_executive": "Executive",

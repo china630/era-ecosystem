@@ -36,6 +36,12 @@ export async function GET(request: Request) {
   const mayPay = session
     ? sessionHasFnbPermission(session, PERMISSIONS.TICKETS_PAY)
     : false;
+  const mayDiscount = session
+    ? sessionHasFnbPermission(session, PERMISSIONS.TICKETS_DISCOUNT)
+    : false;
+  const maySales = session
+    ? sessionHasFnbPermission(session, PERMISSIONS.SCREEN_SALES)
+    : false;
   if (!shift) {
     return NextResponse.json({
       status: "NONE",
@@ -43,6 +49,8 @@ export async function GET(request: Request) {
       businessDayStart: profile.businessDayStart,
       mayClose,
       mayPay,
+      mayDiscount,
+      maySales,
     });
   }
   const closed = await prisma.ticket.findMany({
@@ -75,6 +83,8 @@ export async function GET(request: Request) {
     till,
     mayClose,
     mayPay,
+    mayDiscount,
+    maySales,
   });
 }
 

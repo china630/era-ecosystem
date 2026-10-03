@@ -57,6 +57,8 @@ model Outlet {
   soldOut            MenuItemSoldOut[]
   staff              StaffRoster[]
   publicSlug         String?  @unique @map("public_slug")
+  /** PINs on this point stop working until a manager pairs the tablet again. Set on Z. */
+  terminalRevokedAt  DateTime? @map("terminal_revoked_at")
 
   @@map("outlets")
   @@unique([organizationId, code])
@@ -343,6 +345,8 @@ model StaffRoster {
   financeEmployeeId String? @map("finance_employee_id")
   cpEmploymentId  String? @unique @map("cp_employment_id")
   active         Boolean  @default(true)
+  pinFailCount   Int      @default(0) @map("pin_fail_count")
+  pinLockedUntil DateTime? @map("pin_locked_until")
   createdAt      DateTime @default(now()) @map("created_at")
   outlet         Outlet?  @relation(fields: [outletId], references: [id])
 

@@ -1,17 +1,12 @@
 import {
-  ORG_NO_RE,
   authCookieName,
   enterSatelliteTenant,
-  readStaffLoginJson,
-  resolveStaffLoginTenant,
-  satelliteOrganizationId,
-  satelliteRuntimeConfig,
   signSatelliteSession,
 } from "@era/satellite-kit";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { hashStaffPin, pinMatches } from "@/lib/labor-pin";
+import { pinMatches } from "@/lib/labor-pin";
 import { assertPinLoginQuota } from "@/lib/fnb-quota";
 import {
   ensureSystemFnbRoles,
@@ -23,68 +18,85 @@ import {
   pinRoleToCode,
 } from "@/lib/auth/permissions";
 import { OUTLET_COOKIE } from "@/lib/outlet-session";
+import {
+  readTerminalCookie,
+  terminalCookieHeader,
+} from "@/lib/terminal-cookie";
+
+const PIN_FAIL_LIMIT = 5;
+const PIN_LOCK_MS = 15 * 60 * 1000;
 
 const schema = z.object({
+  staffId: z.string().min(1),
   pin: z.string().min(4).max(8),
-  orgNo: z.string().regex(ORG_NO_RE).optional(),
-  outletId: z.string().min(1),
 });
 
 export async function POST(request: Request) {
   try {
-    const rawBody = await readStaffLoginJson(request);
-    if (!rawBody.ok) {
-      return jsonError(rawBody.error, rawBody.status);
-    }
-    const body = schema.parse(rawBody.raw);
+    const raw = terminalCookieHeader(request);
+    const terminal = readTerminalCookie(raw);
+    if (!terminal) return jsonError("TERMINAL_REQUIRED", 401);
+
+    const body = schema.parse(await request.json());
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
     assertPinLoginQuota(ip);
 
-    const tenant = await resolveStaffLoginTenant({
-      orgNo: body.orgNo,
-      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
-      request,
-    });
-    if (!tenant.ok) {
-      return jsonError(tenant.error, tenant.status);
-    }
-
-    const organizationId = tenant.organizationId?.trim() || satelliteOrganizationId();
-    if (!organizationId) {
-      return jsonError("orgNo is required on SHARED pool", 400);
-    }
-    enterSatelliteTenant({ organizationId });
-
-    const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
-    await ensureSystemFnbRoles(prisma, organizationId, edition);
-
-    const pinHash = hashStaffPin(body.pin);
-    const staff = await prisma.staffRoster.findFirst({
+    enterSatelliteTenant({ organizationId: terminal.organizationId });
+    const outlet = await prisma.outlet.findFirst({
       where: {
-        organizationId,
-        pinHash,
+        id: terminal.outletId,
+        organizationId: terminal.organizationId,
         active: true,
       },
     });
-    if (!staff) {
+    if (
+      !outlet ||
+      (outlet.terminalRevokedAt && outlet.terminalRevokedAt.getTime() >= terminal.boundAt)
+    ) {
+      return jsonError("TERMINAL_REQUIRED", 401);
+    }
+
+    const profile = await getFnbOrgProfile(terminal.organizationId);
+    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    await ensureSystemFnbRoles(prisma, terminal.organizationId, edition);
+
+    const staff = await prisma.staffRoster.findFirst({
+      where: {
+        id: body.staffId,
+        organizationId: terminal.organizationId,
+        active: true,
+      },
+    });
+    if (!staff || staff.outletId !== outlet.id) {
       pinMatches(null, body.pin);
       return jsonError("Invalid PIN", 401);
     }
+    if (staff.pinLockedUntil && staff.pinLockedUntil.getTime() > Date.now()) {
+      return jsonError("PIN_LOCKED", 429);
+    }
+    if (!pinMatches(staff.pinHash, body.pin)) {
+      const fails = staff.pinFailCount + 1;
+      await prisma.staffRoster.update({
+        where: { id: staff.id },
+        data: {
+          pinFailCount: fails,
+          pinLockedUntil: fails >= PIN_FAIL_LIMIT ? new Date(Date.now() + PIN_LOCK_MS) : null,
+        },
+      });
+      return jsonError(fails >= PIN_FAIL_LIMIT ? "PIN_LOCKED" : "Invalid PIN", fails >= PIN_FAIL_LIMIT ? 429 : 401);
+    }
 
-    if (!staff.outletId) {
-      return jsonError("PIN_OUTLET_UNBOUND", 403);
-    }
-    if (staff.outletId !== body.outletId) {
-      return jsonError("Invalid PIN", 401);
-    }
+    await prisma.staffRoster.update({
+      where: { id: staff.id },
+      data: { pinFailCount: 0, pinLockedUntil: null },
+    });
 
     const roleCode = pinRoleToCode(staff.pinRole);
     const role = await prisma.role.findFirst({
-      where: { organizationId, code: roleCode },
+      where: { organizationId: terminal.organizationId, code: roleCode },
     });
     const permissions = role
       ? effectiveRolePermissions(role.code, role.permissionsJson, edition)
@@ -95,10 +107,10 @@ export async function POST(request: Request) {
       login: staff.staffCode,
       role: roleCode,
       fullName: staff.fullName,
-      organizationId,
+      organizationId: terminal.organizationId,
       permissions,
       pin: true,
-      outletId: staff.outletId,
+      outletId: staff.outletId ?? undefined,
     });
     const res = jsonOk({
       user: {
@@ -106,7 +118,7 @@ export async function POST(request: Request) {
         login: staff.staffCode,
         fullName: staff.fullName,
         role: roleCode,
-        organizationId,
+        organizationId: terminal.organizationId,
         outletId: staff.outletId,
         pin: true,
         permissions,
@@ -119,7 +131,7 @@ export async function POST(request: Request) {
       path: "/",
       maxAge: 60 * 60 * 12,
     });
-    res.cookies.set(OUTLET_COOKIE, staff.outletId, {
+    res.cookies.set(OUTLET_COOKIE, staff.outletId ?? "", {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

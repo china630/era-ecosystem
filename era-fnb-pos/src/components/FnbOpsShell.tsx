@@ -43,7 +43,7 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/admin/tables": PERMISSIONS.SCREEN_ADMIN_TABLES,
   "/admin/settings": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
-  "/sales": PERMISSIONS.SCREEN_ORDERS,
+  "/sales": PERMISSIONS.SCREEN_SALES,
 };
 
 const hotelLinks = [
@@ -100,6 +100,7 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
   const [edition, setEdition] = useState<string | null>(null);
   const [modules, setModules] = useState<string[]>([]);
   const [me, setMe] = useState<MePayload | null>(null);
+  const [navReady, setNavReady] = useState(false);
 
   useEffect(() => {
     void fetch("/api/edition")
@@ -116,7 +117,8 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
     void fetch("/api/auth/me")
       .then(async (r) => (r.ok ? ((await r.json()) as MePayload) : null))
       .then((d) => setMe(d))
-      .catch(() => setMe(null));
+      .catch(() => setMe(null))
+      .finally(() => setNavReady(true));
   }, []);
 
   const permSession: FnbPermissionSession = useMemo(
@@ -151,15 +153,16 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
     }
   }
 
-  const navItems: EraOpsNavItem[] = links
+  const navItems: EraOpsNavItem[] = !navReady
+    ? []
+    : links
     .filter((l) => {
       const screen = LINK_SCREENS[l.href];
       if (!screen) return true;
       if (l.href === "/kds" && kafe && !modules.includes("fnb_kitchen_kds")) {
         return false;
       }
-      const grants = me?.permissions;
-      if (!Array.isArray(grants) || grants.length === 0) return true;
+      if (!me) return false;
       return can(screen);
     })
     .map((l) => ({
@@ -170,8 +173,29 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+    window.location.href = me?.pin ? "/pin" : "/login";
   }
+
+  useEffect(() => {
+    if (!me?.pin) return;
+    const idleMs = 5 * 60 * 1000;
+    let timer = window.setTimeout(() => {
+      void logout();
+    }, idleMs);
+    const bump = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void logout();
+      }, idleMs);
+    };
+    window.addEventListener("pointerdown", bump);
+    window.addEventListener("keydown", bump);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", bump);
+      window.removeEventListener("keydown", bump);
+    };
+  }, [me?.pin]);
 
   const profileItems: HeaderProfileMenuItem[] = [];
   if (can(PERMISSIONS.SCREEN_ADMIN_SETTINGS)) {

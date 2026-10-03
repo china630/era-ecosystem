@@ -13,7 +13,7 @@ import {
   type RoleCode,
 } from "@/lib/auth/permissions";
 
-export const FNB_PERMISSION_CATALOG_VERSION = 3;
+export const FNB_PERMISSION_CATALOG_VERSION = 4;
 
 type RoleRow = {
   id: string;
@@ -136,12 +136,20 @@ async function upsertSystemRole(
     if (existing.code === ROLE_CODES.CASHIER) {
       const current = parsePermissions(existing.permissionsJson);
       if (current.length > 0) {
-        const extra = [PERMISSIONS.SHIFTS_CLOSE, PERMISSIONS.TICKETS_DISCOUNT].filter(
-          (p) => !current.includes(p),
-        );
+        const extra = [
+          PERMISSIONS.SHIFTS_CLOSE,
+          PERMISSIONS.TICKETS_DISCOUNT,
+          PERMISSIONS.SCREEN_SALES,
+        ].filter((p) => !current.includes(p));
         if (extra.length > 0) {
           patch.permissionsJson = serializePermissions([...current, ...extra]);
         }
+      }
+    }
+    if (existing.code === ROLE_CODES.MANAGER) {
+      const current = parsePermissions(existing.permissionsJson);
+      if (current.length > 0 && !current.includes(PERMISSIONS.SCREEN_SALES)) {
+        patch.permissionsJson = serializePermissions([...current, PERMISSIONS.SCREEN_SALES]);
       }
     }
   }

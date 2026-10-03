@@ -16,6 +16,11 @@ import {
 import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 
 const COOKIE = authCookieName();
+const TERMINAL_COOKIE = "era_fnb_terminal";
+
+function pairedTablet(request: NextRequest): boolean {
+  return Boolean(request.cookies.get(TERMINAL_COOKIE)?.value);
+}
 
 function withPath(request: NextRequest) {
   return eraPathnameRequestHeaders(request.headers, request.nextUrl.pathname);
@@ -30,6 +35,7 @@ export async function middleware(request: NextRequest) {
     "/api/integration/settlement-confirmed",
     "/api/public/menu",
     "/api/auth/pin",
+    "/api/auth/terminal",
   ];
 
   function verifyPosBridge(req: NextRequest): boolean {
@@ -84,7 +90,7 @@ export async function middleware(request: NextRequest) {
   const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
   if (!token) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = pairedTablet(request) ? "/pin" : "/login";
     return redirectNoStore(url);
   }
   try {
@@ -103,14 +109,14 @@ export async function middleware(request: NextRequest) {
       !required.some((p) => sessionHasFnbPermission(sessionView, p))
     ) {
       const forbiddenUrl = request.nextUrl.clone();
-      forbiddenUrl.pathname = "/login";
-      forbiddenUrl.searchParams.set("error", "forbidden");
+      forbiddenUrl.pathname = session.pin ? "/floor" : "/login";
+      if (!session.pin) forbiddenUrl.searchParams.set("error", "forbidden");
       return redirectNoStore(forbiddenUrl);
     }
     return NextResponse.next({ request: { headers: reqHeaders } });
   } catch {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = pairedTablet(request) ? "/pin" : "/login";
     return redirectNoStore(url);
   }
 }

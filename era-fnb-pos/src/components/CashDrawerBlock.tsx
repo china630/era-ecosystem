@@ -36,10 +36,15 @@ export function CashDrawerBlock({
   return (
     <div className="rounded-md bg-[#F7F9FA] px-3 py-2 text-sm text-[#34495E]">
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-        <p className="min-w-[9rem] pb-0.5 font-semibold">
-          {labels.title}
-          {drawer.openedBy ? ` · ${drawer.openedBy}` : ""}
-          {` · ${bakuTimeLabel(drawer.openedAt)}`}
+        <p
+          className="flex w-96 shrink-0 items-baseline gap-1 pb-0.5 font-semibold"
+          title={`${labels.title}${drawer.openedBy ? ` · ${drawer.openedBy}` : ""} · ${bakuTimeLabel(drawer.openedAt)}`}
+        >
+          <span className="min-w-0 truncate">
+            {labels.title}
+            {drawer.openedBy ? ` · ${drawer.openedBy}` : ""}
+          </span>
+          <span className="shrink-0">· {bakuTimeLabel(drawer.openedAt)}</span>
         </p>
         {cells.map((cell) => (
           <div key={cell.label} className="min-w-[4.5rem]">

@@ -328,8 +328,7 @@
     "shift": "Növbə",
     "closedBy": "Bağlayan",
     "openedBy": "Açan",
-    "drawer": "Kassa",
-    "allDrawers": "Bütün kassalar"
+    "drawer": "Kassa"
   },
   "shift": {
     "title": "POS növbəsi",
@@ -443,7 +442,15 @@
     "submitBusy": "…",
     "invalid": "PIN yanlışdır",
     "unbound": "PIN outlet-ə bağlı deyil — sahibdən soruşun",
-    "backToLogin": "Şifrə ilə giriş"
+    "backToLogin": "Şifrə ilə giriş",
+    "pairHint": "Sahib və ya menecer planşeti növbə üçün bağlayır.",
+    "pairSubmit": "Adları göstər",
+    "namesHint": "Adınızı seçin, sonra PIN yazın.",
+    "pickName": "Adınızı seçin",
+    "noStaff": "Bu nöqtəyə hələ heç kim bağlı deyil.",
+    "locked": "Çox cəhd. 15 dəqiqə sonra yenidən yoxlayın.",
+    "terminalRequired": "Planşet bağlanmayıb. Sahibdən giriş etməsini xahiş edin.",
+    "bindDenied": "Planşeti yalnız sahib və ya menecer bağlaya bilər."
   },
   "help": {
     "title": "Tez-tez verilən suallar",
@@ -530,6 +537,7 @@
       "screen_home": "İcmal",
       "screen_floor": "Zal",
       "screen_orders": "Sifarişlər",
+      "screen_sales": "Satış jurnalı",
       "screen_kds": "Mətbəx ekranı",
       "screen_calendar": "Təqvim",
       "screen_executive": "İcra",

@@ -1,14 +1,14 @@
 import { assertFnbEntitled, handleRouteError, jsonOk } from "@/lib/api-utils";
 import { getSessionFromRequest } from "@/lib/session";
-import { denyUnlessAnyPermission } from "@/lib/auth/require";
-import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
+import { denyUnlessPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 import { saleReportForScope } from "@/lib/sales-report";
 
 export async function GET(request: Request) {
   try {
     await assertFnbEntitled();
     const session = await getSessionFromRequest(request);
-    const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
+    const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_SALES);
     if (denied) return denied;
     const url = new URL(request.url);
     const scope = url.searchParams.get("scope") === "shift" ? "shift" : "today";

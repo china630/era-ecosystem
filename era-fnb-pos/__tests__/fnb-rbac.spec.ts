@@ -24,6 +24,7 @@ import { routePermissions } from "@/lib/auth/page-route-permissions";
 describe("fnb rbac catalog", () => {
   it("kafe waiter omits pay; hotel waiter includes pay", () => {
     expect(waiterPermissions("kafe")).not.toContain(PERMISSIONS.TICKETS_PAY);
+    expect(waiterPermissions("kafe")).not.toContain(PERMISSIONS.SCREEN_SALES);
     expect(waiterPermissions("hotel")).toContain(PERMISSIONS.TICKETS_PAY);
   });
 
@@ -196,6 +197,7 @@ describe("fnb rbac catalog", () => {
     expect(t).toContain(PERMISSIONS.TICKETS_PAY);
     expect(t).toContain(PERMISSIONS.SHIFTS_CLOSE);
     expect(t).toContain(PERMISSIONS.TICKETS_DISCOUNT);
+    expect(t).toContain(PERMISSIONS.SCREEN_SALES);
     expect(t).not.toContain(PERMISSIONS.TICKETS_VOID);
   });
 

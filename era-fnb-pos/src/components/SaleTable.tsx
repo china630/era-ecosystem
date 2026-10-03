@@ -116,7 +116,7 @@ export function SaleTable({
           )}
         </tbody>
       </table>
-      <p className="mt-3 text-right text-sm text-[#34495E]">
+      <p className="mt-3 flex flex-wrap justify-end gap-x-2 gap-y-1 text-right text-sm text-[#34495E]">
         {labels.count}: {totals.count}
         {" · "}
         {labels.cash} {totals.cash.toFixed(2)}
