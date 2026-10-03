@@ -7,8 +7,6 @@ import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { CheckLines } from "@/components/CheckLines";
-import { fnbCan } from "@/lib/auth/permission-check";
-import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type TicketLine = {
   id: string;
@@ -79,7 +77,7 @@ export default function OrdersPanel() {
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const [hasKds, setHasKds] = useState(false);
-  const [canPay, setCanPay] = useState(false);
+  const [canPay, setCanPay] = useState(true);
   const [cashReceived, setCashReceived] = useState("");
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
@@ -96,10 +94,13 @@ export default function OrdersPanel() {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/auth/me")
+    void fetch("/api/shifts/open")
       .then((r) => (r.ok ? r.json() : null))
-      .then((me) => setCanPay(fnbCan(me, PERMISSIONS.TICKETS_PAY)))
-      .catch(() => setCanPay(false));
+      .then((data) => {
+        if (data && data.mayPay === false) setCanPay(false);
+        else setCanPay(true);
+      })
+      .catch(() => setCanPay(true));
   }, []);
 
   useEffect(() => {

@@ -11,8 +11,8 @@ import {
 import { requestOrganizationId } from "@/lib/request-organization";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
 import { shiftIdCovering } from "@/lib/open-shift";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
-import { getSessionFromRequest } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -126,6 +126,7 @@ export async function POST(
       status: "CLOSED",
       closedAt,
       shiftId: await shiftIdCovering(ticket.outletId, closedAt),
+      closedByName: sessionActorName(session),
     },
   });
   await releaseTableForTicket(id, ticket.tableId);

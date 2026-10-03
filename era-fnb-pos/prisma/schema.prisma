@@ -242,6 +242,8 @@ model Ticket {
   cashTenderedAzn         Decimal?     @map("cash_tendered_azn") @db.Decimal(12, 2)
   changeAzn               Decimal?     @map("change_azn") @db.Decimal(12, 2)
   shiftId                 String?      @map("shift_id")
+  openedByName            String?      @map("opened_by_name")
+  closedByName            String?      @map("closed_by_name")
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")
   externalRef             String?      @map("external_ref")

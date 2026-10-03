@@ -20,45 +20,51 @@ export function CashDrawerBlock({
     variance: string;
   };
 }) {
-  const rows: { label: string; value: number }[] = [
-    { label: labels.opening, value: drawer.opening },
-    { label: labels.cashSales, value: drawer.cashSales },
-    { label: labels.drops, value: drawer.dropsTotal },
-    { label: labels.expected, value: drawer.expected },
+  const cells: { label: string; value: string }[] = [
+    { label: labels.opening, value: drawer.opening.toFixed(2) },
+    { label: labels.cashSales, value: drawer.cashSales.toFixed(2) },
+    { label: labels.drops, value: drawer.dropsTotal.toFixed(2) },
+    { label: labels.expected, value: drawer.expected.toFixed(2) },
   ];
-  if (drawer.counted != null) rows.push({ label: labels.counted, value: drawer.counted });
-  if (drawer.variance != null) rows.push({ label: labels.variance, value: drawer.variance });
+  if (drawer.counted != null) {
+    cells.push({ label: labels.counted, value: drawer.counted.toFixed(2) });
+  }
+  if (drawer.variance != null) {
+    cells.push({ label: labels.variance, value: drawer.variance.toFixed(2) });
+  }
 
   return (
-    <div className="mb-3 rounded-md bg-[#F7F9FA] p-3 text-sm text-[#34495E]">
-      <p className="mb-2 font-semibold">
-        {labels.title}
-        {drawer.openedBy ? ` · ${drawer.openedBy}` : ""}
-        {` · ${bakuTimeLabel(drawer.openedAt)}`}
-      </p>
-      <table className="w-full max-w-md">
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <td className="py-0.5 pr-4">{row.label}</td>
-              <td className="py-0.5 text-right tabular-nums">
-                {row.value.toFixed(2)} {azn}
-              </td>
-            </tr>
-          ))}
+    <div className="rounded-md bg-[#F7F9FA] px-3 py-2 text-sm text-[#34495E]">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+        <p className="min-w-[9rem] pb-0.5 font-semibold">
+          {labels.title}
+          {drawer.openedBy ? ` · ${drawer.openedBy}` : ""}
+          {` · ${bakuTimeLabel(drawer.openedAt)}`}
+        </p>
+        {cells.map((cell) => (
+          <div key={cell.label} className="min-w-[4.5rem]">
+            <p className="text-[11px] text-[#7F8C8D]">{cell.label}</p>
+            <p className="font-semibold tabular-nums">
+              {cell.value} {azn}
+            </p>
+          </div>
+        ))}
+      </div>
+      {drawer.drops.length > 0 ? (
+        <ul className="mt-1 space-y-0.5 text-xs text-[#7F8C8D]">
           {drawer.drops.map((drop) => (
-            <tr key={drop.id} className="text-xs text-[#7F8C8D]">
-              <td className="py-0.5 pr-4">
+            <li key={drop.id} className="flex justify-between gap-3">
+              <span>
                 {bakuTimeLabel(drop.createdAt)}
                 {drop.note ? ` · ${drop.note}` : ""}
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
+              </span>
+              <span className="tabular-nums">
                 {drop.amountAzn.toFixed(2)} {azn}
-              </td>
-            </tr>
+              </span>
+            </li>
           ))}
-        </tbody>
-      </table>
+        </ul>
+      ) : null}
     </div>
   );
 }

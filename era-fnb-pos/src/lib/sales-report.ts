@@ -13,7 +13,16 @@ export type SaleRow = {
   place: string;
   method: string | null;
   totalAzn: number;
+  shiftId: string | null;
   shiftOpenedAt: string | null;
+  closedByName: string | null;
+  openedByName: string | null;
+};
+
+export type ShiftChoice = {
+  id: string;
+  openedAt: string;
+  openedBy: string | null;
 };
 
 export type SaleTotals = {
@@ -38,6 +47,7 @@ export type SaleReport = {
   totals: SaleTotals;
   shift: SaleShift | null;
   drawers: CashDrawerView[];
+  shiftChoices?: ShiftChoice[];
   day?: string;
   businessDayStart?: string;
 };
@@ -84,6 +94,7 @@ export async function saleReportBetween(input: {
   shift?: SaleShift | null;
   channel?: "TAKEAWAY" | "DINE_IN";
   method?: "CASH" | "CARD" | "TRANSFER";
+  shiftId?: string;
 }): Promise<SaleReport> {
   const organizationId = requestOrganizationId();
   const tickets = await prisma.ticket.findMany({
@@ -96,10 +107,11 @@ export async function saleReportBetween(input: {
         ? { OR: [{ serviceChannel: null }, { serviceChannel: { not: "TAKEAWAY" } }] }
         : {}),
       ...(input.method ? { paymentMethod: input.method } : {}),
+      ...(input.shiftId ? { shiftId: input.shiftId } : {}),
     },
     include: {
       table: { select: { code: true } },
-      shift: { select: { openedAt: true } },
+      shift: { select: { openedAt: true, openedBy: true } },
     },
     orderBy: { closedAt: "desc" },
     take: 300,
@@ -113,7 +125,10 @@ export async function saleReportBetween(input: {
     place: placeOf(ticket),
     method: ticket.paymentMethod,
     totalAzn: Number(ticket.totalAzn),
+    shiftId: ticket.shiftId,
     shiftOpenedAt: ticket.shift?.openedAt?.toISOString() ?? null,
+    closedByName: ticket.closedByName,
+    openedByName: ticket.openedByName,
   }));
   return { rows, totals: totalsOf(rows), shift: input.shift ?? null, drawers: [] };
 }
@@ -124,6 +139,7 @@ export async function saleReportForScope(
     date?: string;
     channel?: "TAKEAWAY" | "DINE_IN";
     method?: "CASH" | "CARD" | "TRANSFER";
+    shiftId?: string;
   },
 ): Promise<SaleReport> {
   const channel = filters?.channel;
@@ -159,17 +175,37 @@ export async function saleReportForScope(
       ? filters.date
       : currentBusinessDayKey(new Date(), profile.businessDayStart);
   const { start, end } = businessDayBounds(day, profile.businessDayStart);
-  const report = await saleReportBetween({ from: start, to: end, channel, method });
-  const closed = await prisma.posShift.findMany({
-    where: { status: "CLOSED", closedAt: { gte: start, lte: end } },
-    include: { outlet: true },
-    orderBy: { closedAt: "desc" },
+  const report = await saleReportBetween({
+    from: start,
+    to: end,
+    channel,
+    method,
+    shiftId: filters?.shiftId,
   });
+  const overlapping = await prisma.posShift.findMany({
+    where: {
+      openedAt: { lte: end },
+      OR: [{ closedAt: null }, { closedAt: { gte: start } }],
+    },
+    include: { outlet: true },
+    orderBy: { openedAt: "desc" },
+  });
+  const closed = overlapping.filter(
+    (row) => row.status === "CLOSED" && row.closedAt && row.closedAt >= start && row.closedAt <= end,
+  );
+  const visibleClosed = filters?.shiftId
+    ? closed.filter((row) => row.id === filters.shiftId)
+    : closed;
   return {
     ...report,
     day,
     businessDayStart: profile.businessDayStart,
-    drawers: await Promise.all(closed.map((row) => cashDrawerForShift(row))),
+    shiftChoices: overlapping.map((row) => ({
+      id: row.id,
+      openedAt: row.openedAt.toISOString(),
+      openedBy: row.openedBy,
+    })),
+    drawers: await Promise.all(visibleClosed.map((row) => cashDrawerForShift(row))),
   };
 }
 

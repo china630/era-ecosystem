@@ -23,6 +23,7 @@ type Report = {
   totals: SaleTotalsView;
   shift: { openedBy: string | null; outletCode: string } | null;
   drawers?: CashDrawerView[];
+  shiftChoices?: { id: string; openedAt: string; openedBy: string | null }[];
 };
 
 type CheckView = {
@@ -36,6 +37,8 @@ type CheckView = {
   openedAt?: string | null;
   closedAt?: string | null;
   shiftOpenedAt?: string | null;
+  openedByName?: string | null;
+  closedByName?: string | null;
   serviceChannel?: string | null;
   table?: { name?: string | null; code?: string | null } | null;
   lines: CheckLine[];
@@ -53,6 +56,7 @@ export default function SalesJournalPanel() {
   const datePinned = useRef(false);
   const [channel, setChannel] = useState("");
   const [method, setMethod] = useState("");
+  const [shiftId, setShiftId] = useState("");
   const [report, setReport] = useState<Report | null>(null);
   const [check, setCheck] = useState<CheckView | null>(null);
 
@@ -61,6 +65,7 @@ export default function SalesJournalPanel() {
     if (scope === "today" && date) params.set("date", date);
     if (channel) params.set("channel", channel);
     if (method) params.set("method", method);
+    if (scope === "today" && shiftId) params.set("shiftId", shiftId);
     const res = await fetch(`/api/sales?${params.toString()}`);
     const data = await res.json().catch(() => null);
     if (!res.ok || !data) {
@@ -71,7 +76,7 @@ export default function SalesJournalPanel() {
     if (scope === "today" && !date && !datePinned.current && typeof data.day === "string") {
       setDate(data.day);
     }
-  }, [scope, date, channel, method]);
+  }, [scope, date, channel, method, shiftId]);
 
   useEffect(() => {
     void load();
@@ -102,7 +107,7 @@ export default function SalesJournalPanel() {
     closed: t("closed"),
     place: t("place"),
     method: t("method"),
-    shift: t("shift"),
+    shift: t("closedBy"),
     sum: t("sum"),
     empty: t("empty"),
     cash: t("cash"),
@@ -129,6 +134,7 @@ export default function SalesJournalPanel() {
           }`}
           onClick={() => {
             datePinned.current = false;
+            if (date) setShiftId("");
             setDate("");
             setScope("today");
           }}
@@ -153,6 +159,7 @@ export default function SalesJournalPanel() {
             if (!next) return;
             datePinned.current = true;
             setScope("today");
+            if (next !== date) setShiftId("");
             setDate(next);
           }}
         />
@@ -179,6 +186,25 @@ export default function SalesJournalPanel() {
               { value: "TRANSFER", label: t("transfer") },
             ]}
             onChange={(next) => setMethod(Array.isArray(next) ? next[0] ?? "" : next)}
+          />
+        </div>
+        <div className="min-w-[14rem]">
+          <CatalogField
+            kind={"CLOSED_SMALL" as CatalogFieldKind}
+            label={t("drawer")}
+            value={scope === "shift" ? "" : shiftId}
+            emptyLabel={t("allDrawers")}
+            disabled={scope === "shift"}
+            options={(report?.shiftChoices ?? []).map((choice) => ({
+              value: choice.id,
+              label: choice.openedBy
+                ? `${choice.openedBy} · ${bakuTimeLabel(choice.openedAt)}`
+                : bakuTimeLabel(choice.openedAt),
+            }))}
+            onChange={(next) => {
+              setScope("today");
+              setShiftId(Array.isArray(next) ? next[0] ?? "" : next);
+            }}
           />
         </div>
       </EraListFilterBar>
@@ -228,6 +254,24 @@ export default function SalesJournalPanel() {
                 ? ` · ${t("shift")} ${bakuTimeLabel(check.shiftOpenedAt)}`
                 : ""}
             </p>
+            {check.closedByName ? (
+              <p
+                className={`text-sm text-[#34495E] ${
+                  check.openedByName &&
+                  check.openedByName.trim() !== check.closedByName.trim()
+                    ? "mb-1"
+                    : "mb-3"
+                }`}
+              >
+                {t("closedBy")}: {check.closedByName}
+              </p>
+            ) : null}
+            {check.openedByName &&
+            check.openedByName.trim() !== (check.closedByName ?? "").trim() ? (
+              <p className="mb-3 text-sm text-[#34495E]">
+                {t("openedBy")}: {check.openedByName}
+              </p>
+            ) : null}
             <CheckLines
               lines={check.lines}
               labels={{

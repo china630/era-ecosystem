@@ -27,6 +27,7 @@ import {
   type HeaderProfileMenuItem,
 } from "@era/satellite-kit/ui";
 import OfflineReplayBridge from "@/components/OfflineReplayBridge";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
 import {
   sessionHasFnbPermission,
@@ -76,6 +77,20 @@ type MePayload = {
   isOwner?: boolean;
   pin?: boolean;
 };
+
+function BakuNow() {
+  const [label, setLabel] = useState("");
+  useEffect(() => {
+    const tick = () => setLabel(bakuDateTimeDisplay(new Date()));
+    tick();
+    const id = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (!label) return null;
+  return (
+    <p className="whitespace-nowrap text-sm font-semibold tabular-nums text-[#2C3E50]">{label}</p>
+  );
+}
 
 export default function FnbOpsShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("nav");
@@ -190,6 +205,7 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
       }
       notifications={<SatelliteNotificationBell labels={SATELLITE_NOTIFICATION_LABELS_EN} />}
       locale={<SatelliteHeaderLocale locale={locale} />}
+      tierBar={<BakuNow />}
     >
       <OfflineReplayBridge />
       {children}

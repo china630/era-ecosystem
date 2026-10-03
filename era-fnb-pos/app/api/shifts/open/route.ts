@@ -4,7 +4,7 @@ import { z } from "zod";
 import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -33,12 +33,16 @@ export async function GET(request: Request) {
   const mayClose = session
     ? sessionHasFnbPermission(session, PERMISSIONS.SHIFTS_CLOSE)
     : false;
+  const mayPay = session
+    ? sessionHasFnbPermission(session, PERMISSIONS.TICKETS_PAY)
+    : false;
   if (!shift) {
     return NextResponse.json({
       status: "NONE",
       stale: false,
       businessDayStart: profile.businessDayStart,
       mayClose,
+      mayPay,
     });
   }
   const closed = await prisma.ticket.findMany({
@@ -70,6 +74,7 @@ export async function GET(request: Request) {
     drawer: await cashDrawerForShift(shift),
     till,
     mayClose,
+    mayPay,
   });
 }
 
@@ -122,7 +127,7 @@ export async function POST(request: Request) {
     data: {
       outletId: outlet.id,
       openingCash: body.openingCash,
-      openedBy: session?.fullName?.trim() || session?.login || null,
+      openedBy: sessionActorName(session),
       fiscalDeviceId: fiscalDeviceId ?? null,
       bankTerminalId: bankTerminalId ?? null,
     },

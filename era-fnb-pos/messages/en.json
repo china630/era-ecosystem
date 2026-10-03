@@ -317,7 +317,11 @@
     "checkTitle": "Check #{no} · {place}",
     "opened": "Opened",
     "closed": "Closed",
-    "shift": "Shift"
+    "shift": "Shift",
+    "closedBy": "Closed by",
+    "openedBy": "Opened by",
+    "drawer": "Drawer",
+    "allDrawers": "All drawers"
   },
   "shift": {
     "title": "POS shift",

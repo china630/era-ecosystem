@@ -2,7 +2,7 @@ import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
@@ -44,6 +44,7 @@ export async function POST(
         tableId: reservation.tableId,
         covers: reservation.partySize,
         guestName: reservation.guestName,
+        openedByName: sessionActorName(session),
         subtotalAzn: 0,
         totalAzn: 0,
       },

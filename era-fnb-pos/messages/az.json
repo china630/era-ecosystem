@@ -325,7 +325,11 @@
     "checkTitle": "Çek #{no} · {place}",
     "opened": "Açılıb",
     "closed": "Bağlanıb",
-    "shift": "Növbə"
+    "shift": "Növbə",
+    "closedBy": "Bağlayan",
+    "openedBy": "Açan",
+    "drawer": "Kassa",
+    "allDrawers": "Bütün kassalar"
   },
   "shift": {
     "title": "POS növbəsi",

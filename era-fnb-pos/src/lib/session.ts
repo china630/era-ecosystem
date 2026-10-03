@@ -10,6 +10,13 @@ import {
 } from "@/lib/auth/fnb-permission.service";
 import { isSystemFnbRoleCode } from "@/lib/auth/permissions";
 
+export function sessionActorName(
+  session: { fullName?: string | null; login?: string | null } | null | undefined,
+): string | null {
+  const name = session?.fullName?.trim() || session?.login?.trim() || "";
+  return name || null;
+}
+
 export async function getSessionFromRequest(
   request: Request,
 ): Promise<SatelliteSessionPayload | null> {
