@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     enterSatelliteTenant({ organizationId });
 
     const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
     const refreshed = await prisma.user.findUnique({

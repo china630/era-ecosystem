@@ -39,7 +39,7 @@ export async function ensureKafeOpsSkeleton(input: {
   await ensureSystemFnbRoles(
     prisma,
     organizationId,
-    resolveFnbEdition("kafe", false),
+    resolveFnbEdition("kafe"),
   );
 
   const cafeName = input.cafeName.trim();

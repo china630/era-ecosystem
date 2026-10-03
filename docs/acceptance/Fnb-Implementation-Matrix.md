@@ -34,6 +34,7 @@ AC-FNB-RBAC is 🟡 (Variant A shipped; field UAT open) and stays **out of Scaff
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | (no TENANT AC) | SHARED F&B pool | Out of BE rollup | Wave 3 request tenant code; topology note only — not an AC this edition |
 | AC-FNB-RBAC | Field UAT / SHOW | Out of BE rollup | SCREEN until signoff |
+| (no AC) | Edition / hall preset / hotel mode split + owner upgrade (FNB-09 / FNB-10) | Out of BE rollup | API: unit tests `fnb-rbac.spec.ts` (edition resolve, preset clamp, metered kitchen; `hotelMode=false` on `fnb` stays `fnb`), orch `fnb-edition.service.spec.ts` + `kafe-foundation.spec.ts`; UAT step open |
 
 ### Negative-path proof index
 

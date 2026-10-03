@@ -17,6 +17,10 @@
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
     "logout": "Logout",
+    "cashier": "Cashier",
+    "waiter": "Waiter",
+    "manager": "Manager",
+    "staff": "Staff",
     "sales": "Sales journal",
     "settings": "Settings",
     "access": "Access"
@@ -130,7 +134,15 @@
       "defaultOutletName": "Demo outlet",
       "businessDayStart": "Business day starts",
       "businessDayHint": "Asia/Baku. Sales before this time belong to the previous day.",
-      "saved": "Saved"
+      "saved": "Saved",
+      "edition": "Edition",
+      "editionKafe": "ERA Kafe",
+      "editionFnb": "Full F&B",
+      "presets": "Halls",
+      "presetsHint": "Which halls run. The edition decides which halls are allowed.",
+      "presetCafe": "Café",
+      "presetRestaurant": "Restaurant",
+      "presetBanquet": "Banquet hall"
     },
     "menu": {
       "title": "Menu admin",

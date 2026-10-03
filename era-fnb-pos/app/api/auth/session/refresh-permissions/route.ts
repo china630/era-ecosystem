@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     const organizationId = session.organizationId;
     const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
     if (session.pin === true) {

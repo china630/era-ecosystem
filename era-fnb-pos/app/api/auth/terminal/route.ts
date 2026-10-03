@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     const organizationId = user.organizationId;
     enterSatelliteTenant({ organizationId });
     const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
     const refreshed = await prisma.user.findUnique({
       where: { id: user.id },
@@ -112,7 +112,9 @@ export async function POST(request: Request) {
     if (!bypass && !manager) {
       return jsonError("TERMINAL_BIND_DENIED", 403);
     }
-    const outlet = await resolveOpsOutlet(edition === "kafe" ? "KAFE" : null);
+    const outlet = await resolveOpsOutlet(
+      profile.enabledPresets.includes("cafe") ? "KAFE" : null,
+    );
     const boundAt = Date.now();
     const token = signTerminalCookie({
       organizationId,

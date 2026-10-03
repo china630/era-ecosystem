@@ -42,14 +42,15 @@ jest.mock("@/lib/request-organization", () => ({
 
 jest.mock("@/lib/auth/ensure-system-fnb-roles", () => ({
   ensureSystemFnbRoles: jest.fn(async () => undefined),
-  resolveFnbEdition: jest.fn(() => "hotel"),
+  resolveFnbEdition: jest.fn(() => "fnb"),
 }));
 
 jest.mock("@/lib/fnb-org-profile", () => ({
   getFnbOrgProfile: jest.fn(async () => ({
     organizationId: "770e8400-e29b-41d4-a716-446655440002",
-    edition: "hotel",
+    edition: "fnb",
     hotelMode: true,
+    enabledPresets: ["restaurant"],
     waiterPinPacks: 1,
     activeModules: [],
   })),

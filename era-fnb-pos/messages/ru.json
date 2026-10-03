@@ -25,6 +25,10 @@
     "brand": "ERA F&B POS",
     "brandKafe": "ERA Kafe",
     "logout": "Выход",
+    "cashier": "Кассир",
+    "waiter": "Официант",
+    "manager": "Менеджер",
+    "staff": "Сотрудник",
     "sales": "Журнал продаж",
     "settings": "Настройки",
     "access": "Доступ"
@@ -138,7 +142,15 @@
       "defaultOutletName": "Demo outlet",
       "businessDayStart": "Торговый день начинается",
       "businessDayHint": "Asia/Baku. Продажи до этого часа относятся к предыдущему дню.",
-      "saved": "Сохранено"
+      "saved": "Сохранено",
+      "edition": "Редакция",
+      "editionKafe": "ERA Kafe",
+      "editionFnb": "Полный F&B",
+      "presets": "Залы",
+      "presetsHint": "Какие залы работают. Какие залы разрешены, решает редакция.",
+      "presetCafe": "Кафе",
+      "presetRestaurant": "Ресторан",
+      "presetBanquet": "Банкетный зал"
     },
     "menu": {
       "title": "Админ меню",

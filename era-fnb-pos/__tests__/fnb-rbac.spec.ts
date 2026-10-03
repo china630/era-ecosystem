@@ -20,23 +20,29 @@ import {
   sessionHasFnbPermission,
 } from "@/lib/auth/permission-check";
 import { routePermissions } from "@/lib/auth/page-route-permissions";
+import {
+  allowedFnbPresets,
+  clampFnbPresets,
+  fnbKitchenOn,
+  fnbSubmodulesMetered,
+} from "@/lib/fnb-edition";
 
 describe("fnb rbac catalog", () => {
-  it("kafe waiter omits pay; hotel waiter includes pay", () => {
+  it("kafe waiter omits pay; full F&B waiter includes pay", () => {
     expect(waiterPermissions("kafe")).not.toContain(PERMISSIONS.TICKETS_PAY);
     expect(waiterPermissions("kafe")).not.toContain(PERMISSIONS.SCREEN_SALES);
-    expect(waiterPermissions("hotel")).toContain(PERMISSIONS.TICKETS_PAY);
+    expect(waiterPermissions("fnb")).toContain(PERMISSIONS.TICKETS_PAY);
   });
 
-  it("manager hotel template includes void and access", () => {
-    const m = rolePermissionsForEdition("FB_MANAGER", "hotel");
+  it("manager full F&B template includes void and access", () => {
+    const m = rolePermissionsForEdition("FB_MANAGER", "fnb");
     expect(m).toContain(PERMISSIONS.TICKETS_VOID);
     expect(m).toContain(PERMISSIONS.ACCESS_MANAGE);
     expect(m).toContain(PERMISSIONS.SCREEN_ADMIN_ACCESS);
   });
 
   it("kitchen is kds-only screens", () => {
-    const k = rolePermissionsForEdition("FB_KITCHEN", "hotel");
+    const k = rolePermissionsForEdition("FB_KITCHEN", "fnb");
     expect(k).toContain(PERMISSIONS.KDS_BUMP);
     expect(k).not.toContain(PERMISSIONS.MENU_MANAGE);
     expect(k).not.toContain(PERMISSIONS.SCREEN_ADMIN_MENU);
@@ -51,9 +57,9 @@ describe("fnb rbac catalog", () => {
 
   it("effectiveRolePermissions honors stored strip", () => {
     const stripped = serializePermissions(
-      waiterPermissions("hotel").filter((p) => p !== PERMISSIONS.TICKETS_VOID),
+      waiterPermissions("fnb").filter((p) => p !== PERMISSIONS.TICKETS_VOID),
     );
-    const eff = effectiveRolePermissions("FB_MANAGER", stripped, "hotel");
+    const eff = effectiveRolePermissions("FB_MANAGER", stripped, "fnb");
     expect(eff).not.toContain(PERMISSIONS.TICKETS_VOID);
   });
 
@@ -63,10 +69,25 @@ describe("fnb rbac catalog", () => {
     expect(resolveFnbRoleCode("BANANA")).toBeNull();
   });
 
-  it("edition resolve", () => {
+  it("edition resolve ignores hotel mode", () => {
     expect(resolveFnbEdition("kafe")).toBe("kafe");
-    expect(resolveFnbEdition("hotel", false)).toBe("kafe");
-    expect(resolveFnbEdition("hotel", true)).toBe("hotel");
+    expect(resolveFnbEdition("fnb")).toBe("fnb");
+    expect(resolveFnbEdition("hotel")).toBe("fnb");
+    expect(resolveFnbEdition("mvp")).toBe("fnb");
+  });
+
+  it("presets clamp to the edition", () => {
+    expect(clampFnbPresets("kafe", ["restaurant", "banquet"])).toEqual(["cafe"]);
+    expect(clampFnbPresets("fnb", ["banquet", "cafe"])).toEqual(["cafe", "banquet"]);
+    expect(clampFnbPresets("fnb", [])).toEqual(["restaurant"]);
+    expect(allowedFnbPresets("kafe")).toEqual(["cafe"]);
+  });
+
+  it("full F&B with hotel mode off is still full F&B", () => {
+    expect(fnbSubmodulesMetered({ edition: "fnb", activeModules: ["industry_fnb_pos"] })).toBe(true);
+    expect(fnbKitchenOn({ edition: "fnb", activeModules: [] })).toBe(true);
+    expect(fnbKitchenOn({ edition: "kafe", activeModules: [] })).toBe(false);
+    expect(fnbKitchenOn({ edition: "fnb", activeModules: ["fnb_kitchen_kds"] })).toBe(true);
   });
 
   it("FB_MANAGER does not bypass; owner and pin rules", () => {
@@ -174,7 +195,7 @@ describe("fnb rbac catalog", () => {
       },
     };
 
-    await ensureSystemFnbRoles(db as never, "org-1", "hotel");
+    await ensureSystemFnbRoles(db as never, "org-1", "fnb");
     expect(store.size).toBe(4);
     const mgr = store.get("org-1:FB_MANAGER")!;
     expect(mgr.permissionCatalogVersion).toBe(FNB_PERMISSION_CATALOG_VERSION);
@@ -185,7 +206,7 @@ describe("fnb rbac catalog", () => {
       ...store.get("org-1:FB_WAITER")!,
       permissionsJson: "[]",
     });
-    await ensureSystemFnbRoles(db as never, "org-1", "hotel");
+    await ensureSystemFnbRoles(db as never, "org-1", "fnb");
     expect(store.get("org-1:FB_WAITER")!.permissionsJson).toBe("[]");
   });
 

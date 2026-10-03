@@ -12,6 +12,7 @@ import {
   type FnbEdition,
   type RoleCode,
 } from "@/lib/auth/permissions";
+import { normalizeFnbEdition } from "@/lib/fnb-edition";
 
 export const FNB_PERMISSION_CATALOG_VERSION = 4;
 
@@ -51,24 +52,20 @@ type RoleDb = {
   };
 };
 
-export function resolveFnbEdition(
-  edition: string | null | undefined,
-  hotelMode?: boolean | null,
-): FnbEdition {
-  if (edition?.toLowerCase() === "kafe") return "kafe";
-  if (hotelMode === false) return "kafe";
-  return "hotel";
+/** Hotel mode is a separate field and does not decide the edition. */
+export function resolveFnbEdition(edition: string | null | undefined): FnbEdition {
+  return normalizeFnbEdition(edition);
 }
 
 /**
  * Upsert the four system F&B roles for an organization.
  * Does not overwrite a valid permissionsJson array (including intentional empty).
- * Template grants depend on edition (hotel vs kafe — waiter pay).
+ * Template grants depend on edition (full F&B vs kafe — waiter pay).
  */
 export async function ensureSystemFnbRoles(
   db: RoleDb | Pick<PrismaClient, "role">,
   organizationId: string,
-  edition: FnbEdition = "hotel",
+  edition: FnbEdition = "fnb",
 ): Promise<void> {
   const orgId = organizationId.trim();
   if (!orgId) throw new Error("organizationId required for ensureSystemFnbRoles");

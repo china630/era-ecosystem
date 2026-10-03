@@ -54,8 +54,9 @@ export async function POST(req: Request) {
     const body = bodySchema.parse(await req.json());
     const organizationId = requestOrganizationId();
     const profile = await getFnbOrgProfile(organizationId);
-    const kafe = profile.edition.toLowerCase() === "kafe";
-    if (!body.globalPersonId && !kafe) {
+    // Hotel departments get staff from Finance HR; a street point types its own roster.
+    const manualRoster = !profile.hotelMode;
+    if (!body.globalPersonId && !manualRoster) {
       return jsonError(
         "Manual roster create requires globalPersonId from Finance HR STAFF_PROVISIONED",
         422,
