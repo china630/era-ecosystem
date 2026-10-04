@@ -13,7 +13,7 @@ export function PageHeader({
   subtitle?: ReactNode;
   leading?: ReactNode;
   actions?: ReactNode;
-  /** Extra classes on `<header>` (e.g. `!mb-0` inside LIST_PAGE_SHELL). */
+  /** Extra classes on `<header>`. Keep the default bottom margin on list pages. */
   className?: string;
 }) {
   const hasLeading = leading != null && leading !== "";
