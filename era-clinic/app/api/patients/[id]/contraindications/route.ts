@@ -7,7 +7,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { BODY_PART_CODES } from "@/lib/body-part-codes";
+import { activeBodyPartCodes } from "@/domain/catalog/body-part-lookup";
 import { prisma } from "@/lib/prisma";
 import {
   EPISODE_CLOSED,
@@ -16,7 +16,7 @@ import {
 } from "@/domain/sanatorium/episode-gates";
 
 const bodySchema = z.object({
-  bodyPart: z.enum(BODY_PART_CODES),
+  bodyPart: z.string().min(1),
   note: z.string().optional(),
   episodeId: z.string().min(1),
 });
@@ -87,6 +87,10 @@ export async function POST(
 
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
+    const allowedParts = await activeBodyPartCodes();
+    if (!allowedParts.has(body.bodyPart.trim().toUpperCase())) {
+      return jsonError("Unknown body part", 400);
+    }
     const episode = await prisma.clinicalEpisode.findFirst({
       where: { id: body.episodeId, patientRefId: id },
       select: { id: true, status: true },

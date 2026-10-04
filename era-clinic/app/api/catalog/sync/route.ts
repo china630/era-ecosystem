@@ -1,6 +1,8 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
+import { recordCatalogPriceIfChanged } from "@/domain/catalog/catalog-price-history";
 import { prisma } from "@/lib/prisma";
+import { requestOrganizationId } from "@/lib/request-organization";
 
 type CatalogItem = { code: string; description: string; amount: number };
 
@@ -26,35 +28,39 @@ export async function POST(req: Request) {
   try {
     const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
-    let items = await fetchFinanceCatalog();
+    const items = await fetchFinanceCatalog();
     if (items.length === 0) {
-      items = [
-        { code: "CONSULT", description: "Consultation", amount: 50 },
-        { code: "LAB-CBC", description: "Complete blood count", amount: 25 },
-        { code: "USG", description: "Ultrasound", amount: 40 },
-        { code: "MASSAGE", description: "Therapeutic massage", amount: 60 },
-      ];
+      return jsonOk({ synced: 0, source: "unavailable" });
     }
 
+    const organizationId = requestOrganizationId();
     for (const item of items) {
+      const listAmount = item.amount > 0 ? item.amount : null;
       await prisma.serviceCatalogCache.upsert({
-        where: { code: item.code } as never,
+        where: { organizationId_code: { organizationId, code: item.code } },
         create: {
+          organizationId,
           code: item.code,
           description: item.description,
           amount: item.amount,
-          listAmount: item.amount > 0 ? item.amount : null,
+          listAmount,
         },
         update: {
           description: item.description,
           amount: item.amount,
-          listAmount: item.amount > 0 ? item.amount : null,
+          listAmount,
           syncedAt: new Date(),
         },
       });
+      await recordCatalogPriceIfChanged({
+        organizationId,
+        code: item.code,
+        amount: item.amount,
+        listAmount,
+      });
     }
 
-    return jsonOk({ synced: items.length, source: items.length ? "finance" : "fallback" });
+    return jsonOk({ synced: items.length, source: "finance" });
   } catch (err) {
     return handleRouteError(err);
   }

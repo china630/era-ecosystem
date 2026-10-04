@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -18,6 +18,7 @@ import {
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
 } from "@era/satellite-kit/ui";
 
 type LookupRow = {
@@ -58,7 +59,7 @@ export default function ClinicLookupsAdminPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader
-        title={t("lookupsTitle", { defaultValue: "Clinic lookups" })}
+        title={t("lookupsTitle")}
         actions={
           <button
             type="button"
@@ -74,19 +75,16 @@ export default function ClinicLookupsAdminPage() {
         }
       />
       <p className="text-[13px] text-[#7F8C8D]">
-        {t("lookupsBodyPartHint", {
-          defaultValue: "BodyPart catalog (SatAdmin T1). Seeded codes match clinical UI.",
-        })}
+        {t("lookupsBodyPartHint")}
       </p>
       <div className={DATA_TABLE_VIEWPORT_CLASS}>
         <table className={DATA_TABLE_CLASS}>
           <thead>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code", { defaultValue: "Code" })}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name", { defaultValue: "Name" })}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>
-                {t("active", { defaultValue: "Active" })}
-              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("active")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -101,7 +99,21 @@ export default function ClinicLookupsAdminPage() {
               >
                 <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{row.active ? "yes" : "no"}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{row.active ? t("yes") : t("no")}</td>
+                <td className={DATA_TABLE_TD_CLASS}>
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={tc("edit")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEdit(row);
+                      setOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -132,6 +144,7 @@ export default function ClinicLookupsAdminPage() {
           <ModalFooter
             formId={formId}
             onCancel={() => setOpen(false)}
+            cancelLabel={tc("cancel")}
             busy={busy}
             submitLabel={edit ? tc("save") : tc("add")}
           />
@@ -175,19 +188,19 @@ export default function ClinicLookupsAdminPage() {
           }}
         >
           {!edit ? (
-            <Field label="Code" preset="code" name="code" required defaultValue="" />
+            <Field label={t("code")} preset="code" name="code" required defaultValue="" />
           ) : (
-            <Field label="Code" preset="code" value={edit.code} readOnly />
+            <Field label={t("code")} preset="code" value={edit.code} readOnly />
           )}
           <Field
-            label="Name"
+            label={t("name")}
             preset="shortText"
             name="name"
             required
             defaultValue={edit?.name ?? ""}
           />
           <Field
-            label="Sort"
+            label={t("sort")}
             preset="count"
             name="sortOrder"
             type="number"
@@ -201,7 +214,7 @@ export default function ClinicLookupsAdminPage() {
                 className={MODAL_CHECKBOX_CLASS}
                 defaultChecked={edit.active}
               />
-              Active
+              {t("active")}
             </label>
           ) : null}
         </form>

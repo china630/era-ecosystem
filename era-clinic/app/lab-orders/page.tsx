@@ -29,7 +29,11 @@ import {
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
 import { bakuDateDisplay } from "@/lib/baku-day";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
-import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import type {
+  DiagnosticCatalogGroup,
+  DiagnosticCatalogItem,
+  L10n,
+} from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import {
   expandPackageCodes,
@@ -45,7 +49,13 @@ type DiagnosticServiceRef = {
   titleAz?: string | null;
   modality?: ModalityRef | null;
 };
-type LabOrderItem = { id: string; serviceCode: string; diagnosticService?: DiagnosticServiceRef | null };
+type LabOrderItem = {
+  id: string;
+  serviceCode: string;
+  inPackage?: boolean;
+  amountNet?: string | number | null;
+  diagnosticService?: DiagnosticServiceRef | null;
+};
 
 type LabOrder = {
   id: string;
@@ -122,8 +132,39 @@ function servicesLabel(order: LabOrder, locale: string): string {
   return order.testCode;
 }
 
-function modalityLabel(order: LabOrder): string {
-  return order.items?.[0]?.diagnosticService?.modality?.code ?? "—";
+const LAB_ORDER_STATUSES = [
+  "ORDERED",
+  "COLLECTED",
+  "IN_PROGRESS",
+  "RESULT_READY",
+  "PUBLISHED",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
+
+function modalityTitle(
+  code: string | null | undefined,
+  modalities: Array<{ code: string; title: L10n }>,
+  locale: string,
+): string {
+  if (!code) return "—";
+  const hit = modalities.find((m) => m.code === code);
+  return hit ? pickL10n(hit.title, locale) : code;
+}
+
+function chargeAmount(order: Pick<LabOrder, "amountNet" | "items">): number {
+  const header = Number(order.amountNet);
+  if (header > 0) return header;
+  return (order.items ?? []).reduce((sum, item) => sum + (Number(item.amountNet) || 0), 0);
+}
+
+function amountLabel(order: LabOrder, inPackageLabel: string): string {
+  const net = chargeAmount(order);
+  const items = order.items ?? [];
+  if (items.length > 0 && items.every((item) => item.inPackage) && !(net > 0)) {
+    return inPackageLabel;
+  }
+  return `${Number.isFinite(net) ? net.toFixed(2) : "0.00"} AZN`;
 }
 
 export default function LabOrdersPage() {
@@ -138,6 +179,7 @@ export default function LabOrdersPage() {
   const [form, setForm] = useState({ patientRefCode: "", patientFullName: "", visitId: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [catalogItems, setCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
+  const [catalogGroups, setCatalogGroups] = useState<DiagnosticCatalogGroup[]>([]);
   const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
   const [favoritesMode, setFavoritesMode] = useState<"first" | "only">("first");
   const [search, setSearch] = useState("");
@@ -209,6 +251,7 @@ export default function LabOrdersPage() {
       .then((d) => {
         const row = d.data ?? d;
         setCatalogItems(row.items ?? []);
+        setCatalogGroups(row.groups ?? []);
         setFavoriteKeys(row.favorites?.keys ?? []);
         setFavoritesMode(row.favorites?.mode === "only" ? "only" : "first");
       });
@@ -216,17 +259,13 @@ export default function LabOrdersPage() {
 
   const modalities = useMemo(() => {
     const map = new Map<string, L10n>();
-    for (const item of catalogItems) {
-      if (!map.has(item.modality)) {
-        map.set(item.modality, {
-          en: item.modality,
-          ru: item.modality,
-          az: item.modality,
-        });
-      }
+    for (const group of catalogGroups) {
+      if (group.category) continue;
+      if (!group.modality || map.has(group.modality)) continue;
+      map.set(group.modality, group.title);
     }
     return [...map.entries()].map(([code, title]) => ({ code, title }));
-  }, [catalogItems]);
+  }, [catalogGroups]);
 
   const pickerItems = useMemo(
     () =>
@@ -370,13 +409,21 @@ export default function LabOrdersPage() {
       {
         key: "modality",
         header: t("colType"),
-        render: (order) => modalityLabel(order),
+        render: (order) =>
+          modalityTitle(order.items?.[0]?.diagnosticService?.modality?.code, modalities, locale),
       },
-      { key: "status", header: tc("status"), render: (order) => order.status },
+      {
+        key: "status",
+        header: tc("status"),
+        render: (order) =>
+          (LAB_ORDER_STATUSES as readonly string[]).includes(order.status)
+            ? t(`orderStatus.${order.status}` as "orderStatus.ORDERED")
+            : order.status,
+      },
       {
         key: "amount",
         header: t("colAmount"),
-        render: (order) => `${order.amountNet} AZN`,
+        render: (order) => amountLabel(order, t("inPackage")),
       },
       {
         key: "created",
@@ -423,14 +470,13 @@ export default function LabOrdersPage() {
         ),
       },
     ],
-    [t, tc, locale],
+    [t, tc, locale, modalities],
   );
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
-          className="!mb-0"
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
@@ -442,7 +488,6 @@ export default function LabOrdersPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={resetFilters}
             actionsExtra={
@@ -471,12 +516,11 @@ export default function LabOrdersPage() {
               onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">{tc("all")}</option>
-              <option value="ORDERED">ORDERED</option>
-              <option value="COLLECTED">COLLECTED</option>
-              <option value="RESULT_READY">RESULT_READY</option>
-              <option value="PUBLISHED">PUBLISHED</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELLED">CANCELLED</option>
+              {LAB_ORDER_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {t(`orderStatus.${status}`)}
+                </option>
+              ))}
             </FieldSelect>
             <FieldSelect
               label={t("modalityFilter")}

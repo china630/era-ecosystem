@@ -48,7 +48,22 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
   const canMasterData =
     (profile?.permissions ?? []).includes(CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA) || canAdmin;
 
-  const catalog = useMemo(() => clinicNavCatalog((key) => t(key as "home")), [t]);
+  const codeCheckIn = profile?.raw.checkInMode === "CODE";
+  const isPlatformSuperAdmin = profile?.isPlatformSuperAdmin === true;
+  const catalog = useMemo(() => {
+    const base = clinicNavCatalog((key) => t(key as "home"));
+    return {
+      ...base,
+      sections: base.sections.map((section) => ({
+        ...section,
+        items: section.items.map((item) => {
+          if (item.href === "/check-in") return { ...item, when: codeCheckIn };
+          if (item.href === "/admin/ops-wipe") return { ...item, when: isPlatformSuperAdmin };
+          return item;
+        }),
+      })),
+    };
+  }, [t, codeCheckIn, isPlatformSuperAdmin]);
   const topItems = useMemo(
     () => visibleOpsNavItems(catalog.topItems, status, profile),
     [catalog, status, profile],

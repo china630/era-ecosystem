@@ -307,6 +307,7 @@ export default function LisProfilesAdminPage() {
         open={modalOpen}
         title={editingId ? t("editProfile") : t("addProfile")}
         onClose={() => setModalOpen(false)}
+        closeLabel={tc("close")}
       >
         <div className={FORM_STACK_CLASS}>
           <Field
@@ -324,8 +325,8 @@ export default function LisProfilesAdminPage() {
               setForm({ ...form, format: e.target.value as LisProfile["format"] })
             }
           >
-            <option value="CSV">CSV</option>
-            <option value="HL7_FRAGMENT">HL7_FRAGMENT</option>
+            <option value="CSV">{t("format_CSV")}</option>
+            <option value="HL7_FRAGMENT">{t("format_HL7")}</option>
           </FieldSelect>
           <Field
             label={t("delimiter")}
@@ -338,7 +339,7 @@ export default function LisProfilesAdminPage() {
             {MAPPING_KEYS.map((key) => (
               <Field
                 key={key}
-                label={key}
+                label={t(`map_${key}`)}
                 preset="shortText"
                 value={form.columnMapping[key] ?? ""}
                 onChange={(e) =>
@@ -355,6 +356,7 @@ export default function LisProfilesAdminPage() {
           onCancel={() => setModalOpen(false)}
           onSubmit={() => void saveProfile()}
           submitLabel={tc("save")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
     </>

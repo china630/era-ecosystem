@@ -13,6 +13,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
+  EraListFilterBar,
   Field,
   FORM_STACK_CLASS,
   ListPaginationFooter,
@@ -427,7 +428,7 @@ export default function NurseRosterPage() {
     <div className="space-y-4">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      <div className="flex flex-wrap items-end gap-3">
+      <EraListFilterBar resetLabel={tc("filterReset")} onReset={() => setMatrixView("procedures")}>
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("staffKind")}
@@ -480,7 +481,7 @@ export default function NurseRosterPage() {
         <span className={TEXT_MUTED_CLASS}>
           {t("overrideCount", { count: dayOverrides.length })}
         </span>
-      </div>
+      </EraListFilterBar>
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -761,51 +762,6 @@ export default function NurseRosterPage() {
           />
         </div>
       )}
-
-      <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="text-sm font-medium">{t("staffList")}</h2>
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("absences")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(view?.staff ?? []).map((s) => (
-                <tr key={s.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.fullName}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.code}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {(view?.absences ?? [])
-                      .filter((a) => a.practitionerId === s.id)
-                      .map((a) => (
-                        <span key={a.id} className="mr-2 inline-flex items-center gap-1">
-                          <span className={TEXT_DANGER_CLASS}>
-                            {a.kind} {a.startsOn}–{a.endsOn}
-                          </span>
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            aria-label={tc("delete")}
-                            onClick={() => void removeAbsence(a.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                          </button>
-                        </span>
-                      ))}
-                    {s.warnings.some((w) => w.kind === "DAY_OFF") ? (
-                      <span className={TEXT_MUTED_CLASS}>{t("hasDayOff")}</span>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       <ModalShell
         open={absenceOpen}

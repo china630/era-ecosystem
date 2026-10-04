@@ -106,6 +106,43 @@ describe("getIntakeChecklist", () => {
     expect(intake?.status).toBe("MISSING");
   });
 
+  it("keeps ECG, ultrasound, and program labs when the snapshot only aliases two visits", async () => {
+    mockedPrisma.programInstance.findFirst.mockResolvedValue({
+      programCode: "PKG-STANDART",
+      entitlementSnapshot: {
+        version: 1,
+        code: "PKG-STANDART",
+        templateId: "tpl",
+        members: [],
+        knots: [],
+        procedures: [
+          {
+            procedureCode: "VISIT-SANATORIUM-INTAKE",
+            procedureName: "Intake",
+            fulfillment: "VISIT",
+            kind: "EXAM",
+          },
+          {
+            procedureCode: "GYN-OR-URO",
+            procedureName: "Gyn",
+            fulfillment: "VISIT",
+            kind: "EXAM",
+          },
+          {
+            procedureCode: "LAB-CBC",
+            procedureName: "CBC",
+            fulfillment: "LAB_ORDER",
+            kind: "LAB",
+          },
+        ],
+      },
+    });
+    const checklist = await getIntakeChecklist("p1", { episodeId: "ep1" });
+    expect(checklist.items.find((i) => i.slot === "CARDIO-ECG")).toBeTruthy();
+    expect(checklist.items.find((i) => i.slot === "USG-ABD")).toBeTruthy();
+    expect(checklist.items.find((i) => i.slot === "LAB-CBC")?.title.az).toBe("CBC");
+  });
+
   it("scopes LabOrder / Visit queries by clinicalEpisodeId when provided", async () => {
     await getIntakeChecklist("p1", { episodeId: "ep-this-year" });
     expect(mockedPrisma.labOrder.findFirst).toHaveBeenCalledWith(

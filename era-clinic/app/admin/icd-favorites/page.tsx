@@ -90,7 +90,9 @@ export default function AdminIcdFavoritesPage() {
             {t("catalogVersion", {
               version: version.version,
               count: String(version.count),
-              source: version.source,
+              source: t.has(`source_${version.source}` as "source_orchestrator")
+                ? t(`source_${version.source}` as "source_orchestrator")
+                : version.source,
             })}
           </p>
         ) : null}

@@ -35,7 +35,23 @@ describe("matrixNowLineLeft", () => {
       slotColumnWidth: "3.5rem",
     });
     const cols = (11 * 60 + 26 - 8 * 60) / 30;
-    expect(left).toBe(`calc(10rem + ${cols} * 3.5rem)`);
-    expect(cols).toBeCloseTo(6.8667, 3);
+    const placed = Number(left?.match(/calc\(10rem \+ ([0-9.]+) \* 3\.5rem\)/)?.[1]);
+    expect(placed).toBeCloseTo(cols, 8);
+  });
+
+  it("keeps 14:15 on the post-lunch column when 13:00 is omitted", () => {
+    const slotTimes = [
+      slot(12, 0),
+      slot(12, 30),
+      slot(14, 0),
+      slot(14, 30),
+    ];
+    const now = parseBakuDateTime("2026-10-01", "14:15:00");
+    const left = matrixNowLineLeft({
+      slotTimes,
+      now,
+      slotColumnWidth: "1.75rem",
+    });
+    expect(left).toBe(`calc(10rem + ${2.5} * 1.75rem)`);
   });
 });

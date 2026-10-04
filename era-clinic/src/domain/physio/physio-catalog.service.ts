@@ -1,6 +1,7 @@
 import { Prisma, type PhysioListKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { inactiveCatalogDenied } from "@/lib/master-data-gates";
+import { activeBodyPartCodes } from "@/domain/catalog/body-part-lookup";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   PhysioCatalogError,
@@ -89,7 +90,7 @@ export async function getPhysioSite(id: string) {
 export async function createPhysioSite(input: PhysioSiteInput) {
   const code = assertPhysioCode(input.code);
   const kind = parseSiteKind(input.kind);
-  const coarse = parseCoarse(input.coarse);
+  const coarse = parseCoarse(input.coarse, await activeBodyPartCodes());
   const aliases = parseAliasList(input.aliases);
   const organizationId = orgId();
   try {
@@ -131,7 +132,7 @@ export async function updatePhysioSite(id: string, input: Partial<PhysioSiteInpu
   if (input.titleEn !== undefined) data.titleEn = input.titleEn.trim();
   if (input.titleLa !== undefined) data.titleLa = input.titleLa.trim();
   if (input.boundary !== undefined) data.boundary = input.boundary?.trim() || null;
-  if (input.coarse !== undefined) data.coarse = parseCoarse(input.coarse);
+  if (input.coarse !== undefined) data.coarse = parseCoarse(input.coarse, await activeBodyPartCodes());
   if (input.anatomyJson !== undefined) data.anatomyJson = input.anatomyJson;
   if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
   if (input.active !== undefined) data.active = input.active;

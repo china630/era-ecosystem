@@ -6,7 +6,7 @@ Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTem
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
-Prices stay in Finance; this catalog owns **codes + form fields / analytes / packages**.  
+Commercial prices live on `ServiceCatalogCache` (`amount`, `listAmount`) with append-only `ServiceCatalogPrice` history. Finance sync writes them when the finance catalog answers; an empty finance response does not invent demo prices. SatAdmin can add and edit rows on `/admin/catalog`. This diagnostic catalog owns **codes + form fields / analytes / packages**, not the price text in parentheses.  
 Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the rest). Rare send-out: SatAdmin add, not this JSON.
 
 **v1.2 sources:** Nafta Analyses price list; Exonlab special panels; MediClub public lab menus (biochem, general clinical, infections); Liv/Eurolab category pages. Not Referans 7000 / LOINC.
@@ -125,7 +125,7 @@ PET/CT, nuclear medicine, full genetic NGS, newborn screening pack, IVF advanced
 - [x] UI: modality/category order picker (`/lab-orders` + `DiagnosticCatalogPicker`)
 - [x] UI: result form renderer (`TemplateResultForm` on `/lab-orders/[id]`)
 - [x] UI: package → expand to child order codes on create
-- [x] SatAdmin favorites: `/admin/diagnostic-catalog` favorites tab (`first` | `only`)
+- [x] SatAdmin favorites: `/admin/diagnostic-catalog` favorites tab pins `code:` service/panel keys (`first` | `only`)
 - [x] Patient card: now/next + pending labs + results/plan (`/patients/[id]` + card-summary/feed)
 - [ ] Finance price-list rows per `serviceCode`
 

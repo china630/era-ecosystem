@@ -23,6 +23,7 @@ import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels"
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { packageAssignBlockText } from "@/lib/package-assign-block";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -55,6 +56,28 @@ export type PackageAssignedAgg = {
 };
 
 type PoolEligibleSku = { code: string; name: string };
+
+type ExtraDraftLine = {
+  key: string;
+  procedureCode: string;
+  procedureName: string;
+  qty: number;
+  amountNet: number;
+  note: string;
+  physioFields?: Record<string, unknown> | null;
+  siteIds?: string[];
+  siteApplyMode?: "TURN" | "TOGETHER" | null;
+  siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+  paramsLabel: string;
+};
+
+type PackageBlockReason =
+  | "NO_PROGRAM"
+  | "NO_PROGRAM_CODE"
+  | "NO_ANAMNESIS"
+  | "NO_COMPLAINT"
+  | "NO_CARE_TEAM"
+  | "INSTANTIATE_FAILED";
 
 type DraftLine = {
   key: string;
@@ -249,9 +272,13 @@ export function PackageAssignModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [softWarn, setSoftWarn] = useState<string | null>(null);
-  const [blockReason, setBlockReason] = useState<"NO_PROGRAM" | "NO_PROGRAM_CODE" | null>(
-    null,
-  );
+  const [blockReason, setBlockReason] = useState<PackageBlockReason | null>(null);
+  const [formLane, setFormLane] = useState<"package" | "extra" | null>(null);
+  const [extraDraft, setExtraDraft] = useState<ExtraDraftLine[]>([]);
+  const [extraPrices, setExtraPrices] = useState<Record<string, number>>({});
+  const [extraPending, setExtraPending] = useState<
+    Array<{ id: string; procedureName: string; amountNet: number }>
+  >([]);
 
   const [catalog, setCatalog] = useState<PhysioCatalogSite[]>([]);
   const [programs, setPrograms] = useState<PhysioCatalogListItem[]>([]);
@@ -294,23 +321,30 @@ export function PackageAssignModal({
     const ver =
       typeof payload.packageVersion === "number" ? payload.packageVersion : null;
     setPackagePin(code ? (ver != null ? `${code} · v${ver}` : code) : null);
-    const block =
-      payload.blockReason === "NO_PROGRAM" || payload.blockReason === "NO_PROGRAM_CODE"
-        ? (payload.blockReason as "NO_PROGRAM" | "NO_PROGRAM_CODE")
-        : null;
+    const known: PackageBlockReason[] = [
+      "NO_PROGRAM",
+      "NO_PROGRAM_CODE",
+      "NO_ANAMNESIS",
+      "NO_COMPLAINT",
+      "NO_CARE_TEAM",
+      "INSTANTIATE_FAILED",
+    ];
+    const block = known.includes(payload.blockReason) ? payload.blockReason : null;
     setBlockReason(block);
-    if (block === "NO_PROGRAM_CODE") {
-      setError(tPhysio("packageAssignNoProgramCode"));
-    } else if (block === "NO_PROGRAM") {
-      setError(tPhysio("packageAssignNoProgram"));
-    } else if (payload.softWarnDay1) {
-      setSoftWarn(String(payload.softWarnDay1));
-    }
+    const blockText = packageAssignBlockText(
+      tPhysio,
+      block,
+      typeof payload.packageCode === "string" ? payload.packageCode : "",
+    );
+    if (blockText) setError(blockText);
+    else if (payload.softWarnDay1) setSoftWarn(String(payload.softWarnDay1));
   }, [episodeId, tPhysio]);
 
   useEffect(() => {
     if (!open) return;
     setDraft([]);
+    setExtraDraft([]);
+    setFormLane(null);
     setPendingCancel(new Set());
     setPendingCut({});
     setFormCode(null);
@@ -323,9 +357,10 @@ export function PackageAssignModal({
     void load();
     void (async () => {
       try {
-        const [catRes, typesRes] = await Promise.all([
+        const [catRes, typesRes, extraRes] = await Promise.all([
           fetch("/api/physio-catalog"),
           fetch("/api/procedure-types"),
+          fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`),
         ]);
         if (catRes.ok) {
           const data = await catRes.json();
@@ -333,6 +368,19 @@ export function PackageAssignModal({
           setPrograms((data.programs ?? data.data?.programs ?? []) as PhysioCatalogListItem[]);
           setSubstances(
             (data.substances ?? data.data?.substances ?? []) as PhysioCatalogListItem[],
+          );
+        }
+        if (extraRes.ok) {
+          const data = await extraRes.json();
+          const payload = data.data ?? data;
+          setExtraPrices(payload.prices ?? {});
+          const pending = Array.isArray(payload.items) ? payload.items : [];
+          setExtraPending(
+            pending.map((row: { id: string; procedureName?: string; amountNet?: number }) => ({
+              id: row.id,
+              procedureName: row.procedureName || row.id,
+              amountNet: Number(row.amountNet || 0),
+            })),
           );
         }
         if (typesRes.ok) {
@@ -392,10 +440,16 @@ export function PackageAssignModal({
 
   const hasPendingAdjust =
     pendingCancel.size > 0 || Object.values(pendingCut).some((n) => n > 0);
-  const canSave =
-    !busy &&
-    !blockReason &&
-    (draft.length > 0 || hasPendingAdjust || Boolean(formCode));
+  const clinicalLock =
+    blockReason === "NO_ANAMNESIS" ||
+    blockReason === "NO_COMPLAINT" ||
+    blockReason === "NO_CARE_TEAM";
+  const extraDraftTotal = extraDraft.reduce((sum, row) => sum + row.amountNet * row.qty, 0);
+  const extraPendingTotal = extraPending.reduce((sum, row) => sum + row.amountNet, 0);
+  const canSavePackage =
+    !blockReason && (draft.length > 0 || hasPendingAdjust || (formLane === "package" && Boolean(formCode)));
+  const canSaveExtras = !clinicalLock && (extraDraft.length > 0 || formLane === "extra");
+  const canSave = !busy && (canSavePackage || canSaveExtras);
 
   const leftoverDraft = useMemo(() => {
     const used = new Set<string>();
@@ -438,12 +492,39 @@ export function PackageAssignModal({
   }
 
   function closeForm() {
+    setFormLane(null);
     setFormCode(null);
     setFormBurnPool(null);
     setFormPhysio(EMPTY_PHYSIO);
   }
 
+  function quotaStillOpen(code: string): boolean {
+    if ((draftRemaining.get(code) ?? 0) > 0) return true;
+    for (const [pool, skus] of Object.entries(poolEligible)) {
+      if (skus.some((s) => s.code === code) && (draftRemaining.get(pool) ?? 0) > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const extraOptions = useMemo(
+    () =>
+      allCodes
+        .filter((row) => !quotaStillOpen(row.value))
+        .map((row) => {
+          const unit = extraPrices[row.value];
+          const price =
+            Number.isFinite(unit) && unit > 0 ? `${unit.toFixed(2)} AZN` : "—";
+          return { value: row.value, label: `${row.label} · ${price}` };
+        }),
+    // quotaStillOpen is recreated each render; remaining and pools are the inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allCodes, extraPrices, draftRemaining, poolEligible],
+  );
+
   function openForm(code: string, fillAllQty = false) {
+    setFormLane("package");
     const bal = balances.find((b) => b.procedureCode === code);
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
     if (needsPicker(bal)) {
@@ -522,7 +603,57 @@ export function PackageAssignModal({
     };
   }
 
+  function openExtra(code: string) {
+    if (!code || quotaStillOpen(code)) return;
+    const name = allCodes.find((c) => c.value === code)?.label ?? code;
+    setFormLane("extra");
+    setFormBurnPool(null);
+    setFormCode(code);
+    setFormQty(1);
+    setFormPhysio(gateToPhysio(code, name));
+  }
+
+  function addExtraFromForm() {
+    if (!formCode) return;
+    const unit = extraPrices[formCode] ?? 0;
+    const fill = formPhysio.physioFields?.naftalanFill;
+    const fillCode =
+      fill === "OTURAQ" || fill === "QURSAQ" || fill === "TAM" ? fill : "TAM";
+    const occupancy =
+      formPhysio.hideSitePicker && formPhysio.siteIds.length === 0
+        ? (() => {
+            const row = catalog.find((s) => s.code === siteCodeForNaftalanFill(fillCode));
+            return row ? [row.id] : [];
+          })()
+        : formPhysio.siteIds;
+    const qty = Math.max(1, formQty);
+    setExtraDraft((prev) => [
+      ...prev,
+      {
+        key: `${formCode}-${Date.now()}`,
+        procedureCode: formCode,
+        procedureName: formName,
+        qty,
+        amountNet: unit,
+        note: formPhysio.note ?? "",
+        physioFields: {
+          ...formPhysio.physioFields,
+          ...(qty <= 1 ? { bathSequence: null } : {}),
+        } as Record<string, unknown>,
+        siteIds: occupancy,
+        siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
+        siteLaterality: formPhysio.siteLaterality,
+        paramsLabel: paramsLabelFromPhysio({ ...formPhysio, siteIds: occupancy }, catalog),
+      },
+    ]);
+    closeForm();
+  }
+
   function addDraft() {
+    if (formLane === "extra") {
+      addExtraFromForm();
+      return;
+    }
     const line = formDraftLine();
     if (!line) return;
     pushDraft(line);
@@ -576,13 +707,35 @@ export function PackageAssignModal({
   }
 
   async function save() {
-    const flushed = formDraftLine();
-    const lines = flushed ? mergeDraft(draft, flushed) : draft;
+    let extras = extraDraft;
+    let lines = draft;
+    if (formLane === "extra" && formCode) {
+      const unit = extraPrices[formCode] ?? 0;
+      extras = [
+        ...extras,
+        {
+          key: `${formCode}-flush`,
+          procedureCode: formCode,
+          procedureName: formName,
+          qty: Math.max(1, formQty),
+          amountNet: unit,
+          note: formPhysio.note ?? "",
+          physioFields: formPhysio.physioFields ?? null,
+          siteIds: formPhysio.siteIds,
+          siteApplyMode: formPhysio.siteApplyMode,
+          siteLaterality: formPhysio.siteLaterality,
+          paramsLabel: paramsLabelFromPhysio(formPhysio, catalog),
+        },
+      ];
+    } else {
+      const flushed = formDraftLine();
+      lines = flushed ? mergeDraft(draft, flushed) : draft;
+    }
     const cancelKeys = pendingCancel;
     const cuts = pendingCut;
     const hasAdjust =
       cancelKeys.size > 0 || Object.values(cuts).some((n) => n > 0);
-    if (lines.length === 0 && !hasAdjust) {
+    if (lines.length === 0 && !hasAdjust && extras.length === 0) {
       onClose();
       return;
     }
@@ -615,7 +768,7 @@ export function PackageAssignModal({
         }
       }
 
-      if (lines.length > 0) {
+      if (lines.length > 0 && !blockReason) {
         const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -651,7 +804,40 @@ export function PackageAssignModal({
         const payload = d.data ?? d;
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
       }
+      if (extras.length > 0 && !clinicalLock) {
+        const res = await fetch(
+          `/api/sanatorium/episodes/${episodeId}/extras-prescribe`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lines: extras.map((row) => ({
+                procedureCode: row.procedureCode,
+                qty: row.qty,
+                note: row.note || null,
+                physioFields: row.physioFields ?? null,
+                siteIds: row.siteIds ?? [],
+                siteApplyMode: row.siteApplyMode ?? null,
+                siteLaterality: row.siteLaterality ?? {},
+              })),
+            }),
+          },
+        );
+        const extraBody = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const code = typeof extraBody?.code === "string" ? extraBody.code : null;
+          setError(
+            code === "QUOTA_REMAINING"
+              ? tPhysio("packageAssignQuotaRemaining")
+              : typeof extraBody?.error === "string"
+                ? extraBody.error
+                : "Save failed",
+          );
+          return;
+        }
+      }
       setDraft([]);
+      setExtraDraft([]);
       setPendingCancel(new Set());
       setPendingCut({});
       closeForm();
@@ -893,6 +1079,23 @@ export function PackageAssignModal({
               })}
             </ul>
           )}
+          <div className="pt-3">
+            <h4 className="mb-2 text-sm font-medium">{tPhysio("assignExtrasTitle")}</h4>
+            <CatalogField
+              kind="SEARCHABLE"
+              label={tPhysio("assignExtrasTitle")}
+              value=""
+              onChange={(v) => {
+                const next = String(v ?? "");
+                if (next) openExtra(next);
+              }}
+              options={extraOptions}
+              widthPreset="select"
+            />
+            <p className={`mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>
+              {tPhysio("packageAssignExtraHint")}
+            </p>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -1054,6 +1257,42 @@ export function PackageAssignModal({
               ))}
             </ul>
           )}
+          {extraDraft.length > 0 || extraPending.length > 0 ? (
+            <div className={`${CARD_CONTAINER_CLASS} space-y-2 px-3 py-2 text-[13px]`}>
+              <h4 className="font-medium">{tPhysio("assignExtrasTitle")}</h4>
+              <ul className="space-y-1">
+                {extraPending.map((row) => (
+                  <li key={row.id} className="flex justify-between gap-2">
+                    <span className="min-w-0 truncate">{row.procedureName}</span>
+                    <span className="shrink-0">{row.amountNet.toFixed(2)} AZN</span>
+                  </li>
+                ))}
+                {extraDraft.map((row) => (
+                  <li key={row.key} className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate">
+                      {row.procedureName} ×{row.qty}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      <span>{(row.amountNet * row.qty).toFixed(2)} AZN</span>
+                      <button
+                        type="button"
+                        className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                        onClick={() =>
+                          setExtraDraft((prev) => prev.filter((x) => x.key !== row.key))
+                        }
+                        aria-label={labels.delete}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="border-t border-slate-100 pt-1 font-medium">
+                {tPhysio("extrasDraftTotal")}: {(extraDraftTotal + extraPendingTotal).toFixed(2)} AZN
+              </p>
+            </div>
+          ) : null}
         </div>
 
           {formBurnPool || formCode ? (
@@ -1072,10 +1311,19 @@ export function PackageAssignModal({
                       className={`${MODAL_INPUT_CLASS} w-[5ch]`}
                       type="number"
                       min={1}
-                      max={draftRemaining.get(formQuotaCode ?? formCode) ?? 1}
+                      max={
+                        formLane === "extra"
+                          ? 40
+                          : Math.max(1, draftRemaining.get(formQuotaCode ?? formCode) ?? 1)
+                      }
                       value={formQty}
                       onChange={(e) => {
-                        const n = Number(e.target.value) || 1;
+                        const raw = Number(e.target.value) || 1;
+                        const cap =
+                          formLane === "extra"
+                            ? 40
+                            : Math.max(1, draftRemaining.get(formQuotaCode ?? formCode) ?? 1);
+                        const n = Math.min(cap, Math.max(1, raw));
                         setFormQty(n);
                         if (n <= 1) {
                           setFormPhysio((prev) => ({
@@ -1099,6 +1347,21 @@ export function PackageAssignModal({
                     widthPreset="select"
                   />
                 </div>
+              ) : null}
+              {formLane === "extra" && formCode ? (
+                <p className="mb-2 text-[13px] font-medium text-[#2C3E50]">
+                  {tPhysio("price")}:{" "}
+                  {Number.isFinite(extraPrices[formCode]) && extraPrices[formCode] > 0
+                    ? `${extraPrices[formCode].toFixed(2)} AZN`
+                    : "—"}
+                  {" · "}
+                  {tPhysio("extrasDraftTotal")}:{" "}
+                  {(
+                    (Number.isFinite(extraPrices[formCode]) ? extraPrices[formCode] : 0) *
+                    Math.max(1, formQty)
+                  ).toFixed(2)}{" "}
+                  AZN
+                </p>
               ) : null}
               {formCode ? (
                 <>

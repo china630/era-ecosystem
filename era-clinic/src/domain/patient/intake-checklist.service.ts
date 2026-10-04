@@ -14,13 +14,20 @@ import { parseEntitlementSnapshot } from "@/domain/sanatorium/program-template-a
 export type IntakeChecklistStatus = "DONE" | "ORDERED" | "MISSING";
 
 export type IntakeChecklistItem = {
-  slot: NaftaIntakeSlotCode;
+  /** Canonical Nafta slot, or a program study code that is not one of those four. */
+  slot: string;
   resolvedCode: string;
   kind: "visit" | "lab" | "imaging";
   title: { en: string; ru: string; az: string };
   status: IntakeChecklistStatus;
   href: string | null;
   recordId: string | null;
+};
+
+type ExtraIntakeStudy = {
+  code: string;
+  name: string;
+  lane: "lab" | "visit";
 };
 
 export type IntakeChecklist = {
@@ -183,42 +190,45 @@ async function findGynOrUroVisit(
 }
 
 /**
- * Prefer entitlement snapshot intake blocks (LAB_ORDER|VISIT or kind LAB|EXAM).
- * Falls back to PKG-NAFTA-INTAKE catalog includes.
+ * The four Nafta check-in slots always stay on the card.
+ * A program snapshot used to replace that list with only the slots it aliased,
+ * which dropped ECG, ultrasound, and blood panels. Extra lab/exam lines from
+ * the snapshot are appended; they do not gate package scheduling.
  */
 async function resolveIntakeSlots(
   episodeId: string | null | undefined,
-): Promise<{ packageCode: string; slots: NaftaIntakeSlotCode[] }> {
-  if (episodeId) {
-    const instance = await prisma.programInstance.findFirst({
-      where: { episodeId },
-      select: { programCode: true, entitlementSnapshot: true },
+): Promise<{ packageCode: string; extras: ExtraIntakeStudy[] }> {
+  const extras: ExtraIntakeStudy[] = [];
+  if (!episodeId) return { packageCode: PKG_NAFTA_INTAKE, extras };
+  const instance = await prisma.programInstance.findFirst({
+    where: { episodeId },
+    select: { programCode: true, entitlementSnapshot: true },
+  });
+  const snap = parseEntitlementSnapshot(instance?.entitlementSnapshot);
+  const seen = new Set<string>();
+  for (const p of snap?.procedures ?? []) {
+    const isStudy =
+      p.fulfillment === "LAB_ORDER" ||
+      p.fulfillment === "VISIT" ||
+      p.kind === "LAB" ||
+      p.kind === "EXAM";
+    if (!isStudy) continue;
+    const raw = p.procedureCode.trim();
+    const upper = raw.toUpperCase();
+    if (SLOT_ALIASES[upper] || SLOT_ALIASES[raw]) continue;
+    if (seen.has(upper)) continue;
+    seen.add(upper);
+    const lane = p.fulfillment === "LAB_ORDER" || p.kind === "LAB" ? "lab" : "visit";
+    extras.push({
+      code: raw,
+      name: p.procedureName?.trim() || raw,
+      lane,
     });
-    const snap = parseEntitlementSnapshot(instance?.entitlementSnapshot);
-    if (snap?.procedures?.length) {
-      const fromSnap: NaftaIntakeSlotCode[] = [];
-      const seen = new Set<string>();
-      for (const p of snap.procedures) {
-        const isIntakeFulfillment =
-          p.fulfillment === "LAB_ORDER" || p.fulfillment === "VISIT";
-        const isIntakeKind =
-          p.kind === "LAB" || p.kind === "EXAM";
-        if (!isIntakeFulfillment && !isIntakeKind) continue;
-        const slot = SLOT_ALIASES[p.procedureCode.trim().toUpperCase()]
-          ?? SLOT_ALIASES[p.procedureCode.trim()];
-        if (!slot || seen.has(slot)) continue;
-        seen.add(slot);
-        fromSnap.push(slot);
-      }
-      if (fromSnap.length > 0) {
-        return {
-          packageCode: instance?.programCode ?? snap.code ?? PKG_NAFTA_INTAKE,
-          slots: fromSnap,
-        };
-      }
-    }
   }
-  return { packageCode: PKG_NAFTA_INTAKE, slots: [...NAFTA_INTAKE_SLOT_CODES] };
+  return {
+    packageCode: instance?.programCode ?? snap?.code ?? PKG_NAFTA_INTAKE,
+    extras,
+  };
 }
 
 /**
@@ -241,12 +251,7 @@ export async function getIntakeChecklist(
     resolveIntakeSlots(opts?.episodeId),
   ]);
   const pkg = catalog.items.find((i) => i.code === PKG_NAFTA_INTAKE && i.kind === "package");
-  const slots =
-    slotSource.packageCode === PKG_NAFTA_INTAKE && pkg?.includes?.length
-      ? (pkg.includes.filter((c): c is NaftaIntakeSlotCode =>
-          (NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(c),
-        ) as NaftaIntakeSlotCode[])
-      : slotSource.slots;
+  const slots = [...NAFTA_INTAKE_SLOT_CODES];
 
   const items: IntakeChecklistItem[] = [];
   for (const slot of slots) {
@@ -322,6 +327,33 @@ export async function getIntakeChecklist(
       status: gyn ? visitStatus(gyn.status) : "MISSING",
       href: gyn ? `/visits/${gyn.id}` : null,
       recordId: gyn?.id ?? null,
+    });
+  }
+
+  for (const extra of slotSource.extras) {
+    const title = { en: extra.name, ru: extra.name, az: extra.name };
+    if (extra.lane === "lab") {
+      const order = await findLabOrder(patientRefId, extra.code, episode);
+      items.push({
+        slot: extra.code,
+        resolvedCode: extra.code,
+        kind: "lab",
+        title,
+        status: order ? labStatus(order.status) : "MISSING",
+        href: order ? `/lab-orders?order=${order.id}` : null,
+        recordId: order?.id ?? null,
+      });
+      continue;
+    }
+    const visit = await findVisitByServiceCode(patientRefId, extra.code, episode);
+    items.push({
+      slot: extra.code,
+      resolvedCode: extra.code,
+      kind: "visit",
+      title,
+      status: visit ? visitStatus(visit.status) : "MISSING",
+      href: visit ? `/visits/${visit.id}` : null,
+      recordId: visit?.id ?? null,
     });
   }
 

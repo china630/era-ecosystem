@@ -22,13 +22,16 @@ export function uniqueOrderedIds(ids: string[]): string[] {
  * Single ProcedureOrder.bodyPart for rotation / silhouette.
  * Site order preserved; FULL_BODY wins if any selected S rolls up to it.
  */
-export function deriveCoarseBodyPart(sites: { coarse: string[] }[]): string | null {
+export function deriveCoarseBodyPart(
+  sites: { coarse: string[] }[],
+  allowed: Set<string> = COARSE_SET,
+): string | null {
   const ordered: string[] = [];
   const seen = new Set<string>();
   for (const site of sites) {
     for (const raw of site.coarse) {
       const code = raw.trim().toUpperCase();
-      if (!code || !COARSE_SET.has(code) || seen.has(code)) continue;
+      if (!code || !allowed.has(code) || seen.has(code)) continue;
       seen.add(code);
       ordered.push(code);
     }

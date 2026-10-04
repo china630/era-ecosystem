@@ -1,23 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Pencil, Plus } from "lucide-react";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
+  DatePicker,
   EraDataGrid,
   EraListFilterBar,
   useDebouncedValue,
   Field,
   FieldSelect,
   ListPaginationFooter,
+  MODAL_CHECKBOX_CLASS,
+  ModalFooter,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
-import { bakuDateTimeDisplay } from "@/lib/baku-day";
+import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 
 type CatalogRow = {
   id: string;
@@ -33,7 +40,17 @@ type CatalogRow = {
   syncedAt: string;
   kind?: string;
   displayName?: string;
+  effectiveFrom?: string;
 };
+
+type PriceHistoryRow = {
+  id: string;
+  amount: string;
+  listAmount?: string | null;
+  effectiveFrom: string;
+};
+
+const KIND_VALUES = ["PROCEDURE", "DIAGNOSTIC", "LAB", "VISIT", "OTHER"] as const;
 
 type PackageFilter = "" | "paid" | "package";
 type KindFilter = "" | "PROCEDURE" | "DIAGNOSTIC" | "LAB" | "VISIT" | "OTHER";
@@ -48,6 +65,23 @@ export default function CatalogAdminPage() {
   const t = useTranslations("catalogAdmin");
   const tc = useTranslations("common");
   const locale = useLocale();
+  const formId = useId();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<CatalogRow | null>(null);
+  const [history, setHistory] = useState<PriceHistoryRow[]>([]);
+  const [draft, setDraft] = useState({
+    code: "",
+    descriptionAz: "",
+    descriptionRu: "",
+    descriptionEn: "",
+    amount: "",
+    listAmount: "",
+    packageIncluded: false,
+    department: "",
+    kind: "OTHER",
+    effectiveFrom: "",
+  });
+  const [saving, setSaving] = useState(false);
   const [rows, setRows] = useState<CatalogRow[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,23 +197,114 @@ export default function CatalogAdminPage() {
         render: (row) => row.department ?? "—",
       },
       {
-        key: "syncedAt",
-        header: t("lastSync"),
+        key: "effectiveFrom",
+        header: t("effectiveFrom"),
+        render: (row) => bakuDateTimeDisplay(row.effectiveFrom ?? row.syncedAt),
+      },
+      {
+        key: "actions",
+        header: tc("actions"),
         render: (row) => (
-          <span className={isStale(row.syncedAt) ? "text-amber-700" : undefined}>
-            {bakuDateTimeDisplay(row.syncedAt)}
-          </span>
+          <button
+            type="button"
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={tc("edit")}
+            onClick={() => void openEdit(row)}
+          >
+            <Pencil className="h-3.5 w-3.5" aria-hidden />
+          </button>
         ),
       },
     ],
-    [t, locale],
+    [t, tc, locale],
   );
+
+  function openCreate() {
+    setEditing(null);
+    setHistory([]);
+    setDraft({
+      code: "",
+      descriptionAz: "",
+      descriptionRu: "",
+      descriptionEn: "",
+      amount: "",
+      listAmount: "",
+      packageIncluded: false,
+      department: "",
+      kind: "OTHER",
+      effectiveFrom: todayBakuYmd(),
+    });
+    setEditorOpen(true);
+  }
+
+  async function openEdit(row: CatalogRow) {
+    setEditing(row);
+    setDraft({
+      code: row.code,
+      descriptionAz: row.descriptionAz ?? row.description ?? "",
+      descriptionRu: row.descriptionRu ?? "",
+      descriptionEn: row.descriptionEn ?? "",
+      amount: String(row.amount ?? ""),
+      listAmount: row.listAmount != null ? String(row.listAmount) : "",
+      packageIncluded: row.packageIncluded,
+      department: row.department ?? "",
+      kind: row.kind ?? "OTHER",
+      effectiveFrom: todayBakuYmd(),
+    });
+    setHistory([]);
+    setEditorOpen(true);
+    const res = await fetch(`/api/admin/catalog/${row.id}`);
+    if (!res.ok) return;
+    const data = (await res.json()) as { prices?: PriceHistoryRow[] };
+    setHistory(data.prices ?? []);
+  }
+
+  async function saveCatalog(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMsg(null);
+    try {
+      const payload = {
+        description: draft.descriptionAz || draft.descriptionRu || draft.descriptionEn || draft.code,
+        descriptionAz: draft.descriptionAz,
+        descriptionRu: draft.descriptionRu,
+        descriptionEn: draft.descriptionEn,
+        amount: Number(draft.amount || 0),
+        listAmount: draft.listAmount.trim() === "" ? null : Number(draft.listAmount),
+        packageIncluded: draft.packageIncluded,
+        department: draft.department,
+        kind: draft.kind,
+        effectiveFrom: draft.effectiveFrom,
+        ...(editing ? {} : { code: draft.code.trim() }),
+      };
+      const res = await fetch(editing ? `/api/admin/catalog/${editing.id}` : "/api/admin/catalog", {
+        method: editing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        setMsg(res.status === 409 ? t("codeExists") : tc("failed"));
+        return;
+      }
+      setEditorOpen(false);
+      await load();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function sync() {
     setMsg(null);
     const res = await fetch("/api/catalog/sync", { method: "POST" });
     const d = await res.json();
-    setMsg(res.ok ? t("synced", { count: d.data?.synced ?? d.synced ?? 0 }) : tc("failed"));
+    const payload = (d.data ?? d) as { synced?: number; source?: string };
+    if (!res.ok) {
+      setMsg(tc("failed"));
+    } else if (payload.source === "unavailable") {
+      setMsg(t("syncUnavailable"));
+    } else {
+      setMsg(t("synced", { count: payload.synced ?? 0 }));
+    }
     await load();
   }
 
@@ -225,8 +350,12 @@ export default function CatalogAdminPage() {
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void importNafta()}>
               {t("importNaftaPrices")}
             </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void sync()}>
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void sync()}>
               {t("syncFromFinance")}
+            </button>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {tc("add")}
             </button>
           </>
         }
@@ -348,6 +477,118 @@ export default function CatalogAdminPage() {
           </>
         )}
       </div>
+      <ModalShell
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        title={editing ? tc("edit") : tc("add")}
+        footer={
+          <ModalFooter
+            formId={formId}
+            onCancel={() => setEditorOpen(false)}
+            cancelLabel={tc("cancel")}
+            busy={saving}
+            submitLabel={tc("save")}
+          />
+        }
+      >
+        <form id={formId} className="space-y-3" onSubmit={(e) => void saveCatalog(e)}>
+          {editing ? (
+            <Field label={t("code")} preset="code" value={draft.code} readOnly />
+          ) : (
+            <Field
+              label={t("code")}
+              preset="code"
+              value={draft.code}
+              required
+              onChange={(e) => setDraft({ ...draft, code: e.target.value })}
+            />
+          )}
+          <Field
+            label={t("descriptionAz")}
+            preset="shortText"
+            value={draft.descriptionAz}
+            onChange={(e) => setDraft({ ...draft, descriptionAz: e.target.value })}
+          />
+          <Field
+            label={t("descriptionRu")}
+            preset="shortText"
+            value={draft.descriptionRu}
+            onChange={(e) => setDraft({ ...draft, descriptionRu: e.target.value })}
+          />
+          <Field
+            label={t("descriptionEn")}
+            preset="shortText"
+            value={draft.descriptionEn}
+            onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("filterKind")}
+            value={draft.kind}
+            emptyLabel={null}
+            options={KIND_VALUES.map((value) => ({
+              value,
+              label:
+                value === "PROCEDURE"
+                  ? t("filterKindProcedure")
+                  : value === "DIAGNOSTIC"
+                    ? t("filterKindDiagnostic")
+                    : value === "LAB"
+                      ? t("filterKindLab")
+                      : value === "VISIT"
+                        ? t("filterKindVisit")
+                        : t("filterKindOther"),
+            }))}
+            onChange={(next) => setDraft({ ...draft, kind: String(next) })}
+          />
+          <Field
+            label={t("amount")}
+            preset="amount"
+            value={draft.amount}
+            onChange={(e) => setDraft({ ...draft, amount: e.target.value })}
+          />
+          <Field
+            label={t("listAmount")}
+            preset="amount"
+            value={draft.listAmount}
+            onChange={(e) => setDraft({ ...draft, listAmount: e.target.value })}
+          />
+          <Field
+            label={t("department")}
+            preset="shortText"
+            value={draft.department}
+            onChange={(e) => setDraft({ ...draft, department: e.target.value })}
+          />
+          <DatePicker
+            label={t("effectiveFrom")}
+            placeholder={tc("datePlaceholder")}
+            value={draft.effectiveFrom}
+            onChange={(value) => setDraft({ ...draft, effectiveFrom: value })}
+          />
+          <label className="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={draft.packageIncluded}
+              onChange={(e) => setDraft({ ...draft, packageIncluded: e.target.checked })}
+            />
+            {t("packageLabel")}
+          </label>
+          {history.length > 0 ? (
+            <div>
+              <p className="mb-1 text-[13px] font-medium">{t("priceHistory")}</p>
+              <ul className="space-y-1 text-[13px]">
+                {history.map((row) => (
+                  <li key={row.id}>
+                    {bakuDateTimeDisplay(row.effectiveFrom)} · {row.amount} AZN
+                    {row.listAmount != null ? ` · list ${row.listAmount}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </form>
+      </ModalShell>
     </>
   );
 }
