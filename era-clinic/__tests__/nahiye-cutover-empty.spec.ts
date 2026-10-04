@@ -1,5 +1,11 @@
 jest.mock("@/lib/prisma", () => ({
-  prisma: {},
+  prisma: {
+    clinicLookup: {
+      count: jest.fn().mockResolvedValue(1),
+      findMany: jest.fn().mockResolvedValue([]),
+      createMany: jest.fn(),
+    },
+  },
 }));
 
 jest.mock("@/lib/request-organization", () => ({
