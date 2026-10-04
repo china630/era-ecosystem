@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { assertFnbEntitled, handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
@@ -15,8 +15,7 @@ const dropSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SHIFTS_CLOSE);
     if (denied) return denied;
     const body = dropSchema.parse(await request.json());

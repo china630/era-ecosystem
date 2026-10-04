@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const lineSchema = z.object({
@@ -14,6 +14,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const pickLists = await prisma.pickList.findMany({
       include: { order: true, lines: true },
       orderBy: { createdAt: "desc" },
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const order = await prisma.b2BOrder.findUnique({
       where: { orderNumber: body.orderNumber } as never,

@@ -1,8 +1,8 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
@@ -13,8 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, [
       PERMISSIONS.TICKETS_PAY,
       PERMISSIONS.TICKETS_VOID,

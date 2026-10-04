@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -19,7 +19,7 @@ function laundryReadWritePerms() {
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertAnyPermission(session, [...laundryReadWritePerms()]);
     await ensureNaftaLaundryCatalog();
     const reservationId = new URL(request.url).searchParams.get('reservationId');
@@ -100,7 +100,7 @@ const deliverBody = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     const body = await request.json();
     if (body.deliverTicketId) {
       assertAnyPermission(session, [...laundryReadWritePerms()]);

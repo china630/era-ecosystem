@@ -3,7 +3,7 @@ import {
   jsonOk,
   jsonError,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -19,7 +19,7 @@ const schema = z.object({
 /** CLI-57 W4 — clinic reception reverse paid not-COMPLETED extra (−folio). */
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,

@@ -135,6 +135,12 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-RBAC-01 | Hotel | Role×permission matrix + custom roles | Y FO/folio/HK/admin catalog; system seed; clone | `/settings/access` | **SCREEN** | AC-HOT-RBAC 🟡; UAT open → not SHOW | Variant A |
 | FNB-RBAC-01 | F&B | Role×permission matrix + custom roles | Y till/KDS/admin catalog; system seed; clone; PIN bind | `/admin/access` | **SCREEN** | AC-FNB-RBAC 🟡; UAT open → not SHOW | Variant A |
 | BANK-RBAC-01 | Bank | Role×permission matrix + custom roles | Y ops catalog; system seed; clone; BFF grant doors | `/admin/access` | **SCREEN** | AC-BNK-RBAC 🟡; UAT open → not SHOW | Variant A |
+| RET-RBAC-01 | Retail | Role×permission matrix + custom roles | Y POS/shift/stock/import catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-RET-RBAC 🟡; UAT open → not SHOW | Variant A |
+| CRM-RBAC-01 | CRM | Role×permission matrix + custom roles | Y leads/assign/import/pipeline catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-CRM-RBAC 🟡; UAT open → not SHOW | Variant A |
+| WS-RBAC-01 | Wholesale | Role×permission matrix + custom roles | Y orders/pick/import-orders catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-WHS-RBAC 🟡; UAT open → not SHOW | Variant A |
+| AS-RBAC-01 | Auto | Role×permission matrix + custom roles | Y work-order/appointment/vehicle/tools catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-AUT-RBAC 🟡; UAT open → not SHOW | Variant A |
+| CN-RBAC-01 | Construction | Role×permission matrix + custom roles | Y project/BOQ/site/acts catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-CON-RBAC 🟡; UAT open → not SHOW | Variant A |
+| LOG-RBAC-01 | Logistics | Role×permission matrix + custom roles | Y trip/fleet/hub/customs catalog; system seed; clone; assign | `/admin/access` | **SCREEN** | AC-LOG-RBAC 🟡; UAT open → not SHOW | Variant A |
 | CLI-WF-PWD-01 | Clinic | Local staff change own password | Y `PATCH /api/auth/password` | `/account/password` | **SHIPPED** | UAT first login 0000 then change; SSO 403 | not CP password UI |
 | HOT-PKG-02 | Hotel | Medical SKU resolve + notes | Y resolve + notes import | import wizard / notes tab | **SCREEN** | UAT §38 open; AC-HOT-PKG-NAFTA 🟡 | Wave A |
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
@@ -178,6 +184,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-09-24 | CP-WF-ROSTER-01 brigades transfer + history **SCREEN** (`/workspace/workforce/shifts/brigades`); dated membership API landed. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-23 | Platform Workforce lists: EraListWorkspace/EraDataGrid fill + empty row; ModalShell footer stripe removed; roster vs timesheet copy. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-21 | Platform Workforce UI hygiene: nested shifts/attendance SCREENs; employments server q; modals for import/bulk/materialize; Status=API (not SHOW / not SHIPPED). |
+| 2026-10-04 | RET-RBAC-01, CRM-RBAC-01, WS-RBAC-01, AS-RBAC-01, CN-RBAC-01, LOG-RBAC-01 Variant A access matrix `/admin/access` **SCREEN** (not SHOW); AC-*-RBAC out of BE rollup; UAT open. |
 | 2026-09-20 | BANK-RBAC-01 Bank Variant A ops matrix **SCREEN** (not SHOW); AC-BNK-RBAC out of BE rollup. |
 | 2026-09-18 | FIN-RBAC-01 Finance Wave 5 CP grant doors **SCREEN** (not SHOW); AC-FIN-RBAC out of BE rollup. |
 | 2026-09-18 | P2 density: FIN-EMAS / roster / orders / group dual-VÖEN copy+preview stay **SCREEN** (not SHIPPED); Demo/Pilot unchanged. |

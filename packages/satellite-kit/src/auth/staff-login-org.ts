@@ -32,8 +32,9 @@ export type StaffLoginTenantResult =
   | { ok: false; status: 400 | 401 | 429; error: string };
 
 /**
- * Resolve public org number to tenant UUID for local staff login (SHARED / DEDICATED).
- * SHARED: orgNo required (from body or ERA subdomain Host). Miss → generic 401.
+ * Resolve public org number to tenant UUID for local staff login.
+ * orgNo is required unless the Host already names the org (ERA subdomain or white-label).
+ * A missing number is 400. An unknown number is a generic 401.
  */
 export async function resolveStaffLoginTenant(input: {
   orgNo?: string;
@@ -90,12 +91,8 @@ export async function resolveStaffLoginTenant(input: {
       : { ok: true, organizationId: customHost.organizationId };
   }
 
-  if (input.isShared && !orgNo) {
-    return { ok: false, status: 400, error: "orgNo is required on SHARED pool" };
-  }
-
   if (!orgNo) {
-    return { ok: true, organizationId: undefined };
+    return { ok: false, status: 400, error: "orgNo is required" };
   }
 
   if (!ORG_NO_RE.test(orgNo)) {

@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { jsonError, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getPackDefaults, getReportBySlug, validatePackSlugs } from '@/lib/reports/catalog';
@@ -35,7 +35,7 @@ async function resolvePackSlugs(): Promise<string[]> {
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
 
     const url = new URL(request.url);

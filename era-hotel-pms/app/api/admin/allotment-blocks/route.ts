@@ -5,7 +5,7 @@ import {
   createAllotmentBlock,
   listAllotmentBlocks,
 } from '@/lib/services/allotment-block.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
@@ -30,8 +30,9 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataRead(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataRead(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const url = new URL(req.url);
     const status = url.searchParams.get('status') as
       | 'TENTATIVE'
@@ -55,8 +56,9 @@ export async function GET(req: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataWrite(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataWrite(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const body = createSchema.parse(await request.json());
     const row = await createAllotmentBlock(body);
     return jsonOk(serialize(row), 201);

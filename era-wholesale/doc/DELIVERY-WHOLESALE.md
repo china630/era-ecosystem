@@ -47,3 +47,7 @@ Client: `@era/satellite-kit`.
 ## Planned — v1.1
 
 - [x] M7: EDI / buyer API export
+
+## Access (RBAC Variant A)
+
+- [~] WS-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/wholesale-domain-permissions-and-rbac.md))

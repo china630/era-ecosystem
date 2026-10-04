@@ -1,17 +1,16 @@
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_TABLES } from "@/lib/auth/read-permission-sets";
 
 export async function GET(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, TILL_READ_TABLES);
     if (denied) return denied;
     const tables = await prisma.posTable.findMany({
@@ -86,9 +85,8 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TABLES_MANAGE);
     if (denied) return denied;
 

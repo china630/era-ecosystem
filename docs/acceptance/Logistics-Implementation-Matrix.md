@@ -20,9 +20,11 @@
 | AC-LOG-REF | Customs / FX / HS preview via Finance | ✅ | [ ] | `__tests__/log-ref-negative.spec.ts` + LOG-REF-01 | Negative: short HS code; missing FX from; Finance HS/FX failure → explicit 500 (not silent success) |
 | AC-LOG-PLAT | Platform add-ons on trip complete | ✅ | [ ] | `__tests__/log-plat-negative.spec.ts` + L4 hooks | Negative: events/dispatch missing/wrong token → 401; notify soft-skip when token unset |
 | AC-LOG-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit tenant extension | **Excluded from Scaffold BE rollup.** Schema + filter landed; not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
+| AC-LOG-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `logistics-rbac` + `logistics-rbac-doors` + page/API inventory + role-name grep; ADR logistics-domain-permissions-and-rbac; `/admin/access` clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 
 **Edition / wave rollup (BE, in-scope)** = worst(TRIP, POD, REF, PLAT) → **✅**.  
 AC-LOG-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  
+AC-LOG-RBAC is 🟡 (Variant A landed; field UAT open) and stays **out of Scaffold BE rollup**.  
 Do not call this table «product readiness».
 
 ### Residual register
@@ -30,6 +32,7 @@ Do not call this table «product readiness».
 | AC | Residual | Severity | Status |
 |----|----------|----------|--------|
 | AC-LOG-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Schema+filter only |
+| AC-LOG-RBAC | Field UAT / SHOW | Out of BE rollup | SCREEN until signoff |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 
 ### Negative-path proof index
@@ -40,3 +43,7 @@ Do not call this table «product readiness».
 | `era-logistics/__tests__/log-pod-negative.spec.ts` | AC-LOG-POD |
 | `era-logistics/__tests__/log-ref-negative.spec.ts` | AC-LOG-REF |
 | `era-logistics/__tests__/log-plat-negative.spec.ts` | AC-LOG-PLAT |
+| `era-logistics/__tests__/logistics-rbac.spec.ts` | AC-LOG-RBAC |
+| `era-logistics/__tests__/logistics-rbac-doors.spec.ts` | AC-LOG-RBAC |
+| `era-logistics/__tests__/logistics-rbac-inventory.spec.ts` | AC-LOG-RBAC |
+| `era-logistics/__tests__/logistics-rbac-role-name-grep.spec.ts` | AC-LOG-RBAC |

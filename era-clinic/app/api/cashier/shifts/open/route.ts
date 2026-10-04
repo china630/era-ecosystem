@@ -1,5 +1,5 @@
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonOk,
   requireClinicPermission,
@@ -10,7 +10,7 @@ import { openShift } from "@/domain/cashier/cashier-shift.service";
 /** Legacy open endpoint — delegates to current-shift open (idempotent). */
 export async function POST() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 

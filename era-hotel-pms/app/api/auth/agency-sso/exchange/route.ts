@@ -1,7 +1,7 @@
 import {
   agencySsoExchangeBodySchema,
   consumeSsoSignatureOnce,
-  satelliteOrganizationId,
+  enterSatelliteTenant,
   signAgencySession,
   verifyAgencySsoSignature,
   agencyAuthCookieName,
@@ -16,7 +16,6 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(request: Request) {
   try {
-    await requireHotelModule('hotel_agency_portal');
     const body = agencySsoExchangeBodySchema.parse(await request.json());
     if (body.expiresAt < Math.floor(Date.now() / 1000)) {
       return jsonError('SSO token expired', 401);
@@ -37,13 +36,12 @@ export async function POST(request: Request) {
       return jsonError('SSO ticket already used', 401);
     }
 
-    const deployOrg = satelliteOrganizationId();
-    if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
-      return jsonError('SSO organization mismatch', 401);
-    }
+    const organizationId = body.organizationId;
+    enterSatelliteTenant({ organizationId });
+    await requireHotelModule('hotel_agency_portal', organizationId);
 
     const agency = await prisma.agency.findFirst({
-      where: { id: body.agencyId, active: true },
+      where: { id: body.agencyId, organizationId, active: true },
     });
     if (!agency) {
       return jsonError('Agency not found', 404);
@@ -55,7 +53,7 @@ export async function POST(request: Request) {
       actor: 'agency',
       email,
       fullName: body.fullName?.trim() || email.split('@')[0] || 'Agency',
-      organizationId: body.organizationId,
+      organizationId,
       agencyId: agency.id,
       agencyCode: agency.code,
     });

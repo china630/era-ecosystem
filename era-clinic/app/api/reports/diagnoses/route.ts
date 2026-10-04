@@ -1,5 +1,5 @@
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -10,7 +10,7 @@ import { listDiagnosisReport } from "@/domain/icd/diagnosis-report.service";
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_REPORTS_DIAGNOSES);
     if (denied) return denied;
 

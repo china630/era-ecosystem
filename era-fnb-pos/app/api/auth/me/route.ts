@@ -1,5 +1,5 @@
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { resolveFnbEdition } from "@/lib/auth/ensure-system-fnb-roles";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { fnbKitchenOn } from "@/lib/fnb-edition";
@@ -14,7 +14,7 @@ import { permissionsForRoleCode } from "@/lib/auth/fnb-permission.service";
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     if (!session?.organizationId) return jsonError("Unauthorized", 401);
 
     const organizationId = session.organizationId;

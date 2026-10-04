@@ -1,10 +1,10 @@
 import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { findOpsOutlet, resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_DAILY_MENU } from "@/lib/auth/read-permission-sets";
@@ -15,9 +15,8 @@ function resolveBoardDate(raw: string | null | undefined): { ymd: string; date: 
 }
 
 export async function GET(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, TILL_READ_DAILY_MENU);
     if (denied) return denied;
     const url = new URL(request.url);
@@ -59,9 +58,8 @@ const putSchema = z.object({
 });
 
 export async function PUT(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_DAILY_MENU);
     if (denied) return denied;
 
@@ -96,9 +94,8 @@ const copySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_DAILY_MENU);
     if (denied) return denied;
 

@@ -1,6 +1,6 @@
 import { requestOrganizationId } from "@/lib/request-organization";
 import { SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import {
@@ -23,6 +23,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const { id } = await params;
     const act = await prisma.progressAct.findUnique({

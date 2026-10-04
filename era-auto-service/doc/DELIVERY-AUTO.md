@@ -57,3 +57,7 @@ PRD M5–M12 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md) · M5 base cove
 - [x] M1: Customer vehicle card (`CustomerVehicle`, `/api/vehicles`, WO create links vehicle)
 - [x] M3: Labor lines (`WorkOrderLaborLine`, roll-up to `laborAmount` on complete)
 - [x] M4: Parts lines (`WorkOrderPartLine`, roll-up to `partsAmount` on complete)
+
+## Access (RBAC Variant A)
+
+- [~] AS-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/auto-domain-permissions-and-rbac.md))

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { assertFnbEntitled, handleRouteError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { handleRouteError, jsonOk } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
@@ -10,8 +10,7 @@ import { normalizeBusinessDayStart } from "@/lib/business-day";
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_ADMIN_SETTINGS);
     if (denied) return denied;
     const profile = await getFnbOrgProfile();
@@ -27,8 +26,7 @@ const patchSchema = z.object({
 
 export async function PATCH(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.SCREEN_ADMIN_SETTINGS);
     if (denied) return denied;
     const body = patchSchema.parse(await request.json());

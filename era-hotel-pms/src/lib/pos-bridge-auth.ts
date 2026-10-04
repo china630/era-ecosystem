@@ -1,4 +1,4 @@
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import type { Permission } from '@/lib/auth/permissions';
 import {
@@ -23,6 +23,6 @@ export async function assertPosBridgeOrPermission(
   permission: Permission,
 ): Promise<void> {
   if (verifyPosBridge(request)) return;
-  const session = await getSessionFromHeaders();
+  const session = await getSatelliteSession();
   assertPermission(session, permission);
 }

@@ -51,6 +51,8 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 | Водитель | `DRIVER` | Mobile stub, статус рейса |
 | Аудитор (SSO) | `SATELLITE_OPERATOR` | Read-only |
 
+**Variant A (LOG-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `DISPATCHER`). `DRIVER` keeps the full trip flow, including `api:driver.trips` (the route lists all open trips, so both roles hold it); settings and access go to `DISPATCHER`. Tracking by token is session-only: any staff session, then the path token selects the trip. Customer access stays a later decision. `SATELLITE_OPERATOR` keeps the ops package until someone tightens it to read-only in the matrix. ADR [logistics-domain-permissions-and-rbac](../docs/adr/logistics-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

@@ -1,11 +1,10 @@
 import type { TicketLine } from "@prisma/client";
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { getSessionFromRequest, sessionActorName } from "@/lib/session";
+import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
@@ -19,72 +18,75 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_SPLIT);
-  if (denied) return denied;
-
-  const { id } = await params;
-  const body = splitSchema.parse(await request.json());
-
-  const source = await prisma.ticket.findUnique({
-    where: { id },
-    include: { lines: true },
-  });
-  if (!source) {
-    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
-  }
-  if (!["OPEN", "HELD"].includes(source.status)) {
-    return NextResponse.json({ error: "Ticket is not open" }, { status: 400 });
-  }
   try {
-    await requireCurrentShift(source.outletId);
+    const session = await getSatelliteSession();
+    const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_SPLIT);
+    if (denied) return denied;
+
+    const { id } = await params;
+    const body = splitSchema.parse(await request.json());
+
+    const source = await prisma.ticket.findUnique({
+      where: { id },
+      include: { lines: true },
+    });
+    if (!source) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+    if (!["OPEN", "HELD"].includes(source.status)) {
+      return NextResponse.json({ error: "Ticket is not open" }, { status: 400 });
+    }
+    try {
+      await requireCurrentShift(source.outletId);
+    } catch (err) {
+      return handleRouteError(err);
+    }
+
+    const lineSet = new Set(body.lineIds);
+    const toMove = source.lines.filter((l: TicketLine) => lineSet.has(l.id));
+    if (toMove.length === 0) {
+      return NextResponse.json({ error: "No matching lines" }, { status: 400 });
+    }
+    if (toMove.length === source.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID").length) {
+      return NextResponse.json(
+        { error: "Leave at least one active line on the original ticket" },
+        { status: 400 },
+      );
+    }
+
+    const splitTicket = await prisma.$transaction(async (tx) => {
+      const created = await tx.ticket.create({
+        data: {
+          organizationId: source.organizationId || requestOrganizationId(),
+          outletId: source.outletId,
+          tableId: null,
+          covers: source.covers,
+          guestName: source.guestName,
+          openedByName: source.openedByName ?? sessionActorName(session),
+          discountPercent: 0,
+          subtotalAzn: 0,
+          totalAzn: 0,
+        },
+      });
+      await tx.ticketLine.updateMany({
+        where: { id: { in: toMove.map((l: TicketLine) => l.id) } },
+        data: { ticketId: created.id, organizationId: created.organizationId },
+      });
+      return created;
+    });
+
+    await recalculateTicketTotals(id);
+    const updatedSplit = await recalculateTicketTotals(splitTicket.id);
+    const updatedSource = await prisma.ticket.findUnique({
+      where: { id },
+      include: { lines: true, table: true, outlet: true },
+    });
+
+    return NextResponse.json(
+      { source: updatedSource, split: updatedSplit },
+      { status: 201 },
+    );
   } catch (err) {
     return handleRouteError(err);
   }
-
-  const lineSet = new Set(body.lineIds);
-  const toMove = source.lines.filter((l: TicketLine) => lineSet.has(l.id));
-  if (toMove.length === 0) {
-    return NextResponse.json({ error: "No matching lines" }, { status: 400 });
-  }
-  if (toMove.length === source.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID").length) {
-    return NextResponse.json(
-      { error: "Leave at least one active line on the original ticket" },
-      { status: 400 },
-    );
-  }
-
-  const splitTicket = await prisma.$transaction(async (tx) => {
-    const created = await tx.ticket.create({
-      data: {
-        organizationId: source.organizationId || requestOrganizationId(),
-        outletId: source.outletId,
-        tableId: null,
-        covers: source.covers,
-        guestName: source.guestName,
-        openedByName: source.openedByName ?? sessionActorName(session),
-        discountPercent: 0,
-        subtotalAzn: 0,
-        totalAzn: 0,
-      },
-    });
-    await tx.ticketLine.updateMany({
-      where: { id: { in: toMove.map((l: TicketLine) => l.id) } },
-      data: { ticketId: created.id, organizationId: created.organizationId },
-    });
-    return created;
-  });
-
-  await recalculateTicketTotals(id);
-  const updatedSplit = await recalculateTicketTotals(splitTicket.id);
-  const updatedSource = await prisma.ticket.findUnique({
-    where: { id },
-    include: { lines: true, table: true, outlet: true },
-  });
-
-  return NextResponse.json(
-    { source: updatedSource, split: updatedSplit },
-    { status: 201 },
-  );
 }

@@ -28,12 +28,14 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 | reception | reception123 | Receptionist |
 | manager | manager123 | Manager |
 
-Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API calls must not 500 (`Headers#set` ByteString). Middleware encodes `x-user-login` / `x-user-fullname` as `utf8:…`.
+Staff with non-latin `fullName` (Azerbaijani/Cyrillic): after login, FO API calls must not 500. Route handlers read login and full name from the session cookie (`getSatelliteSession`); middleware stamps only `x-user-id`, `x-user-role`, `x-era-organization-id`.
+
+Agency directory (staff): `/settings` → agencies list and agency settlement (`/api/agencies/*`) load with the staff cookie only; the agency portal (`/agency`, `/api/agency/*`) still requires the agency cookie.
 
 ## 1. Auth & navigation
 
 1. Open `/login`, sign in as `reception` / `reception123`.
-2. **SHARED pool:** enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). DEDICATED appliance may omit the field.
+2. Enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). The field is required unless the host already names the organization.
 3. Confirm Chessboard loads; AppNav shows allowed links only.
 4. **Clock (Asia/Baku):** FO availability / reservation-times / front-cash / HK date defaults and night-audit “today” use **Asia/Baku** civil day (`hotelDateKey` / `todayBakuYmd`), not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the default date is already the new Baku day when Node `TZ=UTC`. **UI labels:** front-cash transactions / folio-journal / agency-ledger timestamps use `bakuDateTimeDisplay` (browser TZ ignored).
 

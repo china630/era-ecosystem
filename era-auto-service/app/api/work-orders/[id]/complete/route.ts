@@ -1,6 +1,6 @@
 import { requestOrganizationId } from "@/lib/request-organization";
 import { SATELLITE_AUTO_WORK_ORDER_COMPLETED } from "@era/contracts";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { z } from "zod";
@@ -24,6 +24,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const { id } = await params;
     const order = await prisma.workOrder.findUnique({ where: { id } });

@@ -7,6 +7,7 @@ import { ConfigService } from "@nestjs/config";
 import {
   PlatformCustomDomainKind,
   PlatformCustomDomainStatus,
+  isKafeEdition,
 } from "@era365/database";
 import {
   FINANCE_CORE_SATELLITE_KEY,
@@ -367,7 +368,10 @@ export class SatelliteOrgBindSyncService {
       !Array.isArray(orgSettings.settings)
         ? (orgSettings.settings as Record<string, unknown>)
         : {};
-    if (settings.edition === "kafe" || settings.signupSource === "kafe") {
+    // Upgraded street cafés keep signupSource=kafe; their edition is full F&B.
+    if (String(settings.edition ?? "").trim().toLowerCase() === "fnb") {
+      body.edition = "fnb";
+    } else if (isKafeEdition({ subscriptionPlan: org?.subscriptionPlan, settings })) {
       body.edition = "kafe";
     }
 

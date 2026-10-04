@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { financeFxPreview } from "@era/satellite-kit";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 
 const querySchema = z.object({
   from: z.string().min(3),
@@ -11,6 +11,7 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const url = new URL(req.url);
     const params = querySchema.parse({
       from: url.searchParams.get("from"),

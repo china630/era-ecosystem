@@ -1,10 +1,10 @@
-import { assertFnbEntitled, handleRouteError, jsonError } from "@/lib/api-utils";
+import { handleRouteError, jsonError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { OUTLET_LIST_READ } from "@/lib/auth/read-permission-sets";
@@ -18,22 +18,24 @@ const copySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessAnyPermission(session, OUTLET_LIST_READ);
-  if (denied) return denied;
-  const outlets = await prisma.outlet.findMany({
-    where: { active: true },
-    orderBy: { code: "asc" },
-  });
-  const selectedOutletId = await getSelectedOutletId();
-  return NextResponse.json({ outlets, selectedOutletId });
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessAnyPermission(session, OUTLET_LIST_READ);
+    if (denied) return denied;
+    const outlets = await prisma.outlet.findMany({
+      where: { active: true },
+      orderBy: { code: "asc" },
+    });
+    const selectedOutletId = await getSelectedOutletId();
+    return NextResponse.json({ outlets, selectedOutletId });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.OUTLETS_MANAGE);
     if (denied) return denied;
     const body = copySchema.parse(await request.json());

@@ -28,7 +28,7 @@ import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
-  /** SHARED pool: which F&B org. Appliance: omit → process bind only. */
+  /** Required unless the host already names the organization. */
   orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 

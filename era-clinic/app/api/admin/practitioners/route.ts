@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, getSatelliteSession, jsonError } from "@/lib/api-utils";
 
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 
@@ -8,7 +8,7 @@ import { listPractitioners } from "@/lib/services/clinic-master-data.service";
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const staffKind = new URL(req.url).searchParams.get("staffKind");
     const kind =

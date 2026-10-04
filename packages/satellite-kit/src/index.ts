@@ -86,6 +86,8 @@ export {
   enterSatelliteTenant,
   getSatelliteTenantContext,
   resolveSatelliteTenantOrgId,
+  peekSatelliteRequestOrganizationId,
+  organizationIdOnIncomingRequest,
   resolveSatelliteTenantFilter,
   type SatelliteTenantContext,
   type SatelliteTenantFilter,
@@ -154,6 +156,13 @@ export {
   verifySatelliteSession,
   type SatelliteSessionPayload,
 } from "./auth/session";
+export {
+  readSatelliteStaffSession,
+  type ReadSatelliteStaffSessionInput,
+  type SatelliteSessionUser,
+  type SatelliteStaffSession,
+  type SatelliteStaffSessionPayload,
+} from "./auth/get-satellite-session";
 export {
   ssoExchangeBodySchema,
   type SsoExchangeBody,
@@ -430,7 +439,6 @@ export {
   assertClinicModuleActive,
   assertClinicModuleForRoute,
   requireSatelliteModule,
-  runCronIfEntitled,
   runCronForEachTenant,
   listCronOrganizationIds,
   CronOrganizationListError,

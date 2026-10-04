@@ -25,5 +25,6 @@ Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo 🟡 · Sell: do not claim
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-wholesale/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-4 | BE deepen → Scaffold ✅ (excl. TENANT) | [x] | IM + `__tests__/ws-*-negative.spec.ts` |
+| S-RBAC | Wholesale RBAC Variant A + custom roles | [~] | AC-WHS-RBAC 🟡; `/admin/access` clone + assign; system seed; UAT open — not Pilot |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

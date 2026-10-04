@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { updateRoomView } from '@/lib/services/master-data.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 
 const schema = z.object({
@@ -15,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    assertMasterDataWrite(await getSessionFromHeaders());
+    assertMasterDataWrite(await getSatelliteSession());
     const { id } = await params;
     const body = schema.parse(await request.json());
     return jsonOk(serialize(await updateRoomView(id, body)));

@@ -8,7 +8,9 @@ import {
   CatalogField,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
+  useOpsNavProfile,
 } from "@era/satellite-kit/ui";
+import { PERMISSIONS as P } from "@/lib/auth/permissions";
 import type { RetailPreset, RetailPresetConfig } from "@/lib/retail-preset";
 import {
   enqueueOfflineReceipt,
@@ -77,6 +79,8 @@ const EMPTY_LINE: LineForm = {
 export default function PosCheckoutPage() {
   const t = useTranslations("pos");
   const tNav = useTranslations("nav");
+  const { profile } = useOpsNavProfile();
+  const canVoidLine = profile?.permissions.includes(P.RECEIPTS_VOID_LINE) === true;
   const [shift, setShift] = useState<Shift | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [preset, setPreset] = useState<RetailPreset>("grocery");
@@ -792,7 +796,7 @@ export default function PosCheckoutPage() {
                     {line.description} — {Number(line.lineTotal).toFixed(2)} AZN
                     {line.lineStatus === "VOID" ? " (VOID)" : ""}
                   </span>
-                  {receipt.status === "OPEN" && line.lineStatus === "ACTIVE" && (
+                  {canVoidLine && receipt.status === "OPEN" && line.lineStatus === "ACTIVE" && (
                     <button
                       type="button"
                       className="rounded border px-2 py-0.5 text-[12px]"

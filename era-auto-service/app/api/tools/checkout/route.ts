@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -10,6 +10,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const tool = await prisma.tool.findUnique({ where: { id: body.toolId } });
     if (!tool) return jsonError("Tool not found", 404);

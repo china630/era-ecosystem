@@ -27,5 +27,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-retail-pos/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-4 | Green Scaffold BE Wave 8 (FISCAL excl.) | [x] | IM + PRM; FISCAL stays 🟡 External |
+| S-RBAC | Retail RBAC Variant A + custom roles | [~] | AC-RET-RBAC 🟡; `/admin/access` clone + assign; system seed; UAT open — not Pilot |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

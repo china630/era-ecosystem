@@ -18,7 +18,6 @@ import {
 } from "@/lib/auth/clinic-permissions";
 import { isSystemClinicRoleCode } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const patchSchema = z.object({
@@ -34,7 +33,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     if (gate.error) return gate.error;
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     const role = await prisma.role.findFirst({
       where: { organizationId, code },
     });
@@ -67,7 +66,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (denied) return denied;
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     const body = patchSchema.parse(await req.json());
     const role = await prisma.role.findFirst({
       where: { organizationId, code },

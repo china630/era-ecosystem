@@ -26,6 +26,7 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-1 | Stage-gate script green + signoff | [~] | `scripts/run-crm-stage-gate.mjs` |
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-crm/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
+| S-RBAC | CRM RBAC Variant A + custom roles | [~] | AC-CRM-RBAC 🟡; `/admin/access` clone + assign; system seed; UAT open — not Pilot |
 | S-4 | Green Scaffold BE Wave 8 (WA excl.) | [x] | IM + PRM; WA stays 🟡 External |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

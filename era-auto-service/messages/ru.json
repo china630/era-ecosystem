@@ -112,6 +112,56 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
+  },
+  "nav": {
+    "access": "Доступ"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "workshop": "Мастерская",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_work_orders": "Заказ-наряды",
+      "screen_appointments": "Записи",
+      "screen_admin_settings": "Экран настроек",
+      "screen_admin_access": "Экран доступа",
+      "api_work_orders": "Заказ-наряды (приёмка, работы, запчасти, цех, закрытие, оплата)",
+      "api_appointments": "Записи",
+      "api_vehicles": "Автомобили и история",
+      "api_parts_catalog": "Каталог запчастей",
+      "api_tools": "Инструменты и выдача",
+      "api_calendar": "Рабочий календарь",
+      "admin_settings": "Настройки мастерской",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

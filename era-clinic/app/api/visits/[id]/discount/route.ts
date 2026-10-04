@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   jsonOk,
   jsonError,
   handleRouteError,
@@ -20,7 +20,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;

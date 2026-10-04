@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OUTLET_OVERAGE_AZN = exports.CLINIC_MODULE_CAPACITY = exports.CLINIC_CAPACITY_UNIT_AZN = exports.CLINIC_CAPACITY_INCLUDED = exports.CAPACITY_DRIVERS = exports.PASS_THROUGH_CATALOG_KEYS = exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = exports.CLINIC_COMMERCIAL_MODULE_KEYS = exports.RETIRED_CLINIC_MODULE_KEYS = exports.ONE_SHOT_CATALOG_KEYS = exports.CATALOG_MUTEX_GROUPS = exports.WORKFORCE_HUB_KEYS = exports.WORKFORCE_XOR = exports.DATA_HUB_XOR = exports.CATALOG_PALETTE_AZN = void 0;
 exports.isOneShotCatalogKey = isOneShotCatalogKey;
 exports.isKafeEdition = isKafeEdition;
+exports.isKafeSignup = isKafeSignup;
 exports.shouldWaiveEraFoundation = shouldWaiveEraFoundation;
 exports.isWorkforceHubKey = isWorkforceHubKey;
 exports.inferSatelliteKeyFromModuleKey = inferSatelliteKeyFromModuleKey;
@@ -43,21 +44,34 @@ exports.ONE_SHOT_CATALOG_KEYS = ["platform_onsite_visit"];
 function isOneShotCatalogKey(key) {
     return exports.ONE_SHOT_CATALOG_KEYS.includes(key);
 }
+function orgSettingsRecord(settings) {
+    return settings && typeof settings === "object" && !Array.isArray(settings)
+        ? settings
+        : {};
+}
+/** F&B edition today. `settings.edition` wins; `fnb` = upgraded to full F&B. */
 function isKafeEdition(org) {
+    const rec = orgSettingsRecord(org.settings);
+    const edition = String(rec.edition ?? "").trim().toLowerCase();
+    if (edition)
+        return edition === "kafe";
     const plan = (org.subscriptionPlan ?? "").trim().toLowerCase();
     if (plan === "kafe")
         return true;
-    const s = org.settings;
-    if (s && typeof s === "object" && !Array.isArray(s)) {
-        const rec = s;
-        const edition = String(rec.edition ?? rec.signupSource ?? "").toLowerCase();
-        if (edition === "kafe")
-            return true;
-    }
-    return false;
+    return String(rec.signupSource ?? "").trim().toLowerCase() === "kafe";
 }
+/** Signed up through ERA Kafe, whatever the edition is now. */
+function isKafeSignup(org) {
+    if (isKafeEdition(org))
+        return true;
+    return String(orgSettingsRecord(org.settings).signupSource ?? "").trim().toLowerCase() === "kafe";
+}
+/**
+ * Street F&B signed up through Kafe: waive ERA Foundation until NAS / finance satellite is on.
+ * Upgrading the edition to full F&B does not add a price line.
+ */
 function shouldWaiveEraFoundation(org) {
-    if (!isKafeEdition(org))
+    if (!isKafeSignup(org))
         return false;
     const mods = org.activeModules ?? [];
     return !mods.some((m) => m === "nas" || m === "industry_finance");

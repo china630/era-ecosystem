@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   jsonError,
   requireClinicPermission,
 } from "@/lib/api-utils";
@@ -31,7 +31,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
 

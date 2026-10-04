@@ -1,7 +1,7 @@
 import type { TimesheetEntry } from "@prisma/client";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { isConstructionWorkingDay } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
@@ -21,6 +21,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const accepted: typeof body.rows = [];
     const skipped: Array<{ row: (typeof body.rows)[number]; reason: string }> = [];

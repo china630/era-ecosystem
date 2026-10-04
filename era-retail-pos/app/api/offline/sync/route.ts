@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -9,7 +9,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const rows = await Promise.all(
       body.receipts.map((payload) =>
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const clientId = new URL(req.url).searchParams.get("clientId");
     const pending = await prisma.offlineReceiptQueue.findMany({
       where: { status: "PENDING", ...(clientId ? { clientId } : {}) },

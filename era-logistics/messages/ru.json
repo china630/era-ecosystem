@@ -161,6 +161,64 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
+  },
+  "nav": {
+    "access": "Доступ"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "trips": "Рейсы",
+      "operations": "Операции",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_trips": "Рейсы",
+      "screen_trips_detail": "Карточка рейса",
+      "screen_fleet": "Автопарк",
+      "screen_customs": "Таможня",
+      "screen_reports_fuel": "Отчёт по топливу",
+      "screen_admin_settings": "Настройки",
+      "screen_admin_access": "Экран доступа",
+      "api_trips": "Рейсы (список, правка, тариф, ETA)",
+      "api_trips_waybill": "Путевой лист",
+      "api_trips_pod": "Подтверждение доставки",
+      "api_trips_complete": "Завершить рейс",
+      "api_trips_points": "Точки маршрута",
+      "api_driver_trips": "Список рейсов водителя",
+      "api_fleet_alerts": "Оповещения автопарка",
+      "api_hub_scan": "Сканирование на хабе",
+      "api_cod_settle": "Расчёт наложенного платежа",
+      "api_reports_fuel": "Отчёты по топливу",
+      "api_customs_preview": "Предпросмотр ТН ВЭД / курса",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

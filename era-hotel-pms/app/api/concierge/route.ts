@@ -7,7 +7,7 @@ import {
   bookConciergeOrder,
   completeConciergeOrder,
 } from '@/lib/services/concierge.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -21,7 +21,7 @@ const bookSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const guestId = new URL(request.url).searchParams.get('guestId') ?? undefined;
     const view = new URL(request.url).searchParams.get('view');
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = await request.json();
     if (body.action === 'complete') {

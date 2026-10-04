@@ -6,11 +6,8 @@ import {
 export { IndustryModuleInactiveError };
 
 /** Satellite entitlement gate — fail-closed. */
-export async function requireConstructionSatellite(organizationId?: string): Promise<void> {
+export async function requireConstructionSatellite(organizationId: string): Promise<void> {
   const org = organizationId?.trim();
-  if (org) {
-    await requireSatelliteModule("industry_construction", { organizationId: org });
-    return;
-  }
-  await requireSatelliteModule("industry_construction");
+  if (!org) throw new IndustryModuleInactiveError("industry_construction");
+  await requireSatelliteModule("industry_construction", { organizationId: org });
 }

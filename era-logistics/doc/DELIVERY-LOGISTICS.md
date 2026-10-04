@@ -62,3 +62,7 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M10: Rate matrix / tariff engine (Finance)
 - [x] M11: COD split & clearing (Finance)
 - [x] M12: Hub cross-dock scanning
+
+## Access (RBAC Variant A)
+
+- [~] LOG-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/logistics-domain-permissions-and-rbac.md))

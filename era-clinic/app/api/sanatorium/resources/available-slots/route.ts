@@ -1,11 +1,11 @@
-import { jsonOk, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, getSatelliteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { listAvailableResourceSlots } from "@/domain/procedure/procedure-inventory.service";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 export async function GET(request: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_RESOURCES);
     if (denied) return denied;
 

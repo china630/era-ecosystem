@@ -5,12 +5,10 @@ import {
   enginePath,
   forwardToBankCore,
 } from "@/lib/engine-client";
-import { getRouteSession, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession, handleRouteError, jsonError } from "@/lib/api-utils";
 import { requiredPermissionsForEngineProxy } from "@/lib/auth/bff-permission-map";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
-import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
 import { sanitizeLimitsJson } from "@/lib/auth/permissions";
-import type { SatelliteSessionPayload } from "@era/satellite-kit";
 
 type ProxyOptions = {
   enginePrefix: string;
@@ -84,30 +82,22 @@ async function denyIfOverDebitLimit(
   return null;
 }
 
-async function sessionWithDbPermissions(
-  session: SatelliteSessionPayload,
-): Promise<SatelliteSessionPayload> {
-  const permissions = await permissionsForUserId(session.sub);
-  return { ...session, permissions };
-}
-
 async function proxyRequest(
   request: NextRequest,
   pathSegments: string[] | undefined,
   options: ProxyOptions,
 ): Promise<Response> {
-  const session = await getRouteSession();
+  const session = await getSatelliteSession();
   if (!session) {
     return jsonError("Unauthorized", 401);
   }
 
-  const authed = await sessionWithDbPermissions(session);
   const required = requiredPermissionsForEngineProxy({
     enginePrefix: options.enginePrefix,
     method: request.method,
     pathSegments,
   });
-  const denied = denyUnlessAnyPermission(authed, required);
+  const denied = denyUnlessAnyPermission(session, required);
   if (denied) return denied;
 
   const search = request.nextUrl.search;
@@ -179,8 +169,12 @@ export function createEngineProxyRoute(options: ProxyOptions) {
     request: NextRequest,
     ctx: { params: Promise<{ path?: string[] }> },
   ) {
-    const params = await ctx.params;
-    return proxyRequest(request, params.path, options);
+    try {
+      const params = await ctx.params;
+      return await proxyRequest(request, params.path, options);
+    } catch (err) {
+      return handleRouteError(err);
+    }
   }
 
   return {

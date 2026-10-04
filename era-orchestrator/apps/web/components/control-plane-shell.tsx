@@ -94,7 +94,6 @@ export function ControlPlaneShell({ children }: { children: React.ReactNode }) {
           onNavClick={closeMobileNav}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebarCollapsed={() => setSidebarCollapsed((v) => !v)}
-          isSuperAdmin={Boolean(user?.isSuperAdmin)}
         />
       }
       header={

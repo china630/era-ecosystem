@@ -1,12 +1,12 @@
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { listAuditLogs } from '@/lib/satellite-audit';
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const url = new URL(request.url);
     const entityType = url.searchParams.get('entityType');

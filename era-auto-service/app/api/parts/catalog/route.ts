@@ -1,8 +1,9 @@
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const vin = new URL(req.url).searchParams.get("vin") ?? "";
     const mockUrl = process.env.TECDOC_MOCK_URL;
     if (mockUrl && vin) {

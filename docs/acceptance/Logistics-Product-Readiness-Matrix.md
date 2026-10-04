@@ -31,6 +31,7 @@
 | Trips | `/trips` | 🟡 |
 | Fuel reports | `/reports/fuel` | 🟡 |
 | Customs hub | `/customs` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (LOG-RBAC-01; not SHOW) |
 
 Trip creation now follows the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
 

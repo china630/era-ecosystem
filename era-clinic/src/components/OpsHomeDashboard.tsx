@@ -221,8 +221,9 @@ export function OpsHomeDashboard({
   const t = useTranslations("home");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const { auth } = useClinicAuth();
-  const enabledPresets: ClinicPresetCode[] = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
+  const { auth, loading: authLoading } = useClinicAuth();
+  const enabledPresets: ClinicPresetCode[] =
+    !authLoading && auth ? auth.enabledPresets : [];
   const hasOutpatient = enabledPresets.includes(CLINIC_PRESET.OUTPATIENT);
   const hasSanatorium = enabledPresets.includes(CLINIC_PRESET.SANATORIUM_CLINICAL);
   const hasInpatient = enabledPresets.includes(CLINIC_PRESET.INPATIENT_DAY);

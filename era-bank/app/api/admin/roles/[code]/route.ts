@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { assertBankEntitled, jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getRouteSession } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/api-utils";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import {
@@ -9,7 +9,6 @@ import {
   canMutateCustomRoleMeta,
 } from "@/lib/auth/bank-role-admin";
 import { prisma } from "@/lib/prisma";
-import { permissionsForUserId } from "@/lib/auth/bank-permission.service";
 
 type RouteParams = { params: Promise<{ code: string }> };
 
@@ -19,11 +18,9 @@ const patchSchema = z.object({
 
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const permissions = await permissionsForUserId(session.sub);
-    assertPermission({ ...session, permissions }, PERMISSIONS.ACCESS_MANAGE);
+    assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
     const organizationId = session.organizationId;
@@ -57,11 +54,9 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
 export async function DELETE(_req: Request, { params }: RouteParams) {
   try {
-    await assertBankEntitled();
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const permissions = await permissionsForUserId(session.sub);
-    assertPermission({ ...session, permissions }, PERMISSIONS.ACCESS_MANAGE);
+    assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
     const organizationId = session.organizationId;

@@ -22,7 +22,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "You do not have access to that page"
   },
   "meta": {
     "title": "ERA Auto STO",
@@ -32,7 +33,8 @@
     "home": "Home",
     "workOrders": "Work orders",
     "appointments": "Appointments",
-    "settings": "Settings"
+    "settings": "Settings",
+    "access": "Access"
   },
   "login": {
     "title": "Sign in",
@@ -148,6 +150,52 @@
       "actions": "Actions",
       "edit": "Edit",
       "save": "Save"
+    }
+  },
+  "settingsAccess": {
+    "title": "Roles and access",
+    "subtitle": "Role packages and the screens and actions they grant",
+    "loading": "Loading…",
+    "loadFailed": "Could not load roles",
+    "saveFailed": "Could not save",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "delete": "Delete role",
+    "newCode": "New role code",
+    "newName": "Name",
+    "cloneFrom": "Copy grants from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "deleteInUse": "Reassign the users of this role before deleting it",
+    "assignTitle": "Assign a role to a user",
+    "assignUser": "User",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groups": {
+      "screens": "Screens",
+      "workshop": "Workshop",
+      "admin": "Administration"
+    },
+    "perms": {
+      "screen_home": "Home",
+      "screen_work_orders": "Work orders",
+      "screen_appointments": "Appointments",
+      "screen_admin_settings": "Settings screen",
+      "screen_admin_access": "Access screen",
+      "api_work_orders": "Work orders (intake, labor, parts, shop floor, complete, pay)",
+      "api_appointments": "Appointments",
+      "api_vehicles": "Vehicles and history",
+      "api_parts_catalog": "Parts catalog",
+      "api_tools": "Tools and checkout",
+      "api_calendar": "Working calendar",
+      "admin_settings": "Workshop settings",
+      "admin_access_manage": "Manage roles and access"
     }
   }
 }

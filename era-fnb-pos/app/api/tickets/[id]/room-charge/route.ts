@@ -1,4 +1,3 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runPlatformCommerceHooks } from "@era/satellite-kit";
@@ -11,10 +10,11 @@ import {
 import { requestOrganizationId } from "@/lib/request-organization";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
 import { shiftIdCovering } from "@/lib/open-shift";
-import { getSessionFromRequest, sessionActorName } from "@/lib/session";
+import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { handleRouteError } from "@/lib/api-utils";
 
 const bodySchema = z
   .object({
@@ -27,135 +27,138 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
-  await assertHotelFnbFeature("room-charge");
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessPermission(session, PERMISSIONS.ROOM_CHARGE);
-  if (denied) return denied;
-  const { id } = await params;
-  const body = bodySchema.parse(await request.json().catch(() => undefined));
+  try {
+    await assertHotelFnbFeature("room-charge");
+    const session = await getSatelliteSession();
+    const denied = denyUnlessPermission(session, PERMISSIONS.ROOM_CHARGE);
+    if (denied) return denied;
+    const { id } = await params;
+    const body = bodySchema.parse(await request.json().catch(() => undefined));
 
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
-    include: { outlet: true, table: true },
-  });
-  if (!ticket) {
-    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
-  }
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: { outlet: true, table: true },
+    });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
 
-  const linked = ticket.roomChargeReservationId;
-  const reservationId =
-    body?.reservationId ??
-    (linked && isUuid(linked) ? linked : undefined);
-  const roomNumber =
-    body?.roomNumber ??
-    (linked && !isUuid(linked) ? linked : undefined);
+    const linked = ticket.roomChargeReservationId;
+    const reservationId =
+      body?.reservationId ??
+      (linked && isUuid(linked) ? linked : undefined);
+    const roomNumber =
+      body?.roomNumber ??
+      (linked && !isUuid(linked) ? linked : undefined);
 
-  if (!reservationId && !roomNumber) {
-    return NextResponse.json(
-      { error: "No room charge guest linked (reservationId or roomNumber)" },
-      { status: 400 },
-    );
-  }
-
-  const ticketForBilling = {
-    ...ticket,
-    roomChargeReservationId:
-      ticket.roomChargeReservationId ??
-      reservationId ??
-      roomNumber ??
-      null,
-  };
-  const roomBlock = roomChargeBlockedReason(ticketForBilling);
-  if (roomBlock) {
-    return NextResponse.json({ error: roomBlock }, { status: 400 });
-  }
-
-  const settlement = await resolveTicketSettlement(ticketForBilling);
-  if (settlement !== "HOTEL_FOLIO") {
-    return NextResponse.json(
-      { error: "Room charge only for in-house hotel guests" },
-      { status: 400 },
-    );
-  }
-
-  const amount = Number(ticket.totalAzn);
-
-  if (amount <= 0) {
-    const entitlements = await fetchGuestEntitlements({ reservationId, roomNumber });
-    if (!entitlements?.found || !entitlements.breakfastIncluded) {
+    if (!reservationId && !roomNumber) {
       return NextResponse.json(
-        {
-          error: "Meal not included on rate plan — charge guest or use CASH/CARD",
-          denyReason: "MEAL_NOT_INCLUDED",
-        },
-        { status: 403 },
+        { error: "No room charge guest linked (reservationId or roomNumber)" },
+        { status: 400 },
       );
     }
-  }
 
-  const result = await postRoomCharge(
-    {
-      reservationId,
-      roomNumber,
-      revenueCode: ticket.outlet.revenueCenterCode,
-      amount,
-      description: `FB ticket ${ticket.table?.code ?? "walk-in"} — ${ticket.id.slice(0, 8)}`,
-      outletCode: ticket.outlet.code,
-      externalTicketId: ticket.id,
-    },
-    ticket.id,
-  );
+    const ticketForBilling = {
+      ...ticket,
+      roomChargeReservationId:
+        ticket.roomChargeReservationId ??
+        reservationId ??
+        roomNumber ??
+        null,
+    };
+    const roomBlock = roomChargeBlockedReason(ticketForBilling);
+    if (roomBlock) {
+      return NextResponse.json({ error: roomBlock }, { status: 400 });
+    }
 
-  if (!result.ok) {
-    const body = result.body as { error?: string; code?: string };
-    const denyReason =
-      body?.error === 'CREDIT_LIMIT' || String(body?.error ?? '').includes('CREDIT_LIMIT')
-        ? 'CREDIT_LIMIT'
-        : body?.error;
-    return NextResponse.json(
-      { ...body, denyReason: denyReason ?? body?.error },
-      { status: result.status },
-    );
-  }
+    const settlement = await resolveTicketSettlement(ticketForBilling);
+    if (settlement !== "HOTEL_FOLIO") {
+      return NextResponse.json(
+        { error: "Room charge only for in-house hotel guests" },
+        { status: 400 },
+      );
+    }
 
-  const closedAt = new Date();
-  await prisma.ticket.update({
-    where: { id },
-    data: {
-      status: "CLOSED",
-      closedAt,
-      shiftId: await shiftIdCovering(ticket.outletId, closedAt),
-      closedByName: sessionActorName(session),
-    },
-  });
-  await releaseTableForTicket(id, ticket.tableId);
+    const amount = Number(ticket.totalAzn);
 
-  const organizationId = requestOrganizationId();
-  if (organizationId) {
-    void runPlatformCommerceHooks({
-      organizationId,
-      portal: { entityType: "fb_ticket", entityId: ticket.id },
-      payment: {
-        amountAzn: amount,
-        sourceEntityType: "fb_room_charge",
-        sourceEntityId: ticket.id,
-        description: `Room charge ${roomNumber ?? reservationId ?? ""}`,
+    if (amount <= 0) {
+      const entitlements = await fetchGuestEntitlements({ reservationId, roomNumber });
+      if (!entitlements?.found || !entitlements.breakfastIncluded) {
+        return NextResponse.json(
+          {
+            error: "Meal not included on rate plan — charge guest or use CASH/CARD",
+            denyReason: "MEAL_NOT_INCLUDED",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
+    const result = await postRoomCharge(
+      {
+        reservationId,
+        roomNumber,
+        revenueCode: ticket.outlet.revenueCenterCode,
+        amount,
+        description: `FB ticket ${ticket.table?.code ?? "walk-in"} — ${ticket.id.slice(0, 8)}`,
+        outletCode: ticket.outlet.code,
+        externalTicketId: ticket.id,
       },
-      ...(ticket.tableId
-        ? {
-            bookingSlot: {
-              resourceKey: `fb-table-${ticket.tableId}`,
-              resourceName: ticket.table?.name ?? `Table ${ticket.tableId}`,
-              startsAt: new Date().toISOString(),
-              endsAt: new Date(Date.now() + 7200_000).toISOString(),
-              capacity: 1,
-              metadata: { ticketId: ticket.id },
-            },
-          }
-        : {}),
-    }).catch(() => undefined);
-  }
+      ticket.id,
+    );
 
-  return NextResponse.json(result.body);
+    if (!result.ok) {
+      const body = result.body as { error?: string; code?: string };
+      const denyReason =
+        body?.error === 'CREDIT_LIMIT' || String(body?.error ?? '').includes('CREDIT_LIMIT')
+          ? 'CREDIT_LIMIT'
+          : body?.error;
+      return NextResponse.json(
+        { ...body, denyReason: denyReason ?? body?.error },
+        { status: result.status },
+      );
+    }
+
+    const closedAt = new Date();
+    await prisma.ticket.update({
+      where: { id },
+      data: {
+        status: "CLOSED",
+        closedAt,
+        shiftId: await shiftIdCovering(ticket.outletId, closedAt),
+        closedByName: sessionActorName(session),
+      },
+    });
+    await releaseTableForTicket(id, ticket.tableId);
+
+    const organizationId = requestOrganizationId();
+    if (organizationId) {
+      void runPlatformCommerceHooks({
+        organizationId,
+        portal: { entityType: "fb_ticket", entityId: ticket.id },
+        payment: {
+          amountAzn: amount,
+          sourceEntityType: "fb_room_charge",
+          sourceEntityId: ticket.id,
+          description: `Room charge ${roomNumber ?? reservationId ?? ""}`,
+        },
+        ...(ticket.tableId
+          ? {
+              bookingSlot: {
+                resourceKey: `fb-table-${ticket.tableId}`,
+                resourceName: ticket.table?.name ?? `Table ${ticket.tableId}`,
+                startsAt: new Date().toISOString(),
+                endsAt: new Date(Date.now() + 7200_000).toISOString(),
+                capacity: 1,
+                metadata: { ticketId: ticket.id },
+              },
+            }
+          : {}),
+      }).catch(() => undefined);
+    }
+
+    return NextResponse.json(result.body);
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

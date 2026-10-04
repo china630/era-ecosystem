@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -22,9 +22,9 @@ const upsertSchema = z.object({
 
 export async function GET() {
   try {
-    await requireHotelModule('hotel_distribution');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const binding = await getChannelManagerBinding();
     return jsonOk(
       binding ?? {
@@ -45,9 +45,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    await requireHotelModule('hotel_distribution');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const body = upsertSchema.parse(await request.json());
     const binding = await upsertChannelManagerBinding(body);
     return jsonOk(binding);

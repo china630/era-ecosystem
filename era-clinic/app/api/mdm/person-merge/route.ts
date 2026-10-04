@@ -4,7 +4,7 @@ import {
   jsonOk,
   handleRouteError,
   jsonError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -21,7 +21,7 @@ const schema = z.object({
 /** Ops: foreigner received FIN — merge MDM records and re-link patient. */
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_MDM);
     if (denied) return denied;
 

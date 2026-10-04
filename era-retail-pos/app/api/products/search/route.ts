@@ -1,10 +1,10 @@
-import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { ensureProductCacheSeeded } from "@/lib/product-cache-seed";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     await ensureProductCacheSeeded();
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();

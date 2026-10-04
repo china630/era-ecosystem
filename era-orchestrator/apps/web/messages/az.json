@@ -951,6 +951,20 @@
       "transferFailed": "Ötürmə alınmadı",
       "transferOk": "Sahiblik ötürülüb."
     },
+    "fnbEdition": {
+      "title": "F&B redaksiyası",
+      "kafe": "ERA Kafe",
+      "fnb": "Tam F&B",
+      "kafeHint": "Yalnız kafe zalı. Tam F&B eyni F&B satellitində restoran və banket zalına da icazə verir.",
+      "fnbHint": "Kafe, restoran və banket zalına icazə var. Kafe və restoran F&B parametrlərində açılır; banket ekranları hələ hazır deyil.",
+      "upgrade": "Tam F&B-yə keç",
+      "confirmTitle": "Tam F&B-yə keçilsin?",
+      "confirmBody": "Kafeniz olduğu kimi işləməyə davam edir. Aylıq qiymət dəyişmir: yalnız açdığınız modullar üçün ödəyirsiniz. Otel funksiyaları bağlı qalır. Sonra restoran zalını F&B parametrlərində aça bilərsiniz.",
+      "cancel": "Ləğv et",
+      "upgraded": "Tam F&B-yə keçildi.",
+      "upgradedPending": "Tam F&B-yə keçildi. F&B satelliti növbəti sinxronizasiyada bunu götürəcək.",
+      "upgradeFailed": "Redaksiyanı dəyişmək alınmadı"
+    },
     "subscription": {
       "title": "Abunəlik",
       "loading": "Yüklənir…",

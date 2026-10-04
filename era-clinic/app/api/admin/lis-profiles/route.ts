@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
@@ -12,8 +12,8 @@ const bodySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
     const profiles = await prisma.lisFileProfile.findMany({
       orderBy: { name: "asc" },
     });

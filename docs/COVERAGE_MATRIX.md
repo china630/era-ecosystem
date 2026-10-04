@@ -253,6 +253,8 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FNB-06 | Recipe SKU + Finance deep-link | Y menu admin | SHIPPED | BOM SoT Finance |
 | FNB-07 | Dish image URL | Y `/admin/menu` + floor strip | SHIPPED | URL only, no upload |
 | FNB-08 | Nafta cutover Excel wizard | Y `/admin/import` | API | READY #30-#32; UAT-SMOKE UI open — not SHIPPED |
+| FNB-09 | Edition (`kafe` / `fnb`), hall presets (`cafe` / `restaurant`; `banquet` stored, no screens), and `hotelMode` as three fields; SatAdmin Halls modal on `/admin/settings` (`GET/PATCH /api/settings/presets`); menu rows by preset + kitchen module from one `/api/auth/me` read | Y `/admin/settings` | API | ADR era-kafe-edition §1a; UAT-SMOKE UI step and browser run open — not SHIPPED |
+| FNB-10 | OrgOwner upgrade ERA Kafe → full F&B (no new price line, `hotelMode` untouched, Sync re-run) | OrgOwner `/settings/subscription` card (`GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade`) | API | ADR era-kafe-edition §1b; UAT-SMOKE UI step open — not SHIPPED |
 
 ---
 
@@ -261,6 +263,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | ID | Capability | OpsUI | Status | Blocker |
 |----|------------|-------|--------|---------|
 | RET-01 | Nafta cutover stock-cards import | Y `/admin/import` | API | READY #33; UAT-SMOKE UI open — not SHIPPED |
+| RET-RBAC-01 | Role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (void, import) | OpsUI nav by grant; SatAdmin `/admin/access` (`OUTLET_ADMIN`) | API | UI class SCREEN; ADR retail-domain-permissions-and-rbac; AC-RET-RBAC 🟡; UAT-SMOKE RET-RBAC-01 open — not SHIPPED |
 
 ---
 
@@ -381,6 +384,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | CRM-IMPORT-01 | CSV/XLSX prospect import | — | Y `/admin/import` | SHIPPED | e-taxes enriched columns + dedup |
 | CRM-IMPORT-02 | Activity sector on lead | Y | Y | SHIPPED | `donor_sectors` → `activitySector` |
 | CRM-CONV-01 | Finance auto-counterparty on convert | — | HEADLESS | SHIPPED | extended `SATELLITE_CRM_LEAD_CONVERTED` |
+| CRM-RBAC-01 | Role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (lead assign, import, pipeline rules) | OpsUI nav and assign control by grant | SatAdmin `/admin/access` (`SALES_LEAD`) | API | UI class SCREEN; ADR crm-domain-permissions-and-rbac; AC-CRM-RBAC 🟡; UAT-SMOKE CRM-RBAC-01 open — not SHIPPED |
 
 ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-prospect-import.md)
 
@@ -468,6 +472,15 @@ Modal CRUD audit (LOCAL_UAT §5): **Partial** for FB, Ret, Log, Con, CRM, Auto, 
 
 **era-bank-core:** L1 kernel = **HEADLESS** (no UI). **era-bank** ops satellite UI = **API / playbook 🟡** (teller back-office, BFF-only — no local ledger; not product GA). **era-bank-dbo** = customer channel (separate UX standard).
 
+### Variant A access matrix (industry satellites)
+
+| ID | Capability | OpsUI | SatAdmin | Status | Notes |
+|----|------------|-------|----------|--------|-------|
+| WS-RBAC-01 | Wholesale role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (import orders, settings, access) | OpsUI nav by grant | SatAdmin `/admin/access` (`WHOLESALE_MANAGER`) | API | UI class SCREEN; ADR wholesale-domain-permissions-and-rbac; AC-WHS-RBAC 🟡; UAT-SMOKE WS-RBAC-01 open — not SHIPPED |
+| AS-RBAC-01 | Auto role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (settings, access; cron stays on its secret) | OpsUI nav by grant | SatAdmin `/admin/access` (`STO_MANAGER`) | API | UI class SCREEN; ADR auto-domain-permissions-and-rbac; AC-AUT-RBAC 🟡; UAT-SMOKE AS-RBAC-01 open — not SHIPPED |
+| CN-RBAC-01 | Construction role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (act approve as a grant, settings, access) | OpsUI nav by grant | SatAdmin `/admin/access` (`PROJECT_MANAGER`) | API | UI class SCREEN; ADR construction-domain-permissions-and-rbac; AC-CON-RBAC 🟡; UAT-SMOKE CN-RBAC-01 open — not SHIPPED |
+| LOG-RBAC-01 | Logistics role×permission matrix + custom roles (Variant A): system packages, clone, Reset, assign; page + API grant doors (driver trip list as a grant on both roles, trip complete, settings, access; tracking is session-only; the path token selects the trip) | OpsUI nav by grant | SatAdmin `/admin/access` (`DISPATCHER`) | API | UI class SCREEN; ADR logistics-domain-permissions-and-rbac; AC-LOG-RBAC 🟡; UAT-SMOKE LOG-RBAC-01 open — not SHIPPED |
+
 ---
 
 ## Regeneration
@@ -489,6 +502,13 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-03 | F&B edition / preset / hotel mode split (`FNB-09`) and owner upgrade ERA Kafe → full F&B (`FNB-10`) — API, not SHIPPED. Kit menu row conditions (`permission`, `anyPermission`, `module`, `preset`, `edition`, `when`) with paint-once filters; F&B, hotel, clinic, bank shells read one `/api/auth/me`; finance and control-plane sidebars use the same predicate on the JWT session. Bank `/api/auth/me` carries `activeModules`. No SHIPPED flips. |
+| 2026-10-04 | Request tenant filter no longer falls back to the process bind inside a Next request (dead sync `headers()` read removed; missing entered org throws). Staff handlers with a session pass `session.organizationId` (fiscal device lists, hotel cash shift and booking sources, clinic/hotel/F&B role and user admin). Clinic admin GETs that only the admin screen calls (rooms, resources, lookups, procedure types, ICD favorites, LIS profiles, practitioner skills and schedule) use `assertClinicAdminRoute`. Practitioner list GET stays open to ops. On retail, CRM, wholesale, construction, auto and logistics: missing `x-era-pathname` denies the API grant; `POST /api/auth/logout` clears the staff cookie. Logistics tracking reads the staff session, then the path token. No SHIPPED / Pilot / ga changes. |
+| 2026-10-04 | Staff session standard, final: kit `readSatelliteStaffSession` takes the org from the token only and loads the staff row in that tenant (missing / inactive / other-org row → 401; bank inactive `OpsUser` and F&B inactive PIN roster included); each app `getSatelliteSession()` runs the module gate for that org and builds permissions from the loaded role (no second DB read in guards, data scope, BFF proxy, refresh-permissions, `/me`); `assert*Entitled` removed in all apps; one session read per route handler inside `try` (F&B handlers moved inside `try`, ungated staff routes in the six simple satellites and hotel now read the session); hotel / clinic gates take the org as an argument; kit `requireSatelliteModule` drops the process-bind fallback; kit middleware strips client identity headers on every path (`serviceApiPrefixes` for S2S, clinic capacity summary reachable from the hotel proxy with the session org), hotel freeze check via `authorizeApi` with the token org. Guard `check:satellite-session` in `run:quality-gates`. Data-layer process-bind fallback stays an open item (ADR saas-request-tenant §2). No SHIPPED / Pilot / ga changes. |
+| 2026-10-04 | Variant A RBAC on the six remaining satellites: `RET-RBAC-01` (Retail), `CRM-RBAC-01`, `WS-RBAC-01` (Wholesale), `AS-RBAC-01` (Auto), `CN-RBAC-01` (Construction), `LOG-RBAC-01` (Logistics). Each app gets system packages per org (ops roles plus `BUSINESS_OWNER` / `PLATFORM_MEMBER` / `SATELLITE_OPERATOR`), `/admin/access` (matrix, clone, Reset, assign), `permissions[]` in the login / SSO token with refresh-permissions, page grants in middleware and API grants in `getSatelliteSession()` (unlisted staff route → 403). Pre-matrix role names map to templates once (catalog version 0 → 1); seed access is unchanged except the per-app manager-only admin splits listed as deliberate deltas in each ADR. Cron (Auto) and tracking token (Logistics) stay declared handler exceptions. All six rows API (UI class SCREEN), AC-*-RBAC 🟡 out of BE rollup; UAT-SMOKE steps open. No SHIPPED / SHOW / Pilot / ga changes. |
+| 2026-10-04 | Staff login without `orgNo` or a host binding returns 400 on every industry satellite (no process-bind lookup). `POST /api/events/dispatch` stamps the org from the request context only. No SHIPPED flips. |
+| 2026-10-04 | One staff-session standard: module gates refuse without a session org (no process-bind fallback) in all industry satellites, hotel agency portal (`requireAgencyPortalSession`) and bank-dbo; SSO exchange (10 satellites + hotel agency SSO) takes the org from the signed ticket with no process-bind comparison (SEC-SSO-05 superseded); clinic and bank reload permissions from the DB in `getSatelliteSession` like hotel and F&B (F&B no longer keeps token grants when the DB list is empty or the read fails); bank DBO customer channel falls back to the deployment org on DEDICATED/ONPREM when no host or lab `orgNo` is present (SHARED refused); hotel session email comes from the token only; clinic session returns null outside a request. ADR saas-request-tenant §2. No SHIPPED / Pilot / ga changes. |
+| 2026-10-03 | Shared staff session: clinic, F&B, bank, hotel, retail, CRM, logistics, wholesale, construction, auto read the session with kit `getSatelliteSession` (org from token, middleware header, or User row; never the process bind) behind kit `createSatelliteStaffMiddleware`. Hotel signs with kit `signSatelliteSession`; staff `/api/agencies/*` no longer falls into the agency-cookie branch; hotel `GET /api/platform/billing-snapshot` takes the org from the session. ADR saas-request-tenant §2. No SHIPPED flips. |
 | 2026-10-01 | Bank core SHARED: process bind is not taken from `ERA_BANK_ORGANIZATION_ID` / Sync of one bank. Boot, desired-state pull, and organization bind clear that pin when topology is SHARED (DBO and era-bank boot included). Request tenant stays `X-Organization-Id`. DBO demo seed enters the lab bank and upserts `organizationId_keyHash`. AC-BANK-TENANT stays 🟡; no SHIPPED flip. |
 | 2026-10-01 | Finance: org invites looked up by email/id (not session org); VÖEN join runs in the target org; system audit events append the org hash chain; unwired Pasha/Drakaris payment webhook methods removed (live pay path remains Drakaris `finalizePaidOrderPublic`). |
 | 2026-10-01 | Tenant filter skip removed: kit drops `ERA_SKIP_TENANT_FILTER`; cron org list = kit `listCronOrganizationIds` (SHARED orch registry only, 503 on empty/drop; DEDICATED process org); `ERA_CRON_ORGANIZATION_IDS` + satellite User DISTINCT discover removed; seeds/imports/loaders bind org with filter on; clinic extra-ticket print link carries `organizationId`. AC-*-TENANT stay 🟡; no SHIPPED flips. |

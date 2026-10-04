@@ -1,7 +1,7 @@
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(_req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_QUEUE);
     if (denied) return denied;
 

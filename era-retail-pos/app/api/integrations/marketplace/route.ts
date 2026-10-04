@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -10,7 +10,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const secret = req.headers.get("x-marketplace-secret");
     const expected = process.env.MARKETPLACE_WEBHOOK_SECRET ?? "marketplace-dev";

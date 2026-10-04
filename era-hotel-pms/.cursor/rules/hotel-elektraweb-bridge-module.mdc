@@ -18,7 +18,7 @@ globs: era-hotel-pms/extensions/elektraweb-bridge/**,era-hotel-pms/app/api/integ
 | ERA org | JWT / session / outbox body `organizationId` → `enterSatelliteTenant` |
 | Elektraweb property | `ElektrawebBridgePolicy` for that org (Super-Admin + Sync) |
 | Bridge JWT | embeds org + policy hotel id; ingest 409 if row `HOTELID` mismatches policy |
-| Appliance login without org | `getUserByLogin` scoped to process bind only |
+| Bridge login | `orgNo` or host binding required; `getUserByLogin` does not use the process bind |
 
 ## Auth
 

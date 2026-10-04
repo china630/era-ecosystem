@@ -22,7 +22,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "You do not have access to that page"
   },
   "meta": {
     "title": "ERA Construction",
@@ -33,7 +34,8 @@
     "projects": "Projects",
     "fieldOps": "Field ops",
     "materialRequisitions": "Material requisitions",
-    "settings": "Settings"
+    "settings": "Settings",
+    "access": "Access"
   },
   "login": {
     "title": "Sign in",
@@ -174,6 +176,59 @@
       "actions": "Actions",
       "edit": "Edit",
       "save": "Save"
+    }
+  },
+  "settingsAccess": {
+    "title": "Roles and access",
+    "subtitle": "Role packages and the screens and actions they grant",
+    "loading": "Loading…",
+    "loadFailed": "Could not load roles",
+    "saveFailed": "Could not save",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "delete": "Delete role",
+    "newCode": "New role code",
+    "newName": "Name",
+    "cloneFrom": "Copy grants from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "deleteInUse": "Reassign the users of this role before deleting it",
+    "assignTitle": "Assign a role to a user",
+    "assignUser": "User",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groups": {
+      "screens": "Screens",
+      "projects": "Projects",
+      "site": "Site work",
+      "admin": "Administration"
+    },
+    "perms": {
+      "screen_home": "Home",
+      "screen_projects": "Projects",
+      "screen_projects_detail": "Project card",
+      "screen_field_ops": "Field ops",
+      "screen_material_requisitions": "Material requisitions",
+      "screen_admin_settings": "Settings",
+      "screen_admin_access": "Access screen",
+      "api_projects": "Projects",
+      "api_boq": "BOQ / plan vs actual",
+      "api_daily_logs": "Daily logs",
+      "api_punch_list": "Punch list",
+      "api_gantt": "Gantt",
+      "api_requisitions": "Material requisitions",
+      "api_acts_approve": "Approve progress acts",
+      "api_timesheets_import": "Timesheet import",
+      "api_equipment_hours": "Equipment hours",
+      "api_cde": "Drawings (CDE)",
+      "api_subcontractor_claims": "Subcontractor claims",
+      "admin_access_manage": "Manage roles and access"
     }
   }
 }

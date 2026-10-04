@@ -1,10 +1,11 @@
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const DAYS_AHEAD = 30;
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const until = new Date();
     until.setDate(until.getDate() + DAYS_AHEAD);
 

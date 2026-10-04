@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -31,7 +31,7 @@ const viewSchema = z.enum([
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_REPORTS_PROCEDURES);
     if (denied) return denied;
     if (!session) return jsonError("Unauthorized", 401);

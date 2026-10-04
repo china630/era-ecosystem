@@ -30,6 +30,7 @@
 |---------|------|-------|
 | Pipeline / leads | `CRM UI` | 🟡 |
 | Visits / inbox | `visits + inbox` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (CRM-RBAC-01; not SHOW) |
 
 Create-lead and admin import now follow the modal CRUD playbook; sell/show stays 🟡 until live sign-off.
 

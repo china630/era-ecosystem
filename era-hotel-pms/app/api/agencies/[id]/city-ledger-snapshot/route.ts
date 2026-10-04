@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { dispatchCityLedgerSnapshot } from '@/lib/integration/event-dispatcher';
@@ -17,7 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    assertPermission(await getSessionFromHeaders(), PERMISSIONS.FOLIO_READ);
+    assertPermission(await getSatelliteSession(), PERMISSIONS.FOLIO_READ);
     const { id } = await params;
     const last = await prisma.satelliteAuditLog.findFirst({
       where: { entityType: 'CityLedgerSnapshot', entityId: id },
@@ -46,7 +46,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const { id } = await params;
     const body = postSchema.parse(await request.json().catch(() => ({})));

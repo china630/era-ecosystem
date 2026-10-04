@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
-  authCookieName,
-  enterSatelliteTenant,
-  getBearerOrCookieToken,
-  verifySatelliteSession,
-  type SatelliteSessionPayload,
+  readSatelliteStaffSession,
+  type SatelliteStaffSessionPayload,
 } from "@era/satellite-kit";
+import { prisma } from "@/lib/prisma";
+import { permissionsForSession } from "@/lib/auth/bank-permission.service";
 import {
   BankingEntitlementError,
   BankEngineError,
@@ -58,36 +57,43 @@ export function handleRouteError(err: unknown) {
   return jsonError("Internal error", 500);
 }
 
-/** Call at the start of authenticated API handlers (session helper). */
-export async function assertBankEntitled(): Promise<void> {
-  await requireBankSatellite();
-}
-
-export async function getRouteSession(): Promise<SatelliteSessionPayload | null> {
-  await assertBankEntitled();
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const token = getBearerOrCookieToken(
-    cookieStore,
-    headerStore,
-    authCookieName(),
-  );
-  if (!token) return null;
+/**
+ * Staff session: org from the signed token, active OpsUser row, banking gate,
+ * grants from the DB. No session → null (401); module off →
+ * IndustryModuleInactiveError (403). Call once per handler, inside try.
+ */
+export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
+  let cookieStore: Awaited<ReturnType<typeof cookies>>;
+  let headerStore: Awaited<ReturnType<typeof headers>>;
   try {
-    const session = await verifySatelliteSession(token);
-    if (session.organizationId) {
-      enterSatelliteTenant({ organizationId: session.organizationId });
-    }
-    return session;
+    cookieStore = await cookies();
+    headerStore = await headers();
   } catch {
     return null;
   }
-}
-
-export async function requireRouteSession(): Promise<
-  SatelliteSessionPayload | NextResponse
-> {
-  const session = await getRouteSession();
-  if (!session) return jsonError("Unauthorized", 401);
-  return session;
+  const staff = await readSatelliteStaffSession({
+    cookies: cookieStore,
+    headers: headerStore,
+    loadUser: async ({ sub }) => {
+      const user = await prisma.opsUser.findUnique({
+        where: { id: sub },
+        select: {
+          organizationId: true,
+          status: true,
+          opsRole: { select: { code: true, permissionsJson: true } },
+        },
+      });
+      return user
+        ? {
+            organizationId: user.organizationId,
+            active: user.status === "ACTIVE",
+            opsRole: user.opsRole,
+          }
+        : null;
+    },
+  });
+  if (!staff) return null;
+  const { session, user } = staff;
+  await requireBankSatellite(session.organizationId);
+  return { ...session, permissions: permissionsForSession(session, user.opsRole) };
 }

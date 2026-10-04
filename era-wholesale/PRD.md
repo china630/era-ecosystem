@@ -36,6 +36,8 @@
 | Комплектовщик | `WAREHOUSE_PICKER` | Pick list stub |
 | Менеджер опта | `WHOLESALE_MANAGER` | Покупатели, прайс |
 
+**Variant A (WS-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `WHOLESALE_MANAGER`). Every ops package keeps the full order, payment, TTN and pick flow; import orders, settings and access go to `WHOLESALE_MANAGER`. ADR [wholesale-domain-permissions-and-rbac](../docs/adr/wholesale-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

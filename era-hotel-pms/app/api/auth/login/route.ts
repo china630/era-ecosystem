@@ -6,11 +6,12 @@ import {
   readStaffLoginJson,
   resolveStaffLoginTenant,
   satelliteRuntimeConfig,
+  signSatelliteSession,
 } from "@era/satellite-kit";
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { verifyPassword } from "@/lib/auth/password";
-import { signToken } from "@/lib/auth/jwt";
+import { remapPermissionList } from "@/lib/auth/hotel-permission-rename";
 import { getUserByLogin, userPermissions } from "@/lib/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
@@ -18,7 +19,7 @@ import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
-  /** SHARED pool: required. Appliance: omit → process bind only. */
+  /** Required unless the host already names the organization. */
   orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
@@ -70,14 +71,14 @@ export async function POST(request: Request) {
     }
 
     const permissions = userPermissions(refreshed);
-    const token = await signToken({
+    const token = await signSatelliteSession({
       sub: refreshed.id,
       login: refreshed.login,
       role: refreshed.role.code,
       fullName: refreshed.fullName,
       email: refreshed.email ?? undefined,
       organizationId,
-      permissions,
+      permissions: permissions.length ? remapPermissionList(permissions) : undefined,
     });
 
     const res = jsonOk({

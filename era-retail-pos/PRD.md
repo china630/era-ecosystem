@@ -84,6 +84,8 @@
 
 RBAC: операционные роли в satellite DB; membership/OWNER — orchestrator; SSO — [docs/INTEGRATION_SSO_EVENTS.md](../docs/INTEGRATION_SSO_EVENTS.md).
 
+**Variant A (RET-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `OUTLET_ADMIN`). The seed reproduces prior access: shift close and X-report on every ops package; void and import on supervisor and outlet admin. `SATELLITE_OPERATOR` keeps the cashier package until someone tightens it in the matrix. ADR [retail-domain-permissions-and-rbac](../docs/adr/retail-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

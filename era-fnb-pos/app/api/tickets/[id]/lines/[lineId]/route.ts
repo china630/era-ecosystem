@@ -1,4 +1,4 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +7,7 @@ import {
   recalculateTicketTotals,
   voidTicketIfNoLiveLines,
 } from "@/lib/ticket-helpers";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
@@ -23,8 +23,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; lineId: string }> },
 ) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_LINES);
     if (denied) return denied;
 

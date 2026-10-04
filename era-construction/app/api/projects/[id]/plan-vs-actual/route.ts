@@ -1,5 +1,5 @@
 import type { BoqLine, ProgressAct } from "@prisma/client";
-import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonError, jsonOk, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const project = await prisma.project.findUnique({
       where: { id },

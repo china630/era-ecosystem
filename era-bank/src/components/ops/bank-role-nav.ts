@@ -1,6 +1,6 @@
 /**
  * Ops sidebar visibility by screen grants (Variant A).
- * Entitlement modules still apply on top via useBankEntitlements.
+ * BankOpsShell applies entitlement modules as a kit row condition on top.
  * @deprecated ROLE_NAV_ALLOW — role name no longer grants nav; use screen:* grants.
  */
 import { screenPermissionForNavHref } from "@/lib/auth/page-route-permissions";

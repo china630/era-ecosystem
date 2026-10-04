@@ -352,7 +352,7 @@ export async function createReservation(input: {
     );
     const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
     if (stamped.programCode) {
-      await assertSanatoriumBookingAllowed(reservation.checkInDate);
+      await assertSanatoriumBookingAllowed(reservation.organizationId, reservation.checkInDate);
       void dispatchSanatoriumBookingCreated({
         reservationId: reservation.id,
         programCode: stamped.programCode,

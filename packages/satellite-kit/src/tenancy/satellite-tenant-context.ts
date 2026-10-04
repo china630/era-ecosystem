@@ -14,10 +14,10 @@ export type SatelliteTenantFilter = { mode: "apply"; organizationId: string };
 const als = new AsyncLocalStorage<SatelliteTenantContext>();
 
 /**
- * Next.js drops `enterWith` across `await`. After that, the org is read from
- * the request header `x-era-organization-id` (middleware stamps the session)
- * and from the Next request store written by `enterSatelliteTenant`.
- * Outside a request both reads miss and the process bind remains the source.
+ * Next.js drops `enterWith` across `await`. `enterSatelliteTenant` also
+ * remembers the org on the Next request store, and the filter reads that.
+ * The process bind is used only when there is no request (cron, workers).
+ * A request with no entered org throws.
  */
 const orgByWorkStore = new WeakMap<object, string>();
 
@@ -33,22 +33,6 @@ function currentWorkStore(): object | undefined {
     return undefined;
   }
   return undefined;
-}
-
-function organizationIdFromNextRequest(): string | undefined {
-  try {
-    const dynamicRequire = eval("require") as NodeRequire;
-    const { headers } = dynamicRequire("next/headers") as {
-      headers: () => { get?: (name: string) => string | null } | Promise<unknown>;
-    };
-    const result = headers();
-    if (!result || typeof (result as { then?: unknown }).then === "function") return undefined;
-    const bag = result as { get?: (name: string) => string | null };
-    const id = bag.get?.("x-era-organization-id")?.trim();
-    return id || undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 function peekRequestOrganizationId(): string | undefined {
@@ -97,20 +81,22 @@ function requireUsableOrgId(id: string): string {
 /**
  * Org for Prisma tenant extension. There is no unfiltered mode: lookups by a
  * pool-unique key iterate registry orgs, each inside `runWithSatelliteTenant`.
- * Unbound / sentinel → throw (fail-closed). Never return empty and continue.
+ * Inside a Next request the org is ALS or the store written by
+ * `enterSatelliteTenant`; missing → throw. The process bind is only outside a request.
  */
 export function resolveSatelliteTenantFilter(): SatelliteTenantFilter {
   const ctx = als.getStore();
   if (ctx?.organizationId?.trim()) {
     return { mode: "apply", organizationId: requireUsableOrgId(ctx.organizationId) };
   }
-  const fromRequest = organizationIdFromNextRequest();
-  if (fromRequest) {
-    return { mode: "apply", organizationId: requireUsableOrgId(fromRequest) };
-  }
   const remembered = peekRequestOrganizationId();
   if (remembered) {
     return { mode: "apply", organizationId: requireUsableOrgId(remembered) };
+  }
+  if (currentWorkStore()) {
+    throw new SatelliteOrganizationUnboundError(
+      "Request has no organization. Enter the tenant from the session; the process bind is not a request fallback.",
+    );
   }
   const resolved = resolveSatelliteOrganizationId();
   return { mode: "apply", organizationId: requireUsableOrgId(resolved.organizationId) };
@@ -119,4 +105,34 @@ export function resolveSatelliteTenantFilter(): SatelliteTenantFilter {
 /** Org id the tenant filter applies. Unbound throws. */
 export function resolveSatelliteTenantOrgId(): string {
   return resolveSatelliteTenantFilter().organizationId;
+}
+
+/**
+ * Org already on this call: ALS or the Next request store.
+ * Missing → undefined. Never the process bind and never the request header.
+ * A service caller passes the incoming request to `organizationIdOnIncomingRequest`.
+ */
+export function peekSatelliteRequestOrganizationId(): string | undefined {
+  const ctx = als.getStore();
+  if (ctx?.organizationId?.trim()) {
+    return requireUsableOrgId(ctx.organizationId);
+  }
+  const remembered = peekRequestOrganizationId();
+  if (remembered) return requireUsableOrgId(remembered);
+  return undefined;
+}
+
+/**
+ * Org for a service HTTP call. The incoming `x-era-organization-id` wins,
+ * then ALS / the Next request store. Never the JSON body and never the process bind.
+ */
+export function organizationIdOnIncomingRequest(request: {
+  headers: { get(name: string): string | null };
+}): string | undefined {
+  const header = request.headers.get("x-era-organization-id")?.trim() ?? "";
+  if (header) {
+    if (isSentinelOrganizationId(header)) return undefined;
+    return header;
+  }
+  return peekSatelliteRequestOrganizationId();
 }

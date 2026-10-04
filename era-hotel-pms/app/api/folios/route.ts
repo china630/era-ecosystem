@@ -2,13 +2,13 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { listFolios, postCharge, postPayment } from '@/lib/services/folio.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const reservationId = new URL(request.url).searchParams.get('reservationId') ?? undefined;
     return jsonOk(serialize(await listFolios(reservationId)));
@@ -42,7 +42,7 @@ const paymentSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     const body = await request.json();
     if (body.folioId) {
       assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);

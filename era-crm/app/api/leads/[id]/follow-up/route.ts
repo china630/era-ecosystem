@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { todayBakuYmd, parseBakuDateTime } from "@era/satellite-kit/time";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { prisma } from "@/lib/prisma";
 import { crmNextContactDue } from "@/lib/production-calendar";
@@ -17,6 +17,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
     const lead = await prisma.lead.findUnique({ where: { id } });

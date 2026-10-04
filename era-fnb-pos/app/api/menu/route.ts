@@ -1,11 +1,11 @@
 import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
 import { findOpsOutlet, resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_MENU } from "@/lib/auth/read-permission-sets";
@@ -13,9 +13,8 @@ import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { categoryCodeFromName } from "@/lib/business-day";
 
 export async function GET(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, TILL_READ_MENU);
     if (denied) return denied;
     const url = new URL(request.url);
@@ -98,9 +97,8 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 

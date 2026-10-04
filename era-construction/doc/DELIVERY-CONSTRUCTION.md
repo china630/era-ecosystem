@@ -48,3 +48,7 @@ PRD M6–M12 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M10: Site equipment / machine hours
 - [x] M11: CDE / drawing versions
 - [x] M12: Labor timesheets / SKUD
+
+## Access (RBAC Variant A)
+
+- [~] CN-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/construction-domain-permissions-and-rbac.md))

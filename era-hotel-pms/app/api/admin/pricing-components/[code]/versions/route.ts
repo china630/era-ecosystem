@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import {
   addPricingComponentVersion,
@@ -21,7 +21,7 @@ export async function GET(
   ctx: { params: Promise<{ code: string }> },
 ) {
   try {
-    assertMasterDataRead(await getSessionFromHeaders());
+    assertMasterDataRead(await getSatelliteSession());
     const { code } = await ctx.params;
     return jsonOk(serialize(await getPricingComponent(code)));
   } catch (err) {
@@ -34,7 +34,7 @@ export async function POST(
   ctx: { params: Promise<{ code: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertMasterDataWrite(session);
     const { code } = await ctx.params;
     const body = bodySchema.parse(await request.json());

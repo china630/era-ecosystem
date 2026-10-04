@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { handleRouteError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { requestOrganizationId } from "@/lib/request-organization";
-
 /** List fiscal KKM / bank POS devices for cashier pick (F3). */
 export async function GET(request: Request) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(
       session,
       PERMISSIONS.TICKETS_PAY,
     );
-    if (denied && denied.status === 401) return denied;
+    if (denied || !session) {
+      return denied ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outlet") ?? undefined;
@@ -26,7 +25,7 @@ export async function GET(request: Request) {
 
     const { listDevicesForSatellite, resolveDefaultDevicesForSatellite } =
       await import("@era/satellite-kit");
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const devices = listDevicesForSatellite({
       organizationId,
       outletCode,

@@ -1,8 +1,8 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
@@ -16,11 +16,10 @@ export async function PATCH(
   { params }: { params: Promise<{ lineId: string }> },
 ) {
   try {
-    await assertFnbEntitled();
-    await requireFnbSubmodule("fnb_kitchen_kds");
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.KDS_BUMP);
     if (denied) return denied;
+    await requireFnbSubmodule("fnb_kitchen_kds", session?.organizationId);
 
     const { lineId } = await params;
     const body = patchSchema.parse(await request.json());

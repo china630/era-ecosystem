@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -12,6 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; pointId: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id, pointId } = await params;
     const body = bodySchema.parse(await req.json());
     const point = await prisma.tripPoint.findFirst({

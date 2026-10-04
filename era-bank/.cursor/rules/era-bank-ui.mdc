@@ -8,7 +8,7 @@ Canon: [docs/UI_PLAYBOOK_SATELLITES.md](../../docs/UI_PLAYBOOK_SATELLITES.md) ·
 
 - `BankOpsShell` uses `navSections` (not flat `navItems`): Core · Payments · Products · AML · Reports · Treasury · Risk · Admin.
 - Header LTR: Locale → `SatelliteNotificationBell` → Org → Profile → `BankHeaderTierBar`.
-- Role filter via `bank-role-nav.ts` + entitlement modules via `useBankEntitlements`.
+- Menu from one kit `useOpsNavProfile` read of `GET /api/auth/me` (`permissions` + `activeModules`). Each row carries kit conditions: `permission` from `screenPermissionForNavHref`, `module` from the shell `NAV_MODULE_MAP`; `industry_banking` opens every module. `visibleOpsNavSections` paints once after the read.
 
 ## List screens (required)
 

@@ -2,9 +2,9 @@ import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { listImportEntities } from "@/lib/import/adapters";
 import { assertFnbImportAccess } from "@/lib/import/auth";
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
-    await assertFnbImportAccess(request);
+    await assertFnbImportAccess();
     return jsonOk(listImportEntities());
   } catch (err) {
     if (err instanceof Error && err.message === "Unauthorized") {

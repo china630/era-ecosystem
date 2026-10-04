@@ -23,5 +23,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-1 | Stage-gate script green + signoff | [x] | `scripts/run-construction-stage-gate.mjs` |
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-construction/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
+| S-RBAC | Construction RBAC Variant A + custom roles | [~] | AC-CON-RBAC 🟡; `/admin/access` clone + assign; system seed; UAT open — not Pilot |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

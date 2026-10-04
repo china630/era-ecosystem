@@ -1,5 +1,4 @@
 import type { TicketLine } from "@prisma/client";
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runPlatformCommerceHooks } from "@era/satellite-kit";
@@ -14,7 +13,7 @@ import {
   resolveTicketSettlement,
   shouldFiscalizeAtPos,
 } from "@/lib/billing-router";
-import { getSessionFromRequest, sessionActorName } from "@/lib/session";
+import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
@@ -34,9 +33,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-  const session = await getSessionFromRequest(request);
+  const session = await getSatelliteSession();
   const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_PAY);
   if (denied) {
     if (denied.status === 401) return denied;

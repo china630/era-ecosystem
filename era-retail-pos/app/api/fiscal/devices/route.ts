@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
-import { requestOrganizationId } from "@/lib/request-organization";
+import { handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 
 export async function GET(request: Request) {
   try {
-    await assertRetailEntitled();
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
     const url = new URL(request.url);
     const outletCode = url.searchParams.get("outlet") ?? undefined;
     const registerRef = url.searchParams.get("register") ?? undefined;
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       | undefined;
     const { listDevicesForSatellite, resolveDefaultDevicesForSatellite } =
       await import("@era/satellite-kit");
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     return NextResponse.json({
       devices: listDevicesForSatellite({
         organizationId,

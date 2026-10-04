@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { updateRoomType } from '@/lib/services/master-data.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { recordHotelAudit } from '@/lib/satellite-audit';
 
@@ -19,7 +19,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertMasterDataWrite(session);
     const { id } = await params;
     const body = schema.parse(await request.json());

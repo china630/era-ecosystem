@@ -1,8 +1,7 @@
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getAgencySession } from '@/lib/auth/agency-session';
-import { requireHotelModule } from '@/lib/hotel-module-gate';
+import { requireAgencyPortalSession } from '@/lib/auth/agency-session';
 import { getAgencyLedger } from '@/lib/services/agency-ledger.service';
 
 /**
@@ -11,8 +10,7 @@ import { getAgencyLedger } from '@/lib/services/agency-ledger.service';
  */
 export async function GET(request: Request) {
   try {
-    await requireHotelModule('hotel_agency_portal');
-    const session = await getAgencySession();
+    const session = await requireAgencyPortalSession();
     const url = new URL(request.url);
     const fromStr = url.searchParams.get('from') ?? todayBakuYmd();
     const toStr = url.searchParams.get('to') ?? fromStr;

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { bakuDayBounds, todayBakuYmd } from '@era/satellite-kit/time';
@@ -16,7 +16,7 @@ const actionSchema = z.enum(['ALL', 'CANCEL', 'EXTEND', 'NOTE', 'OTHER']);
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const url = new URL(request.url);
     const today = todayBakuYmd();

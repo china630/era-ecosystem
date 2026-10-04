@@ -22,7 +22,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "You do not have access to that page"
   },
   "meta": {
     "title": "ERA CRM Field",
@@ -35,7 +36,8 @@
     "inbox": "Inbox",
     "settings": "Settings",
     "import": "Import",
-    "logout": "Logout"
+    "logout": "Logout",
+    "access": "Access"
   },
   "login": {
     "title": "Sign in",
@@ -209,6 +211,59 @@
       "actions": "Actions",
       "edit": "Edit",
       "save": "Save"
+    }
+  },
+  "settingsAccess": {
+    "title": "Roles and access",
+    "subtitle": "Role packages and the screens and actions they grant",
+    "loading": "Loading…",
+    "loadFailed": "Could not load roles",
+    "saveFailed": "Could not save",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "delete": "Delete role",
+    "newCode": "New role code",
+    "newName": "Name",
+    "cloneFrom": "Copy grants from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "deleteInUse": "Reassign the users of this role before deleting it",
+    "assignTitle": "Assign a role to a user",
+    "assignUser": "User",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groups": {
+      "screens": "Screens",
+      "leads": "Leads and pipeline",
+      "field": "Field work",
+      "admin": "Administration"
+    },
+    "perms": {
+      "screen_home": "Home",
+      "screen_leads": "Pipeline",
+      "screen_leads_detail": "Lead card",
+      "screen_inbox": "Inbox",
+      "screen_visits": "Visits",
+      "screen_admin_access": "Access screen",
+      "api_leads_read": "View leads",
+      "api_leads_write": "Create and edit leads",
+      "api_leads_stage": "Move pipeline stage",
+      "api_leads_convert": "Convert lead",
+      "api_leads_follow_up": "Schedule follow-up",
+      "api_leads_assign": "Assign lead owner",
+      "api_inbox": "Inbox messages",
+      "api_visits": "Log visits",
+      "api_lookups": "Lookup lists",
+      "api_users_list": "Assignee list",
+      "admin_import": "Lead import",
+      "admin_pipeline": "Pipeline rules and settings",
+      "admin_access_manage": "Manage roles and access"
     }
   }
 }
