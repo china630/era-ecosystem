@@ -39,7 +39,7 @@ export function FilterMenuButton<T extends string = string>({
   }, [open]);
 
   return (
-    <div className={`relative ${className}`} ref={ref}>
+    <div className={`relative inline-flex w-fit ${className}`} ref={ref}>
       <button
         type="button"
         className={`${SECONDARY_BUTTON_CLASS} inline-flex items-center gap-1.5`}
@@ -53,7 +53,7 @@ export function FilterMenuButton<T extends string = string>({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-50 mt-1 min-w-[10rem] rounded-lg border border-[#D5DADF] bg-white py-1 shadow-lg"
+          className="absolute left-0 top-full z-50 mt-1 min-w-full w-max rounded-lg border border-[#D5DADF] bg-white py-1 shadow-lg"
           role="menu"
         >
           {options.map((opt) => (
