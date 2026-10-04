@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
-  FieldSelect,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -151,19 +150,14 @@ export default function TourDeparturePage() {
           {t('price')}: {Number(dep.price)} · {t('seats')}: {dep.bookings.filter((b) => b.status !== 'CANCELLED').length}/
           {dep.capacity}
         </p>
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('vehicle')}
-          preset="select"
           value={dep.vehicleId ?? ''}
-          onChange={(e) => void saveVehicle(e.target.value)}
-        >
-          <option value="">—</option>
-          {vehicles.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.code} {v.licensePlate}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => void saveVehicle(String(v ?? ''))}
+          options={vehicles.map((v) => ({ value: v.id, label: `${v.code} ${v.licensePlate}` }))}
+          emptyLabel="—"
+        />
         <div className="flex gap-2">
           <Link href={`/tours/${id}/print`} className={SECONDARY_BUTTON_CLASS} target="_blank">
             {t('print')}
@@ -178,7 +172,7 @@ export default function TourDeparturePage() {
         <h2 className="mb-2 font-semibold">{t('addGuest')}</h2>
         <div className="flex flex-wrap items-end gap-2">
           <CatalogField
-            kind="CLOSED_SMALL"
+            kind="ENTITY_REF"
             label={t('addGuest')}
             value={reservationId}
             onChange={(v) => setReservationId(String(v))}

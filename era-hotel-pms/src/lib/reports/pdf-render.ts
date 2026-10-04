@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { registerUnicodeFonts, PDF_FONT_UNICODE, PDF_FONT_UNICODE_BOLD } from './pdf-font';
 import { bindPdfI18n, pdfCellLabel, pdfHeaderLabel, reportPdfT } from './pdf-i18n';
+import { isReportTotalLabel, isReportTotalRow, reportCellAlign } from './report-align';
 
 export interface PdfTableColumn {
   header: string;
@@ -77,7 +78,7 @@ export function renderTable(
     doc.fillColor(HEADER_FG).font(PDF_FONT_UNICODE_BOLD).fontSize(FONT_SIZE);
     let x = startX;
     for (const col of columns) {
-      doc.text(pdfHeaderLabel(doc, col.header), x + 2, curY + 4, { width: col.width - 4, align: col.align ?? 'left' });
+      doc.text(pdfHeaderLabel(doc, col.header), x + 2, curY + 4, { width: col.width - 4, align: 'center' });
       x += col.width;
     }
     doc.fillColor('#000000');
@@ -96,7 +97,10 @@ export function renderTable(
       drawHeaderRow();
     }
 
-    if (opts?.groupHeaders?.includes(String(rows[ri][0]))) {
+    const totalRow =
+      isReportTotalRow(rows[ri]) ||
+      (opts?.groupHeaders ?? []).some((label) => rows[ri].some((cell) => String(cell) === label || isReportTotalLabel(cell)));
+    if (totalRow) {
       doc.font(PDF_FONT_UNICODE_BOLD);
     }
 
@@ -110,7 +114,7 @@ export function renderTable(
     for (let ci = 0; ci < columns.length; ci++) {
       const raw = rows[ri][ci] ?? '';
       const val = pdfCellLabel(doc, raw);
-      const align = columns[ci].align ?? (typeof raw === 'number' ? 'right' : 'left');
+      const align = columns[ci].align ?? reportCellAlign(raw);
       doc.text(String(val), x + 2, curY + 3, { width: columns[ci].width - 4, align });
       x += columns[ci].width;
     }

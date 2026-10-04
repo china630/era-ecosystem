@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -71,15 +70,6 @@ export default function RoomChangesPage() {
   return (
     <>
       <PageHeader title={t('title')} />
-      <p className="mb-2 max-w-3xl text-sm text-[#7F8C8D]">{t('howToChange')}</p>
-      <p className="mb-4 flex flex-wrap gap-3 text-sm">
-        <Link href="/fo/room-plan" className="text-[#2980B9] hover:underline">
-          {t('openPlan')}
-        </Link>
-        <Link href="/fo/rack" className="text-[#2980B9] hover:underline">
-          {t('openRack')}
-        </Link>
-      </p>
       <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setQ('')}>
         <Field
           label={tc('search')}

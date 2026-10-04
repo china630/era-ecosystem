@@ -13,6 +13,7 @@ import {
 } from '@/lib/integration/elektraweb-bridge/guest-bridge-resolve';
 import { resolveAgencyIdFromElektrawebRow } from '@/lib/integration/elektraweb-bridge/resolve-agency-from-ew';
 import { bookingSourceIdFromAgency } from '@/lib/services/booking-source.service';
+import { resolveElektraSellPath, type ElektraSellPath } from '@/lib/integration/elektraweb-sell-path';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
 import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 import {
@@ -37,22 +38,10 @@ export type ReservationBridgeResult = UpsertResult & {
   events: string[];
 };
 
-async function resolveRatePlanId(row: Record<string, unknown>): Promise<string> {
-  const code = str(row.RATECODE) ?? str(row.RATECODEID_RATECODE);
-  if (code) {
-    const byCode = await prisma.ratePlan.findFirst({
-      where: {
-        OR: [
-          { code: { equals: code, mode: 'insensitive' } },
-          { name: { equals: code, mode: 'insensitive' } },
-        ],
-      },
-    });
-    if (byCode) return byCode.id;
-  }
-  const any = await prisma.ratePlan.findFirst({ where: { active: true }, orderBy: { code: 'asc' } });
-  if (!any) throw new Error('No rate plans — import Rate Codes first');
-  return any.id;
+function resolveRatePlanId(row: Record<string, unknown>): Promise<ElektraSellPath> {
+  return resolveElektraSellPath(prisma, {
+    code: str(row.RATECODE) ?? str(row.RATECODEID_RATECODE),
+  });
 }
 
 async function resolveRoomTypeId(row: Record<string, unknown>): Promise<string> {
@@ -94,10 +83,13 @@ export async function upsertReservationFromElektrawebRow(
   const doorNumber = physicalRoomNumber(rawRoomNumber);
   const guestId = await resolveGuestIdForBridgeReservation(row);
   const roomTypeId = await resolveRoomTypeId(row);
-  const ratePlanId = await resolveRatePlanId(row);
+  const sellPath = await resolveRatePlanId(row);
+  const ratePlanId = sellPath.ratePlanId;
 
   // Resolve-or-create (Excel agency-statement style). Missing EW agency must not wipe.
-  const resolvedAgencyId = await resolveAgencyIdFromElektrawebRow(row);
+  // A channel rate code (Booking.com, Expedia) supplies the agency when the row has none.
+  const resolvedAgencyId =
+    (await resolveAgencyIdFromElektrawebRow(row)) ?? sellPath.agencyId ?? undefined;
 
   let roomId: string | undefined;
   if (doorNumber) {
@@ -121,7 +113,7 @@ export async function upsertReservationFromElektrawebRow(
   // EW has no sell-path column; fill only an empty source so FO edits survive re-sync.
   const inferredSourceId = existing?.sourceId
     ? null
-    : await bookingSourceIdFromAgency(bridgeRequestOrganizationId(), agencyId);
+    : (sellPath.sourceId ?? (await bookingSourceIdFromAgency(bridgeRequestOrganizationId(), agencyId)));
 
   const data = {
     organizationId: bridgeRequestOrganizationId(),

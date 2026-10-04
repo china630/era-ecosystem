@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Lock, PlaneLanding, PlaneTakeoff, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -28,6 +28,7 @@ import {
   sourceKindLabel,
 } from '@/lib/booking-source-kind';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
 
@@ -71,11 +72,12 @@ function StayDateFlightIcons({
   const t = useTranslations('reservationCard');
   const kind = resolveStayWindowPlane({ checkIn, checkOut, status });
   if (!kind) return <div className="h-3.5" data-testid="stay-flight-icons" />;
+  const frame = `${SECONDARY_BUTTON_CLASS} !px-2`;
   if (kind === 'arrival') {
     return (
       <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconArrival')} aria-label={t('flightIconArrival')} className="text-[#E74C3C]">
-          <PlaneLanding className="h-3.5 w-3.5" />
+        <span title={t('flightIconArrival')} aria-label={t('flightIconArrival')} className={`${frame} !text-[#E74C3C]`}>
+          <PlaneLanding className="h-4 w-4" />
         </span>
       </div>
     );
@@ -83,8 +85,8 @@ function StayDateFlightIcons({
   if (kind === 'departure') {
     return (
       <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconDeparture')} aria-label={t('flightIconDeparture')} className="text-[#E74C3C]">
-          <PlaneTakeoff className="h-3.5 w-3.5" />
+        <span title={t('flightIconDeparture')} aria-label={t('flightIconDeparture')} className={`${frame} !text-[#E74C3C]`}>
+          <PlaneTakeoff className="h-4 w-4" />
         </span>
       </div>
     );
@@ -103,17 +105,17 @@ function StayDateFlightIcons({
             e.stopPropagation();
             onEarlyStayCheckout();
           }}
-          className="text-amber-500 hover:text-amber-600 disabled:opacity-50"
+          className={`${frame} !text-amber-500 hover:!text-amber-600 disabled:opacity-50`}
         >
-          <PlaneTakeoff className="h-3.5 w-3.5" />
+          <PlaneTakeoff className="h-4 w-4" />
         </button>
       </div>
     );
   }
   return (
     <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-      <span title={earlyLabel} aria-label={earlyLabel} className="text-amber-500">
-        <PlaneTakeoff className="h-3.5 w-3.5" />
+      <span title={earlyLabel} aria-label={earlyLabel} className={`${frame} !text-amber-500`}>
+        <PlaneTakeoff className="h-4 w-4" />
       </span>
     </div>
   );
@@ -259,6 +261,10 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   } = props;
 
   const nights = nightsBetween(props.checkIn, props.checkOut);
+  const [nightsDraft, setNightsDraft] = useState(String(nights));
+  useEffect(() => {
+    setNightsDraft(String(nights));
+  }, [nights]);
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
@@ -352,10 +358,25 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               <Field
                 label={t('nights')}
                 preset="count"
-                value={String(nights)}
-                readOnly
+                value={nightsDraft}
+                disabled={disabled}
                 className="min-w-0 w-full"
                 inputClassName="w-full min-w-0 text-center"
+                onChange={(e) => setNightsDraft(e.target.value)}
+                onBlur={() => {
+                  const n = Number(nightsDraft);
+                  if (!props.checkIn || !Number.isInteger(n) || n < 1) {
+                    setNightsDraft(String(nights));
+                    return;
+                  }
+                  onChange({ checkOut: addHotelDays(props.checkIn, n) });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
               />
               <DatePicker
                 label={tb('checkOut')}
@@ -408,39 +429,29 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
       <FieldPanel title={t('roomSection')}>
         <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
           <FieldRow cols={2} className="min-w-0">
-            <FieldSelect
+            <CatalogField
+              kind="ENTITY_REF"
               label={tb('roomType')}
-              preset="select"
               className="min-w-0"
-              selectClassName="w-full min-w-0 max-w-full"
               value={props.roomTypeId}
-              onChange={set('roomTypeId')}
+              onChange={setCatalog('roomTypeId')}
+              options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
               required
+              emptyLabel={null}
               hint={t('roomTypeChargeHint')}
-            >
-              <option value="">{tc('select')}</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.label}
-                </option>
-              ))}
-            </FieldSelect>
-            <FieldSelect
+              disabled={disabled}
+            />
+            <CatalogField
+              kind="ENTITY_REF"
               label={t('givenRoomType')}
-              preset="select"
               className="min-w-0"
-              selectClassName="w-full min-w-0 max-w-full"
               value={props.givenRoomTypeId}
-              onChange={set('givenRoomTypeId')}
+              onChange={setCatalog('givenRoomTypeId')}
+              options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
+              emptyLabel="—"
               hint={t('givenRoomTypePhysicalHint')}
-            >
-              <option value="">—</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.label}
-                </option>
-              ))}
-            </FieldSelect>
+              disabled={disabled}
+            />
           </FieldRow>
           {props.givenRoomTypeId &&
           props.roomTypeId &&
@@ -497,21 +508,17 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           {showAssignment ? (
             <>
               <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <FieldSelect
+                <CatalogField
+                  kind="ENTITY_REF"
                   label={t('roomNo')}
-                  preset="selectWide"
                   id="res-card-room-select"
                   value={props.roomId}
-                  onChange={set('roomId')}
+                  onChange={setCatalog('roomId')}
+                  options={rooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+                  emptyLabel="—"
                   hint={t('roomNoPhysicalHint')}
-                >
-                  <option value="">—</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.roomNumber}
-                    </option>
-                  ))}
-                </FieldSelect>
+                  disabled={disabled}
+                />
                 <div
                   className="flex shrink-0 flex-wrap items-end gap-1 pb-0.5"
                   data-testid="room-door-actions"
@@ -735,24 +742,20 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           ) : null}
           {showAgencyContract || showCompanyContract ? (
             <FieldRow cols={2}>
-              <FieldSelect
+              <CatalogField
+                kind="ENTITY_REF"
                 label={showCompanyContract ? t('companyContract') : t('agencyContract')}
-                preset="selectWide"
                 value={props.salesContractId}
-                onChange={set('salesContractId')}
+                onChange={setCatalog('salesContractId')}
+                options={contractsForKind.map((c) => ({ value: c.id, label: c.label }))}
+                emptyLabel="—"
                 disabled={
-                  showCompanyContract
+                  disabled ||
+                  (showCompanyContract
                     ? !props.companyId && contractsForKind.length === 0
-                    : !props.agencyId && contractsForKind.length === 0
+                    : !props.agencyId && contractsForKind.length === 0)
                 }
-              >
-                <option value="">—</option>
-                {contractsForKind.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </FieldSelect>
+              />
               <Field
                 label={t('contractRef')}
                 preset="code"
@@ -761,25 +764,20 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               />
             </FieldRow>
           ) : null}
-          <FieldSelect
+          <CatalogField
+            kind="ENTITY_REF"
             label={t('packageOrRate')}
-            preset="select"
             className="min-w-0"
-            selectClassName="w-full min-w-0 max-w-full"
             value={props.ratePlanId}
-            onChange={set('ratePlanId')}
+            onChange={setCatalog('ratePlanId')}
+            options={filteredRatePlans.map((rp) => ({ value: rp.id, label: rp.label }))}
             required
-          >
-            <option value="">{tc('select')}</option>
-            {filteredRatePlans.map((rp) => (
-              <option key={rp.id} value={rp.id}>
-                {rp.label}
-              </option>
-            ))}
-          </FieldSelect>
+            emptyLabel={null}
+            disabled={disabled}
+          />
           <FieldRow cols={2} className="min-w-0">
             <CatalogField
-              kind="CLOSED_SMALL"
+              kind="SEARCHABLE"
               label={t('market')}
               className="min-w-0"
               value={props.market}
@@ -788,7 +786,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               disabled={disabled}
             />
             <CatalogField
-              kind="CLOSED_SMALL"
+              kind="SEARCHABLE"
               label={t('segment')}
               className="min-w-0"
               value={props.segment}
@@ -900,7 +898,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           <Field label={t('shareNo')} preset="code" value={props.shareNo} onChange={set('shareNo')} />
           <FieldRow cols={2}>
             <CatalogField
-              kind="CLOSED_MEDIUM"
+              kind="SEARCHABLE"
               label={t('preferredLocation')}
               value={props.preferredLocation}
               onChange={setCatalog('preferredLocation')}
@@ -908,7 +906,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               disabled={disabled}
             />
             <CatalogField
-              kind="CLOSED_MEDIUM"
+              kind="SEARCHABLE"
               label={t('preferredBed')}
               value={props.preferredBed}
               onChange={setCatalog('preferredBed')}

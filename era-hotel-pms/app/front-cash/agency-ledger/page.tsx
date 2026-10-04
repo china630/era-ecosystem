@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import {
   DatePicker,
   EraListFilterBar,
-  FieldSelect,
+  CatalogField,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   showApiError,
@@ -210,19 +210,14 @@ export default function AgencyLedgerPage() {
           placeholder={tc('datePlaceholder')}
           openCalendarLabel={tc('openCalendar')}
         />
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('agency')}
-          preset="select"
           value={agencyId}
-          onChange={(e) => setAgencyId(e.target.value)}
-        >
-          <option value="">{t('agencySelect')}</option>
-          {agencies.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.code} — {a.name}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setAgencyId(String(v ?? ''))}
+          options={agencies.map((a) => ({ value: a.id, label: `${a.code} — ${a.name}` }))}
+          emptyLabel={t('agencySelect')}
+        />
       </EraListFilterBar>
 
       <FinanceBoundaryBanner target="counterparties" />

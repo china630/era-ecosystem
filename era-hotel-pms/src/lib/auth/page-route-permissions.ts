@@ -11,6 +11,9 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname === "/settings/users" || pathname.startsWith("/settings/users/")) {
     return [PERMISSIONS.SCREEN_SETTINGS_USERS];
   }
+  if (pathname === "/settings/logins" || pathname.startsWith("/settings/logins/")) {
+    return [PERMISSIONS.SCREEN_SETTINGS_USERS];
+  }
   if (pathname === "/settings/import" || pathname.startsWith("/settings/import/")) {
     return [PERMISSIONS.SCREEN_SETTINGS_IMPORT];
   }

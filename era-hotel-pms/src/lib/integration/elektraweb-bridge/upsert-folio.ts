@@ -3,36 +3,14 @@ import { toDecimal } from '@/lib/decimal';
 import { assertHotelIdMatches, bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import { num, parseElektrawebDate, str } from '@/lib/integration/elektraweb-bridge/normalize';
 import type { UpsertResult } from '@/lib/integration/elektraweb-bridge/upsert-guest';
+import { resolveElektraRevenueCodeId } from '@/lib/integration/elektraweb-revenue';
 
-async function resolveRevenueCodeId(row: Record<string, unknown>): Promise<string | null> {
-  const name = str(row.REVENUE) ?? str(row.REVID_REVENUENAME);
-  const code = str(row.REVCODE) ?? (num(row.REVID) != null ? String(num(row.REVID)) : null);
-
-  if (name) {
-    const byName = await prisma.revenueCode.findFirst({
-      where: { name: { equals: name, mode: 'insensitive' } },
-    });
-    if (byName) return byName.id;
-  }
-  if (code) {
-    const byCode = await prisma.revenueCode.findFirst({
-      where: {
-        OR: [
-          { code: { equals: code, mode: 'insensitive' } },
-          { code: { equals: `EW-${code}`, mode: 'insensitive' } },
-        ],
-      },
-    });
-    if (byCode) return byCode.id;
-  }
-
-  // Soft fallback: ROOM / first active — better than dropping day lines entirely
-  const room = await prisma.revenueCode.findFirst({
-    where: { code: { equals: 'ROOM', mode: 'insensitive' } },
+function resolveRevenueCodeId(row: Record<string, unknown>): Promise<string> {
+  return resolveElektraRevenueCodeId(prisma, {
+    name: str(row.REVENUE) ?? str(row.REVID_REVENUENAME),
+    code: str(row.REVCODE),
+    numericId: num(row.REVID),
   });
-  if (room) return room.id;
-  const any = await prisma.revenueCode.findFirst({ orderBy: { code: 'asc' } });
-  return any?.id ?? null;
 }
 
 export async function upsertFolioFromElektrawebRow(
@@ -61,7 +39,6 @@ export async function upsertFolioFromElektrawebRow(
   }
 
   const revenueCodeId = await resolveRevenueCodeId(row);
-  if (!revenueCodeId) throw new Error(`No revenue codes configured (folio ${externalRef})`);
 
   let folio = reservation.folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
   if (!folio) {

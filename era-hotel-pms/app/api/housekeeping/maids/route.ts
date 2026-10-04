@@ -21,8 +21,8 @@ export async function GET() {
 }
 
 const createSchema = z.object({
-  code: z.string(),
-  name: z.string(),
+  globalPersonId: z.string().uuid(),
+  name: z.string().min(1),
   department: z.enum(['ROOMS', 'PUBLIC_AREA', 'LAUNDRY']).optional(),
 });
 const assignSchema = z.object({ taskId: z.string().uuid(), housekeeperId: z.string().uuid().nullable() });

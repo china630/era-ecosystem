@@ -250,7 +250,7 @@ function parseUnstructuredPhrases(text: string): MedicalPackageCode | null {
 /**
  * Agency name starts with Premium/Dermo/Detox or known walk-in labels → SKU for all pax.
  * Walkin leisure / Walkin medical without prefix → not a medical SKU.
- * Optional `rules` from AgencyMedicalSkuRule (DB) checked first (prefix match, case-insensitive).
+ * Optional `rules` are an in-memory override (tests). Import stores the package on Agency.
  *
  * Token match (anywhere): `\bpremium\b`, `\bdermo\b`, `\bdetoks?\b`, Həmkarlar —
  * covers «Premium Naftalan Kamel», «Dermo Nafdan travel», etc.
@@ -310,7 +310,11 @@ export function resolveAgencyPackageCode(
 }
 
 export function resolveMedicalSku(
-  input: ResolveMedicalSkuInput & { agencyRules?: AgencySkuRuleInput[] | null },
+  input: ResolveMedicalSkuInput & {
+    agencyRules?: AgencySkuRuleInput[] | null;
+    /** Package stored on the agency. Wins over the name. */
+    agencyPackageCode?: string | null;
+  },
 ): ResolveMedicalSkuResult {
   const guests = input.guests.length > 0 ? input.guests : [{}];
   const perGuestCodes: (MedicalPackageCode | null)[] = guests.map(() => null);
@@ -375,7 +379,9 @@ export function resolveMedicalSku(
 
   // 3–4. Agency prefix / Həmkarlar — all pax when Extra did not set codes
   if (perGuestCodes.every((c): boolean => c == null)) {
-    const agencyCode = resolveAgencyPackageCode(input.agencyName, input.agencyRules);
+    const agencyCode =
+      normalizeMedicalPackageCode(input.agencyPackageCode ?? null) ??
+      resolveAgencyPackageCode(input.agencyName, input.agencyRules);
     if (agencyCode) {
       anyHit = true;
       perGuestCodes.fill(agencyCode);

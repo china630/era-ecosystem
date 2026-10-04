@@ -24,8 +24,8 @@ describe('hotel report workspace exports', () => {
     expect(manager[0]?.rows).toContainEqual(['occupancyPct', 80]);
   });
 
-  it('writes an xlsx workbook for an empty period', () => {
-    const buf = reportToXlsxBuffer({ rows: [], totalRevenue: 0 }, 'az');
+  it('writes an xlsx workbook for an empty period', async () => {
+    const buf = await reportToXlsxBuffer({ rows: [], totalRevenue: 0 }, 'az');
     expect(buf.subarray(0, 2).toString('utf8')).toBe('PK');
   });
 });

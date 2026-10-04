@@ -100,6 +100,8 @@ export async function handleStaffProvisionEvent(event: unknown) {
           globalPersonId,
           cpEmploymentId,
           roleId: role.id,
+          ...(p.positionTitle ? { positionTitle: p.positionTitle } : {}),
+          ...(p.departmentName ? { department: p.departmentName } : {}),
           ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
         },
       });
@@ -116,6 +118,8 @@ export async function handleStaffProvisionEvent(event: unknown) {
         isCrossSystem: true,
         globalPersonId,
         cpEmploymentId,
+        ...(p.positionTitle ? { positionTitle: p.positionTitle } : {}),
+        ...(p.departmentName ? { department: p.departmentName } : {}),
         ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
       },
     });

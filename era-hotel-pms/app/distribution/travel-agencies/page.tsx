@@ -35,6 +35,7 @@ type AgencyRow = {
   paymentTermsDays?: number | null;
   financeCounterpartyId?: string | null;
   active: boolean;
+  medicalPackageCode?: string | null;
 };
 
 function catalogStr(v: string | string[]): string {
@@ -64,6 +65,7 @@ export default function TravelAgenciesPage() {
   const [settlementMode, setSettlementMode] = useState<'PREPAID' | 'POSTPAID'>('POSTPAID');
   const [creditLimitAzn, setCreditLimitAzn] = useState('');
   const [paymentTermsDays, setPaymentTermsDays] = useState('');
+  const [medicalPackageCode, setMedicalPackageCode] = useState('');
 
   const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -126,6 +128,7 @@ export default function TravelAgenciesPage() {
     setSettlementMode('POSTPAID');
     setCreditLimitAzn('');
     setPaymentTermsDays('');
+    setMedicalPackageCode('');
     setModalOpen(true);
   }
 
@@ -136,6 +139,7 @@ export default function TravelAgenciesPage() {
     setSettlementMode(row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID');
     setCreditLimitAzn(row.creditLimitAzn != null && row.creditLimitAzn !== '' ? String(row.creditLimitAzn) : '');
     setPaymentTermsDays(row.paymentTermsDays != null ? String(row.paymentTermsDays) : '');
+    setMedicalPackageCode(row.medicalPackageCode ?? '');
     setModalOpen(true);
   }
 
@@ -372,6 +376,7 @@ export default function TravelAgenciesPage() {
                   paymentTermsDays:
                     paymentTermsDays.trim() === '' ? null : Number(paymentTermsDays),
                   active: fd.get('active') === 'on',
+                  medicalPackageCode: medicalPackageCode || null,
                 }),
               });
               setBusy(false);
@@ -439,6 +444,19 @@ export default function TravelAgenciesPage() {
             type="number"
             step="0.01"
             defaultValue={editRow?.commissionPercent ?? ''}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('medicalPackage')}
+            value={medicalPackageCode}
+            onChange={(v) => setMedicalPackageCode(catalogStr(v))}
+            options={[
+              { value: 'PKG-STANDART', label: 'PKG-STANDART' },
+              { value: 'PKG-PREMIUM', label: 'PKG-PREMIUM' },
+              { value: 'PKG-DERMO', label: 'PKG-DERMO' },
+              { value: 'PKG-DETOKS', label: 'PKG-DETOKS' },
+            ]}
+            emptyLabel={t('medicalPackageNone')}
           />
           <CatalogField
             kind="CLOSED_SMALL"

@@ -12,7 +12,7 @@ import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { verifyPassword } from "@/lib/auth/password";
 import { remapPermissionList } from "@/lib/auth/hotel-permission-rename";
-import { getUserByLogin, userPermissions } from "@/lib/services/user.service";
+import { getUserByLogin, recordUserLogin, userPermissions } from "@/lib/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
 
@@ -60,6 +60,10 @@ export async function POST(request: Request) {
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
+    await recordUserLogin(
+      { id: user.id, organizationId, login: user.login },
+      request,
+    );
 
     // Reload role after ensure (permissions may have been filled).
     const refreshed = await prisma.user.findUnique({

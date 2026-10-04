@@ -510,7 +510,7 @@ export async function patchReservationFull(
           reservationId: id,
           stayDate,
           amount: toDecimal(d.amount),
-          manualFlag: true,
+          manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
           discountPct:
@@ -520,7 +520,7 @@ export async function patchReservationFull(
         },
         update: {
           amount: toDecimal(d.amount),
-          manualFlag: true,
+          manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
           discountPct:

@@ -18,7 +18,7 @@ Paper / export sources (2026-08):
 
 | Area | Scaffold now | This spec |
 |------|----------------|-----------|
-| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, rotation, forecast, laundry, discrepancy, `/settings/hk-policy` |
+| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, rotation, forecast, laundry, discrepancy, `/settings/policies#hk` |
 | Room state | One `RoomStatus` mix | Three axes coded (inventory × FO occupancy × HK condition) |
 | Check-in | Door forced to `OCCUPIED` | Occupied + Dirty/Clean/Inspected/Pickup coexist; no OCCUPIED write |
 | Task | PENDING / IN_PROGRESS / DONE, no type | Typed job + visit outcome + business date + optional needed-by |
@@ -58,15 +58,15 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Item | Code |
 |------|------|
 | Three axes + check-in does not write OCCUPIED | Landed |
-| Roster / rotation DnD + CatalogField shifts | Landed (SCREEN) |
+| Roster week grid + rotation pair board | Landed (SCREEN). Cells are E/L/N/OFF/ƏG selects. Pairs swap from the day board. |
 | Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN). Sheet filter, readable job labels, NSR toggle, print in the page header. |
 | Laundry ticket + immediate post on accept | **Superseded** — accept is IN_PLANT only |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
 | HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
-| Linen/deep every N (`/settings/hk-policy`) + sheet duty | Landed (SCREEN); stay-level override on reservation |
+| Linen/deep every N (`/settings/policies#hk`) + sheet duty | Landed (SCREEN); stay-level override on reservation |
 | Needed-by time on sheet | Landed (SCREEN); stored as Asia/Baku wall clock |
 | DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
-| Print | `window.print()` plus PDF download of the floor sheet |
+| Print | Floor-sheet PDF, one floor per page, DejaVu, UI locale. Browser print of the ops page is not the form. |
 | Elektra time columns / Q Saati | Arrival/departure clocks from Stay actual times; Q Saati still empty |
 | Per-stay linen/deep N | **Coded** (HK job on stay, **not** a folio line) |
 | Laundry cycle §9 (intake ≠ return, post on Delivered, FO fallback, checkout stop) | **Coded** (SCREEN) — UAT unsigned |
@@ -89,7 +89,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 
 | Topic | Decision |
 |-------|----------|
-| Housekeeping / traveling credits | **OUT** this edition. Optional later, default off. Fairness = paired floors + manager DnD |
+| Housekeeping / traveling credits | **OUT** this edition. Optional later, default off. Fairness = paired floors + a swap on the day board |
 | Stayover / linen schedule + NSR | **IN** |
 | Pickup | **IN** (HK condition) |
 | OOO ≠ OOS | **IN** |
@@ -167,7 +167,7 @@ Algorithm (rooms department, morning job or night audit):
 2. Load pair catalog.
 3. Rotate yesterday’s ring by **+1 pair** among on-duty staff.
 4. Target ≈ one pair (~2 floors) per maid. If fewer people than pairs, leave leftover pairs unassigned and warn (manager assigns by hand).
-5. Manager may DnD: reorder print rows, swap pairs, move a row to another department.
+5. Manager swaps two people on the day board. Department is set on the maid, not by dragging a row.
 6. Next auto run starts from the **saved** assignment, not from a theoretical ring.
 
 Do not paint a single pair on the weekly roster row for the whole week — pairs change every day. Show “today: person → pair” next to the week grid.
@@ -268,11 +268,11 @@ Skip / Sleep stay on a discrepancy board; they are not maid sheet codes.
 Separate from the Çamaşırxana **shift** roster. Same department, different document.  
 **Room linen / deep every N nights** (and a stay override of that N) is an HK **job on the sheet**, not a `LAUNDRY` folio line. Guest wash/iron is the only laundry posting.
 
-Ticket header: guest (default from in-house stay), room, date. Catalog rows: two independent steppers:
+Ticket header: guest (default from in-house stay), room, date. Catalog rows: wash and iron steppers (minus, count, plus).
 
 `line = washQty × washPrice + ironQty × ironPrice`
 
-Zero qty = service not ordered. Bill **hotel count** when guest vs hotel qty differ (flag, do not block). Prices live in an HK catalog, not hardcoded AZN. Legal text (shrinkage, stains, cap 3× wash price) is on both print forms, az/en/ru.
+Zero qty = service not ordered. Guest and hotel count the pieces together and save one agreed quantity. If they disagree, they recount; the ticket is not saved with two different numbers. Damage and shrinkage are a separate claim, not an intake shortage. Prices live in an HK catalog, not hardcoded AZN. Legal text (shrinkage, stains, cap 3× wash price) is on both print forms, az/en/ru.
 
 Revenue code is always **`LAUNDRY`** (18% tax tag already seeded). Tours (`TOUR`) are a later FO module, not this ticket.
 
@@ -328,7 +328,7 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | Route | Purpose |
 |-------|---------|
 | `/hk/roster` | Week grid E/L/N/OFF/ƏG, balance, departments |
-| `/hk/rotation` | Date × shift × pairs, auto + DnD |
+| `/hk/rotation` | Day board of floor pairs; rotate, then swap two people |
 | `/hk` | Floor sheets, VIP strip, derived job type |
 | `/hk/mobile` | My floors today + outcome codes |
 | `/hk/forecast` | 7–14 day load |
@@ -336,17 +336,11 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
 | `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS and can close a door. |
 
-`/hk/maids` code+name CRUD is not the roster.
+`/hk/maids` links a finance employee (`globalPersonId`). The hotel keeps department and ƏG. It is not the roster.
 
-### 10.1 Manager DnD
+### 10.1 Shift and pair edits
 
-| Gesture | Effect |
-|---------|--------|
-| Reorder rows inside a department | Print order |
-| Drop row on row | Swap floor pairs |
-| Drop row on another department | Move for that week/day |
-
-Change a shift cell with a closed select, not drag.
+Change a shift cell with a closed select (E / L / N / OFF / ƏG). Swap two people on the day board; that swap is the pair change. Department stays on the maid record, not a drop target.
 
 ---
 

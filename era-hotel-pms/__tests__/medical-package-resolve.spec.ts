@@ -164,14 +164,12 @@ describe("medical-package-resolve", () => {
     expect(isLeisureAgency("Premium paket Walkin")).toBe(false);
   });
 
-  it("DB agency rules override when provided", () => {
+  it("stored agency package wins over the name", () => {
     const r = resolveMedicalSku({
       notes: [],
       agencyName: "Custom Corp Travel",
       guests: [{ fullName: "Guest" }],
-      agencyRules: [
-        { agencyNamePrefix: "Custom Corp", packageCode: "PKG-DERMO" },
-      ],
+      agencyPackageCode: "PKG-DERMO",
     });
     expect(r.unanimousCode).toBe("PKG-DERMO");
     expect(r.stayKind).toBe("medical");

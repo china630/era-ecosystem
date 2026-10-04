@@ -147,9 +147,27 @@ export function visibleOpsNavItems<T>(
   );
 }
 
+function filterNavBranch<T>(
+  item: T,
+  profile: OpsNavProfile,
+  allow?: OpsNavAllow,
+): T | null {
+  if (opsNavRowGated(item) && !opsNavRowVisible(item as OpsNavCondition, profile, allow)) {
+    return null;
+  }
+  const children = (item as { children?: readonly unknown[]; href?: string }).children;
+  if (!children) return item;
+  const next = children
+    .map((child) => filterNavBranch(child, profile, allow))
+    .filter((child): child is NonNullable<typeof child> => child != null);
+  if (next.length === 0 && !(item as { href?: string }).href) return null;
+  return { ...(item as object), children: next } as T;
+}
+
 /**
  * Same rule for sectioned menus. The section's own conditions apply to all its rows;
  * a section left without rows is dropped. Sections without rows (headers) pass when ungated.
+ * Nested `children` are filtered with the same rule; a parent with no href and no visible children is dropped.
  */
 export function visibleOpsNavSections<S extends { items: readonly unknown[] }>(
   sections: readonly S[],
@@ -167,9 +185,9 @@ export function visibleOpsNavSections<S extends { items: readonly unknown[] }>(
     if (opsNavRowGated(section) && !opsNavRowVisible(section as OpsNavCondition, profile, allow)) {
       continue;
     }
-    const items = section.items.filter(
-      (item) => !opsNavRowGated(item) || opsNavRowVisible(item as OpsNavCondition, profile, allow),
-    );
+    const items = section.items
+      .map((item) => filterNavBranch(item, profile, allow))
+      .filter((item): item is (typeof section.items)[number] => item != null);
     if (section.items.length > 0 && items.length === 0) continue;
     out.push({ ...section, items });
   }

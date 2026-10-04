@@ -99,3 +99,21 @@ export function formatGuestGenderLabel(
   if (!g) return '—';
   return labels.other;
 }
+
+/** GET /api/guests returns `{ items, total }`. Older callers still sent a bare array. */
+export function guestListItems(payload: unknown): Array<{ id: string; fullName: string }> {
+  const rows: unknown[] = Array.isArray(payload)
+    ? payload
+    : payload &&
+        typeof payload === 'object' &&
+        Array.isArray((payload as { items?: unknown }).items)
+      ? (payload as { items: unknown[] }).items
+      : [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const id = (row as { id?: unknown }).id;
+    if (typeof id !== 'string' || !id) return [];
+    const fullName = (row as { fullName?: unknown }).fullName;
+    return [{ id, fullName: typeof fullName === 'string' ? fullName : '' }];
+  });
+}

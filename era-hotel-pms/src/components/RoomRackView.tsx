@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Mars, Plus, Venus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   FORM_INPUT_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -237,7 +238,7 @@ export default function RoomRackView({
 
       if (agencyFilter !== 'all') {
         if (!active) return false;
-        if (agencyFilter === '') {
+        if (agencyFilter === 'walkin') {
           if (active.agencyId) return false;
         } else if (active.agencyId !== agencyFilter) {
           return false;
@@ -363,23 +364,27 @@ export default function RoomRackView({
           <span>{t('vacant')}: {vacantCount}</span>
         </div>
         <div>
-          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterAgency')}</label>
-          <select className={FORM_INPUT_CLASS} value={agencyFilter} onChange={(e) => setAgencyFilter(e.target.value)}>
-            <option value="all">{t('allAgencies')}</option>
-            <option value="">{t('individualOnly')}</option>
-            {agencies.map((a) => (
-              <option key={a.id} value={a.id}>{a.code}</option>
-            ))}
-          </select>
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t('filterAgency')}
+            value={agencyFilter === 'all' ? '' : agencyFilter}
+            onChange={(v) => setAgencyFilter(String(v ?? '') || 'all')}
+            options={[
+              { value: 'walkin', label: t('individualOnly') },
+              ...agencies.map((a) => ({ value: a.id, label: a.code })),
+            ]}
+            emptyLabel={t('allAgencies')}
+          />
         </div>
         <div>
-          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterSource')}</label>
-          <select className={FORM_INPUT_CLASS} value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-            <option value="all">{t('allSources')}</option>
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>{s.code}</option>
-            ))}
-          </select>
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t('filterSource')}
+            value={sourceFilter === 'all' ? '' : sourceFilter}
+            onChange={(v) => setSourceFilter(String(v ?? '') || 'all')}
+            options={sources.map((s) => ({ value: s.id, label: s.code }))}
+            emptyLabel={t('allSources')}
+          />
         </div>
         <div>
           <label className="mb-1 block font-semibold text-[#34495E]">{t('filterPayStatus')}</label>

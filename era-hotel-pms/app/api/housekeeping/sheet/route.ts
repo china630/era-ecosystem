@@ -13,7 +13,9 @@ export async function GET(request: Request) {
     const sp = new URL(request.url).searchParams;
     const date = sp.get('date') ?? todayBakuYmd();
     if (sp.get('format') === 'pdf') {
-      const buf = await generateFloorSheetPdf(date);
+      const rawLang = sp.get('lang');
+      const lang = rawLang === 'en' || rawLang === 'ru' ? rawLang : 'az';
+      const buf = await generateFloorSheetPdf(date, lang);
       return new Response(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/pdf',

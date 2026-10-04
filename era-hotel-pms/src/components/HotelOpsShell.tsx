@@ -15,6 +15,7 @@ import {
   ClipboardList,
   FileBarChart,
   FileText,
+  Trash2,
   HeartPulse,
   Home,
   LayoutGrid,
@@ -60,6 +61,7 @@ type NavDef = OpsNavCondition & {
   labelKey: string;
   icon: LucideIcon;
   external?: boolean;
+  children?: NavDef[];
 };
 
 type HotelNavItem = EraOpsNavItem & OpsNavCondition;
@@ -91,6 +93,7 @@ function souvenirRetailHref(): string {
 export default function HotelOpsShell({ children }: { children: React.ReactNode }) {
   const { profile, status: navStatus } = useOpsNavProfile();
   const canRunElektrawebImport = profile?.raw.canRunElektrawebImport === true;
+  const isPlatformSuperAdmin = profile?.isPlatformSuperAdmin === true;
   const can = useCallback(
     (permission: string) =>
       navStatus === 'ready' && profile != null && allowHotel(permission, profile),
@@ -127,11 +130,38 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [searchParams, pathname, router]);
 
+  function navHrefActive(href: string): boolean {
+    const hash = href.indexOf('#');
+    const bare = hash >= 0 ? href.slice(0, hash) : href;
+    const qIndex = bare.indexOf('?');
+    const path = qIndex >= 0 ? bare.slice(0, qIndex) : bare;
+    const query = qIndex >= 0 ? bare.slice(qIndex + 1) : '';
+    if (path === '/') return pathname === '/';
+    const pathOk = pathname === path || pathname.startsWith(`${path}/`);
+    if (!pathOk) return false;
+    if (!query) {
+      if (path === '/settings/integration') {
+        const view = searchParams.get('view');
+        return !view || view === 'events';
+      }
+      return true;
+    }
+    const want = new URLSearchParams(query);
+    for (const [key, value] of want) {
+      if (searchParams.get(key) !== value) return false;
+    }
+    return pathname === path;
+  }
+
   function sectionItems(defs: NavDef[]): HotelNavItem[] {
-    return defs.map(({ labelKey, ...def }) => ({
-      ...def,
-      label: t(labelKey as 'chessboard'),
-    }));
+    return defs.map(function mapDef({ labelKey, children, ...def }): HotelNavItem {
+      return {
+        ...def,
+        label: t(labelKey as 'chessboard'),
+        active: def.href ? navHrefActive(def.href) : undefined,
+        children: children?.map((child) => mapDef(child)),
+      };
+    });
   }
 
   const navSections: HotelNavSection[] = useMemo(
@@ -365,6 +395,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
+              id: 'hk-stock',
+              href: '/settings/stock',
+              labelKey: 'minibarCatalog',
+              icon: Package,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
               id: 'hk-maids',
               href: '/hk/maids',
               labelKey: 'maidManagement',
@@ -499,7 +536,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
             },
             {
               id: 'price-policy',
-              href: '/settings/pricing-policy',
+              href: '/settings/policies#pricing',
               labelKey: 'pricingPolicy',
               icon: Banknote,
               permission: PERMISSIONS.SCREEN_SETTINGS,
@@ -668,77 +705,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           ]),
         },
         {
-          id: 'hotel_settings',
-          title: t('sectionSettings'),
-          icon: Settings,
-          items: sectionItems([
-            {
-              id: 'set-master',
-              href: '/settings/master-data',
-              labelKey: 'masterData',
-              icon: Building2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-hk-policy',
-              href: '/settings/hk-policy',
-              labelKey: 'hkPolicy',
-              icon: Wrench,
-              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
-            },
-            {
-              id: 'set-agency-medical-sku',
-              href: '/settings/agency-medical-sku',
-              labelKey: 'agencyMedicalSku',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-users',
-              href: '/settings/users',
-              labelKey: 'users',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_SETTINGS_USERS,
-            },
-            {
-              id: 'set-access',
-              href: '/settings/access',
-              labelKey: 'access',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_SETTINGS_ACCESS,
-            },
-            {
-              id: 'set-int',
-              href: '/settings/integration',
-              labelKey: 'integration',
-              icon: Link2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-audit',
-              href: '/settings/audit',
-              labelKey: 'auditViewer',
-              icon: ClipboardList,
-              permission: PERMISSIONS.SCREEN_REPORTS,
-            },
-            {
-              id: 'set-stock',
-              href: '/settings/stock',
-              labelKey: 'stock',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-import',
-              href: '/settings/import',
-              labelKey: 'elektrawebImport',
-              icon: FileText,
-              permission: PERMISSIONS.API_IMPORT_ELEKTRAWEB,
-              when: canRunElektrawebImport,
-            },
-          ]),
-        },
-        {
           id: 'hotel_reports',
           title: t('sectionReports'),
           icon: BarChart3,
@@ -755,6 +721,27 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/reports/nightly-pack',
               labelKey: 'reportsNightlyPack',
               icon: Package,
+              permission: PERMISSIONS.SCREEN_REPORTS,
+            },
+          ]),
+        },
+        {
+          id: 'hotel_reports_tools',
+          title: t('reportsTools'),
+          icon: BarChart3,
+          items: sectionItems([
+            {
+              id: 'rep-analytics',
+              href: '/reports/analytics',
+              labelKey: 'analytics',
+              icon: BarChart3,
+              permission: PERMISSIONS.SCREEN_REPORTS,
+            },
+            {
+              id: 'rep-occ-grid',
+              href: '/reports/occupancy/grid',
+              labelKey: 'reportsOccupancyGrid',
+              icon: BarChart3,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
           ]),
@@ -803,9 +790,106 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
             },
           ]),
         },
+        {
+          id: 'hotel_settings',
+          title: t('sectionSettings'),
+          icon: Settings,
+          items: sectionItems([
+            {
+              id: 'set-master',
+              href: '/settings/master-data',
+              labelKey: 'masterData',
+              icon: Building2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-policies',
+              href: '/settings/policies',
+              labelKey: 'policies',
+              icon: Wrench,
+              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
+            },
+            {
+              id: 'set-accounts',
+              labelKey: 'accounts',
+              icon: Users,
+              anyPermission: [
+                PERMISSIONS.SCREEN_SETTINGS_USERS,
+                PERMISSIONS.SCREEN_SETTINGS_ACCESS,
+              ],
+              children: [
+                {
+                  id: 'set-users',
+                  href: '/settings/users',
+                  labelKey: 'users',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS_USERS,
+                },
+                {
+                  id: 'set-access',
+                  href: '/settings/access',
+                  labelKey: 'access',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS_ACCESS,
+                },
+                {
+                  id: 'set-logins',
+                  href: '/settings/logins',
+                  labelKey: 'logins',
+                  icon: ClipboardList,
+                  permission: PERMISSIONS.SCREEN_SETTINGS_USERS,
+                },
+              ],
+            },
+            {
+              id: 'set-int',
+              href: '/settings/integration',
+              labelKey: 'integrationEvents',
+              icon: Link2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-int-gl',
+              href: '/settings/integration?view=gl',
+              labelKey: 'integrationGl',
+              icon: Link2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-int-journal',
+              href: '/settings/integration?view=journal',
+              labelKey: 'integrationJournal',
+              icon: Link2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-audit',
+              href: '/settings/audit',
+              labelKey: 'auditViewer',
+              icon: ClipboardList,
+              permission: PERMISSIONS.SCREEN_REPORTS,
+            },
+            {
+              id: 'set-import',
+              href: '/settings/import',
+              labelKey: 'elektrawebImport',
+              icon: FileText,
+              permission: PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+              when: canRunElektrawebImport,
+            },
+            {
+              id: 'set-ops-wipe',
+              href: '/settings/ops-wipe',
+              labelKey: 'opsWipe',
+              icon: Trash2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+              when: isPlatformSuperAdmin,
+            },
+          ]),
+        },
       ],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t identity stable enough per render
-    [t, pathname, canRunElektrawebImport],
+    [t, pathname, searchParams, canRunElektrawebImport, isPlatformSuperAdmin],
   );
   const visibleSections = useMemo(
     () => visibleOpsNavSections(navSections, navStatus, profile, allowHotel),

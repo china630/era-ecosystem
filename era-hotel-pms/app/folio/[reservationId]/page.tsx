@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   Field,
   FieldSelect,
   FieldTextarea,
@@ -574,18 +575,14 @@ export default function FolioPage() {
 
       {can(PERMISSIONS.FOLIO_PAYMENT) && (
         <section className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-2 p-4`}>
-          <FieldSelect
+          <CatalogField
+            kind="ENTITY_REF"
             label="Folio"
-            preset="select"
             value={selectedFolio}
-            onChange={(e) => setSelectedFolio(e.target.value)}
-          >
-            {folios.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.type}
-              </option>
-            ))}
-          </FieldSelect>
+            onChange={(v) => setSelectedFolio(String(v ?? ''))}
+            options={folios.map((f) => ({ value: f.id, label: f.type }))}
+            emptyLabel={null}
+          />
           <Field
             label={tc('amount')}
             preset="amount"

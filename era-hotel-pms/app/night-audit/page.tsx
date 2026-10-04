@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -44,6 +45,7 @@ interface NightAuditStatus {
     currentBusinessDate: string;
     wallClockDate: string;
     lagDays: number;
+    businessDayStatus: string | null;
     locked: boolean;
     strictGate: boolean;
   };
@@ -268,13 +270,13 @@ export default function OperationsPage() {
               : 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
           }`}>
 
-          Business date: <strong>{status.businessDate.currentBusinessDate}</strong>
+          {t('bannerBusinessDate')}: <strong>{status.businessDate.currentBusinessDate}</strong>
           {' · '}
-          Wall clock: {status.businessDate.wallClockDate}
+          {t('bannerWallClock')}: {status.businessDate.wallClockDate}
           {status.businessDate.lagDays > 0 && (
-            <> · Lag: {status.businessDate.lagDays} day(s) — run night audit</>
+            <> · {t('bannerLag', { count: status.businessDate.lagDays })}</>
           )}
-          {status.businessDate.locked && <> · Locked (NA running)</>}
+          {status.businessDate.locked && <> · {t('bannerLocked')}</>}
         </section>
       )}
 
@@ -322,8 +324,11 @@ export default function OperationsPage() {
             {t('inHouse')} {status?.inHouseCount ?? tc('dash')}
           </li>
           <li>
-            {t('businessDay')} {status?.businessDay?.date?.slice(0, 10) ?? tc('dash')} (
-            {status?.businessDay?.status ?? tc('dash')})
+            {t('businessDay')}{' '}
+            {status?.businessDay?.date?.slice(0, 10) ??
+              status?.businessDate?.currentBusinessDate ??
+              tc('dash')}{' '}
+            ({status?.businessDay?.status ?? status?.businessDate?.businessDayStatus ?? tc('dash')})
           </li>
           <li>
             {t('cashShiftStatus')}{' '}
@@ -480,44 +485,32 @@ export default function OperationsPage() {
             />
           </div>
           {kkms.length > 0 ? (
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-kkm">
-                {t('fiscalDevice')}
-              </label>
-              <select
-                id="shift-kkm"
-                className={MODAL_INPUT_CLASS}
-                value={fiscalDeviceId}
-                onChange={(e) => setFiscalDeviceId(e.target.value)}
-              >
-                <option value="">{t('autoDefault')}</option>
-                {kkms.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label} ({d.providerId})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CatalogField
+              kind="ENTITY_REF"
+              id="shift-kkm"
+              label={t('fiscalDevice')}
+              value={fiscalDeviceId}
+              onChange={(v) => setFiscalDeviceId(String(v ?? ''))}
+              options={kkms.map((d) => ({
+                value: d.id,
+                label: `${d.label} (${d.providerId})`,
+              }))}
+              emptyLabel={t('autoDefault')}
+            />
           ) : null}
           {banks.length > 0 ? (
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-bank">
-                {t('bankTerminal')}
-              </label>
-              <select
-                id="shift-bank"
-                className={MODAL_INPUT_CLASS}
-                value={bankTerminalId}
-                onChange={(e) => setBankTerminalId(e.target.value)}
-              >
-                <option value="">{t('autoDefault')}</option>
-                {banks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label} ({d.providerId})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CatalogField
+              kind="ENTITY_REF"
+              id="shift-bank"
+              label={t('bankTerminal')}
+              value={bankTerminalId}
+              onChange={(v) => setBankTerminalId(String(v ?? ''))}
+              options={banks.map((d) => ({
+                value: d.id,
+                label: `${d.label} (${d.providerId})`,
+              }))}
+              emptyLabel={t('autoDefault')}
+            />
           ) : null}
         </form>
       </EraModal>

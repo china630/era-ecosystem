@@ -353,22 +353,30 @@ export async function queryAgencyForecastMonth(from: Date, to: Date): Promise<Ag
   });
 
   const map = new Map<string, AgencyForecastMonthRow>();
-  const cursor = new Date(start);
-  while (cursor < end) {
-    const dateStr = toIso(cursor);
-    const next = addDays(cursor, 1);
-    for (const r of reservations) {
-      if (!r.agency) continue;
-      const k = `${r.agency.code}|${dateStr}`;
-      if (!map.has(k)) {
-        map.set(k, { agencyCode: r.agency.code, agencyName: r.agency.name, date: dateStr, expectedArrivals: 0, expectedDepartures: 0, roomNights: 0 });
+  for (const r of reservations) {
+    if (!r.agency) continue;
+    const touch = (dateStr: string) => {
+      const k = `${r.agency!.code}|${dateStr}`;
+      let row = map.get(k);
+      if (!row) {
+        row = { agencyCode: r.agency!.code, agencyName: r.agency!.name, date: dateStr, expectedArrivals: 0, expectedDepartures: 0, roomNights: 0 };
+        map.set(k, row);
       }
-      const row = map.get(k)!;
-      if (r.checkInDate >= cursor && r.checkInDate < next) row.expectedArrivals++;
-      if (r.checkOutDate >= cursor && r.checkOutDate < next) row.expectedDepartures++;
-      if (r.checkInDate < next && r.checkOutDate > cursor) row.roomNights++;
+      return row;
+    };
+    const ci = toIso(r.checkInDate);
+    const co = toIso(r.checkOutDate);
+    if (r.checkInDate >= start && r.checkInDate < end) touch(ci).expectedArrivals += 1;
+    if (r.checkOutDate >= start && r.checkOutDate < end) touch(co).expectedDepartures += 1;
+    const cursor = new Date(Math.max(r.checkInDate.getTime(), start.getTime()));
+    cursor.setUTCHours(0, 0, 0, 0);
+    const stop = r.checkOutDate < end ? r.checkOutDate : end;
+    let guard = 0;
+    while (cursor < stop && cursor < r.checkOutDate && guard < 400) {
+      touch(toIso(cursor)).roomNights += 1;
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      guard += 1;
     }
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
   return { rows: [...map.values()].sort((a, b) => a.agencyCode.localeCompare(b.agencyCode) || a.date.localeCompare(b.date)) };

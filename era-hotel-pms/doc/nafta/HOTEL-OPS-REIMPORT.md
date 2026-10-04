@@ -2,9 +2,13 @@
 
 Full wipe of **transactional** hotel data, then Elektraweb wizard import in canon order.
 
-**Keeps:** room types, rooms, agencies, rate plans, reference seed (revenue/bed/view), org bind, pricing components.
+**Keeps:** room types, rooms, agencies, rate plans, reference seed (revenue/bed/view), lookups, org bind, pricing components.
 
-**Removes:** guests, reservations, folios, reservation notes, guest CRM, EW outbox rows for the org.
+**Removes:** guests, reservations, folios, reservation and guest notes, guest CRM, concierge orders, banquet events, medical orders/alerts, EW outbox rows for the org — and by cascade procedure appointments, lab results, tour bookings, transfer orders, migration registrations, tourism tax submissions.
+
+**UI alternative to §2:** `/settings/ops-wipe` (platform super-admin) — counts for the session org, then confirm by typing `WIPE`. Same service as the CLI (`src/lib/services/ops-wipe.service.ts`). See [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §4.4.
+
+**Before re-import on a DB imported before 2026-10-04:** run `scripts/ops/reclass-elektra-rate-channels.ts --org=<uuid> --dry-run` (then without `--dry-run`) so channel rate plans (BOOKING, EXPEDIA, …) retire onto BAR + OTA source — [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §4.3.
 
 ---
 

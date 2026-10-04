@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { DatePicker, EraListFilterBar, PageHeader, showApiError } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -36,6 +36,7 @@ export default function FolioJournalPage() {
   const [to, setTo] = useState(todayIso);
   const [rows, setRows] = useState<Row[]>([]);
   const [totals, setTotals] = useState({ charges: 0, payments: 0 });
+  const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -114,9 +115,13 @@ export default function FolioJournalPage() {
             header: tc('actions'),
             render: (r) =>
               r.reservationId ? (
-                <Link href={`/folio/${r.reservationId}`} className="text-[#2980B9] hover:underline">
+                <button
+                  type="button"
+                  className="text-[#2980B9] hover:underline"
+                  onClick={() => setFolioReservationId(r.reservationId)}
+                >
                   {t('openFolio')}
-                </Link>
+                </button>
               ) : (
                 '—'
               ),
@@ -125,6 +130,15 @@ export default function FolioJournalPage() {
         rows={rows as (Row & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
         emptyMessage={t('empty')}
+      />
+      <ReservationCardModal
+        open={Boolean(folioReservationId)}
+        reservationId={folioReservationId}
+        initialTab="folio"
+        onClose={() => {
+          setFolioReservationId(null);
+          void load();
+        }}
       />
     </>
   );

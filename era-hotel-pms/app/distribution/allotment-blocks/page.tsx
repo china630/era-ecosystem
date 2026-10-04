@@ -26,6 +26,7 @@ import {
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { guestListItems } from '@/lib/guest-list-identity';
 
 type Agency = { id: string; code: string; name: string };
 type RoomType = { id: string; code: string; name: string };
@@ -204,10 +205,7 @@ export default function AllotmentBlocksPage() {
       setContracts(Array.isArray(c) ? c : (c.data ?? []));
       setRoomTypes(Array.isArray(rt) ? rt : (rt.data ?? []));
       setRatePlans(Array.isArray(rp) ? rp : (rp.data ?? []));
-      const glist = Array.isArray(g) ? g : (g.data ?? []);
-      setGuests(
-        glist.map((x: { id: string; fullName: string }) => ({ id: x.id, fullName: x.fullName })),
-      );
+      setGuests(guestListItems(g));
     });
   }, [load]);
 

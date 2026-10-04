@@ -17,8 +17,17 @@ export async function GET(request: Request) {
       where: { workDate: bakuCivilUtcDate(date) },
       orderBy: { createdAt: 'desc' },
     });
+    const rooms =
+      rows.length === 0
+        ? []
+        : await prisma.room.findMany({
+            where: { id: { in: rows.map((r) => r.roomId) } },
+            select: { id: true, roomNumber: true },
+          });
+    const numberById = new Map(rooms.map((r) => [r.id, r.roomNumber]));
+    const withRoom = rows.map((row) => ({ ...row, roomNumber: numberById.get(row.roomId) ?? '' }));
     const escalations = await escalateVisitFlags(date);
-    return jsonOk(serialize({ rows, escalations }));
+    return jsonOk(serialize({ rows: withRoom, escalations }));
   } catch (err) {
     return handleRouteError(err);
   }

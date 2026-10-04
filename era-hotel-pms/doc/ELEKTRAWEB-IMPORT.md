@@ -120,16 +120,16 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 
 | Elektraweb template (typical filename) | API entity slug | Prisma model | Upsert key | Notes |
 |----------------------------------------|-----------------|--------------|------------|-------|
-| Revenue Code Definitions.xlsx | `revenue-codes` | `RevenueCode` | `code` | Also in reference seed |
+| Revenue Code Definitions.xlsx | `revenue-codes` | `RevenueCode` | `code` | Also in reference seed. Goes through the shared revenue adapter (§4.2) — known pairs land on canonical codes |
 | Bed Type.xlsx | `bed-types` | `BedType` | `code` | Also in reference seed |
 | Room Views.xlsx | `room-views` | `RoomView` | `code` | Also in reference seed |
 | Room Types.xlsx | `room-types` | `RoomType` | `code` | EW export includes **BANQUET** (`Room Count=0`, keep as quota 0) and a **totals footer** (empty code/name, `Room Count` = inventory sum) — footer is skipped, not an error. |
-| Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields |
+| Rate Codes.xlsx | `rate-plans` | `RatePlan` | `code` | Legacy flat price fields. Channel codes (`BOOKING`, `EXPEDIA`, …) are **skipped** as plans — see §4.3 |
 | Rooms.xlsx | `rooms` | `Room` | `roomNumber` | Soft refs: `viewCode`, `bedTypeCode`. **Skip** virtual share labels (`707S`) — not master rooms. Nafta cutover: keep `Room No` / `Room Type` / `Floor` / `Bed Type` only. Ignore EW `Max Bed=0` (use `RoomType.adultCapacity`) and `Room State` HK snapshot (import leaves `AVAILABLE`). |
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | EW columns **Agent Code** + **Full Name** (Nafta READY: 212 rows). Footer/blank rows skipped. |
 | `14-Package-Sell-2026.xlsx` | `package-sell` | desk sell rates | package code | After folios on the wizard (`#14`). PDF desk, not EW. Adapter skips `desk=N`. Extra bed: Standart 96 AZN, others 48. |
 | `10-Guest-Cards.xlsx` | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**, plus Nafta FO-only `wo:fo:{id}`. **Gender:** EW **`0` = Male**, **`1` = Female** (UI “0 - Male”); import/bridge normalize to `M`/`F` (never store raw `0`/`1`). **National Id No** → FIN only if valid AZ FIN (7 chars, no I/O); **Passport No** → passport unless the cell is actually a FIN. FIO order: given + patronymic (extra tokens in `Name`) + surname. WebOnly FO guest cards overlay missing passports and append FO-only rows (`apply-wo-fo-guest-bridge.cjs`). |
-| `11-Reservations.xlsx` | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**; **`Guest Id`** column required (FO export lacks it — stamp via `scripts/enrich-reservations-guest-id.ts` from `#10` + optional API `--api-map`). Import resolves `guestId` by `Guest.externalRef` = **Guest Id** (no name stubs). Shared twin: see §4.1 |
+| `11-Reservations.xlsx` | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id**; **`Guest Id`** column required (FO export lacks it — stamp via `scripts/enrich-reservations-guest-id.ts` from `#10` + optional API `--api-map`). Import resolves `guestId` by `Guest.externalRef` = **Guest Id** (no name stubs). Optional **Rate Code** column → sell path (§4.3); missing → BAR. Shared twin: see §4.1 |
 | `12-Reservation-Notes.xlsx` | `reservation-notes` | `ReservationNote` | `(reservationId, noteType)` | All nine EW note columns → ERA types (`EXTRA_REQ`…`INVOICE_NOTE`); then medical SKU stamp (HOT-PKG-02). Field map + 2026 extract: [`reports/nafta-ew-notes-2026/README.md`](../../reports/nafta-ew-notes-2026/README.md). Cheatsheet: [ERA-PKG-FO-CHEATSHEET.md](./nafta/ERA-PKG-FO-CHEATSHEET.md) |
 | `13-Folio-p01.xlsx` … `p12` | `folios` | `FolioCharge` | `externalRef` | Multi-select all chunks in one step. |
 | `15-Agency-Statement.xlsx` | `agency-statement` | `FolioCharge` on **AGENCY** folio | `ew:agency-stmt:{ResId}` | EW remaining > 0 only. Ops city ledger, **not** Finance/1C AR. |
@@ -147,6 +147,54 @@ Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assign
 - Agency name is **not** a trigger. Walk-in shares only when EW marks the second guest.
 - Guests must be imported with Gender before share pairs become effective inventory.
 
+### 4.2 Revenue codes — one adapter
+
+Canon: [ADR §7](../../docs/adr/hotel-elektraweb-import.md). Code: `src/lib/integration/elektraweb-revenue.ts`, used by the `revenue-codes` and `folios` adapters and by the live bridge (`upsert-folio.ts`).
+
+| Elektraweb name / code | ERA `RevenueCode.code` |
+|------------------------|------------------------|
+| Accommodation / room | `ROOM` |
+| Banquet, Banket, Ziyafet, Банкет (`BNQ`, `BQT`) | `BANQUET` |
+| Minibar | `MINIBAR` |
+| Laundry | `LAUNDRY` |
+| Any other row with a code | Same code, uppercased (no prefix) |
+| Numeric revenue id only | `EW-{id}` |
+| Name only | `EW-{slug}` |
+
+An existing row with the same name (case-insensitive) or any candidate code is reused first, so renaming a code in **Revenue codes** (master data) does not create a duplicate on re-import. Folio dry run only looks up codes and never creates them.
+
+### 4.3 Channel ≠ rate plan
+
+Canon: [ADR §8](../../docs/adr/hotel-elektraweb-import.md). Code: `src/lib/integration/elektraweb-sell-path.ts`.
+
+Elektraweb rate codes named after a channel (Booking.com, Expedia, Agoda, Airbnb, HalalBooking, Ostrovok, Exely, Channex) describe the **sell path**:
+
+| Field | Value |
+|-------|-------|
+| `Reservation.ratePlanId` | **BAR** (created if missing) |
+| `Reservation.sourceId` | BookingSource `OTA` (only when the reservation has no source yet) |
+| `Reservation.agencyId` | Agency from the row when present; otherwise the channel agency (existing agency matching the channel keyword, else created from the label) |
+
+`BAR`, `BAR-*` and `PKG*` codes always stay rate plans. Real contract/derived codes keep importing as `RatePlan` (`DERIVED`, price 0, active).
+
+**Databases imported before 2026-10-04** may still have channel rate plans. Reclassify once per org:
+
+```bash
+npx tsx scripts/ops/reclass-elektra-rate-channels.ts --org=<uuid> --dry-run
+npx tsx scripts/ops/reclass-elektra-rate-channels.ts --org=<uuid>
+```
+
+The dry run prints, per channel plan, how many reservations, stay slices, sales contracts and channel mappings reference it. The live run moves reservations and stay slices onto BAR + OTA + channel agency and sets the channel plan `active=false` (retire policy, no hard delete). Folio totals are not recalculated.
+
+### 4.4 Re-import: operational wipe
+
+Variant A (keep master data, reload guests → reservations → folios):
+
+- **UI:** `/settings/ops-wipe` (platform super-admin only; nav **Operational wipe** under Settings). Shows counts for the session org → **Wipe** → type `WIPE` to confirm.
+- **CLI:** `npx tsx scripts/ops/wipe-hotel-ops-transactional.ts --org=<uuid> [--dry-run]`.
+
+Both call `src/lib/services/ops-wipe.service.ts`. Deleted: guests, reservations, folios and their charges/payments/settlements/deposits/fiscal docs, reservation and guest notes, concierge orders, banquet events, medical orders/alerts, Elektraweb folio outbox. Cascade (also counted on the screen): procedure appointments, lab results, tour bookings, transfer orders, migration registrations, tourism tax submissions. Rooms return to `AVAILABLE`. Kept: room types, rooms, rate plans, revenue codes, agencies, lookups, users; finance-core and MDM are untouched.
+
 ---
 
 ## 5. Dependencies between steps
@@ -162,7 +210,8 @@ Canon: [hotel-shared-twin-assignment.md](../../docs/adr/hotel-shared-twin-assign
 FnB product groups/cards and retail stock are **not** hotel wizard steps — Apply on `era-fnb-pos` / `era-retail-pos`.
 
 - **Reservations** resolve RoomType (code/name), optional Room, Agency, Guest (name or existing guest).
-- **Folios** resolve Reservation by `externalRef`, RevenueCode by `code`.
+- **Folios** resolve Reservation by `externalRef`, RevenueCode through the shared revenue adapter (§4.2).
+- **Reservations** resolve the rate plan through the sell-path adapter (§4.3): channel codes become BAR + OTA source + channel agency.
 - **Guests** import resolves `globalPersonId` via MDM when FIN or passport is present (`resolvePersonIdentity` from `@era/satellite-kit`), and writes **sex + birthDate** to MDM person core.
 
 Missing references surface as **per-row errors** in preview/import summary.
@@ -452,3 +501,4 @@ Nafta snapshot (2026-07-13 merged packs): ~80% reservations strict-match a Guest
 | 2026-07-13 | Folio `--ew` multi-root merge + hotel vs `999 FB` FnB house split |
 | 2026-07-13 | §15.5 locked guest↔reservation name-linking policy (safe fold only; no initials auto) |
 | 2026-07-13 | §15.5 Cancelled/future: import complete cards only; skip incomplete; Nafta [IMPORT_FILE_CHECKLIST.md](./nafta/IMPORT_FILE_CHECKLIST.md) |
+| 2026-10-04 | §4.2 one revenue adapter (import + live bridge); §4.3 channel ≠ rate plan + reclass script; §4.4 super-admin ops wipe screen |

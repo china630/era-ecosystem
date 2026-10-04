@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
-import { CatalogField, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
+import { CatalogField, DatePicker, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type Cell = {
   id: string;
@@ -12,11 +12,11 @@ type Cell = {
   housekeeper: { id: string; name: string; egBalance: number; department: string };
 };
 
-const KINDS = ['E', 'L', 'N', 'OFF', 'EG', 'CUSTOM'];
-const DEPTS = ['ROOMS', 'PUBLIC_AREA', 'LAUNDRY'];
+const KINDS = ['E', 'L', 'N', 'OFF', 'EG'] as const;
 
 export default function HkRosterPage() {
   const t = useTranslations('housekeeping');
+  const tc = useTranslations('common');
   const [weekStart, setWeekStart] = useState(() => {
     const today = hotelDateKey();
     const dow = parseHotelNoon(today).getUTCDay();
@@ -24,9 +24,10 @@ export default function HkRosterPage() {
     return addHotelDays(today, diff);
   });
   const [cells, setCells] = useState<Cell[]>([]);
-  const [order, setOrder] = useState<string[]>([]);
   const [todayPair, setTodayPair] = useState<Record<string, string>>({});
   const [calendarNote, setCalendarNote] = useState<string | null>(null);
+
+  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addHotelDays(weekStart, i)), [weekStart]);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/housekeeping/roster?weekStart=${weekStart}`);
@@ -35,13 +36,8 @@ export default function HkRosterPage() {
       showApiError(json, t('title'));
       return;
     }
-    const next = Array.isArray(json?.cells) ? json.cells : [];
+    const next = Array.isArray(json?.cells) ? (json.cells as Cell[]) : [];
     setCells(next);
-    const ids: string[] = [];
-    for (const c of next as Cell[]) {
-      if (!ids.includes(c.housekeeper.id)) ids.push(c.housekeeper.id);
-    }
-    setOrder(ids);
     const today = hotelDateKey();
     const rot = await fetch(`/api/housekeeping/rotation?date=${today}`);
     if (rot.ok) {
@@ -78,24 +74,6 @@ export default function HkRosterPage() {
     await load();
   }
 
-  async function persistOrder(next: string[]) {
-    setOrder(next);
-    await fetch('/api/housekeeping/roster', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderedIds: next }),
-    });
-  }
-
-  async function moveDept(housekeeperId: string, department: string) {
-    await fetch('/api/housekeeping/roster', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ housekeeperId, department }),
-    });
-    await load();
-  }
-
   async function accrue() {
     const res = await fetch('/api/housekeeping/eg', {
       method: 'POST',
@@ -108,16 +86,29 @@ export default function HkRosterPage() {
     await load();
   }
 
-  const byPerson = new Map<string, Cell[]>();
-  for (const c of cells) {
-    const id = c.housekeeper.id;
-    byPerson.set(id, [...(byPerson.get(id) ?? []), c]);
+  const people = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; egBalance: number }>();
+    for (const c of cells) {
+      if (!map.has(c.housekeeper.id)) {
+        map.set(c.housekeeper.id, {
+          id: c.housekeeper.id,
+          name: c.housekeeper.name,
+          egBalance: c.housekeeper.egBalance,
+        });
+      }
+    }
+    return [...map.values()];
+  }, [cells]);
+
+  function cellFor(personId: string, day: string) {
+    return cells.find((c) => c.housekeeper.id === personId && String(c.workDate).slice(0, 10) === day);
   }
 
   return (
     <>
       <PageHeader
         title={t('rosterTitle')}
+        subtitle={t('rosterHint')}
         actions={
           <div className="flex gap-2">
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void propose()}>
@@ -130,81 +121,64 @@ export default function HkRosterPage() {
         }
       />
       {calendarNote ? <p className="mb-2 text-sm text-amber-800">{calendarNote}</p> : null}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {DEPTS.map((d) => (
-          <div
-            key={d}
-            className="rounded border border-dashed px-3 py-2 text-xs"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const from = e.dataTransfer.getData('text/plain');
-              if (from) void moveDept(from, d);
-            }}
-          >
-            {t('dropDept')} {d}
-          </div>
-        ))}
-      </div>
-      <label className="mb-4 block text-sm">
-        {t('weekStart')}
-        <input
-          type="date"
-          className="ml-2 border px-2 py-1"
+      <div className="mb-4 max-w-xs">
+        <DatePicker
+          label={t('weekStart')}
           value={weekStart}
-          onChange={(e) => setWeekStart(e.target.value)}
+          onChange={(next) => {
+            if (!next) return;
+            const dow = parseHotelNoon(next).getUTCDay();
+            const diff = dow === 0 ? -6 : 1 - dow;
+            setWeekStart(addHotelDays(next, diff));
+          }}
+          placeholder={tc('datePlaceholder')}
+          preset="date"
         />
-      </label>
-      {order.length === 0 ? <p className="mb-4 text-sm text-[#7F8C8D]">{t('rosterEmpty')}</p> : null}
-      <div className="space-y-4">
-        {order.map((hid) => {
-          const row = byPerson.get(hid);
-          if (!row?.[0]) return null;
-          return (
-            <div
-              key={hid}
-              className="rounded border p-3"
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', hid)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const from = e.dataTransfer.getData('text/plain');
-                const next = order.filter((id) => id !== from);
-                const idx = next.indexOf(hid);
-                next.splice(idx, 0, from);
-                void persistOrder(next);
-              }}
-            >
-              <p className="mb-2 text-sm font-medium">
-                {row[0].housekeeper.name} · ƏG {row[0].housekeeper.egBalance}
-                {todayPair[hid] ? ` · ${todayPair[hid]}` : ''}
-              </p>
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t('department')}
-                value={row[0].housekeeper.department}
-                onChange={(v) => void moveDept(hid, String(v))}
-                options={DEPTS.map((d) => ({ value: d, label: d }))}
-              />
-              <div className="mt-2 flex flex-wrap gap-2">
-                {row
-                  .sort((a, b) => a.workDate.localeCompare(b.workDate))
-                  .map((c) => (
-                    <CatalogField
-                      key={c.id}
-                      kind="CLOSED_SMALL"
-                      label={c.workDate.slice(0, 10)}
-                      value={c.kind}
-                      onChange={(v) => void setKind(c.id, String(v))}
-                      options={KINDS.map((k) => ({ value: k, label: k }))}
-                    />
-                  ))}
-              </div>
-            </div>
-          );
-        })}
       </div>
+      {people.length === 0 ? <p className="text-sm text-[#7F8C8D]">{t('rosterEmpty')}</p> : null}
+      {people.length > 0 ? (
+        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+          <table className="w-full min-w-[880px] text-sm">
+            <thead>
+              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+                <th className="px-2 py-2">{t('colMaid')}</th>
+                <th className="px-2 py-2">{t('floor')}</th>
+                {days.map((d) => (
+                  <th key={d} className="px-2 py-2">
+                    {d.slice(5)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {people.map((p) => (
+                <tr key={p.id} className="border-b border-[#ECF0F1] align-top">
+                  <td className="px-2 py-2 font-medium">{p.name}</td>
+                  <td className="px-2 py-2">{todayPair[p.id] ?? '—'}</td>
+                  {days.map((d) => {
+                    const cell = cellFor(p.id, d);
+                    return (
+                      <td key={d} className="px-1 py-1">
+                        {cell ? (
+                          <CatalogField
+                            kind="CLOSED_SMALL"
+                            label={d}
+                            value={cell.kind === 'CUSTOM' ? 'OFF' : cell.kind}
+                            onChange={(v) => void setKind(cell.id, String(v))}
+                            options={KINDS.map((k) => ({ value: k, label: k === 'EG' ? 'ƏG' : k }))}
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </>
   );
 }

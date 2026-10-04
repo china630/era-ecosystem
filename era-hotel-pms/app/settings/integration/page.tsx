@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -13,7 +14,6 @@ import {
   EraListFilterBar,
   useDebouncedValue,
   Field,
-  FieldSelect,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -86,84 +86,6 @@ function PosBridgeTestModal({
       <form id={formId} className={FORM_STACK_CLASS} onSubmit={(e) => { e.preventDefault(); void send(); }}>
         <Field label="Room" preset="code" id="pos-room" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} />
         <Field label={tc('amount')} preset="amount" id="pos-amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      </form>
-    </EraModal>
-  );
-}
-
-function E6SimulatorModal({
-  open,
-  onClose,
-  onDone,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const t = useTranslations('integration');
-  const tc = useTranslations('common');
-  const [invoiceRef, setInvoiceRef] = useState('');
-  const [status, setStatus] = useState('accepted');
-  const [busy, setBusy] = useState(false);
-  const formId = 'e6-simulator-form';
-
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const res = await fetch('/api/integration/erp/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceRef,
-          fiscalStatus: status,
-          fiscalExternalId: status === 'accepted' ? `EQ-${Date.now()}` : undefined,
-          rejectionReason: status === 'rejected' ? t('rejectionDemo') : undefined,
-        }),
-      });
-      const data = await res.json();
-      setBusy(false);
-      if (!res.ok) {
-        showApiError(data, tc('failed'));
-        return;
-      }
-      showSuccess(t('e6Applied', { status: data.document?.fiscalStatus }));
-      onDone();
-      onClose();
-    } catch (err) {
-      setBusy(false);
-      showApiError({ error: err instanceof Error ? err.message : tc('failed') });
-    }
-  }
-
-  return (
-    <EraModal
-      open={open}
-      title={t('e6Title')}
-      onClose={onClose}
-      footer={
-        <EraModalFooter
-          formId={formId}
-          onCancel={onClose}
-          busy={busy}
-          submitLabel={t('sendE6')}
-        />
-      }
-    >
-      <form id={formId} onSubmit={send} className={FORM_STACK_CLASS}>
-        <Field
-          label={t('invoiceRefPlaceholder')}
-          preset="code"
-          id="e6-invoice"
-          placeholder={t('invoiceRefPlaceholder')}
-          value={invoiceRef}
-          onChange={(e) => setInvoiceRef(e.target.value)}
-        />
-        <FieldSelect label={tc('status')} preset="select" id="e6-status" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="sent">{t('fiscalSent')}</option>
-          <option value="accepted">{t('fiscalAccepted')}</option>
-          <option value="rejected">{t('fiscalRejected')}</option>
-        </FieldSelect>
       </form>
     </EraModal>
   );
@@ -263,7 +185,9 @@ export default function IntegrationAdminPage() {
   const [logQ, setLogQ] = useState('');
   const debouncedLogQ = useDebouncedValue(logQ, 300);
   const [posModalOpen, setPosModalOpen] = useState(false);
-  const [e6ModalOpen, setE6ModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const viewParam = searchParams.get('view');
+  const view = viewParam === 'gl' || viewParam === 'journal' ? viewParam : 'events';
 
   const load = useCallback(async () => {
     const [sRes, lRes, glRes] = await Promise.all([
@@ -334,7 +258,7 @@ export default function IntegrationAdminPage() {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
-  if (!settings) {
+  if (view === 'events' && !settings) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('loading')}</p>;
   }
 
@@ -360,15 +284,17 @@ export default function IntegrationAdminPage() {
   return (
     <>
       <PageHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
+        title={view === 'gl' ? t('glMappingTitle') : view === 'journal' ? t('outboundJournal') : t('title')}
+        subtitle={view === 'gl' ? t('glMappingHint') : view === 'journal' ? t('subtitle') : t('subtitle')}
         actions={
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPosModalOpen(true)}>
-            {t('posBridgeTest')}
-          </button>
+          view === 'events' ? (
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPosModalOpen(true)}>
+              {t('posBridgeTest')}
+            </button>
+          ) : null
         }
       />
-      {settings.platformSubscription != null && (
+      {view === 'events' && settings?.platformSubscription != null && (
         <section className={`${CARD_CONTAINER_CLASS} mb-6 border border-dashed border-[#CBD2D9] bg-[#F4F6F8] p-4 text-[13px] text-[#34495E]`}>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <p className="m-0 text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
@@ -390,6 +316,7 @@ export default function IntegrationAdminPage() {
         </section>
       )}
 
+      {view === 'events' && settings ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 space-y-3 p-4 text-[13px] text-[#34495E]`}>
         <label className="flex items-center gap-2">
           <input
@@ -469,15 +396,9 @@ export default function IntegrationAdminPage() {
           </button>
         </div>
       </section>
+      ) : null}
 
-      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('e6Title')}</h2>
-        <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('e6Hint')}</p>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setE6ModalOpen(true)}>
-          {t('sendE6')}
-        </button>
-      </section>
-
+      {view === 'gl' ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('glMappingTitle')}</h2>
         <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('glMappingHint')}</p>
@@ -505,7 +426,9 @@ export default function IntegrationAdminPage() {
           </table>
         </div>
       </section>
+      ) : null}
 
+      {view === 'journal' ? (
       <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('outboundJournal')}</h2>
         <EraListFilterBar
@@ -566,9 +489,9 @@ export default function IntegrationAdminPage() {
           </table>
         </div>
       </section>
+      ) : null}
 
       <PosBridgeTestModal open={posModalOpen} onClose={() => setPosModalOpen(false)} />
-      <E6SimulatorModal open={e6ModalOpen} onClose={() => setE6ModalOpen(false)} onDone={() => load()} />
     </>
   );
 }

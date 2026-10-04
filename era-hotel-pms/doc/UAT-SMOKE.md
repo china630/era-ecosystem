@@ -377,7 +377,7 @@ Prerequisite: W1 code deployed (`src/lib/reports/`, 8 P0 query services + pages 
    - `folio-transactions`
    - `department-revenues`
 4. Night Audit `/night-audit/reports`: pack member links resolve to canonical `/reports/...` pages + Download ZIP button — not a dead list.
-5. SatAdmin `/settings/report-pack`: disable one report → Download ZIP without it.
+5. SatAdmin `/settings/policies#reports`: disable one report → Download ZIP without it.
 6. Empty report (e.g. no discounts for the day) → empty PDF renders with empty-state message, not HTTP 500.
 
 ## 31. Reports W2 — remaining catalog (P1)
@@ -496,7 +496,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
 8. `/hk/forecast` — 7 and 14 day load by floor.
 9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
-10. `/settings/hk-policy` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
+10. `/settings/policies#hk` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 
 ## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
@@ -585,7 +585,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`; `Walkin leisure` stays unresolved **and** check-in does **not** emit sanatorium lifecycle (`stayKind: leisure`).
 3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
 4. Check-in lifecycle sends `programCode` only when unanimous; EW Rate Code alone never becomes SKU.
-5. SatAdmin `/settings/agency-medical-sku`: edit prefix→SKU; resolver prefers DB rules then code defaults.
+5. Travel agency form: medical package CatalogField. Stored `Agency.medicalPackageCode` wins; empty means the name tokens (`Premium` / `Dermo` / `Detoks` / Həmkarlar / standart).
 6. FO Guests tab: Select medical package per pax → Save → `dailyRates` / folio `packageCompose` refresh.
 7. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md).
 
@@ -687,7 +687,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 **Status:** Engineering SCREEN — field UAT open (not SHOW / not SHIPPED).
 
-1. Sign in as **Hotel_Admin** → **/settings/access** opens; matrix lists system roles and permission groups (incl. Import / bridge).
+1. Sign in as **Hotel_Admin** → **/settings/access** opens a role table. The permissions icon opens process tiles (incl. Import / bridge).
 2. Uncheck `api:folio.void` on **Hotel_Admin**, Save (session refresh). Void charge on folio returns **403**; UI hides void when can(`api:folio.void`) is false.
 3. Re-check + Save → void restored.
 4. **Clone** NightAuditor → NIGHT_MANAGER; assign a user on /settings/users; login as that user → grants match clone.
@@ -696,4 +696,4 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 7. After image/DB upgrade run hotel Prisma migrate (`Role.isSystem` / `cloneFromCode` / `permissionCatalogVersion`); **re-login or any page load** (`/api/auth/me` → ensure) so role JSON remaps to fleet-canon and page JWT picks up Wave-2 keys (API already dual-reads / reloads DB).
 8. Uncheck `api:import.elektraweb` (keep SKU), Save → `/settings/import` and `/api/import` **403**; re-check restores (SKU still required). Strip must survive the next login (`ensure` must not re-add).
 9. Sign in as **Housekeeper** → open `/spa` by URL → redirected forbidden (middleware).
-10. `/settings/hk-policy` is master-data (not HK prefix). Staff bridge JWT after grant strip → 403 without re-mint.
+10. `/settings/policies` is the settings screen (not the HK prefix). Old `/settings/hk-policy` redirects. Staff bridge JWT after grant strip → 403 without re-mint.

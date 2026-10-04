@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { ROLE_CODES } from "@/lib/auth/permissions";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
-import { userPermissions } from "@/lib/services/user.service";
+import { recordUserLogin, userPermissions } from "@/lib/services/user.service";
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
 
@@ -97,6 +97,11 @@ export async function POST(request: Request) {
     if (!user) {
       return jsonError("SSO user provisioning failed", 500);
     }
+
+    await recordUserLogin(
+      { id: user.id, organizationId, login: user.login },
+      request,
+    );
 
     const permissions = userPermissions(user);
     const token = await signSatelliteSession({

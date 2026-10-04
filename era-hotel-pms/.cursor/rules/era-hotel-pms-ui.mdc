@@ -52,6 +52,7 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 - Tabs: kit `TAB_STRIP_CLASS` / `TAB_ITEM_*`; folio subtabs: `CHIP_*`.
 - Stay dates: kit `DatePicker` + `common.datePlaceholder` (never native `type="date"` alone).
 - Folio grid: `HotelDataGrid`. No raw hex buttons — `SUCCESS_BUTTON_CLASS` / `DANGER_BUTTON_CLASS` / `SECONDARY_BUTTON_CLASS` / `GHOST_BUTTON_CLASS` for icon headers.
+- Front-cash **open folio** (balances, journal, cash transactions) opens `ReservationCardModal` on the Folio tab (`initialTab="folio"`), not the `/folio/[id]` page.
 
 ## Guest card (same FO chrome)
 

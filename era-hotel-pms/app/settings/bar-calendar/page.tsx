@@ -7,8 +7,8 @@ import {
   CARD_CONTAINER_CLASS,
   DatePicker,
   EraListFilterBar,
+  CatalogField,
   Field,
-  FieldSelect,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -265,18 +265,14 @@ export default function BarCalendarPage() {
       </EraListFilterBar>
 
       <section className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-3 p-3`}>
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('fillRoomType')}
-          preset="select"
           value={fillRoomTypeId}
-          onChange={(e) => setFillRoomTypeId(e.target.value)}
-        >
-          {roomTypes.map((rt) => (
-            <option key={rt.id} value={rt.id}>
-              {rt.code} — {rt.name}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setFillRoomTypeId(String(v ?? ''))}
+          options={roomTypes.map((rt) => ({ value: rt.id, label: `${rt.code} — ${rt.name}` }))}
+          emptyLabel={null}
+        />
         <Field
           label={t('fillAmount')}
           preset="amount"
@@ -289,7 +285,7 @@ export default function BarCalendarPage() {
         <button
           type="button"
           className={SECONDARY_BUTTON_CLASS}
-          disabled={busy || !ratePlanId || !fillAmount}
+          disabled={busy || !ratePlanId || !fillRoomTypeId || !fillAmount}
           onClick={() => void bulkFill()}
         >
           {t('fillRange')}

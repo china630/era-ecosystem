@@ -209,7 +209,7 @@ export default function YieldRulesPage() {
           {t('barLink')}
         </Link>
         {' · '}
-        <Link className="text-[#2980B9] hover:underline" href="/settings/pricing-policy">
+        <Link className="text-[#2980B9] hover:underline" href="/settings/policies#pricing">
           {t('pricingPolicyLink')}
         </Link>
         {' · '}

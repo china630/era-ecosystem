@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -93,6 +94,10 @@ export default function MedicalPage() {
 
   async function createOrder(e: React.FormEvent) {
     e.preventDefault();
+    if (!reservationId) {
+      setMsg(tc('required'));
+      return;
+    }
     setBusy(true);
     const res = await fetch('/api/medical/orders', {
       method: 'POST',
@@ -202,27 +207,20 @@ export default function MedicalPage() {
         }
       >
         <form id={alertFormId} onSubmit={createAlert} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="alert-guest">
-              {tc('guest')}
-            </label>
-            <select
-              id="alert-guest"
-              className={MODAL_INPUT_CLASS}
-              value={guestId}
-              onChange={(e) => {
-                setGuestId(e.target.value);
-                const r = reservations.find((x) => x.guest.id === e.target.value);
-                if (r) setReservationId(r.id);
-              }}
-            >
-              {reservations.map((r) => (
-                <option key={r.guest.id} value={r.guest.id}>
-                  {r.guest.fullName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            id="alert-guest"
+            label={tc('guest')}
+            value={guestId}
+            onChange={(v) => {
+              const id = String(v ?? '');
+              setGuestId(id);
+              const r = reservations.find((x) => x.guest.id === id);
+              if (r) setReservationId(r.id);
+            }}
+            options={reservations.map((r) => ({ value: r.guest.id, label: r.guest.fullName }))}
+            emptyLabel={null}
+          />
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="alert-msg">
               {tc('message')}
@@ -251,24 +249,19 @@ export default function MedicalPage() {
         }
       >
         <form id={labOrderFormId} onSubmit={createOrder} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="lab-reservation">
-              {tc('guest')}
-            </label>
-            <select
-              id="lab-reservation"
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-              required
-            >
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} ({tRes(r.status as 'IN_HOUSE')})
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            id="lab-reservation"
+            label={tc('guest')}
+            value={reservationId}
+            onChange={(v) => setReservationId(String(v ?? ''))}
+            options={reservations.map((r) => ({
+              value: r.id,
+              label: `${r.guest.fullName} (${tRes(r.status as 'IN_HOUSE')})`,
+            }))}
+            required
+            emptyLabel={null}
+          />
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="lab-order-type">
               {t('orderLab')}

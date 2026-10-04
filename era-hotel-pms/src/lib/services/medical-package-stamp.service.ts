@@ -101,20 +101,6 @@ export async function stampMedicalPackagesForReservation(
             },
           ];
 
-    let agencyRules: Awaited<
-      ReturnType<
-        typeof import("@/lib/services/agency-medical-sku-rules.service").listAgencySkuRulesForResolve
-      >
-    > = [];
-    try {
-      const { listAgencySkuRulesForResolve } = await import(
-        "@/lib/services/agency-medical-sku-rules.service"
-      );
-      agencyRules = await listAgencySkuRulesForResolve();
-    } catch {
-      agencyRules = [];
-    }
-
     result = resolveMedicalSku({
       notes: reservation.notes.map((n) => ({
         noteType: n.noteType,
@@ -123,7 +109,7 @@ export async function stampMedicalPackagesForReservation(
       agencyName,
       guests,
       ratePlanCode: reservation.ratePlan.code,
-      agencyRules,
+      agencyPackageCode: reservation.agency?.medicalPackageCode ?? null,
     });
 
     // Keep prior FO stamp when resolve left a pax null (mid-stay preserve)
