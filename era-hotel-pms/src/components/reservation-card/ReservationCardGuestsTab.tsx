@@ -9,6 +9,7 @@ import {
   DROPDOWN_PANEL_CLASS,
   Field,
   GHOST_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -17,6 +18,7 @@ import {
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { guestListItems } from '@/lib/guest-list-identity';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
   attachGuestToPax,
@@ -25,6 +27,10 @@ import {
 import type { PartyBillingMode, PaxRow, SelectOption } from './types';
 
 export { emptyPax } from '@/components/reservation-card/party-pax';
+
+function guestHits(list: unknown): SelectOption[] {
+  return guestListItems(list).map((x) => ({ id: x.id, label: x.fullName }));
+}
 
 type PaxGridRow = PaxRow & Record<string, unknown> & { _idx: number };
 
@@ -87,6 +93,9 @@ export function ReservationCardGuestsTab({
   const [remoteHits, setRemoteHits] = useState<SelectOption[] | null>(null);
   const [searchBusy, setSearchBusy] = useState(false);
   const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
+  const [rowEdit, setRowEdit] = useState<number | null>(null);
+  const [rowQuery, setRowQuery] = useState('');
+  const [rowHits, setRowHits] = useState<SelectOption[]>([]);
   const equalMode = partyBillingMode === 'EQUAL';
 
   const hasPartyMembers = pax.some(
@@ -105,22 +114,29 @@ export function ReservationCardGuestsTab({
       void fetch(`/api/guests?q=${encodeURIComponent(q)}`)
         .then((r) => r.json())
         .then((list) => {
-          if (!Array.isArray(list)) {
-            setRemoteHits([]);
-            return;
-          }
-          setRemoteHits(
-            list.map((x: { id: string; fullName: string }) => ({
-              id: x.id,
-              label: x.fullName,
-            })),
-          );
+          setRemoteHits(guestHits(list));
         })
         .catch(() => setRemoteHits([]))
         .finally(() => setSearchBusy(false));
     }, 250);
     return () => window.clearTimeout(handle);
   }, [query, searchOpen]);
+
+  useEffect(() => {
+    if (rowEdit == null) return;
+    const q = rowQuery.trim();
+    if (q.length < 2) {
+      setRowHits([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      void fetch(`/api/guests?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((list) => setRowHits(guestHits(list)))
+        .catch(() => setRowHits([]));
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [rowQuery, rowEdit]);
 
   const filtered = useMemo(() => {
     if (remoteHits) return remoteHits;
@@ -163,6 +179,30 @@ export function ReservationCardGuestsTab({
       onGuestId('');
     }
     onPax(next);
+  }
+
+  function assignGuestAt(index: number, g: SelectOption) {
+    if (pax.some((row, i) => i !== index && row.guestId === g.id)) return;
+    const { firstName, lastName } = splitFullName(g.label);
+    const next = pax.map((row, i) =>
+      i === index ? { ...row, guestId: g.id, firstName, lastName } : row,
+    );
+    onPax(next);
+    const chosen = next[index];
+    if (chosen && (chosen.isPrimary || (!next.some((row) => row.isPrimary) && index === 0))) {
+      onGuestId(g.id);
+    }
+    setRowHits([]);
+    setRowEdit(null);
+  }
+
+  function typeGuestAt(index: number, value: string) {
+    const { firstName, lastName } = splitFullName(value);
+    onPax(
+      pax.map((row, i) => (i === index ? { ...row, firstName, lastName } : row)),
+    );
+    setRowEdit(index);
+    setRowQuery(value);
   }
 
   function pickGuest(g: SelectOption) {
@@ -216,6 +256,36 @@ export function ReservationCardGuestsTab({
         render: (row) => {
           const name =
             [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ').trim() || '—';
+          if (!row.guestId) {
+            const shown = [row.firstName, row.lastName].filter(Boolean).join(' ');
+            return (
+              <div className="relative min-w-[10rem]">
+                <input
+                  className={MODAL_INPUT_CLASS}
+                  value={shown}
+                  placeholder={t('searchGuest')}
+                  aria-label={t('searchGuest')}
+                  onChange={(e) => typeGuestAt(row._idx, e.target.value)}
+                />
+                {rowEdit === row._idx && rowHits.length > 0 ? (
+                  <ul className="absolute z-20 mt-1 max-h-40 w-full overflow-y-auto rounded border border-[#D5DADF] bg-white text-[13px] shadow">
+                    {rowHits.map((g) => (
+                      <li key={g.id}>
+                        <button
+                          type="button"
+                          className="flex w-full px-2 py-1.5 text-left hover:bg-[#EBF5FB]"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => assignGuestAt(row._idx, g)}
+                        >
+                          {g.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            );
+          }
           if (row.guestId && onOpenGuestCard) {
             return (
               <button
@@ -361,6 +431,8 @@ export function ReservationCardGuestsTab({
       onMoveGuest,
       onOpenGuestCard,
       onScanId,
+      rowEdit,
+      rowHits,
     ],
   );
 

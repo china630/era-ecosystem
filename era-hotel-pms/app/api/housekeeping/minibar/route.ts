@@ -16,7 +16,7 @@ export async function GET() {
     const rooms = await prisma.room.findMany({
       where: { deleted: false, disabled: false },
       orderBy: { roomNumber: 'asc' },
-      select: { id: true, roomNumber: true },
+      select: { id: true, roomNumber: true, floor: true },
     });
     const postings = await prisma.minibarPosting.findMany({
       orderBy: { postedAt: 'desc' },

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  CatalogField,
   Field,
   FORM_STACK_CLASS,
   PageHeader,
@@ -77,6 +78,10 @@ export default function AgencyPortalHomePage() {
 
   async function createStay(e: React.FormEvent) {
     e.preventDefault();
+    if (!salesContractId || !roomTypeId) {
+      showApiError({ error: 'Contract and room type are required' }, 'Create failed');
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/agency/reservations', {
@@ -137,40 +142,32 @@ export default function AgencyPortalHomePage() {
       />
 
       <form className={FORM_STACK_CLASS} onSubmit={(e) => void createStay(e)}>
-        <label className="text-sm">
-          Contract
-          <select
-            className="mt-1 w-full rounded border px-3 py-2"
-            value={salesContractId}
-            onChange={(ev) => {
-              setSalesContractId(ev.target.value);
-              const c = contracts.find((x) => x.id === ev.target.value);
-              if (c?.allotments?.[0]) setRoomTypeId(c.allotments[0].roomTypeId);
-            }}
-            required
-          >
-            {contracts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          Room type
-          <select
-            className="mt-1 w-full rounded border px-3 py-2"
-            value={roomTypeId}
-            onChange={(ev) => setRoomTypeId(ev.target.value)}
-            required
-          >
-            {(selected?.allotments ?? []).map((a) => (
-              <option key={a.id} value={a.roomTypeId}>
-                {a.roomType.code} (quota {a.nightlyQuota})
-              </option>
-            ))}
-          </select>
-        </label>
+        <CatalogField
+          kind="ENTITY_REF"
+          label="Contract"
+          value={salesContractId}
+          onChange={(v) => {
+            const id = String(v ?? '');
+            setSalesContractId(id);
+            const c = contracts.find((x) => x.id === id);
+            if (c?.allotments?.[0]) setRoomTypeId(c.allotments[0].roomTypeId);
+          }}
+          options={contracts.map((c) => ({ value: c.id, label: c.code }))}
+          required
+          emptyLabel={null}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label="Room type"
+          value={roomTypeId}
+          onChange={(v) => setRoomTypeId(String(v ?? ''))}
+          options={(selected?.allotments ?? []).map((a) => ({
+            value: a.roomTypeId,
+            label: `${a.roomType.code} (quota ${a.nightlyQuota})`,
+          }))}
+          required
+          emptyLabel={null}
+        />
         <Field
           label="Check-in"
           preset="shortText"

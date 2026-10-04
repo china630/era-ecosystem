@@ -10,6 +10,8 @@ export type EraOpsNavItem = {
   active?: boolean;
   hidden?: boolean;
   onClick?: () => void;
+  /** Nested links under a collapsible row (settings accounts, and similar). */
+  children?: EraOpsNavItem[];
 };
 
 export type EraOpsNavSection = {

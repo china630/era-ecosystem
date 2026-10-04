@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useId, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -11,7 +12,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   Field,
-  FieldSelect,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -19,6 +19,8 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { LocalizedNameFields, localizedNamesFromForm } from '@/components/admin/LocalizedNameFields';
+import { catalogLabel } from '@/lib/catalog-label';
 
 const KINDS = [
   'MARKET',
@@ -46,6 +48,9 @@ type LookupRow = {
   kind: Kind;
   code: string;
   name: string;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
   active: boolean;
   sortOrder: number;
 };
@@ -53,6 +58,7 @@ type LookupRow = {
 export function HotelLookupsAdmin() {
   const t = useTranslations('masterData');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const formId = useId();
   const [kind, setKind] = useState<Kind>('MARKET');
   const [rows, setRows] = useState<LookupRow[]>([]);
@@ -79,18 +85,17 @@ export function HotelLookupsAdmin() {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('lookups')}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <FieldSelect
+          <CatalogField
+            kind="CLOSED_MEDIUM"
             label={t('lookupKind')}
-            preset="selectWide"
             value={kind}
-            onChange={(e) => setKind(e.target.value as Kind)}
-          >
-            {KINDS.map((k) => (
-              <option key={k} value={k}>
-                {k}
-              </option>
-            ))}
-          </FieldSelect>
+            emptyLabel={null}
+            options={KINDS.map((k) => ({ value: k, label: t(`lookupKinds.${k}`) }))}
+            onChange={(value) => {
+              const next = Array.isArray(value) ? value[0] : value;
+              if (next) setKind(next as Kind);
+            }}
+          />
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
@@ -124,7 +129,7 @@ export function HotelLookupsAdmin() {
                 }}
               >
                 <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(row, locale)}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
                   {row.active ? t('activeOnly') : t('inactiveOnly')}
                 </td>
@@ -162,6 +167,7 @@ export function HotelLookupsAdmin() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     name: String(fd.get('name') ?? ''),
+                    ...localizedNamesFromForm(fd),
                     active: fd.get('active') === 'on',
                     sortOrder: Number(fd.get('sortOrder') ?? 0),
                   }),
@@ -175,6 +181,7 @@ export function HotelLookupsAdmin() {
                     kind,
                     code: String(fd.get('code') ?? ''),
                     name: String(fd.get('name') ?? ''),
+                    ...localizedNamesFromForm(fd),
                     sortOrder: Number(fd.get('sortOrder') ?? 0),
                   }),
                 });
@@ -196,12 +203,13 @@ export function HotelLookupsAdmin() {
             <Field label={t('code')} preset="code" value={edit.code} readOnly />
           )}
           <Field
-            label={t('name')}
+            label={t('nameDefault')}
             preset="shortText"
             name="name"
             required
             defaultValue={edit?.name ?? ''}
           />
+          <LocalizedNameFields idPrefix="lk" row={edit} />
           <Field
             label={t('sortOrder')}
             preset="count"

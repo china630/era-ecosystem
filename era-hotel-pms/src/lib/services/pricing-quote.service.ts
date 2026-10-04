@@ -137,7 +137,12 @@ export async function getNightlyRoomChargeForDate(
 ): Promise<number> {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { dailyRates: true, ratePlan: true, room: true },
+    include: {
+      dailyRates: true,
+      ratePlan: true,
+      room: true,
+      paxGuests: { select: { medicalPackageCode: true }, orderBy: { sortOrder: 'asc' } },
+    },
   });
   if (!res) throw new Error('Reservation not found');
 
@@ -146,9 +151,28 @@ export async function getNightlyRoomChargeForDate(
   );
   if (daily) return decimalToNumber(daily.amount);
 
+  const { ownerPackageNightlySell } = await import(
+    '@/lib/services/nafta-package-compose-apply.service'
+  );
+  const { MEDICAL_PACKAGE_CODES } = await import('@/lib/services/medical-package-resolve.service');
+  const packageCodes = (
+    res.paxGuests.length > 0
+      ? res.paxGuests.map((g) => g.medicalPackageCode)
+      : [res.medicalPackageCode]
+  )
+    .map((c) => (c ?? '').trim().toUpperCase())
+    .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+  if (packageCodes.length > 0) {
+    const nightly = await ownerPackageNightlySell(res.checkInDate, packageCodes);
+    if (nightly != null) return nightly;
+  }
+  if (res.ratePlan.medicalFlag || packageCodes.length > 0) {
+    return decimalToNumber(res.ratePlan.pricePerNight);
+  }
+
   const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
   const slice = await resolveStaySliceForDate(reservationId, businessDate);
-  const roomTypeId = slice?.roomTypeId ?? res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
+  const roomTypeId = slice?.roomTypeId ?? res.roomTypeId ?? res.ratePlan.roomTypeId;
   if (!roomTypeId) {
     return decimalToNumber(res.ratePlan.pricePerNight);
   }

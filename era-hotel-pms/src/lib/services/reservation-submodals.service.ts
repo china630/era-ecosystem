@@ -93,7 +93,7 @@ export async function getReservationFolioRouting(reservationId: string) {
     prisma.revenueCode.findMany({
       where: { active: true },
       orderBy: { code: 'asc' },
-      select: { id: true, code: true, name: true },
+      select: { id: true, code: true, name: true, nameAz: true, nameRu: true, nameEn: true },
     }),
   ]);
   return { folios, rules, overrides, revenueCodes };

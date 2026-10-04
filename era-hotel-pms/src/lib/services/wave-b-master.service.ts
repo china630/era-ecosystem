@@ -96,6 +96,7 @@ export async function upsertTravelAgency(input: {
   creditLimitAzn?: number | null;
   paymentTermsDays?: number | null;
   active?: boolean;
+  medicalPackageCode?: string | null;
 }) {
   const creditLimitAzn =
     input.creditLimitAzn != null ? toDecimal(input.creditLimitAzn) : input.creditLimitAzn;
@@ -112,6 +113,7 @@ export async function upsertTravelAgency(input: {
         creditLimitAzn,
         paymentTermsDays: input.paymentTermsDays,
         active: input.active,
+        medicalPackageCode: input.medicalPackageCode,
       },
     });
   }
@@ -126,6 +128,7 @@ export async function upsertTravelAgency(input: {
       creditLimitAzn: creditLimitAzn ?? null,
       paymentTermsDays: input.paymentTermsDays ?? null,
       active: input.active ?? true,
+      medicalPackageCode: input.medicalPackageCode ?? null,
     },
   });
 }
@@ -147,11 +150,25 @@ export async function listHousekeepers() {
 }
 
 export async function createHousekeeper(input: {
-  code: string;
+  globalPersonId: string;
   name: string;
   department?: 'ROOMS' | 'PUBLIC_AREA' | 'LAUNDRY';
 }) {
-  return prisma.housekeeper.create({ data: input });
+  const existing = await prisma.housekeeper.findFirst({
+    where: { globalPersonId: input.globalPersonId },
+  });
+  if (existing) {
+    throw new Error('This employee is already on the housekeeping list');
+  }
+  const code = `HR-${input.globalPersonId.replace(/-/g, '').slice(0, 12).toUpperCase()}`;
+  return prisma.housekeeper.create({
+    data: {
+      code,
+      name: input.name.trim(),
+      department: input.department ?? 'ROOMS',
+      globalPersonId: input.globalPersonId,
+    },
+  });
 }
 
 export async function assignTaskHousekeeper(taskId: string, housekeeperId: string | null) {

@@ -153,7 +153,18 @@ export default function FoLaundryPage() {
         columns={[
           { key: 'room', header: t('laundryRoom'), render: (tk) => tk.roomNumber ?? '—' },
           { key: 'guest', header: t('laundryGuest'), render: (tk) => tk.guestName },
-          { key: 'status', header: tc('status'), render: (tk) => tk.status },
+          {
+            key: 'status',
+            header: tc('status'),
+            render: (tk) =>
+              tk.status === 'IN_PLANT'
+                ? t('statusInPlant')
+                : tk.status === 'POSTED'
+                  ? t('statusPosted')
+                  : tk.status === 'VOIDED'
+                    ? t('statusVoided')
+                    : tk.status,
+          },
           {
             key: 'due',
             header: t('laundryDue'),

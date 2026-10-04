@@ -344,6 +344,8 @@ model User {
   passwordHash      String
   fullName          String
   department        String?
+  /** Job title cached from workforce provision (`positionTitle`). Empty for local logins. */
+  positionTitle     String?
   status            UserStatus @default(ACTIVE)
   roleId            String
   role              Role       @relation(fields: [roleId], references: [id])
@@ -354,6 +356,7 @@ model User {
   lastLoginAt       DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+  logins            UserLogin[]
 
   @@index([roleId])
   @@index([status])
@@ -415,6 +418,9 @@ model HotelLookup {
   kind      HotelLookupKind
   code      String
   name      String
+  nameAz         String?
+  nameRu         String?
+  nameEn         String?
   active    Boolean         @default(true)
   sortOrder Int             @default(0)
   createdAt DateTime        @default(now())
@@ -430,6 +436,9 @@ model RoomView {
   organizationId String
   code      String
   name      String
+  nameAz         String?
+  nameRu         String?
+  nameEn         String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -442,6 +451,9 @@ model BedType {
   organizationId String
   code       String
   name       String
+  nameAz         String?
+  nameRu         String?
+  nameEn         String?
   systemType String?
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
@@ -455,6 +467,9 @@ model RoomType {
   organizationId String
   code          String
   name          String
+  nameAz                String?
+  nameRu                String?
+  nameEn                String?
   adultCapacity Int                 @default(2)
   childCapacity Int                 @default(0)
   baseQuota     Int
@@ -535,6 +550,9 @@ model RatePlan {
   organizationId String
   code          String
   name          String
+  nameAz         String?
+  nameRu         String?
+  nameEn         String?
   type          RatePlanType  @default(DERIVED)
 
   // Derivation config (NULL for BASE / BAR)
@@ -721,6 +739,9 @@ model RevenueCode {
   organizationId String
   code         String
   name         String
+  nameAz           String?
+  nameRu           String?
+  nameEn           String?
   taxTag       String?
   active       Boolean            @default(true)
   departmentId String?
@@ -780,6 +801,8 @@ model Agency {
   /** Net days after checkout for Finance aging (display + H-BL-48) */
   paymentTermsDays     Int?
   active               Boolean             @default(true)
+  /** Medical package stamped from the agency name at import (PKG-*). Null = resolve from the name. */
+  medicalPackageCode   String?
   reservations         Reservation[]
   reservationGroups    ReservationGroup[]
   allotmentBlocks      AllotmentBlock[]
@@ -788,6 +811,21 @@ model Agency {
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
   @@unique([organizationId, code])
   @@index([organizationId])
+}
+
+/** One row per successful staff or SSO sign-in. */
+model UserLogin {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  login          String
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
 }
 
 /** Corporate account (Opera Company profile) — direct bill, no travel-agent commission. */
@@ -809,21 +847,6 @@ model Company {
 
   @@unique([organizationId, code])
   @@index([organizationId])
-}
-
-/** Editable agency-name prefix → medical SKU (pilot polish #20). */
-model AgencyMedicalSkuRule {
-  id               String   @id @default(uuid())
-  organizationId   String
-  agencyNamePrefix String
-  packageCode      String
-  sortOrder        Int      @default(0)
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([organizationId, active])
-  @@index([agencyNamePrefix])
 }
 
 enum ContractPricingRuleType {
@@ -1774,6 +1797,8 @@ model Housekeeper {
   organizationId String
   code      String
   name      String
+  /// Finance employee person. Display name is copied at link time; identity stays in MDM.
+  globalPersonId String?
   active    Boolean            @default(true)
   department HkDepartment      @default(ROOMS)
   pinShift  HkRosterCellKind?
@@ -1785,6 +1810,7 @@ model Housekeeper {
   egLedger  HkEgLedger[]
   createdAt DateTime           @default(now())
   @@unique([organizationId, code])
+  @@unique([organizationId, globalPersonId])
   @@index([organizationId])
 }
 

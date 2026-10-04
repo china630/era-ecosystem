@@ -60,7 +60,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [~] Report hub pages (`/reports`, `/reports/analysis`, `/reports/occupancy`, `/reports/daily`, `/reports/financial`, `/reports/agency`, `/reports/booking`, `/reports/nightly-pack`)
 - [~] ZIP pack download (`/api/reports/pack/download`)
 - [~] ReportFilterBar component
-- [~] Pack config admin page (`/settings/report-pack`)
+- [~] Pack config admin page (`/settings/policies#reports`)
 - [~] HotelOpsShell sidebar restructured with hierarchical reports nav
 - [~] i18n keys en/az/ru (nav + reportsPdf namespace)
 - [~] NA `/night-audit/reports` deep links + FO in-house link
@@ -495,7 +495,7 @@ Tracked in [BACKLOG-PRODUCTION.md § P5](BACKLOG-PRODUCTION.md) · [COVERAGE_MAT
 ### Unit economics / BAR floor (2026-08-10)
 
 - [x] Versioned pricing components (service fee 6, meals 25, food COGS 16, medical COGS 20) + history — `/settings/pricing-components`, migration `20260810140000_pricing_components` (HOT-PC-01)
-- [x] Pricing policy flags (occupancy / load-based yield / child absolute) default OFF — `/settings/pricing-policy` (HOT-OCC-01)
+- [x] Pricing policy flags (occupancy / load-based yield / child absolute) default OFF — `/settings/policies#pricing` (HOT-OCC-01)
 - [x] Rate plan 2nd/3rd adult + extra bed amounts + child matrix absolute/freeCount CRUD
 - [x] Package `costFloor` + manual `sellPrice` versions (independent of BAR) — `/settings/package-prices` (HOT-PKG-01)
 - [x] BAR calendar shows recommended extra-adult add-on from components

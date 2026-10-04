@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   FilterMenuButton,
@@ -9,6 +8,7 @@ import {
   showApiError,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -48,6 +48,7 @@ export default function FolioBalancesPage() {
   const tc = useTranslations('common');
   const [tab, setTab] = useState<FolioBalanceTab>('inHouse');
   const [rows, setRows] = useState<Row[]>([]);
+  const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -122,15 +123,28 @@ export default function FolioBalancesPage() {
             key: 'open',
             header: tc('actions'),
             render: (r) => (
-              <Link href={`/folio/${r.id}`} className="text-[#2980B9] hover:underline">
+              <button
+                type="button"
+                className="text-[#2980B9] hover:underline"
+                onClick={() => setFolioReservationId(r.id)}
+              >
                 {t('openFolio')}
-              </Link>
+              </button>
             ),
           },
         ]}
         rows={rows as (Row & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
         emptyMessage={t('empty')}
+      />
+      <ReservationCardModal
+        open={Boolean(folioReservationId)}
+        reservationId={folioReservationId}
+        initialTab="folio"
+        onClose={() => {
+          setFolioReservationId(null);
+          void load();
+        }}
       />
     </>
   );

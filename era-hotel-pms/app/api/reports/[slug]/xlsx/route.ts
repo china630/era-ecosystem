@@ -33,7 +33,7 @@ export async function GET(
 
     const dim = url.searchParams.get('dim') ?? undefined;
     const data = await queryReport(slug, from, to, dim ? { dim } : undefined);
-    const buffer = reportToXlsxBuffer(data, lang.locale);
+    const buffer = await reportToXlsxBuffer(data, lang.locale);
 
     return new Response(new Uint8Array(buffer), {
       headers: {

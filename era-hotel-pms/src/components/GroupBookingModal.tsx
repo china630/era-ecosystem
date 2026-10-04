@@ -27,6 +27,7 @@ import {
   persistCounterpartyIds,
   sourceKindLabel,
 } from '@/lib/booking-source-kind';
+import { guestListItems } from '@/lib/guest-list-identity';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 function catalogValue(v: string | string[]): string {
@@ -152,6 +153,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [roomTypes, setRoomTypes] = useState<SelectOpt[]>([]);
   const [salesContracts, setSalesContracts] = useState<ContractOpt[]>([]);
   const [avlByType, setAvlByType] = useState<Record<string, number>>({});
+  const [nightsDraft, setNightsDraft] = useState('1');
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
@@ -249,6 +251,10 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   }, [neededByType, avlByType, checkIn, checkOut]);
 
   useEffect(() => {
+    setNightsDraft(String(nightsBetween(checkIn, checkOut) || 1));
+  }, [checkIn, checkOut]);
+
+  useEffect(() => {
     if (!open) return;
     setCheckIn(todayIso());
     setCheckOut(addDaysIso(todayIso(), 1));
@@ -281,8 +287,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       fetch('/api/master/room-types').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/admin/contracts?status=ACTIVE').then((r) => (r.ok ? r.json() : [])),
     ]).then(([g, rp, mp, src, ag, co, rt, contracts]) => {
-      if (Array.isArray(g)) {
-        setGuests(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
+      if (Array.isArray(g) || (g && typeof g === 'object' && Array.isArray((g as { items?: unknown }).items))) {
+        setGuests(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
       }
       if (Array.isArray(rp)) {
         const mapped: RatePlanOpt[] = rp
@@ -639,11 +645,25 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               <Field
                 label={tr('nights')}
                 preset="count"
-                value={String(nights)}
-                readOnly
+                value={nightsDraft}
                 className="min-w-0"
                 inputClassName="w-full min-w-0 text-center"
                 hint={tr('hintNights')}
+                onChange={(e) => setNightsDraft(e.target.value)}
+                onBlur={() => {
+                  const n = Number(nightsDraft);
+                  if (!checkIn || !Number.isInteger(n) || n < 1) {
+                    setNightsDraft(String(nights || 1));
+                    return;
+                  }
+                  setCheckOut(addDaysIso(checkIn, n));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
               />
             </div>
             <FieldRow cols={2}>
@@ -666,40 +686,30 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
 
           <FieldPanel title={tr('productSection')}>
             <FieldRow cols={3} className="min-w-0">
-              <FieldSelect
+              <CatalogField
+                kind="ENTITY_REF"
                 label={tb('roomType')}
-                preset="select"
                 className="min-w-0"
-                selectClassName="w-full min-w-0 max-w-full"
                 value={defaultRoomTypeId}
-                onChange={(e) => setDefaultRoomType(e.target.value)}
+                onChange={(v) => setDefaultRoomType(catalogValue(v))}
+                options={roomTypes.map((r) => ({
+                  value: r.id,
+                  label: r.adultCapacity != null ? `${r.label} (cap ${r.adultCapacity})` : r.label,
+                }))}
+                emptyLabel={tc('select')}
                 hint={t('defaultRoomTypeHint')}
-              >
-                <option value="">{tc('select')}</option>
-                {roomTypes.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.label}
-                    {r.adultCapacity != null ? ` (cap ${r.adultCapacity})` : ''}
-                  </option>
-                ))}
-              </FieldSelect>
-              <FieldSelect
+              />
+              <CatalogField
+                kind="ENTITY_REF"
                 label={tr('packageOrRate')}
-                preset="select"
                 className="min-w-0"
-                selectClassName="w-full min-w-0 max-w-full"
                 value={ratePlanId}
-                onChange={(e) => applyRatePlan(e.target.value)}
-                hint={tr('hintPackageOrRate')}
+                onChange={(v) => applyRatePlan(catalogValue(v))}
+                options={filteredRatePlans.map((rp) => ({ value: rp.id, label: rp.label }))}
                 required
-              >
-                <option value="">{tc('select')}</option>
-                {filteredRatePlans.map((rp) => (
-                  <option key={rp.id} value={rp.id}>
-                    {rp.label}
-                  </option>
-                ))}
-              </FieldSelect>
+                emptyLabel={null}
+                hint={tr('hintPackageOrRate')}
+              />
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={tr('mealPlan')}
@@ -781,25 +791,20 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
             ) : null}
             {showAgencyContract || showCompanyContract ? (
               <FieldRow cols={2}>
-                <FieldSelect
+                <CatalogField
+                  kind="ENTITY_REF"
                   label={showCompanyContract ? tr('companyContract') : tr('agencyContract')}
-                  preset="selectWide"
                   value={salesContractId}
-                  onChange={(e) => applySalesContract(e.target.value)}
+                  onChange={(v) => applySalesContract(catalogValue(v))}
+                  options={contractsForKind.map((c) => ({ value: c.id, label: c.label }))}
+                  emptyLabel="—"
                   disabled={
                     showCompanyContract
                       ? !companyId && contractsForKind.length === 0
                       : !agencyId && contractsForKind.length === 0
                   }
                   hint={tr('hintSalesContract')}
-                >
-                  <option value="">—</option>
-                  {contractsForKind.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </FieldSelect>
+                />
                 <Field
                   label={tr('contractRef')}
                   preset="code"
@@ -808,21 +813,16 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                 />
               </FieldRow>
             ) : null}
-            <FieldSelect
+            <CatalogField
+              kind="ENTITY_REF"
               label={t('bookerGuest')}
-              preset="selectWide"
               value={guestId}
-              onChange={(e) => setGuestId(e.target.value)}
+              onChange={(v) => setGuestId(catalogValue(v))}
+              options={guests.map((g) => ({ value: g.id, label: g.label }))}
               required
+              emptyLabel={null}
               hint={t('bookerGuestHint')}
-            >
-              <option value="">{tc('select')}</option>
-              {guests.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.label}
-                </option>
-              ))}
-            </FieldSelect>
+            />
             <FieldRow cols={3}>
               <Field label={tr('booker')} preset="shortText" value={booker} onChange={(e) => setBooker(e.target.value)} />
               <Field
@@ -880,22 +880,16 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                   key={line.key}
                   className="grid grid-cols-[minmax(6.5rem,1fr)_3.5rem_3.75rem_3rem_3rem_3rem_minmax(6.75rem,0.9fr)_minmax(6.75rem,0.9fr)_2rem] items-end gap-1.5 rounded-md border border-[#D5DADF] bg-[#F8F9FA] p-2"
                 >
-                  <FieldSelect
+                  <CatalogField
+                    kind="ENTITY_REF"
                     label={tb('roomType')}
-                    preset="select"
                     className="min-w-0"
-                    selectClassName="w-full min-w-0 max-w-full"
                     value={line.roomTypeId || defaultRoomTypeId}
-                    onChange={(e) => updateLine(line.key, { roomTypeId: e.target.value })}
+                    onChange={(v) => updateLine(line.key, { roomTypeId: catalogValue(v) })}
+                    options={roomTypes.map((r) => ({ value: r.id, label: r.label }))}
                     required
-                  >
-                    <option value="">{tc('select')}</option>
-                    {roomTypes.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </FieldSelect>
+                    emptyLabel={null}
+                  />
                   <Field
                     label={t('roomsOfType')}
                     preset="count"

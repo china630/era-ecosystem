@@ -14,6 +14,7 @@ import {
   parseElektrawebRoomCount,
   physicalRoomNumber,
 } from '@/lib/integration/elektraweb-share-map';
+import { classifyElektraRateCode, resolveElektraSellPath } from '@/lib/integration/elektraweb-sell-path';
 import { resolveGuestIdForReservationImport } from '@/lib/import/resolve-reservation-guest';
 import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
 
@@ -26,6 +27,8 @@ const rowSchema = z.object({
   /** Raw EW Room No (may be 707S). */
   roomNumber: z.string().optional().nullable(),
   agencyName: z.string().optional().nullable(),
+  /** EW rate code — channel codes (BOOKING, EXPEDIA…) become BAR + OTA source + channel agency. */
+  rateCode: z.string().optional().nullable(),
   checkInDate: z.date(),
   checkOutDate: z.date(),
   adults: z.number().int().optional(),
@@ -53,6 +56,9 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     'Room Type': 'roomTypeCode',
     'Room No': 'roomNumber',
     Agency: 'agencyName',
+    'Rate Code': 'rateCode',
+    RateCode: 'rateCode',
+    RATECODE: 'rateCode',
     Arrival: 'checkInDate',
     Departure: 'checkOutDate',
     Adult: 'adults',
@@ -81,6 +87,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       roomTypeCode: cellString(raw.roomTypeCode),
       roomNumber: cellString(raw.roomNumber),
       agencyName: cellString(raw.agencyName),
+      rateCode: cellString(raw.rateCode),
       checkInDate: checkIn,
       checkOutDate: checkOut,
       adults: cellNumber(raw.adults) ?? 1,
@@ -103,15 +110,27 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     });
     if (!roomType) throw new Error(`Room type not found: ${row.roomTypeCode}`);
 
-    const ratePlan = await tx.ratePlan.findFirst({ where: { active: true }, orderBy: { code: 'asc' } });
-    if (!ratePlan) throw new Error('No rate plans — import Rate Codes first');
-
     let agencyId: string | undefined;
     if (row.agencyName) {
       const agency = await tx.agency.findFirst({
         where: { name: { contains: row.agencyName, mode: 'insensitive' } },
       });
       agencyId = agency?.id;
+    }
+
+    let ratePlanId: string;
+    let sourceId: string | null = null;
+    if (dryRun) {
+      const any = await tx.ratePlan.findFirst({ where: { active: true }, select: { id: true } });
+      if (!any && classifyElektraRateCode({ code: row.rateCode }).kind !== 'channel') {
+        throw new Error('No rate plans — import Rate Codes first');
+      }
+      ratePlanId = any?.id ?? 'dry-run-bar';
+    } else {
+      const sellPath = await resolveElektraSellPath(tx, { code: row.rateCode });
+      ratePlanId = sellPath.ratePlanId;
+      sourceId = sellPath.sourceId;
+      agencyId = agencyId ?? sellPath.agencyId ?? undefined;
     }
 
     const doorNumber = physicalRoomNumber(row.roomNumber);
@@ -141,8 +160,9 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       roomTypeId: roomType.id,
       roomId,
       guestId,
-      ratePlanId: ratePlan.id,
+      ratePlanId,
       agencyId,
+      sourceId: existing?.sourceId ? undefined : (sourceId ?? undefined),
       checkInDate: row.checkInDate,
       checkOutDate: row.checkOutDate,
       status: mapReservationStatus(row.status),
@@ -165,6 +185,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         guestId: data.guestId,
         ratePlanId: data.ratePlanId,
         agencyId: data.agencyId,
+        ...(data.sourceId ? { sourceId: data.sourceId } : {}),
         checkInDate: data.checkInDate,
         checkOutDate: data.checkOutDate,
         status: data.status,

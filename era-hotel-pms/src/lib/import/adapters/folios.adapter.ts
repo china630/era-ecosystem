@@ -3,6 +3,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellNumber, cellString, parseDateCell } from '@/lib/import/helpers';
 import { toDecimal } from '@/lib/decimal';
 import type { ImportAdapter } from '@/lib/import/types';
+import { resolveElektraRevenueCodeId } from '@/lib/integration/elektraweb-revenue';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
@@ -61,15 +62,11 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       throw new Error(`Reservation not found for Res Id ${row.reservationExternalRef}`);
     }
 
-    const revenue = await tx.revenueCode.findFirst({
-      where: {
-        OR: [
-          { code: row.revenueCode },
-          { name: { equals: row.revenueCode, mode: 'insensitive' } },
-        ],
-      },
-    });
-    if (!revenue) throw new Error(`Revenue code not found: ${row.revenueCode}`);
+    const revenueInput = { code: row.revenueCode, name: row.revenueCode };
+    const revenueCodeId = dryRun
+      ? await resolveElektraRevenueCodeId(tx, revenueInput, { createMissing: false })
+      : await resolveElektraRevenueCodeId(tx, revenueInput);
+    if (!revenueCodeId && !dryRun) throw new Error(`Revenue code not found: ${row.revenueCode}`);
 
     let folio = reservation.folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
     if (!folio && !dryRun) {
@@ -89,7 +86,7 @@ export const foliosAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     const data = {
       externalRef: row.externalRef,
       folioId: folio.id,
-      revenueCodeId: revenue.id,
+      revenueCodeId: revenueCodeId ?? '',
       amount: toDecimal(row.amount),
       qty: 1,
       description: row.description,

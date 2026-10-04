@@ -23,8 +23,16 @@ export async function POST(request: Request) {
       await prisma.hkNsrDay.deleteMany({
         where: { reservationId: body.reservationId, workDate },
       });
+      await prisma.housekeepingTask.updateMany({
+        where: { roomId: body.roomId, businessDate: workDate, visitOutcome: 'REFUSED' },
+        data: { visitOutcome: null, jobType: 'OTHER' },
+      });
       return jsonOk({ cleared: true });
     }
+    await prisma.housekeepingTask.updateMany({
+      where: { roomId: body.roomId, businessDate: workDate },
+      data: { visitOutcome: 'REFUSED', jobType: 'NSR' },
+    });
     const existing = await prisma.hkNsrDay.findFirst({
       where: { reservationId: body.reservationId, workDate },
     });

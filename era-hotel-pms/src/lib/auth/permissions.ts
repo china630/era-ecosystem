@@ -154,6 +154,88 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
   },
 ];
 
+/** Display order for the role modal. Each permission appears once. */
+export const PERMISSION_PROCESSES: PermissionGroup[] = [
+  { id: "home", labelKey: "procHome", permissions: [PERMISSIONS.SCREEN_HOME] },
+  {
+    id: "booking",
+    labelKey: "procBooking",
+    permissions: [
+      PERMISSIONS.SCREEN_FO,
+      PERMISSIONS.RESERVATIONS_READ,
+      PERMISSIONS.RESERVATIONS_WRITE,
+      PERMISSIONS.RESERVATIONS_CHECKIN,
+      PERMISSIONS.RESERVATIONS_CHECKOUT,
+      PERMISSIONS.RESERVATIONS_CANCEL,
+    ],
+  },
+  {
+    id: "folio",
+    labelKey: "procFolio",
+    permissions: [
+      PERMISSIONS.SCREEN_FOLIO,
+      PERMISSIONS.FOLIO_READ,
+      PERMISSIONS.FOLIO_CHARGE,
+      PERMISSIONS.FOLIO_PAYMENT,
+      PERMISSIONS.FOLIO_VOID,
+    ],
+  },
+  {
+    id: "cash",
+    labelKey: "procCash",
+    permissions: [PERMISSIONS.SCREEN_FRONT_CASH, PERMISSIONS.CASH_SHIFT],
+  },
+  { id: "rooms", labelKey: "procRooms", permissions: [PERMISSIONS.ROOMS_STATUS] },
+  {
+    id: "hk",
+    labelKey: "procHk",
+    permissions: [PERMISSIONS.SCREEN_HK, PERMISSIONS.HOUSEKEEPING_MANAGE],
+  },
+  {
+    id: "medical",
+    labelKey: "procMedical",
+    permissions: [PERMISSIONS.SCREEN_MEDICAL, PERMISSIONS.MEDICAL_MANAGE],
+  },
+  {
+    id: "distribution",
+    labelKey: "procDistribution",
+    permissions: [PERMISSIONS.SCREEN_DISTRIBUTION, PERMISSIONS.CHANNEL_MANAGE],
+  },
+  {
+    id: "night",
+    labelKey: "procNight",
+    permissions: [PERMISSIONS.SCREEN_NIGHT_AUDIT, PERMISSIONS.NIGHT_AUDIT_RUN],
+  },
+  {
+    id: "reports",
+    labelKey: "procReports",
+    permissions: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.REPORTS_READ],
+  },
+  { id: "tours", labelKey: "procTours", permissions: [PERMISSIONS.SCREEN_TOURS] },
+  {
+    id: "admin",
+    labelKey: "procAdmin",
+    permissions: [
+      PERMISSIONS.SCREEN_ADMIN,
+      PERMISSIONS.SCREEN_SETTINGS,
+      PERMISSIONS.SCREEN_SETTINGS_USERS,
+      PERMISSIONS.SCREEN_SETTINGS_ACCESS,
+      PERMISSIONS.SCREEN_SETTINGS_IMPORT,
+      PERMISSIONS.MASTER_DATA_MANAGE,
+      PERMISSIONS.USERS_MANAGE,
+      PERMISSIONS.ACCESS_MANAGE,
+    ],
+  },
+  {
+    id: "import",
+    labelKey: "procImport",
+    permissions: [
+      PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+      PERMISSIONS.API_INTEGRATION_ELEKTRAWEB_BRIDGE,
+    ],
+  },
+];
+
 export const ROLE_PERMISSIONS: Record<RoleCode, Permission[]> = {
   [ROLE_CODES.HOTEL_ADMIN]: [...ALL_PERMISSIONS],
   [ROLE_CODES.MANAGER]: withPairedScreens([

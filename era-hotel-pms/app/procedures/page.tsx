@@ -8,8 +8,8 @@ import {
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
+  CatalogField,
   Field,
-  FieldSelect,
   FORM_STACK_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
@@ -248,33 +248,27 @@ export default function ProceduresPage() {
         }
       >
         <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
-          <FieldSelect
+          <CatalogField
+            kind="ENTITY_REF"
             label={t('guestStay')}
-            preset="selectWide"
             value={reservationId}
-            onChange={(e) => setReservationId(e.target.value)}
+            onChange={(v) => setReservationId(String(v ?? ''))}
+            options={reservations.map((r) => ({
+              value: r.id,
+              label: `${r.guest.fullName} · ${r.room?.roomNumber ?? '—'}`,
+            }))}
             required
-          >
-            <option value="">{tc('select')}</option>
-            {reservations.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-              </option>
-            ))}
-          </FieldSelect>
-          <FieldSelect
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
             label={t('service')}
-            preset="selectWide"
             value={serviceId}
-            onChange={(e) => setServiceId(e.target.value)}
+            onChange={(v) => setServiceId(String(v ?? ''))}
+            options={services.map((s) => ({ value: s.id, label: `${s.code} — ${s.name}` }))}
             required
-          >
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.code} — {s.name}
-              </option>
-            ))}
-          </FieldSelect>
+            emptyLabel={null}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('staff')} preset="longText" value={staffName} onChange={(e) => setStaffName(e.target.value)} />
             <Field label={t('place')} preset="code" value={placeCode} onChange={(e) => setPlaceCode(e.target.value)} />

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
@@ -259,46 +260,40 @@ export default function BanquetsPage() {
               required
             />
           </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('saloon')}</label>
-            <select className={MODAL_INPUT_CLASS} value={saloonId} onChange={(e) => setSaloonId(e.target.value)} required>
-              {saloons.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.code} — {s.name} (max {s.maxPax})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('menuPackage')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={menuPackageId}
-              onChange={(e) => setMenuPackageId(e.target.value)}
-            >
-              <option value="">{tc('select')}</option>
-              {menuPackages.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.code} — {p.name} ({p.pricePerPax} AZN/pax)
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('depositFolio')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-            >
-              <option value="">{t('noFolio')}</option>
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('saloon')}
+            value={saloonId}
+            onChange={(v) => setSaloonId(String(v ?? ''))}
+            options={saloons.map((s) => ({
+              value: s.id,
+              label: `${s.code} — ${s.name} (max ${s.maxPax})`,
+            }))}
+            required
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('menuPackage')}
+            value={menuPackageId}
+            onChange={(v) => setMenuPackageId(String(v ?? ''))}
+            options={menuPackages.map((p) => ({
+              value: p.id,
+              label: `${p.code} — ${p.name} (${p.pricePerPax} AZN/pax)`,
+            }))}
+            emptyLabel={tc('select')}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('depositFolio')}
+            value={reservationId}
+            onChange={(v) => setReservationId(String(v ?? ''))}
+            options={reservations.map((r) => ({
+              value: r.id,
+              label: `${r.guest.fullName} · ${r.room?.roomNumber ?? '—'}`,
+            }))}
+            emptyLabel={t('noFolio')}
+          />
           <div className="grid grid-cols-2 gap-3">
             <DatePicker
               label={t('eventDate')}

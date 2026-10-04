@@ -7,6 +7,16 @@ import { useEffect, useState } from "react";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
 
+function branchActive(
+  item: EraOpsNavItem,
+  pathname: string,
+  resolveActive: (pathname: string, href: string) => boolean,
+): boolean {
+  if (item.active) return true;
+  if (item.href && resolveActive(pathname, item.href)) return true;
+  return item.children?.some((child) => branchActive(child, pathname, resolveActive)) ?? false;
+}
+
 function NavLink({ item }: { item: EraOpsNavItem }) {
   const Icon = item.icon;
   const className = item.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
@@ -47,6 +57,62 @@ function NavLink({ item }: { item: EraOpsNavItem }) {
   );
 }
 
+function NavBranch({
+  item,
+  pathname,
+  resolveActive,
+}: {
+  item: EraOpsNavItem;
+  pathname: string;
+  resolveActive: (pathname: string, href: string) => boolean;
+}) {
+  const kids = (item.children ?? []).filter((child) => !child.hidden);
+  if (kids.length === 0) {
+    const active = item.active ?? (item.href ? resolveActive(pathname, item.href) : false);
+    return <NavLink item={{ ...item, active }} />;
+  }
+
+  const active = branchActive(item, pathname, resolveActive);
+  const [open, setOpen] = useState(active);
+  const Icon = item.icon;
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS}
+      >
+        {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
+        <span className="flex-1 truncate">{item.label}</span>
+        {open ? (
+          <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        )}
+      </button>
+      {open ? (
+        <div className="ml-3 flex flex-col gap-0.5 border-l border-[#ECF0F1] pl-2">
+          {kids.map((child) => {
+            const childActive =
+              child.active ?? (child.href ? resolveActive(pathname, child.href) : false);
+            return (
+              <NavLink
+                key={child.id ?? child.href ?? child.label}
+                item={{ ...child, active: childActive }}
+              />
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CollapsibleSection({
   section,
   pathname,
@@ -67,8 +133,8 @@ function CollapsibleSection({
     return <NavLink item={{ ...item, active }} />;
   }
 
-  const sectionActive = visibleItems.some(
-    (item) => item.active ?? (item.href ? resolveActive(pathname, item.href) : false),
+  const sectionActive = visibleItems.some((item) =>
+    branchActive(item, pathname, resolveActive),
   );
   const [open, setOpen] = useState(sectionActive);
   const Icon = section.icon;
@@ -106,7 +172,12 @@ function CollapsibleSection({
       {open ? (
         <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-[#ECF0F1] pl-2">
           {visibleItems.map((item) => (
-            <NavLink key={item.id ?? item.href ?? item.label} item={item} />
+            <NavBranch
+              key={item.id ?? item.href ?? item.label}
+              item={item}
+              pathname={pathname}
+              resolveActive={resolveActive}
+            />
           ))}
         </div>
       ) : null}

@@ -95,6 +95,7 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control |
+| Minibar catalog | `/settings/stock` | Local hotel product catalog (minibar). Screen permission stays Settings |
 | Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
 | Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
@@ -103,7 +104,7 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 | Guest laundry | `/hk/laundry` | Accept IN_PLANT; Delivered + return form → folio `LAUNDRY` |
 | HK forecast | `/hk/forecast` | Load 7/14 by floor |
 | `/hk/discrepancy` | Skip / Sleep (Sleep ≠ SO) |
-| `/settings/hk-policy` | Linen / deep every N nights (hotel-wide) |
+| Policies | `/settings/policies#hk` | Linen / deep every N nights (hotel-wide). Old `/settings/hk-policy` redirects |
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
@@ -129,7 +130,7 @@ Legacy: `/channel` → `/distribution/channel`, `/admin/contracts` → `/distrib
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | BAR calendar | `/settings/bar-calendar` | All BAR BASE plans with plan tabs + daily grid |
-| Pricing policy | `/settings/pricing-policy` | Occupancy / load-yield / child-absolute flags |
+| Pricing policy | `/settings/policies#pricing` | Occupancy / load-yield / child-absolute flags. Old `/settings/pricing-policy` redirects |
 | Child matrix | `/settings/child-matrix` | Child age bands (% / absolute / freeCount) on top of adult nightly |
 | Yield rules | `/settings/yield-rules` | Load-based % uplift (only if policy flag ON; not stop-sell) |
 | Pricing components | `/settings/pricing-components` | Versioned service fee / meals / COGS (BAR floor inputs) |
@@ -211,13 +212,13 @@ Deep clinical / lab → **Clinic** (external).
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | Master data | `/settings/master-data` | Rooms, types, rates, revenue codes, routing |
-| Users | `/settings/users` | Local hotel users/roles (SSO seats → CP) |
-| Integration | `/settings/integration` | Bridges, tokens, Finance handoff |
-| Audit viewer | `/settings/audit` | Action audit |
-| Stock (local MVP) | `/settings/stock` | Local HK consumption; ERP warehouse → Finance |
-| Elektraweb import | `/settings/import` | Import (controlled / SuperAdmin) |
-| Nightly report pack | `/settings/report-pack` | Which Management Reports go into the post-NA ZIP (HOT-RPT-02; spec) |
-| HK linen / deep | `/settings/hk-policy` | Hotel-wide every-N nights (HOT-HK-05; not per-stay) |
+| Policies | `/settings/policies` | HK linen/deep, pricing flags, morning report pack. Old URLs redirect to `#hk` / `#pricing` / `#reports` |
+| Accounts | `/settings/users`, `/settings/access`, `/settings/logins` | Nested menu: users, roles, sign-ins |
+| Outbound events | `/settings/integration` | Event toggles and URLs |
+| Revenue codes | `/settings/integration?view=gl` | Revenue code → GL |
+| Outbound journal | `/settings/integration?view=journal` | Sent events |
+| Audit viewer | `/settings/audit` | Entity type is a closed list of types that are written |
+| Import | `/settings/import` | Column profile includes Elektraweb; the screen name is Import |
 
 Legacy: `/admin/*` → `/settings/*` for these screens.
 
@@ -244,14 +245,15 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md) (ElektraWeb WA0058/59 + Nafta samples). **W1 live** — 8 P0 screens + PDF + nightly ZIP; not SHIPPED (no UAT evidence).
 
-**Sidebar:** one workspace plus the nightly pack. Categories live in the report list, not as extra menu screens.
+**Sidebar:** Reports, then Tools, then Other, immediately above Settings. Categories live in the report list, not as extra menu screens.
 
 | Menu item | URL | Classifier |
 |-----------|-----|------------|
 | All reports | `/reports` | Shared period, grouped list, PDF + Excel. Old category and slug URLs redirect here |
-| Nightly pack | `/reports/nightly-pack` | Hotel-configured ZIP for closed NA date |
+| Nightly pack | `/reports/nightly-pack` | Eight morning-pack forms for the last closed audit, plus ZIP for that date |
+| Tools | `/reports/analytics`, `/reports/occupancy/grid` | Own menu. Not rows in the report catalog |
 
-SatAdmin pack membership: `/settings/report-pack`.
+SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pack` redirects.
 
 **One screen → one primary home:** Management PDFs live on `/reports`. Night Audit `/night-audit/reports` is a **deep-link hub** (enabled pack + Download ZIP + NA-only ops grids). Front Cash journal links to the cash report; FO in-house ops list stays `/fo/in-house` and links to `/reports?report=in-house`.
 
@@ -291,9 +293,11 @@ SatAdmin pack membership: `/settings/report-pack`.
 11. Banquets  
 12. Medical  
 13. Reports  
-14. Settings  
-15. External links (footer / header)  
-16. Əsas — when decided  
+14. Tools (analytics, occupancy grid)  
+15. Other  
+16. Settings  
+17. External links (footer / header)  
+18. Əsas — when decided  
 
 ---
 

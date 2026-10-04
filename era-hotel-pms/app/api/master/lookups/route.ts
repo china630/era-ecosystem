@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { localizedNameFields } from '@/lib/catalog-label';
 import { HotelLookupKind } from '@prisma/client';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
@@ -12,6 +13,7 @@ const createSchema = z.object({
   kind: kindSchema,
   code: z.string().min(1),
   name: z.string().min(1),
+  ...localizedNameFields,
   sortOrder: z.number().int().optional(),
 });
 

@@ -16,6 +16,7 @@ const schema = z.object({
   creditLimitAzn: z.number().nonnegative().nullable().optional(),
   paymentTermsDays: z.number().int().nonnegative().nullable().optional(),
   active: z.boolean().optional(),
+  medicalPackageCode: z.string().trim().max(40).nullable().optional(),
 });
 
 export async function GET() {

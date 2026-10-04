@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
@@ -43,6 +43,7 @@ type ReportDef = {
 export default function NightAuditReportsHubPage() {
   const { can } = useAuth();
   const t = useTranslations('nightAudit');
+  const locale = useLocale();
   const tc = useTranslations('common');
   const [date, setDate] = useState(todayIso);
 
@@ -201,7 +202,7 @@ export default function NightAuditReportsHubPage() {
             );
           })}
           <Link
-            href={`/api/reports/pack/download?businessDate=${date}`}
+            href={`/api/reports/pack/download?businessDate=${date}&lang=${locale}`}
             className="rounded bg-[#2980B9] px-3 py-1 text-[12px] font-medium text-white hover:bg-[#2471A3]"
           >
             ⬇ Download ZIP

@@ -9,6 +9,7 @@ import {
   composeNaftaPackageNightlySellBreakdown,
   DEFAULT_NAFTA_PACKAGE_SELL,
   DEFAULT_STANDART_COMPANION_AZN,
+  halfOcc2,
   STANDART_COMPANION_COMPONENT_CODE,
   type ComposeBreakdown,
   type PackageSellRow,
@@ -51,6 +52,81 @@ export async function resolveStandartCompanionAzn(
 /**
  * Load occ1/2/3 from RatePlanSellVersion for PKG-* when present; else DEFAULT_NAFTA_PACKAGE_SELL.
  */
+function stayDateUtc(asOf: Date): Date {
+  return new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate()));
+}
+
+/** Companion add-on for the stay date only. No compiled 96 fallback. */
+async function datedStandartCompanionAzn(asOf: Date): Promise<number | null> {
+  const on = stayDateUtc(asOf);
+  const row = await prisma.pricingComponent.findFirst({
+    where: { code: STANDART_COMPANION_COMPONENT_CODE, active: true },
+    include: { versions: { orderBy: { effectiveFrom: "desc" } } },
+  });
+  const ver = row?.versions.find(
+    (v) => v.effectiveFrom <= on && (v.effectiveTo == null || v.effectiveTo >= on),
+  );
+  return ver?.sellAmount != null ? Number(ver.sellAmount) : null;
+}
+
+/**
+ * Owner package nightly from RatePlanSellVersion on the stay date.
+ * Returns null when a required occupancy (or Standart companion) has no version.
+ * Does not use the compiled 139/193/180/178/96 table.
+ */
+export async function ownerPackageNightlySell(
+  asOf: Date,
+  codes: string[],
+): Promise<number | null> {
+  if (codes.length === 0) return null;
+  const on = stayDateUtc(asOf);
+  const unique = [...new Set(codes)];
+  const plans = await prisma.ratePlan.findMany({
+    where: { code: { in: unique } },
+    include: { sellVersions: { orderBy: { effectiveFrom: "desc" } } },
+  });
+
+  function occPrice(code: string, occ: 1 | 2 | 3): number | null {
+    const plan = plans.find((p) => p.code === code);
+    const ver = plan?.sellVersions.find(
+      (v) =>
+        v.occupancy === occ &&
+        v.effectiveFrom <= on &&
+        (v.effectiveTo == null || v.effectiveTo >= on),
+    );
+    return ver ? Number(ver.sellPrice) : null;
+  }
+
+  if (unique.length === 1) {
+    const bucket: 1 | 2 | 3 = codes.length === 1 ? 1 : codes.length === 2 ? 2 : 3;
+    return occPrice(unique[0]!, bucket);
+  }
+
+  const ranked = [...codes].sort((a, b) => (occPrice(b, 1) ?? -1) - (occPrice(a, 1) ?? -1));
+  const mainCode = ranked[0]!;
+  const mainOcc1 = occPrice(mainCode, 1);
+  if (mainOcc1 == null) return null;
+  let total = mainOcc1;
+  let skippedMain = false;
+  for (const code of ranked) {
+    if (code === mainCode && !skippedMain) {
+      skippedMain = true;
+      continue;
+    }
+    if (code === "PKG-STANDART") {
+      const companion = await datedStandartCompanionAzn(asOf);
+      if (companion == null) return null;
+      total += companion;
+      continue;
+    }
+    const occ2 = occPrice(code, 2);
+    const occ1 = occPrice(code, 1);
+    if (occ2 == null || occ1 == null) return null;
+    total += halfOcc2({ code, occ1, occ2 });
+  }
+  return total;
+}
+
 export async function loadNaftaPackageSellCatalog(
   asOf: Date = new Date(),
 ): Promise<PackageSellRow[]> {

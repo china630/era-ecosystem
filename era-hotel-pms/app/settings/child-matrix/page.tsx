@@ -232,7 +232,7 @@ export default function ChildMatrixPage() {
           {t('barLink')}
         </Link>
         {' · '}
-        <Link className="text-[#2980B9] hover:underline" href="/settings/pricing-policy">
+        <Link className="text-[#2980B9] hover:underline" href="/settings/policies#pricing">
           {t('policyLink')}
         </Link>
         {' · '}

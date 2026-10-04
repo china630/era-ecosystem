@@ -4,6 +4,8 @@ import type { FolioType, HotelLookupKind } from '@prisma/client';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 import { HOTEL_LOOKUP_DEFAULTS } from '@/lib/hotel-lookup-defaults';
 
+type LocalizedNames = { nameAz?: string | null; nameRu?: string | null; nameEn?: string | null };
+
 export async function listRoomTypes() {
   return prisma.roomType.findMany({ orderBy: { code: 'asc' }, include: { _count: { select: { rooms: true } } } });
 }
@@ -14,7 +16,7 @@ export async function createRoomType(input: {
   adultCapacity?: number;
   childCapacity?: number;
   baseQuota: number;
-}) {
+} & LocalizedNames) {
   return prisma.roomType.create({ data: input });
 }
 
@@ -26,7 +28,7 @@ export async function updateRoomType(
     childCapacity?: number;
     baseQuota?: number;
     active?: boolean;
-  },
+  } & LocalizedNames,
 ) {
   return prisma.roomType.update({ where: { id }, data: input });
 }
@@ -49,11 +51,14 @@ export async function createRatePlan(input: {
   extraAdultAmount?: number | null;
   thirdAdultAmount?: number | null;
   extraBedAmount?: number | null;
-}) {
+} & LocalizedNames) {
   return prisma.ratePlan.create({
     data: {
       code: input.code,
       name: input.name,
+      nameAz: input.nameAz ?? null,
+      nameRu: input.nameRu ?? null,
+      nameEn: input.nameEn ?? null,
       medicalFlag: input.medicalFlag,
       roomTypeId: input.roomTypeId,
       mealPlanId: input.mealPlanId,
@@ -83,10 +88,13 @@ export async function updateRatePlan(
     extraAdultAmount?: number | null;
     thirdAdultAmount?: number | null;
     extraBedAmount?: number | null;
-  },
+  } & LocalizedNames,
 ) {
   const data: Record<string, unknown> = {
     name: input.name,
+    nameAz: input.nameAz,
+    nameRu: input.nameRu,
+    nameEn: input.nameEn,
     medicalFlag: input.medicalFlag,
     active: input.active,
     baseOccupancy: input.baseOccupancy,
@@ -134,7 +142,7 @@ export async function createRevenueCode(input: {
   taxTag?: string;
   departmentId?: string;
   targetFolioType?: FolioType;
-}) {
+} & LocalizedNames) {
   const { targetFolioType, ...codeData } = input;
   return prisma.$transaction(async (tx) => {
     const code = await tx.revenueCode.create({ data: codeData });
@@ -158,7 +166,7 @@ export async function updateRevenueCode(
     departmentId?: string | null;
     targetFolioType?: FolioType | null;
     active?: boolean;
-  },
+  } & LocalizedNames,
 ) {
   const { targetFolioType, ...codeData } = input;
   return prisma.$transaction(async (tx) => {
@@ -193,11 +201,16 @@ export async function listBedTypes() {
   return prisma.bedType.findMany({ orderBy: { code: 'asc' } });
 }
 
-export async function createBedType(input: { code: string; name: string; systemType?: string }) {
+export async function createBedType(
+  input: { code: string; name: string; systemType?: string } & LocalizedNames,
+) {
   return prisma.bedType.create({
     data: {
       code: input.code.toUpperCase(),
       name: input.name,
+      nameAz: input.nameAz ?? null,
+      nameRu: input.nameRu ?? null,
+      nameEn: input.nameEn ?? null,
       systemType: input.systemType,
     },
   });
@@ -205,7 +218,7 @@ export async function createBedType(input: { code: string; name: string; systemT
 
 export async function updateBedType(
   id: string,
-  input: { name?: string; systemType?: string | null; active?: boolean },
+  input: { name?: string; systemType?: string | null; active?: boolean } & LocalizedNames,
 ) {
   return prisma.bedType.update({ where: { id }, data: input });
 }
@@ -214,16 +227,22 @@ export async function listRoomViews() {
   return prisma.roomView.findMany({ orderBy: { code: 'asc' } });
 }
 
-export async function createRoomView(input: { code: string; name: string }) {
+export async function createRoomView(input: { code: string; name: string } & LocalizedNames) {
   return prisma.roomView.create({
     data: {
       code: input.code.toUpperCase(),
       name: input.name,
+      nameAz: input.nameAz ?? null,
+      nameRu: input.nameRu ?? null,
+      nameEn: input.nameEn ?? null,
     },
   });
 }
 
-export async function updateRoomView(id: string, input: { name?: string; active?: boolean }) {
+export async function updateRoomView(
+  id: string,
+  input: { name?: string; active?: boolean } & LocalizedNames,
+) {
   return prisma.roomView.update({ where: { id }, data: input });
 }
 
@@ -301,17 +320,32 @@ export async function listHotelLookups(kind?: HotelLookupKind, activeOnly = fals
   });
 }
 
+/** Rejects codes that are not an active row of the given HotelLookup kind (HTTP 400). */
+export async function assertActiveHotelLookupCode(kind: HotelLookupKind, code: string) {
+  await ensureHotelLookupsSeeded();
+  const row = await prisma.hotelLookup.findFirst({
+    where: { kind, code: code.trim(), active: true },
+    select: { id: true },
+  });
+  if (!row) {
+    throw Object.assign(new Error(`Invalid ${kind} code: ${code}`), { status: 400 });
+  }
+}
+
 export async function createHotelLookup(input: {
   kind: HotelLookupKind;
   code: string;
   name: string;
   sortOrder?: number;
-}) {
+} & LocalizedNames) {
   return prisma.hotelLookup.create({
     data: {
       kind: input.kind,
       code: input.code.trim(),
       name: input.name.trim(),
+      nameAz: input.nameAz ?? null,
+      nameRu: input.nameRu ?? null,
+      nameEn: input.nameEn ?? null,
       sortOrder: input.sortOrder ?? 0,
     },
   });
@@ -319,7 +353,7 @@ export async function createHotelLookup(input: {
 
 export async function updateHotelLookup(
   id: string,
-  input: { name?: string; active?: boolean; sortOrder?: number },
+  input: { name?: string; active?: boolean; sortOrder?: number } & LocalizedNames,
 ) {
   return prisma.hotelLookup.update({ where: { id }, data: input });
 }

@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   DATA_TABLE_SHELL_CLASS,
   DatePicker,
   Field,
@@ -28,6 +24,7 @@ import {
   type ReportDateMode,
 } from '@/lib/reports/catalog';
 import { resolveDateMode, resolvePreset, type PeriodPreset } from '@/lib/reports/period';
+import { isReportTotalRow, reportCellAlign } from '@/lib/reports/report-align';
 import { reportToSheets, type TabularSheet } from '@/lib/reports/tabular';
 
 const CATEGORIES: ReportCategory[] = ['daily', 'occupancy', 'financial', 'analysis', 'agency', 'booking'];
@@ -87,8 +84,8 @@ export function ReportsWorkspace() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'xlsx' | null>(null);
   const [data, setData] = useState<unknown>(null);
-  const [packBlocks, setPackBlocks] = useState<Array<{ slug: string; title: string; sheets: TabularSheet[] }>>([]);
   const [shown, setShown] = useState(false);
+  const loadAbort = useRef<AbortController | null>(null);
 
   const def = getReportBySlug(slug);
 
@@ -115,7 +112,7 @@ export function ReportsWorkspace() {
     fetch('/api/business-date')
       .then((r) => r.json())
       .then((body) => {
-        const raw = body.businessDate ?? body.date ?? hotelDateKey();
+        const raw = body.currentBusinessDate ?? body.businessDate ?? body.date ?? hotelDateKey();
         const ymd = typeof raw === 'string' ? raw.slice(0, 10) : hotelDateKey();
         setBusinessDate(ymd);
         setAnchorIso((prev) => prev || ymd);
@@ -135,7 +132,8 @@ export function ReportsWorkspace() {
     if (!businessDate) return null;
     const businessDay = bakuCivilUtcDate(businessDate);
     if (dateMode === 'month_to_closed' || dateMode === 'year_to_closed') {
-      const resolved = resolveDateMode(dateMode, businessDay);
+      const anchor = anchorIso || businessDate;
+      const resolved = resolveDateMode(dateMode, bakuCivilUtcDate(anchor));
       return { from: ymdOf(resolved.from), to: ymdOf(resolved.to) };
     }
     if (dateMode === 'business_date') {
@@ -174,10 +172,16 @@ export function ReportsWorkspace() {
     return title.includes(needle) || report.slug.includes(needle);
   });
 
+  function abortLoad() {
+    loadAbort.current?.abort();
+    loadAbort.current = null;
+    setLoading(false);
+  }
+
   function openReport(next: string) {
+    abortLoad();
     setSlug(next);
     setData(null);
-    setPackBlocks([]);
     setShown(false);
     if (next.endsWith('-cube') && next.includes('reservation')) setDim('roomType');
     else if (next.endsWith('-cube') && next.includes('agency')) setDim('agency');
@@ -195,11 +199,14 @@ export function ReportsWorkspace() {
   async function showReport() {
     const qs = queryString();
     if (!qs) return;
+    abortLoad();
+    const controller = new AbortController();
+    loadAbort.current = controller;
     setLoading(true);
     setShown(true);
-    setPackBlocks([]);
+    setData(null);
     try {
-      const res = await fetch(`/api/reports/${encodeURIComponent(slug)}?${qs}`);
+      const res = await fetch(`/api/reports/${encodeURIComponent(slug)}?${qs}`, { signal: controller.signal });
       const body = await res.json().catch(() => ({ error: res.statusText }));
       if (!res.ok) {
         setData(null);
@@ -208,41 +215,14 @@ export function ReportsWorkspace() {
       }
       setData(body);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setData(null);
       showApiError({ error: err instanceof Error ? err.message : t('exportFailed') });
     } finally {
-      setLoading(false);
-    }
-  }
-
-  async function showMorningPack() {
-    if (!businessDate) return;
-    setLoading(true);
-    setShown(true);
-    setData(null);
-    try {
-      const blocks: Array<{ slug: string; title: string; sheets: TabularSheet[] }> = [];
-      for (const report of getPackDefaults()) {
-        const range = periodFor(report.dateMode);
-        if (!range) continue;
-        const qs = new URLSearchParams({ from: range.from, to: range.to, lang: locale });
-        const res = await fetch(`/api/reports/${encodeURIComponent(report.slug)}?${qs}`);
-        const body = await res.json().catch(() => ({ error: res.statusText }));
-        if (!res.ok) {
-          showApiError(body, t('exportFailed'));
-          continue;
-        }
-        blocks.push({
-          slug: report.slug,
-          title: tRoot(report.titleKey as 'reportsPdf.dailyManagement'),
-          sheets: reportToSheets(body).filter((sheet) => sheet.columns.length > 0),
-        });
+      if (loadAbort.current === controller) {
+        loadAbort.current = null;
+        setLoading(false);
       }
-      setPackBlocks(blocks);
-    } catch (err) {
-      showApiError({ error: err instanceof Error ? err.message : t('exportFailed') });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -291,7 +271,7 @@ export function ReportsWorkspace() {
             if (items.length === 0) return null;
             return (
               <div key={category} className="mb-3">
-                <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+                <p className="px-2 py-1.5 text-sm font-semibold text-[#34495E]">
                   {t(category)}
                 </p>
                 {items.map((report) => {
@@ -312,15 +292,6 @@ export function ReportsWorkspace() {
               </div>
             );
           })}
-          <div className="mt-2 border-t border-[#D5DADF] pt-2">
-            <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">{t('tools')}</p>
-            <Link href="/reports/analytics" className="block rounded-lg px-2 py-1.5 text-[13px] text-[#34495E] hover:bg-[#F8F9FA]">
-              {t('analyticsTitle')}
-            </Link>
-            <Link href="/reports/occupancy/grid" className="block rounded-lg px-2 py-1.5 text-[13px] text-[#34495E] hover:bg-[#F8F9FA]">
-              {t('occupancyTitle')}
-            </Link>
-          </div>
         </div>
       </aside>
 
@@ -329,34 +300,33 @@ export function ReportsWorkspace() {
           <h1 className="text-xl font-semibold text-[#34495E]">
             {def ? tRoot(def.titleKey as 'reportsPdf.dailyManagement') : t('pickReport')}
           </h1>
-          <div className={`${CHIP_GROUP_CLASS} mt-3`}>
-            <span className="px-1 text-[12px] text-[#7F8C8D]">{t('morningPack')}</span>
-            {getPackDefaults().map((report) => (
-              <button
-                key={report.slug}
-                type="button"
-                className={report.slug === slug ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-                onClick={() => openReport(report.slug)}
-              >
-                {tRoot(report.titleKey as 'reportsPdf.dailyManagement')}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="rounded-xl border border-[#D5DADF] bg-white p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <div className="min-w-[14rem] flex-1">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={!period || exporting != null} onClick={() => void download('pdf')}>
+                {exporting === 'pdf' ? tc('loading') : t('exportPdf')}
+              </button>
+              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={!period || exporting != null} onClick={() => void download('xlsx')}>
+                {exporting === 'xlsx' ? tc('loading') : t('exportExcel')}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-end justify-end gap-2">
+            <div className="w-44">
               <CatalogField
                 kind="CLOSED_MEDIUM"
                 label={tp('period')}
                 value={preset}
                 disabled={presetsLocked}
                 emptyLabel={null}
+                widthPreset="select"
                 options={presetOptions}
                 onChange={(value) => {
                   const next = (Array.isArray(value) ? value[0] : value) as PresetChoice;
-                  if (next) setPreset(next);
+                  if (!next) return;
+                  abortLoad();
+                  setPreset(next);
                 }}
               />
             </div>
@@ -364,7 +334,11 @@ export function ReportsWorkspace() {
               <DatePicker
                 label={t('selectDate')}
                 value={anchorIso || businessDate}
-                onChange={(iso) => iso && setAnchorIso(iso)}
+                onChange={(iso) => {
+                  if (!iso) return;
+                  abortLoad();
+                  setAnchorIso(iso);
+                }}
                 placeholder={tc('datePlaceholder')}
                 openCalendarLabel={tc('openCalendar')}
               />
@@ -374,14 +348,22 @@ export function ReportsWorkspace() {
                 <DatePicker
                   label={t('dateFrom')}
                   value={customFrom || businessDate}
-                  onChange={(iso) => iso && setCustomFrom(iso)}
+                  onChange={(iso) => {
+                    if (!iso) return;
+                    abortLoad();
+                    setCustomFrom(iso);
+                  }}
                   placeholder={tc('datePlaceholder')}
                   openCalendarLabel={tc('openCalendar')}
                 />
                 <DatePicker
                   label={t('dateTo')}
                   value={customTo || businessDate}
-                  onChange={(iso) => iso && setCustomTo(iso)}
+                  onChange={(iso) => {
+                    if (!iso) return;
+                    abortLoad();
+                    setCustomTo(iso);
+                  }}
                   placeholder={tc('datePlaceholder')}
                   openCalendarLabel={tc('openCalendar')}
                 />
@@ -407,18 +389,8 @@ export function ReportsWorkspace() {
                 />
               </div>
             ) : null}
-            <div className="flex flex-wrap gap-2">
               <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!period || loading} onClick={() => void showReport()}>
                 {loading ? tc('loading') : t('show')}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={!businessDate || loading} onClick={() => void showMorningPack()}>
-                {t('showPack')}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={!period || exporting != null} onClick={() => void download('pdf')}>
-                {exporting === 'pdf' ? tc('loading') : t('exportPdf')}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={!period || exporting != null} onClick={() => void download('xlsx')}>
-                {exporting === 'xlsx' ? tc('loading') : t('exportExcel')}
               </button>
             </div>
           </div>
@@ -429,27 +401,19 @@ export function ReportsWorkspace() {
           ) : null}
         </div>
 
+        {loading ? <p className="text-sm text-[#7F8C8D]">{t('calculating')}</p> : null}
         {!unknownReport && !shown ? <p className="text-sm text-[#7F8C8D]">{t('pressShow')}</p> : null}
         {unknownReport ? <p className="text-sm text-[#C0392B]">{t('unknownReport', { slug: requested ?? '' })}</p> : null}
-        {shown && !loading && sheets.length === 0 && packBlocks.length === 0 ? <p className="text-sm text-[#7F8C8D]">{tp('noData')}</p> : null}
+        {shown && !loading && sheets.length === 0 ? <p className="text-sm text-[#7F8C8D]">{tp('noData')}</p> : null}
         {sheets.map((sheet) => (
           <ReportSheet key={sheet.name} sheet={sheet} locale={locale} />
-        ))}
-        {packBlocks.map((block) => (
-          <div key={block.slug} className="space-y-2">
-            <h2 className="text-base font-semibold text-[#34495E]">{block.title}</h2>
-            {block.sheets.length === 0 ? <p className="text-sm text-[#7F8C8D]">{tp('noData')}</p> : null}
-            {block.sheets.map((sheet) => (
-              <ReportSheet key={`${block.slug}-${sheet.name}`} sheet={sheet} locale={locale} />
-            ))}
-          </div>
         ))}
       </section>
     </div>
   );
 }
 
-function ReportSheet({ sheet, locale }: { sheet: TabularSheet; locale: string }) {
+export function ReportSheet({ sheet, locale }: { sheet: TabularSheet; locale: string }) {
   return (
     <div className={DATA_TABLE_SHELL_CLASS}>
       <div className="overflow-x-auto">
@@ -457,7 +421,7 @@ function ReportSheet({ sheet, locale }: { sheet: TabularSheet; locale: string })
           <thead className="border-b border-[#D5DADF] bg-[#F8F9FA]">
             <tr>
               {sheet.columns.map((key) => (
-                <th key={key} className="px-3 py-2 text-left font-medium text-[#34495E]">
+                <th key={key} className="px-3 py-2 text-center text-sm font-bold text-[#34495E]">
                   {columnLabel(locale, key)}
                 </th>
               ))}
@@ -472,9 +436,18 @@ function ReportSheet({ sheet, locale }: { sheet: TabularSheet; locale: string })
               </tr>
             ) : (
               sheet.rows.map((row, index) => (
-                <tr key={index} className={index % 2 === 1 ? 'bg-[#F8F9FA]' : undefined}>
+                <tr key={index} className={`${index % 2 === 1 ? 'bg-[#F8F9FA]' : ''} ${isReportTotalRow(row) ? 'font-bold' : ''}`}>
                   {row.map((value, cellIndex) => (
-                    <td key={cellIndex} className="px-3 py-1.5 text-[#34495E]">
+                    <td
+                      key={cellIndex}
+                      className={`px-3 py-1.5 text-[#34495E] ${
+                        reportCellAlign(value) === 'right'
+                          ? 'text-right'
+                          : reportCellAlign(value) === 'center'
+                            ? 'text-center'
+                            : 'text-left'
+                      }`}
+                    >
                       {value == null
                         ? ''
                         : typeof value === 'number'

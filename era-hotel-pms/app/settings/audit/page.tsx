@@ -10,6 +10,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  CatalogField,
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
@@ -20,6 +21,18 @@ import {
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+
+const AUDIT_ENTITY_TYPES = [
+  'FolioCharge',
+  'RoomType',
+  'Role',
+  'ImportRun',
+  'HotelPolicy',
+  'PricingComponent',
+  'RatePlanSellVersion',
+  'CityLedgerSnapshot',
+  'OpsWipe',
+] as const;
 
 type AuditRow = {
   id: string;
@@ -37,7 +50,7 @@ export default function AuditPage() {
   const tc = useTranslations('common');
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [busy, setBusy] = useState(false);
-  const [entityType, setEntityType] = useState('Reservation');
+  const [entityType, setEntityType] = useState<string>(AUDIT_ENTITY_TYPES[0]);
   const [entityId, setEntityId] = useState('');
   const [action, setAction] = useState('');
   const debouncedEntityId = useDebouncedValue(entityId, 300);
@@ -89,7 +102,7 @@ export default function AuditPage() {
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
-          setEntityType('Reservation');
+          setEntityType(AUDIT_ENTITY_TYPES[0]);
           setEntityId('');
           setAction('');
           setDateFrom('');
@@ -97,13 +110,18 @@ export default function AuditPage() {
           setRows([]);
         }}
       >
-        <Field
+        <CatalogField
+          kind="CLOSED_SMALL"
           label={t('entityType')}
-          preset="shortText"
           id="audit-entity-type"
           value={entityType}
-          onChange={(e) => setEntityType(e.target.value)}
-          placeholder={t('entityTypePlaceholder')}
+          onChange={(v) => setEntityType(String(v ?? AUDIT_ENTITY_TYPES[0]))}
+          options={AUDIT_ENTITY_TYPES.map((code) => ({
+            value: code,
+            label: t(`entity_${code}` as 'entity_FolioCharge'),
+          }))}
+          emptyLabel={null}
+          widthPreset="selectWide"
         />
         <Field
           label={t('entityId')}

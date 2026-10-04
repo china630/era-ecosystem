@@ -13,6 +13,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
   useDebouncedValue,
+  CatalogField,
   Field,
   FieldSelect,
   FORM_STACK_CLASS,
@@ -103,6 +104,10 @@ export default function StockAdminPage() {
 
   async function receipt(e: React.FormEvent) {
     e.preventDefault();
+    if (!productId || !warehouseId) {
+      showApiError({ error: tc('required') }, tc('error'));
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/stock/movements', {
@@ -381,32 +386,24 @@ export default function StockAdminPage() {
         }
       >
         <form id={receiptFormId} onSubmit={receipt} className={FORM_STACK_CLASS}>
-          <FieldSelect
+          <CatalogField
+            kind="ENTITY_REF"
             label={tc('name')}
-            preset="selectWide"
             id="stock-product"
             value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-          >
-            {activeProducts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code}
-              </option>
-            ))}
-          </FieldSelect>
-          <FieldSelect
+            onChange={(v) => setProductId(String(v ?? ''))}
+            options={activeProducts.map((p) => ({ value: p.id, label: p.code }))}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
             label={tc('code')}
-            preset="select"
             id="stock-warehouse"
             value={warehouseId}
-            onChange={(e) => setWarehouseId(e.target.value)}
-          >
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.code}
-              </option>
-            ))}
-          </FieldSelect>
+            onChange={(v) => setWarehouseId(String(v ?? ''))}
+            options={warehouses.map((w) => ({ value: w.id, label: w.code }))}
+            emptyLabel={null}
+          />
           <Field
             label={tc('amount')}
             preset="count"

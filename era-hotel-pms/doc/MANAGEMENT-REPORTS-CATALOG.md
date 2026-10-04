@@ -72,16 +72,18 @@ Nafta answers (2026-08-19): Monthly and Daily Analysis = through closed date inc
 
 ## 5. Reports menu IA
 
-Primary home: sidebar **All reports** (`/reports`) plus **Nightly pack**. Categories are groups inside the workspace list, not extra sidebar screens.
+Primary home: sidebar **All reports** (`/reports`) plus **Nightly pack**, then **Tools** and **Other**, above Settings. Categories are groups inside the workspace list, not extra sidebar screens.
 
 ```
 Reports                         /reports                    list + shared period + PDF/Excel
-└── Nightly pack                /reports/nightly-pack       configured ZIP for closed date
+└── Nightly pack                /reports/nightly-pack       eight forms + ZIP for the closed date
+Tools                           /reports/analytics          not catalog rows
+                                /reports/occupancy/grid
 ```
 
 Old `/reports/{category}` and `/reports/{category}/{slug}` URLs redirect to `/reports?report=` or `?category=`.
 
-SatAdmin pack membership: `/settings/report-pack` (not a Reports sidebar row).
+SatAdmin pack membership: `/settings/policies#reports` (not a Reports sidebar row).
 
 ### 5.1 Deep links (not a second catalog)
 
@@ -132,7 +134,7 @@ Pack membership and order are **per hotel** (`NightAuditReportPackConfig`). Naft
 **APIs (W1 live):**
 
 - `GET /api/reports/pack?businessDate=` — manifest (enabled slugs, filenames)
-- `GET /api/reports/pack/download?businessDate=&lang=` — ZIP of PDFs (lang from UI locale)
+- `GET /api/reports/pack/download?businessDate=&lang=` — ZIP of PDFs. Each member uses its date mode ending on that business date (month-to-date and year-to-date included). `lang` is the UI locale.
 - `GET/PUT /api/admin/report-pack` — SatAdmin config
 
 ---

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import {
   DatePicker,
   EraListFilterBar,
-  FieldSelect,
+  CatalogField,
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
@@ -171,19 +171,14 @@ export default function CompanyLedgerPage() {
           placeholder={tc('datePlaceholder')}
           openCalendarLabel={tc('openCalendar')}
         />
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('company')}
-          preset="select"
           value={companyId}
-          onChange={(e) => setCompanyId(e.target.value)}
-        >
-          <option value="">{t('companySelect')}</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.code} — {c.name}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setCompanyId(String(v ?? ''))}
+          options={companies.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))}
+          emptyLabel={t('companySelect')}
+        />
       </EraListFilterBar>
 
       <FinanceBoundaryBanner target="counterparties" />

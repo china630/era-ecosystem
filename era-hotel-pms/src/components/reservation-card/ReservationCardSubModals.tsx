@@ -1,19 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import {
+  CatalogField,
   FieldSelect,
   PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { catalogLabel, type LocalizedCatalogRow } from '@/lib/catalog-label';
 
 type SubModal = 'creditCard' | 'packages' | 'tasks' | 'folioRouting' | null;
 
-type RevenueCode = { id: string; code: string; name: string };
+type RevenueCode = LocalizedCatalogRow & { id: string; code: string; name: string };
 type OverrideRow = {
   revenueCodeId: string;
   targetFolioType: 'GUEST' | 'COMPANY' | 'AGENCY';
@@ -44,6 +46,7 @@ export function ReservationCardSubModals({
 }) {
   const t = useTranslations('reservationCard');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   const [overrides, setOverrides] = useState<OverrideRow[]>([]);
   const [rules, setRules] = useState<RuleRow[]>([]);
@@ -233,19 +236,17 @@ export function ReservationCardSubModals({
             </tbody>
           </table>
           <div className="flex flex-wrap items-end gap-2">
-            <FieldSelect
+            <CatalogField
+              kind="ENTITY_REF"
               label={t('subModal.revenueCode')}
-              preset="select"
               value={newCodeId}
-              onChange={(e) => setNewCodeId(e.target.value)}
-            >
-              <option value="">{tc('select')}</option>
-              {revenueCodes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.code} — {c.name}
-                </option>
-              ))}
-            </FieldSelect>
+              onChange={(v) => setNewCodeId(String(v ?? ''))}
+              options={revenueCodes.map((c) => ({
+                value: c.id,
+                label: `${c.code} — ${catalogLabel(c, locale)}`,
+              }))}
+              emptyLabel={tc('select')}
+            />
             <FieldSelect
               label={t('subModal.targetFolio')}
               preset="select"

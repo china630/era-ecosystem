@@ -12,9 +12,9 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
+  CatalogField,
   Field,
   FieldRow,
-  FieldSelect,
   FORM_STACK_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -144,27 +144,31 @@ export default function PackagePricesPage() {
         title={t('title')}
         subtitle={t('subtitle')}
         leading={
-          <Link className="text-[13px] text-[#2980B9] hover:underline" href="/settings/pricing-policy">
+          <Link className="text-[13px] text-[#2980B9] hover:underline" href="/settings/policies#pricing">
             {t('policyLink')}
           </Link>
         }
       />
 
       <section className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('package')}
-          preset="select"
           value={planId}
-          onChange={(e) => setPlanId(e.target.value)}
-        >
-          {plans.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.code} — {p.name} ({p.pricePerNight})
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setPlanId(String(v ?? ''))}
+          options={plans.map((p) => ({
+            value: p.id,
+            label: `${p.code} — ${p.name} (${p.pricePerNight})`,
+          }))}
+          emptyLabel={null}
+        />
         {canWrite ? (
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={!planId}
+            onClick={() => setModalOpen(true)}
+          >
             {t('addVersion')}
           </button>
         ) : null}
