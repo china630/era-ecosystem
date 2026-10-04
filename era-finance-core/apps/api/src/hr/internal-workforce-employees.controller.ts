@@ -55,6 +55,35 @@ export class InternalWorkforceEmployeesController {
     );
   }
 
+  @Get("picker")
+  @ApiOperation({
+    summary: "S2S: active employees for a satellite staff picker (display name via MDM, no rates)",
+  })
+  async picker(@Query("organizationId") organizationId: string) {
+    const org = organizationId?.trim();
+    if (!org) return { items: [] as Array<{ id: string; globalPersonId: string; name: string }> };
+    return runWithTenantContextAsync(
+      { organizationId: org, skipTenantFilter: false },
+      async () => {
+        const page = await this.employees.list(org, { page: 1, pageSize: 500 });
+        const persons = page.persons as Record<string, { displayName?: string | null }>;
+        const items = page.items
+          .filter(
+            (item) =>
+              String((item as { employmentStatus?: string }).employmentStatus ?? "ACTIVE") ===
+              "ACTIVE",
+          )
+          .map((item) => {
+            const globalPersonId = item.globalPersonId;
+            const name = persons[globalPersonId]?.displayName?.trim() || "";
+            return { id: item.id, globalPersonId, name };
+          })
+          .filter((row) => row.name.length > 0);
+        return { items };
+      },
+    );
+  }
+
   @Get("by-cp-employment")
   @ApiOperation({
     summary:
