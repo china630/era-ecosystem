@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellBool, cellString, firstCellString } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
+import { resolveAgencyPackageCode } from '@/lib/services/medical-package-resolve.service';
 
 const rowSchema = z.object({
   code: z.string().min(1),
@@ -47,6 +48,7 @@ export const agenciesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   upsert: async (tx, row, dryRun) => {
     const existing = await tx.agency.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
+    const medicalPackageCode = resolveAgencyPackageCode(row.name);
     await tx.agency.upsert({
       where: { code: row.code } as never,
       create: {
@@ -54,11 +56,13 @@ export const agenciesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         name: row.name,
         voen: row.voen ?? undefined,
         active: row.active ?? true,
+        medicalPackageCode,
       },
       update: {
         name: row.name,
         voen: row.voen ?? undefined,
         active: row.active ?? true,
+        medicalPackageCode,
       },
     });
     return existing ? 'updated' : 'created';

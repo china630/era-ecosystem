@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
@@ -38,6 +37,9 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
@@ -53,6 +55,7 @@ type Practitioner = {
   globalPersonId?: string | null;
   financeEmployeeId?: string | null;
   defaultSlotMinutes?: number | null;
+  active?: boolean;
 };
 
 type WorkforcePolicy = {
@@ -198,6 +201,10 @@ export default function MasterDataPage() {
   const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
   const [skillCoverageMsg, setSkillCoverageMsg] = useState<string | null>(null);
   const [scheduleFor, setScheduleFor] = useState<{ id: string; name: string } | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const [blockedNonCabin, setBlockedNonCabin] = useState<Array<{ code: string; name: string }>>(
+    [],
+  );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -206,7 +213,9 @@ export default function MasterDataPage() {
 
   const loadAll = useCallback(async () => {
     const [p, r, res, pt, wp, cat, sites] = await Promise.all([
-      fetch("/api/admin/practitioners").then((x) => x.json()),
+      fetch(
+        showInactive ? "/api/admin/practitioners?includeInactive=1" : "/api/admin/practitioners",
+      ).then((x) => x.json()),
       fetch("/api/admin/rooms").then((x) => x.json()),
       fetch("/api/admin/resources").then((x) => x.json()),
       fetch(`/api/admin/procedure-types?locale=${encodeURIComponent(locale)}`).then((x) =>
@@ -219,7 +228,11 @@ export default function MasterDataPage() {
     setPractitioners((p.data ?? p) as Practitioner[]);
     setRooms((r.data ?? r) as Room[]);
     setResources((res.data ?? res) as Resource[]);
-    setProcedureTypes((pt.data ?? pt) as ProcedureType[]);
+    const ptRaw = (pt.data ?? pt) as
+      | ProcedureType[]
+      | { items?: ProcedureType[]; blockedNonCabin?: Array<{ code: string; name: string }> };
+    setProcedureTypes(Array.isArray(ptRaw) ? ptRaw : (ptRaw.items ?? []));
+    setBlockedNonCabin(Array.isArray(ptRaw) ? [] : (ptRaw.blockedNonCabin ?? []));
     const catalogRows = (cat.data ?? cat) as CatalogOption[];
     setCatalogOptions(
       Array.isArray(catalogRows)
@@ -251,7 +264,7 @@ export default function MasterDataPage() {
     );
     const policyPayload = (wp.data ?? wp) as WorkforcePolicy;
     if (policyPayload?.hireMode) setWorkforcePolicy(policyPayload);
-  }, [locale]);
+  }, [locale, showInactive]);
 
   useEffect(() => {
     void loadAll();
@@ -733,7 +746,15 @@ export default function MasterDataPage() {
           : tab === "resources"
             ? `/api/admin/resources/${id}`
             : `/api/admin/procedure-types/${id}`;
-    await fetch(base, { method: "DELETE" });
+    const res = await fetch(base, { method: "DELETE" });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { code?: string };
+      if (body.code === "WORKFORCE_DEACTIVATE_VIA_CP") setMsg(t("deleteViaWorkforce"));
+      else if (body.code === "IN_USE") setMsg(t("deleteInUse"));
+      else setMsg(tc("failed"));
+      return;
+    }
+    setMsg(null);
     await loadAll();
   }
 
@@ -781,12 +802,6 @@ export default function MasterDataPage() {
         subtitle={t("subtitle")}
         actions={
           <>
-            <Link href="/admin/wards" className={SECONDARY_BUTTON_CLASS}>
-              {t("wardsLink")}
-            </Link>
-            <Link href="/sanatorium/nurse-roster" className={SECONDARY_BUTTON_CLASS}>
-              {t("nurseRosterLink")}
-            </Link>
             {!(tab === "practitioners" && blockPractitionerCreate) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
                 {tc("add")}
@@ -801,18 +816,23 @@ export default function MasterDataPage() {
         </p>
       ) : null}
       {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className={TAB_STRIP_CLASS}>
         {tabs.map((x) => (
           <button
             key={x.id}
             type="button"
-            className={tab === x.id ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            className={tab === x.id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
             onClick={() => setTab(x.id)}
           >
             {x.label}
           </button>
         ))}
       </div>
+      {tab === "procedureTypes" && blockedNonCabin.length > 0 ? (
+        <p className={`mb-3 text-[13px] ${TEXT_DANGER_CLASS}`}>
+          {t("blockedNonCabin", { codes: blockedNonCabin.map((row) => row.code).join(", ") })}
+        </p>
+      ) : null}
       <EraListFilterBar
         className="max-w-md"
         resetLabel={tc("filterReset")}
@@ -824,6 +844,17 @@ export default function MasterDataPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        {tab === "practitioners" ? (
+          <label className="flex items-center gap-2 self-end pb-2 text-[13px]">
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+            />
+            {t("showInactive")}
+          </label>
+        ) : null}
       </EraListFilterBar>
       <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -1054,6 +1085,8 @@ export default function MasterDataPage() {
         open={modalOpen}
         title={editingId ? tc("edit") : tc("add")}
         onClose={() => setModalOpen(false)}
+        maxWidthClass={tab === "procedureTypes" ? "max-w-5xl" : "max-w-lg"}
+        closeLabel={tc("close")}
       >
         <div className="space-y-4">
           {!editingId && tab === "procedureTypes" && catalogOptions.length > 0 ? (
@@ -1095,7 +1128,7 @@ export default function MasterDataPage() {
                 onChange={(e) => setForm({ ...form, code: e.target.value })}
               />
             )}
-          {(tab === "practitioners" || tab === "resources" || tab === "procedureTypes") && (
+          {(tab === "practitioners" || tab === "resources") && (
             <Field
               label={t("name")}
               preset="shortText"
@@ -1260,48 +1293,61 @@ export default function MasterDataPage() {
           )}
           {tab === "procedureTypes" && (
             <>
-              <Field
-                label={t("durationMin")}
-                preset="count"
-                value={form.durationMin ?? "30"}
-                onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
-              />
-              <Field
-                label={t("resourceGapMinutes")}
-                preset="count"
-                value={form.resourceGapMinutes ?? "5"}
-                onChange={(e) => setForm({ ...form, resourceGapMinutes: e.target.value })}
-              />
-              <Field
-                label={t("patientRestMinutes")}
-                preset="count"
-                value={form.patientRestMinutes ?? "15"}
-                onChange={(e) => setForm({ ...form, patientRestMinutes: e.target.value })}
-              />
-              <FieldSelect
-                label={t("bodyPart")}
-                preset="select"
-                value={form.bodyPart ?? ""}
-                onChange={(e) => setForm({ ...form, bodyPart: e.target.value })}
-              >
-                <option value="">—</option>
-                {[
-                  "HEAD",
-                  "NECK",
-                  "CHEST",
-                  "BACK",
-                  "ABDOMEN",
-                  "ARM_LEFT",
-                  "ARM_RIGHT",
-                  "LEG_LEFT",
-                  "LEG_RIGHT",
-                  "FULL_BODY",
-                ].map((bp) => (
-                  <option key={bp} value={bp}>
-                    {bp}
-                  </option>
-                ))}
-              </FieldSelect>
+              <FieldRow cols={2}>
+                <Field
+                  label={t("name")}
+                  preset="shortText"
+                  value={form.name ?? ""}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("bodyPart")}
+                  value={form.bodyPart ?? ""}
+                  onChange={(v) => setForm({ ...form, bodyPart: String(v) })}
+                  options={[
+                    "HEAD",
+                    "NECK",
+                    "CHEST",
+                    "BACK",
+                    "ABDOMEN",
+                    "ARM_LEFT",
+                    "ARM_RIGHT",
+                    "LEG_LEFT",
+                    "LEG_RIGHT",
+                    "FULL_BODY",
+                  ].map((bp) => ({ value: bp, label: bp }))}
+                  emptyLabel="—"
+                />
+              </FieldRow>
+              <FieldRow cols={4}>
+                <Field
+                  label={t("durationMin")}
+                  preset="count"
+                  value={form.durationMin ?? "30"}
+                  onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
+                />
+                <Field
+                  label={t("resourceGapMinutes")}
+                  preset="count"
+                  value={form.resourceGapMinutes ?? "5"}
+                  onChange={(e) => setForm({ ...form, resourceGapMinutes: e.target.value })}
+                />
+                <Field
+                  label={t("patientRestMinutes")}
+                  preset="count"
+                  value={form.patientRestMinutes ?? "15"}
+                  onChange={(e) => setForm({ ...form, patientRestMinutes: e.target.value })}
+                />
+                <Field
+                  label={t("extendedEndHour")}
+                  preset="count"
+                  value={form.extendedEndHour ?? ""}
+                  onChange={(e) => setForm({ ...form, extendedEndHour: e.target.value })}
+                />
+              </FieldRow>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3">
               <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
                 <input
                   type="checkbox"
@@ -1311,18 +1357,6 @@ export default function MasterDataPage() {
                 />
                 {t("needsSite")}
               </label>
-              <CatalogField
-                kind="MULTI"
-                label={t("physioOrderFields")}
-                value={physioOrderFields}
-                onChange={(next) =>
-                  setPhysioOrderFields(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
-                }
-                options={PHYSIO_ORDER_FIELD_CODES.map((code) => ({
-                  value: code,
-                  label: t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
-                }))}
-              />
               {needsSite ? (
                 <CatalogField
                   kind="MULTI"
@@ -1336,11 +1370,17 @@ export default function MasterDataPage() {
                   options={physioSiteOptions}
                 />
               ) : null}
-              <Field
-                label={t("extendedEndHour")}
-                preset="count"
-                value={form.extendedEndHour ?? ""}
-                onChange={(e) => setForm({ ...form, extendedEndHour: e.target.value })}
+              <CatalogField
+                kind="MULTI"
+                label={t("physioOrderFields")}
+                value={physioOrderFields}
+                onChange={(next) =>
+                  setPhysioOrderFields(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
+                }
+                options={PHYSIO_ORDER_FIELD_CODES.map((code) => ({
+                  value: code,
+                  label: t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
+                }))}
               />
               {skillCoverageMsg ? (
                 <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{skillCoverageMsg}</p>
@@ -1387,6 +1427,7 @@ export default function MasterDataPage() {
                   ) : null,
                 )}
               </div>
+                </div>
               <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
                 <p className={MODAL_FIELD_LABEL_CLASS}>{t("consumableBom")}</p>
                 <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("consumableBomHint")}</p>
@@ -1466,6 +1507,7 @@ export default function MasterDataPage() {
                   {t("addConsumable")}
                 </button>
               </div>
+              </div>
             </>
           )}
         </div>
@@ -1473,6 +1515,7 @@ export default function MasterDataPage() {
           onCancel={() => setModalOpen(false)}
           onSubmit={() => void save()}
           submitLabel={tc("save")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
 

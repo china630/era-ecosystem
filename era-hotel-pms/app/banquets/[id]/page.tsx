@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   Field,
   FieldSelect,
@@ -19,8 +20,11 @@ import {
 import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 
 type Tab = 'lines' | 'resources' | 'staff' | 'settlement';
+
+const LOOKUP_KINDS = ['EVENT_LINE_KIND'] as const;
 
 export default function BanquetDetailPage() {
   const params = useParams<{ id: string }>();
@@ -31,6 +35,13 @@ export default function BanquetDetailPage() {
   const [event, setEvent] = useState<Record<string, unknown> | null>(null);
   const [settlement, setSettlement] = useState<Record<string, unknown> | null>(null);
   const [staff, setStaff] = useState<Array<Record<string, unknown>>>([]);
+  const { byKind } = useHotelLookupOptions([...LOOKUP_KINDS]);
+  const lineKindOptions = useMemo(() => byKind.EVENT_LINE_KIND ?? [], [byKind]);
+  const lineKindLabel = useCallback(
+    (code: unknown) => lineKindOptions.find((o) => o.value === code)?.label ?? String(code ?? '—'),
+    [lineKindOptions],
+  );
+  const [lineKind, setLineKind] = useState('');
   const [lineDesc, setLineDesc] = useState('');
   const [lineQty, setLineQty] = useState('1');
   const [linePrice, setLinePrice] = useState('100');
@@ -68,17 +79,25 @@ export default function BanquetDetailPage() {
     if (can(PERMISSIONS.RESERVATIONS_READ)) void load();
   }, [can, load]);
 
+  useEffect(() => {
+    if (!lineKind && lineKindOptions[0]) setLineKind(lineKindOptions[0].value);
+  }, [lineKind, lineKindOptions]);
+
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   async function addLine(e: React.FormEvent) {
     e.preventDefault();
+    if (!lineKind) {
+      showApiError({ error: t('lineKindRequired') });
+      return;
+    }
     const res = await fetch(`/api/banquets/${params.id}/lines`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        kind: 'EQUIPMENT',
+        kind: lineKind,
         description: lineDesc,
         quantity: Number(lineQty),
         unitPrice: Number(linePrice),
@@ -164,7 +183,7 @@ export default function BanquetDetailPage() {
     const lineRows = lines
       .map(
         (l) =>
-          `<tr><td>${esc(l.description)}</td><td>${esc(l.qty)}</td><td>${esc(l.unitPrice)}</td><td>${esc(l.kind)}</td></tr>`,
+          `<tr><td>${esc(l.description)}</td><td>${esc(l.qty)}</td><td>${esc(l.unitPrice)}</td><td>${esc(lineKindLabel(l.kind))}</td></tr>`,
       )
       .join('');
     const resourceRows = resources
@@ -199,7 +218,7 @@ export default function BanquetDetailPage() {
         · contact ${esc(data.contactName)}
       </div>
       <h2>${t('tab.lines')}</h2>
-      <table><thead><tr><th>${t('lineDescription')}</th><th>${t('lineQty')}</th><th>${t('linePrice')}</th><th>Kind</th></tr></thead>
+      <table><thead><tr><th>${t('lineDescription')}</th><th>${t('lineQty')}</th><th>${t('linePrice')}</th><th>${t('lineKind')}</th></tr></thead>
       <tbody>${lineRows || '<tr><td colspan="4">—</td></tr>'}</tbody></table>
       <h2>${t('tab.resources')}</h2>
       <table><thead><tr><th>${t('resourceLabel')}</th><th>${t('resourceStart')}</th><th>${t('resourceEnd')}</th><th>${t('notes')}</th></tr></thead>
@@ -285,23 +304,33 @@ export default function BanquetDetailPage() {
           <table className="mb-4 w-full text-[13px]">
             <thead>
               <tr className="border-b text-left text-[#7F8C8D]">
+                <th className="py-2">{t('lineKind')}</th>
                 <th className="py-2">{t('lineDescription')}</th>
-                <th className="py-2">{t('lineQty')}</th>
-                <th className="py-2">{t('linePrice')}</th>
+                <th className="py-2 text-right">{t('lineQty')}</th>
+                <th className="py-2 text-right">{t('linePrice')}</th>
               </tr>
             </thead>
             <tbody>
               {orderLines.map((l) => (
                 <tr key={String(l.id)} className="border-b">
+                  <td className="py-2">{lineKindLabel(l.kind)}</td>
                   <td className="py-2">{String(l.description)}</td>
-                  <td className="py-2">{String(l.quantity)}</td>
-                  <td className="py-2">{String(l.unitPrice)}</td>
+                  <td className="py-2 text-right">{String(l.quantity)}</td>
+                  <td className="py-2 text-right">{String(l.unitPrice)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {event?.status === 'DRAFT' && (
             <form onSubmit={addLine} className={`${FORM_STACK_CLASS} max-w-md`}>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t('lineKind')}
+                value={lineKind}
+                emptyLabel={null}
+                options={withOrphanOption(lineKindOptions, lineKind)}
+                onChange={(value) => setLineKind((Array.isArray(value) ? value[0] : value) ?? '')}
+              />
               <Field
                 label={t('lineDescription')}
                 preset="longText"
@@ -350,18 +379,14 @@ export default function BanquetDetailPage() {
           </ul>
           {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
             <form onSubmit={addResource} className={`${FORM_STACK_CLASS} mt-6 max-w-md`}>
-              <FieldSelect
+              <CatalogField
+                kind="ENTITY_REF"
                 label={t('saloon')}
-                preset="selectWide"
                 value={resourceSaloonId}
-                onChange={(e) => setResourceSaloonId(e.target.value)}
-              >
-                {saloons.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.code} — {s.name}
-                  </option>
-                ))}
-              </FieldSelect>
+                onChange={(v) => setResourceSaloonId(String(v ?? ''))}
+                options={saloons.map((s) => ({ value: s.id, label: `${s.code} — ${s.name}` }))}
+                emptyLabel={null}
+              />
               <Field
                 label={t('resourceLabel')}
                 preset="longText"

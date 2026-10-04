@@ -24,7 +24,6 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   LINK_ACCENT_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_DANGER_CLASS,
@@ -416,7 +415,7 @@ export function OpsHomeDashboard({
         {summary.procedures.byType.length === 0 ? (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("emptyDay")}</p>
         ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <div className="overflow-x-auto">
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>

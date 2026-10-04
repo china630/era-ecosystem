@@ -3,6 +3,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { cellMoney, cellString, firstCellString, parseDateCell, slugCode } from "@/lib/import/helpers";
 import { toDecimal } from "@/lib/decimal";
 import type { ImportAdapter } from "@/lib/import/types";
+import { resolveAgencyPackageCode } from "@/lib/services/medical-package-resolve.service";
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
@@ -80,6 +81,7 @@ export const agencyStatementAdapter: ImportAdapter<z.infer<typeof rowSchema>> = 
           code: agencyCode,
           name: row.agencyLabel,
           active: true,
+          medicalPackageCode: resolveAgencyPackageCode(row.agencyLabel),
         },
       });
     }

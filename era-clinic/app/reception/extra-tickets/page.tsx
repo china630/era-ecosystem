@@ -161,11 +161,10 @@ export default function ExtraTicketsPage() {
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
-      <PageHeader className="!mb-0" title={t("title")} subtitle={dualRun ? t("dualRunOn") : t("dualRunOff")} />
+      <PageHeader title={t("title")} subtitle={dualRun ? t("dualRunOn") : t("dualRunOff")} />
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={resetFilters}
             actionsExtra={

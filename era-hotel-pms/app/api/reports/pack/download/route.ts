@@ -10,6 +10,9 @@ import { queryReport } from '@/lib/services/reports';
 import { renderReportPdf } from '@/lib/services/reports/pdf-renderers';
 import '@/lib/services/reports/register-p1-pdf';
 import { prisma } from '@/lib/prisma';
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { resolveDateMode } from '@/lib/reports/period';
 
 interface PackConfig {
   enabled: boolean;
@@ -60,12 +63,15 @@ export async function GET(request: Request) {
       const def = getReportBySlug(slug);
       if (!def) continue;
       try {
-        const data = await queryReport(slug, businessDate, businessDate);
+        const range = resolveDateMode(def.dateMode, bakuCivilUtcDate(businessDate));
+        const from = hotelDateKey(range.from);
+        const to = hotelDateKey(range.to);
+        const data = await queryReport(slug, from, to);
         const buf = await renderReportPdf(slug, data, {
           propertyName,
           locale: lang.locale,
           title: t(def.titleKey),
-          subtitle: businessDate,
+          subtitle: from === to ? from : `${from} — ${to}`,
           t,
         });
         if (!buf) continue;

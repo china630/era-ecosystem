@@ -2,6 +2,8 @@ import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
+import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { postCharge } from '@/lib/services/folio.service';
 import {
@@ -48,21 +50,139 @@ function eachNight(from: Date, to: Date): Date[] {
   return nights;
 }
 
+const PACKAGE_CODE_SET = new Set<string>(MEDICAL_PACKAGE_CODES);
+
+function stayPackageCodes(input: {
+  medicalPackageCode: string | null;
+  paxGuests: Array<{ medicalPackageCode: string | null }>;
+}): string[] {
+  const raw =
+    input.paxGuests.length > 0
+      ? input.paxGuests.map((g) => g.medicalPackageCode)
+      : [input.medicalPackageCode];
+  return raw
+    .map((c) => (c ?? '').trim().toUpperCase())
+    .filter((c) => PACKAGE_CODE_SET.has(c));
+}
+
+async function writeOwnerNightly(
+  res: {
+    id: string;
+    organizationId: string;
+    checkInDate: Date;
+    checkOutDate: Date;
+    dailyRates: Array<{
+      stayDate: Date;
+      amount: { toString(): string };
+      manualFlag: boolean;
+      currencyCode: string | null;
+      fixPrice: boolean;
+      discountPct: { toString(): string } | null;
+    }>;
+  },
+  nightly: number,
+  remainingFrom?: Date,
+) {
+  const nights = eachNight(res.checkInDate, res.checkOutDate);
+  const fromKey = remainingFrom ? dateOnly(remainingFrom) : null;
+  const rows: Array<{
+    stayDate: Date;
+    amount: number;
+    manualFlag: boolean;
+    currencyCode: string;
+    fixPrice: boolean;
+    discountPct: number | null;
+  }> = [];
+  for (const night of nights) {
+    const existing = res.dailyRates.find(
+      (d) => d.stayDate.toDateString() === night.toDateString(),
+    );
+    if ((fromKey && dateOnly(night) < fromKey && existing) || existing?.manualFlag) {
+      rows.push({
+        stayDate: night,
+        amount: decimalToNumber(existing.amount as never),
+        manualFlag: existing.manualFlag,
+        currencyCode: existing.currencyCode ?? 'AZN',
+        fixPrice: existing.fixPrice,
+        discountPct: existing.discountPct ? decimalToNumber(existing.discountPct as never) : null,
+      });
+      continue;
+    }
+    rows.push({
+      stayDate: night,
+      amount: nightly,
+      manualFlag: false,
+      currencyCode: 'AZN',
+      fixPrice: false,
+      discountPct: null,
+    });
+  }
+  if (rows.length === 0) throw new Error('No nights');
+  await prisma.$transaction([
+    prisma.reservationDailyRate.deleteMany({ where: { reservationId: res.id } }),
+    ...rows.map((r) =>
+      prisma.reservationDailyRate.create({
+        data: {
+          organizationId: res.organizationId,
+          reservationId: res.id,
+          stayDate: r.stayDate,
+          amount: toDecimal(r.amount),
+          manualFlag: r.manualFlag,
+          currencyCode: r.currencyCode,
+          fixPrice: r.fixPrice,
+          discountPct: r.discountPct != null ? toDecimal(r.discountPct) : null,
+        },
+      }),
+    ),
+    prisma.reservation.update({
+      where: { id: res.id },
+      data: { totalAmount: toDecimal(rows.reduce((s, r) => s + r.amount, 0)) },
+    }),
+  ]);
+  return {
+    dailyRates: rows,
+    totalAmount: rows.reduce((s, r) => s + r.amount, 0),
+    quote: null,
+    childAddonNightly: 0,
+    adultNightly: nightly,
+  };
+}
+
 export async function recalcReservationDailyRates(
   reservationId: string,
   opts?: { remainingFrom?: Date },
 ) {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { ratePlan: true, dailyRates: true, room: true, staySlices: true },
+    include: {
+      ratePlan: true,
+      dailyRates: true,
+      room: true,
+      staySlices: true,
+      paxGuests: { orderBy: { sortOrder: 'asc' } },
+    },
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
 
+  const packageCodes = stayPackageCodes(res);
+  if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
+    let nightly: number | null;
+    if (packageCodes.length > 0) {
+      nightly = await ownerPackageNightlySell(res.checkInDate, packageCodes);
+      if (nightly == null) {
+        throw new Error('Package sell price is not set for this stay date');
+      }
+    } else {
+      nightly = decimalToNumber(res.ratePlan.pricePerNight);
+    }
+    return writeOwnerNightly(res, nightly, opts?.remainingFrom);
+  }
+
   const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
   const quoteDate = opts?.remainingFrom ?? res.checkInDate;
   const slice = await resolveStaySliceForDate(reservationId, quoteDate);
-  const roomTypeId = slice?.roomTypeId ?? res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
+  const roomTypeId = slice?.roomTypeId ?? res.roomTypeId ?? res.ratePlan.roomTypeId;
   if (!roomTypeId) throw new Error('Room type required for pricing recalc');
 
   if (res.useManualRate && opts?.remainingFrom) {

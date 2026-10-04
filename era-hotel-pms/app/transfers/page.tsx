@@ -9,10 +9,10 @@ import {
   DatePicker,
   EraListFilterBar,
   useDebouncedValue,
+  CatalogField,
   Field,
   FieldSelect,
   FORM_STACK_CLASS,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
@@ -306,20 +306,22 @@ export default function TransfersPage() {
                       ? `${o.vehicle.code} (${o.vehicle.licensePlate})`
                       : o.status === 'BOOKED'
                         ? (
-                            <select
-                              className={MODAL_INPUT_CLASS}
+                            <CatalogField
+                              kind="ENTITY_REF"
+                              label={t('vehicle')}
                               value={assignVehicleId[o.id] ?? ''}
-                              onChange={(e) =>
-                                setAssignVehicleId((prev) => ({ ...prev, [o.id]: e.target.value }))
+                              onChange={(v) =>
+                                setAssignVehicleId((prev) => ({
+                                  ...prev,
+                                  [o.id]: String(v ?? ''),
+                                }))
                               }
-                            >
-                              <option value="">{tc('select')}</option>
-                              {vehicles.map((v) => (
-                                <option key={v.id} value={v.id}>
-                                  {v.code} — {v.brand}
-                                </option>
-                              ))}
-                            </select>
+                              options={vehicles.map((v) => ({
+                                value: v.id,
+                                label: `${v.code} — ${v.brand}`,
+                              }))}
+                              emptyLabel={tc('select')}
+                            />
                           )
                         : '—'}
                   </td>
@@ -391,20 +393,18 @@ export default function TransfersPage() {
         }
       >
         <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
-          <FieldSelect
+          <CatalogField
+            kind="ENTITY_REF"
             label={t('guestStay')}
-            preset="selectWide"
             value={reservationId}
-            onChange={(e) => setReservationId(e.target.value)}
+            onChange={(v) => setReservationId(String(v ?? ''))}
+            options={reservations.map((r) => ({
+              value: r.id,
+              label: `${r.guest.fullName} · ${r.room?.roomNumber ?? '—'}`,
+            }))}
             required
-          >
-            <option value="">{tc('select')}</option>
-            {reservations.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-              </option>
-            ))}
-          </FieldSelect>
+            emptyLabel={null}
+          />
           <div className="grid grid-cols-2 gap-3">
             <FieldSelect
               label={t('direction')}

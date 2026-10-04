@@ -8,11 +8,10 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { ImportStepRow } from '@/components/import/ImportStepRow';
-import { IMPORT_PHASES, priorEntities } from '@/lib/import/phases';
+import { IMPORT_PHASES } from '@/lib/import/phases';
 import {
   clearAllImportStepStatuses,
   clearImportStepStatus,
-  isStepCompleted,
   loadImportStepStatuses,
   type ImportWizardStorage,
   type StoredImportStepStatus,
@@ -23,6 +22,7 @@ type ImportEntity = {
   label: string;
   order: number;
   templateHint: string;
+  columns?: string[];
   fileless?: boolean;
   allowMultiple?: boolean;
 };
@@ -96,10 +96,9 @@ export function ImportWizard({ entities }: Props) {
     });
   }, []);
 
-  function missingPriorLabels(entity: string): string[] {
-    return priorEntities(entity)
-      .filter((slug) => !isStepCompleted(slug, statuses))
-      .map((slug) => entityBySlug.get(slug)?.label ?? slug);
+  function entityLabel(meta: ImportEntity): string {
+    const key = `entities.${meta.entity}` as "entities.procedures";
+    return t.has(key) ? t(key) : meta.entity;
   }
 
   const current = phasesWithEntities[phaseIndex];
@@ -157,14 +156,18 @@ export function ImportWizard({ entities }: Props) {
                   key={meta.entity}
                   stepNumber={stepCounter}
                   entity={meta.entity}
-                  label={meta.label}
-                  templateHint={meta.templateHint}
+                  label={entityLabel(meta)}
+                  templateHint={
+                    meta.columns?.length
+                      ? t("columnsHint", { columns: meta.columns.join(", ") })
+                      : meta.entity
+                  }
                   fileless={meta.fileless}
                   allowMultiple={meta.allowMultiple}
                   strictOrder={current.phase.strictOrder}
                   isLastInPhase={idx === current.entities.length - 1}
                   storedStatus={statuses[meta.entity] ?? null}
-                  missingPriorLabels={missingPriorLabels(meta.entity)}
+                  missingPriorLabels={[]}
                   labels={{
                     ...rowLabels,
                     pickFileHint: meta.allowMultiple ? t('pickFileHintMultiple') : rowLabels.pickFileHint,

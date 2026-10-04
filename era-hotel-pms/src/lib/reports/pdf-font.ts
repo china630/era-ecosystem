@@ -1,7 +1,8 @@
 import { createRequire } from 'node:module';
+import path from 'node:path';
 import type PDFKit from 'pdfkit';
 
-const requireFont = createRequire(import.meta.url);
+const requireFont = createRequire(path.join(process.cwd(), 'package.json'));
 
 export const PDF_FONT_UNICODE = 'DejaVuSans' as const;
 export const PDF_FONT_UNICODE_BOLD = 'DejaVuSans-Bold' as const;

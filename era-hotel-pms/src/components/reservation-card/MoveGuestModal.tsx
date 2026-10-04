@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { DatePicker, FieldSelect } from '@era/satellite-kit/ui';
+import { CatalogField, DatePicker } from '@era/satellite-kit/ui';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
@@ -49,19 +49,14 @@ export function MoveGuestModal({
     >
       <div className="space-y-3">
         <p className="m-0 text-[13px] text-[#34495E]">{t('moveGuestHint')}</p>
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('moveToStay')}
-          preset="selectWide"
           value={toId}
-          onChange={(e) => setToId(e.target.value)}
-        >
-          <option value="">{tc('select')}</option>
-          {siblings.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setToId(String(v ?? ''))}
+          options={siblings.map((s) => ({ value: s.id, label: s.label }))}
+          emptyLabel={tc('select')}
+        />
         <DatePicker
           label={t('effectiveDate')}
           fluid

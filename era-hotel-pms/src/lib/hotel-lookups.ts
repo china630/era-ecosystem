@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
 import type { CatalogOption } from '@era/satellite-kit/ui';
+import { catalogLabel, type LocalizedCatalogRow } from '@/lib/catalog-label';
 
 export type HotelLookupKindCode =
   | 'MARKET'
@@ -21,7 +23,7 @@ export type HotelLookupKindCode =
   | 'CONCIERGE_CATEGORY'
   | 'EVENT_LINE_KIND';
 
-type LookupRow = { code: string; name: string; active?: boolean };
+type LookupRow = LocalizedCatalogRow & { code: string; name: string; active?: boolean };
 
 /** Load active HotelLookup rows for FO/guest CatalogField options. */
 export function useHotelLookupOptions(kinds: HotelLookupKindCode[]) {
@@ -29,6 +31,7 @@ export function useHotelLookupOptions(kinds: HotelLookupKindCode[]) {
   const [roomViews, setRoomViews] = useState<CatalogOption[]>([]);
   const [bedTypes, setBedTypes] = useState<CatalogOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const locale = useLocale();
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -39,7 +42,7 @@ export function useHotelLookupOptions(kinds: HotelLookupKindCode[]) {
         const rows = Array.isArray(data) ? data : [];
         return [
           kind,
-          rows.map((r) => ({ value: r.code, label: r.name || r.code })),
+          rows.map((r) => ({ value: r.code, label: catalogLabel(r, locale) })),
         ] as const;
       });
       const [kindEntries, viewsRes, bedsRes] = await Promise.all([
@@ -55,17 +58,17 @@ export function useHotelLookupOptions(kinds: HotelLookupKindCode[]) {
       setRoomViews(
         views
           .filter((v: LookupRow & { active?: boolean }) => v.active !== false)
-          .map((v: LookupRow) => ({ value: v.code, label: v.name || v.code })),
+          .map((v: LookupRow) => ({ value: v.code, label: catalogLabel(v, locale) })),
       );
       setBedTypes(
         beds
           .filter((b: LookupRow & { active?: boolean }) => b.active !== false)
-          .map((b: LookupRow) => ({ value: b.code, label: b.name || b.code })),
+          .map((b: LookupRow) => ({ value: b.code, label: catalogLabel(b, locale) })),
       );
     } finally {
       setLoading(false);
     }
-  }, [kinds.join('|')]);
+  }, [kinds.join('|'), locale]);
 
   useEffect(() => {
     void reload();

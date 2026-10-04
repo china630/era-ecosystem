@@ -23,7 +23,7 @@ const createSchema = z.object({
   testCode: z.string().optional(),
   testCodes: z.array(z.string()).optional(),
   visitId: z.string().optional(),
-  amountNet: z.number().nonnegative().default(0),
+  amountNet: z.number().nonnegative().optional(),
   source: z.enum(["IN_HOUSE", "EXTERNAL"]).optional(),
   resultDate: z.string().optional(),
   results: z
@@ -52,6 +52,7 @@ const querySchema = z.object({
       "RESULT_READY",
       "PUBLISHED",
       "COMPLETED",
+      "CANCELLED",
     ])
     .optional(),
   criticalOnly: z

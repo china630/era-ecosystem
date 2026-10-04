@@ -13,16 +13,17 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 
 | Route | API | Role |
 |-------|-----|------|
-| `/hk` | `GET /api/housekeeping/tasks`, `GET /api/housekeeping/sheet` | Board + floor sheet |
-| `/hk/mobile` | tasks + `POST /api/housekeeping/outcome` | Maid outcomes V/VC/OK/DND/SO |
+| `/hk` | `GET /api/housekeeping/tasks`, `GET /api/housekeeping/sheet` | Board + floor sheet PDF (one floor per page) |
+| `/hk/maids` | `GET/POST /api/housekeeping/maids`, `GET /api/housekeeping/personnel` | Link a finance employee; hotel stores department and ƏG |
+| `/hk/mobile` | sheet + `POST /api/housekeeping/outcome` + `POST /api/housekeeping/discrepancy` | Maid outcomes including İstəmədi; Skip/Sleep sent to the board |
 | `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
-| `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Accept IN_PLANT; Delivered → `LAUNDRY` (canon §9; code still posts on accept) |
+| `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash and iron steppers; one agreed count per service |
 | `/fo/laundry` | same API + Delivered | FO fallback grid + filters; Delivered on existing ticket; no invent |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
-| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Skip / Sleep board (Sleep ≠ SO) |
+| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Only Skip/Sleep rows the maid already sent |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
-| `/settings/hk-policy` | `GET/PUT /api/housekeeping/policy` | Linen/deep every N (hotel-wide) |
+| `/settings/policies#hk` | `GET/PUT /api/housekeeping/policy` | Linen/deep every N (hotel-wide). `/settings/hk-policy` redirects here |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops |
 
 Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
@@ -77,7 +78,7 @@ See ADR [`docs/adr/hotel-agency-portal.md`](../../docs/adr/hotel-agency-portal.m
 |-------|-----|------|
 | `/banquets` | `GET/POST /api/banquets` | BEO list + create |
 | `/banquets/[id]` | tabs: lines, resources, staff, settlement | Event order detail |
-| `/banquets/[id]/lines` | `POST /api/banquets/:id/lines` | Menu / AV / room rental lines |
+| `/banquets/[id]/lines` | `POST /api/banquets/:id/lines` | Menu / AV / room rental lines; `kind` = active `EVENT_LINE_KIND` lookup (400 otherwise) |
 | `/banquets/[id]/resources` | `POST /api/banquets/:id/resources` | Saloon / breakout calendar |
 | `/banquets/[id]/staff` | `POST /api/banquets/:id/staff` | Staff assignments |
 | `/banquets/[id]/settlement` | master folio planned vs actual | Settlement tab |
@@ -130,7 +131,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
 | `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Filters + CSV (HOT-NA-04) |
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
-| `/night-audit/logs` | `GET /api/reports/night-audit-runs` | End of day logs |
+| `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
 | Bridge in | `POST /api/settlement/pending` | fb-pos / clinic create pending (`POS_BRIDGE_SECRET`) |
 
@@ -171,10 +172,10 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 
 | Route | API | Role |
 |-------|-----|------|
-| `/settings/pricing-policy` | `GET/PATCH /api/admin/pricing-policy` | Feature flags: occupancy / load yield / child absolute |
+| `/settings/policies#pricing` | `GET/PATCH /api/admin/pricing-policy` | Feature flags: occupancy / load yield / child absolute. `/settings/pricing-policy` redirects here |
 | `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
 | `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell + costFloor versions |
-| `/settings/agency-medical-sku` | `GET/POST/DELETE /api/admin/agency-medical-sku-rules` | Agency name prefix → PKG-* (SatAdmin) |
+| `/distribution/travel-agencies` | travel-agencies API | Medical package is `Agency.medicalPackageCode` (CatalogField). Import stamps it from the name. `/settings/agency-medical-sku` redirects here |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
 | `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
 | `/settings/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON); legacy `/distribution/yield-rules` redirects |
@@ -189,23 +190,34 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | Route | API | Role |
 |-------|-----|------|
 | `/reports` | `GET /api/reports/{slug}`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, shared period, Show, PDF and Excel. Category hubs and old slug URLs redirect here. |
-| `/reports/analytics` | booking analytics API | Folded tool link from the workspace |
-| `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Room-type occupancy grid (not a catalog slug) |
-| `/reports/nightly-pack` | `GET /api/reports/pack`, `GET /api/reports/pack/download?businessDate=&lang=` | ZIP for closed business date |
-| `/settings/report-pack` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership config |
+| `/reports/analytics` | booking analytics API | Sidebar Tools (not inside the report catalog) |
+| `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Sidebar Tools. Room-type occupancy grid (not a catalog slug) |
+| `/reports/nightly-pack` | `GET /api/reports/{slug}`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit, ZIP for that date |
+| `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |
 
 ## Settings / RBAC (HOT-RBAC-01)
 
 | Route | API | Notes |
 |-------|-----|-------|
 | `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
-| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | User CRUD + role assign (`admin:users`); role select includes custom clones |
+| `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | Local logins; workforce (`cpEmploymentId`) name and password stay on provision. Position is `User.positionTitle` |
+| `/settings/logins` | `GET /api/admin/user-logins` | Successful staff and SSO sign-ins (`UserLogin`) |
+| `/settings/integration` | integration settings API | `?view=events` outbound, `?view=gl` revenue→GL, `?view=journal` outbound journal |
 | `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
 | Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |
+| `/settings/ops-wipe` | `GET/POST /api/admin/ops-wipe` | Platform super-admin only (`PLATFORM_SUPER_ADMIN_EMAILS`); session org only, counts → confirm `WIPE`; service `ops-wipe.service.ts` (shared with CLI `scripts/ops/wipe-hotel-ops-transactional.ts`); keeps master data; audit `OpsWipe` |
 | Role clone / matrix Save | `POST /api/admin/roles`, `PATCH …/permissions` | Stamp `permissionCatalogVersion` so ensure does not restore stripped Wave-1 keys |
 | Staff `/login` / SSO | JWT `permissions[]`; ensure system roles + `permissionCatalogVersion`=3 (`screen:*` + `api:*`) | Hotel_Admin does **not** bypass matrix; page middleware fail-closed inventory |
 
 **Page map:** `src/lib/auth/page-route-permissions.ts` — every staff `app/**/page.tsx` must map (test: `hotel-page-route-inventory.spec.ts`).
+
+## Master data / concierge catalog (2026-10)
+
+| Route | API | Notes |
+|-------|-----|-------|
+| `/settings/master-data` | `/api/master/{room-types,lookups,rate-plans,revenue-codes,room-views,bed-types}` (+ `[id]`) | Tabs: room types → dictionaries → rooms → rate plans → revenue → lookups. Optional `nameAz/nameRu/nameEn` on all six catalogs; UI labels via `catalogLabel(row, locale)` (`src/lib/catalog-label.ts`) |
+| `/concierge` | `GET /api/concierge`, `POST` `action: createProduct` | Product catalog + orders; category = `CONCIERGE_CATEGORY` lookup (`CatalogField`); write needs `RESERVATIONS_WRITE` |
+| Elektraweb revenue / sell path | `src/lib/integration/elektraweb-revenue.ts`, `elektraweb-sell-path.ts` | One adapter each for Excel import + live bridge; channel rate codes → BAR + OTA source + channel agency. Reclass: `scripts/ops/reclass-elektra-rate-channels.ts` |
 
 ## Related docs
 

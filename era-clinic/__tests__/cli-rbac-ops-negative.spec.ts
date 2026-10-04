@@ -199,6 +199,7 @@ describe("staff route grep gate (gap closeout)", () => {
     "assertOpsApiPermission",
     "assertClinicAdminRoute",
     "assertClinicImportAccess",
+    "isPlatformSuperAdminUser",
   ];
 
   function walk(dir: string, out: string[] = []): string[] {

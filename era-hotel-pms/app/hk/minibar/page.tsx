@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
@@ -18,7 +18,8 @@ export default function MinibarPage() {
   const th = useTranslations('housekeeping');
   const tc = useTranslations('common');
   const [items, setItems] = useState<Array<{ id: string; code: string; name: string; price: number }>>([]);
-  const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string }>>([]);
+  const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string; floor?: number }>>([]);
+  const [floor, setFloor] = useState('');
   const [postings, setPostings] = useState<
     Array<{ id: string; qty: number; item?: { name: string }; room?: { roomNumber: string } }>
   >([]);
@@ -85,6 +86,15 @@ export default function MinibarPage() {
     }
   }
 
+  const floors = useMemo(() => {
+    const set = new Set<number>();
+    for (const room of rooms) {
+      if (typeof room.floor === 'number') set.add(room.floor);
+    }
+    return [...set].sort((a, b) => a - b);
+  }, [rooms]);
+  const visibleRooms = floor ? rooms.filter((r) => String(r.floor) === floor) : rooms;
+
   return (
     <>
       <PageHeader
@@ -96,14 +106,36 @@ export default function MinibarPage() {
           </button>
         }
       />
+      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
+      {items.length === 0 ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('emptyCatalog')}</p> : null}
+      <ul className="mb-6 space-y-2 text-[13px]">
+        {items.map((i) => (
+          <li key={i.id} className="rounded border border-[#D5DADF] bg-white px-3 py-2">
+            {i.code} — {i.name} · {i.price} AZN
+          </li>
+        ))}
+      </ul>
       <section className="mb-6 max-w-lg space-y-2">
         <h2 className="text-sm font-semibold text-[#34495E]">{t('postTitle')}</h2>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('floorFilter')}
+          value={floor}
+          onChange={(v) => {
+            setFloor(String(v));
+            setRoomId('');
+          }}
+          options={[
+            { value: '', label: t('floorAll') },
+            ...floors.map((f) => ({ value: String(f), label: String(f) })),
+          ]}
+        />
         <CatalogField
           kind="ENTITY_REF"
           label={th('roomSelect')}
           value={roomId}
           onChange={(v) => setRoomId(String(v))}
-          options={rooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+          options={visibleRooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
         />
         <CatalogField
           kind="ENTITY_REF"
@@ -112,7 +144,16 @@ export default function MinibarPage() {
           onChange={(v) => setItemId(String(v))}
           options={items.map((i) => ({ value: i.id, label: `${i.code} · ${i.name} · ${i.price} AZN` }))}
         />
-        <Field label={t('qty')} preset="amount" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-[#7F8C8D]">{t('qty')}</span>
+          <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Math.max(1, Number(qty) - 1)))}>
+            −
+          </button>
+          <span className="w-6 text-center">{qty}</span>
+          <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Number(qty) + 1))}>
+            +
+          </button>
+        </div>
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}
@@ -142,15 +183,6 @@ export default function MinibarPage() {
           {t('post')}
         </button>
       </section>
-      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
-      {items.length === 0 ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('emptyCatalog')}</p> : null}
-      <ul className="mb-6 space-y-2 text-[13px]">
-        {items.map((i) => (
-          <li key={i.id} className="rounded border border-[#D5DADF] bg-white px-3 py-2">
-            {i.code} — {i.name} · {i.price} AZN
-          </li>
-        ))}
-      </ul>
       <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recent')}</h2>
       {postings.length === 0 ? <p className="text-[13px] text-[#7F8C8D]">{t('noPostings')}</p> : null}
       <ul className="space-y-1 text-[13px]">

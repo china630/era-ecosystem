@@ -1,4 +1,5 @@
 import { slugCode } from '@/lib/import/helpers';
+import { resolveAgencyPackageCode } from '@/lib/services/medical-package-resolve.service';
 import { bridgeRequestOrganizationId } from '@/lib/integration/elektraweb-bridge/config';
 import { str } from '@/lib/integration/elektraweb-bridge/normalize';
 import { prisma } from '@/lib/prisma';
@@ -35,6 +36,7 @@ type AgencyTx = {
         code: string;
         name: string;
         active: boolean;
+        medicalPackageCode?: string | null;
       };
     }) => Promise<{ id: string; code: string; name: string }>;
   };
@@ -73,6 +75,7 @@ export async function resolveOrCreateAgencyIdFromLabel(
       code,
       name,
       active: true,
+      medicalPackageCode: resolveAgencyPackageCode(name),
     },
   });
   return created.id;

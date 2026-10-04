@@ -48,6 +48,7 @@ export type ImportEntityMeta = {
   label: string;
   order: number;
   templateHint: string;
+  columns: string[];
   fileless?: boolean;
   allowMultiple?: boolean;
 };

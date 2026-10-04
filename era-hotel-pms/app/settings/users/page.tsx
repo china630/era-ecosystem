@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -36,6 +37,8 @@ interface UserRow {
   role: string;
   status: string;
   isCrossSystem?: boolean;
+  cpEmploymentId?: string | null;
+  positionTitle?: string | null;
 }
 
 export default function AdminUsersPage() {
@@ -54,6 +57,8 @@ export default function AdminUsersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
@@ -79,19 +84,24 @@ export default function AdminUsersPage() {
   }, [load]);
 
   const filteredUsers = useMemo(() => {
-    const q = debouncedQ.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      (u) =>
-        u.login.toLowerCase().includes(q) ||
-        u.fullName.toLowerCase().includes(q) ||
-        u.role.toLowerCase().includes(q),
-    );
-  }, [users, debouncedQ]);
+    const query = debouncedQ.trim().toLowerCase();
+    return users.filter((u) => {
+      if (roleFilter && u.role !== roleFilter) return false;
+      if (statusFilter && u.status !== statusFilter) return false;
+      if (!query) return true;
+      return (
+        u.login.toLowerCase().includes(query) ||
+        u.fullName.toLowerCase().includes(query) ||
+        (u.positionTitle ?? '').toLowerCase().includes(query) ||
+        u.role.toLowerCase().includes(query)
+      );
+    });
+  }, [users, debouncedQ, roleFilter, statusFilter]);
 
   const editing = editId != null;
   const editingUser = users.find((u) => u.id === editId);
-  const isSso = Boolean(editingUser?.isCrossSystem);
+  const workforceLocked = Boolean(editingUser?.cpEmploymentId);
+  const passwordLocked = workforceLocked || Boolean(editingUser?.isCrossSystem);
 
   function openCreate() {
     setEditId(null);
@@ -116,16 +126,17 @@ export default function AdminUsersPage() {
 
   async function submitUser(e: React.FormEvent) {
     e.preventDefault();
+    if (!roleId) {
+      showApiError({ error: tc('required') }, tc('failed'));
+      return;
+    }
     setBusy(true);
     setQuotaError(false);
     try {
       if (editing && editId) {
-        const body: Record<string, unknown> = {
-          fullName,
-          roleId,
-          status,
-        };
-        if (password.trim()) body.password = password;
+        const body: Record<string, unknown> = { roleId, status };
+        if (!workforceLocked) body.fullName = fullName;
+        if (!passwordLocked && password.trim()) body.password = password;
         const res = await fetch(`/api/admin/users/${editId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -174,6 +185,7 @@ export default function AdminUsersPage() {
     <>
       <PageHeader
         title={t('title')}
+        subtitle={t('localLoginHint')}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" aria-hidden />
@@ -188,12 +200,40 @@ export default function AdminUsersPage() {
         </section>
       )}
 
-      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setQ('')}>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setRoleFilter('');
+          setStatusFilter('');
+        }}
+      >
         <Field
           label={tc('search')}
           preset="longText"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+        />
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t('role')}
+          value={roleFilter}
+          onChange={(v) => setRoleFilter(String(v ?? ''))}
+          options={roles.map((r) => ({ value: r.code, label: r.code }))}
+          emptyLabel={t('allRoles')}
+          widthPreset="select"
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={tc('status')}
+          value={statusFilter}
+          onChange={(v) => setStatusFilter(String(v ?? ''))}
+          options={[
+            { value: 'ACTIVE', label: 'ACTIVE' },
+            { value: 'DISABLED', label: 'DISABLED' },
+          ]}
+          emptyLabel={t('allStatuses')}
+          widthPreset="select"
         />
       </EraListFilterBar>
 
@@ -203,6 +243,7 @@ export default function AdminUsersPage() {
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{tAuth('login')}</th>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('name')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('position')}</th>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('role')}</th>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('status')}</th>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
@@ -213,15 +254,17 @@ export default function AdminUsersPage() {
               <tr key={u.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{u.login}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{u.fullName}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{u.positionTitle || tc('dash')}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{u.role}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{u.status}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
                   <button
                     type="button"
-                    className="text-[#2980B9] hover:underline"
+                    className="inline-flex rounded p-1 text-[#2980B9] hover:bg-[#EBF5FB]"
+                    aria-label={tc('edit')}
                     onClick={() => openEdit(u)}
                   >
-                    {tc('edit')}
+                    <Pencil className="h-4 w-4" aria-hidden />
                   </button>
                 </td>
               </tr>
@@ -260,31 +303,30 @@ export default function AdminUsersPage() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
+            disabled={workforceLocked}
+            hint={workforceLocked ? t('workforceNameLocked') : undefined}
           />
-          <Field
-            label={editing ? t('newPasswordOptional') : tAuth('password')}
-            preset="shortText"
-            id="user-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required={!editing}
-            disabled={editing && isSso}
-            hint={editing && isSso ? t('ssoPasswordLocked') : undefined}
-          />
-          <FieldSelect
+          {passwordLocked ? null : (
+            <Field
+              label={editing ? t('newPasswordOptional') : tAuth('password')}
+              preset="shortText"
+              id="user-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required={!editing}
+            />
+          )}
+          <CatalogField
+            kind="SEARCHABLE"
             label={t('role')}
-            preset="selectWide"
             id="user-role"
             value={roleId}
-            onChange={(e) => setRoleId(e.target.value)}
-          >
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.code}
-              </option>
-            ))}
-          </FieldSelect>
+            onChange={(v) => setRoleId(String(v ?? ''))}
+            options={roles.map((r) => ({ value: r.id, label: r.code }))}
+            required
+            emptyLabel={null}
+          />
           {editing ? (
             <FieldSelect
               label={tc('status')}

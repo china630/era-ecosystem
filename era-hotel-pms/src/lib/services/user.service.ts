@@ -9,6 +9,7 @@ import {
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 import { checkSeatQuota } from '@/lib/licensing/client';
 import { requestOrganizationId } from '@/lib/request-organization';
+import { clientIp } from '@/lib/satellite-audit';
 
 export async function listUsers() {
   return prisma.user.findMany({
@@ -81,6 +82,16 @@ export async function updateUser(
   if (existing.passwordHash === 'sso:no-password' && input.password) {
     throw new Error('Cannot set local password for SSO user');
   }
+  if (existing.cpEmploymentId && input.password) {
+    throw Object.assign(new Error('Workforce login password is set at provision'), { status: 400 });
+  }
+  if (
+    existing.cpEmploymentId &&
+    input.fullName != null &&
+    input.fullName !== existing.fullName
+  ) {
+    throw Object.assign(new Error('Workforce login name is set at provision'), { status: 400 });
+  }
 
   if (input.roleId && input.roleId !== existing.roleId) {
     const role = await prisma.role.findUnique({ where: { id: input.roleId } });
@@ -109,6 +120,33 @@ export async function updateUser(
     data,
     include: { role: true },
   });
+}
+
+export async function listUserLogins(limit = 200) {
+  return prisma.userLogin.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: { user: { select: { fullName: true, login: true } } },
+  });
+}
+
+export async function recordUserLogin(
+  user: { id: string; organizationId: string; login: string },
+  request: Request,
+) {
+  try {
+    await prisma.userLogin.create({
+      data: {
+        organizationId: user.organizationId,
+        userId: user.id,
+        login: user.login,
+        ipAddress: clientIp(request),
+        userAgent: request.headers.get('user-agent'),
+      },
+    });
+  } catch {
+    // Sign-in continues when the login journal is not migrated yet.
+  }
 }
 
 /**

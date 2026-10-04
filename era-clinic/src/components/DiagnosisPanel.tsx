@@ -197,37 +197,39 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
             const author = authorLabelFrom(d.recordedByPractitioner ?? null);
             return (
               <li key={d.id} className="border-b border-slate-100 pb-2 last:border-0">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="min-w-0 flex-1">
                     {d.icdCode.code} — {titleFor(d.icdCode, locale)}
                     {d.role ? ` (${d.role})` : ""}
                     {d.kind ? ` · ${d.kind}` : ""}
                     {d.note ? ` — ${d.note}` : ""}
                   </span>
-                  {!readOnly ? (
-                    <>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={tc("edit")}
-                        onClick={() => openEdit(d)}
-                      >
-                        <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={tc("delete")}
-                        onClick={() => void remove(d.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                      </button>
-                    </>
-                  ) : null}
+                  <div className="flex shrink-0 items-center gap-1">
+                    {author ? (
+                      <span className={`mr-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{author}</span>
+                    ) : null}
+                    {!readOnly ? (
+                      <>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("edit")}
+                          onClick={() => openEdit(d)}
+                        >
+                          <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("delete")}
+                          onClick={() => void remove(d.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
-                {author ? (
-                  <p className={`mt-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>{author}</p>
-                ) : null}
               </li>
             );
           })}
@@ -240,12 +242,14 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
           open={open}
           title={editingId ? tc("edit") : t("addDiagnosis")}
           onClose={() => setOpen(false)}
+          closeLabel={tc("close")}
           footer={
             <ModalFooter
               onCancel={() => setOpen(false)}
               onSubmit={() => void save()}
               busy={busy}
               submitLabel={tc("save")}
+              cancelLabel={tc("cancel")}
             />
           }
         >

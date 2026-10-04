@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   Field,
-  FieldSelect,
   FORM_STACK_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
 } from '@era/satellite-kit/ui';
@@ -58,6 +60,7 @@ type TabId = 'compat' | 'sequence' | 'rotation' | 'substitution';
 export default function ProcedureRulesPage() {
   const t = useTranslations('procedureRules');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [tab, setTab] = useState<TabId>('compat');
   const [compatRules, setCompatRules] = useState<CompatRule[]>([]);
   const [seqRules, setSeqRules] = useState<SeqRule[]>([]);
@@ -80,10 +83,13 @@ export default function ProcedureRulesPage() {
     kind: 'SEQUENCE_GAP',
     minGapMinutes: '120',
   });
+  const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>(
+    [],
+  );
   const [rotationForm, setRotationForm] = useState({
     code: '',
     name: '',
-    memberCodes: '',
+    memberCodes: [] as string[],
     scope: 'GROUP',
     maxConsecutiveDays: '1',
     restProcedureCode: '',
@@ -111,6 +117,29 @@ export default function ProcedureRulesPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    void fetch(`/api/admin/procedure-types?locale=${encodeURIComponent(locale)}`)
+      .then((r) => r.json())
+      .then((payload: unknown) => {
+        const raw =
+          payload && typeof payload === 'object' && 'data' in payload
+            ? (payload as { data: unknown }).data
+            : payload;
+        const items = Array.isArray(raw)
+          ? raw
+          : raw && typeof raw === 'object' && 'items' in raw && Array.isArray((raw as { items: unknown }).items)
+            ? (raw as { items: Array<{ code: string; name?: string }> }).items
+            : [];
+        setProcedureOptions(
+          items.map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+      })
+      .catch(() => setProcedureOptions([]));
+  }, [locale]);
+
   function openCreate() {
     setEditingId(null);
     setCompatForm({
@@ -124,7 +153,7 @@ export default function ProcedureRulesPage() {
     setRotationForm({
       code: '',
       name: '',
-      memberCodes: '',
+      memberCodes: [],
       scope: 'GROUP',
       maxConsecutiveDays: '1',
       restProcedureCode: '',
@@ -199,10 +228,7 @@ export default function ProcedureRulesPage() {
       });
       setMsg(res.ok ? (editingId ? tc('saved') : t('added')) : tc('failed'));
     } else if (tab === 'rotation') {
-      const memberCodes = rotationForm.memberCodes
-        .split(',')
-        .map((c) => c.trim())
-        .filter(Boolean);
+      const memberCodes = rotationForm.memberCodes;
       const res = await fetch('/api/admin/procedure-rotation-rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -232,18 +258,27 @@ export default function ProcedureRulesPage() {
     await load();
   }
 
+  function scopeLabel(scope: string) {
+    if (scope === 'GROUP' || scope === 'BODY_PART') return t(`scope_${scope}`);
+    return scope;
+  }
+
   async function confirmDelete() {
     if (!deleteId) return;
-    if (tab === 'compat') {
-      await fetch(`/api/admin/procedure-compatibility-rules?id=${deleteId}`, { method: 'DELETE' });
-    } else if (tab === 'sequence') {
-      await fetch(`/api/admin/procedure-rules?id=${deleteId}`, { method: 'DELETE' });
-    } else if (tab === 'rotation') {
-      await fetch(`/api/admin/procedure-rotation-rules?id=${deleteId}`, { method: 'DELETE' });
-    } else {
-      await fetch(`/api/admin/procedure-substitution-rules?id=${deleteId}`, { method: 'DELETE' });
-    }
+    const url =
+      tab === 'compat'
+        ? `/api/admin/procedure-compatibility-rules?id=${deleteId}`
+        : tab === 'sequence'
+          ? `/api/admin/procedure-rules?id=${deleteId}`
+          : tab === 'rotation'
+            ? `/api/admin/procedure-rotation-rules?id=${deleteId}`
+            : `/api/admin/procedure-substitution-rules?id=${deleteId}`;
+    const res = await fetch(url, { method: 'DELETE' });
     setDeleteId(null);
+    if (!res.ok) {
+      setMsg(tc('failed'));
+      return;
+    }
     await load();
   }
 
@@ -277,7 +312,7 @@ export default function ProcedureRulesPage() {
         }
       />
       {msg ? <p className="mb-4 text-[13px]">{msg}</p> : null}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className={TAB_STRIP_CLASS}>
         {(
           [
             ['compat', t('compatTab')],
@@ -289,7 +324,7 @@ export default function ProcedureRulesPage() {
           <button
             key={id}
             type="button"
-            className={tab === id ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            className={tab === id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
             onClick={() => setTab(id)}
           >
             {label}
@@ -305,7 +340,9 @@ export default function ProcedureRulesPage() {
             <div key={r.id} className="mb-2 flex justify-between border-b pb-2 text-[13px]">
               <span>
                 {r.procedureCodeA} ↔ {r.procedureCodeB} ({compatRuleLabel(r.ruleType)})
-                {r.ruleType === 'MIN_HOURS_GAP' && r.minHours != null ? ` · ${r.minHours}h` : ''}
+                {r.ruleType === 'MIN_HOURS_GAP' && r.minHours != null
+                  ? ` · ${t('hoursShort', { count: r.minHours })}`
+                  : ''}
               </span>
               <span className="flex gap-1">
                 <button
@@ -334,7 +371,8 @@ export default function ProcedureRulesPage() {
           seqRules.map((r) => (
             <div key={r.id} className="mb-2 flex justify-between border-b pb-2 text-[13px]">
               <span>
-                {r.beforeCode} → {r.afterCode} · {seqKindLabel(r.kind)} · {r.minGapMinutes} min
+                {r.beforeCode} → {r.afterCode} · {seqKindLabel(r.kind)} ·{' '}
+                {t('minutesShort', { count: r.minGapMinutes })}
               </span>
               <span className="flex gap-1">
                 <button
@@ -363,9 +401,9 @@ export default function ProcedureRulesPage() {
           rotationRules.map((r) => (
             <div key={r.id} className="mb-2 flex justify-between border-b pb-2 text-[13px]">
               <span>
-                {r.name} · {r.code} · {r.scope} · max {r.maxConsecutiveDays}d ·{' '}
-                {(r.memberCodes ?? []).join(', ')}
-                {r.restProcedureCode ? ` · rest ${r.restProcedureCode}` : ''}
+                {r.name} · {r.code} · {scopeLabel(r.scope)} ·{' '}
+                {t('maxDays', { count: r.maxConsecutiveDays })} · {(r.memberCodes ?? []).join(', ')}
+                {r.restProcedureCode ? ` · ${t('restShort', { code: r.restProcedureCode })}` : ''}
               </span>
               <button
                 type="button"
@@ -398,37 +436,45 @@ export default function ProcedureRulesPage() {
             </div>
           ))}
       </div>
-      <ModalShell open={open} title={editingId ? tc('edit') : tc('add')} onClose={() => setOpen(false)}>
+      <ModalShell
+        open={open}
+        title={editingId ? tc('edit') : tc('add')}
+        onClose={() => setOpen(false)}
+        closeLabel={tc('close')}
+      >
         {tab === 'compat' ? (
           <div className={FORM_STACK_CLASS}>
             {!editingId ? (
               <>
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t('codeA')}
-                  preset="code"
                   value={compatForm.procedureCodeA}
-                  onChange={(e) => setCompatForm({ ...compatForm, procedureCodeA: e.target.value })}
+                  onChange={(v) => setCompatForm({ ...compatForm, procedureCodeA: String(v) })}
+                  options={procedureOptions}
+                  emptyLabel="—"
                 />
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t('codeB')}
-                  preset="code"
                   value={compatForm.procedureCodeB}
-                  onChange={(e) => setCompatForm({ ...compatForm, procedureCodeB: e.target.value })}
+                  onChange={(v) => setCompatForm({ ...compatForm, procedureCodeB: String(v) })}
+                  options={procedureOptions}
+                  emptyLabel="—"
                 />
               </>
             ) : null}
-            <FieldSelect
+            <CatalogField
+              kind="CLOSED_SMALL"
               label={t('ruleType')}
-              preset="select"
               value={compatForm.ruleType}
-              onChange={(e) => setCompatForm({ ...compatForm, ruleType: e.target.value })}
-            >
-              {COMPAT_RULE_TYPES.map((rt) => (
-                <option key={rt} value={rt}>
-                  {compatRuleLabel(rt)}
-                </option>
-              ))}
-            </FieldSelect>
+              onChange={(v) => setCompatForm({ ...compatForm, ruleType: String(v) })}
+              options={COMPAT_RULE_TYPES.map((rt) => ({
+                value: rt,
+                label: compatRuleLabel(rt),
+              }))}
+              emptyLabel={null}
+            />
             {compatForm.ruleType === 'MIN_HOURS_GAP' ? (
               <Field
                 label={t('minHours')}
@@ -450,32 +496,32 @@ export default function ProcedureRulesPage() {
           <div className={FORM_STACK_CLASS}>
             {!editingId ? (
               <>
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t('beforeCode')}
-                  preset="code"
                   value={seqForm.beforeCode}
-                  onChange={(e) => setSeqForm({ ...seqForm, beforeCode: e.target.value })}
+                  onChange={(v) => setSeqForm({ ...seqForm, beforeCode: String(v) })}
+                  options={procedureOptions}
+                  emptyLabel="—"
                 />
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t('afterCode')}
-                  preset="code"
                   value={seqForm.afterCode}
-                  onChange={(e) => setSeqForm({ ...seqForm, afterCode: e.target.value })}
+                  onChange={(v) => setSeqForm({ ...seqForm, afterCode: String(v) })}
+                  options={procedureOptions}
+                  emptyLabel="—"
                 />
               </>
             ) : null}
-            <FieldSelect
+            <CatalogField
+              kind="CLOSED_SMALL"
               label={t('kind')}
-              preset="select"
               value={seqForm.kind}
-              onChange={(e) => setSeqForm({ ...seqForm, kind: e.target.value })}
-            >
-              {SEQ_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {seqKindLabel(k)}
-                </option>
-              ))}
-            </FieldSelect>
+              onChange={(v) => setSeqForm({ ...seqForm, kind: String(v) })}
+              options={SEQ_KINDS.map((k) => ({ value: k, label: seqKindLabel(k) }))}
+              emptyLabel={null}
+            />
             <Field
               label={t('minGapMinutes')}
               preset="count"
@@ -499,21 +545,29 @@ export default function ProcedureRulesPage() {
               value={rotationForm.name}
               onChange={(e) => setRotationForm({ ...rotationForm, name: e.target.value })}
             />
-            <Field
+            <CatalogField
+              kind="MULTI"
               label={t('memberCodes')}
-              preset="longText"
               value={rotationForm.memberCodes}
-              onChange={(e) => setRotationForm({ ...rotationForm, memberCodes: e.target.value })}
+              onChange={(next) =>
+                setRotationForm({
+                  ...rotationForm,
+                  memberCodes: Array.isArray(next) ? next.map(String) : next ? [String(next)] : [],
+                })
+              }
+              options={procedureOptions}
             />
-            <FieldSelect
+            <CatalogField
+              kind="CLOSED_SMALL"
               label={t('scope')}
-              preset="select"
               value={rotationForm.scope}
-              onChange={(e) => setRotationForm({ ...rotationForm, scope: e.target.value })}
-            >
-              <option value="GROUP">GROUP</option>
-              <option value="BODY_PART">BODY_PART</option>
-            </FieldSelect>
+              onChange={(v) => setRotationForm({ ...rotationForm, scope: String(v) })}
+              options={[
+                { value: 'GROUP', label: t('scope_GROUP') },
+                { value: 'BODY_PART', label: t('scope_BODY_PART') },
+              ]}
+              emptyLabel={null}
+            />
             <Field
               label={t('maxConsecutiveDays')}
               preset="count"
@@ -523,26 +577,32 @@ export default function ProcedureRulesPage() {
               value={rotationForm.maxConsecutiveDays}
               onChange={(e) => setRotationForm({ ...rotationForm, maxConsecutiveDays: e.target.value })}
             />
-            <Field
+            <CatalogField
+              kind="SEARCHABLE"
               label={t('restProcedureCode')}
-              preset="code"
               value={rotationForm.restProcedureCode}
-              onChange={(e) => setRotationForm({ ...rotationForm, restProcedureCode: e.target.value })}
+              onChange={(v) => setRotationForm({ ...rotationForm, restProcedureCode: String(v) })}
+              options={procedureOptions}
+              emptyLabel="—"
             />
           </div>
         ) : (
           <div className={FORM_STACK_CLASS}>
-            <Field
+            <CatalogField
+              kind="SEARCHABLE"
               label={t('originalCode')}
-              preset="code"
               value={substitutionForm.originalCode}
-              onChange={(e) => setSubstitutionForm({ ...substitutionForm, originalCode: e.target.value })}
+              onChange={(v) => setSubstitutionForm({ ...substitutionForm, originalCode: String(v) })}
+              options={procedureOptions}
+              emptyLabel="—"
             />
-            <Field
+            <CatalogField
+              kind="SEARCHABLE"
               label={t('substituteCode')}
-              preset="code"
               value={substitutionForm.substituteCode}
-              onChange={(e) => setSubstitutionForm({ ...substitutionForm, substituteCode: e.target.value })}
+              onChange={(v) => setSubstitutionForm({ ...substitutionForm, substituteCode: String(v) })}
+              options={procedureOptions}
+              emptyLabel="—"
             />
             <Field
               label={t('note')}
@@ -552,11 +612,26 @@ export default function ProcedureRulesPage() {
             />
           </div>
         )}
-        <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void saveRule()} submitLabel={tc('save')} />
+        <ModalFooter
+          onCancel={() => setOpen(false)}
+          onSubmit={() => void saveRule()}
+          submitLabel={tc('save')}
+          cancelLabel={tc('cancel')}
+        />
       </ModalShell>
 
-      <ModalShell open={!!deleteId} title={tc('confirmDelete')} onClose={() => setDeleteId(null)}>
-        <ModalFooter onCancel={() => setDeleteId(null)} onSubmit={() => void confirmDelete()} submitLabel={tc('delete')} />
+      <ModalShell
+        open={!!deleteId}
+        title={tc('confirmDelete')}
+        onClose={() => setDeleteId(null)}
+        closeLabel={tc('close')}
+      >
+        <ModalFooter
+          onCancel={() => setDeleteId(null)}
+          onSubmit={() => void confirmDelete()}
+          submitLabel={tc('delete')}
+          cancelLabel={tc('cancel')}
+        />
       </ModalShell>
     </>
   );

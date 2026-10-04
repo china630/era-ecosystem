@@ -1,25 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   EraListFilterBar,
   FieldSelect,
-  FORM_FIELD_GROUP_CLASS,
-  FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
 import { bakuTimeLabel } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -33,6 +26,7 @@ interface Task {
 interface Room {
   id: string;
   roomNumber: string;
+  floor?: number;
   status: string;
   roomType: { code: string };
 }
@@ -44,13 +38,10 @@ export default function HousekeepingPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
+  const locale = useLocale();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [oooRoomId, setOooRoomId] = useState('');
-  const [oooDays, setOooDays] = useState('3');
   const [msg, setMsg] = useState<string | null>(null);
-  const [oooModalOpen, setOooModalOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<HkFilter>('all');
   const [sheetFloor, setSheetFloor] = useState('2');
   const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
@@ -72,8 +63,6 @@ export default function HousekeepingPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const oooFormId = 'ooo-form';
 
   async function completeTask(taskId: string) {
     const res = await fetch('/api/housekeeping/tasks', {
@@ -102,23 +91,13 @@ export default function HousekeepingPage() {
     await load();
   }
 
-  async function setOoo(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    const res = await fetch('/api/housekeeping/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId: oooRoomId, days: parseInt(oooDays, 10), notes: 'OOO from HK' }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    setMsg(res.ok ? t('roomOoo', { room: data.roomNumber }) : data.error);
-    if (res.ok) {
-      setOooModalOpen(false);
-      setOooRoomId('');
+  const floors = useMemo(() => {
+    const set = new Set<number>();
+    for (const room of rooms) {
+      if (typeof room.floor === 'number') set.add(room.floor);
     }
-    await load();
-  }
+    return [...set].sort((a, b) => a - b);
+  }, [rooms]);
 
   const dirtyRooms = rooms.filter((r) => r.status === 'DIRTY');
   const cleanRooms = rooms.filter((r) => r.status === 'CLEAN');
@@ -164,18 +143,12 @@ export default function HousekeepingPage() {
         subtitle={t('hint')}
         actions={
           <div className="flex flex-wrap gap-2 print:hidden">
-            <a className={SECONDARY_BUTTON_CLASS} href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}`}>
+            <a
+              className={SECONDARY_BUTTON_CLASS}
+              href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}&lang=${locale === 'en' || locale === 'ru' ? locale : 'az'}`}
+            >
               {t('downloadSheetPdf')}
             </a>
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => window.print()}>
-              {t('printSheet')}
-            </button>
-            {can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOooModalOpen(true)}>
-                <Plus className="h-4 w-4" aria-hidden />
-                {t('setOoo')}
-              </button>
-            ) : null}
           </div>
         }
       />
@@ -207,23 +180,25 @@ export default function HousekeepingPage() {
       <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 print:shadow-none`} id="hk-floor-sheet">
         <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
           <h2 className="text-sm font-semibold">{t('sheetTitle')}</h2>
-          <label className="text-[12px] text-[#7F8C8D]">
-            {t('floor')}
-            <input
-              type="number"
-              className={`${MODAL_INPUT_CLASS} ml-2`}
-              style={{ width: 80 }}
+          <div className="w-40">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('floor')}
               value={sheetFloor}
-              onChange={(e) => setSheetFloor(e.target.value)}
+              onChange={(v) => setSheetFloor(String(v))}
+              options={(floors.length ? floors : [Number(sheetFloor)]).map((f) => ({
+                value: String(f),
+                label: String(f),
+              }))}
             />
-          </label>
+          </div>
         </div>
         {[{ floor: Number(sheetFloor), rows: visibleSheet }].map((page) => (
           <div key={page.floor} className="hk-print-floor" style={{ pageBreakAfter: 'always' }}>
             <p className="mb-1 hidden text-xs print:block">
               {t('sheetTitle')} · {t('floor')} {page.floor} · {sheetDate} · {t('inList')}: {page.rows.length}
             </p>
-            <table className="w-full text-[11px]">
+            <table className="w-full table-fixed text-[11px]">
               <thead>
                 <tr>
                   <th>{t('colRoom')}</th>
@@ -285,7 +260,7 @@ export default function HousekeepingPage() {
                     <td className="print:hidden">
                       <input
                         type="time"
-                        className={MODAL_INPUT_CLASS}
+                        className="w-24 rounded border border-[#D5DADF] px-1 py-0.5 text-[11px]"
                         defaultValue={
                           r.neededByAt
                             ? bakuTimeLabel(String(r.neededByAt))
@@ -308,7 +283,7 @@ export default function HousekeepingPage() {
                           <CatalogField
                             kind="CLOSED_SMALL"
                             label={t('outcome')}
-                            value=""
+                            value={String(r.visitOutcome ?? '')}
                             onChange={(v) => {
                               void fetch('/api/housekeeping/outcome', {
                                 method: 'POST',
@@ -327,14 +302,17 @@ export default function HousekeepingPage() {
                           />
                           <button
                             type="button"
-                            className={
-                              String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR'
-                                ? PRIMARY_BUTTON_CLASS
-                                : SECONDARY_BUTTON_CLASS
-                            }
+                            className={`rounded px-2 py-0.5 text-[11px] ${
+                              String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR' || String(r.visitOutcome) === 'REFUSED'
+                                ? 'bg-[#34495E] text-white'
+                                : 'border border-[#D5DADF] text-[#34495E]'
+                            }`}
                             title={t('nsrHint')}
                             onClick={() => {
-                              const on = String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR';
+                              const on =
+                                String(r.jobType) === 'NSR' ||
+                                String(r.jobDuty) === 'NSR' ||
+                                String(r.visitOutcome) === 'REFUSED';
                               void fetch('/api/housekeeping/nsr', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -347,7 +325,7 @@ export default function HousekeepingPage() {
                               }).then(() => load());
                             }}
                           >
-                            {String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR'
+                            {String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR' || String(r.visitOutcome) === 'REFUSED'
                               ? t('nsrClear')
                               : t('nsr')}
                           </button>
@@ -411,50 +389,6 @@ export default function HousekeepingPage() {
           {t('dirtyWithoutTask')} {dirtyRooms.map((r) => r.roomNumber).join(', ')}
         </section>
       ) : null}
-
-      <EraModal
-        open={oooModalOpen}
-        title={t('outOfOrder')}
-        onClose={() => setOooModalOpen(false)}
-        footer={
-          <EraModalFooter formId={oooFormId} onCancel={() => setOooModalOpen(false)} busy={busy} submitLabel={t('setOoo')} />
-        }
-      >
-        <form id={oooFormId} onSubmit={setOoo} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ooo-room">
-              {t('roomSelect')}
-            </label>
-            <select
-              id="ooo-room"
-              className={MODAL_INPUT_CLASS}
-              value={oooRoomId}
-              onChange={(e) => setOooRoomId(e.target.value)}
-              required
-            >
-              <option value="">{t('roomSelect')}</option>
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.roomNumber} ({tRoom(r.status as 'DIRTY')})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ooo-days">
-              {t('days')}
-            </label>
-            <input
-              id="ooo-days"
-              type="number"
-              min={1}
-              className={MODAL_INPUT_CLASS}
-              value={oooDays}
-              onChange={(e) => setOooDays(e.target.value)}
-            />
-          </div>
-        </form>
-      </EraModal>
     </>
   );
 }

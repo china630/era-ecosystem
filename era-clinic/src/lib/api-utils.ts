@@ -73,6 +73,7 @@ export function handleRouteError(err: unknown) {
       "LAB_ALREADY_OPEN",
       "LAB_ALREADY_COMPLETED",
       "LAB_OVER_QUOTA_BLOCKED",
+      "IN_USE",
     ]);
     if (conflictCodes.has(code)) {
       const testCode =

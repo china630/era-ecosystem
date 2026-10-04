@@ -27,6 +27,7 @@ export {
   tenderCatalogOptions,
 } from "../catalog/tender-options";
 export { NATIONALITY_OPTIONS } from "../catalog/nationality-options";
+export { countryLabel, countryOptions } from "../catalog/iso-countries";
 export { FieldSection } from "./field-section";
 export { FieldPanel } from "./field-panel";
 export { buildAuthLoginLabels } from "./auth-login-labels";

@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth/hotel-permission-rename";
 import {
   ALL_PERMISSIONS,
+  PERMISSION_PROCESSES,
   PERMISSIONS,
   isHotelPermission,
   parsePermissions,
@@ -30,6 +31,12 @@ describe("hotel permission rename (Wave 2)", () => {
     );
     expect(normalizeHotelPermission("not-a-perm")).toBeNull();
     expect(normalizeHotelPermission("")).toBeNull();
+  });
+
+  it("process rows list every permission once", () => {
+    const listed = PERMISSION_PROCESSES.flatMap((row) => row.permissions);
+    expect([...listed].sort()).toEqual([...ALL_PERMISSIONS].sort());
+    expect(new Set(listed).size).toBe(listed.length);
   });
 
   it("PERMISSIONS values match HOTEL_CANONICAL_PERMISSIONS", () => {

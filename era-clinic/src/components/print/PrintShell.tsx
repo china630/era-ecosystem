@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { countryLabel } from "@era/satellite-kit/ui";
 import { printLabel } from "@/domain/print/print-labels";
 
 type Props = {
@@ -86,7 +87,8 @@ export function PrintShell({
             <strong>{printLabel(lang, "patient")}:</strong> {patient.fullName}
           </div>
           <div>
-            <strong>{printLabel(lang, "country")}:</strong> {patient.nationality ?? "—"}
+            <strong>{printLabel(lang, "country")}:</strong>{" "}
+            {patient.nationality ? countryLabel(patient.nationality, lang) : "—"}
           </div>
           <div>
             <strong>{printLabel(lang, "sex")}:</strong> {sexLabel(lang, patient.sex)}

@@ -76,6 +76,57 @@ async function listPriceForCode(procedureCode: string): Promise<number> {
   return charge.amountNet;
 }
 
+/**
+ * Balance code that still has unused package quota for this procedure
+ * (the line itself, or a block that lists it). Null when it may be a paid extra.
+ */
+export async function remainingPackageQuotaCode(
+  episodeId: string,
+  procedureCode: string,
+): Promise<string | null> {
+  const instance = await prisma.programInstance.findFirst({
+    where: { episodeId },
+    select: {
+      templateId: true,
+      procedureLines: { select: { procedureCode: true, quotaTotal: true } },
+    },
+  });
+  if (!instance) return null;
+  const memberOf = await prisma.programTemplateBlockMember.findMany({
+    where: { templateId: instance.templateId, procedureCode },
+    select: { blockCode: true },
+  });
+  const quotaCodes = [procedureCode, ...memberOf.map((m) => m.blockCode)];
+  for (const code of quotaCodes) {
+    const line = instance.procedureLines.find((l) => l.procedureCode === code);
+    if (!line || line.quotaTotal <= 0) continue;
+    const used = await prisma.procedureOrder.count({
+      where: {
+        clinicalEpisodeId: episodeId,
+        inPackage: true,
+        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] },
+        OR: [{ procedureCode: code }, { packageQuotaCode: code }],
+      },
+    });
+    if (line.quotaTotal - used > 0) return code;
+  }
+  return null;
+}
+
+/** A procedure that still has package quota must not be written as a paid extra. */
+async function assertNoRemainingPackageQuota(
+  episodeId: string,
+  procedureCode: string,
+): Promise<void> {
+  const open = await remainingPackageQuotaCode(episodeId, procedureCode);
+  if (!open) return;
+  throw new PackageAssignError(
+    `Procedure ${procedureCode} still has package quota`,
+    "QUOTA_REMAINING",
+    409,
+  );
+}
+
 /** Doctor prescribe: PENDING_PAY only (not on schedule). */
 export async function prescribeExtras(
   episodeId: string,
@@ -91,6 +142,7 @@ export async function prescribeExtras(
 
   for (const line of lines) {
     if (line.qty < 1) continue;
+    await assertNoRemainingPackageQuota(episodeId, line.procedureCode);
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
       throw new PackageAssignError(

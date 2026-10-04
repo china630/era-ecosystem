@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getCalendarDaysRange } from '@era/satellite-kit';
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { PDF_FONT_UNICODE, registerUnicodeFonts } from '@/lib/reports/pdf-font';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { roomWriteFromAxes } from '@/lib/room-state';
@@ -327,6 +329,9 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
           where: { businessDate: workDate, roomId: { in: rooms.map((r) => r.id) } },
         });
   const neededByMap = new Map(dayTasks.map((t) => [t.roomId, t.neededByAt]));
+  const outcomeByRoom = new Map(
+    dayTasks.filter((t) => t.visitOutcome).map((t) => [t.roomId, t.visitOutcome as string]),
+  );
   const rotation = await prisma.hkRotationDay.findMany({
     where: { workDate },
     include: { housekeeper: true, pair: true },
@@ -391,7 +396,7 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       nightsInHouse: stay?.status === 'IN_HOUSE' ? nightsSince(stay.checkInDate, workDate) : 0,
       linenEvery: stay?.linenEveryNights ?? linenEvery,
       deepEvery: stay?.deepEveryNights ?? deepEvery,
-      visitOutcome: '',
+      visitOutcome: (stay && nsrSet.has(stay.id) ? 'REFUSED' : outcomeByRoom.get(room.id)) ?? '',
       visitTime: '',
       neededByAt: neededByMap.get(room.id)?.toISOString() ?? null,
       maidName: maid?.housekeeper.name ?? '',
@@ -429,28 +434,84 @@ export async function generateAllFloorSheets(workDateIso: string) {
   return pages;
 }
 
-export async function generateFloorSheetPdf(workDateIso: string): Promise<Buffer> {
+const SHEET_PDF_LABELS = {
+  az: {
+    title: 'Mərtəbə vərəqi',
+    floor: 'Mərtəbə',
+    headers: ['Otaq', 'Dolu', 'Tip', 'Qonaq', 'İş', 'Xidmətçi', 'Nəticə', 'Gəliş', 'Gediş', 'Böyük', 'Uşaq'],
+  },
+  en: {
+    title: 'Floor sheet',
+    floor: 'Floor',
+    headers: ['Room', 'Occ', 'Type', 'Guest', 'Job', 'Maid', 'Outcome', 'Arrival', 'Depart', 'Ad', 'Ch'],
+  },
+  ru: {
+    title: 'Лист этажа',
+    floor: 'Этаж',
+    headers: ['Номер', 'Зан.', 'Тип', 'Гость', 'Работа', 'Горничная', 'Итог', 'Заезд', 'Выезд', 'Взр', 'Дет'],
+  },
+} as const;
+
+export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'en' | 'ru' = 'az'): Promise<Buffer> {
   const PDFDocument = (await import('pdfkit')).default;
   const pages = await generateAllFloorSheets(workDateIso);
+  const labels = SHEET_PDF_LABELS[lang];
   const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 28 });
+  registerUnicodeFonts(doc);
+  doc.font(PDF_FONT_UNICODE);
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
   const done = new Promise<Buffer>((resolve, reject) => {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
   });
-  doc.fontSize(12).text(`Floor sheet ${workDateIso}`, { align: 'left' });
-  for (const page of pages) {
-    doc.moveDown();
-    doc.fontSize(10).text(`Floor ${page.floor}`);
+  const cols = [42, 36, 44, 130, 64, 88, 52, 58, 58, 32, 32];
+  pages.forEach((page, index) => {
+    if (index > 0) doc.addPage();
+    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor} · ${workDateIso}`);
+    doc.moveDown(0.4);
+    let y = doc.y;
+    const headers = labels.headers;
+    doc.font(PDF_FONT_UNICODE).fontSize(8);
+    let x = 28;
+    headers.forEach((h, i) => {
+      doc.text(h, x, y, { width: cols[i], continued: false });
+      x += cols[i] ?? 40;
+    });
+    y += 16;
+    doc.moveTo(28, y).lineTo(800, y).stroke();
+    y += 6;
     for (const row of page.rows) {
+      if (y > 540) {
+        doc.addPage();
+        doc.font(PDF_FONT_UNICODE).fontSize(8);
+        y = 40;
+      }
       const r = row as Record<string, unknown>;
-      doc
-        .fontSize(8)
-        .text(
-          `${r.roomNumber ?? ''} ${r.occupancy ?? ''} ${r.guests ?? ''} ${r.arrivalTime ?? ''} ${r.departureTime ?? ''} ${r.jobDuty ?? ''}`,
-        );
+      const cells = [
+        String(r.roomNumber ?? ''),
+        String(r.occupancy ?? ''),
+        String(r.roomType ?? ''),
+        String(r.guests ?? ''),
+        String(r.jobDuty ?? r.jobType ?? ''),
+        String(r.maidName ?? ''),
+        String(r.visitOutcome ?? ''),
+        String(r.arrival ?? ''),
+        String(r.departure ?? ''),
+        String(r.adults ?? ''),
+        String(r.children ?? ''),
+      ];
+      x = 28;
+      cells.forEach((cell, i) => {
+        doc.text(cell.slice(0, 28), x, y, { width: (cols[i] ?? 60) - 4, lineBreak: false });
+        x += cols[i] ?? 60;
+      });
+      y += 14;
     }
+    doc.y = y;
+  });
+  if (pages.length === 0) {
+    doc.fontSize(12).text(`${labels.title} · ${workDateIso}`);
   }
   doc.end();
   return done;
@@ -491,9 +552,29 @@ export async function applyVisitOutcome(taskId: string, outcome: HkVisitOutcome)
     data: {
       visitOutcome: outcome,
       status: done ? 'DONE' : 'IN_PROGRESS',
-      jobType: outcome === 'REFUSED' ? 'NSR' : task.jobType,
+      jobType: outcome === 'REFUSED' ? 'NSR' : task.jobType === 'NSR' ? 'OTHER' : task.jobType,
     },
   });
+  const stay = await prisma.reservation.findFirst({
+    where: { roomId: room.id, status: 'IN_HOUSE' },
+    select: { id: true },
+  });
+  if (stay) {
+    if (outcome === 'REFUSED') {
+      const existing = await prisma.hkNsrDay.findFirst({
+        where: { reservationId: stay.id, workDate: task.businessDate },
+      });
+      if (!existing) {
+        await prisma.hkNsrDay.create({
+          data: { reservationId: stay.id, roomId: room.id, workDate: task.businessDate },
+        });
+      }
+    } else {
+      await prisma.hkNsrDay.deleteMany({
+        where: { reservationId: stay.id, workDate: task.businessDate },
+      });
+    }
+  }
   if (done) {
     await prisma.room.update({
       where: { id: room.id },
@@ -562,10 +643,12 @@ export async function escalateVisitFlags(workDateIso: string) {
 }
 
 export async function recordDiscrepancy(roomId: string, workDateIso: string, kind: 'SKIP' | 'SLEEP', notes?: string) {
+  const workDate = bakuCivilUtcDate(workDateIso);
+  await prisma.hkDiscrepancy.deleteMany({ where: { roomId, workDate } });
   return prisma.hkDiscrepancy.create({
     data: {
       roomId,
-      workDate: new Date(`${workDateIso}T00:00:00.000Z`),
+      workDate,
       kind,
       notes: notes ?? null,
     },
@@ -679,8 +762,8 @@ export async function createLaundryTicket(input: {
             itemId: l.itemId,
             washQty: l.washQty,
             ironQty: l.ironQty,
-            guestQty: l.guestQty ?? l.washQty + l.ironQty,
-            hotelQty: l.hotelQty ?? l.washQty + l.ironQty,
+            guestQty: l.washQty + l.ironQty,
+            hotelQty: l.washQty + l.ironQty,
           })),
       },
     },

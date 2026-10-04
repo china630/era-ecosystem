@@ -20,13 +20,25 @@ export function matrixNowLineLeft(args: {
 }): string | null {
   const { slotTimes, now, slotColumnWidth } = args;
   if (slotTimes.length === 0) return null;
-  const startMin = wallMinutes(slotTimes[0]);
-  const step =
-    slotTimes.length >= 2 ? wallMinutes(slotTimes[1]) - wallMinutes(slotTimes[0]) : 5;
-  if (!(step > 0)) return null;
-  const endMin = wallMinutes(slotTimes[slotTimes.length - 1]) + step;
   const nowMin = wallMinutes(now);
-  if (nowMin < startMin || nowMin > endMin) return null;
-  const cols = (nowMin - startMin) / step;
+  const firstMin = wallMinutes(slotTimes[0]);
+  const lastMin = wallMinutes(slotTimes[slotTimes.length - 1]);
+  const tailStep =
+    slotTimes.length >= 2
+      ? Math.max(1, lastMin - wallMinutes(slotTimes[slotTimes.length - 2]))
+      : 5;
+  if (nowMin < firstMin || nowMin > lastMin + tailStep) return null;
+
+  let cols = 0;
+  for (let i = 0; i < slotTimes.length; i++) {
+    const start = wallMinutes(slotTimes[i]);
+    const end =
+      i + 1 < slotTimes.length ? wallMinutes(slotTimes[i + 1]) : start + tailStep;
+    if (nowMin <= end || i === slotTimes.length - 1) {
+      const span = Math.max(1, end - start);
+      cols = i + (nowMin - start) / span;
+      break;
+    }
+  }
   return `calc(${LABEL_COLUMN} + ${cols} * ${slotColumnWidth})`;
 }

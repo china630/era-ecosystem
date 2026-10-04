@@ -143,6 +143,10 @@ export default function ChannelPage() {
 
   async function mapRoomType(e: React.FormEvent) {
     e.preventDefault();
+    if (!mapRoomTypeId) {
+      showApiError({ error: tc('required') }, tc('failed'));
+      return;
+    }
     setBusy(true);
     const res = await fetch('/api/channel/mappings', {
       method: 'POST',
@@ -168,6 +172,10 @@ export default function ChannelPage() {
 
   async function mapRatePlan(e: React.FormEvent) {
     e.preventDefault();
+    if (!mapRatePlanId) {
+      showApiError({ error: tc('required') }, tc('failed'));
+      return;
+    }
     setBusy(true);
     const res = await fetch('/api/channel/mappings', {
       method: 'POST',

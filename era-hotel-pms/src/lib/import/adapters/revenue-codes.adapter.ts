@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cellString } from '@/lib/import/helpers';
 import type { ImportAdapter } from '@/lib/import/types';
+import { upsertElektraRevenueCode } from '@/lib/integration/elektraweb-revenue';
 
 const rowSchema = z.object({
   code: z.string().min(1),
@@ -28,14 +29,5 @@ export const revenueCodesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     name: cellString(raw.name),
     taxTag: cellString(raw.taxTag),
   }),
-  upsert: async (tx, row, dryRun) => {
-    const existing = await tx.revenueCode.findFirst({ where: { code: row.code } });
-    if (dryRun) return existing ? 'updated' : 'created';
-    await tx.revenueCode.upsert({
-      where: { code: row.code } as never,
-      create: { code: row.code, name: row.name, taxTag: row.taxTag ?? undefined },
-      update: { name: row.name, taxTag: row.taxTag ?? undefined },
-    });
-    return existing ? 'updated' : 'created';
-  },
+  upsert: (tx, row, dryRun) => upsertElektraRevenueCode(tx, row, dryRun),
 };

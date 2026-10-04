@@ -133,7 +133,7 @@ KPI и операционные PDF без Excel. Дом отчётов — ме
 
 **Экран:** WA0058 — Occupancy PDF + PDF Reports.
 
-Nafta **nightly pack** (после NA, одна кнопка ZIP; рассылку делают сами): Daily Management, Trial Balance Date Period, Cash Report, Monthly and Daily Analysis, In-house, Annual Occupancy, Folio Transactions, Department revenues. Состав настраивается (`/settings/report-pack`).
+Nafta **nightly pack** (после NA, одна кнопка ZIP; рассылку делают сами): Daily Management, Trial Balance Date Period, Cash Report, Monthly and Daily Analysis, In-house, Annual Occupancy, Folio Transactions, Department revenues. Состав настраивается (`/settings/policies#reports`).
 
 ## B.4 Заполняемость по питанию
 

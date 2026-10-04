@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import {
+  CatalogField,
   DatePicker,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
@@ -123,24 +124,15 @@ export function ChannelFormModals({
             openCalendarLabel={tc('openCalendar')}
             required
           />
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stop-roomType">
-              {t('roomType')}
-            </label>
-            <select
-              id="stop-roomType"
-              className={MODAL_INPUT_CLASS}
-              value={stopRoomTypeId}
-              onChange={(e) => onStopRoomTypeId(e.target.value)}
-            >
-              <option value="">{t('allRoomTypes')}</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.code}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            id="stop-roomType"
+            label={t('roomType')}
+            value={stopRoomTypeId}
+            onChange={(v) => onStopRoomTypeId(String(v ?? ''))}
+            options={roomTypes.map((rt) => ({ value: rt.id, label: rt.code }))}
+            emptyLabel={t('allRoomTypes')}
+          />
         </form>
       </EraModal>
 
@@ -239,25 +231,16 @@ export function ChannelFormModals({
         }
       >
         <form id={mapRoomFormId} onSubmit={onMapRoomType} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="map-room-type">
-              {t('roomType')}
-            </label>
-            <select
-              id="map-room-type"
-              className={MODAL_INPUT_CLASS}
-              value={mapRoomTypeId}
-              onChange={(e) => onMapRoomTypeId(e.target.value)}
-              required
-            >
-              <option value="">{tc('select')}</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.code}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            id="map-room-type"
+            label={t('roomType')}
+            value={mapRoomTypeId}
+            onChange={(v) => onMapRoomTypeId(String(v ?? ''))}
+            options={roomTypes.map((rt) => ({ value: rt.id, label: rt.code }))}
+            required
+            emptyLabel={null}
+          />
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ota-room-code">
               {t('otaRoomCode')}
@@ -287,25 +270,16 @@ export function ChannelFormModals({
         }
       >
         <form id={mapRateFormId} onSubmit={onMapRatePlan} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="map-rate-plan">
-              {t('ratePlan')}
-            </label>
-            <select
-              id="map-rate-plan"
-              className={MODAL_INPUT_CLASS}
-              value={mapRatePlanId}
-              onChange={(e) => onMapRatePlanId(e.target.value)}
-              required
-            >
-              <option value="">{tc('select')}</option>
-              {ratePlans.map((rp) => (
-                <option key={rp.id} value={rp.id}>
-                  {rp.code}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CatalogField
+            kind="ENTITY_REF"
+            id="map-rate-plan"
+            label={t('ratePlan')}
+            value={mapRatePlanId}
+            onChange={(v) => onMapRatePlanId(String(v ?? ''))}
+            options={ratePlans.map((rp) => ({ value: rp.id, label: rp.code }))}
+            required
+            emptyLabel={null}
+          />
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ota-rate-code">
               {t('otaRateCode')}

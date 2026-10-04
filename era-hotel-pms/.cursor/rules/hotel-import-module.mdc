@@ -48,6 +48,8 @@ Not on the hotel form: BAR bootstrap; FnB `#30`–`#32`; Retail `#33`.
 | `excel.ts` | xlsx → rows |
 | `run-import.ts` | header map, zod, per-row upsert |
 | `adapters/*.ts` | entity-specific idempotent upsert |
+| `src/lib/integration/elektraweb-revenue.ts` | Shared revenue resolver (revenue-codes, folios, live bridge) |
+| `src/lib/integration/elektraweb-sell-path.ts` | Channel rate codes → BAR + OTA source + channel agency (rate-plans, reservations, live bridge) |
 | `upload.ts` | HTTP client for import POST |
 | `step-status-storage.ts` | browser progress (`era-hotel-import-wizard-v1`) |
 

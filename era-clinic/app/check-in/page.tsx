@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { useTranslations } from "next-intl";
 import { bakuTimeLabel } from "@/lib/baku-day";
@@ -19,6 +20,7 @@ type ProcOrder = {
 
 export default function CheckInPage() {
   const t = useTranslations("common");
+  const router = useRouter();
   const { auth } = useClinicAuth();
 
   const [code, setCode] = useState("");
@@ -40,6 +42,7 @@ export default function CheckInPage() {
     if (!auth?.role) return;
     if (auth.checkInMode !== "CODE") {
       setLoading(false);
+      router.replace("/");
       return;
     }
 
@@ -55,7 +58,7 @@ export default function CheckInPage() {
       })
       .catch(() => null)
       .finally(() => setLoading(false));
-  }, [auth?.role, auth?.checkInMode, dateParam]);
+  }, [auth?.role, auth?.checkInMode, dateParam, router]);
 
   async function submit() {
     setMsg(null);
@@ -83,10 +86,7 @@ export default function CheckInPage() {
     }
   }
 
-  if (!auth?.checkInMode) return null;
-  if (auth.checkInMode !== "CODE") {
-    return <div className="p-4">Check-in by code is available only in CODE mode.</div>;
-  }
+  if (!auth?.checkInMode || auth.checkInMode !== "CODE") return null;
 
   return (
     <div className="p-4">

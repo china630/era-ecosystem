@@ -1,5 +1,6 @@
 import { Prisma, type ProcedureSiteLaterality } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { activeBodyPartCodes } from "@/domain/catalog/body-part-lookup";
 import { requestOrganizationId } from "@/lib/request-organization";
 import type { ImportTx } from "@/lib/import/types";
 import {
@@ -155,7 +156,7 @@ export async function applyNahiyeToProcedureOrder(
   const byCode = new Map(dbSites.map((s) => [s.code, s]));
   const orderedCodes = uniqueOrderedIds(chips).filter((c) => byCode.has(c));
   const orderedSites = orderedCodes.map((c) => byCode.get(c)!);
-  const bodyPart = deriveCoarseBodyPart(orderedSites);
+  const bodyPart = deriveCoarseBodyPart(orderedSites, await activeBodyPartCodes());
   const siteApplyMode = resolveSiteApplyMode(orderedSites.length, flaggedMode);
   // JSON matched but catalog empty → chips dropped; keep WO text for re-Apply after seed.
   const catalogMiss = chips.length > 0 && orderedSites.length === 0;

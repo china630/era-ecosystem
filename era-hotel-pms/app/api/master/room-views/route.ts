@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { localizedNameFields } from '@/lib/catalog-label';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createRoomView, listRoomViews } from '@/lib/services/master-data.service';
@@ -8,6 +9,7 @@ import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-d
 const schema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
+  ...localizedNameFields,
 });
 
 export async function GET() {

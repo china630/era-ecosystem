@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
@@ -11,6 +11,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  CatalogField,
   EraListFilterBar,
   Field,
   FieldRow,
@@ -27,7 +28,9 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { HotelLookupsAdmin } from '@/components/admin/HotelLookupsAdmin';
+import { LocalizedNameFields, localizedNamesFromForm } from '@/components/admin/LocalizedNameFields';
 import { matchesCodeNameQuery, matchesRoomTypeFilter } from '@/lib/list-filter';
+import { catalogLabel } from '@/lib/catalog-label';
 import {
   matchesRetireFilter,
   matchesRoomInventoryFilter,
@@ -37,6 +40,9 @@ import {
 
 interface RetireRow {
   active?: boolean;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
 }
 
 interface RoomType extends RetireRow {
@@ -97,6 +103,42 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
   );
 }
 
+function FormCatalogPick({
+  name,
+  label,
+  defaultValue,
+  options,
+  required,
+  emptyLabel = '—',
+  id,
+}: {
+  name: string;
+  label: string;
+  defaultValue: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+  emptyLabel?: string | null;
+  id?: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  useEffect(() => setValue(defaultValue), [defaultValue]);
+  return (
+    <>
+      <input type="hidden" name={name} value={value} />
+      <CatalogField
+        kind="ENTITY_REF"
+        id={id}
+        label={label}
+        value={value}
+        onChange={(v) => setValue(String(v ?? ''))}
+        options={options}
+        required={required}
+        emptyLabel={required ? null : emptyLabel}
+      />
+    </>
+  );
+}
+
 function ActiveStatus({ active }: { active?: boolean }) {
   const t = useTranslations('masterData');
   return (
@@ -133,6 +175,7 @@ function RetireFilterSelect({
 
 export default function MasterDataPage() {
   const t = useTranslations('masterData');
+  const locale = useLocale();
   const tc = useTranslations('common');
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -143,7 +186,7 @@ export default function MasterDataPage() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<
     'revenue' | 'dictionaries' | 'lookups' | 'roomTypes' | 'rooms' | 'ratePlans'
-  >('revenue');
+  >('roomTypes');
 
   const [rcFilter, setRcFilter] = useState('');
   const [bedFilter, setBedFilter] = useState('');
@@ -273,7 +316,7 @@ export default function MasterDataPage() {
             {rows.map((row) => (
               <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(row, locale)}</td>
                 {extraCol && <td className={DATA_TABLE_TD_CLASS}>{extraCol(row) ?? '—'}</td>}
                 <td className={DATA_TABLE_TD_CLASS}>
                   <ActiveStatus active={row.active} />
@@ -290,12 +333,12 @@ export default function MasterDataPage() {
   }
 
   const tabs = [
-    { id: 'revenue' as const, label: t('revenueCodes') },
-    { id: 'dictionaries' as const, label: t('dictionaries') },
-    { id: 'lookups' as const, label: t('lookupsTab') },
     { id: 'roomTypes' as const, label: t('roomTypes') },
+    { id: 'dictionaries' as const, label: t('dictionaries') },
     { id: 'rooms' as const, label: t('rooms') },
     { id: 'ratePlans' as const, label: t('ratePlans') },
+    { id: 'revenue' as const, label: t('revenueCodes') },
+    { id: 'lookups' as const, label: t('lookupsTab') },
   ];
 
   return (
@@ -492,7 +535,7 @@ export default function MasterDataPage() {
               {filteredRoomTypes.map((rt) => (
                 <tr key={rt.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.code}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{rt.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(rt, locale)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.baseQuota}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.adultCapacity ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -539,19 +582,14 @@ export default function MasterDataPage() {
                 <option value="DISABLED">{t('disabledRooms')}</option>
                 <option value="DELETED">{t('deletedRooms')}</option>
               </FieldSelect>
-              <FieldSelect
+              <CatalogField
+                kind="ENTITY_REF"
                 label={t('type')}
-                preset="select"
                 value={roomTypeFilter}
-                onChange={(e) => setRoomTypeFilter(e.target.value)}
-              >
-                <option value="">{t('allRoomTypes')}</option>
-                {roomTypes.map((rt) => (
-                  <option key={rt.id} value={rt.id}>
-                    {rt.code}
-                  </option>
-                ))}
-              </FieldSelect>
+                onChange={(v) => setRoomTypeFilter(String(v ?? ''))}
+                options={roomTypes.map((rt) => ({ value: rt.id, label: rt.code }))}
+                emptyLabel={t('allRoomTypes')}
+              />
             </EraListFilterBar>
             <button
               type="button"
@@ -661,7 +699,7 @@ export default function MasterDataPage() {
               {filteredRatePlans.map((rp) => (
                 <tr key={rp.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{rp.code}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{rp.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(rp, locale)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rp.pricePerNight}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rp.extraAdultAmount ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rp.extraBedAmount ?? '—'}</td>
@@ -713,6 +751,7 @@ export default function MasterDataPage() {
             const body = editRoomType
               ? {
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
                   active: fd.get('active') === 'on',
@@ -720,6 +759,7 @@ export default function MasterDataPage() {
               : {
                   code: fd.get('code'),
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
                 };
@@ -763,13 +803,14 @@ export default function MasterDataPage() {
             />
           )}
           <Field
-            label={tc('name')}
+            label={t('nameDefault')}
             preset="shortText"
             id="rt-name"
             name="name"
             defaultValue={editRoomType?.name ?? ''}
             required
           />
+          <LocalizedNameFields idPrefix="rt" row={editRoomType} />
           <FieldRow cols={2}>
             <Field
               label={tc('quota')}
@@ -839,6 +880,7 @@ export default function MasterDataPage() {
             const body = editRatePlan
               ? {
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   pricePerNight: Number(fd.get('price')),
                   medicalFlag: fd.get('medical') === 'on',
                   roomTypeId,
@@ -848,6 +890,7 @@ export default function MasterDataPage() {
               : {
                   code: fd.get('code'),
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   pricePerNight: Number(fd.get('price')),
                   medicalFlag: fd.get('medical') === 'on',
                   roomTypeId: roomTypeId || undefined,
@@ -885,13 +928,14 @@ export default function MasterDataPage() {
             />
           )}
           <Field
-            label={tc('name')}
+            label={t('nameDefault')}
             preset="shortText"
             id="rp-name"
             name="name"
             defaultValue={editRatePlan?.name ?? ''}
             required
           />
+          <LocalizedNameFields idPrefix="rp" row={editRatePlan} />
           <FieldRow cols={2}>
             <Field
               label={t('priceBase1Adult')}
@@ -903,20 +947,14 @@ export default function MasterDataPage() {
               defaultValue={editRatePlan?.pricePerNight ?? ''}
               required
             />
-            <FieldSelect
-              label={t('type')}
-              preset="select"
+            <FormCatalogPick
               id="rp-roomTypeId"
               name="roomTypeId"
+              label={t('type')}
               defaultValue={editRatePlan?.roomTypeId ?? ''}
-            >
-              <option value="">{t('anyType')}</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.code}
-                </option>
-              ))}
-            </FieldSelect>
+              emptyLabel={t('anyType')}
+              options={roomTypes.map((rt) => ({ value: rt.id, label: rt.code }))}
+            />
           </FieldRow>
           <p className="m-0 text-[12px] text-[#7F8C8D]">{t('occupancyHint')}</p>
           <FieldRow cols={2}>
@@ -1007,6 +1045,7 @@ export default function MasterDataPage() {
             const body = editRevenueCode
               ? {
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   taxTag: (fd.get('taxTag') as string) || null,
                   targetFolioType: folioType,
                   active: fd.get('active') === 'on',
@@ -1014,6 +1053,7 @@ export default function MasterDataPage() {
               : {
                   code: fd.get('code'),
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   taxTag: (fd.get('taxTag') as string) || undefined,
                   targetFolioType: folioType || undefined,
                 };
@@ -1051,13 +1091,14 @@ export default function MasterDataPage() {
             />
           )}
           <Field
-            label={tc('name')}
+            label={t('nameDefault')}
             preset="shortText"
             id="rc-name"
             name="name"
             defaultValue={editRevenueCode?.name ?? ''}
             required
           />
+          <LocalizedNameFields idPrefix="rc" row={editRevenueCode} />
           <FieldRow cols={2}>
             <Field
               label={t('taxTag')}
@@ -1118,12 +1159,14 @@ export default function MasterDataPage() {
             const body = editBedType
               ? {
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   systemType: (fd.get('systemType') as string) || null,
                   active: fd.get('active') === 'on',
                 }
               : {
                   code: fd.get('code'),
                   name: fd.get('name'),
+                  ...localizedNamesFromForm(fd),
                   systemType: (fd.get('systemType') as string) || undefined,
                 };
             const res = await fetch(
@@ -1159,7 +1202,7 @@ export default function MasterDataPage() {
           )}
           <FieldRow cols={2}>
             <Field
-              label={tc('name')}
+              label={t('nameDefault')}
               preset="shortText"
               id="bt-name"
               name="name"
@@ -1174,6 +1217,7 @@ export default function MasterDataPage() {
               defaultValue={editBedType?.systemType ?? ''}
             />
           </FieldRow>
+          <LocalizedNameFields idPrefix="bt" row={editBedType} />
           {editBedType && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -1210,8 +1254,8 @@ export default function MasterDataPage() {
             setBusy(true);
             const fd = new FormData(e.currentTarget);
             const body = editRoomView
-              ? { name: fd.get('name'), active: fd.get('active') === 'on' }
-              : { code: fd.get('code'), name: fd.get('name') };
+              ? { name: fd.get('name'), ...localizedNamesFromForm(fd), active: fd.get('active') === 'on' }
+              : { code: fd.get('code'), name: fd.get('name'), ...localizedNamesFromForm(fd) };
             const res = await fetch(
               editRoomView ? `/api/master/room-views/${editRoomView.id}` : '/api/master/room-views',
               {
@@ -1244,13 +1288,14 @@ export default function MasterDataPage() {
             />
           )}
           <Field
-            label={tc('name')}
+            label={t('nameDefault')}
             preset="shortText"
             id="rv-name"
             name="name"
             defaultValue={editRoomView?.name ?? ''}
             required
           />
+          <LocalizedNameFields idPrefix="rv" row={editRoomView} />
           {editRoomView && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -1284,11 +1329,16 @@ export default function MasterDataPage() {
           className={FORM_STACK_CLASS}
           onSubmit={async (e) => {
             e.preventDefault();
-            setBusy(true);
             const fd = new FormData(e.currentTarget);
+            const roomTypeId = String(fd.get('roomTypeId') ?? '');
+            if (!roomTypeId) {
+              showApiError({ error: tc('required') }, tc('error'));
+              return;
+            }
+            setBusy(true);
             const body = editRoom
               ? {
-                  roomTypeId: fd.get('roomTypeId'),
+                  roomTypeId,
                   floor: Number(fd.get('floor') || 1),
                   viewCode: (fd.get('viewCode') as string) || null,
                   bedTypeCode: (fd.get('bedTypeCode') as string) || null,
@@ -1299,7 +1349,7 @@ export default function MasterDataPage() {
                 }
               : {
                   roomNumber: fd.get('roomNumber'),
-                  roomTypeId: fd.get('roomTypeId'),
+                  roomTypeId,
                   floor: Number(fd.get('floor') || 1),
                   viewCode: (fd.get('viewCode') as string) || undefined,
                   bedTypeCode: (fd.get('bedTypeCode') as string) || undefined,
@@ -1343,20 +1393,14 @@ export default function MasterDataPage() {
               readOnly
             />
           )}
-          <FieldSelect
-            label={t('type')}
-            preset="selectWide"
+          <FormCatalogPick
             id="rm-type"
             name="roomTypeId"
-            defaultValue={editRoom?.roomTypeId ?? roomTypes[0]?.id}
+            label={t('type')}
+            defaultValue={editRoom?.roomTypeId ?? roomTypes[0]?.id ?? ''}
             required
-          >
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>
-                {rt.code}
-              </option>
-            ))}
-          </FieldSelect>
+            options={roomTypes.map((rt) => ({ value: rt.id, label: rt.code }))}
+          />
           <FieldRow cols={3}>
             <Field
               label={t('floor')}
@@ -1366,38 +1410,24 @@ export default function MasterDataPage() {
               type="number"
               defaultValue={editRoom?.floor ?? 1}
             />
-            <FieldSelect
-              label={t('viewCode')}
-              preset="select"
+            <FormCatalogPick
               id="rm-view"
               name="viewCode"
+              label={t('viewCode')}
               defaultValue={editRoom?.viewCode ?? ''}
-            >
-              <option value="">—</option>
-              {roomViews
+              options={roomViews
                 .filter((v) => v.active !== false)
-                .map((v) => (
-                  <option key={v.id} value={v.code}>
-                    {v.code} — {v.name}
-                  </option>
-                ))}
-            </FieldSelect>
-            <FieldSelect
-              label={t('bedTypeCode')}
-              preset="select"
+                .map((v) => ({ value: v.code, label: `${v.code} — ${catalogLabel(v, locale)}` }))}
+            />
+            <FormCatalogPick
               id="rm-bed"
               name="bedTypeCode"
+              label={t('bedTypeCode')}
               defaultValue={editRoom?.bedTypeCode ?? ''}
-            >
-              <option value="">—</option>
-              {bedTypes
+              options={bedTypes
                 .filter((b) => b.active !== false)
-                .map((b) => (
-                  <option key={b.id} value={b.code}>
-                    {b.code} — {b.name}
-                  </option>
-                ))}
-            </FieldSelect>
+                .map((b) => ({ value: b.code, label: `${b.code} — ${catalogLabel(b, locale)}` }))}
+            />
           </FieldRow>
           <FieldRow cols={2}>
             <Field

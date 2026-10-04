@@ -12,8 +12,9 @@
 4. Mix / unresolved → omit `programCode` on lifecycle; stamp `medicalPackageUnresolved`.
 5. **Clinic** always opens an in-house episode on check-in event; staff Select assigns one of four templates when hotel omitted SKU.
 6. `Walkin leisure` is **not** a medical SKU: hotel check-in **skips** `dispatchGuestCheckedIn` (`stayKind: leisure`) so clinic stays quiet; clinic «always open» still applies if a lifecycle event somehow arrives.
-7. Editable `AgencyMedicalSkuRule` (SatAdmin `/settings/agency-medical-sku`) overrides code defaults when seeded; empty table → hardcoded prefixes remain.
+7. The package lives on `Agency.medicalPackageCode`. Import stamps `PKG-*` from the agency name (`resolveAgencyPackageCode`). Empty code on the travel-agency form means “from the name”. The prefix table `AgencyMedicalSkuRule` is removed.
 8. FO Guests tab may set `ReservationGuest.medicalPackageCode` per pax; save stamps FO codes + `syncComposedDailyRates` + stay-product (non-leisure).
+9. Reservation card **Calculate daily prices** does not open the BAR calendar for a medical stay. `PKG-*` on the stay uses `RatePlanSellVersion` for the check-in date (occupancy 1/2/3, Standart companion from its dated component version). No compiled 139/193/180/178/96 fallback: a missing version leaves existing nights in place and returns an error. A medical plan with no package code uses that plan's `pricePerNight`. A non-medical room plan still quotes BAR from the **booked** room type (`Reservation.roomTypeId`), not the assigned door. Saving the card stores `manualFlag` only for nights the desk edited.
 
 ## Consequences
 

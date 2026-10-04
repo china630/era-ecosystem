@@ -62,6 +62,17 @@ export default function NightAuditYearEndPage() {
         showApiError(data, tc('error'));
         return;
       }
+      if (data.ok === false) {
+        const message =
+          data.code === 'YEAR_END_BLOCKED_OPEN_CITY_LEDGER'
+            ? t('yearEndBlockedLedger', {
+                count: data.preview?.openCityLedger?.count ?? 0,
+              })
+            : t('yearEndNotEnabled');
+        showApiError({ error: message }, tc('error'));
+        if (data.preview) setPreview(data.preview);
+        return;
+      }
       showSuccess(data.message ?? t('yearEndStaged'));
       if (data.preview) setPreview(data.preview);
     } catch (e) {
@@ -91,7 +102,7 @@ export default function NightAuditYearEndPage() {
             <li>
               {t('yearLabel')}: {preview.year}
             </li>
-            <li className="text-[#7F8C8D]">{preview.note}</li>
+            <li className="text-[#7F8C8D]">{t('yearEndNote')}</li>
           </ul>
         ) : (
           <p className="m-0 text-[13px] text-[#7F8C8D]">{tc('loading')}</p>

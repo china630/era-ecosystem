@@ -120,7 +120,7 @@ function paramsLabelFromPhysio(
   return parts.join(" · ");
 }
 
-/** CLI-57 extras modal — prescribe to PENDING_PAY with price + physio form overlay. */
+/** Paid-extra prescribe form. The card opens PackageAssignModal, which writes quota and extras together. */
 export function ExtrasAssignModal({
   open,
   episodeId,

@@ -30,6 +30,8 @@ export async function GET() {
           department: u.department,
           status: u.status,
           isCrossSystem: u.isCrossSystem,
+          cpEmploymentId: u.cpEmploymentId,
+          positionTitle: u.positionTitle,
           role: u.role.code,
           roleName: u.role.name,
           lastLoginAt: u.lastLoginAt,

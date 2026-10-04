@@ -1,7 +1,7 @@
 # ADR: Elektraweb Excel import (hotel satellite bootstrap)
 
 **Status:** Accepted  
-**Date:** 2026-06-12  
+**Date:** 2026-06-12 (amended 2026-10-04: revenue adapter, sell path, ops wipe)  
 **Scope:** `era-hotel-pms` — one-time / repeat hotel migration from Elektraweb `.xlsx` exports
 
 ## Context
@@ -68,6 +68,47 @@ Progress is stored in browser `localStorage` (`era-hotel-import-wizard-v1`) for 
 
 - **`npm run db:seed:reference`** — universal dictionaries (RevenueCode, BedType, RoomView) for **all** deployments; idempotent, no wipe.
 - **Wizard import** — property-specific rows from Elektraweb exports (room types, rooms, agencies, historical guests, etc.).
+
+### 7. One revenue adapter for Excel import and the live bridge (2026-10-04)
+
+Elektraweb revenue names and codes map to ERA `RevenueCode` through **one** resolver: `src/lib/integration/elektraweb-revenue.ts`. There is no separate Elektra mapping table.
+
+| Caller | Use |
+|--------|-----|
+| `revenue-codes` adapter (`#03`) | `upsertElektraRevenueCode` — writes `name` + `taxTag` only |
+| `folios` adapter (`#13`) | `resolveElektraRevenueCodeId` — dry run is lookup-only (`createMissing: false`) |
+| Live bridge `upsert-folio.ts` | `resolveRevenueCodeId` → same resolver (`REVENUE` / `REVID_REVENUENAME`, `REVCODE`, `REVID`) |
+
+Resolution order:
+
+1. Known pairs → canonical ERA code: accommodation → `ROOM`; banquet / banket / ziyafet / банкет (codes `BNQ`, `BQT`) → `BANQUET`; minibar → `MINIBAR`; laundry → `LAUNDRY`.
+2. Elektra code present → same code, uppercased, no prefix (Excel `#03` and folio rows land on one row).
+3. Numeric revenue id only → `EW-{id}`; name only → `EW-{slug}`; nothing → `ROOM`.
+
+For non-canonical targets the resolver first reuses an existing row by name (case-insensitive) or by any candidate code, then upserts the target. Re-import never duplicates a revenue code that the operator already renamed in MD-04.
+
+### 8. A channel is not a rate plan (2026-10-04)
+
+Elektraweb rate codes such as `BOOKING`, `EXPEDIA`, `AGODA`, `AIRBNB` describe **where** the room was sold. In ERA that is `Reservation.sourceId` (BookingSource `OTA`) plus `Reservation.agencyId` (the channel agency). The price comes from the **BAR** rate plan.
+
+One resolver, `src/lib/integration/elektraweb-sell-path.ts`, serves both paths:
+
+| Caller | Use |
+|--------|-----|
+| `rate-plans` adapter (`#05`) | `upsertElektraRateCode` — channel rows are **skipped** as rate plans; the OTA source and channel agency are ensured instead |
+| `reservations` adapter (optional `Rate Code` column) + live bridge `upsert-reservation.ts` (`RATECODE`) | `resolveElektraSellPath` → `{ ratePlanId, sourceId, agencyId }`; no rate code → BAR |
+
+- Channel detection uses `isOtaAgency` keywords; `BAR`, `BAR-*` and `PKG*` codes are protected and always stay rate plans.
+- The row's own agency wins over the channel agency. An existing reservation `sourceId` is never overwritten.
+- Existing databases imported before this decision: `scripts/ops/reclass-elektra-rate-channels.ts --org=<uuid> [--dry-run]` moves reservations and stay slices from channel plans onto BAR + OTA source + channel agency and retires the channel plan (`active=false`). Folio totals are not recalculated.
+
+### 9. Operational wipe for re-import (2026-10-04)
+
+Variant A re-import (keep master data, reload operations) is exposed as a **platform super-admin** screen `/settings/ops-wipe` (`GET|POST /api/admin/ops-wipe`) over the same service as the CLI `scripts/ops/wipe-hotel-ops-transactional.ts` (`src/lib/services/ops-wipe.service.ts`).
+
+- The org comes from the session only; the POST body must repeat the session org id and the phrase `WIPE` (409 on mismatch). It never wipes all tenants.
+- The screen shows counts first; deletion is a separate confirm. One bucket: guests, reservations, folios (charges, payments, settlements, deposits, fiscal docs), notes, concierge orders, banquet events, medical orders/alerts, Elektraweb folio outbox — plus rows that cascade from them (procedure appointments, lab results, tour bookings, transfer orders, migration registrations, tourism tax submissions), which the screen also counts. Rooms return to `AVAILABLE`.
+- Master data, finance-core and MDM are untouched. Each wipe writes a `SatelliteAuditLog` entry (`OpsWipe` / `WIPE`).
 
 ## Consequences
 

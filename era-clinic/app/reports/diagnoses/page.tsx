@@ -3,18 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
+  EraListFilterBar,
+  EraListWorkspace,
   FieldSelect,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
@@ -88,53 +88,66 @@ export default function DiagnosisReportPage() {
     setPage(1);
   }, [from, to, source, chapter, locale, tc]);
 
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   return (
-    <>
+    <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader title={t("reportTitle")} subtitle={t("reportSubtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>
-        <div className="flex flex-wrap items-end gap-3">
-          <DatePicker
-            label={t("dateFrom")}
-            placeholder="YYYY-MM-DD"
-            value={from}
-            onChange={setFrom}
-          />
-          <DatePicker
-            label={t("dateTo")}
-            placeholder="YYYY-MM-DD"
-            value={to}
-            onChange={setTo}
-          />
-          <FieldSelect
-            label={t("source")}
-            preset="select"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            resetLabel={tc("filterReset")}
+            onReset={() => {
+              setFrom(monthAgoIso());
+              setTo(todayBakuYmd());
+              setSource("all");
+              setChapter("");
+            }}
           >
-            <option value="all">{tc("all")}</option>
-            <option value="episode">{t("sourceEpisode")}</option>
-            <option value="visit">{t("sourceVisit")}</option>
-            <option value="admission">{t("sourceAdmission")}</option>
-          </FieldSelect>
-          <FieldSelect
-            label={t("chapter")}
-            preset="selectWide"
-            value={chapter}
-            onChange={(e) => setChapter(e.target.value)}
-          >
-            <option value="">{t("allChapters")}</option>
-            {chapters.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.title}
-              </option>
-            ))}
-          </FieldSelect>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void load()}>
-            {tc("search")}
-          </button>
-        </div>
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
-        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <DatePicker
+              label={t("dateFrom")}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+              value={from}
+              onChange={setFrom}
+            />
+            <DatePicker
+              label={t("dateTo")}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+              value={to}
+              onChange={setTo}
+            />
+            <FieldSelect
+              label={t("source")}
+              preset="select"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+            >
+              <option value="all">{tc("all")}</option>
+              <option value="episode">{t("sourceEpisode")}</option>
+              <option value="visit">{t("sourceVisit")}</option>
+              <option value="admission">{t("sourceAdmission")}</option>
+            </FieldSelect>
+            <FieldSelect
+              label={t("chapter")}
+              preset="selectWide"
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+            >
+              <option value="">{t("allChapters")}</option>
+              {chapters.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.title}
+                </option>
+              ))}
+            </FieldSelect>
+          </EraListFilterBar>
+        }
+        toolbar={msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -168,25 +181,27 @@ export default function DiagnosisReportPage() {
               ) : null}
             </tbody>
           </table>
-        </div>
-        <ListPaginationFooter
-          page={page}
-          pageSize={pageSize}
-          total={items.length}
-          loading={busy}
-          onPageChange={setPage}
-          onPageSizeChange={(n) => {
-            setPageSize(n);
-            setPage(1);
-          }}
-          labels={{
-            rowsPerPage: tc("rowsPerPage"),
-            pageOf: tc("pageOf"),
-            prev: tc("prev"),
-            next: tc("next"),
-          }}
-        />
-      </div>
-    </>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={items.length}
+            loading={busy}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+            labels={{
+              rowsPerPage: tc("rowsPerPage"),
+              pageOf: tc("pageOf"),
+              prev: tc("prev"),
+              next: tc("next"),
+            }}
+          />
+        }
+      />
+    </div>
   );
 }

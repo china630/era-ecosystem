@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   DANGER_BUTTON_CLASS,
   MODAL_FULL_CLASS,
@@ -14,6 +14,7 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay, bakuTimeLabel } from '@era/satellite-kit/time';
+import { guestListItems } from '@/lib/guest-list-identity';
 import { addHotelDays } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
@@ -77,6 +78,7 @@ import {
   contractCounterpartyType,
 } from '@/lib/booking-source-kind';
 import { previewOccupancyAfterDepart } from '@/lib/occupancy-party';
+import { catalogLabel, type LocalizedCatalogRow } from '@/lib/catalog-label';
 
 function mergeDateTime(date: string, time: string): string | undefined {
   if (!date) return undefined;
@@ -98,6 +100,8 @@ export type ReservationCardEditorProps = {
   open: boolean;
   onClose: () => void;
   reservationId: string | null;
+  /** Right-hand tab shown when the card opens. Create still starts on guests. */
+  initialTab?: TabId;
   onReservationCreated?: (id: string) => void;
 };
 
@@ -106,16 +110,22 @@ export function ReservationCardEditor({
   open,
   onClose,
   reservationId,
+  initialTab = 'guests',
   onReservationCreated,
 }: ReservationCardEditorProps) {
   const isCreate = !reservationId;
   const t = useTranslations('reservationCard');
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const tRes = useTranslations('reservationStatus');
   const { can } = useAuth();
 
-  const [tab, setTab] = useState<TabId>('guests');
+  const [tab, setTab] = useState<TabId>(initialTab);
+  useEffect(() => {
+    if (!open || isCreate) return;
+    setTab(initialTab);
+  }, [open, isCreate, reservationId, initialTab]);
   const [folioTab, setFolioTab] = useState<FolioSubTab>('all');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -809,7 +819,7 @@ export function ReservationCardEditor({
         const mapped: RatePlanOption[] = rp
           .filter((x: { active?: boolean }) => x.active !== false)
           .map(
-            (x: {
+            (x: LocalizedCatalogRow & {
               id: string;
               code: string;
               name?: string;
@@ -824,7 +834,7 @@ export function ReservationCardEditor({
               medicalFlag: !!x.medicalFlag,
               mealPlanId: x.mealPlanId ?? null,
               roomTypeId: x.roomTypeId ?? null,
-              label: `${x.name ? `${x.code} — ${x.name}` : x.code}${
+              label: `${x.name ? `${x.code} — ${catalogLabel(x, locale)}` : x.code}${
                 x.medicalFlag ? tc('medicalSuffix') : ''
               }`,
             }),
@@ -839,9 +849,9 @@ export function ReservationCardEditor({
         setRoomTypes(
           rt
             .filter((x: { active?: boolean }) => x.active !== false)
-            .map((x: { id: string; code: string; name?: string; adultCapacity?: number }) => ({
+            .map((x: LocalizedCatalogRow & { id: string; code: string; name?: string; adultCapacity?: number }) => ({
               id: x.id,
-              label: x.name ? `${x.code} — ${x.name}` : x.code,
+              label: x.name ? `${x.code} — ${catalogLabel(x, locale)}` : x.code,
               adultCapacity: x.adultCapacity,
             })),
         );
@@ -854,8 +864,8 @@ export function ReservationCardEditor({
           })),
         );
       }
-      if (Array.isArray(g)) {
-        setGuestOptions(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
+      if (Array.isArray(g) || (g && typeof g === 'object' && Array.isArray((g as { items?: unknown }).items))) {
+        setGuestOptions(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
       }
       if (Array.isArray(rm)) {
         setRooms(
@@ -917,7 +927,7 @@ export function ReservationCardEditor({
         );
       }
     });
-  }, [open, tc]);
+  }, [open, tc, locale]);
 
   useEffect(() => {
     if (!open) {
@@ -1045,9 +1055,7 @@ export function ReservationCardEditor({
 
   async function loadGuests() {
     const g = await fetch('/api/guests').then((r) => r.json());
-    if (Array.isArray(g)) {
-      setGuestOptions(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
-    }
+    setGuestOptions(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
   }
 
   async function spreadKind(kind: 'NIGHTLY' | 'STAY_TOTAL' | 'PERCENT', value: number) {

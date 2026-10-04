@@ -5,6 +5,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   listProcedureTypes,
   createProcedureType,
+  purgeNonCabinProcedureTypes,
   auditMasterChange,
 } from "@/lib/services/clinic-master-data.service";
 
@@ -50,12 +51,20 @@ export async function GET(req: Request) {
       session,
       CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
     );
-    if (deniedMaster && deniedTemplates) return deniedMaster;
+    const deniedRules = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+    );
+    if (deniedMaster && deniedTemplates && deniedRules) return deniedMaster;
     const locale =
       new URL(req.url).searchParams.get("locale") ??
       req.headers.get("x-era-locale") ??
       "en";
-    return jsonOk(await listProcedureTypes(locale));
+    const blockedNonCabin = await purgeNonCabinProcedureTypes();
+    return jsonOk({
+      items: await listProcedureTypes(locale),
+      blockedNonCabin,
+    });
   } catch (err) {
     return handleRouteError(err);
   }

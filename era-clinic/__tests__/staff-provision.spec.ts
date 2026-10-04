@@ -34,6 +34,7 @@ jest.mock("@/lib/prisma", () => ({
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      delete: jest.fn(),
     },
   },
 }));
@@ -218,6 +219,27 @@ describe("clinic staff-provision", () => {
         where: expect.objectContaining({ code: "CLINIC_ADMIN" }),
       }),
     );
+  });
+
+  it("does not create a practitioner for a reception role", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.role.findFirst.mockResolvedValue({
+      id: "role-reception",
+      code: "RECEPTION",
+      staffKind: "NONE",
+    });
+    await handleStaffProvisionEvent({
+      ...provisionEvent,
+      payload: {
+        ...provisionEvent.payload,
+        satelliteRole: "RECEPTION",
+        fullName: "Rahman Shirinov",
+        login: "rahman",
+      },
+    });
+    expect(prisma.user.create).toHaveBeenCalled();
+    expect(prisma.practitioner.create).not.toHaveBeenCalled();
+    expect(prisma.practitioner.update).not.toHaveBeenCalled();
   });
 
   it("deactivates only satelliteUserId on STAFF_DEACTIVATED", async () => {

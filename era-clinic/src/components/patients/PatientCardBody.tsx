@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
@@ -21,7 +21,8 @@ import {
   FieldSelect,
   ModalFooter,
   ModalShell,
-  NATIONALITY_OPTIONS,
+  countryLabel,
+  countryOptions,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
@@ -31,10 +32,9 @@ import {
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import type { PractitionerAuthorRef } from "@/domain/staff/practitioner-label";
 
-function nationalityLabel(code: string | null | undefined): string {
-  if (!code) return "—";
-  const hit = NATIONALITY_OPTIONS.find((o) => o.value === code);
-  return hit?.label ?? code;
+function identityValue(value: string | null | undefined): string {
+  const text = value?.trim();
+  return text ? text : "—";
 }
 
 export type PatientSex = "MALE" | "FEMALE" | "UNKNOWN";
@@ -144,6 +144,15 @@ export function PatientCardBody({
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const locale = useLocale();
+  const nationalityOptions = useMemo(
+    () => countryOptions(locale, form.nationality),
+    [locale, form.nationality],
+  );
+  const issuingCountryOptions = useMemo(
+    () => countryOptions(locale, form.issuingCountry),
+    [locale, form.issuingCountry],
+  );
 
   const selectedEpisode = useMemo(
     () => episodes.find((e) => e.id === selectedEpisodeId) ?? null,
@@ -396,44 +405,78 @@ export function PatientCardBody({
             </button>
           </div>
           {isSuperAdmin ? (
-            <p className="text-sm">
-              {t("mdmBadge")}:{" "}
+            <p>
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("mdmBadge")}
+              </span>
               {patient.globalPersonId ? (
-                <span className={TEXT_SUCCESS_CLASS}>{maskPersonId(patient.globalPersonId)}</span>
+                <span className={`text-base font-semibold ${TEXT_SUCCESS_CLASS}`}>
+                  {maskPersonId(patient.globalPersonId)}
+                </span>
               ) : (
-                <span className={TEXT_DANGER_CLASS}>{t("mdmMissing")}</span>
+                <span className={`text-base font-semibold ${TEXT_DANGER_CLASS}`}>
+                  {t("mdmMissing")}
+                </span>
               )}
             </p>
           ) : null}
-          <div className="grid gap-2 text-sm text-[#2C3E50] sm:grid-cols-2">
-            {patient.phone ? (
-              <p>
-                <span className="font-medium">{t("phone")}:</span> {patient.phone}
-              </p>
-            ) : null}
+          <div className="grid gap-3 sm:grid-cols-2">
             <p>
-              <span className="font-medium">{t("nationality")}:</span>{" "}
-              {nationalityLabel(patient.nationality)}
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("phone")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {identityValue(patient.phone)}
+              </span>
             </p>
             <p>
-              <span className="font-medium">{t("sex")}:</span> {sexLabel(patient.sex)}
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("nationality")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {patient.nationality ? countryLabel(patient.nationality, locale) : "—"}
+              </span>
             </p>
             <p>
-              <span className="font-medium">{t("birthDate")}:</span>{" "}
-              {birthDateToInputValue(patient.birthDate) || "—"} ({ageLine})
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("sex")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {identityValue(sexLabel(patient.sex))}
+              </span>
             </p>
             <p>
-              <span className="font-medium">{t("bloodGroup")}:</span>{" "}
-              {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
-                ? BLOOD_LABELS[patient.bloodGroup]
-                : t("sexUnknown")}
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("birthDate")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {birthDateToInputValue(patient.birthDate)
+                  ? `${birthDateToInputValue(patient.birthDate)} (${ageLine})`
+                  : "—"}
+              </span>
             </p>
-            {patient.emergencyContactName || patient.emergencyContactPhone ? (
-              <p>
-                <span className="font-medium">{t("emergencyContact")}:</span>{" "}
-                {[patient.emergencyContactName, patient.emergencyContactPhone].filter(Boolean).join(" · ")}
-              </p>
-            ) : null}
+            <p>
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("bloodGroup")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
+                  ? BLOOD_LABELS[patient.bloodGroup]
+                  : "—"}
+              </span>
+            </p>
+            <p>
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {t("emergencyContact")}
+              </span>
+              <span className="text-base font-semibold text-[#2C3E50]">
+                {identityValue(
+                  [patient.emergencyContactName, patient.emergencyContactPhone]
+                    .filter(Boolean)
+                    .join(" · "),
+                )}
+              </span>
+            </p>
           </div>
           {isSuperAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
             <p className={TEXT_MUTED_CLASS}>
@@ -602,7 +645,7 @@ export function PatientCardBody({
               onChange={(v) =>
                 setForm({ ...form, nationality: String(v ?? "").toUpperCase() })
               }
-              options={[...NATIONALITY_OPTIONS]}
+              options={nationalityOptions}
               emptyLabel={t("sexUnknown")}
             />
           </FieldRow>
@@ -687,7 +730,7 @@ export function PatientCardBody({
                     onChange={(v) =>
                       setForm({ ...form, issuingCountry: String(v ?? "").toUpperCase() })
                     }
-                    options={[...NATIONALITY_OPTIONS]}
+                    options={issuingCountryOptions}
                     emptyLabel={t("sexUnknown")}
                   />
                 ) : (

@@ -14,7 +14,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
-  FieldSelect,
+  CatalogField,
   FilterMenuButton,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -25,6 +25,7 @@ import {
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
+import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -122,6 +123,7 @@ export default function FrontCashTransactionsPage() {
   const [busy, setBusy] = useState(false);
   const [journalTab, setJournalTab] = useState<'payments' | 'deposits'>('payments');
   const [zOpen, setZOpen] = useState(false);
+  const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
 
   useEffect(() => {
     const f = searchParams.get('from');
@@ -239,19 +241,17 @@ export default function FrontCashTransactionsPage() {
           placeholder={tc('datePlaceholder')}
           openCalendarLabel={tc('openCalendar')}
         />
-        <FieldSelect
+        <CatalogField
+          kind="ENTITY_REF"
           label={t('cashShift')}
-          preset="select"
           value={cashShiftId}
-          onChange={(e) => setCashShiftId(e.target.value)}
-        >
-          <option value="">{t('allShifts')}</option>
-          {shifts.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.status} · {s.cashier} · {bakuDateTimeDisplay(s.openedAt)}
-            </option>
-          ))}
-        </FieldSelect>
+          onChange={(v) => setCashShiftId(String(v ?? ''))}
+          options={shifts.map((s) => ({
+            value: s.id,
+            label: `${s.status} · ${s.cashier} · ${bakuDateTimeDisplay(s.openedAt)}`,
+          }))}
+          emptyLabel={t('allShifts')}
+        />
       </EraListFilterBar>
 
       {zOpen && z ? (
@@ -381,12 +381,13 @@ export default function FrontCashTransactionsPage() {
                     {Number(r.amount).toFixed(2)} {tc('azn')}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <Link
-                      href={`/folio/${r.reservationId}`}
+                    <button
+                      type="button"
                       className="text-[#2980B9] hover:underline"
+                      onClick={() => setFolioReservationId(r.reservationId)}
                     >
                       {t('openFolio')}
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -433,12 +434,13 @@ export default function FrontCashTransactionsPage() {
                     {Number(r.amount).toFixed(2)} {tc('azn')}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <Link
-                      href={`/folio/${r.reservationId}`}
+                    <button
+                      type="button"
                       className="text-[#2980B9] hover:underline"
+                      onClick={() => setFolioReservationId(r.reservationId)}
                     >
                       {t('openFolio')}
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -455,6 +457,15 @@ export default function FrontCashTransactionsPage() {
       </section>
       </>
       )}
+      <ReservationCardModal
+        open={Boolean(folioReservationId)}
+        reservationId={folioReservationId}
+        initialTab="folio"
+        onClose={() => {
+          setFolioReservationId(null);
+          void load();
+        }}
+      />
     </>
   );
 }

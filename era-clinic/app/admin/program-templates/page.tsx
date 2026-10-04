@@ -241,7 +241,10 @@ export default function ProgramTemplatesAdminPage() {
 
       if (ptRes.ok) {
         const ptJson = await ptRes.json();
-        const ptList = (ptJson.data ?? ptJson) as Array<{ code: string; name?: string }>;
+        const ptRaw = (ptJson.data ?? ptJson) as
+          | Array<{ code: string; name?: string }>
+          | { items?: Array<{ code: string; name?: string }> };
+        const ptList = Array.isArray(ptRaw) ? ptRaw : (ptRaw.items ?? []);
         const seen = new Set<string>();
         const unique: ProcTypeOpt[] = [];
         for (const x of Array.isArray(ptList) ? ptList : []) {

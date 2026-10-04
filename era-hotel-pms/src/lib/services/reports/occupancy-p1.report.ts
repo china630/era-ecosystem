@@ -58,14 +58,47 @@ async function loadOccReservations(windowStart: Date, windowEnd: Date): Promise<
   });
 }
 
+type OccIndex = {
+  source: OccReservation[];
+  byNight: Map<string, OccReservation[]>;
+  arrivals: Map<string, number>;
+  departures: Map<string, number>;
+};
+
+let occIndex: OccIndex | null = null;
+
+function indexOcc(reservations: OccReservation[]): OccIndex {
+  if (occIndex?.source === reservations) return occIndex;
+  const byNight = new Map<string, OccReservation[]>();
+  const arrivals = new Map<string, number>();
+  const departures = new Map<string, number>();
+  for (const r of reservations) {
+    arrivals.set(toIso(r.checkInDate), (arrivals.get(toIso(r.checkInDate)) ?? 0) + 1);
+    departures.set(toIso(r.checkOutDate), (departures.get(toIso(r.checkOutDate)) ?? 0) + 1);
+    const cursor = new Date(r.checkInDate);
+    cursor.setUTCHours(0, 0, 0, 0);
+    const end = new Date(r.checkOutDate);
+    let guard = 0;
+    while (cursor < end && guard < 400) {
+      const key = toIso(cursor);
+      const bucket = byNight.get(key);
+      if (bucket) bucket.push(r);
+      else byNight.set(key, [r]);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      guard += 1;
+    }
+  }
+  occIndex = { source: reservations, byNight, arrivals, departures };
+  return occIndex;
+}
+
+function nightSlice(reservations: OccReservation[], night: Date, roomTypeId?: string): OccReservation[] {
+  const day = indexOcc(reservations).byNight.get(toIso(night)) ?? [];
+  return roomTypeId ? day.filter((r) => r.roomTypeId === roomTypeId) : day;
+}
+
 function guestNightsOnNight(reservations: OccReservation[], night: Date, roomTypeId?: string): number {
-  const nightEnd = addDays(night, 1);
-  return reservations.filter(
-    (r) =>
-      (!roomTypeId || r.roomTypeId === roomTypeId) &&
-      r.checkInDate < nightEnd &&
-      r.checkOutDate > night,
-  ).length;
+  return nightSlice(reservations, night, roomTypeId).length;
 }
 
 function doorsOnNight(
@@ -74,13 +107,13 @@ function doorsOnNight(
   maxBedByType: Map<string, number>,
   roomTypeId?: string,
 ): number {
+  const day = nightSlice(reservations, night, roomTypeId);
   if (roomTypeId) {
-    const slices = reservations.filter((r) => r.roomTypeId === roomTypeId);
-    return countDoorsUsedOnNight(slices, night, maxBedByType.get(roomTypeId) ?? 2);
+    return countDoorsUsedOnNight(day, night, maxBedByType.get(roomTypeId) ?? 2);
   }
   let total = 0;
   const byType = new Map<string, OccReservation[]>();
-  for (const r of reservations) {
+  for (const r of day) {
     const list = byType.get(r.roomTypeId) ?? [];
     list.push(r);
     byType.set(r.roomTypeId, list);
@@ -217,8 +250,8 @@ export async function queryForecastWoRev(from: Date, to: Date): Promise<Forecast
   const cursor = new Date(windowStart);
   while (cursor < windowEnd) {
     const dateStr = toIso(cursor);
-    const arrivals = reservations.filter((r) => toIso(r.checkInDate) === dateStr).length;
-    const departures = reservations.filter((r) => toIso(r.checkOutDate) === dateStr).length;
+    const arrivals = indexOcc(reservations).arrivals.get(dateStr) ?? 0;
+    const departures = indexOcc(reservations).departures.get(dateStr) ?? 0;
     const sold = doorsOnNight(reservations, cursor, maxBedByType);
     const stayovers = Math.max(0, guestNightsOnNight(reservations, cursor) - arrivals);
     const available = Math.max(sellable - sold, 0);
@@ -305,19 +338,22 @@ export async function queryForecast(from: Date, to: Date): Promise<ForecastResul
     prisma.roomType.findMany({ select: { id: true, adultCapacity: true } }),
   ]);
   const maxBedByType = new Map(roomTypes.map((rt) => [rt.id, rt.adultCapacity ?? 2]));
+  const revenueByDate = new Map<string, number>();
+  for (const c of charges) {
+    const key = toIso(c.businessDate);
+    revenueByDate.set(key, (revenueByDate.get(key) ?? 0) + Number(c.amount));
+  }
 
   const rows: ForecastRow[] = [];
   const cursor = new Date(windowStart);
   while (cursor < windowEnd) {
     const dateStr = toIso(cursor);
-    const arrivals = reservations.filter((r) => toIso(r.checkInDate) === dateStr).length;
-    const departures = reservations.filter((r) => toIso(r.checkOutDate) === dateStr).length;
+    const arrivals = indexOcc(reservations).arrivals.get(dateStr) ?? 0;
+    const departures = indexOcc(reservations).departures.get(dateStr) ?? 0;
     const sold = doorsOnNight(reservations, cursor, maxBedByType);
     const available = Math.max(sellable - sold, 0);
     const occupancyPct = sellable > 0 ? Math.round((sold / sellable) * 1000) / 10 : 0;
-    const revenue = charges
-      .filter((c) => toIso(c.businessDate) === dateStr)
-      .reduce((s, c) => s + Number(c.amount), 0);
+    const revenue = revenueByDate.get(dateStr) ?? 0;
     const adr = sold > 0 ? Math.round((revenue / sold) * 100) / 100 : 0;
     const revPar = sellable > 0 ? Math.round((revenue / sellable) * 100) / 100 : 0;
     rows.push({ date: dateStr, arrivals, departures, sold, available, occupancyPct, revenue, adr, revPar });
@@ -378,19 +414,46 @@ export async function queryForecastCompare(from: Date, to: Date): Promise<Foreca
     }),
   ]);
 
+  const soldByDay = (list: Array<{ checkInDate: Date; checkOutDate: Date }>) => {
+    const map = new Map<string, number>();
+    for (const r of list) {
+      const cursor = new Date(r.checkInDate);
+      cursor.setUTCHours(0, 0, 0, 0);
+      const end = new Date(r.checkOutDate);
+      let guard = 0;
+      while (cursor < end && guard < 400) {
+        const key = toIso(cursor);
+        map.set(key, (map.get(key) ?? 0) + 1);
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+        guard += 1;
+      }
+    }
+    return map;
+  };
+  const moneyByDay = (list: Array<{ businessDate: Date; amount: unknown }>) => {
+    const map = new Map<string, number>();
+    for (const c of list) {
+      const key = toIso(c.businessDate);
+      map.set(key, (map.get(key) ?? 0) + Number(c.amount));
+    }
+    return map;
+  };
+  const currentSoldByDay = soldByDay(curRes);
+  const priorSoldByDay = soldByDay(priorRes);
+  const currentMoney = moneyByDay(curCharges);
+  const priorMoney = moneyByDay(priorCharges);
+
   const rows: ForecastCompareRow[] = [];
   for (let i = 0; i < days; i++) {
     const cur = addDays(windowStart, i);
-    const curNext = addDays(cur, 1);
     const pri = addDays(priorStart, i);
-    const priNext = addDays(pri, 1);
     const curDateStr = toIso(cur);
     const priDateStr = toIso(pri);
 
-    const currentSold = curRes.filter((r) => r.checkInDate < curNext && r.checkOutDate > cur).length;
-    const priorSold = priorRes.filter((r) => r.checkInDate < priNext && r.checkOutDate > pri).length;
-    const currentRevenue = curCharges.filter((c) => toIso(c.businessDate) === curDateStr).reduce((s, c) => s + Number(c.amount), 0);
-    const priorRevenue = priorCharges.filter((c) => toIso(c.businessDate) === priDateStr).reduce((s, c) => s + Number(c.amount), 0);
+    const currentSold = currentSoldByDay.get(curDateStr) ?? 0;
+    const priorSold = priorSoldByDay.get(priDateStr) ?? 0;
+    const currentRevenue = currentMoney.get(curDateStr) ?? 0;
+    const priorRevenue = priorMoney.get(priDateStr) ?? 0;
 
     rows.push({
       date: curDateStr,

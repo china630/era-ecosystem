@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
@@ -39,7 +39,7 @@ export default function HkLaundryPage() {
   const [express, setExpress] = useState(false);
   const [expressEnabled, setExpressEnabled] = useState(false);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
-  const [qty, setQty] = useState<Record<string, { wash: number; iron: number; guest: number; hotel: number }>>({});
+  const [qty, setQty] = useState<Record<string, { wash: number; iron: number }>>({});
 
   const load = useCallback(async () => {
     const res = await fetch('/api/housekeeping/laundry');
@@ -60,11 +60,24 @@ export default function HkLaundryPage() {
 
   const assignedStays = stays.filter((s) => s.roomId && s.room?.roomNumber);
   const stay = assignedStays.find((s) => s.roomId === roomId);
-  const mismatch = useMemo(
-    () =>
-      Object.values(qty).some((q) => (q.guest ?? 0) !== (q.hotel ?? 0) && ((q.wash ?? 0) > 0 || (q.iron ?? 0) > 0)),
-    [qty],
-  );
+
+  function laundryStatus(status: string) {
+    if (status === 'IN_PLANT') return t('statusInPlant');
+    if (status === 'POSTED') return t('statusPosted');
+    if (status === 'VOIDED') return t('statusVoided');
+    return status;
+  }
+
+  function bump(id: string, key: 'wash' | 'iron', delta: number) {
+    setQty((q) => ({
+      ...q,
+      [id]: {
+        wash: q[id]?.wash ?? 0,
+        iron: q[id]?.iron ?? 0,
+        [key]: Math.max(0, (q[id]?.[key] ?? 0) + delta),
+      },
+    }));
+  }
 
   async function submit() {
     const lines = items
@@ -72,8 +85,6 @@ export default function HkLaundryPage() {
         itemId: i.id,
         washQty: qty[i.id]?.wash ?? 0,
         ironQty: qty[i.id]?.iron ?? 0,
-        guestQty: qty[i.id]?.guest ?? qty[i.id]?.wash ?? 0,
-        hotelQty: qty[i.id]?.hotel ?? qty[i.id]?.iron ?? qty[i.id]?.wash ?? 0,
       }))
       .filter((l) => l.washQty > 0 || l.ironQty > 0);
     const res = await fetch('/api/housekeeping/laundry', {
@@ -123,50 +134,22 @@ export default function HkLaundryPage() {
             ]}
           />
         ) : null}
-        {mismatch ? <p className="text-sm text-amber-800">{t('qtyMismatch')}</p> : null}
+        <p className="text-sm text-[#7F8C8D]">{t('agreedQty')}</p>
       </div>
-      <ul className="mb-4 space-y-2 text-sm">
+      <ul className="mb-4 space-y-3 text-sm">
         {items.map((i) => (
-          <li key={i.id} className="flex flex-wrap items-center gap-2">
+          <li key={i.id} className="flex flex-wrap items-center gap-3">
             <span className="w-48">
               {i.name} ({i.washPrice}/{i.ironPrice})
             </span>
-            {(['wash', 'iron', 'guest', 'hotel'] as const).map((k) => (
+            {(['wash', 'iron'] as const).map((k) => (
               <span key={k} className="inline-flex items-center gap-1">
-                <span>{k[0]!.toUpperCase()}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQty((q) => ({
-                      ...q,
-                      [i.id]: {
-                        wash: q[i.id]?.wash ?? 0,
-                        iron: q[i.id]?.iron ?? 0,
-                        guest: q[i.id]?.guest ?? 0,
-                        hotel: q[i.id]?.hotel ?? 0,
-                        [k]: Math.max(0, (q[i.id]?.[k] ?? 0) - 1),
-                      },
-                    }))
-                  }
-                >
-                  -
+                <span className="w-12 text-[12px] text-[#7F8C8D]">{k === 'wash' ? t('laundryWash') : t('laundryIron')}</span>
+                <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(i.id, k, -1)}>
+                  −
                 </button>
-                {qty[i.id]?.[k] ?? 0}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQty((q) => ({
-                      ...q,
-                      [i.id]: {
-                        wash: q[i.id]?.wash ?? 0,
-                        iron: q[i.id]?.iron ?? 0,
-                        guest: q[i.id]?.guest ?? 0,
-                        hotel: q[i.id]?.hotel ?? 0,
-                        [k]: (q[i.id]?.[k] ?? 0) + 1,
-                      },
-                    }))
-                  }
-                >
+                <span className="w-6 text-center">{qty[i.id]?.[k] ?? 0}</span>
+                <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(i.id, k, 1)}>
                   +
                 </button>
               </span>
@@ -177,19 +160,14 @@ export default function HkLaundryPage() {
       <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!roomId} onClick={() => void submit()}>
         {t('acceptLaundry')}
       </button>
-      <button type="button" className={`${SECONDARY_BUTTON_CLASS} ml-2 print:hidden`} onClick={() => window.print()}>
-        {t('printTicket')}
-      </button>
-      <p className="mt-4 hidden text-xs print:block">{t('laundryLegalAz')}</p>
-      <p className="hidden text-xs print:block">{t('laundryLegalEn')}</p>
-      <p className="hidden text-xs print:block">{t('laundryLegalRu')}</p>
+      <p className="mt-4 text-xs text-[#7F8C8D]">{t('laundryLegal')}</p>
       <ul className="mt-6 text-sm">
         {tickets.map((tk) => (
           <li key={tk.id} className="mb-2 flex flex-wrap items-center gap-2">
             <span>
-              {tk.guestName} · {tk.status}
-              {tk.dueAt ? ` · due ${bakuDateTimeDisplay(tk.dueAt)}` : ''}
-              {tk.folioChargeId ? ` · folio ${tk.folioChargeId.slice(0, 8)}` : ''}
+              {tk.guestName} · {laundryStatus(tk.status)}
+              {tk.dueAt ? ` · ${t('laundryDue')} ${bakuDateTimeDisplay(tk.dueAt)}` : ''}
+              {tk.folioChargeId ? ` · ${t('laundryFolio')} ${tk.folioChargeId.slice(0, 8)}` : ''}
             </span>
             {tk.status === 'IN_PLANT' ? (
               <>

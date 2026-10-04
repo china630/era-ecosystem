@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { ensureDefaultRequirements } from "@/domain/procedure/procedure-allocation.service";
-import { inferServiceCatalogKind } from "@/domain/catalog/service-catalog-kind";
+import { recordCatalogPriceIfChanged } from "@/domain/catalog/catalog-price-history";
+import {
+  catalogKindBecomesProcedureType,
+  inferServiceCatalogKind,
+} from "@/domain/catalog/service-catalog-kind";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 export type NaftaPriceRow = {
@@ -98,7 +102,16 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         syncedAt: now,
       },
     });
+    await recordCatalogPriceIfChanged({
+      organizationId,
+      code,
+      amount,
+      listAmount,
+      effectiveFrom: now,
+    });
     catalogCount++;
+
+    if (!catalogKindBecomesProcedureType(kind)) continue;
 
     const pt = await prisma.procedureType.upsert({
       where: { organizationId_code: { organizationId, code } },

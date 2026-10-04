@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { localizedNameFields } from '@/lib/catalog-label';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { updateRoomType } from '@/lib/services/master-data.service';
@@ -8,6 +9,7 @@ import { recordHotelAudit } from '@/lib/satellite-audit';
 
 const schema = z.object({
   name: z.string().min(1).optional(),
+  ...localizedNameFields,
   baseQuota: z.number().int().positive().optional(),
   adultCapacity: z.number().int().optional(),
   childCapacity: z.number().int().optional(),

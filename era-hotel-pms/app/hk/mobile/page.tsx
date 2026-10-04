@@ -13,6 +13,7 @@ type SheetRow = {
   hkCondition?: string;
   guests?: string;
   reservationId?: string | null;
+  visitOutcome?: string;
 };
 
 type Rot = {
@@ -56,11 +57,22 @@ export default function HkMobilePage() {
   }, [load]);
 
   const mine = useMemo(() => {
-    if (!maidId) return rows;
+    if (!maidId) return [];
     const rot = rotation.find((r) => r.housekeeperId === maidId || r.housekeeper.id === maidId);
     if (!rot) return [];
     return rows.filter((x) => x.floor >= rot.pair.floorLow && x.floor <= rot.pair.floorHigh);
   }, [rows, rotation, maidId]);
+
+  async function flag(roomId: string, kind: 'SKIP' | 'SLEEP') {
+    const date = hotelDateKey();
+    const res = await fetch('/api/housekeeping/discrepancy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId, date, kind }),
+    });
+    if (!res.ok) showApiError(await res.json(), tc('failed'));
+    else await load();
+  }
 
   async function outcome(roomId: string, code: string) {
     const date = hotelDateKey();
@@ -104,13 +116,22 @@ export default function HkMobilePage() {
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t('outcome')}
-                value=""
+                value={row.visitOutcome ?? ''}
                 onChange={(v) => void outcome(row.roomId, String(v))}
                 options={OUTCOMES.map((o) => ({
                   value: o,
                   label: o === 'REFUSED' ? t('refused') : o,
                 }))}
               />
+              <p className="mt-2 text-[12px] text-[#7F8C8D]">{t('mobileMismatch')}</p>
+              <div className="mt-1 flex gap-2">
+                <button type="button" className="rounded border border-[#D5DADF] px-2 py-1 text-xs" onClick={() => void flag(row.roomId, 'SKIP')}>
+                  {t('sendSkip')}
+                </button>
+                <button type="button" className="rounded border border-[#D5DADF] px-2 py-1 text-xs" onClick={() => void flag(row.roomId, 'SLEEP')}>
+                  {t('sendSleep')}
+                </button>
+              </div>
             </div>
           </li>
         ))}

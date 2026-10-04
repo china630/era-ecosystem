@@ -142,7 +142,7 @@ export function StayAmendmentModal({
           openCalendarLabel={tc('openCalendar')}
         />
         <CatalogField
-          kind="CLOSED_MEDIUM"
+          kind="ENTITY_REF"
           label={t('roomType')}
           value={roomTypeId}
           onChange={(v) => {
