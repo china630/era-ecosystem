@@ -317,14 +317,19 @@ export function ResourceDayMatrix({
           <div className="relative min-w-max">
             <div style={{ display: "grid", gridTemplateColumns: gridCols }}>
               <div className={`sticky left-0 top-0 z-30 border-b border-r border-[#D5DADF] bg-white px-2 py-2 text-[11px] font-semibold ${TEXT_MUTED_CLASS}`} />
-              {timeSlots.map((slot) => (
-                <div
-                  key={slot.time}
-                  className={`sticky top-0 z-20 border-b border-[#D5DADF] bg-[#F8FAFC] px-0.5 py-2 text-center text-[10px] font-medium ${TEXT_MUTED_CLASS}`}
-                >
-                  {bakuTimeLabel(slot.time)}
-                </div>
-              ))}
+              {timeSlots.map((slot) => {
+                const { minute } = bakuHourMinute(slot.time);
+                return (
+                  <div
+                    key={slot.time}
+                    className={`sticky top-0 z-20 border-b border-[#D5DADF] bg-[#F8FAFC] px-0.5 py-2 text-center text-[10px] font-medium ${TEXT_MUTED_CLASS}`}
+                  >
+                    {minute === 0 ? (
+                      <span className="whitespace-nowrap">{bakuTimeLabel(slot.time)}</span>
+                    ) : null}
+                  </div>
+                );
+              })}
 
               {filtered.map((row) => {
                 const rowSlots = alignRowSlots(row, timeSlots);
@@ -436,7 +441,7 @@ export function ResourceDayMatrix({
                 title={labels.now}
               >
                 <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#E74C3C] px-1 text-[9px] text-white">
-                  {labels.now}
+                  {bakuTimeLabel(new Date())}
                 </span>
               </div>
             ) : null}

@@ -33,7 +33,7 @@ export async function getLocalIcd10Version() {
     version: tenant?.icd10Version ?? ICD10_VERSION,
     syncedAt: tenant?.icd10SyncedAt ?? null,
     count,
-    source: tenant?.icd10SyncedAt ? "gateway-or-file" : "local-file",
+    source: tenant?.icd10Source ?? (tenant?.icd10SyncedAt ? "unknown" : "local-file"),
   };
 }
 
@@ -41,11 +41,11 @@ export async function getLocalIcd10Version() {
 export async function syncIcd10FromGatewayOrFile() {
   const remote = await platformCatalogGet<Icd10GatewayPage>("/icd10?take=1");
   if (!remote?.version) {
-    return reloadFromBundledDump();
+    return finishBundledFallback();
   }
   const page = await platformCatalogGet<Icd10GatewayPage>(`/icd10?take=50000`);
   if (!page?.items?.length) {
-    return reloadFromBundledDump();
+    return finishBundledFallback();
   }
 
   await prisma.admissionDiagnosis.deleteMany();
@@ -71,9 +71,7 @@ export async function syncIcd10FromGatewayOrFile() {
     await prisma.icdCode.createMany({ data: slice });
   }
 
-  await prisma.tenant.updateMany({
-    data: { icd10Version: page.version, icd10SyncedAt: new Date() },
-  });
+  await markIcdSource("orchestrator", page.version);
 
   return {
     skipped: false,
@@ -81,4 +79,22 @@ export async function syncIcd10FromGatewayOrFile() {
     version: page.version,
     source: "orchestrator",
   };
+}
+
+async function finishBundledFallback() {
+  const loaded = await reloadFromBundledDump();
+  if (!loaded.skipped && loaded.version) {
+    await markIcdSource("bundled", loaded.version);
+  }
+  return { ...loaded, source: loaded.skipped ? "unchanged" : "bundled" };
+}
+
+async function markIcdSource(source: "orchestrator" | "bundled", version?: string) {
+  await prisma.tenant.updateMany({
+    data: {
+      icd10Source: source,
+      icd10SyncedAt: new Date(),
+      ...(version ? { icd10Version: version } : {}),
+    },
+  });
 }

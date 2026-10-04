@@ -1,5 +1,6 @@
 import type { Prisma, ProcedureSiteApplyMode, ProcedureSiteLaterality } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { activeBodyPartCodes } from "@/domain/catalog/body-part-lookup";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { PhysioCatalogError } from "./physio-catalog";
 import {
@@ -193,7 +194,7 @@ export async function patchProcedureOrderPhysio(
       ordered.map((s) => ({ id: s.id, laterality: s.laterality })),
       mergedLaterality,
     );
-    const bodyPart = deriveCoarseBodyPart(ordered);
+    const bodyPart = deriveCoarseBodyPart(ordered, await activeBodyPartCodes());
     const gate = gateForSites;
     const siteApplyMode = gate.forceSiteTogether
       ? ("TOGETHER" as const)

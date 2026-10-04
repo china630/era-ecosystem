@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ClinicLookupKind } from "@prisma/client";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
+import { ensureBodyPartLookups } from "@/domain/catalog/body-part-lookup";
 import { prisma } from "@/lib/prisma";
 
 const kindSchema = z.nativeEnum(ClinicLookupKind);
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
     const kindRaw = url.searchParams.get("kind");
     const activeOnly = url.searchParams.get("activeOnly") === "1";
     const kind = kindRaw ? kindSchema.parse(kindRaw) : undefined;
+    if (!kind || kind === "BODY_PART") await ensureBodyPartLookups();
     const rows = await prisma.clinicLookup.findMany({
       where: {
         ...(kind ? { kind } : {}),

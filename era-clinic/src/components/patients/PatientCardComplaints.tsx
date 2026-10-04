@@ -173,32 +173,34 @@ export function PatientCardComplaints({
               const author = authorLabelFrom(c.recordedByPractitioner ?? null);
               return (
                 <li key={c.id} className="border-b border-slate-100 pb-2 last:border-0">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span>{c.text}</span>
-                    {!readOnly ? (
-                      <>
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("edit")}
-                          onClick={() => openEdit(c)}
-                        >
-                          <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("delete")}
-                          onClick={() => void remove(c.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                        </button>
-                      </>
-                    ) : null}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 flex-1">{c.text}</span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {author ? (
+                        <span className={`mr-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{author}</span>
+                      ) : null}
+                      {!readOnly ? (
+                        <>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={tc("edit")}
+                            onClick={() => openEdit(c)}
+                          >
+                            <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={tc("delete")}
+                            onClick={() => void remove(c.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
                   </div>
-                  {author ? (
-                    <p className={`mt-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>{author}</p>
-                  ) : null}
                 </li>
               );
             })}
@@ -213,6 +215,7 @@ export function PatientCardComplaints({
         open={open}
         title={editingId ? tc("edit") : t("addComplaint")}
         onClose={() => setOpen(false)}
+        closeLabel={tc("close")}
       >
         <FieldTextarea
           label={t("complaintsTitle")}
@@ -225,6 +228,7 @@ export function PatientCardComplaints({
           onSubmit={() => void save()}
           busy={busy}
           submitLabel={tc("save")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
     </section>

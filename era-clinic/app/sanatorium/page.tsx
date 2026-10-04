@@ -44,7 +44,7 @@ import {
   ModalFooter,
   ModalShell,
   MODAL_CHECKBOX_CLASS,
-  NATIONALITY_OPTIONS,
+  countryOptions,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   PageHeader,
@@ -63,7 +63,7 @@ import {
   EpisodeScheduleCards,
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
-import { ExtrasAssignModal } from "@/components/sanatorium/ExtrasAssignModal";
+import { packageAssignBlockText } from "@/lib/package-assign-block";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
@@ -204,6 +204,7 @@ function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }
 
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
+  const tCard = useTranslations("patientCard");
   const tc = useTranslations("common");
   const tp = useTranslations("patients");
   const locale = useLocale();
@@ -247,7 +248,6 @@ export default function SanatoriumPage() {
   >([]);
   const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
   const [packageModalOpen, setPackageModalOpen] = useState(false);
-  const [extrasModalOpen, setExtrasModalOpen] = useState(false);
   const [scheduleCards, setScheduleCards] = useState<
     Array<{ id: string; title: string; subtitle?: string; status: string; atLabel?: string }>
   >([]);
@@ -973,7 +973,6 @@ export default function SanatoriumPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
-          className="!mb-0"
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
@@ -987,7 +986,6 @@ export default function SanatoriumPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={() => {
               setQ("");
@@ -1243,7 +1241,7 @@ export default function SanatoriumPage() {
                     day1Busy={day1Busy}
                     hidePackage={selected.patientOrigin === "WALK_IN"}
                     onPackagePlus={() => setPackageModalOpen(true)}
-                    onExtrasPlus={() => setExtrasModalOpen(true)}
+                    onExtrasPlus={() => setPackageModalOpen(true)}
                     onDay1={
                       selected.patientOrigin === "WALK_IN"
                         ? undefined
@@ -1257,7 +1255,11 @@ export default function SanatoriumPage() {
                               .then(async (res) => {
                                 if (!res.ok) {
                                   const d = await res.json();
-                                  window.alert(d.error ?? "Day-1 assign failed");
+                                  window.alert(
+                                    packageAssignBlockText(tCard, d.code) ??
+                                      d.error ??
+                                      "Day-1 assign failed",
+                                  );
                                   return;
                                 }
                                 const patientRefId = episodeDetail?.patientRef?.id;
@@ -1301,7 +1303,7 @@ export default function SanatoriumPage() {
                   readOnly={busy}
                   hidePackage
                   onPackagePlus={() => setPackageModalOpen(true)}
-                  onExtrasPlus={() => setExtrasModalOpen(true)}
+                  onExtrasPlus={() => setPackageModalOpen(true)}
                 />
                 {pendingExtras.length > 0 ? (
                   <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
@@ -1786,7 +1788,7 @@ export default function SanatoriumPage() {
               onChange={(v) =>
                 setWalkIn({ ...walkIn, nationality: String(v ?? "").toUpperCase() })
               }
-              options={[...NATIONALITY_OPTIONS]}
+              options={countryOptions(locale, walkIn.nationality)}
               emptyLabel={t("sexUnknown")}
             />
           </FieldRow>
@@ -1905,6 +1907,7 @@ export default function SanatoriumPage() {
             episodeId={selectedId}
             onClose={() => setPackageModalOpen(false)}
             onSaved={() => {
+              void loadPendingExtras(selectedId);
               const patientRefId = episodeDetail?.patientRef?.id;
               if (patientRefId) void loadProposed(patientRefId);
               void loadDetail(selectedId);
@@ -1932,29 +1935,6 @@ export default function SanatoriumPage() {
               qtyDown: t("qtyDown", { defaultValue: "−1" }),
               checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
               pickPoolSku: t("pickProcedure", { defaultValue: "Procedure" }),
-            }}
-          />
-          <ExtrasAssignModal
-            open={extrasModalOpen}
-            episodeId={selectedId}
-            onClose={() => setExtrasModalOpen(false)}
-            onSaved={() => {
-              void loadPendingExtras(selectedId);
-              const patientRefId = episodeDetail?.patientRef?.id;
-              if (patientRefId) void loadProposed(patientRefId);
-            }}
-            labels={{
-              title: t("extrasAssignModalTitle", { defaultValue: "Additional procedures" }),
-              save: tc("save"),
-              cancel: tc("cancel"),
-              pickProcedure: t("pickProcedure", { defaultValue: "Procedure" }),
-              qty: t("qty", { defaultValue: "Quantity" }),
-              note: t("note", { defaultValue: "Note" }),
-              addToDraft: t("addToDraft", { defaultValue: "Add" }),
-              pending: t("pendingPay", { defaultValue: "Awaiting payment" }),
-              price: t("price", { defaultValue: "Price" }),
-              delete: tc("delete"),
-              empty: t("extrasEmpty", { defaultValue: "No additional procedures." }),
             }}
           />
         </>

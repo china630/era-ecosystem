@@ -3,7 +3,11 @@ import { getCheckupSectionsConfig, getPrintBranding } from "@/domain/print/print
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
-import { printSpecialtyForIntakeSlot } from "@/lib/import/nafta-intake-map";
+import {
+  NAFTA_INTAKE_SLOT_CODES,
+  printSpecialtyForIntakeSlot,
+  type NaftaIntakeSlotCode,
+} from "@/lib/import/nafta-intake-map";
 import { bakuDateKey, todayBakuYmd } from "@/lib/baku-day";
 
 export type PrintCheckupSection = {
@@ -86,7 +90,10 @@ export async function buildCheckupPrint(
   ]);
 
   const intakeBySpecialty = new Map(
-    intake.items.map((item) => [printSpecialtyForIntakeSlot(item.slot), item]),
+    intake.items.flatMap((item) => {
+      if (!(NAFTA_INTAKE_SLOT_CODES as readonly string[]).includes(item.slot)) return [];
+      return [[printSpecialtyForIntakeSlot(item.slot as NaftaIntakeSlotCode), item] as const];
+    }),
   );
 
   const sections = config.map((cfg) => {

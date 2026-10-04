@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import {
   CatalogField,
   DATA_TABLE_CLASS,
@@ -22,9 +22,12 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
-import { BODY_PART_CODES } from "@/lib/body-part-codes";
 import { PHYSIO_SITE_KINDS } from "@/domain/physio/physio-catalog";
 
 type Tab = "sites" | "programs" | "substances" | "queue";
@@ -177,10 +180,19 @@ export default function PhysioSitesAdminPage() {
     void load();
   }, [load]);
 
-  const coarseOptions = useMemo(
-    () => BODY_PART_CODES.map((code) => ({ value: code, label: code })),
-    [],
-  );
+  const [coarseOptions, setCoarseOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    void fetch("/api/admin/lookups?kind=BODY_PART&activeOnly=1")
+      .then((res) => res.json())
+      .then((data) => {
+        const rows = (Array.isArray(data) ? data : data.data ?? []) as {
+          code: string;
+          name: string;
+        }[];
+        setCoarseOptions(rows.map((row) => ({ value: row.code, label: row.name || row.code })));
+      })
+      .catch(() => setCoarseOptions([]));
+  }, []);
   const kindOptions = useMemo(
     () => PHYSIO_SITE_KINDS.map((code) => ({ value: code, label: code })),
     [],
@@ -352,27 +364,6 @@ export default function PhysioSitesAdminPage() {
     await load();
   }
 
-  async function retireCurrent() {
-    const url =
-      tab === "sites" && editSite
-        ? `/api/admin/physio-sites/${editSite.id}`
-        : editList
-          ? `/api/admin/physio-lists/${editList.id}`
-          : null;
-    if (!url) return;
-    if (!window.confirm(t("confirmRetire"))) return;
-    setBusy(true);
-    const res = await fetch(url, { method: "DELETE" });
-    setBusy(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setMsg((data as { error?: string }).error ?? tc("failed"));
-      return;
-    }
-    setOpen(false);
-    await load();
-  }
-
   const tabs: { id: Tab; label: string }[] = [
     { id: "sites", label: t("tabSites") },
     { id: "programs", label: t("tabPrograms") },
@@ -397,12 +388,12 @@ export default function PhysioSitesAdminPage() {
           )
         }
       />
-      <div className="flex flex-wrap gap-2">
+      <div className={TAB_STRIP_CLASS}>
         {tabs.map((x) => (
           <button
             key={x.id}
             type="button"
-            className={tab === x.id ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            className={tab === x.id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
             onClick={() => setTab(x.id)}
           >
             {x.label}
@@ -512,6 +503,7 @@ export default function PhysioSitesAdminPage() {
               ) : null}
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("aliases")}</th>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("active")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -535,6 +527,20 @@ export default function PhysioSitesAdminPage() {
                 ) : null}
                 <td className={DATA_TABLE_TD_CLASS}>{row.aliases?.length ?? 0}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{row.active ? t("yes") : t("no")}</td>
+                <td className={DATA_TABLE_TD_CLASS}>
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={tc("edit")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (tab === "sites") openSite(row as SiteRow);
+                      else openList(row as ListRow);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -569,6 +575,7 @@ export default function PhysioSitesAdminPage() {
           <ModalFooter
             formId={formId}
             onCancel={() => setOpen(false)}
+            cancelLabel={tc("cancel")}
             busy={busy}
             submitLabel={editing ? tc("save") : tc("add")}
           />
@@ -738,16 +745,6 @@ export default function PhysioSitesAdminPage() {
               ) : null}
             </>
           )}
-          {editing && (tab === "sites" ? editSite?.active : editList?.active) ? (
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void retireCurrent()}
-            >
-              {t("retire")}
-            </button>
-          ) : null}
         </form>
       </ModalShell>
     </div>

@@ -48,8 +48,7 @@ export function parseSiteKind(kind: string): PhysioSiteKind {
   throw new PhysioCatalogError("Unknown site kind");
 }
 
-export function parseCoarse(codes: string[]): string[] {
-  const allowed = new Set<string>(BODY_PART_CODES);
+export function parseCoarse(codes: string[], allowed = new Set<string>(BODY_PART_CODES)): string[] {
   const out: string[] = [];
   for (const c of codes) {
     const code = c.trim().toUpperCase();

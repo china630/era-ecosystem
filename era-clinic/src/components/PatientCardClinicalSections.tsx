@@ -25,8 +25,7 @@ import {
   EpisodeScheduleCards,
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
-import { ExtrasAssignModal } from "@/components/sanatorium/ExtrasAssignModal";
-
+import { packageAssignBlockText } from "@/lib/package-assign-block";
 type TimelineEvent = {
   id: string;
   type: string;
@@ -195,7 +194,6 @@ export function PatientCardClinicalSections({
   const [planLoading, setPlanLoading] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
-  const [extrasModalOpen, setExtrasModalOpen] = useState(false);
   const [day1Busy, setDay1Busy] = useState(false);
 
   const loadSummary = useCallback(async () => {
@@ -480,7 +478,7 @@ export function PatientCardClinicalSections({
             }))}
             pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
             onPackagePlus={() => setPackageModalOpen(true)}
-            onExtrasPlus={() => setExtrasModalOpen(true)}
+            onExtrasPlus={() => setPackageModalOpen(true)}
             onDay1={
               patientOrigin === "WALK_IN"
                 ? undefined
@@ -492,7 +490,9 @@ export function PatientCardClinicalSections({
                       .then(async (res) => {
                         if (!res.ok) {
                           const d = await res.json();
-                          setConfirmMsg(d.error ?? "Day-1 failed");
+                          setConfirmMsg(
+                            packageAssignBlockText(t, d.code) ?? d.error ?? "Day-1 failed",
+                          );
                           return;
                         }
                         setConfirmMsg(null);
@@ -573,32 +573,6 @@ export function PatientCardClinicalSections({
               qtyDown: t("qtyDown", { defaultValue: "−1" }),
               checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
               pickPoolSku: t("pickProcedure", { defaultValue: "Procedure" }),
-            }}
-          />
-          <ExtrasAssignModal
-            open={extrasModalOpen}
-            episodeId={episodeId}
-            onClose={() => setExtrasModalOpen(false)}
-            onSaved={async () => {
-              const q = `?episode=${encodeURIComponent(episodeId)}`;
-              const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
-              if (r.ok) {
-                const d = await r.json();
-                setSummary(d.data ?? d);
-              }
-            }}
-            labels={{
-              title: t("assignExtrasTitle", { defaultValue: "Additional procedures" }),
-              save: tc("save"),
-              cancel: tc("cancel"),
-              pickProcedure: t("pickProcedure", { defaultValue: "Procedure" }),
-              qty: t("qty", { defaultValue: "Quantity" }),
-              note: t("note", { defaultValue: "Note" }),
-              addToDraft: t("addToDraft", { defaultValue: "Add" }),
-              pending: t("pendingPay", { defaultValue: "Awaiting payment" }),
-              price: t("price", { defaultValue: "Price" }),
-              delete: tc("delete"),
-              empty: t("extrasEmpty", { defaultValue: "No additional procedures." }),
             }}
           />
         </>

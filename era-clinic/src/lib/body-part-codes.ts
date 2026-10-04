@@ -1,4 +1,4 @@
-/** Canonical BodyPart codes (ClinicLookup BODY_PART is SatAdmin SoR). */
+/** Seed codes for ClinicLookup BODY_PART. Runtime checks read the lookup. */
 export const BODY_PART_CODES = [
   "HEAD",
   "NECK",

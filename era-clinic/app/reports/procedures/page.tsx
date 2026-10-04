@@ -4,14 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import {
-  CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  EraListWorkspace,
+  LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
@@ -69,6 +73,7 @@ function monthAgoBaku() {
 
 export default function ProceduresReportPage() {
   const t = useTranslations("common");
+  const tr = useTranslations("procedureReports");
   const tc = useTranslations("nav");
   const locale = useLocale();
   const { auth } = useClinicAuth();
@@ -84,6 +89,9 @@ export default function ProceduresReportPage() {
   const [paid, setPaid] = useState<"" | "paid" | "free">("");
   const [nurseId, setNurseId] = useState<string>("");
   const [nurses, setNurses] = useState<Array<{ id: string; fullName: string }>>([]);
+  const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>(
+    [],
+  );
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -124,6 +132,29 @@ export default function ProceduresReportPage() {
   }, [view, from, to, procedure, paid, nurseId, locale]);
 
   useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/procedure-types")
+      .then(async (res) => (res.ok ? res.json() : null))
+      .then((raw) => {
+        if (cancelled || !raw) return;
+        const rows = (raw.data ?? raw) as Array<{ code?: string; name?: string }>;
+        if (!Array.isArray(rows)) return;
+        setProcedureOptions(
+          rows
+            .filter((row) => Boolean(row.code))
+            .map((row) => ({
+              value: row.code as string,
+              label: row.name ? `${row.name} (${row.code})` : (row.code as string),
+            })),
+        );
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (view !== "nurse-work" || !canSelectNurse) return;
     if (nurses.length > 0) return;
 
@@ -158,7 +189,7 @@ export default function ProceduresReportPage() {
       const res = await fetch(url);
       const d = (await res.json()) as ApiResponse;
       if (!res.ok) {
-        setMsg((d as { error?: string }).error ?? "Load failed");
+        setMsg((d as { error?: string }).error ?? tr("loadFailed"));
         return;
       }
       setItems(d.items ?? []);
@@ -176,7 +207,7 @@ export default function ProceduresReportPage() {
         });
       }
     } catch {
-      setMsg("Load failed");
+      setMsg(tr("loadFailed"));
     } finally {
       setBusy(false);
     }
@@ -187,112 +218,175 @@ export default function ProceduresReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
+  function lineStatus(status: string) {
+    if (status === "COMPLETED") return tr("status_COMPLETED");
+    if (status === "CANCELLED") return tr("status_CANCELLED");
+    if (status === "NO_SHOW") return tr("status_NO_SHOW");
+    if (status === "PENDING") return tr("status_PENDING");
+    return status;
+  }
+
+  function paidLabel(value: string) {
+    if (value === "paid") return tr("paidYes");
+    if (value === "free") return tr("paidNo");
+    return value;
+  }
+
+  function originLabel(value: string) {
+    if (value === "IN_HOUSE") return tr("origin_IN_HOUSE");
+    if (value === "WALK_IN") return tr("origin_WALK_IN");
+    return value;
+  }
+
   return (
-    <>
-      <PageHeader title={tc("procedureReport")} subtitle="Procedure reports" />
-      <div className={`${CARD_CONTAINER_CLASS} p-4`}>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col text-sm">
-            <span className={TEXT_MUTED_CLASS}>View</span>
-            <select
+    <div className={LIST_PAGE_SHELL_CLASS}>
+      <PageHeader title={tc("procedureReport")} subtitle={tr("subtitle")} />
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar
+            resetLabel={t("filterReset")}
+            onReset={() => {
+              setView("doctor-lines");
+              setFrom(monthAgoBaku());
+              setTo(todayIsoBaku());
+              setProcedure("");
+              setPaid("");
+              setNurseId("");
+            }}
+          >
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={tr("view")}
               value={view}
-              onChange={(e) =>
-                setView(e.target.value as typeof view)
-              }
-              className="w-64 rounded border px-2 py-1"
-            >
-              <option value="doctor-lines">Doctor lines</option>
-              <option value="doctor-bonus">Doctor bonus</option>
-              <option value="by-procedure">By procedure</option>
-              <option value="nurse-work">Nurse work</option>
-            </select>
-          </label>
+              onChange={(value) => setView(String(value) as typeof view)}
+              emptyLabel={null}
+              options={[
+                { value: "doctor-lines", label: tr("viewDoctorLines") },
+                { value: "doctor-bonus", label: tr("viewDoctorBonus") },
+                { value: "by-procedure", label: tr("viewByProcedure") },
+                { value: "nurse-work", label: tr("viewNurseWork") },
+              ]}
+            />
+            <DatePicker
+              label={tr("from")}
+              value={from}
+              onChange={setFrom}
+              placeholder={t("datePlaceholder")}
+              openCalendarLabel={t("openCalendar")}
+            />
+            <DatePicker
+              label={tr("to")}
+              value={to}
+              onChange={setTo}
+              placeholder={t("datePlaceholder")}
+              openCalendarLabel={t("openCalendar")}
+            />
+            <CatalogField
+              kind="SEARCHABLE"
+              label={tr("procedure")}
+              value={procedure}
+              onChange={(value) => setProcedure(String(value ?? ""))}
+              options={[{ value: "", label: t("all") }, ...procedureOptions]}
+              emptyLabel={t("all")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={tr("paid")}
+              value={paid}
+              onChange={(value) => setPaid(String(value) as typeof paid)}
+              options={[
+                { value: "", label: t("all") },
+                { value: "paid", label: tr("paidYes") },
+                { value: "free", label: tr("paidNo") },
+              ]}
+              emptyLabel={t("all")}
+            />
+            {view === "nurse-work" && canSelectNurse ? (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={tr("nurse")}
+                value={nurseId}
+                onChange={(value) => setNurseId(String(value ?? ""))}
+                options={[
+                  { value: "", label: tr("allNurses") },
+                  ...nurses.map((n) => ({ value: n.id, label: n.fullName })),
+                ]}
+                emptyLabel={tr("allNurses")}
+              />
+            ) : null}
+          </EraListFilterBar>
+        }
 
-          <label className="flex flex-col text-sm">
-            <span className={TEXT_MUTED_CLASS}>From</span>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded border px-2 py-1" />
-          </label>
-          <label className="flex flex-col text-sm">
-            <span className={TEXT_MUTED_CLASS}>To</span>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded border px-2 py-1" />
-          </label>
-
-          <label className="flex flex-col text-sm">
-            <span className={TEXT_MUTED_CLASS}>Procedure filter</span>
-            <input value={procedure} onChange={(e) => setProcedure(e.target.value)} className="w-56 rounded border px-2 py-1" placeholder="code" />
-          </label>
-
-          <label className="flex flex-col text-sm">
-            <span className={TEXT_MUTED_CLASS}>Paid</span>
-            <select value={paid} onChange={(e) => setPaid(e.target.value as any)} className="w-40 rounded border px-2 py-1">
-              <option value="">all</option>
-              <option value="paid">paid</option>
-              <option value="free">free</option>
-            </select>
-          </label>
-
-          {view === "nurse-work" && canSelectNurse ? (
-            <label className="flex flex-col text-sm">
-              <span className={TEXT_MUTED_CLASS}>{t("nurse")}</span>
-              <select value={nurseId} onChange={(e) => setNurseId(e.target.value)} className="w-56 rounded border px-2 py-1">
-                <option value="">All nurses</option>
-                {nurses.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.fullName}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-
-          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void load()}>
-            {t("search")}
-          </button>
-        </div>
-
-        {msg ? <p className={`mt-3 text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
-
-        <div className={`mt-4 ${DATA_TABLE_VIEWPORT_CLASS}`}>
+        toolbar={
+          msg || grandTotal != null || bonusBuckets ? (
+            <div className={`space-y-1 text-sm ${TEXT_MUTED_CLASS}`}>
+              {msg ? <p>{msg}</p> : null}
+              {grandTotal != null ? <p>{tr("grandTotal", { amount: grandTotal.toFixed(2) })}</p> : null}
+              {bonusBuckets ? (
+                <>
+                  <p>
+                    {tr("bonusInHouse", {
+                      base: bonusBuckets.inHouse.toFixed(2),
+                      percent: bonusBuckets.pctInHouse,
+                      bonus: bonusBuckets.bonusInHouse.toFixed(2),
+                    })}
+                  </p>
+                  <p>
+                    {tr("bonusWalkIn", {
+                      base: bonusBuckets.walkIn.toFixed(2),
+                      percent: bonusBuckets.pctWalkIn,
+                      bonus: bonusBuckets.bonusWalkIn.toFixed(2),
+                    })}
+                  </p>
+                  <p className="font-medium">
+                    {tr("bonusTotal", { amount: bonusBuckets.bonusTotal.toFixed(2) })}
+                  </p>
+                </>
+              ) : null}
+            </div>
+          ) : null
+        }
+        table={
           <table className={DATA_TABLE_CLASS}>
             <thead>
-              <tr>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 {view === "doctor-lines" ? (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Procedure</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Date</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Status</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Paid</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Origin</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Qty</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Amount</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDate")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colStatus")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPaid")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colOrigin")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colAmount")}</th>
                   </>
                 ) : view === "doctor-bonus" ? (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Procedure</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Qty</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Price</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Total</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPrice")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colTotal")}</th>
                   </>
                 ) : view === "by-procedure" ? (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Procedure</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Assigned</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Completed</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colAssigned")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colCompleted")}</th>
                   </>
                 ) : (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Date</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Procedure</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>Qty</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDate")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr>
+                <tr className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS} colSpan={7}>
-                    No data
+                    {tr("empty")}
                   </td>
                 </tr>
               ) : (
@@ -300,14 +394,14 @@ export default function ProceduresReportPage() {
                   if (view === "doctor-lines") {
                     const row = it as DoctorLinesItem;
                     return (
-                      <tr key={idx}>
+                      <tr key={idx} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.procedureDate)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.paid}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.origin}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{lineStatus(row.status)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{paidLabel(row.paid)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{originLabel(row.origin)}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.quantity}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.totalAmount}</td>
                       </tr>
@@ -316,7 +410,7 @@ export default function ProceduresReportPage() {
                   if (view === "doctor-bonus") {
                     const row = it as DoctorBonusItem;
                     return (
-                      <tr key={idx}>
+                      <tr key={idx} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
@@ -329,8 +423,10 @@ export default function ProceduresReportPage() {
                   if (view === "by-procedure") {
                     const row = it as ByProcedureItem;
                     return (
-                      <tr key={idx}>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.procedure.code}</td>
+                      <tr key={idx} className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {row.procedure.code} — {row.procedure.name}
+                        </td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.assignedCount}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.completedCount}</td>
                       </tr>
@@ -338,7 +434,7 @@ export default function ProceduresReportPage() {
                   }
                   const row = it as NurseWorkItem;
                   return (
-                    <tr key={idx}>
+                    <tr key={idx} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{row.ymd}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.procedureCode}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.quantity}</td>
@@ -348,43 +444,28 @@ export default function ProceduresReportPage() {
               )}
             </tbody>
           </table>
-        </div>
-        <ListPaginationFooter
-          page={page}
-          pageSize={pageSize}
-          total={items.length}
-          loading={busy}
-          onPageChange={setPage}
-          onPageSizeChange={(n) => {
-            setPageSize(n);
-            setPage(1);
-          }}
-          labels={{
-            rowsPerPage: t("rowsPerPage"),
-            pageOf: t("pageOf"),
-            prev: t("prev"),
-            next: t("next"),
-          }}
-        />
-
-        {grandTotal != null ? <p className="mt-3 text-sm">Grand total: {grandTotal}</p> : null}
-        {bonusBuckets ? (
-          <div className={`mt-2 space-y-1 text-sm ${TEXT_MUTED_CLASS}`}>
-            <p>
-              In-house extras base: {bonusBuckets.inHouse.toFixed(2)} AZN ×{" "}
-              {bonusBuckets.pctInHouse}% = {bonusBuckets.bonusInHouse.toFixed(2)} AZN
-            </p>
-            <p>
-              Walk-in extras base: {bonusBuckets.walkIn.toFixed(2)} AZN ×{" "}
-              {bonusBuckets.pctWalkIn}% = {bonusBuckets.bonusWalkIn.toFixed(2)} AZN
-            </p>
-            <p className="font-medium text-[inherit]">
-              Bonus total: {bonusBuckets.bonusTotal.toFixed(2)} AZN
-            </p>
-          </div>
-        ) : null}
-      </div>
-    </>
+        }
+        footer={
+          <ListPaginationFooter
+            page={page}
+            pageSize={pageSize}
+            total={items.length}
+            loading={busy}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+            labels={{
+              rowsPerPage: t("rowsPerPage"),
+              pageOf: t("pageOf"),
+              prev: t("prev"),
+              next: t("next"),
+            }}
+          />
+        }
+      />
+    </div>
   );
 }
 

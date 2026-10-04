@@ -133,6 +133,8 @@ async function main() {
     });
     catalogCount++;
 
+    if (kind !== "PROCEDURE") continue;
+
     const pt = await prisma.procedureType.upsert({
       where: { organizationId_code: { organizationId, code } },
       create: { organizationId, code, name: description, durationMin: 15 },

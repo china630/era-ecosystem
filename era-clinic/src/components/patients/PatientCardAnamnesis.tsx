@@ -107,20 +107,27 @@ export function PatientCardAnamnesis({
           {tr("anamnesis")}
         </h2>
         {!readOnly ? (
-          hasAnamnesis ? (
-            <button
-              type="button"
-              className={TABLE_ROW_ICON_BTN_CLASS}
-              aria-label={tc("edit")}
-              onClick={openEdit}
-            >
-              <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-            </button>
-          ) : (
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-              {t("addAnamnesis")}
-            </button>
-          )
+          <div className="flex shrink-0 items-center gap-1">
+            {authorLine ? (
+              <span className={`mr-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{authorLine}</span>
+            ) : null}
+            {hasAnamnesis ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
+                onClick={openEdit}
+              >
+                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            ) : (
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                {t("addAnamnesis")}
+              </button>
+            )}
+          </div>
+        ) : authorLine ? (
+          <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{authorLine}</span>
         ) : null}
       </div>
       <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4`}>
@@ -130,9 +137,6 @@ export function PatientCardAnamnesis({
         {hasAnamnesis ? (
           <>
             <p className="whitespace-pre-wrap text-sm text-[#2C3E50]">{text}</p>
-            {authorLine ? (
-              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{authorLine}</p>
-            ) : null}
           </>
         ) : (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
@@ -143,6 +147,7 @@ export function PatientCardAnamnesis({
         open={open}
         title={hasAnamnesis ? tc("edit") : t("addAnamnesis")}
         onClose={() => setOpen(false)}
+        closeLabel={tc("close")}
         footer={
           <ModalFooter
             onCancel={() => setOpen(false)}

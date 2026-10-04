@@ -4,18 +4,27 @@ import { jsonOk, handleRouteError, getSatelliteSession, jsonError } from "@/lib/
 
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 
-import { listPractitioners } from "@/lib/services/clinic-master-data.service";
+import {
+  listPractitioners,
+  purgeNonClinicalPractitioners,
+} from "@/lib/services/clinic-master-data.service";
 
 export async function GET(req: Request) {
   try {
     const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const staffKind = new URL(req.url).searchParams.get("staffKind");
+    const url = new URL(req.url);
+    const staffKind = url.searchParams.get("staffKind");
     const kind =
       staffKind === "DOCTOR" || staffKind === "NURSE" || staffKind === "LAB"
         ? staffKind
         : undefined;
-    return jsonOk(await listPractitioners(kind));
+    await purgeNonClinicalPractitioners();
+    return jsonOk(
+      await listPractitioners(kind, {
+        includeInactive: url.searchParams.get("includeInactive") === "1",
+      }),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

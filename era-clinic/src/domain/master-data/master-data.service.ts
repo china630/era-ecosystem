@@ -17,10 +17,52 @@ import {
 import { parsePhysioOrderFields } from "@/domain/physio/physio-order-fields";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import { uniqueSiteCodes } from "@/domain/physio/physio-allowed-sites";
+import {
+  catalogKindIsNonCabinProcedure,
+  inferServiceCatalogKind,
+} from "@/domain/catalog/service-catalog-kind";
 
-export async function listPractitioners(staffKind?: "DOCTOR" | "NURSE" | "LAB") {
+function rethrowIfInUse(err: unknown): never {
+  if (
+    err &&
+    typeof err === "object" &&
+    "code" in err &&
+    (err as { code?: string }).code === "P2003"
+  ) {
+    throw Object.assign(new Error("Referenced by existing rows"), {
+      code: "IN_USE",
+    });
+  }
+  throw err;
+}
+
+/** Drop practitioner rows whose login role is reception or clinic admin. */
+export async function purgeNonClinicalPractitioners() {
+  const rows = await prisma.practitioner.findMany({
+    where: { user: { role: { staffKind: "NONE" } } },
+    select: { id: true },
+  });
+  for (const row of rows) {
+    try {
+      await prisma.practitioner.delete({ where: { id: row.id } });
+    } catch {
+      await prisma.practitioner.update({
+        where: { id: row.id },
+        data: { active: false },
+      });
+    }
+  }
+}
+
+export async function listPractitioners(
+  staffKind?: "DOCTOR" | "NURSE" | "LAB",
+  opts?: { includeInactive?: boolean },
+) {
   return prisma.practitioner.findMany({
-    where: staffKind ? { staffKind } : undefined,
+    where: {
+      ...(staffKind ? { staffKind } : {}),
+      ...(opts?.includeInactive ? {} : { active: true }),
+    },
     orderBy: { code: "asc" },
   });
 }
@@ -41,7 +83,11 @@ export async function getPractitionerById(id: string) {
 }
 
 export async function deletePractitioner(id: string) {
-  await prisma.practitioner.delete({ where: { id } });
+  try {
+    await prisma.practitioner.delete({ where: { id } });
+  } catch (err) {
+    rethrowIfInUse(err);
+  }
 }
 
 export async function listPractitionerSkills(practitionerId: string) {
@@ -92,7 +138,11 @@ export async function updateRoom(id: string, data: { name?: string }) {
 }
 
 export async function deleteRoom(id: string) {
-  await prisma.room.delete({ where: { id } });
+  try {
+    await prisma.room.delete({ where: { id } });
+  } catch (err) {
+    rethrowIfInUse(err);
+  }
 }
 
 export async function listResources() {
@@ -127,7 +177,11 @@ export async function updateResource(
 }
 
 export async function deleteResource(id: string) {
-  await prisma.resource.delete({ where: { id } });
+  try {
+    await prisma.resource.delete({ where: { id } });
+  } catch (err) {
+    rethrowIfInUse(err);
+  }
 }
 
 export async function listProcedureTypes(locale = "en") {
@@ -320,7 +374,35 @@ export async function updateProcedureType(
 }
 
 export async function deleteProcedureType(id: string) {
-  await prisma.procedureType.delete({ where: { id } });
+  try {
+    await prisma.procedureType.delete({ where: { id } });
+  } catch (err) {
+    rethrowIfInUse(err);
+  }
+}
+
+/** Remove lab, diagnostic and visit rows that price import stored as procedure types. */
+export async function purgeNonCabinProcedureTypes(): Promise<
+  Array<{ code: string; name: string }>
+> {
+  const rows = await prisma.procedureType.findMany({
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      _count: { select: { orders: true } },
+    },
+  });
+  const blocked: Array<{ code: string; name: string }> = [];
+  for (const row of rows) {
+    if (!catalogKindIsNonCabinProcedure(inferServiceCatalogKind(row.code))) continue;
+    if (row._count.orders > 0) {
+      blocked.push({ code: row.code, name: row.name });
+      continue;
+    }
+    await prisma.procedureType.delete({ where: { id: row.id } });
+  }
+  return blocked;
 }
 
 export async function listProcedureTypeRequirements(procedureTypeId: string) {

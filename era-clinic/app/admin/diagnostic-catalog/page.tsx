@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { List, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -21,13 +21,15 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  SIDEBAR_LINK_ACTIVE_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
-import type { CatalogFieldDef, DiagnosticCatalogGroup, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import type { CatalogFieldDef, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import {
   CatalogFieldsEditor,
@@ -86,12 +88,27 @@ type DiagnosticAnalyte = {
   }>;
 };
 
-type Tab = "modalities" | "services" | "analytes" | "favorites";
+type Tab = "modalities" | "services" | "favorites";
+
+const ORDERABLE_KINDS = new Set([
+  "lab_panel",
+  "imaging",
+  "functional",
+  "endoscopy",
+  "visit",
+  "package",
+]);
+
+type FavoriteItem = {
+  code: string;
+  kind: string;
+  title: L10n;
+};
 
 type FavoritesPayload = {
   keys: string[];
   mode: "first" | "only";
-  groups: DiagnosticCatalogGroup[];
+  items?: FavoriteItem[];
 };
 
 function unwrap<T>(payload: unknown): T {
@@ -108,8 +125,10 @@ export default function DiagnosticCatalogAdminPage() {
 
   // Favorites tab state (migrated from /admin/catalog-favorites)
   const [favKeys, setFavKeys] = useState<string[]>([]);
+  const [favItems, setFavItems] = useState<FavoriteItem[]>([]);
+  const [analyteMode, setAnalyteMode] = useState(false);
+  const [serviceFormStash, setServiceFormStash] = useState<Record<string, string> | null>(null);
   const [favMode, setFavMode] = useState<"first" | "only">("first");
-  const [favGroups, setFavGroups] = useState<DiagnosticCatalogGroup[]>([]);
   const [favLoading, setFavLoading] = useState(true);
   const [favSaving, setFavSaving] = useState(false);
   const [favMsg, setFavMsg] = useState<string | null>(null);
@@ -160,9 +179,9 @@ export default function DiagnosticCatalogAdminPage() {
     setFavLoading(true);
     const res = await fetch("/api/admin/catalog-favorites");
     const row = unwrap<FavoritesPayload>(await res.json());
-    setFavKeys(row.keys ?? []);
+    setFavKeys((row.keys ?? []).filter((key) => key.startsWith("code:")));
     setFavMode(row.mode === "only" ? "only" : "first");
-    setFavGroups(row.groups ?? []);
+    setFavItems(row.items ?? []);
     setFavLoading(false);
   }, []);
 
@@ -170,28 +189,40 @@ export default function DiagnosticCatalogAdminPage() {
     void loadFavorites();
   }, [loadFavorites]);
 
+  const orderableServices = useMemo(
+    () => services.filter((s) => s.kind !== "LAB"),
+    [services],
+  );
+
   const filteredServices = useMemo(() => {
-    if (!serviceKindFilter) return services;
-    return services.filter((s) => s.kind === serviceKindFilter);
-  }, [services, serviceKindFilter]);
+    if (!serviceKindFilter) return orderableServices;
+    return orderableServices.filter((s) => s.kind === serviceKindFilter);
+  }, [orderableServices, serviceKindFilter]);
 
   const kindOptions = useMemo(() => {
-    const set = new Set(services.map((s) => s.kind).filter(Boolean));
+    const set = new Set(orderableServices.map((s) => s.kind).filter(Boolean));
     return [...set].sort();
-  }, [services]);
+  }, [orderableServices]);
+
+  const favoriteChoices = useMemo(
+    () => favItems.filter((item) => ORDERABLE_KINDS.has(item.kind)),
+    [favItems],
+  );
+
+  function localeTitle(row: { titleEn: string; titleRu?: string; titleAz?: string }) {
+    if (locale.startsWith("ru")) return row.titleRu || row.titleEn;
+    if (locale.startsWith("az")) return row.titleAz || row.titleEn;
+    return row.titleEn;
+  }
+
+  function kindLabel(kind: string) {
+    const key = `kind_${kind}` as "kind_visit";
+    return t.has(key) ? t(key) : kind;
+  }
 
   const visitModalityId = useMemo(
     () => modalities.find((m) => m.code === "VISIT" || m.kind === "visit")?.id ?? "",
     [modalities],
-  );
-
-  const favModalityGroups = useMemo(
-    () => favGroups.filter((g) => g.category === null),
-    [favGroups],
-  );
-  const favCategoryGroups = useMemo(
-    () => favGroups.filter((g) => g.category !== null),
-    [favGroups],
   );
 
   function toggleFavorite(key: string) {
@@ -204,7 +235,10 @@ export default function DiagnosticCatalogAdminPage() {
     const res = await fetch("/api/admin/catalog-favorites", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keys: favKeys, mode: favMode }),
+        body: JSON.stringify({
+          keys: favKeys.filter((key) => key.startsWith("code:")),
+          mode: favMode,
+        }),
     });
     setFavSaving(false);
     setFavMsg(res.ok ? tFav("saved") : tFav("saveFailed"));
@@ -215,12 +249,8 @@ export default function DiagnosticCatalogAdminPage() {
     [services, selectedServiceId],
   );
 
-  function openManageAnalytes(service: DiagnosticService) {
-    setSelectedServiceId(service.id);
-    setTab("analytes");
-  }
-
   function openCreate() {
+    setAnalyteMode(false);
     setEditingId(null);
     setFormFields([]);
     setForm(
@@ -250,7 +280,9 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   function openEditService(row: DiagnosticService) {
+    setAnalyteMode(false);
     setEditingId(row.id);
+    if (row.kind === "lab_panel") setSelectedServiceId(row.id);
     setFormFields(parseCatalogFieldsJson(row.fieldsJson));
     let includesText = "";
     try {
@@ -275,6 +307,8 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   function openEditAnalyte(row: DiagnosticAnalyte) {
+    setServiceFormStash(form);
+    setAnalyteMode(true);
     setEditingId(row.id);
     setForm({
       code: row.code,
@@ -372,13 +406,13 @@ export default function DiagnosticCatalogAdminPage() {
       return;
     }
 
-    if (tab === "analytes" && selectedServiceId) {
+    if (analyteMode && selectedServiceId) {
       let valueOptions;
       if (form.valueOptionsJson?.trim()) {
         try {
           valueOptions = JSON.parse(form.valueOptionsJson);
         } catch {
-          setMsg("Invalid valueOptions JSON");
+          setMsg(t("invalidValueOptions"));
           return;
         }
       }
@@ -407,10 +441,20 @@ export default function DiagnosticCatalogAdminPage() {
         setMsg(tc("saveFailed"));
         return;
       }
-      setModalOpen(false);
+      setAnalyteMode(false);
+      if (serviceFormStash) setForm(serviceFormStash);
+      setEditingId(selectedServiceId);
       setMsg(tc("saved"));
       await loadAnalytes(selectedServiceId);
     }
+  }
+
+  function startNewAnalyte() {
+    if (!selectedServiceId) return;
+    setServiceFormStash(form);
+    setAnalyteMode(true);
+    setEditingId(null);
+    setForm({ valueType: "NUMERIC" });
   }
 
   async function toggleModalityActive(row: Modality) {
@@ -440,15 +484,13 @@ export default function DiagnosticCatalogAdminPage() {
     await loadAnalytes(selectedServiceId);
   }
 
-  const tabs: { id: Tab; label: string; disabled?: boolean }[] = [
+  const tabs: { id: Tab; label: string }[] = [
     { id: "modalities", label: t("tabModalities") },
     { id: "services", label: t("tabServices") },
-    { id: "analytes", label: t("tabAnalytes"), disabled: !selectedServiceId },
     { id: "favorites", label: t("tabFavorites") },
   ];
 
-  const showAddButton =
-    tab === "modalities" || tab === "services" || (tab === "analytes" && !!selectedServiceId);
+  const showAddButton = tab === "modalities" || tab === "services";
 
   return (
     <>
@@ -473,16 +515,13 @@ export default function DiagnosticCatalogAdminPage() {
         }
       />
       {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className={TAB_STRIP_CLASS}>
         {tabs.map((x) => (
           <button
             key={x.id}
             type="button"
-            disabled={x.disabled}
-            className={`${tab === x.id ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS} ${
-              x.disabled ? "cursor-not-allowed opacity-50" : ""
-            }`}
-            onClick={() => !x.disabled && setTab(x.id)}
+            className={tab === x.id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
+            onClick={() => setTab(x.id)}
           >
             {x.label}
           </button>
@@ -495,7 +534,7 @@ export default function DiagnosticCatalogAdminPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("titleEn")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("kind")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("sortOrder")}</th>
@@ -506,9 +545,9 @@ export default function DiagnosticCatalogAdminPage() {
               <tbody>
                 {modalities.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.titleEn}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{localeTitle(row)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.kind}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{kindLabel(row.kind)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.sortOrder}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.active ? (
@@ -569,7 +608,7 @@ export default function DiagnosticCatalogAdminPage() {
               <option value="">{t("allModalities")}</option>
               {modalities.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.code} — {m.titleEn}
+                  {m.code} — {localeTitle(m)}
                 </option>
               ))}
             </FieldSelect>
@@ -583,7 +622,7 @@ export default function DiagnosticCatalogAdminPage() {
               <option value="">{t("allKinds")}</option>
               {kindOptions.map((k) => (
                 <option key={k} value={k}>
-                  {k}
+                  {kindLabel(k)}
                 </option>
               ))}
             </FieldSelect>
@@ -609,7 +648,7 @@ export default function DiagnosticCatalogAdminPage() {
               <table className={DATA_TABLE_CLASS}>
                 <thead>
                   <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("titleEn")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("modality")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("category")}</th>
@@ -622,12 +661,14 @@ export default function DiagnosticCatalogAdminPage() {
                 <tbody>
                   {filteredServices.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.titleEn}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{localeTitle(row)}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.modality?.code ?? "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.category || "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.serviceCode}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row._count?.analytes ?? 0}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {row.kind === "lab_panel" ? (row._count?.analytes ?? 0) : "—"}
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {row.active ? (
                           <span className={TEXT_SUCCESS_CLASS}>{t("statusActive")}</span>
@@ -644,14 +685,6 @@ export default function DiagnosticCatalogAdminPage() {
                             onClick={() => openEditService(row)}
                           >
                             <Pencil className="h-3.5 w-3.5" aria-hidden />
-                          </button>
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            aria-label={t("manageAnalytes")}
-                            onClick={() => openManageAnalytes(row)}
-                          >
-                            <List className="h-3.5 w-3.5" aria-hidden />
                           </button>
                           <button
                             type="button"
@@ -673,72 +706,6 @@ export default function DiagnosticCatalogAdminPage() {
                     <tr>
                       <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={8}>
                         {t("emptyServices")}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {tab === "analytes" && (
-        <div className="space-y-3">
-          {selectedService ? (
-            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-              {t("analytesFor", { service: `${selectedService.code} — ${selectedService.titleEn}` })}
-            </p>
-          ) : (
-            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("noServiceSelected")}</p>
-          )}
-          <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("labelEn")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("unit")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMin")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMax")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytes.map((row) => (
-                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.labelEn}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.unit ?? "—"}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.refMin ?? "—"}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.refMax ?? "—"}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            aria-label={tc("edit")}
-                            onClick={() => openEditAnalyte(row)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" aria-hidden />
-                          </button>
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            aria-label={tc("delete")}
-                            onClick={() => void removeAnalyte(row.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {analytes.length === 0 ? (
-                    <tr>
-                      <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={6}>
-                        {t("emptyAnalytes")}
                       </td>
                     </tr>
                   ) : null}
@@ -780,49 +747,27 @@ export default function DiagnosticCatalogAdminPage() {
               </div>
 
               <div>
-                <p className="mb-2 text-[13px] font-medium">{tFav("modalities")}</p>
-                <div className="flex flex-wrap gap-2">
-                  {favModalityGroups.map((g) => (
-                    <label
-                      key={g.key}
-                      className={`flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-[13px] ${
-                        favKeys.includes(g.key) ? SIDEBAR_LINK_ACTIVE_CLASS : ""
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className={MODAL_CHECKBOX_CLASS}
-                        checked={favKeys.includes(g.key)}
-                        onChange={() => toggleFavorite(g.key)}
-                      />
-                      {pickL10n(g.title as L10n, locale)}
-                      <span className={`text-[11px] ${TEXT_MUTED_CLASS}`}>
-                        ({g.itemCodes.length})
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-[13px] font-medium">{tFav("categories")}</p>
+                <p className="mb-2 text-[13px] font-medium">{tFav("services")}</p>
                 <ul className={`${CARD_CONTAINER_CLASS} max-h-96 space-y-1 overflow-y-auto p-2`}>
-                  {favCategoryGroups.map((g) => (
-                    <li key={g.key}>
-                      <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px]">
-                        <input
-                          type="checkbox"
-                          className={MODAL_CHECKBOX_CLASS}
-                          checked={favKeys.includes(g.key)}
-                          onChange={() => toggleFavorite(g.key)}
-                        />
-                        <span className="flex-1">{pickL10n(g.title as L10n, locale)}</span>
-                        <span className={`text-[11px] ${TEXT_MUTED_CLASS}`}>
-                          {g.key} · {g.itemCodes.length}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
+                  {favoriteChoices.map((item) => {
+                    const key = `code:${item.code}`;
+                    return (
+                      <li key={key}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[13px]">
+                          <input
+                            type="checkbox"
+                            className={MODAL_CHECKBOX_CLASS}
+                            checked={favKeys.includes(key)}
+                            onChange={() => toggleFavorite(key)}
+                          />
+                          <span className="flex-1">
+                            {pickL10n(item.title, locale)} · {item.code}
+                          </span>
+                          <span className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{kindLabel(item.kind)}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
@@ -882,7 +827,7 @@ export default function DiagnosticCatalogAdminPage() {
             </>
           )}
 
-          {tab === "services" && (
+          {tab === "services" && !analyteMode && (
             <>
               {!editingId ? (
                 <Field
@@ -978,11 +923,62 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              {editingId && form.kind === "lab_panel" ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-medium">{t("tabAnalytes")}</p>
+                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={startNewAnalyte}>
+                      {tc("add")}
+                    </button>
+                  </div>
+                  <ul className="max-h-48 space-y-1 overflow-y-auto text-[13px]">
+                    {analytes.map((row) => (
+                      <li key={row.id} className="flex items-center gap-2">
+                        <span className="flex-1">
+                          {(locale.startsWith("ru")
+                            ? row.labelRu
+                            : locale.startsWith("az")
+                              ? row.labelAz
+                              : row.labelEn) || row.labelEn}{" "}
+                          · {row.code}
+                        </span>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("edit")}
+                          onClick={() => openEditAnalyte(row)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("delete")}
+                          onClick={() => void removeAnalyte(row.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </>
           )}
 
-          {tab === "analytes" && (
+          {analyteMode && (
             <>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  setAnalyteMode(false);
+                  if (serviceFormStash) setForm(serviceFormStash);
+                  setEditingId(selectedServiceId);
+                }}
+              >
+                {t("tabServices")}
+              </button>
               <Field
                 label={t("code")}
                 preset="code"
@@ -996,23 +992,23 @@ export default function DiagnosticCatalogAdminPage() {
                 onChange={(e) => setForm({ ...form, unit: e.target.value })}
               />
               <Field
-                label="Section"
+                label={t("section")}
                 preset="shortText"
                 value={form.section ?? ""}
                 onChange={(e) => setForm({ ...form, section: e.target.value })}
               />
               <FieldSelect
-                label="Value type"
+                label={t("valueType")}
                 preset="select"
                 value={form.valueType ?? "NUMERIC"}
                 onChange={(e) => setForm({ ...form, valueType: e.target.value })}
               >
-                <option value="NUMERIC">NUMERIC</option>
-                <option value="QUALITATIVE">QUALITATIVE</option>
+                <option value="NUMERIC">{t("valueTypeNumeric")}</option>
+                <option value="QUALITATIVE">{t("valueTypeQualitative")}</option>
               </FieldSelect>
               <FieldTextarea
-                label="Value options JSON"
-                hint='[{"code":"neg","labelEn":"Negative","labelRu":"Отриц.","labelAz":"Neqativ"}]'
+                label={t("valueOptions")}
+                hint={t("valueOptionsHint")}
                 value={form.valueOptionsJson ?? ""}
                 onChange={(e) => setForm({ ...form, valueOptionsJson: e.target.value })}
               />
@@ -1059,6 +1055,7 @@ export default function DiagnosticCatalogAdminPage() {
         </div>
         <ModalFooter
           onCancel={() => setModalOpen(false)}
+          cancelLabel={tc("cancel")}
           onSubmit={() => void save()}
           submitLabel={tc("save")}
         />

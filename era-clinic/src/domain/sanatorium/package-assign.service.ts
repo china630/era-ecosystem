@@ -483,8 +483,18 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   balances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
-  /** Present when balances cannot load yet (set package / open day-1). */
-  blockReason: "NO_PROGRAM" | "NO_PROGRAM_CODE" | null;
+  /**
+   * Why balances are empty. Anamnesis, a complaint, and a care-team doctor stay the lock.
+   * Ultrasound, gynecology, cardiology, and labs are not reasons.
+   */
+  blockReason:
+    | "NO_PROGRAM"
+    | "NO_PROGRAM_CODE"
+    | "NO_ANAMNESIS"
+    | "NO_COMPLAINT"
+    | "NO_CARE_TEAM"
+    | "INSTANTIATE_FAILED"
+    | null;
   /** poolCode → eligible real SKUs for the picker */
   poolEligible: Record<string, PoolEligibleSku[]>;
   /** Pinned package identity for support (code + version). */
@@ -492,25 +502,55 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   packageVersion: number | null;
   templateId: string | null;
 }> {
-  const episode = await loadEpisodeForAssign(episodeId, {
+  let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
     requireProgram: false,
   });
 
   if (!episode.programInstance) {
     const hasCode = Boolean(episode.programCode?.trim());
-    return {
-      balances: [],
-      assigned: [],
-      softWarnDay1: hasCode
-        ? "Program code is set but package is not open yet — use Complete checkup / Day-1 to instantiate balances."
-        : "No program code on this stay — set the package (Complete checkup & schedule) before assigning procedures.",
-      blockReason: hasCode ? "NO_PROGRAM" : "NO_PROGRAM_CODE",
-      poolEligible: {},
-      packageCode: episode.programCode?.trim() || null,
-      packageVersion: null,
-      templateId: null,
-    };
+    if (!hasCode) {
+      return {
+        balances: [],
+        assigned: [],
+        softWarnDay1: null,
+        blockReason: "NO_PROGRAM_CODE",
+        poolEligible: {},
+        packageCode: null,
+        packageVersion: null,
+        templateId: null,
+      };
+    }
+    const { tryOpenProgramAfterTherapistStage } = await import(
+      "@/domain/sanatorium/open-program-after-therapist.service"
+    );
+    const opened = await tryOpenProgramAfterTherapistStage(episodeId);
+    if (opened.opened || opened.reason === "ALREADY_OPEN") {
+      episode = await loadEpisodeForAssign(episodeId, {
+        requireClinicalGates: false,
+        requireProgram: false,
+      });
+    }
+    if (!episode.programInstance) {
+      const reason = opened.opened
+        ? "INSTANTIATE_FAILED"
+        : opened.reason === "NO_ANAMNESIS" ||
+            opened.reason === "NO_COMPLAINT" ||
+            opened.reason === "NO_CARE_TEAM" ||
+            opened.reason === "INSTANTIATE_FAILED"
+          ? opened.reason
+          : "NO_PROGRAM";
+      return {
+        balances: [],
+        assigned: [],
+        softWarnDay1: null,
+        blockReason: reason,
+        poolEligible: {},
+        packageCode: episode.programCode?.trim() || null,
+        packageVersion: null,
+        templateId: null,
+      };
+    }
   }
 
   const instance = episode.programInstance;
@@ -1059,6 +1099,17 @@ export async function replacePackageProcedures(
     }
   }
 
+  if (!inPackageTarget) {
+    const { remainingPackageQuotaCode } = await import(
+      "@/domain/sanatorium/extras-assign.service"
+    );
+    const openQuota = await remainingPackageQuotaCode(episodeId, input.toCode);
+    if (openQuota) {
+      inPackageTarget = true;
+      if (openQuota !== input.toCode) burnPoolCode = openQuota;
+    }
+  }
+
   if (!inPackageTarget && !opts?.allowOutOfPackage) {
     throw new PackageAssignError(
       "Out-of-package replace requires manager approval (paid extra path)",
@@ -1144,6 +1195,9 @@ export async function day1AutoAssign(
     (await getSchedulingSettings()).dailyPackageProcedureCap,
   );
   const snap = await getPackageAssignSnapshot(episodeId);
+  if (snap.blockReason) {
+    throw new PackageAssignError(snap.blockReason, snap.blockReason, 409);
+  }
   const picks = snap.balances
     .filter((b) => !b.isPool && !b.isQuotaAlias && !b.needsSkuPicker && b.remaining > 0)
     .slice(0, packageCap);

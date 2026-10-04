@@ -49,6 +49,8 @@ type LabResultRow = {
 type LabOrderItem = {
   id: string;
   serviceCode: string;
+  inPackage?: boolean;
+  amountNet?: string | number | null;
   diagnosticService?: {
     code: string;
     titleEn?: string;
@@ -75,6 +77,51 @@ type LabOrder = {
 
 const EDITABLE_STATUSES = ["COLLECTED", "IN_PROGRESS", "RESULT_READY"];
 const STEP_KEYS = ["collect", "results", "publish", "complete"] as const;
+
+function labOrderStatusLabel(
+  tList: (
+    key:
+      | "orderStatus.ORDERED"
+      | "orderStatus.COLLECTED"
+      | "orderStatus.IN_PROGRESS"
+      | "orderStatus.RESULT_READY"
+      | "orderStatus.PUBLISHED"
+      | "orderStatus.COMPLETED"
+      | "orderStatus.CANCELLED"
+      | "inPackage",
+  ) => string,
+  status: string,
+): string {
+  switch (status) {
+    case "ORDERED":
+      return tList("orderStatus.ORDERED");
+    case "COLLECTED":
+      return tList("orderStatus.COLLECTED");
+    case "IN_PROGRESS":
+      return tList("orderStatus.IN_PROGRESS");
+    case "RESULT_READY":
+      return tList("orderStatus.RESULT_READY");
+    case "PUBLISHED":
+      return tList("orderStatus.PUBLISHED");
+    case "COMPLETED":
+      return tList("orderStatus.COMPLETED");
+    case "CANCELLED":
+      return tList("orderStatus.CANCELLED");
+    default:
+      return status;
+  }
+}
+
+function labOrderAmountLabel(order: LabOrder, inPackageLabel: string): string {
+  const header = Number(order.amountNet);
+  const items = order.items ?? [];
+  const net =
+    header > 0 ? header : items.reduce((sum, item) => sum + (Number(item.amountNet) || 0), 0);
+  if (items.length > 0 && items.every((item) => item.inPackage) && !(net > 0)) {
+    return inPackageLabel;
+  }
+  return `${Number.isFinite(net) ? net.toFixed(2) : "0.00"} AZN`;
+}
 
 function stepIndex(status: string): number {
   if (status === "ORDERED") return 0;
@@ -398,7 +445,8 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
             <>
               <div className={`space-y-1 text-[13px] ${TEXT_MUTED_CLASS}`}>
                 <div>
-                  {t("status")}: {order.status} · {order.amountNet} AZN
+                  {t("status")}: {labOrderStatusLabel(tList, order.status)} ·{" "}
+                  {labOrderAmountLabel(order, tList("inPackage"))}
                   {order.visitId ? ` · ${t("visit")} ${order.visitId.slice(0, 8)}…` : ""}
                 </div>
                 {catalogItem ? (

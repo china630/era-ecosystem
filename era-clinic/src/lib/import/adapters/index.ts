@@ -1778,12 +1778,13 @@ export function getImportAdapter(entity: string): ImportAdapter<unknown> | undef
 }
 
 export function listImportEntities(): ImportEntityMeta[] {
-  return ADAPTERS.map(({ entity, label, order, templateHint, fileless, allowMultiple }) => ({
-    entity,
-    label,
-    order,
-    templateHint,
-    fileless,
-    allowMultiple,
+  return ADAPTERS.map((adapter) => ({
+    entity: adapter.entity,
+    label: adapter.label,
+    order: adapter.order,
+    templateHint: adapter.templateHint,
+    columns: Object.keys(adapter.headerAliases),
+    fileless: adapter.fileless,
+    allowMultiple: adapter.allowMultiple,
   })).sort((a, b) => a.order - b.order);
 }

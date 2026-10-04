@@ -141,14 +141,36 @@ async function resolveProvisionRole(
   return role;
 }
 
-function practitionerStaffKindFromRole(
+function clinicalPractitionerKind(
   staffKind: string | null | undefined,
-): "DOCTOR" | "NURSE" | "LAB" {
+): "DOCTOR" | "NURSE" | "LAB" | null {
   const kind = parseClinicRoleStaffKind(staffKind);
   if (kind === "NURSE") return "NURSE";
   if (kind === "LAB") return "LAB";
-  // DOCTOR or NONE → DOCTOR pool for clinical matching (reception rarely gets Practitioner).
-  return "DOCTOR";
+  if (kind === "DOCTOR") return "DOCTOR";
+  // Reception and clinic admin are NONE. They get a login, not a doctor row.
+  return null;
+}
+
+async function retireNonClinicalPractitioner(args: {
+  cpEmploymentId: string;
+  userId: string;
+}) {
+  const row = await prisma.practitioner.findFirst({
+    where: {
+      OR: [{ cpEmploymentId: args.cpEmploymentId }, { userId: args.userId }],
+    },
+    select: { id: true },
+  });
+  if (!row) return;
+  try {
+    await prisma.practitioner.delete({ where: { id: row.id } });
+  } catch {
+    await prisma.practitioner.update({
+      where: { id: row.id },
+      data: { active: false },
+    });
+  }
 }
 
 async function findExistingPractitioner(input: {
@@ -227,7 +249,11 @@ export async function handleStaffProvisionEvent(event: unknown) {
       userId = user.id;
     }
 
-    const staffKind = practitionerStaffKindFromRole(role.staffKind);
+    const staffKind = clinicalPractitionerKind(role.staffKind);
+    if (!staffKind) {
+      await retireNonClinicalPractitioner({ cpEmploymentId, userId });
+      return { satelliteUserId: userId };
+    }
     const existingPractitioner = await findExistingPractitioner({
       cpEmploymentId,
       globalPersonId,

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Eye } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
   DatePicker,
@@ -16,7 +16,7 @@ import {
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
-  NATIONALITY_OPTIONS,
+  countryOptions,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -92,6 +92,7 @@ const emptyListFilters = (): ListFilters => ({
 export default function PatientsPage() {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const { auth } = useClinicAuth();
   const isSuperAdmin = Boolean(auth?.isPlatformSuperAdmin);
   const [filterState, setFilterState] = useState(emptyListFilters);
@@ -242,7 +243,6 @@ export default function PatientsPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
-          className="!mb-0"
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
@@ -254,7 +254,6 @@ export default function PatientsPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={() => setFilterState(emptyListFilters())}
           >
@@ -410,7 +409,7 @@ export default function PatientsPage() {
               onChange={(v) =>
                 setForm({ ...form, nationality: String(v ?? "").toUpperCase() })
               }
-              options={[...NATIONALITY_OPTIONS]}
+              options={countryOptions(locale, form.nationality)}
               emptyLabel={t("sexUnknown")}
             />
           </FieldRow>

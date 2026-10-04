@@ -124,6 +124,10 @@ export async function POST(
       if (shouldRetryAuto) {
         await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM" }).catch(() => null);
       }
+      const { tryOpenProgramAfterTherapistStage } = await import(
+        "@/domain/sanatorium/open-program-after-therapist.service"
+      );
+      await tryOpenProgramAfterTherapistStage(id).catch(() => null);
       return jsonOk(row);
     } catch (err) {
       const code = (err as Error & { code?: string }).code;

@@ -26,6 +26,7 @@ import {
   Wrench,
   Grid3x3,
   CalendarRange,
+  Trash2,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
 import {
@@ -330,6 +331,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
+    href: "/admin/ops-wipe",
+    labelKey: "opsWipe",
+    icon: Trash2,
+    group: "platform",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   },
   {
     href: "/admin/audit",

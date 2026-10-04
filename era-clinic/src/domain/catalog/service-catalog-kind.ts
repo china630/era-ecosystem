@@ -37,6 +37,19 @@ export function inferServiceCatalogKind(
   return "OTHER";
 }
 
+/** Price import creates a cabin procedure type only for PROCEDURE rows. */
+export function catalogKindBecomesProcedureType(kind: ServiceCatalogKind): boolean {
+  return kind === "PROCEDURE";
+}
+
+/**
+ * Lab, imaging and visits are not cabin procedures. OTHER stays: Nafta physio
+ * codes often have no prefix and must not be purged with the lab panels.
+ */
+export function catalogKindIsNonCabinProcedure(kind: ServiceCatalogKind): boolean {
+  return kind === "LAB" || kind === "DIAGNOSTIC" || kind === "VISIT";
+}
+
 export function parseCatalogKindQuery(
   raw: string | null,
 ): ServiceCatalogKind[] | undefined {
