@@ -28,6 +28,7 @@
 |---------|------|-------|
 | Projects | `/projects` | 🟡 |
 | Plan vs actual | `/projects/[id]` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (CN-RBAC-01; not SHOW) |
 
 Project create and subcontractor-claim flows now follow the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
 

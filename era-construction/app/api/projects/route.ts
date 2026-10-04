@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, assertConstructionEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -21,7 +21,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    await assertConstructionEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const projects = await prisma.project.findMany({
       include: { progressActs: true },
       orderBy: { createdAt: "desc" },
@@ -34,6 +34,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     let project = await prisma.project.findUnique({
       where: { code: body.projectCode } as never,

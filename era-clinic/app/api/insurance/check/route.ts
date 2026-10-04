@@ -3,7 +3,7 @@ import { financeEligibilityCheck } from "@era/satellite-kit";
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS);
     if (denied) return denied;
 

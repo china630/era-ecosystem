@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { CheckLines } from "@/components/CheckLines";
 
 type TicketLine = {
   id: string;
@@ -39,13 +41,14 @@ type Ticket = {
   beoId?: string | null;
   roomChargeReservationId?: string | null;
   guestName?: string | null;
-  table?: { code: string } | null;
+  openedAt?: string | null;
+  table?: { code: string; name?: string | null } | null;
   outlet: { code: string };
   lines: TicketLine[];
 };
 
 function ticketLabel(ticket: Ticket, takeaway: string, walkIn: string): string {
-  if (ticket.table?.code) return ticket.table.code;
+  if (ticket.table) return ticket.table.name?.trim() || ticket.table.code;
   if (ticket.serviceChannel === "TAKEAWAY" || ticket.serviceChannel === "WALK_IN") {
     return takeaway;
   }
@@ -60,6 +63,7 @@ function isInHouseTicket(ticket: Ticket): boolean {
 
 export default function OrdersPanel() {
   const t = useTranslations("orders");
+  const tf = useTranslations("floor");
   const tc = useTranslations("common");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,6 +77,14 @@ export default function OrdersPanel() {
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const [hasKds, setHasKds] = useState(false);
+  const [canPay, setCanPay] = useState<boolean | null>(null);
+  const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
+  const [cashReceived, setCashReceived] = useState("");
+  const [lastPaid, setLastPaid] = useState<{
+    dayNo: number | null;
+    amount: number;
+    change: number | null;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +92,25 @@ export default function OrdersPanel() {
     const data = await res.json();
     setTickets(Array.isArray(data) ? data : []);
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/shifts/open");
+        const data = res.ok ? await res.json().catch(() => null) : null;
+        if (!res.ok || !data) {
+          setCanPay(true);
+          setCanDiscount(true);
+          return;
+        }
+        setCanPay(data.mayPay === false ? false : true);
+        setCanDiscount(data.mayDiscount === false ? false : true);
+      } catch {
+        setCanPay(true);
+        setCanDiscount(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -91,13 +122,8 @@ export default function OrdersPanel() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        const kafe = d.edition === "kafe" || d.hotelMode === false;
-        setHotelMode(!kafe);
-        setHasKds(
-          !kafe ||
-            (Array.isArray(d.activeModules) &&
-              d.activeModules.includes("fnb_kitchen_kds")),
-        );
+        setHotelMode(d.hotelMode === true);
+        setHasKds(d.kitchen === true);
       })
       .catch(() => undefined);
     void fetch("/api/billing/context")
@@ -151,16 +177,32 @@ export default function OrdersPanel() {
   }
 
   async function pay(method: "CASH" | "CARD" | "TRANSFER") {
-    if (!selected) return;
+    if (!selected || !canPay) return;
+    const persisted = await persistDiscount();
+    if (persisted == null) return;
+    const due = persisted;
+    const got = Number(cashReceived);
+    if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
+      showApiError({ error: tf("cashShort") });
+      return;
+    }
+    const paidDay = selected.dayNo ?? null;
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({
+        method,
+        ...(method === "CASH" ? { cashTendered: got } : {}),
+      }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
       window.dispatchEvent(
         new CustomEvent("era-fnb-offline", {
-          detail: { kind: "pay", ticketId: selected.id, payload: { method } },
+          detail: {
+            kind: "pay",
+            ticketId: selected.id,
+            payload: { method, ...(method === "CASH" ? { cashTendered: got } : {}) },
+          },
         }),
       );
       showApiError({ error: t("queuedOffline") });
@@ -168,14 +210,28 @@ export default function OrdersPanel() {
     }
     const data = await res.json();
     if (!res.ok) {
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf("shiftRequired") });
+        return;
+      }
       showApiError(
-        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
-        "Payment failed",
+        data.error === "Nothing to pay"
+          ? { error: t("nothingToPay") }
+          : data.error === "Cash tendered is less than the check"
+            ? { error: tf("cashShort") }
+            : data,
+        tc("failed"),
       );
       return;
     }
-    const label = method === "CARD" ? t("payCard") : t("payCash");
-    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
+    const amount = Number(data.amount);
+    setLastPaid({
+      dayNo: paidDay,
+      amount,
+      change: method === "CASH" ? Number(data.changeAzn ?? Math.round((got - amount) * 100) / 100) : null,
+    });
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
+    setCashReceived("");
     setSelectedId(null);
     await load();
   }
@@ -267,41 +323,47 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function voidLine(lineId: string) {
+  async function changeQty(lineId: string, qty: number) {
     if (!selected) return;
-    const res = await fetch(
-      `/api/tickets/${selected.id}/lines/${lineId}/void`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Manager void" }),
-      },
-    );
-    const data = await res.json();
+    const res = await fetch(`/api/tickets/${selected.id}/lines/${lineId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qty }),
+    });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showApiError(data, t("void"));
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf("shiftRequired") });
+        return;
+      }
+      showApiError(data, tc("failed"));
       return;
     }
-    showSuccess(t("void"));
     await load();
   }
 
-  async function applyDiscount() {
-    if (!selected) return;
-    const discountPercent = parseFloat(discountInput);
-    if (Number.isNaN(discountPercent)) return;
+  async function persistDiscount(): Promise<number | null> {
+    if (!selected) return null;
+    const raw = discountInput.trim() === "" ? 0 : Number(discountInput);
+    if (!Number.isFinite(raw) || raw < 0 || raw > 100) {
+      showApiError({ error: t("discountPercent") });
+      return null;
+    }
+    const stored = Number(selected.discountPercent ?? 0);
+    if (Math.abs(raw - stored) < 0.001) return Number(selected.totalAzn);
     const res = await fetch(`/api/tickets/${selected.id}/discount`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discountPercent }),
+      body: JSON.stringify({ discountPercent: raw }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showApiError(data, t("applyDiscount"));
-      return;
+      if (res.status === 403) showApiError({ error: t("discountDenied") });
+      else showApiError(data, t("discountPercent"));
+      return null;
     }
-    showSuccess(`${discountPercent}%`);
     await load();
+    return Number(data.totalAzn);
   }
 
   async function splitTicket() {
@@ -313,6 +375,10 @@ export default function OrdersPanel() {
     });
     const data = await res.json();
     if (!res.ok) {
+      if (data.code === "SHIFT_STALE" || data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: tf(data.code === "SHIFT_STALE" ? "shiftStale" : "shiftRequired") });
+        return;
+      }
       showApiError(data, t("splitSelected"));
       return;
     }
@@ -337,8 +403,8 @@ export default function OrdersPanel() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="space-y-3">
+    <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-2">
+      <div className="min-h-0 space-y-3 overflow-y-auto">
         <h2 className="text-sm font-semibold text-[#34495E]">{t("openTickets")}</h2>
         {loading ? (
           <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
@@ -350,85 +416,105 @@ export default function OrdersPanel() {
               key={ticket.id}
               type="button"
               onClick={() => setSelectedId(ticket.id)}
-              className={`${CARD_CLASS} w-full p-4 text-left ${
-                selected?.id === ticket.id ? "border-[#2980B9] ring-2 ring-[#2980B9]" : ""
+              className={`${CARD_CLASS} flex h-24 w-full flex-col p-3 text-left ${
+                selected?.id === ticket.id ? "border-[#2980B9] bg-[#EAF3FB]" : ""
               }`}
             >
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-base font-semibold">
                   {ticketLabel(ticket, t("channelTakeaway"), t("channelWalkIn"))}
-                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""} · {ticket.outlet?.code ?? ""}
+                  {ticket.dayNo ? ` #${ticket.dayNo}` : ""}
                   {ticket.beoId ? " · BEO" : ""}
                 </span>
-                <span>{statusLabel(ticket.status)}</span>
-              </div>
-              <p className="mt-1 text-lg font-semibold">
-                {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
-              </p>
+                {ticket.status !== "OPEN" ? (
+                  <span className="shrink-0 text-xs text-[#7F8C8D]">{statusLabel(ticket.status)}</span>
+                ) : null}
+              </span>
+              <span className="mt-auto flex items-end justify-between gap-2">
+                <span className="text-xs text-[#7F8C8D]">
+                  {ticket.openedAt ? bakuTimeLabel(ticket.openedAt) : statusLabel(ticket.status)}
+                </span>
+                <span className="text-sm font-semibold tabular-nums">
+                  {Number(ticket.totalAzn).toFixed(2)} {tc("azn")}
+                </span>
+              </span>
             </button>
           ))
         )}
       </div>
 
-      <div className={`${CARD_CLASS} p-4`}>
+      <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
         {!selected ? (
-          <p className="text-sm text-[#7F8C8D]">{t("selectTicket")}</p>
+          <p className="text-sm text-[#7F8C8D]">
+            {lastPaid
+              ? tf("paidBanner", {
+                  no: lastPaid.dayNo ?? "—",
+                  amount: lastPaid.amount.toFixed(2),
+                  change:
+                    lastPaid.change == null
+                      ? ""
+                      : tf("changeDue", { amount: lastPaid.change.toFixed(2) }),
+                })
+              : t("selectTicket")}
+          </p>
         ) : (
           <>
             <p className="mb-2 text-sm font-medium text-[#34495E]">
               {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
               {selected.dayNo ? ` #${selected.dayNo}` : ""}
             </p>
-            <ul className="mb-2 space-y-1 text-sm text-[#34495E]">
-              {selected.lines.filter((l) => l.kitchenStatus !== "VOID").map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-2">
-                  <label className="flex flex-1 items-center gap-2">
-                    {l.kitchenStatus !== "VOID" && (
-                      <input
-                        type="checkbox"
-                        checked={splitLineIds.includes(l.id)}
-                        onChange={() => toggleSplitLine(l.id)}
-                        aria-label={t("selectLinesToSplit")}
-                      />
-                    )}
-                    <span>
-                      {l.qty}× {l.description}
-                    </span>
-                  </label>
-                  <button
-                    type="button"
-                    className="text-red-600 underline"
-                    onClick={() => void voidLine(l.id)}
-                  >
-                    {t("void")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="mb-4 text-base font-semibold">
-              {Number(selected.totalAzn).toFixed(2)} {tc("azn")}
-            </p>
-            <div className="mb-3 flex flex-wrap items-end gap-2">
-              <label className="text-xs text-[#7F8C8D]">
-                {t("applyDiscount")}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={discountInput}
-                  onChange={(e) => setDiscountInput(e.target.value)}
-                  className={`${INPUT_CLASS} mt-1 w-20`}
-                />
-              </label>
-              <button
-                type="button"
-                className="rounded border px-3 py-1.5 text-sm text-[#2980B9]"
-                onClick={() => void applyDiscount()}
-              >
-                {t("applyDiscount")}
-              </button>
+            <div className="mb-2 flex min-h-0 flex-1 flex-col overflow-hidden">
+              <CheckLines
+                lines={selected.lines.filter((l) => l.kitchenStatus !== "VOID")}
+                onQty={(line, qty) => void changeQty(line.id, qty)}
+                onRemove={(line) => void changeQty(line.id, 0)}
+                onToggle={hotelMode ? (line) => toggleSplitLine(line.id) : undefined}
+                selectedIds={splitLineIds}
+                azn={tc("azn")}
+                labels={{
+                  name: t("colName"),
+                  qty: t("colQty"),
+                  price: t("colPrice"),
+                  sum: t("colSum"),
+                  minus: t("qtyMinus"),
+                  plus: t("qtyPlus"),
+                  remove: t("void"),
+                }}
+                discount={
+                  canDiscount
+                    ? (() => {
+                  const gross = selected.lines
+                    .filter((l) => l.kitchenStatus !== "VOID")
+                    .reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
+                  const pct = Math.min(100, Math.max(0, Number(discountInput) || 0));
+                  const net = Math.round(gross * (1 - pct / 100) * 100) / 100;
+                  const amount = Math.round((gross - net) * 100) / 100;
+                  return {
+                    label: t("discountPercent"),
+                    value: discountInput,
+                    onChange: setDiscountInput,
+                    onBlur: () => void persistDiscount(),
+                    amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
+                    netText: `${net.toFixed(2)} ${tc("azn")}`,
+                  };
+                })()
+                    : undefined
+                }
+                tender={
+                  !canPay ||
+                  (hotelMode && (inHouse || selected.roomChargeReservationId || deferWalkInToHub))
+                    ? undefined
+                    : {
+                        label: tf("cashReceived"),
+                        value: cashReceived,
+                        onChange: setCashReceived,
+                      }
+                }
+              />
+            </div>
+            {hotelMode ? (
+            <div className="mb-3 shrink-0">
               <button
                 type="button"
                 className="rounded border px-3 py-1.5 text-sm text-[#2980B9]"
@@ -438,6 +524,7 @@ export default function OrdersPanel() {
                 {t("splitSelected")}
               </button>
             </div>
+            ) : null}
             {hotelMode ? (
             <div className="mb-3 rounded border border-[#ECF0F1] bg-[#FAFBFC] p-3">
               <p className="mb-2 text-xs font-medium text-[#7F8C8D]">{t("inHouseGuest")}</p>
@@ -521,7 +608,8 @@ export default function OrdersPanel() {
               )}
             </div>
             ) : null}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2">
+              {hasKds ? (
               <button
                 type="button"
                 className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
@@ -529,6 +617,7 @@ export default function OrdersPanel() {
               >
                 {t("fireKitchen")}
               </button>
+              ) : null}
               {hotelMode && (inHouse || selected.roomChargeReservationId) ? (
                 <button
                   type="button"
@@ -545,8 +634,9 @@ export default function OrdersPanel() {
                 >
                   {t("sendToReception")}
                 </button>
-              ) : (
-                <>
+              ) : canPay ? (
+                <div className="flex w-full shrink-0 flex-col items-end gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
                   <button
                     type="button"
                     className="rounded bg-[#27AE60] px-3 py-1.5 text-sm text-white"
@@ -568,8 +658,9 @@ export default function OrdersPanel() {
                   >
                     {t("payTransfer")}
                   </button>
-                </>
-              )}
+                  </div>
+                </div>
+              ) : null}
               {hasKds ? (
               <Link
                 href="/kds"
@@ -584,7 +675,6 @@ export default function OrdersPanel() {
         {selected && hotelMode && inHouse && (
           <p className="mt-2 text-xs text-[#8E44AD]">{t("inHouseHint")}</p>
         )}
-        <p className="mt-3 text-xs text-[#7F8C8D]">{t("roleHint")}</p>
       </div>
     </div>
   );

@@ -126,7 +126,7 @@ ADR + this spec + coverage PLANNED + menu/module-map + backlog `H-BL-50`. No pro
 
 ### W2 — HTTP API
 
-- Routes in §5; Zod; `requireHotelModule('hotel_transfers')`.  
+- Routes in §5; Zod; `requireHotelModule('hotel_transfers', session.organizationId)`.  
 - Map `/tours`, `/api/tours` in `packages/satellite-kit` `HOTEL_MODULE_BY_ROUTE`.  
 - `__tests__/tours-negative.spec.ts`.  
 - Coverage still **API** (not SHIPPED).

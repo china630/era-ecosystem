@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -11,15 +11,15 @@ const patchSchema = z.object({
   name: z.string().min(1).optional(),
   seats: z.number().int().positive().optional(),
   zone: z.string().nullable().optional(),
+  hallId: z.string().nullable().optional(),
 });
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TABLES_MANAGE);
     if (denied) return denied;
 
@@ -27,6 +27,12 @@ export async function PATCH(
     const body = patchSchema.parse(await request.json());
     const existing = await prisma.posTable.findUnique({ where: { id } });
     if (!existing) return jsonError("Table not found", 404);
+    if (body.hallId) {
+      const hall = await prisma.posHall.findFirst({
+        where: { id: body.hallId, outletId: existing.outletId },
+      });
+      if (!hall) return jsonError("Hall not found", 404);
+    }
 
     if (existing.status === "OCCUPIED" && (body.code || body.name)) {
       // Allow metadata edits while occupied; block delete only.
@@ -39,6 +45,7 @@ export async function PATCH(
         ...(body.name !== undefined ? { name: body.name } : {}),
         ...(body.seats !== undefined ? { seats: body.seats } : {}),
         ...(body.zone !== undefined ? { zone: body.zone } : {}),
+        ...(body.hallId !== undefined ? { hallId: body.hallId } : {}),
       },
     });
     return jsonOk(table);
@@ -51,9 +58,8 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(_request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TABLES_MANAGE);
     if (denied) return denied;
 

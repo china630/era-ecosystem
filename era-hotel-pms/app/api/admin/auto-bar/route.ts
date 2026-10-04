@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { previewAutoBar, applyAutoBar } from "@/lib/services/auto-bar-engine.service";
-import { getSessionFromHeaders } from "@/lib/auth/session";
+import { getSatelliteSession } from "@/lib/auth/session";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -14,7 +14,7 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const url = new URL(req.url);
     const params = querySchema.parse({
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const body = querySchema.extend({ dryRun: z.boolean().optional() }).parse(
       await req.json(),

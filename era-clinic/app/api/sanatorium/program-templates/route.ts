@@ -1,7 +1,7 @@
 import {
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -10,7 +10,7 @@ import { sellableTemplateWhere } from "@/domain/sanatorium/program-template-admi
 
 export async function GET() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { handleRouteError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromHeaders } from "@/lib/auth/session";
+import { getSatelliteSession } from "@/lib/auth/session";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -14,7 +14,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const orders = await prisma.maintenanceWorkOrder.findMany({
       orderBy: { createdAt: "desc" },
@@ -28,7 +28,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = createSchema.parse(await request.json());
     const wo = await prisma.maintenanceWorkOrder.create({

@@ -1,4 +1,3 @@
-import { resolveSatelliteOrganizationId } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import {
@@ -113,9 +112,8 @@ export async function updateUser(
 }
 
 /**
- * Resolve staff by login within one org.
- * - With `organizationId`: only that org (SHARED / widget / explicit login).
- * - Without: only process bind org (DEDICATED appliance) — never cross-org findFirst.
+ * Resolve staff by login, email, or phone inside one org.
+ * Without `organizationId` returns null. Never scans the pool and never uses the process bind.
  */
 export async function getUserByLogin(
   credential: string,
@@ -123,14 +121,8 @@ export async function getUserByLogin(
 ) {
   const id = credential.trim();
   if (!id) return null;
-  let orgId = organizationId?.trim() || null;
-  if (!orgId) {
-    try {
-      orgId = resolveSatelliteOrganizationId().organizationId;
-    } catch {
-      return null;
-    }
-  }
+  const orgId = organizationId?.trim() || null;
+  if (!orgId) return null;
   return prisma.user.findFirst({
     where: {
       organizationId: orgId,

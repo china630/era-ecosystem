@@ -1,4 +1,4 @@
-import { assertFnbEntitled, handleRouteError, jsonError } from "@/lib/api-utils";
+import { handleRouteError, jsonError } from "@/lib/api-utils";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +6,7 @@ import { hashStaffPin } from "@/lib/labor-pin";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import {
   denyUnlessAnyPermission,
 } from "@/lib/auth/require";
@@ -14,32 +14,35 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { ROSTER_WRITE } from "@/lib/auth/read-permission-sets";
 
 export async function GET(req: Request) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(req);
-  const denied = denyUnlessAnyPermission(session, [
-    PERMISSIONS.LABOR_ROSTER_READ,
-    PERMISSIONS.STAFF_PIN,
-    PERMISSIONS.LABOR_ROSTER_WRITE,
-  ]);
-  if (denied) return denied;
-  const roster = await prisma.staffRoster.findMany({
-    where: { active: true },
-    select: {
-      id: true,
-      staffCode: true,
-      fullName: true,
-      pinRole: true,
-      outletId: true,
-      globalPersonId: true,
-    },
-  });
-  return NextResponse.json({ roster });
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessAnyPermission(session, [
+      PERMISSIONS.LABOR_ROSTER_READ,
+      PERMISSIONS.STAFF_PIN,
+      PERMISSIONS.LABOR_ROSTER_WRITE,
+    ]);
+    if (denied) return denied;
+    const roster = await prisma.staffRoster.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        staffCode: true,
+        fullName: true,
+        pinRole: true,
+        outletId: true,
+        globalPersonId: true,
+      },
+    });
+    return NextResponse.json({ roster });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 const bodySchema = z.object({
   staffCode: z.string(),
   fullName: z.string(),
-  pin: z.string().min(4).max(8),
+  pin: z.string().min(6).max(8),
   pinRole: z.enum(["CASHIER", "WAITER", "KITCHEN", "MANAGER"]).default("CASHIER"),
   outletId: z.string().min(1),
   globalPersonId: z.string().uuid().optional(),
@@ -47,15 +50,15 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(req);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, ROSTER_WRITE);
     if (denied) return denied;
     const body = bodySchema.parse(await req.json());
     const organizationId = requestOrganizationId();
     const profile = await getFnbOrgProfile(organizationId);
-    const kafe = profile.edition.toLowerCase() === "kafe";
-    if (!body.globalPersonId && !kafe) {
+    // Hotel departments get staff from Finance HR; a street point types its own roster.
+    const manualRoster = !profile.hotelMode;
+    if (!body.globalPersonId && !manualRoster) {
       return jsonError(
         "Manual roster create requires globalPersonId from Finance HR STAFF_PROVISIONED",
         422,

@@ -89,7 +89,7 @@ All industry satellites, Orchestrator, and Finance `/login` share the same layou
 | Links (order) | need account → register org → pricing → FAQ; user agreement → Orch `/terms` |
 | Cross-app URLs | `orchPublicHref()` from `@era/satellite-kit/ui` (not main kit barrel) |
 
-**API:** `POST /api/auth/login` on industry satellites **and `era-bank` ops** verifies scrypt hash and, on SHARED pools, resolves tenant from public `orgNo` (not UUID) — [org-public-number-and-login-host.md](./adr/org-public-number-and-login-host.md). JWT/SSO still use UUID `organizationId`. `POST /api/auth/sso/exchange` unchanged (UUID ticket). Finance Core and orchestrator login stay membership/SSO. Bank DBO customers do not type ERA ID (Host / bind).
+**API:** `POST /api/auth/login` on industry satellites **and `era-bank` ops** verifies scrypt hash and, on every topology, resolves tenant from public `orgNo` or a host binding (not UUID; neither → 400) — [org-public-number-and-login-host.md](./adr/org-public-number-and-login-host.md). JWT/SSO still use UUID `organizationId`. `POST /api/auth/sso/exchange` unchanged (UUID ticket). Finance Core and orchestrator login stay membership/SSO. Bank DBO customers do not type ERA ID (Host / bind).
 
 **Middleware:** whitelist `POST /api/locale` and public pages (`/login`, `/help`) so locale switch works without session.
 

@@ -34,12 +34,12 @@ describe("resolveStaffLoginTenant", () => {
     assert.equal(r.status, 400);
   });
 
-  it("DEDICATED allows omitting orgNo", async () => {
+  it("DEDICATED still requires orgNo when the host does not name the org", async () => {
     const r = await resolveStaffLoginTenant({
       isShared: false,
       request: mockRequest(),
     });
-    assert.deepEqual(r, { ok: true, organizationId: undefined });
+    assert.deepEqual(r, { ok: false, status: 400, error: "orgNo is required" });
   });
 
   it("miss returns 401 invalid credentials", async () => {

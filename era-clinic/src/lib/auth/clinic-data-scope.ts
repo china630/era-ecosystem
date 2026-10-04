@@ -3,7 +3,6 @@ import type { Prisma } from "@prisma/client";
 import type { SatelliteSessionPayload } from "@era/satellite-kit";
 import { hasClinicPermissionBypass } from "@/lib/auth/clinic-admin-access";
 import { sessionHasClinicPermission } from "@/lib/auth/clinic-permission-check";
-import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 import {
   CLINIC_PERMISSION,
   type ClinicPermission,
@@ -21,6 +20,7 @@ export type ResolvedClinicDataScope = {
  * Layer 2 (data scope): after screen/API permission passes.
  * `scope:*.all` (or OrgOwner / platform bypass) → ALL rows;
  * otherwise → ASSIGNED to session practitioner (empty if no Practitioner link).
+ * `session` comes from `getSatelliteSession()`, which already carries DB grants.
  */
 export async function resolveClinicDataScope(
   session: SatelliteSessionPayload,
@@ -36,13 +36,7 @@ export async function resolveClinicDataScope(
     return { mode: "ALL", practitionerId };
   }
 
-  const perms = await permissionsForUser(session.sub);
-  if (
-    sessionHasClinicPermission(
-      { ...session, permissions: perms },
-      allPermission,
-    )
-  ) {
+  if (sessionHasClinicPermission(session, allPermission)) {
     return { mode: "ALL", practitionerId };
   }
 

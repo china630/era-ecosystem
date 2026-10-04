@@ -103,7 +103,8 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
   },
   "admin": {
     "supplierMatch": {
@@ -133,7 +134,8 @@
     "replenishment": "Пополнение",
     "import": "Импорт cutover",
     "settings": "Настройки",
-    "executive": "Executive"
+    "executive": "Executive",
+    "access": "Доступ"
   },
   "cutoverImport": {
     "title": "Импорт Elektraweb",
@@ -170,5 +172,59 @@
     "nextPhase": "Следующая фаза",
     "prevPhase": "Предыдущая фаза",
     "phaseProgress": "Фаза {current} из {total}"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "sales": "Продажи",
+      "shifts": "Смены",
+      "stock": "Остатки",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_pos": "POS-терминал",
+      "screen_stock_check": "Проверка остатков",
+      "screen_settings": "Настройки магазина",
+      "screen_admin_access": "Экран доступа",
+      "api_receipts_sell": "Продажа (чеки, оплата, возвраты, промо)",
+      "api_receipts_void_line": "Аннулировать чек или строку",
+      "api_shifts_open": "Открыть смену",
+      "api_shifts_close": "Закрыть смену",
+      "api_shifts_x_report": "X-отчёт",
+      "api_stock_check": "Проверить остаток",
+      "api_presets": "Отраслевые пресеты",
+      "api_offline_sync": "Офлайн-синхронизация",
+      "api_fiscal_devices": "Фискальные устройства",
+      "api_uploads": "Загрузка вложений",
+      "api_integrations_stock": "Складские хуки клиники",
+      "admin_import": "Импорт, сверка поставщиков, пополнение",
+      "admin_settings": "Интеграции точки",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

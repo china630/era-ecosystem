@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
@@ -22,6 +22,11 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const { orgNo, setOrgNo, hostBound } = useStaffLoginOrgNo(searchParams);
+  const forbidden = searchParams.get("error") === "forbidden";
+
+  useEffect(() => {
+    if (forbidden) showApiError({ error: tAuth("forbidden") });
+  }, [forbidden, tAuth]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

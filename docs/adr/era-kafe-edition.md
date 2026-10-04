@@ -22,7 +22,36 @@ Selling that shell as «29 AZN street POS» would bill **Foundation 29 + Gate 29
 - **Edition / signup source:** `kafe` (org flag or `signupSource=kafe`). Hotel F&B orgs stay on the existing Nafta/hotel shell.
 - **Control plane:** one orchestrator. Dedicated **chromeless** landing `/kafe` (not inside the logged-in app shell) + short onboarding form write the **same** org, subscription, and satellite bind. The form has no marketing copy above the fields. Gate `industry_fnb_pos` is shown as a **locked** «ERA Kafe · 29 AZN» checkbox (always billed; not a POST flag). Zal / KDS / QR default **off**. After signup, orch S2S-provisions an F&B `FB_MANAGER` with the **same owner password** (email as login) plus outlet `KAFE` / table T-01; the browser prefers SSO into the pool. Lab overlay: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` (never sentinel `demo-org`). Lab seed writes `OrganizationSubscription.activeModules` (`industry_fnb_pos` + `fnb_waiter_pin`), `OrganizationSatelliteEntitlement`, then S2S bind + runtime-config so workspace Open and F&B entitlement match. No parallel identity store.
 
-A later **banquet-hall** SKU is a **third world**, not mixed into Kafe nav and not implied by Nafta banquet BEO.
+Banquet hall is a **preset** of full F&B (see §1a), not a third edition, not a price line, and not implied by Nafta banquet BEO.
+
+### 1a. Edition, preset, hotel mode (three fields)
+
+`FnbOrgProfile` stores three separate things. Code must not derive one from another.
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `edition` | `kafe` · `fnb` | What the org bought. One per org. `kafe` = ERA Kafe; `fnb` = full F&B. Orchestrator sends `kafe` or a plan label; any non-`kafe` value normalizes to `fnb`. |
+| `enabledPresets` | `cafe` · `restaurant` · `banquet` | Which halls run. Several at once, clamped to what the edition allows: `kafe` → `cafe` only; `fnb` → all three. Presets are **not billed**. |
+| `hotelMode` | boolean | Department of a hotel: room charge, in-house guests, BEO, PMS calendar, check routing to the hotel till. Hotel APIs return `FNB_HOTEL_MODE_OFF` when false. Never inferred from edition. |
+
+Price stays on `pricing_modules` only: gate `industry_fnb_pos` 29, submodules 19 each, second till +19 (capacity `pos`). Changing presets changes screens, not the bill.
+
+- Shell nav = union of the screens of every enabled preset; KDS also needs `fnb_kitchen_kds` (legacy unmetered full F&B orgs keep it).
+- `banquet` is stored and allowed for `fnb` but has no screens yet; owner settings offer only presets with screens (`cafe`, `restaurant`).
+- Role templates follow edition (Kafe waiter without pay; full F&B waiter with pay). Upgrading edition does not rewrite stored role grants.
+- Migration `20261003170000_fnb_edition_presets`: `edition=kafe` or `hotelMode=false` → `kafe` + `["cafe"]` + hotel mode off; everything else → `fnb` + `["restaurant"]`, hotel mode kept.
+- Owner picks presets at F&B `/admin/settings` (`GET/PATCH /api/settings/presets`, permission `screen:admin.settings`); a preset outside the edition returns 403 `FNB_PRESET_NOT_IN_EDITION`.
+- Upgrade ERA Kafe → full F&B is an orchestrator action (§1b); the satellite only applies the runtime-config snapshot.
+
+### 1b. Upgrade ERA Kafe → full F&B
+
+Owner action in the control plane: `/settings/subscription` card «F&B edition» → `GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade` (`API_BILLING_MANAGE` + `assertOwnerForBilling`).
+
+- Sets `Organization.settings.edition = "fnb"` and `subscriptionPlan = "fnb"`; `settings.signupSource = "kafe"` and `settings.hotelMode` stay. Audit row `organization.fnb_edition` / `upgrade`.
+- No new price line: `industry_fnb_pos` and bought submodules stay as they are. `shouldWaiveEraFoundation` keys on Kafe signup (`isKafeSignup`), so the Foundation waiver survives the upgrade until `nas` / `industry_finance`.
+- Runtime-config sends `edition: "fnb"` when `settings.edition` is `fnb` (before the `signupSource=kafe` fallback). Push is best-effort; the response carries `synced: false` if the pool did not answer.
+- On the satellite the café preset stays; restaurant can then be turned on in F&B settings. Hotel mode is not switched on: a street café does not become a hotel department.
+- Downgrade back to ERA Kafe is not offered here. `FNB_EDITION_ALREADY_FULL` (409) and `FNB_NOT_CONNECTED` (400) are the negative paths.
 
 ### 2. Identities: owner login ≠ cashier PIN
 
@@ -88,13 +117,14 @@ v1: tablet on **its own 4G**, not café Wi-Fi. Cache menu + tables. Buffer **15�
 
 Software only. Pivəxana template may list beer. Licence/excise is the owner’s. One sentence in the offer.
 
-### 8. Two F&B worlds (then three)
+### 8. F&B shapes (edition × preset × hotel mode)
 
-| World | Shell | Hotel APIs |
-|-------|-------|------------|
-| Hotel / Nafta F&B | Current nav (room-charge, banquet, calendar, import) | On |
-| **ERA Kafe** | Narrow nav: floor, orders, menu, shift, optional KDS/QR | `HOTEL_MODE_OFF` → 403 on room-charge, in-house, BEO, PMS NA |
-| Banquet halls | Future SKU | Not Kafe v1 |
+| Shape | Edition | Presets | Hotel mode | Hotel APIs |
+|-------|---------|---------|------------|------------|
+| Hotel / Nafta F&B | `fnb` | `restaurant` | on | On |
+| **ERA Kafe** | `kafe` | `cafe` | off | `FNB_HOTEL_MODE_OFF` → 403 on room-charge, in-house, BEO, PMS NA |
+| Street café upgraded to full F&B | `fnb` | `cafe` (+ `restaurant` / `banquet` when the owner turns them on) | off | Off |
+| Banquet hall | `fnb` | `banquet` | either | Banquet screens not built yet |
 
 Kafe must not emit `SATELLITE_FB_SALE_COMPLETED` / stock events until `nas` is on.
 

@@ -30,6 +30,7 @@
 |---------|------|-------|
 | POS | `retail POS` | 🟡 |
 | Stock / admin | `stock + admin` | 🟡 |
+| Access matrix | `/admin/access` | 🟡 SCREEN (RET-RBAC-01; not SHOW) |
 
 Admin replenishment and supplier-match surfaces now follow the list + modal playbook; sell/show stays 🟡 until live sign-off.
 

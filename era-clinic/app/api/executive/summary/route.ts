@@ -1,5 +1,5 @@
 import {
-  getRouteSession,
+  getSatelliteSession,
   hasBusinessOwnerRole,
   jsonOk,
   jsonError,
@@ -17,7 +17,7 @@ function resolveDayBounds(dateParam?: string) {
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     if (!hasBusinessOwnerRole(session)) {
       return jsonError("BUSINESS_OWNER required", 403);

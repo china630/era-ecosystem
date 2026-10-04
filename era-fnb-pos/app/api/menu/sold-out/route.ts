@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { assertFnbEntitled, handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_SOLD_OUT } from "@/lib/auth/read-permission-sets";
@@ -17,8 +17,7 @@ const bodySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, TILL_READ_SOLD_OUT);
     if (denied) return denied;
     const outletId =
@@ -39,8 +38,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.MENU_SOLD_OUT);
     if (denied) return denied;
     const body = bodySchema.parse(await request.json());

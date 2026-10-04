@@ -69,12 +69,13 @@ export function computeRevpar(roomRevenue: number, roomsTotal: number): number {
 }
 
 async function fetchClinicCapacitySummary(
+  organizationId: string,
   refDate: Date,
 ): Promise<ClinicCapacitySummary | null> {
   const { fetchClinicCapacitySummary: fetchCap } = await import(
     '@/lib/integration/clinic-capacity-client'
   );
-  return fetchCap(refDate);
+  return fetchCap(organizationId, refDate);
 }
 
 type ChargeRow = {
@@ -207,7 +208,10 @@ async function getReceivables(asOf: Date) {
   };
 }
 
-export async function getExecutiveDashboard(dateInput?: Date): Promise<ExecutiveCockpit> {
+export async function getExecutiveDashboard(
+  organizationId: string,
+  dateInput?: Date,
+): Promise<ExecutiveCockpit> {
   const day = startOfDay(dateInput ?? new Date());
   const dayEnd = endOfDay(day);
 
@@ -258,7 +262,7 @@ export async function getExecutiveDashboard(dateInput?: Date): Promise<Executive
     lastWeek: lastWeek.revpar,
   };
 
-  const clinicCapacity = await fetchClinicCapacitySummary(day);
+  const clinicCapacity = await fetchClinicCapacitySummary(organizationId, day);
 
   return {
     date: day.toISOString().slice(0, 10),

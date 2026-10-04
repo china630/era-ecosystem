@@ -3,7 +3,7 @@ import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createReservation, listReservations } from '@/lib/services/reservation.service';
 import type { ReservationStatus } from '@prisma/client';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -28,7 +28,7 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const url = new URL(request.url);
     const status = url.searchParams.get('status') as ReservationStatus | null;
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
     const reservation = await createReservation(body);

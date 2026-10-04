@@ -22,7 +22,8 @@
     "localeToggleAria": "Language",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "You do not have access to that page"
   },
   "meta": {
     "title": "ERA Logistics",
@@ -34,7 +35,8 @@
     "fleet": "Fleet",
     "customs": "Customs",
     "fuelReport": "Fuel report",
-    "settings": "Settings"
+    "settings": "Settings",
+    "access": "Access"
   },
   "login": {
     "title": "Sign in",
@@ -209,6 +211,60 @@
       "actions": "Actions",
       "edit": "Edit",
       "save": "Save"
+    }
+  },
+  "settingsAccess": {
+    "title": "Roles and access",
+    "subtitle": "Role packages and the screens and actions they grant",
+    "loading": "Loading…",
+    "loadFailed": "Could not load roles",
+    "saveFailed": "Could not save",
+    "role": "Role",
+    "clone": "Clone role",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "delete": "Delete role",
+    "newCode": "New role code",
+    "newName": "Name",
+    "cloneFrom": "Copy grants from",
+    "create": "Create",
+    "saved": "Permissions saved",
+    "resetDone": "Defaults restored",
+    "created": "Role created",
+    "deleted": "Role deleted",
+    "deleteInUse": "Reassign the users of this role before deleting it",
+    "assignTitle": "Assign a role to a user",
+    "assignUser": "User",
+    "assignRole": "Role",
+    "assign": "Assign",
+    "assigned": "Role assigned",
+    "groups": {
+      "screens": "Screens",
+      "trips": "Trips",
+      "operations": "Operations",
+      "admin": "Administration"
+    },
+    "perms": {
+      "screen_home": "Home",
+      "screen_trips": "Trips",
+      "screen_trips_detail": "Trip card",
+      "screen_fleet": "Fleet",
+      "screen_customs": "Customs",
+      "screen_reports_fuel": "Fuel report",
+      "screen_admin_settings": "Settings",
+      "screen_admin_access": "Access screen",
+      "api_trips": "Trips (list, edit, rate, ETA)",
+      "api_trips_waybill": "Waybill",
+      "api_trips_pod": "Proof of delivery",
+      "api_trips_complete": "Complete trip",
+      "api_trips_points": "Route points",
+      "api_driver_trips": "Driver trip list",
+      "api_fleet_alerts": "Fleet alerts",
+      "api_hub_scan": "Hub scan",
+      "api_cod_settle": "Cash on delivery settle",
+      "api_reports_fuel": "Fuel reports",
+      "api_customs_preview": "HS / FX preview",
+      "admin_access_manage": "Manage roles and access"
     }
   }
 }

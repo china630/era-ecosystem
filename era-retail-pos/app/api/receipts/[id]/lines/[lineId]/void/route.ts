@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
-import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { receiptLineVoidDenied } from "@/lib/receipt-status-gates";
 import { totalsFromReceipt } from "@/lib/receipt-totals";
 import { prisma } from "@/lib/prisma";
-import { canVoidLine, getRequestSession } from "@/lib/session";
+import { assertPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type ReceiptWithLines = Prisma.ReceiptGetPayload<{ include: { lines: true } }>;
 
@@ -12,12 +13,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string; lineId: string }> },
 ) {
   try {
-    await assertRetailEntitled();
-    const session = await getRequestSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    if (!canVoidLine(session)) {
-      return jsonError("SHIFT_SUPERVISOR or OUTLET_ADMIN role required", 403);
-    }
+    assertPermission(session, PERMISSIONS.RECEIPTS_VOID_LINE);
 
     const { id, lineId } = await params;
     const receipt = (await prisma.receipt.findUnique({

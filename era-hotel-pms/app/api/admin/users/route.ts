@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { createUser, listUsers } from '@/lib/services/user.service';
@@ -17,7 +17,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.USERS_MANAGE);
     const users = await listUsers();
     return jsonOk(
@@ -43,7 +43,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.USERS_MANAGE);
     const body = createSchema.parse(await request.json());
     const user = await createUser(body);

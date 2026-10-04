@@ -40,24 +40,37 @@ import {
   HeaderProfileMenu,
   SatelliteHeaderLocale,
   SatelliteNotificationBell,
+  useOpsNavProfile,
+  visibleOpsNavSections,
   type EraOpsNavItem,
   type EraOpsNavSection,
   type HeaderProfileMenuItem,
+  type OpsNavCondition,
+  type OpsNavProfile,
 } from '@era/satellite-kit/ui';
 import { HotelHeaderTierBar } from '@/components/HotelHeaderTierBar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import GroupBookingModal from '@/components/GroupBookingModal';
-import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { normalizeHotelPermission } from '@/lib/auth/hotel-permission-rename';
 
-type NavDef = {
+type NavDef = OpsNavCondition & {
   id: string;
   href?: string;
   labelKey: string;
   icon: LucideIcon;
   external?: boolean;
-  show?: boolean;
 };
+
+type HotelNavItem = EraOpsNavItem & OpsNavCondition;
+type HotelNavSection = Omit<EraOpsNavSection, 'items'> & { items: HotelNavItem[] };
+
+/** Same rule as the hotel API: owner and platform super admin bypass; legacy keys read through the rename map. */
+function allowHotel(permission: string, profile: OpsNavProfile): boolean {
+  if (profile.isPlatformSuperAdmin || profile.isOwner) return true;
+  const want = normalizeHotelPermission(permission) ?? permission;
+  return profile.permissions.some((p) => (normalizeHotelPermission(p) ?? p) === want);
+}
 
 function posCalendarHref(): string {
   return (
@@ -76,7 +89,13 @@ function souvenirRetailHref(): string {
 }
 
 export default function HotelOpsShell({ children }: { children: React.ReactNode }) {
-  const { user, can, isPlatformSuperAdmin, canRunElektrawebImport } = useAuth();
+  const { profile, status: navStatus } = useOpsNavProfile();
+  const canRunElektrawebImport = profile?.raw.canRunElektrawebImport === true;
+  const can = useCallback(
+    (permission: string) =>
+      navStatus === 'ready' && profile != null && allowHotel(permission, profile),
+    [navStatus, profile],
+  );
   const pathname = usePathname() ?? '';
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -108,22 +127,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  function mapNavItem(def: NavDef): EraOpsNavItem | null {
-    if (def.show === false) return null;
-    return {
-      id: def.id,
-      href: def.href,
-      label: t(def.labelKey as 'chessboard'),
-      icon: def.icon,
-      external: def.external,
-    };
+  function sectionItems(defs: NavDef[]): HotelNavItem[] {
+    return defs.map(({ labelKey, ...def }) => ({
+      ...def,
+      label: t(labelKey as 'chessboard'),
+    }));
   }
 
-  function sectionItems(defs: NavDef[]): EraOpsNavItem[] {
-    return defs.map(mapNavItem).filter((item): item is EraOpsNavItem => item !== null);
-  }
-
-  const navSections: EraOpsNavSection[] = useMemo(
+  const navSections: HotelNavSection[] = useMemo(
     () =>
       [
         {
@@ -139,9 +150,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: Home,
               active:
                 pathname === '/executive' || pathname.startsWith('/executive/'),
-              show:
-                can(PERMISSIONS.SCREEN_REPORTS) ||
-                can(PERMISSIONS.SCREEN_FO),
+              anyPermission: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.SCREEN_FO],
             },
             {
               id: 'home-forecast',
@@ -149,9 +158,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               label: t('forecast'),
               icon: TrendingUp,
               active: pathname.startsWith('/executive/forecast'),
-              show:
-                can(PERMISSIONS.SCREEN_REPORTS) ||
-                can(PERMISSIONS.SCREEN_FO),
+              anyPermission: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.SCREEN_FO],
             },
             {
               id: 'home-unit-econ',
@@ -159,9 +166,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               label: t('unitEconomics'),
               icon: TrendingUp,
               active: pathname.startsWith('/executive/unit-economics'),
-              show:
-                can(PERMISSIONS.SCREEN_SETTINGS) ||
-                can(PERMISSIONS.SCREEN_FO),
+              anyPermission: [PERMISSIONS.SCREEN_SETTINGS, PERMISSIONS.SCREEN_FO],
             },
           ],
         },
@@ -175,70 +180,70 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/fo/availability',
               labelKey: 'roomTypeAvailability',
               icon: CalendarDays,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'fo-res-list',
               href: '/fo/reservations',
               labelKey: 'reservationList',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'fo-plan',
               href: '/fo/room-plan',
               labelKey: 'roomPlan',
               icon: BedDouble,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'fo-rack',
               href: '/fo/rack',
               labelKey: 'chessboard',
               icon: LayoutGrid,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'fo-groups',
               href: '/fo/groups',
               labelKey: 'groupReservations',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'fo-inhouse',
               href: '/fo/in-house',
               labelKey: 'inHouse',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_FOLIO) || can(PERMISSIONS.SCREEN_FO),
+              anyPermission: [PERMISSIONS.SCREEN_FOLIO, PERMISSIONS.SCREEN_FO],
             },
             {
               id: 'fo-laundry',
               href: '/fo/laundry',
               labelKey: 'foLaundry',
               icon: Package,
-              show: can(PERMISSIONS.FOLIO_CHARGE) || can(PERMISSIONS.SCREEN_HK),
+              anyPermission: [PERMISSIONS.FOLIO_CHARGE, PERMISSIONS.SCREEN_HK],
             },
             {
               id: 'fo-room-changes',
               href: '/fo/room-changes',
               labelKey: 'roomChanges',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'fo-res-times',
               href: '/fo/reservation-times',
               labelKey: 'actualCheckTimes',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'fo-agency-inbox',
               href: '/fo/agency-inbox',
               labelKey: 'agencyInbox',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_TOURS),
+              permission: PERMISSIONS.SCREEN_TOURS,
             },
           ]),
         },
@@ -252,42 +257,42 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/front-cash/pending',
               labelKey: 'pendingSettlement',
               icon: Banknote,
-              show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.FOLIO_VOID),
+              anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.FOLIO_VOID],
             },
             {
               id: 'fc-balances',
               href: '/front-cash/folio-balances',
               labelKey: 'folioBalances',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_FOLIO),
+              permission: PERMISSIONS.SCREEN_FOLIO,
             },
             {
               id: 'fc-journal',
               href: '/front-cash/folio-journal',
               labelKey: 'folioJournal',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_FOLIO),
+              permission: PERMISSIONS.SCREEN_FOLIO,
             },
             {
               id: 'fc-agency',
               href: '/front-cash/agency-ledger',
               labelKey: 'agencyLedger',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'fc-company',
               href: '/front-cash/company-ledger',
               labelKey: 'companyLedger',
               icon: Building2,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'fc-tx',
               href: '/front-cash/transactions',
               labelKey: 'cashTransactions',
               icon: Banknote,
-              show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.SCREEN_FOLIO),
+              anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.SCREEN_FOLIO],
             },
           ]),
         },
@@ -301,35 +306,35 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/night-audit',
               labelKey: 'endOfDay',
               icon: Moon,
-              show: can(PERMISSIONS.SCREEN_NIGHT_AUDIT) || can(PERMISSIONS.SCREEN_FO),
+              anyPermission: [PERMISSIONS.SCREEN_NIGHT_AUDIT, PERMISSIONS.SCREEN_FO],
             },
             {
               id: 'na-reports',
               href: '/night-audit/reports',
               labelKey: 'eodReports',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_NIGHT_AUDIT) || can(PERMISSIONS.SCREEN_REPORTS),
+              anyPermission: [PERMISSIONS.SCREEN_NIGHT_AUDIT, PERMISSIONS.SCREEN_REPORTS],
             },
             {
               id: 'na-logs',
               href: '/night-audit/logs',
               labelKey: 'endOfDayLogs',
               icon: FileBarChart,
-              show: can(PERMISSIONS.SCREEN_NIGHT_AUDIT),
+              permission: PERMISSIONS.SCREEN_NIGHT_AUDIT,
             },
             {
               id: 'na-res-updates',
               href: '/night-audit/reservation-updates',
               labelKey: 'reservationUpdates',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'na-year-end',
               href: '/night-audit/year-end',
               labelKey: 'endOfYear',
               icon: CalendarDays,
-              show: can(PERMISSIONS.SCREEN_NIGHT_AUDIT),
+              permission: PERMISSIONS.SCREEN_NIGHT_AUDIT,
             },
           ]),
         },
@@ -343,77 +348,77 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/hk',
               labelKey: 'housekeeping',
               icon: Wrench,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-mobile',
               href: '/hk/mobile',
               labelKey: 'hkMobile',
               icon: Smartphone,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-minibar',
               href: '/hk/minibar',
               labelKey: 'minibarControl',
               icon: Package,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-maids',
               href: '/hk/maids',
               labelKey: 'maidManagement',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-roster',
               href: '/hk/roster',
               labelKey: 'hkRoster',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-rotation',
               href: '/hk/rotation',
               labelKey: 'hkRotation',
               icon: Wrench,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-laundry',
               href: '/hk/laundry',
               labelKey: 'hkLaundry',
               icon: Package,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-forecast',
               href: '/hk/forecast',
               labelKey: 'hkForecast',
               icon: CalendarDays,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-discrepancy',
               href: '/hk/discrepancy',
               labelKey: 'hkDiscrepancy',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-ooo',
               href: '/hk/closed-rooms',
               labelKey: 'closedRoomList',
               icon: Wrench,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'hk-lost',
               href: '/hk/lost-and-found',
               labelKey: 'lostAndFound',
               icon: Package,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
           ]),
         },
@@ -427,7 +432,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/guests',
               labelKey: 'guests',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
@@ -441,42 +446,42 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/distribution/channel',
               labelKey: 'channel',
               icon: Radio,
-              show: can(PERMISSIONS.SCREEN_DISTRIBUTION),
+              permission: PERMISSIONS.SCREEN_DISTRIBUTION,
             },
             {
               id: 'dist-contracts',
               href: '/distribution/contracts',
               labelKey: 'salesContracts',
               icon: TrendingUp,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'dist-allotment-blocks',
               href: '/distribution/allotment-blocks',
               labelKey: 'allotmentBlocks',
               icon: TrendingUp,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'dist-promo',
               href: '/distribution/promotion-codes',
               labelKey: 'promotionCodes',
               icon: Settings,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'dist-agencies',
               href: '/distribution/travel-agencies',
               labelKey: 'travelAgencies',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'dist-companies',
               href: '/distribution/companies',
               labelKey: 'companies',
               icon: Building2,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
           ]),
         },
@@ -490,42 +495,42 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/settings/bar-calendar',
               labelKey: 'barCalendar',
               icon: CalendarDays,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'price-policy',
               href: '/settings/pricing-policy',
               labelKey: 'pricingPolicy',
               icon: Banknote,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'price-child-matrix',
               href: '/settings/child-matrix',
               labelKey: 'childMatrix',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'price-yield-rules',
               href: '/settings/yield-rules',
               labelKey: 'yieldRules',
               icon: TrendingUp,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'price-components',
               href: '/settings/pricing-components',
               labelKey: 'pricingComponents',
               icon: Banknote,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'price-packages',
               href: '/settings/package-prices',
               labelKey: 'packagePrices',
               icon: Banknote,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
           ]),
         },
@@ -539,14 +544,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/service',
               labelKey: 'serviceOps',
               icon: Wrench,
-              show: can(PERMISSIONS.SCREEN_HK),
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
               id: 'svc-guest',
               href: '/service/guest',
               labelKey: 'serviceGuestPortal',
               icon: Smartphone,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
@@ -560,7 +565,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/migration',
               labelKey: 'migrationQueue',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
@@ -574,28 +579,28 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/procedures',
               labelKey: 'procedures',
               icon: Activity,
-              show: can(PERMISSIONS.SCREEN_MEDICAL),
+              permission: PERMISSIONS.SCREEN_MEDICAL,
             },
             {
               id: 'spa-list',
               href: '/spa/reservations',
               labelKey: 'spaReservationList',
               icon: Sparkles,
-              show: can(PERMISSIONS.SCREEN_MEDICAL),
+              permission: PERMISSIONS.SCREEN_MEDICAL,
             },
             {
               id: 'spa-staff',
               href: '/spa/staff-match',
               labelKey: 'serviceStaffMatch',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_MEDICAL),
+              permission: PERMISSIONS.SCREEN_MEDICAL,
             },
             {
               id: 'spa-rooms',
               href: '/spa/places',
               labelKey: 'placesAndRooms',
               icon: BedDouble,
-              show: can(PERMISSIONS.SCREEN_MEDICAL),
+              permission: PERMISSIONS.SCREEN_MEDICAL,
             },
           ]),
         },
@@ -609,28 +614,28 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/tours',
               labelKey: 'tours',
               icon: Bus,
-              show: can(PERMISSIONS.SCREEN_TOURS),
+              permission: PERMISSIONS.SCREEN_TOURS,
             },
             {
               id: 'tr-main',
               href: '/transfers',
               labelKey: 'transfers',
               icon: Car,
-              show: can(PERMISSIONS.SCREEN_TOURS),
+              permission: PERMISSIONS.SCREEN_TOURS,
             },
             {
               id: 'tr-airport',
               href: '/transfers/airport',
               labelKey: 'airportTransfer',
               icon: Car,
-              show: can(PERMISSIONS.SCREEN_TOURS),
+              permission: PERMISSIONS.SCREEN_TOURS,
             },
             {
               id: 'tr-fleet',
               href: '/fleet',
               labelKey: 'fleet',
               icon: Car,
-              show: can(PERMISSIONS.SCREEN_TOURS),
+              permission: PERMISSIONS.SCREEN_TOURS,
             },
           ]),
         },
@@ -644,7 +649,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/banquets',
               labelKey: 'banquets',
               icon: UtensilsCrossed,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
@@ -658,7 +663,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/medical',
               labelKey: 'medical',
               icon: HeartPulse,
-              show: can(PERMISSIONS.SCREEN_MEDICAL),
+              permission: PERMISSIONS.SCREEN_MEDICAL,
             },
           ]),
         },
@@ -672,64 +677,64 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/settings/master-data',
               labelKey: 'masterData',
               icon: Building2,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'set-hk-policy',
               href: '/settings/hk-policy',
               labelKey: 'hkPolicy',
               icon: Wrench,
-              show: can(PERMISSIONS.SCREEN_HK) || can(PERMISSIONS.SCREEN_SETTINGS),
+              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
             },
             {
               id: 'set-agency-medical-sku',
               href: '/settings/agency-medical-sku',
               labelKey: 'agencyMedicalSku',
               icon: Banknote,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'set-users',
               href: '/settings/users',
               labelKey: 'users',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_SETTINGS_USERS),
+              permission: PERMISSIONS.SCREEN_SETTINGS_USERS,
             },
             {
               id: 'set-access',
               href: '/settings/access',
               labelKey: 'access',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_SETTINGS_ACCESS),
+              permission: PERMISSIONS.SCREEN_SETTINGS_ACCESS,
             },
             {
               id: 'set-int',
               href: '/settings/integration',
               labelKey: 'integration',
               icon: Link2,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'set-audit',
               href: '/settings/audit',
               labelKey: 'auditViewer',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'set-stock',
               href: '/settings/stock',
               labelKey: 'stock',
               icon: Package,
-              show: can(PERMISSIONS.SCREEN_SETTINGS),
+              permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
               id: 'set-import',
               href: '/settings/import',
               labelKey: 'elektrawebImport',
               icon: FileText,
-              show:
-                can(PERMISSIONS.API_IMPORT_ELEKTRAWEB) && canRunElektrawebImport,
+              permission: PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+              when: canRunElektrawebImport,
             },
           ]),
         },
@@ -743,14 +748,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/reports',
               labelKey: 'reportsAll',
               icon: BarChart3,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'rep-nightly-pack',
               href: '/reports/nightly-pack',
               labelKey: 'reportsNightlyPack',
               icon: Package,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
           ]),
         },
@@ -764,21 +769,21 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/reports/invoices',
               labelKey: 'reportsInvoices',
               icon: FileText,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'rep-other-recon',
               href: '/reports/reconciliation',
               labelKey: 'reportsReconciliation',
               icon: ClipboardList,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'rep-other-dedup',
               href: '/reports/guest-dedup',
               labelKey: 'guestDedup',
               icon: Users,
-              show: can(PERMISSIONS.SCREEN_REPORTS),
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'rep-pos',
@@ -786,7 +791,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'posCalendar',
               icon: CalendarDays,
               external: true,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
               id: 'rep-retail',
@@ -794,13 +799,17 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'souvenirShop',
               icon: ShoppingBag,
               external: true,
-              show: can(PERMISSIONS.SCREEN_FO),
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
-      ].filter((section) => section.items.length > 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- can() identity stable enough per render
-    [t, can, isPlatformSuperAdmin, canRunElektrawebImport],
+      ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t identity stable enough per render
+    [t, pathname, canRunElektrawebImport],
+  );
+  const visibleSections = useMemo(
+    () => visibleOpsNavSections(navSections, navStatus, profile, allowHotel),
+    [navSections, navStatus, profile],
   );
 
   const headerQuickLinkClass = (active: boolean) =>
@@ -861,29 +870,29 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     { label: tHeader('help', { defaultValue: 'Help' }), href: '/help' },
   ];
 
-  const organizationName = user?.organizationName ?? null;
+  const organizationName = profile?.organizationName ?? null;
 
   const resolveActive = useCallback((currentPath: string, href: string) => {
     if (href === '/') return currentPath === '/';
-    const hrefs = navSections.flatMap((section) =>
+    const hrefs = visibleSections.flatMap((section) =>
       section.items.map((item) => item.href).filter((value): value is string => Boolean(value)),
     );
     const matches = hrefs.filter((value) => currentPath === value || currentPath.startsWith(`${value}/`));
     const best = [...matches].sort((a, b) => b.length - a.length)[0];
     return best === href;
-  }, [navSections]);
+  }, [visibleSections]);
 
   return (
     <>
       <EraAppRouteShell
         brandTitle={tMeta('title')}
-        navSections={navSections}
+        navSections={visibleSections}
         resolveActive={resolveActive}
         headerLeft={headerLeft}
         profile={
-        user ? (
+        profile ? (
           <HeaderProfileMenu
-            displayName={user.fullName || user.login}
+            displayName={profile.displayName}
             items={profileItems}
             onLogout={() => void logout()}
             logoutLabel={t('logout')}

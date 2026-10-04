@@ -5,7 +5,7 @@ import {
   isFiscalSkipped,
 } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { recalcWorkOrderTotals } from "@/lib/work-order-lines";
 
@@ -18,6 +18,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
     const method = body.paymentMethod.toUpperCase();

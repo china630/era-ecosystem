@@ -1,9 +1,9 @@
-import { jsonOk, jsonError, handleRouteError, getRouteSession } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { getSubscriptionMe } from "@/integration/control-plane-platform.client";
 
 export async function GET() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session?.organizationId?.trim()) {
       return jsonOk({
         skipped: true,

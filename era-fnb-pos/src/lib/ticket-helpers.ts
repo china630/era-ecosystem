@@ -1,5 +1,6 @@
-import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
 import { prisma } from "@/lib/prisma";
+import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import { businessDayBounds, currentBusinessDayKey } from "@/lib/business-day";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -70,9 +71,13 @@ export async function freeTablesStuckOnDeadTickets(organizationId: string): Prom
 }
 
 export async function daySeqMap(organizationId: string): Promise<Map<string, number>> {
-  const { start, end } = bakuDayBounds(todayBakuYmd());
+  const profile = await getFnbOrgProfile();
+  const { start, end } = businessDayBounds(
+    currentBusinessDayKey(new Date(), profile.businessDayStart),
+    profile.businessDayStart,
+  );
   const rows = await prisma.ticket.findMany({
-    where: { organizationId, openedAt: { gte: start, lt: end } },
+    where: { organizationId, openedAt: { gte: start, lte: end } },
     orderBy: { openedAt: "asc" },
     select: { id: true },
   });

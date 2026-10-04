@@ -9,8 +9,12 @@ jest.mock("next/server", () => ({
 
 jest.mock("next/headers", () => ({
   cookies: jest.fn(async () => ({ get: () => undefined })),
-  headers: jest.fn(async () => ({ get: () => null })),
+  headers: jest.fn(async () => ({
+    get: (name: string) => (name === "x-era-pathname" ? "/api/auth/me" : null),
+  })),
 }));
+
+jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
@@ -27,13 +31,15 @@ jest.mock("@era/satellite-kit", () => {
     requireSatelliteModule: jest.fn(async (moduleKey: string) => {
       throw new IndustryModuleInactiveError(moduleKey);
     }),
-    authCookieName: () => "era_session",
-    getBearerOrCookieToken: () => null,
-    verifySatelliteSession: jest.fn(),
+    readSatelliteStaffSession: jest.fn(async () => null),
   };
 });
 
-import { IndustryModuleInactiveError, requireSatelliteModule } from "@era/satellite-kit";
+import {
+  IndustryModuleInactiveError,
+  readSatelliteStaffSession,
+  requireSatelliteModule,
+} from "@era/satellite-kit";
 
 describe("CRM PARTY negative paths (AC-CRM-PARTY)", () => {
   beforeEach(() => {
@@ -44,20 +50,25 @@ describe("CRM PARTY negative paths (AC-CRM-PARTY)", () => {
   });
 
   describe("module gate", () => {
-    it("assertCrmEntitled rejects when module inactive", async () => {
-      const { assertCrmEntitled } = await import("@/lib/api-utils");
-      await expect(assertCrmEntitled()).rejects.toMatchObject({
+    it("getSatelliteSession: no staff session -> null, module gate not reached", async () => {
+      const { getSatelliteSession } = await import("@/lib/api-utils");
+      await expect(getSatelliteSession()).resolves.toBeNull();
+      expect(requireSatelliteModule).not.toHaveBeenCalled();
+    });
+
+    it("getSatelliteSession: inactive module -> IndustryModuleInactiveError for the token org", async () => {
+      (readSatelliteStaffSession as jest.Mock).mockResolvedValueOnce({
+        session: { sub: "u-1", login: "staff", role: "STAFF", organizationId: "org-1" },
+        user: { organizationId: "org-1", active: true },
+      });
+      const { getSatelliteSession } = await import("@/lib/api-utils");
+      await expect(getSatelliteSession()).rejects.toMatchObject({
         name: "IndustryModuleInactiveError",
         moduleKey: "industry_crm",
       });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_crm", { organizationId: "org-1" });
     });
 
-    it("requireCrmSatellite rejects on unbound/fallback org", async () => {
-      const { requireCrmSatellite } = await import("@/lib/crm-module-gate");
-      await expect(requireCrmSatellite()).rejects.toMatchObject({
-        name: "IndustryModuleInactiveError",
-      });
-    });
 
     it("handleRouteError maps IndustryModuleInactiveError to 403", async () => {
       const { handleRouteError } = await import("@/lib/api-utils");

@@ -1,18 +1,17 @@
 import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessAnyPermission, denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { HOTEL_READ_RESERVATIONS } from "@/lib/auth/read-permission-sets";
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessAnyPermission(session, HOTEL_READ_RESERVATIONS);
     if (denied) return denied;
     await assertHotelFnbFeature("reservations");
@@ -40,8 +39,7 @@ const createSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(
       session,
       PERMISSIONS.RESERVATIONS_OPEN_TICKET,

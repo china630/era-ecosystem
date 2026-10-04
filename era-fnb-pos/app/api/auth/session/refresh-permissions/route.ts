@@ -3,7 +3,7 @@ import {
   signSatelliteSession,
 } from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import {
   ensureSystemFnbRoles,
@@ -21,12 +21,12 @@ import { permissionsForRoleCode } from "@/lib/auth/fnb-permission.service";
 /** Re-sign JWT from current Role.permissionsJson so page middleware matches DB. */
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     if (!session?.organizationId) return jsonError("Unauthorized", 401);
 
     const organizationId = session.organizationId;
     const profile = await getFnbOrgProfile(organizationId);
-    const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+    const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
     if (session.pin === true) {

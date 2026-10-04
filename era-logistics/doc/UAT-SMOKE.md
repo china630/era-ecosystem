@@ -61,3 +61,12 @@ Automated proof: `npm test` in `era-logistics` (`__tests__/log-*-negative.spec.t
 - [ ] AC-LOG-REF: HS code &lt; 4 → 400; Finance HS/FX failure → 500 with explicit error (not silent success)
 - [ ] AC-LOG-PLAT: `POST /api/events/dispatch` without service token → 401
 
+## LOG-RBAC-01 — access matrix (SCREEN; not SHIPPED)
+
+ADR: [logistics-domain-permissions-and-rbac.md](../../docs/adr/logistics-domain-permissions-and-rbac.md). Proof: `__tests__/logistics-rbac*.spec.ts`.
+
+- [ ] Log in as `DISPATCHER` → nav shows **Access** → `/admin/access` lists the five system packages (`DISPATCHER`, `DRIVER`, `BUSINESS_OWNER`, `PLATFORM_MEMBER`, `SATELLITE_OPERATOR`).
+- [ ] Log in as `DRIVER` → nav has Trips, Fleet, Customs and Fuel report, no Settings / Access; opening `/admin/settings` lands on `/login` with the "no access" message.
+- [ ] As `DISPATCHER`: untick `api:trips.complete` on `DRIVER` → Save → a driver's trip complete returns 403; **Reset to defaults** restores it.
+- [ ] Clone `DRIVER` as `DRIVER_TRAINEE`, untick `api:cod.settle` → assign a driver user to it in **Assign a role to a user** → that user's COD settle returns 403; delete `DRIVER_TRAINEE` is refused while the user holds it.
+- [ ] `DISPATCHER` cannot assign `BUSINESS_OWNER` (403); SSO owner can.

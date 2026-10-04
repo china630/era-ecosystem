@@ -952,6 +952,20 @@
       "transferFailed": "Transfer failed",
       "transferOk": "Ownership transferred."
     },
+    "fnbEdition": {
+      "title": "F&B edition",
+      "kafe": "ERA Kafe",
+      "fnb": "Full F&B",
+      "kafeHint": "Café hall only. Full F&B also allows a restaurant and a banquet hall on the same F&B satellite.",
+      "fnbHint": "Café, restaurant, and banquet hall are allowed. Café and restaurant are turned on in F&B settings; banquet screens are not built yet.",
+      "upgrade": "Switch to full F&B",
+      "confirmTitle": "Switch to full F&B?",
+      "confirmBody": "Your café keeps working as it is. The monthly price does not change: you still pay for the modules you turned on. Hotel features stay off. The restaurant hall can then be turned on in F&B settings.",
+      "cancel": "Cancel",
+      "upgraded": "Switched to full F&B.",
+      "upgradedPending": "Switched to full F&B. The F&B satellite will pick it up on the next sync.",
+      "upgradeFailed": "Could not switch the edition"
+    },
     "subscription": {
       "title": "Subscription",
       "loading": "Loading…",

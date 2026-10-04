@@ -38,28 +38,44 @@ export function isOneShotCatalogKey(key: string): boolean {
   return (ONE_SHOT_CATALOG_KEYS as readonly string[]).includes(key);
 }
 
+function orgSettingsRecord(settings: unknown): Record<string, unknown> {
+  return settings && typeof settings === "object" && !Array.isArray(settings)
+    ? (settings as Record<string, unknown>)
+    : {};
+}
+
+/** F&B edition today. `settings.edition` wins; `fnb` = upgraded to full F&B. */
 export function isKafeEdition(org: {
   subscriptionPlan?: string | null;
   settings?: unknown;
 }): boolean {
+  const rec = orgSettingsRecord(org.settings);
+  const edition = String(rec.edition ?? "").trim().toLowerCase();
+  if (edition) return edition === "kafe";
   const plan = (org.subscriptionPlan ?? "").trim().toLowerCase();
   if (plan === "kafe") return true;
-  const s = org.settings;
-  if (s && typeof s === "object" && !Array.isArray(s)) {
-    const rec = s as Record<string, unknown>;
-    const edition = String(rec.edition ?? rec.signupSource ?? "").toLowerCase();
-    if (edition === "kafe") return true;
-  }
-  return false;
+  return String(rec.signupSource ?? "").trim().toLowerCase() === "kafe";
 }
 
-/** Street Kafe: waive ERA Foundation until NAS / finance satellite is on. */
+/** Signed up through ERA Kafe, whatever the edition is now. */
+export function isKafeSignup(org: {
+  subscriptionPlan?: string | null;
+  settings?: unknown;
+}): boolean {
+  if (isKafeEdition(org)) return true;
+  return String(orgSettingsRecord(org.settings).signupSource ?? "").trim().toLowerCase() === "kafe";
+}
+
+/**
+ * Street F&B signed up through Kafe: waive ERA Foundation until NAS / finance satellite is on.
+ * Upgrading the edition to full F&B does not add a price line.
+ */
 export function shouldWaiveEraFoundation(org: {
   subscriptionPlan?: string | null;
   settings?: unknown;
   activeModules?: readonly string[] | null;
 }): boolean {
-  if (!isKafeEdition(org)) return false;
+  if (!isKafeSignup(org)) return false;
   const mods = org.activeModules ?? [];
   return !mods.some((m) => m === "nas" || m === "industry_finance");
 }

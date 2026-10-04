@@ -3,20 +3,19 @@ import {
   signSatelliteSession,
 } from "@era/satellite-kit";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
 } from "@/lib/api-utils";
-import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 
 /** Re-sign JWT from current Role.permissionsJson so page middleware matches DB. */
 export async function POST() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
 
-    const permissions = await permissionsForUser(session.sub);
+    const permissions = session.permissions ?? [];
     const token = await signSatelliteSession({
       sub: session.sub,
       login: session.login,

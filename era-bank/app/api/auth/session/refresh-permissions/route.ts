@@ -3,7 +3,7 @@ import {
   signSatelliteSession,
 } from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getRouteSession } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBankRoles } from "@/lib/auth/ensure-system-bank-roles";
 import {
@@ -15,7 +15,7 @@ import { hasBankPermissionBypass } from "@/lib/auth/permission-check";
 /** Re-sign JWT from current OpsRole.permissionsJson so page middleware matches DB. */
 export async function POST() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session?.organizationId) return jsonError("Unauthorized", 401);
 
     const organizationId = session.organizationId;

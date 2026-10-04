@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { addLabResult, createOrder, postProcedureToFolio } from '@/lib/services/medical.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -27,7 +27,7 @@ const procSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MEDICAL_MANAGE);
     const body = await request.json();
     if (body.orderId && body.testName) {

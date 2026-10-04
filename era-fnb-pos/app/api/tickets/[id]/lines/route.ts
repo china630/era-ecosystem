@@ -1,13 +1,13 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { handleRouteError } from "@/lib/api-utils";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const lineSchema = z.object({
   description: z.string().min(1),
@@ -24,8 +24,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
+  const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_LINES);
   if (denied) return denied;
 
@@ -40,6 +39,7 @@ export async function POST(
       { status: 400 },
     );
   }
+  await requireOpenShift(ticket.outletId);
 
   const parsed = createSchema.parse(await request.json());
   const items = Array.isArray(parsed) ? parsed : [parsed];

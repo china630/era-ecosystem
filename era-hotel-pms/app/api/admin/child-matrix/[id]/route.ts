@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -23,7 +23,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    assertPermission(await getSessionFromHeaders(), PERMISSIONS.MASTER_DATA_MANAGE);
+    assertPermission(await getSatelliteSession(), PERMISSIONS.MASTER_DATA_MANAGE);
     const { id } = await params;
     const body = schema.parse(await request.json());
     return jsonOk(serialize(await updateChildPricingRow(id, body)));
@@ -37,7 +37,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    assertPermission(await getSessionFromHeaders(), PERMISSIONS.MASTER_DATA_MANAGE);
+    assertPermission(await getSatelliteSession(), PERMISSIONS.MASTER_DATA_MANAGE);
     const { id } = await params;
     await deleteChildPricingRow(id);
     return jsonOk({ ok: true });

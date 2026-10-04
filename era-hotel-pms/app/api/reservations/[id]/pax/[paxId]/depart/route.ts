@@ -1,7 +1,7 @@
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { departGuestFromStay } from '@/lib/services/depart-guest.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; paxId: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_CHECKOUT);
     const { id, paxId } = await params;
     const body = (await request.json().catch(() => ({}))) as {

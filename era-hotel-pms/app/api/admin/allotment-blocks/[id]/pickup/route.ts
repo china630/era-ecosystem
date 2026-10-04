@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { pickupAllotmentBlock } from '@/lib/services/allotment-block-pickup.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
@@ -19,8 +19,9 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, ctx: Ctx) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataWrite(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataWrite(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const body = schema.parse(await request.json());
     const result = await pickupAllotmentBlock({ allotmentBlockId: id, ...body });

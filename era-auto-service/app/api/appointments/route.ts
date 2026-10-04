@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { bakuDateKey, bakuTimeLabel, parseBakuDateTime } from "@era/satellite-kit/time";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { appointmentCreateDenied } from "@/lib/appointment-gates";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +13,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const appointments = await prisma.appointment.findMany({
       include: { workOrder: true },
       orderBy: { scheduledAt: "asc" },
@@ -26,6 +27,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const denied = appointmentCreateDenied(body);
     if (denied) return jsonError(denied, 400);

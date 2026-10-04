@@ -3,8 +3,14 @@ import { SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED } from "@era/contracts";
 import { NextResponse } from "next/server";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { stockWriteOffDenied } from "@/lib/stock-gates";
+import { getSatelliteSession, handleRouteError, jsonError } from "@/lib/api-utils";
 
 export async function POST(request: Request) {
+  try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
+  } catch (err) {
+    return handleRouteError(err);
+  }
   const body = (await request.json()) as {
     source?: string;
     procedureOrderId?: string;

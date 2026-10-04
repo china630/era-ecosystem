@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { prisma } from '@/lib/prisma';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -16,7 +16,7 @@ const openSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CASH_SHIFT);
     const shifts = await prisma.cashShift.findMany({ orderBy: { openedAt: 'desc' }, take: 20 });
     return jsonOk(serialize(shifts));
@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CASH_SHIFT);
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
@@ -49,8 +49,7 @@ export async function POST(request: Request) {
     const isPrimary = body.isPrimary ?? !hasPrimary;
     const { resolveDefaultDevicesForSatellite, assertLiveFiscalReady } =
       await import('@era/satellite-kit');
-    const { requestOrganizationId } = await import('@/lib/request-organization');
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     if (process.env.ERA_FISCAL_LIVE === 'true') {
       assertLiveFiscalReady({ organizationId, registerRef: body.registerId });
     }

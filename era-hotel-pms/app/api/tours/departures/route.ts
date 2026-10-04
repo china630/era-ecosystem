@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -22,9 +22,9 @@ const bodySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
-    await requireHotelModule('hotel_transfers');
+    await requireHotelModule('hotel_transfers', session.organizationId);
     const url = new URL(req.url);
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
@@ -45,9 +45,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
-    await requireHotelModule('hotel_transfers');
+    await requireHotelModule('hotel_transfers', session.organizationId);
     const body = bodySchema.parse(await req.json());
     return jsonOk(
       serialize(

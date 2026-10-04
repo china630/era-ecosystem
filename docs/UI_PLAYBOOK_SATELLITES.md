@@ -27,6 +27,23 @@ Authenticated routes use the **Finance-aligned shell** from `@era/satellite-kit/
 
 Do **not** hard-code alternate `pt-*` / `py-*` on app mains. Change the kit token once.
 
+**Sidebar links — one profile.** `useOpsNavProfile` reads `GET /api/auth/me` once (name, role, permissions, and, when the satellite sends them, `edition`, `enabledPresets`, `activeModules`; a `data` envelope is unwrapped). Satellites that do not send those fields get `edition: null` and empty `presets` / `modules`.
+
+**Row conditions.** Each menu row (and each section) may set any of these optional conditions from `OpsNavCondition`; the row is visible when **every** condition it sets holds:
+
+| Condition | Holds when |
+|-----------|-----------|
+| `permission` | the satellite grant check passes for that key |
+| `anyPermission` | the grant check passes for at least one key |
+| `module` | the module is in `activeModules` (or the satellite `allow.module` says so) |
+| `preset` | at least one listed preset is enabled |
+| `edition` | the org edition is one of the listed values |
+| `when` | the app flag from the same read is `true` (e.g. hotel `canRunElektrawebImport`) |
+
+`visibleOpsNavItems` (flat) and `visibleOpsNavSections` (sections) keep a catalog with **any** condition empty until the profile read is ready, then return the allowed set once. A catalog with no conditions is the full list immediately. A failed read does not substitute a shorter menu and does not show every link. A section left without rows is dropped. `allow` is the satellite grant check (owner / super-admin bypass, PIN, legacy key rename) and may also carry a `module` check. `useOpsNavProfile({ refreshEvents })` re-reads on a window event (kit `OPS_NAV_PROFILE_REFRESH_EVENT`, clinic `clinic-auth-refresh`) and keeps the current menu until the new read lands. The pure helpers (`opsNavProfileFromMe`, `opsNavRowVisible`, the two `visible*` filters) are also exported from `@era/satellite-kit/ui/nav` for Jest and for JWT apps.
+
+Wiring per app: F&B rows use `preset` (halls) + `module: fnb_kitchen_kds`; hotel rows use `permission` / `anyPermission` / `when`; clinic rows and module sections use `permission` + `preset`; bank rows use `permission` (from `screenPermissionForNavHref`) + `module` (`industry_banking` opens all). Finance and control plane have no cookie `/api/auth/me` — their sidebars build the same profile from the JWT session (`opsNavProfileFromMe(user)`), evaluate `opsNavRowVisible`, and render no items until the session (finance: and subscription) is known. Logout destination stays in the satellite shell.
+
 Reference implementations:
 
 | App | Shell file |

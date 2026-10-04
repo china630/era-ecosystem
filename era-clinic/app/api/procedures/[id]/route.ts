@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, requireClinicPermission } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, getSatelliteSession, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { patchProcedureOrderPhysio, toPhysioOrderPayload } from "@/domain/physio/physio-order-sites.service";
 
@@ -32,7 +32,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_DOCTOR_RECEPTION);
     if (denied) return denied;
     const { id } = await params;

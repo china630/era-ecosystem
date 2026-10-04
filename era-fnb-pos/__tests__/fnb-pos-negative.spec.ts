@@ -7,6 +7,8 @@ jest.mock("next/server", () => ({
   },
 }));
 
+jest.mock("@/lib/prisma", () => ({ prisma: {} }));
+
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
     readonly status = 403;
@@ -37,22 +39,30 @@ describe("F&B POS negative paths (AC-FNB-POS)", () => {
   });
 
   describe("module gate", () => {
-    it("assertFnbEntitled rejects when requireSatelliteModule throws IndustryModuleInactiveError", async () => {
-      const { assertFnbEntitled } = await import("@/lib/api-utils");
-      await expect(assertFnbEntitled()).rejects.toMatchObject({
-        name: "IndustryModuleInactiveError",
-        moduleKey: "industry_fnb_pos",
-      });
-      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_fnb_pos");
+    it("getSatelliteSession: no staff session -> null, module gate not reached", async () => {
+      const { getSatelliteSession } = await import("@/lib/session");
+      await expect(getSatelliteSession()).resolves.toBeNull();
+      expect(requireSatelliteModule).not.toHaveBeenCalled();
     });
 
-    it("requireFnbSatellite rejects on unbound/fallback org (source fallback)", async () => {
+    it("requireFnbSatellite checks the module for the session org", async () => {
       const { requireFnbSatellite } = await import("@/lib/fnb-module-gate");
-      await expect(requireFnbSatellite()).rejects.toMatchObject({
+      await expect(requireFnbSatellite("org-1")).rejects.toMatchObject({
         name: "IndustryModuleInactiveError",
         moduleKey: "industry_fnb_pos",
       });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_fnb_pos", { organizationId: "org-1" });
     });
+
+    it("requireFnbSatellite checks the module for the given org", async () => {
+      const { requireFnbSatellite } = await import("@/lib/fnb-module-gate");
+      await expect(requireFnbSatellite("org-1")).rejects.toMatchObject({
+        name: "IndustryModuleInactiveError",
+        moduleKey: "industry_fnb_pos",
+      });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_fnb_pos", { organizationId: "org-1" });
+    });
+
 
     it("handleRouteError maps IndustryModuleInactiveError to 403", async () => {
       const { handleRouteError } = await import("@/lib/api-utils");

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { jsonOk, jsonError, handleRouteError, assertRetailEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 type ShiftXReport = Prisma.ShiftGetPayload<{
@@ -14,7 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await assertRetailEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const shift = (await prisma.shift.findUnique({
       where: { id },

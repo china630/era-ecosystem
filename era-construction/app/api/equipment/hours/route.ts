@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -11,6 +11,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const row = await prisma.equipmentLog.create({
       data: {

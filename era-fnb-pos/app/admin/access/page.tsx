@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  OPS_NAV_PROFILE_REFRESH_EVENT,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -30,10 +31,11 @@ export default function FnbAccessPage() {
   const t = useTranslations("settingsAccess");
   const tc = useTranslations("common");
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [accountRole, setAccountRole] = useState("");
   const [selectedCode, setSelectedCode] = useState("");
   const [draft, setDraft] = useState<Set<Permission>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [kafe, setKafe] = useState(true);
+  const [hotelOff, setHotelOff] = useState(true);
   const [hasKds, setHasKds] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -66,13 +68,8 @@ export default function FnbAccessPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        const isKafe = d.edition === "kafe" || d.hotelMode === false;
-        setKafe(Boolean(isKafe));
-        setHasKds(
-          !isKafe ||
-            (Array.isArray(d.activeModules) &&
-              d.activeModules.includes("fnb_kitchen_kds")),
-        );
+        setHotelOff(d.hotelMode !== true);
+        setHasKds(d.kitchen === true);
       })
       .catch(() => undefined);
   }, []);
@@ -87,18 +84,18 @@ export default function FnbAccessPage() {
     ]);
     if (!hasKds) hotelScreens.add(PERMISSIONS.SCREEN_KDS);
     return PERMISSION_GROUPS.filter((group) => {
-      if (!kafe) return true;
+      if (!hotelOff) return true;
       if (group.id === "hotel") return false;
       if (group.id === "kds" && !hasKds) return false;
       return true;
     }).map((group) => {
-      if (!kafe || group.id !== "screens") return group;
+      if (!hotelOff || group.id !== "screens") return group;
       return {
         ...group,
         permissions: group.permissions.filter((p) => !hotelScreens.has(p)),
       };
     });
-  }, [kafe, hasKds]);
+  }, [hotelOff, hasKds]);
 
   const loadRoles = useCallback(async () => {
     setLoading(true);
@@ -145,6 +142,15 @@ export default function FnbAccessPage() {
   );
 
   useEffect(() => {
+    void fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (me && typeof me.role === "string") setAccountRole(me.role);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     void loadRoles();
   }, [loadRoles]);
 
@@ -154,6 +160,7 @@ export default function FnbAccessPage() {
 
   async function refreshSession() {
     await fetch("/api/auth/session/refresh-permissions", { method: "POST" });
+    window.dispatchEvent(new Event(OPS_NAV_PROFILE_REFRESH_EVENT));
     showSuccess(t("sessionRefreshed"));
   }
 
@@ -278,7 +285,7 @@ export default function FnbAccessPage() {
 
   return (
     <main className="space-y-4 p-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} />
       <div className={CARD_CONTAINER_CLASS}>
         {loading ? (
           <p className="text-sm text-[var(--era-muted)]">{tc("loading")}</p>
@@ -293,6 +300,13 @@ export default function FnbAccessPage() {
                   onChange={(v) => setSelectedCode(String(v))}
                   options={roleOptions}
                 />
+                {accountRole ? (
+                  <p className="mt-1 text-xs text-[var(--era-muted)]">
+                    {t("signedIn", {
+                      role: roles.find((row) => row.code === accountRole)?.name ?? accountRole,
+                    })}
+                  </p>
+                ) : null}
               </div>
               <button
                 type="button"

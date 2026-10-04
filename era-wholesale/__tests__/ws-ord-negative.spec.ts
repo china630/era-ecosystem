@@ -1,3 +1,10 @@
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(async () => ({ get: () => undefined })),
+  headers: jest.fn(async () => ({
+    get: (name: string) => (name === "x-era-pathname" ? "/api/auth/me" : null),
+  })),
+}));
+
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
     status = 403;
@@ -11,9 +18,10 @@ jest.mock("@era/satellite-kit", () => {
   return {
     IndustryModuleInactiveError,
     requireSatelliteModule: jest.fn(),
-    authCookieName: () => "era_session",
-    getBearerOrCookieToken: jest.fn(() => null),
-    verifySatelliteSession: jest.fn(),
+    readSatelliteStaffSession: jest.fn(async () => ({
+      session: { sub: "u-1", login: "staff", role: "STAFF", organizationId: "org-1" },
+      user: { organizationId: "org-1", active: true },
+    })),
     satelliteOrganizationId: jest.fn(() => null),
   };
 });
@@ -61,13 +69,13 @@ describe("Wholesale order negative paths (AC-WS-ORD)", () => {
     jest.clearAllMocks();
   });
 
-  describe("assertWholesaleEntitled / module gate", () => {
+  describe("getSatelliteSession / module gate", () => {
     it("denies order list when industry_wholesale inactive", async () => {
       const gate = jest.requireMock("@/lib/wholesale-module-gate") as {
         requireWholesaleSatellite: jest.Mock;
         IndustryModuleInactiveError: new (k: string) => Error;
       };
-      gate.requireWholesaleSatellite.mockRejectedValue(
+      gate.requireWholesaleSatellite.mockRejectedValueOnce(
         new gate.IndustryModuleInactiveError("industry_wholesale"),
       );
       const { GET } = await import("../app/api/orders/route");

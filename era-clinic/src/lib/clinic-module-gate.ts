@@ -3,7 +3,6 @@ import {
   requireSatelliteModule,
   IndustryModuleInactiveError,
   resolveClinicModuleForPathname,
-  enterSatelliteTenant,
 } from "@era/satellite-kit";
 
 export { IndustryModuleInactiveError };
@@ -20,53 +19,27 @@ const AUTH_EXEMPT_PREFIXES = [
   "/sso",
 ];
 
-async function requestOrganizationIdFromHeaders(): Promise<string | undefined> {
-  try {
-    return (await headers()).get("x-era-organization-id")?.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-async function enterTenantFromRequestHeaders(): Promise<string | undefined> {
-  const org = await requestOrganizationIdFromHeaders();
-  if (org) enterSatelliteTenant({ organizationId: org });
-  return org;
-}
-
-/** Satellite entitlement gate — fail-closed (AC Scaffold BE). */
-export async function requireClinicSatellite(organizationId?: string): Promise<void> {
-  const org = organizationId?.trim() || (await enterTenantFromRequestHeaders());
-  if (org) {
-    await requireSatelliteModule("industry_clinic", { organizationId: org });
-    return;
-  }
-  await requireSatelliteModule("industry_clinic");
+/** Satellite entitlement gate — fail-closed (AC Scaffold BE). The org comes from the session. */
+export async function requireClinicSatellite(organizationId: string): Promise<void> {
+  const org = organizationId?.trim();
+  if (!org) throw new IndustryModuleInactiveError("industry_clinic");
+  await requireSatelliteModule("industry_clinic", { organizationId: org });
 }
 
 export async function requireClinicModule(
   moduleKey: string,
-  organizationId?: string,
+  organizationId: string,
 ): Promise<void> {
-  const org = organizationId?.trim() || (await enterTenantFromRequestHeaders());
-  if (org) {
-    await requireSatelliteModule(moduleKey, { organizationId: org });
-    return;
-  }
-  await requireSatelliteModule(moduleKey);
+  const org = organizationId?.trim();
+  if (!org) throw new IndustryModuleInactiveError(moduleKey);
+  await requireSatelliteModule(moduleKey, { organizationId: org });
 }
 
-/** Call at the start of operational clinic API handlers (satellite SKU). */
-export async function assertClinicEntitled(organizationId?: string): Promise<void> {
-  await requireClinicSatellite(organizationId);
-}
-
-/** Satellite gate + submodule when path maps. */
+/** Satellite gate + submodule when the request path maps to one. */
 export async function assertClinicApiEntitled(
-  pathname?: string | null,
-  organizationId?: string,
+  pathname: string | null | undefined,
+  organizationId: string,
 ): Promise<void> {
-  const org = organizationId?.trim() || (await enterTenantFromRequestHeaders());
   let path = pathname?.trim() || "";
   if (!path) {
     try {
@@ -78,9 +51,9 @@ export async function assertClinicApiEntitled(
   if (!path || AUTH_EXEMPT_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {
     return;
   }
-  await requireClinicSatellite(org);
+  await requireClinicSatellite(organizationId);
   const moduleKey = resolveClinicModuleForPathname(path);
   if (moduleKey) {
-    await requireClinicModule(moduleKey, org);
+    await requireClinicModule(moduleKey, organizationId);
   }
 }

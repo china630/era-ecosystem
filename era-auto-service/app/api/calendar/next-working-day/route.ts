@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { todayBakuYmd } from "@era/satellite-kit/time";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 
 const querySchema = z.object({ from: z.string().optional() });
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const url = new URL(req.url);
     const params = querySchema.parse({ from: url.searchParams.get("from") ?? undefined });
     const from = params.from ?? todayBakuYmd();

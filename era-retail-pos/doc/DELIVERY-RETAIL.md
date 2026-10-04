@@ -60,6 +60,7 @@ Platform client: `@era/satellite-kit` via `src/integration/control-plane-platfor
 
 - [x] Platform session (`financeRole` + org) via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
 - [x] Local operational RBAC (cashier roles) — unchanged
+- [~] RET-RBAC-01 Variant A access matrix: system packages, `/admin/access` (matrix, clone, Reset, assign), page + API grant doors — UAT-SMOKE UI step open ([ADR](../../docs/adr/retail-domain-permissions-and-rbac.md))
 - [x] No local join-org / memberships (N/A — Finance/Orch only)
 
 ## Operations (v1.0)

@@ -2,12 +2,11 @@ import {
   consumeSsoSignatureOnce,
   resolveVerifiedSsoFinanceRole,
   ssoExchangeBodySchema,
-  satelliteOrganizationId,
-  satelliteRuntimeConfig,
   enterSatelliteTenant,
+  signSatelliteSession,
 } from "@era/satellite-kit";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { signToken } from "@/lib/auth/jwt";
+import { remapPermissionList } from "@/lib/auth/hotel-permission-rename";
 import { prisma } from "@/lib/prisma";
 import { ROLE_CODES } from "@/lib/auth/permissions";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
@@ -18,7 +17,6 @@ const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
 
 /**
  * SEC-SSO-02/01: Orchestrator mints HMAC (v2/v3); replay guard via consumeSsoSignatureOnce.
- * SEC-SSO-05: on DEDICATED/ONPREM, ticket org must match process bind; SHARED accepts ticket org.
  */
 export async function POST(request: Request) {
   try {
@@ -40,22 +38,6 @@ export async function POST(request: Request) {
     }
     if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
       return jsonError("SSO ticket already used", 401);
-    }
-
-    const topology = satelliteRuntimeConfig().deploymentTopology;
-    let deployOrg: string | null = null;
-    try {
-      deployOrg = satelliteOrganizationId();
-    } catch {
-      deployOrg = null;
-    }
-    if (
-      topology !== "SHARED" &&
-      deployOrg &&
-      deployOrg !== "demo-org" &&
-      body.organizationId !== deployOrg
-    ) {
-      return jsonError("SSO organization mismatch", 401);
     }
 
     const organizationId = body.organizationId;
@@ -117,15 +99,15 @@ export async function POST(request: Request) {
     }
 
     const permissions = userPermissions(user);
-    const token = await signToken({
+    const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,
       role: user.role.code,
       fullName: user.fullName,
       email,
       organizationId,
-      permissions,
-      isOwner,
+      permissions: permissions.length ? remapPermissionList(permissions) : undefined,
+      isOwner: isOwner || undefined,
     });
 
     const res = jsonOk({

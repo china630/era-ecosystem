@@ -26,7 +26,7 @@ function waiterHotel(): FnbPermissionSession {
   return {
     login: "w",
     role: "FB_WAITER",
-    permissions: waiterPermissions("hotel"),
+    permissions: waiterPermissions("fnb"),
   };
 }
 

@@ -3,7 +3,7 @@ import {
   jsonOk,
   jsonError,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -27,7 +27,7 @@ const addSchema = z.object({
  * Later adds: assigned doctor already on the team (or ALL).
  */
 async function assertCareTeamMutateAccess(
-  session: NonNullable<Awaited<ReturnType<typeof getRouteSession>>>,
+  session: NonNullable<Awaited<ReturnType<typeof getSatelliteSession>>>,
   episodeId: string,
 ): Promise<Response | null> {
   const scope = await resolveClinicDataScope(
@@ -48,7 +48,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
@@ -96,7 +96,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
@@ -154,7 +154,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,

@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
 import { ZodError } from "zod";
-import {
-  authCookieName,
-  enterSatelliteTenant,
-  getBearerOrCookieToken,
-  IndustryModuleInactiveError,
-  resolveSatelliteOrganizationId,
-  verifySatelliteSession,
-} from "@era/satellite-kit";
-import { requireFnbSatellite } from "@/lib/fnb-module-gate";
-import { prisma } from "@/lib/prisma";
+import { IndustryModuleInactiveError } from "@era/satellite-kit";
 import {
   FnbHotelModeError,
   FnbQuotaError,
@@ -18,6 +8,7 @@ import {
 } from "@/lib/fnb-module-gate";
 import { FnbSoldOutError } from "@/lib/fnb-sold-out";
 import { FnbWaiterNoPayError } from "@/lib/fnb-roles";
+import { ShiftRequiredError, ShiftStaleError } from "@/lib/open-shift";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -64,6 +55,12 @@ export function handleRouteError(err: unknown) {
       { status: 403 },
     );
   }
+  if (err instanceof ShiftRequiredError || err instanceof ShiftStaleError) {
+    return NextResponse.json(
+      { error: err.message, code: err.code },
+      { status: 409 },
+    );
+  }
   if (err instanceof Error && err.name === "FiscalError") {
     return jsonError(err.message, 400);
   }
@@ -77,55 +74,4 @@ export function handleRouteError(err: unknown) {
     return jsonError(err.message, 500);
   }
   return jsonError("Internal error", 500);
-}
-
-/** Resolve org from JWT / header / user / bind and enter ALS. */
-export async function enterFnbRequestTenant(): Promise<string | undefined> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    return undefined;
-  }
-  let organizationId = headerStore.get("x-era-organization-id")?.trim() || undefined;
-
-  const token = getBearerOrCookieToken(
-    cookieStore,
-    headerStore,
-    authCookieName(),
-  );
-  if (token) {
-    try {
-      const session = await verifySatelliteSession(token);
-      organizationId = organizationId || session.organizationId?.trim() || undefined;
-      if (!organizationId) {
-        const row = await prisma.user.findUnique({
-          where: { id: session.sub },
-          select: { organizationId: true },
-        });
-        organizationId = row?.organizationId || undefined;
-      }
-    } catch {
-      /* ignore — entitlement gate still runs */
-    }
-  }
-  if (!organizationId) {
-    try {
-      organizationId = resolveSatelliteOrganizationId().organizationId;
-    } catch {
-      organizationId = undefined;
-    }
-  }
-  if (organizationId) {
-    enterSatelliteTenant({ organizationId });
-  }
-  return organizationId;
-}
-
-/** Call at the start of operational F&B API handlers. */
-export async function assertFnbEntitled(): Promise<void> {
-  const org = await enterFnbRequestTenant();
-  await requireFnbSatellite(org);
 }

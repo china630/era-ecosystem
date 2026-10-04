@@ -17,6 +17,12 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/integration/staff-provision",
 ];
 
+/**
+ * Public API paths whose handler checks a service secret itself and then trusts
+ * the caller's `x-era-organization-id`. Every other path drops the client copy.
+ */
+export const DEFAULT_SERVICE_API_PREFIXES = ["/api/events/dispatch", "/api/internal"];
+
 export const DEFAULT_PUBLIC_PAGE_PREFIXES = ["/login", "/sso/callback", "/help"];
 
 export const DEFAULT_BARE_PUBLIC_PAGE_PREFIXES = [
@@ -189,6 +195,202 @@ export function redirectNoStore(url: URL | string): NextResponse {
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.headers.set("Pragma", "no-cache");
   return res;
+}
+
+/**
+ * Structural `NextRequest`: each satellite resolves its own `next` copy, so the
+ * kit must not name that type in its signature.
+ */
+export type SatelliteStaffRequest = {
+  nextUrl: { pathname: string; href: string };
+  cookies: CookieReader;
+  headers: Headers;
+};
+
+export type SatelliteStaffPageContext<R extends SatelliteStaffRequest> = {
+  request: R;
+  pathname: string;
+  session: EdgeSessionPayload;
+  reqHeaders: Headers;
+};
+
+export type SatelliteStaffApiContext<R extends SatelliteStaffRequest> =
+  SatelliteStaffPageContext<R>;
+
+export type SatelliteStaffMiddlewareOptions<R extends SatelliteStaffRequest> = {
+  /** Host-bound org on public login pages (`nextWithOptionalHostBoundOrg`). */
+  satelliteKey?: string | null;
+  /** Added to `DEFAULT_PUBLIC_API_PREFIXES`. */
+  publicApiPrefixes?: string[];
+  /**
+   * Verify the staff token, then pass the original request through. Cloning
+   * headers drops Cookie and truncates multipart bodies on POST.
+   */
+  passthroughApiPrefixes?: string[];
+  /**
+   * Added to `DEFAULT_SERVICE_API_PREFIXES`: public paths that keep the
+   * caller's org header because the handler verifies a service secret first.
+   */
+  serviceApiPrefixes?: string[];
+  /** Pages reachable without a staff session. */
+  isPublicPage: (pathname: string) => boolean;
+  /** Public pages that receive the host-bound org header. Default `/login`. */
+  loginPaths?: string[];
+  /**
+   * Where a staff page without a valid session goes (path, may carry a query).
+   * `reason` is `missing` with no token, `invalid` when it fails to verify.
+   * Default `/login`.
+   */
+  loginRedirectPath?: (request: R, reason: "missing" | "invalid") => string;
+  /** Return a response to deny a staff page; nothing → allow. */
+  authorizePage?: (
+    ctx: SatelliteStaffPageContext<R>,
+  ) => Response | null | undefined | Promise<Response | null | undefined>;
+  /** Return a response to deny a staff API call after the token verifies; nothing → allow. */
+  authorizeApi?: (
+    ctx: SatelliteStaffApiContext<R>,
+  ) => Response | null | undefined | Promise<Response | null | undefined>;
+};
+
+function staffLoginRedirect(request: SatelliteStaffRequest, target: string): NextResponse {
+  return redirectNoStore(new URL(target, request.nextUrl.href));
+}
+
+const SESSION_ORG_HEADER = "x-era-organization-id";
+const SESSION_STAMP_HEADERS = ["x-user-id", "x-user-role", SESSION_ORG_HEADER];
+
+/** Drops client-sent `x-user-id`, `x-user-role`, `x-era-organization-id`. */
+export function stripSessionHeaders(source: Headers): Headers {
+  const headers = new Headers(source);
+  for (const name of SESSION_STAMP_HEADERS) headers.delete(name);
+  return headers;
+}
+
+/** Client-sent copies are dropped: handlers trust these only from the verified token. */
+function stampSessionHeaders(source: Headers, session: EdgeSessionPayload): Headers {
+  const headers = stripSessionHeaders(source);
+  headers.set("x-user-id", session.sub);
+  headers.set("x-user-role", session.role);
+  if (session.organizationId) {
+    headers.set(SESSION_ORG_HEADER, session.organizationId);
+  }
+  return headers;
+}
+
+/**
+ * Passthrough keeps the original request (no header clone), so a client copy
+ * of a session header is accepted only when it equals the token value.
+ */
+function passthroughHeadersMatch(headers: Headers, session: EdgeSessionPayload): boolean {
+  const expected: Record<string, string> = {
+    "x-user-id": session.sub,
+    "x-user-role": session.role,
+    [SESSION_ORG_HEADER]: session.organizationId?.trim() ?? "",
+  };
+  return SESSION_STAMP_HEADERS.every((name) => {
+    const sent = headers.get(name)?.trim();
+    return !sent || sent === expected[name];
+  });
+}
+
+/**
+ * Gate for staff satellites: reject a missing or invalid session cookie and
+ * stamp `x-user-id`, `x-user-role`, `x-era-organization-id` from the token on
+ * staff API and page requests. Public paths drop client copies of those
+ * headers, except `serviceApiPrefixes` where the handler checks a service secret.
+ * Route handlers still read the session with the app `getSatelliteSession`.
+ */
+export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
+  opts: SatelliteStaffMiddlewareOptions<R>,
+): (request: R) => Promise<Response> {
+  const cookieName = authCookieName();
+  const loginPaths = opts.loginPaths ?? ["/login"];
+  const servicePrefixes = [
+    ...DEFAULT_SERVICE_API_PREFIXES,
+    ...(opts.serviceApiPrefixes ?? []),
+  ];
+
+  return async function middleware(request: R): Promise<Response> {
+    const { pathname } = request.nextUrl;
+
+    if (opts.passthroughApiPrefixes?.some((p) => pathname.startsWith(p))) {
+      const token = getBearerOrCookieToken(request.cookies, request.headers, cookieName);
+      if (!token) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      let session: EdgeSessionPayload;
+      try {
+        session = await verifySatelliteSession(token);
+      } catch {
+        return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      }
+      if (!passthroughHeadersMatch(request.headers, session)) {
+        return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      }
+      return NextResponse.next();
+    }
+
+    const pathHeaders = eraPathnameRequestHeaders(request.headers, pathname);
+    const reqHeaders = stripSessionHeaders(pathHeaders);
+
+    if (pathname.startsWith("/api")) {
+      if (isPublicApiPath(pathname, opts.publicApiPrefixes)) {
+        const isService = servicePrefixes.some((p) => pathname.startsWith(p));
+        return NextResponse.next({
+          request: { headers: isService ? pathHeaders : reqHeaders },
+        });
+      }
+      const token = getBearerOrCookieToken(request.cookies, request.headers, cookieName);
+      if (!token) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      let session: EdgeSessionPayload;
+      try {
+        session = await verifySatelliteSession(token);
+      } catch {
+        return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      }
+      const apiHeaders = stampSessionHeaders(reqHeaders, session);
+      const denied = await opts.authorizeApi?.({
+        request,
+        pathname,
+        session,
+        reqHeaders: apiHeaders,
+      });
+      if (denied) return denied;
+      return NextResponse.next({ request: { headers: apiHeaders } });
+    }
+
+    if (opts.isPublicPage(pathname)) {
+      if (loginPaths.includes(pathname)) {
+        return nextWithOptionalHostBoundOrg(
+          reqHeaders,
+          request.headers.get("x-forwarded-host") || request.headers.get("host"),
+          opts.satelliteKey,
+        );
+      }
+      return NextResponse.next({ request: { headers: reqHeaders } });
+    }
+
+    const loginTarget = (reason: "missing" | "invalid") =>
+      opts.loginRedirectPath?.(request, reason) ?? "/login";
+    const token = getBearerOrCookieToken(request.cookies, request.headers, cookieName);
+    if (!token) return staffLoginRedirect(request, loginTarget("missing"));
+    try {
+      const session = await verifySatelliteSession(token);
+      const pageHeaders = stampSessionHeaders(reqHeaders, session);
+      const denied = await opts.authorizePage?.({
+        request,
+        pathname,
+        session,
+        reqHeaders: pageHeaders,
+      });
+      if (denied) return denied;
+      return NextResponse.next({ request: { headers: pageHeaders } });
+    } catch {
+      return staffLoginRedirect(request, loginTarget("invalid"));
+    }
+  };
 }
 
 export function agencyAuthCookieName(): string {

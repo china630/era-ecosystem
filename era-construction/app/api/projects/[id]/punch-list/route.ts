@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -18,6 +18,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const items = await prisma.punchListItem.findMany({
       where: { projectId: id },
@@ -34,6 +35,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const project = await prisma.project.findUnique({ where: { id } });
     if (!project) return jsonError("Project not found", 404);
@@ -57,6 +59,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const body = patchSchema.parse(await req.json());
     const item = await prisma.punchListItem.findFirst({

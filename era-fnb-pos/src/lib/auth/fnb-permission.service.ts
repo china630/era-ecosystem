@@ -12,7 +12,7 @@ export async function permissionsForRoleCode(
   roleCode: string,
 ): Promise<Permission[]> {
   const profile = await getFnbOrgProfile(organizationId);
-  const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+  const edition = resolveFnbEdition(profile.edition);
   const role = await prisma.role.findFirst({
     where: { organizationId, code: roleCode },
   });
@@ -24,14 +24,14 @@ export async function permissionsForRoleCode(
 
 export async function permissionsForUserId(
   userId: string,
-): Promise<Permission[]> {
-  const user = await prisma.user.findUnique({
+): Promise<Permission[] | null> {
+  const user = await prisma.user.findFirst({
     where: { id: userId },
     include: { role: true },
   });
-  if (!user) return [];
+  if (!user) return null;
   const profile = await getFnbOrgProfile(user.organizationId);
-  const edition = resolveFnbEdition(profile.edition, profile.hotelMode);
+  const edition = resolveFnbEdition(profile.edition);
   return effectiveRolePermissions(
     user.role.code,
     user.role.permissionsJson,
@@ -43,5 +43,5 @@ export async function editionForOrg(
   organizationId: string,
 ): Promise<FnbEdition> {
   const profile = await getFnbOrgProfile(organizationId);
-  return resolveFnbEdition(profile.edition, profile.hotelMode);
+  return resolveFnbEdition(profile.edition);
 }

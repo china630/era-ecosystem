@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
 import {
   createLeadSchema,
@@ -7,15 +7,19 @@ import {
 } from "@/lib/lead-schemas";
 import { syncContactRef } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
+import { assertPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export async function GET(req: Request) {
   try {
-    await assertCrmEntitled();
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    assertPermission(session, PERMISSIONS.LEADS_READ);
     const { searchParams } = new URL(req.url);
     const ownerId = searchParams.get("ownerId");
     const mine = searchParams.get("mine") === "true";
     const prospectType = searchParams.get("prospectType");
-    const userId = req.headers.get("x-user-id");
+    const userId = session.sub;
 
     const where: Record<string, unknown> = {};
     if (mine && userId) where.ownerId = userId;
@@ -51,6 +55,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    assertPermission(session, PERMISSIONS.LEADS_WRITE);
     const raw = await req.json();
     const body = createLeadSchema.parse(raw);
     const stage = body.stage ?? "NEW";

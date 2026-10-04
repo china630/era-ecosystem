@@ -1,5 +1,4 @@
 import { burnPasswordVerifyCost, verifyPassword } from "./password";
-import { resolveSatelliteOrganizationId } from "../tenancy/organization-bind-core";
 
 export type SatelliteUserRecord = {
   id: string;
@@ -26,9 +25,8 @@ type UserFindArgs = {
 };
 
 /**
- * Resolve user by login, email, or phone within one org.
- * - With `organizationId`: only that org (SHARED / explicit login).
- * - Without: process bind org only (DEDICATED appliance) — never cross-org findFirst.
+ * Resolve user by login, email, or phone inside one org.
+ * Without `organizationId` returns null. Never scans the pool and never uses the process bind.
  */
 export async function findUserByCredential(
   prisma: unknown,
@@ -37,14 +35,8 @@ export async function findUserByCredential(
 ): Promise<SatelliteUserRecord | null> {
   const id = credential.trim();
   if (!id) return null;
-  let orgId = organizationId?.trim() || null;
-  if (!orgId) {
-    try {
-      orgId = resolveSatelliteOrganizationId().organizationId;
-    } catch {
-      return null;
-    }
-  }
+  const orgId = organizationId?.trim() || null;
+  if (!orgId) return null;
   const db = prisma as {
     user: { findFirst(args: UserFindArgs): Promise<unknown> };
   };

@@ -1,11 +1,11 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { handleRouteError } from "@/lib/api-utils";
 
 const discountSchema = z.object({
   discountPercent: z.number().min(0).max(100),
@@ -15,26 +15,29 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_DISCOUNT);
-  if (denied) return denied;
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_DISCOUNT);
+    if (denied) return denied;
 
-  const { id } = await params;
-  const body = discountSchema.parse(await request.json());
+    const { id } = await params;
+    const body = discountSchema.parse(await request.json());
 
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
-  if (!ticket) {
-    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    const ticket = await prisma.ticket.findUnique({ where: { id } });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+    if (!["OPEN", "HELD"].includes(ticket.status)) {
+      return NextResponse.json({ error: "Ticket is closed" }, { status: 400 });
+    }
+
+    await prisma.ticket.update({
+      where: { id },
+      data: { discountPercent: body.discountPercent },
+    });
+    const updated = await recalculateTicketTotals(id);
+    return NextResponse.json(updated);
+  } catch (err) {
+    return handleRouteError(err);
   }
-  if (!["OPEN", "HELD"].includes(ticket.status)) {
-    return NextResponse.json({ error: "Ticket is closed" }, { status: 400 });
-  }
-
-  await prisma.ticket.update({
-    where: { id },
-    data: { discountPercent: body.discountPercent },
-  });
-  const updated = await recalculateTicketTotals(id);
-  return NextResponse.json(updated);
 }

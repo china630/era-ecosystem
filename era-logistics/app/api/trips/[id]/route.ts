@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TripStatus } from "@prisma/client";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const statusSchema = z.object({
@@ -17,6 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const trip = await prisma.trip.findUnique({
       where: { id },
@@ -34,6 +35,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { id } = await params;
     const body = statusSchema.parse(await req.json());
 

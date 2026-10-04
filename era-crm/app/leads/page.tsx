@@ -46,11 +46,14 @@ type Lead = {
 type SessionUser = {
   id: string;
   fullName: string;
-  role: { code: string };
+  role: string;
+  permissions?: string[];
+  isOwner?: boolean;
+  isPlatformSuperAdmin?: boolean;
 };
 
 const STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"];
-const ASSIGN_ROLES = new Set(["SALES_LEAD", "BUSINESS_OWNER"]);
+const LEADS_ASSIGN = "api:leads.assign";
 
 const FALLBACK_CHANNEL: CatalogOption[] = [
   { value: "whatsapp", label: "WhatsApp" },
@@ -129,7 +132,11 @@ function LeadsPipelineContent() {
   const [prospectOptions, setProspectOptions] =
     useState<CatalogOption[]>(FALLBACK_PROSPECT);
 
-  const canAssign = session ? ASSIGN_ROLES.has(session.role.code) : false;
+  const canAssign = session
+    ? session.isOwner === true ||
+      session.isPlatformSuperAdmin === true ||
+      (session.permissions ?? []).includes(LEADS_ASSIGN)
+    : false;
 
   async function loadLeads(mine = myLeadsOnly, prospect = prospectFilter) {
     setLoading(true);

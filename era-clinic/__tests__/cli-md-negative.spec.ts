@@ -37,13 +37,6 @@ describe("Clinic MD negative paths (AC-CLI-MD)", () => {
   });
 
   describe("module gate", () => {
-    it("requireClinicModule rejects inactive submodule", async () => {
-      const { requireClinicModule } = await import("@/lib/clinic-module-gate");
-      await expect(requireClinicModule("clinic_master_data")).rejects.toMatchObject({
-        name: "IndustryModuleInactiveError",
-        moduleKey: "clinic_master_data",
-      });
-    });
   });
 
   describe("domain deny", () => {

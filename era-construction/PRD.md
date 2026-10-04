@@ -52,6 +52,8 @@
 | Главный инженер | `PROJECT_MANAGER` | Сводка проектов |
 | Аудитор (SSO) | `SATELLITE_OPERATOR` | Read-only |
 
+**Variant A (CN-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `PROJECT_MANAGER`). Every ops package keeps the full project and site flow, including progress act approve (`api:acts.approve`); settings and access go to `PROJECT_MANAGER`. `SATELLITE_OPERATOR` keeps the ops package until someone tightens it to read-only in the matrix. ADR [construction-domain-permissions-and-rbac](../docs/adr/construction-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

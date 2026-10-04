@@ -1,6 +1,6 @@
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -8,9 +8,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(_request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 

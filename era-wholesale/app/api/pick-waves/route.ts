@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -9,6 +9,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const lists = await prisma.pickList.findMany({
       where: { waveCode: { not: null } },
       include: { order: true, lines: true },
@@ -34,6 +35,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const results = [];
     for (const orderNumber of body.orderNumbers) {

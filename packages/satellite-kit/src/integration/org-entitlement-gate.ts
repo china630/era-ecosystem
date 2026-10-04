@@ -165,8 +165,8 @@ export type RequireSatelliteModuleOpts = {
 };
 
 /**
- * Explicit request org first (SHARED SSO / session header), then ALS, then process bind.
- * Fallback env without an org is fail-closed.
+ * Explicit org first (session / cron loop), then ALS. No org → inactive.
+ * The process bind is never read here; cron gets its orgs from `listCronOrganizationIds`.
  */
 export async function requireSatelliteModule(
   moduleKey: string,
@@ -176,19 +176,12 @@ export async function requireSatelliteModule(
   const org =
     opts?.organizationId?.trim() ||
     getSatelliteTenantContext()?.organizationId?.trim();
-  if (org) {
-    await runWithSatelliteTenant({ organizationId: org }, () =>
-      assertEntitled(org, moduleKey),
-    );
-    return;
-  }
-  const { organizationId, source } = resolveSatelliteOrganizationId({
-    allowFallback: true,
-  });
-  if (source === "fallback" || !organizationId) {
+  if (!org) {
     throw new IndustryModuleInactiveError(resolveIndustryModuleKey(moduleKey));
   }
-  await assertEntitled(organizationId, moduleKey);
+  await runWithSatelliteTenant({ organizationId: org }, () =>
+    assertEntitled(org, moduleKey),
+  );
 }
 
 export type CronEntitlementOpts = {
@@ -222,18 +215,6 @@ export type CronEntitlementResult =
   | { ok: true }
   | { ok: false; status: 401 | 403 | 503; reason: string; moduleKey?: string };
 
-/**
- * Cron guard: 401 if secret configured and missing; skip/403 when not entitled.
- * Callers should return JSON `{ skipped: true, reason }` without side effects.
- */
-export async function runCronIfEntitled(
-  opts: CronEntitlementOpts,
-): Promise<CronEntitlementResult> {
-  const auth = checkCronSecret(opts);
-  if (!auth.ok) return auth;
-  return checkCronEntitlement(opts);
-}
-
 function checkCronSecret(opts: CronEntitlementOpts): CronEntitlementResult {
   const envKey = opts.cronSecretEnv ?? "PLATFORM_CRON_SECRET";
   const secret = process.env[envKey]?.trim() ?? process.env.PLATFORM_CRON_SECRET?.trim() ?? "";
@@ -246,10 +227,9 @@ function checkCronSecret(opts: CronEntitlementOpts): CronEntitlementResult {
   return { ok: true };
 }
 
-/** Without `organizationId` the module check uses the request ALS / process org. */
 async function checkCronEntitlement(
   opts: CronEntitlementOpts,
-  organizationId?: string,
+  organizationId: string,
 ): Promise<CronEntitlementResult> {
   if (devUnlockAllModules()) return { ok: true };
 
@@ -260,7 +240,7 @@ async function checkCronEntitlement(
 
   try {
     for (const key of keys) {
-      await requireSatelliteModule(key, organizationId ? { organizationId } : undefined);
+      await requireSatelliteModule(key, { organizationId });
     }
     return { ok: true };
   } catch (err) {

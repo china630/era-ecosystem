@@ -3,7 +3,7 @@ import {
   jsonOk,
   jsonError,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -22,7 +22,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
@@ -62,7 +62,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_WRITE,

@@ -5,7 +5,7 @@ import {
   addEventResourceBooking,
   deleteEventResourceBooking,
 } from '@/lib/services/event-order.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -21,9 +21,9 @@ const createSchema = z.object({
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireHotelModule('hotel_banquets');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    await requireHotelModule('hotel_banquets', session.organizationId);
     const { id } = await ctx.params;
     const body = createSchema.parse(await req.json());
     return jsonOk(
@@ -37,9 +37,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function DELETE(req: Request) {
   try {
-    await requireHotelModule('hotel_banquets');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    await requireHotelModule('hotel_banquets', session.organizationId);
     const url = new URL(req.url);
     const bookingId = url.searchParams.get('bookingId');
     if (!bookingId) throw new Error('bookingId query param required');

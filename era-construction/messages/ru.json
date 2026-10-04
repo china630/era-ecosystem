@@ -130,6 +130,63 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
+  },
+  "nav": {
+    "access": "Доступ"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "projects": "Проекты",
+      "site": "Работы на объекте",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_projects": "Проекты",
+      "screen_projects_detail": "Карточка проекта",
+      "screen_field_ops": "Полевые операции",
+      "screen_material_requisitions": "Заявки на материалы",
+      "screen_admin_settings": "Настройки",
+      "screen_admin_access": "Экран доступа",
+      "api_projects": "Проекты",
+      "api_boq": "BOQ / план-факт",
+      "api_daily_logs": "Ежедневные журналы",
+      "api_punch_list": "Список замечаний",
+      "api_gantt": "Диаграмма Ганта",
+      "api_requisitions": "Заявки на материалы",
+      "api_acts_approve": "Утверждение актов",
+      "api_timesheets_import": "Импорт табеля",
+      "api_equipment_hours": "Моточасы техники",
+      "api_cde": "Чертежи (CDE)",
+      "api_subcontractor_claims": "Заявки субподрядчиков",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

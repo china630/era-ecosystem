@@ -1,12 +1,19 @@
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk, assertFnbEntitled } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
+  code: z
+    .string()
+    .trim()
+    .min(1)
+    .max(16)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/)
+    .optional(),
   sortOrder: z.number().int().optional(),
 });
 
@@ -14,9 +21,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 
@@ -25,9 +31,20 @@ export async function PATCH(
     const existing = await prisma.menuCategory.findUnique({ where: { id } });
     if (!existing) return jsonError("Category not found", 404);
 
+    const code = body.code?.toUpperCase();
+    if (code) {
+      const codeTaken = await prisma.menuCategory.findFirst({
+        where: { outletId: existing.outletId, code, NOT: { id } },
+      });
+      if (codeTaken) return jsonError("Category code already exists", 409);
+    }
     const category = await prisma.menuCategory.update({
       where: { id },
-      data: body,
+      data: {
+        ...(body.name ? { name: body.name } : {}),
+        ...(body.sortOrder != null ? { sortOrder: body.sortOrder } : {}),
+        ...(code ? { code } : {}),
+      },
     });
     return jsonOk(category);
   } catch (err) {
@@ -39,9 +56,8 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-    const session = await getSessionFromRequest(_request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.MENU_MANAGE);
     if (denied) return denied;
 

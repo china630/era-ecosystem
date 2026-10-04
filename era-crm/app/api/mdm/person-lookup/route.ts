@@ -7,10 +7,11 @@ import {
   resolveIncomingNameParts,
 } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 
 export async function POST(request: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = (await request.json()) as {
       fin?: string;
       passport?: string;

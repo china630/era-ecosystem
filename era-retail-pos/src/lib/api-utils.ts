@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
-  authCookieName,
-  enterSatelliteTenant,
-  getBearerOrCookieToken,
+  readSatelliteStaffSession,
+  type SatelliteStaffSessionPayload,
   IndustryModuleInactiveError,
-  resolveSatelliteOrganizationId,
-  verifySatelliteSession,
 } from "@era/satellite-kit";
 import { requireRetailSatellite } from "@/lib/retail-module-gate";
 import { prisma } from "@/lib/prisma";
+import { assertApiRouteGrant } from "@/lib/auth/require";
+import type { RoleGrantRow } from "@/lib/auth/permission-catalog";
+import { grantsForUser, ROLE_GRANT_SELECT } from "@/lib/auth/retail-permission.service";
+
+/** Same value as the kit `ERA_PATHNAME_HEADER`; the staff middleware overwrites any client copy. */
+const PATHNAME_HEADER = "x-era-pathname";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -26,6 +29,9 @@ export function handleRouteError(err: unknown) {
   if (err instanceof IndustryModuleInactiveError) {
     return jsonError(err.message, 403);
   }
+  if (err instanceof Error && (err.name === "UnauthorizedError" || err.name === "PermissionDeniedError")) {
+    return jsonError(err.message, err.name === "UnauthorizedError" ? 401 : 403);
+  }
   if (err instanceof Error && err.name === "FiscalError") {
     return jsonError(err.message, 400);
   }
@@ -33,53 +39,63 @@ export function handleRouteError(err: unknown) {
   return jsonError(msg, 500);
 }
 
-/** Resolve org from JWT / header / user / bind and enter ALS. */
-export async function enterRetailRequestTenant(): Promise<string | undefined> {
+export type StaffSession = SatelliteStaffSessionPayload & { permissions: string[] };
+
+/**
+ * Staff session: org from the signed token, active user row, module gate, then
+ * the grant for this API path from the role row (RET-RBAC-01).
+ * No session → null (401); module off → IndustryModuleInactiveError (403);
+ * missing grant → PermissionDeniedError (403).
+ * Call once per handler, inside try, and pass the session on.
+ */
+export async function getSatelliteSession(): Promise<StaffSession | null> {
   let cookieStore: Awaited<ReturnType<typeof cookies>>;
   let headerStore: Awaited<ReturnType<typeof headers>>;
   try {
     cookieStore = await cookies();
     headerStore = await headers();
   } catch {
-    return undefined;
+    return null;
   }
-  let organizationId = headerStore.get("x-era-organization-id")?.trim() || undefined;
-
-  const token = getBearerOrCookieToken(
-    cookieStore,
-    headerStore,
-    authCookieName(),
-  );
-  if (token) {
-    try {
-      const session = await verifySatelliteSession(token);
-      organizationId = organizationId || session.organizationId?.trim() || undefined;
-      if (!organizationId) {
-        const row = await prisma.user.findUnique({
-          where: { id: session.sub },
-          select: { organizationId: true },
-        });
-        organizationId = row?.organizationId || undefined;
-      }
-    } catch {
-      /* ignore — entitlement gate still runs */
-    }
-  }
-  if (!organizationId) {
-    try {
-      organizationId = resolveSatelliteOrganizationId().organizationId;
-    } catch {
-      organizationId = undefined;
-    }
-  }
-  if (organizationId) {
-    enterSatelliteTenant({ organizationId });
-  }
-  return organizationId;
-}
-
-/** Call at the start of operational retail API handlers. Fail-closed. */
-export async function assertRetailEntitled(): Promise<void> {
-  const org = await enterRetailRequestTenant();
-  await requireRetailSatellite(org);
+  const staff = await readSatelliteStaffSession({
+    cookies: cookieStore,
+    headers: headerStore,
+    loadUser: async ({ sub }) => {
+      const user = await prisma.user.findUnique({
+        where: { id: sub },
+        select: {
+          organizationId: true,
+          status: true,
+          login: true,
+          email: true,
+          role: { select: ROLE_GRANT_SELECT },
+        },
+      });
+      return user
+        ? {
+            organizationId: user.organizationId,
+            active: user.status === "ACTIVE",
+            login: user.login,
+            email: user.email,
+            role: user.role as RoleGrantRow | null,
+          }
+        : null;
+    },
+  });
+  if (!staff) return null;
+  await requireRetailSatellite(staff.session.organizationId);
+  const role = staff.user.role ?? null;
+  const session: StaffSession = {
+    ...staff.session,
+    role: role?.code ?? staff.session.role,
+    permissions: grantsForUser({
+      login: staff.user.login ?? staff.session.login,
+      email: staff.user.email ?? staff.session.email,
+      role,
+      isOwner: staff.session.isOwner === true,
+      pin: staff.session.pin === true,
+    }),
+  };
+  assertApiRouteGrant(session, headerStore.get(PATHNAME_HEADER));
+  return session;
 }

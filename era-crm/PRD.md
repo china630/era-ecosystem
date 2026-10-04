@@ -66,6 +66,8 @@
 | Field rep | `FIELD_REP` | Visits, check-in |
 | Read-only auditor | `SATELLITE_OPERATOR` | SSO read |
 
+**Variant A (CRM-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `SALES_LEAD`). The seed keeps lead assign on `SALES_LEAD` and the owner, and moves lead import and pipeline settings to `SALES_LEAD` (`admin:import`, `admin:pipeline`). Agent and field rep get the same ops package; `SATELLITE_OPERATOR` keeps it until someone tightens it in the matrix. “My leads” stays a list filter. ADR [crm-domain-permissions-and-rbac](../docs/adr/crm-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

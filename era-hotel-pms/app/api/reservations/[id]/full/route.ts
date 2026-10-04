@@ -2,7 +2,7 @@ import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getReservationFull, patchReservationFull } from '@/lib/services/reservation-full.service';
 import { reservationFullPatchSchema } from '@/lib/reservation-full-patch.schema';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const { id } = await params;
     return jsonOk(serialize(await getReservationFull(id)));
@@ -25,7 +25,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = reservationFullPatchSchema.parse(await request.json());

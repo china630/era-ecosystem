@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { isConstructionWorkingDay, constructionSlaDueDate } from "@/lib/production-calendar";
 
 const dateQuery = z.object({ date: z.string() });
@@ -10,6 +10,7 @@ const slaQuery = z.object({
 
 export async function GET(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const url = new URL(req.url);
     const mode = url.searchParams.get("mode");
     if (mode === "sla") {

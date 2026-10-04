@@ -12,6 +12,8 @@ jest.mock("next/headers", () => ({
   headers: jest.fn(async () => ({ get: () => null })),
 }));
 
+jest.mock("@/lib/prisma", () => ({ prisma: {} }));
+
 jest.mock("@era/satellite-kit", () => {
   class IndustryModuleInactiveError extends Error {
     readonly status = 403;
@@ -28,9 +30,7 @@ jest.mock("@era/satellite-kit", () => {
       throw new IndustryModuleInactiveError(moduleKey);
     }),
     resolveClinicModuleForPathname: jest.fn(() => null),
-    authCookieName: () => "era_session",
-    getBearerOrCookieToken: () => null,
-    verifySatelliteSession: jest.fn(),
+    readSatelliteStaffSession: jest.fn(async () => null),
   };
 });
 
@@ -45,14 +45,21 @@ describe("Clinic OPS negative paths (AC-CLI-OPS)", () => {
   });
 
   describe("module gate", () => {
-    it("assertClinicEntitled rejects when industry_clinic inactive", async () => {
-      const { assertClinicEntitled } = await import("@/lib/clinic-module-gate");
-      await expect(assertClinicEntitled()).rejects.toMatchObject({
+    it("getSatelliteSession: no staff session -> null, module gate not reached", async () => {
+      const { getSatelliteSession } = await import("@/lib/api-utils");
+      await expect(getSatelliteSession()).resolves.toBeNull();
+      expect(requireSatelliteModule).not.toHaveBeenCalled();
+    });
+
+    it("requireClinicSatellite checks the module for the session org", async () => {
+      const { requireClinicSatellite } = await import("@/lib/clinic-module-gate");
+      await expect(requireClinicSatellite("org-1")).rejects.toMatchObject({
         name: "IndustryModuleInactiveError",
         moduleKey: "industry_clinic",
       });
-      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_clinic");
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_clinic", { organizationId: "org-1" });
     });
+
 
     it("handleRouteError maps IndustryModuleInactiveError to 403", async () => {
       const { handleRouteError } = await import("@/lib/api-utils");

@@ -1,17 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { Ban } from "lucide-react";
+import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
+import { fnbCan } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { CheckLines } from "@/components/CheckLines";
+import PosShiftPanel from "@/components/PosShiftPanel";
 
 type Table = {
   id: string;
   code: string;
   name: string;
   status: string;
+  hall?: { id: string; name: string; sortOrder?: number } | null;
   currentTicketId?: string | null;
+  openTotalAzn?: number | null;
+  openedAt?: string | null;
 };
 
 type MenuItem = {
@@ -44,6 +52,7 @@ type OpenChip = {
   totalAzn: string | number;
   serviceChannel?: string | null;
   tableId?: string | null;
+  openedAt?: string | null;
 };
 
 type Outlet = {
@@ -75,6 +84,7 @@ export default function FloorPanel() {
   const tc = useTranslations("common");
 
   const [tables, setTables] = useState<Table[]>([]);
+  const [hallFilter, setHallFilter] = useState<string | null>(null);
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [menuQuery, setMenuQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -82,6 +92,14 @@ export default function FloorPanel() {
   const [ticketTotal, setTicketTotal] = useState<number | null>(null);
   const [ticketCaption, setTicketCaption] = useState("");
   const [dayNo, setDayNo] = useState<number | null>(null);
+  const [cashReceived, setCashReceived] = useState("");
+  const [discountInput, setDiscountInput] = useState("0");
+  const [storedDiscount, setStoredDiscount] = useState(0);
+  const [lastPaid, setLastPaid] = useState<{
+    dayNo: number | null;
+    amount: number;
+    change: number | null;
+  } | null>(null);
   const [openChips, setOpenChips] = useState<OpenChip[]>([]);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [selectedOutletId, setSelectedOutletId] = useState<string>("");
@@ -92,11 +110,12 @@ export default function FloorPanel() {
   const [outletSaving, setOutletSaving] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
   const hotelModeRef = useRef(false);
+  const autoOpenedRef = useRef(false);
   const [soldOutIds, setSoldOutIds] = useState<Set<string>>(new Set());
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
-  const [canPay, setCanPay] = useState(false);
-  const [canEditLines, setCanEditLines] = useState(false);
+  const [canPay, setCanPay] = useState<boolean | null>(null);
+  const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
   const [canSoldOut, setCanSoldOut] = useState(false);
   const busy = useRef(false);
 
@@ -109,9 +128,10 @@ export default function FloorPanel() {
       lines?: TicketLineView[];
       totalAzn?: string | number;
       dayNo?: number | null;
-      table?: { code?: string } | null;
+      table?: { code?: string; name?: string | null } | null;
       walkInLabel?: string | null;
       serviceChannel?: string | null;
+      discountPercent?: string | number | null;
       status?: string;
       released?: boolean;
     }, caption?: string) => {
@@ -122,14 +142,16 @@ export default function FloorPanel() {
         setTicketTotal(null);
         setTicketCaption("");
         setDayNo(null);
+        setStoredDiscount(0);
         return;
       }
       if (typeof data.id === "string") setActiveTicketId(data.id);
       const lines = liveLines(Array.isArray(data.lines) ? data.lines : []);
       setTicketLines(lines);
       setTicketTotal(Number(data.totalAzn) || 0);
+      if (data.discountPercent != null) setStoredDiscount(Number(data.discountPercent) || 0);
       if (typeof data.dayNo === "number") setDayNo(data.dayNo);
-      const tableCode = data.table?.code;
+      const tableCode = data.table?.name?.trim() || data.table?.code;
       const takeaway =
         data.serviceChannel === "TAKEAWAY" || data.serviceChannel === "WALK_IN";
       setTicketCaption(
@@ -148,43 +170,46 @@ export default function FloorPanel() {
     const data = await res.json().catch(() => null);
     if (!Array.isArray(data)) {
       setOpenChips([]);
-      return;
+      return [] as OpenChip[];
     }
-    setOpenChips(
-      data
-        .filter(
-          (ticket: { serviceChannel?: string | null; table?: { id?: string } | null }) =>
-            ticket.serviceChannel === "TAKEAWAY" ||
-            (ticket.serviceChannel === "WALK_IN" && !ticket.table),
-        )
-        .map(
-          (ticket: {
-            id: string;
-            dayNo?: number | null;
-            totalAzn: string | number;
-            serviceChannel?: string | null;
-            table?: { id?: string } | null;
-          }) => ({
-            id: ticket.id,
-            dayNo: ticket.dayNo ?? null,
-            totalAzn: ticket.totalAzn,
-            serviceChannel: ticket.serviceChannel,
-            tableId: ticket.table?.id ?? null,
-          }),
-        ),
-    );
+    const chips: OpenChip[] = data
+      .filter(
+        (ticket: { serviceChannel?: string | null; table?: { id?: string } | null }) =>
+          ticket.serviceChannel === "TAKEAWAY" ||
+          (ticket.serviceChannel === "WALK_IN" && !ticket.table),
+      )
+      .map(
+        (ticket: {
+          id: string;
+          dayNo?: number | null;
+          totalAzn: string | number;
+          serviceChannel?: string | null;
+          openedAt?: string | null;
+          table?: { id?: string } | null;
+        }) => ({
+          id: ticket.id,
+          dayNo: ticket.dayNo ?? null,
+          totalAzn: ticket.totalAzn,
+          serviceChannel: ticket.serviceChannel,
+          tableId: ticket.table?.id ?? null,
+          openedAt: ticket.openedAt ?? null,
+        }),
+      );
+    setOpenChips(chips);
+    return chips;
   }, []);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
     try {
-      const [tablesRes, menuRes, outletsRes, editionRes, soldRes, meRes] = await Promise.all([
+      const [tablesRes, menuRes, outletsRes, editionRes, soldRes, meRes, grantsRes] = await Promise.all([
         fetch("/api/tables"),
         fetch("/api/menu"),
         fetch("/api/outlets"),
         fetch("/api/edition"),
         fetch("/api/menu/sold-out"),
         fetch("/api/auth/me"),
+        fetch("/api/shifts/open"),
       ]);
       const tablesData = await tablesRes.json().catch(() => null);
       const menuData = await menuRes.json().catch(() => null);
@@ -193,18 +218,20 @@ export default function FloorPanel() {
         ? await editionRes.json().catch(() => null)
         : null;
       const soldData = await soldRes.json().catch(() => ({ soldOut: [] }));
-      const me = meRes.ok ? await meRes.json().catch(() => ({})) : {};
-      const perms: string[] = Array.isArray(me.permissions) ? me.permissions : [];
-      setCanPay(perms.includes(PERMISSIONS.TICKETS_PAY));
-      setCanEditLines(perms.includes(PERMISSIONS.TICKETS_LINES));
-      setCanSoldOut(perms.includes(PERMISSIONS.MENU_SOLD_OUT));
-      const kafe = editionData
-        ? String(editionData.edition ?? "").toLowerCase() === "kafe" ||
-          editionData.hotelMode === false
-        : !hotelModeRef.current;
+      const me = meRes.ok ? await meRes.json().catch(() => null) : null;
+      const grants = grantsRes.ok ? await grantsRes.json().catch(() => null) : null;
+      if (!grantsRes.ok) {
+        setCanPay(true);
+        setCanDiscount(true);
+      } else {
+        setCanPay(grants?.mayPay === false ? false : true);
+        setCanDiscount(grants?.mayDiscount === false ? false : true);
+      }
+      setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
+      const hotel = editionData ? editionData.hotelMode === true : hotelModeRef.current;
       if (editionData) {
-        hotelModeRef.current = !kafe;
-        setHotelMode(!kafe);
+        hotelModeRef.current = hotel;
+        setHotelMode(hotel);
       }
       if (!tablesRes.ok) {
         showApiError(tablesData, tc("failed"));
@@ -218,11 +245,12 @@ export default function FloorPanel() {
       );
       let banquetsData: BanquetEvent[] = [];
       let tableRows = Array.isArray(tablesData) ? tablesData : [];
-      if (!kafe) {
+      if (hotel) {
         const banquetsRes = await fetch("/api/banquets");
         banquetsData = await banquetsRes.json().catch(() => []);
       } else {
         await fetch("/api/tickets/void-empty", { method: "POST" }).catch(() => null);
+        window.dispatchEvent(new Event("era-fnb-shift-refresh"));
         const again = await fetch("/api/tables");
         const againData = await again.json().catch(() => null);
         if (Array.isArray(againData)) tableRows = againData;
@@ -257,13 +285,26 @@ export default function FloorPanel() {
         const list = Array.isArray(banquetsData) ? banquetsData : [];
         return list[0]?.id ?? "";
       });
-      await loadChips();
+      const chips = await loadChips();
+      if (!autoOpenedRef.current) {
+        autoOpenedRef.current = true;
+        const occupied = tableRows.filter(
+          (row: Table) => row.status === "OCCUPIED" && row.currentTicketId,
+        );
+        if (occupied.length + chips.length === 1) {
+          if (occupied.length === 1 && occupied[0].currentTicketId) {
+            void focusTicket(occupied[0].currentTicketId, occupied[0].name || occupied[0].code);
+          } else if (chips[0]) {
+            void focusTicket(chips[0].id, t("takeaway"));
+          }
+        }
+      }
     } catch (err) {
       showApiError(err instanceof Error ? { error: err.message } : {}, tc("failed"));
     } finally {
       setLoading(false);
     }
-  }, [loadChips, tc]);
+  }, [loadChips, t, tc]);
 
   useEffect(() => {
     void load();
@@ -329,13 +370,21 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, caption);
-    showSuccess(t("dishAdded", { name: item.name }));
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     await load({ silent: true });
   }
 
   function apiFailed(data: { error?: string; code?: string }) {
     if (data.code === "SOLD_OUT") {
       showApiError({ error: t("soldOut") });
+      return;
+    }
+    if (data.code === "SHIFT_REQUIRED") {
+      showApiError({ error: t("shiftRequired") });
+      return;
+    }
+    if (data.code === "SHIFT_STALE") {
+      showApiError({ error: t("shiftStale") });
       return;
     }
     const err = data.error?.trim() ?? "";
@@ -375,7 +424,6 @@ export default function FloorPanel() {
         return;
       }
       applyTicket({ ...data, id: activeTicketId });
-      showSuccess(t("dishAdded", { name: item.name }));
       await load({ silent: true });
       return;
     }
@@ -402,7 +450,7 @@ export default function FloorPanel() {
   }
 
   async function changeQty(line: TicketLineView, qty: number, nested = false) {
-    if ((!nested && busy.current) || !activeTicketId || !canEditLines) return;
+    if ((!nested && busy.current) || !activeTicketId) return;
     if (qty > line.qty) {
       const itemId = line.menuItemId;
       if (itemId && soldOutIds.has(itemId)) {
@@ -429,24 +477,65 @@ export default function FloorPanel() {
     }
   }
 
-  async function pay(method: "CASH" | "CARD") {
+  async function persistDiscount(): Promise<number | null> {
+    if (!activeTicketId) return null;
+    const raw = discountInput.trim() === "" ? 0 : Number(discountInput);
+    if (!Number.isFinite(raw) || raw < 0 || raw > 100) {
+      showApiError({ error: t("discountPercent") });
+      return null;
+    }
+    if (Math.abs(raw - storedDiscount) < 0.001) return ticketTotal ?? 0;
+    const res = await fetch(`/api/tickets/${activeTicketId}/discount`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discountPercent: raw }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 403) showApiError({ error: t("discountDenied") });
+      else showApiError(data, t("discountPercent"));
+      return null;
+    }
+    setStoredDiscount(raw);
+    const total = Number(data.totalAzn) || 0;
+    setTicketTotal(total);
+    return total;
+  }
+
+  async function pay(method: "CASH" | "CARD" | "TRANSFER") {
     if (busy.current || !activeTicketId || !canPay) return;
-    if (ticketLines.length === 0 || (ticketTotal ?? 0) <= 0) {
+    const persisted = await persistDiscount();
+    if (persisted == null) return;
+    if (ticketLines.length === 0 || persisted <= 0) {
       showApiError({ error: t("nothingToPay") });
+      return;
+    }
+    const due = persisted;
+    const got = Number(cashReceived);
+    if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
+      showApiError({ error: t("cashShort") });
       return;
     }
     busy.current = true;
     const ticketId = activeTicketId;
+    const paidDay = dayNo;
     try {
     const res = await fetch(`/api/tickets/${ticketId}/pay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({
+        method,
+        ...(method === "CASH" ? { cashTendered: got } : {}),
+      }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
       window.dispatchEvent(
         new CustomEvent("era-fnb-offline", {
-          detail: { kind: "pay", ticketId, payload: { method } },
+          detail: {
+            kind: "pay",
+            ticketId,
+            payload: { method, ...(method === "CASH" ? { cashTendered: got } : {}) },
+          },
         }),
       );
       showApiError({ error: t("queuedOffline") });
@@ -454,14 +543,28 @@ export default function FloorPanel() {
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (data.code === "SHIFT_REQUIRED") {
+        showApiError({ error: t("shiftRequired") });
+        return;
+      }
       showApiError(
-        data.error === "Nothing to pay" ? { error: t("nothingToPay") } : data,
+        data.error === "Nothing to pay"
+          ? { error: t("nothingToPay") }
+          : data.error === "Cash tendered is less than the check"
+            ? { error: t("cashShort") }
+            : data,
         tc("failed"),
       );
       return;
     }
-    const label = method === "CARD" ? t("payCard") : t("payCash");
-    showSuccess(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")}`);
+    const amount = Number(data.amount);
+    setLastPaid({
+      dayNo: paidDay,
+      amount,
+      change: method === "CASH" ? Number(data.changeAzn ?? Math.round((got - amount) * 100) / 100) : null,
+    });
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
+    setCashReceived("");
     setActiveTicketId(null);
     setDraft(null);
     setTicketLines([]);
@@ -485,6 +588,7 @@ export default function FloorPanel() {
       return;
     }
     showSuccess(t("ticketCancelled"));
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     applyTicket({ id: activeTicketId, status: "VOID", released: true });
     await load({ silent: true });
     } finally {
@@ -510,12 +614,12 @@ export default function FloorPanel() {
   function selectTable(table: Table) {
     if (table.status === "OCCUPIED") {
       if (table.currentTicketId) {
-        void focusTicket(table.currentTicketId, table.code);
+        void focusTicket(table.currentTicketId, table.name || table.code);
         return;
       }
       const found = openChips.find((chip) => chip.tableId === table.id);
       if (found) {
-        void focusTicket(found.id, table.code);
+        void focusTicket(found.id, table.name || table.code);
         return;
       }
       void (async () => {
@@ -528,7 +632,7 @@ export default function FloorPanel() {
             )
           : null;
         if (match?.id) {
-          await focusTicket(match.id, table.code);
+          await focusTicket(match.id, table.name || table.code);
           return;
         }
         showApiError({ error: t("occupiedHint") });
@@ -571,6 +675,7 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, walkInLabel.trim() || t("walkInDefaultLabel"));
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     showSuccess(t("walkInOpened", { total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
@@ -598,6 +703,7 @@ export default function FloorPanel() {
       return;
     }
     applyTicket(data, beo?.eventName);
+    window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     showSuccess(t("banquetOpened", { name: beo?.eventName ?? "", total: Number(data.totalAzn).toFixed(2) }));
     await load({ silent: true });
   }
@@ -619,8 +725,46 @@ export default function FloorPanel() {
       ? t("ticketHeading", { name: ticketCaption, no: dayNo })
       : ticketCaption;
 
+  useEffect(() => {
+    setDiscountInput(String(storedDiscount));
+  }, [activeTicketId, storedDiscount]);
+
+  const halls = useMemo(() => {
+    const groups = new Map<string, { label: string; sort: number }>();
+    let hasBlank = false;
+    for (const table of tables) {
+      if (!table.hall?.id) {
+        hasBlank = true;
+        continue;
+      }
+      if (!groups.has(table.hall.id)) {
+        groups.set(table.hall.id, { label: table.hall.name, sort: table.hall.sortOrder ?? 0 });
+      }
+    }
+    const named = [...groups.entries()]
+      .map(([key, row]) => ({ key, label: row.label, sort: row.sort }))
+      .sort((a, b) => a.sort - b.sort || a.label.localeCompare(b.label));
+    return { named, hasBlank, multiple: named.length + (hasBlank ? 1 : 0) > 1 };
+  }, [tables]);
+  const activeHall =
+    halls.multiple &&
+    hallFilter != null &&
+    (hallFilter === "" ? halls.hasBlank : halls.named.some((hall) => hall.key === hallFilter))
+      ? hallFilter
+      : null;
+  const visibleTables =
+    activeHall == null
+      ? tables
+      : tables.filter((table) => (activeHall === "" ? !table.hall?.id : table.hall?.id === activeHall));
+  const occupiedIn = (hallId: string | null) =>
+    tables.filter(
+      (table) =>
+        table.status === "OCCUPIED" &&
+        (hallId == null || (hallId === "" ? !table.hall?.id : table.hall?.id === hallId)),
+    ).length;
+
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:overflow-hidden">
       {outlets.length > 1 && (
         <div className={`${CARD_CLASS} mb-4 p-4`}>
           <div className="flex flex-wrap items-end gap-3">
@@ -639,7 +783,6 @@ export default function FloorPanel() {
                 ))}
               </select>
             </label>
-            <p className="text-xs text-[#7F8C8D]">{t("outletHint")}</p>
           </div>
         </div>
       )}
@@ -701,40 +844,81 @@ export default function FloorPanel() {
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
-        <div className="grid items-start gap-3 lg:grid-cols-[16rem_minmax(0,1fr)_minmax(26rem,38%)]">
-          <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-hidden">
+          <PosShiftPanel />
+          <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:overflow-hidden lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
+          <div className="flex min-h-0 flex-col gap-2 overflow-hidden">
             {!hotelMode && (
-              <>
-                <button
-                  type="button"
-                  className="w-full rounded bg-[#27AE60] px-3 py-2 text-sm font-medium text-white"
-                  onClick={startTakeaway}
-                >
-                  {t("takeaway")}
-                </button>
-                {openChips.length > 0 && (
+              <button
+                type="button"
+                className="w-full shrink-0 rounded bg-[#27AE60] px-3 py-2 text-sm font-medium text-white"
+                onClick={startTakeaway}
+              >
+                {t("takeaway")}
+              </button>
+            )}
+            {halls.multiple ? (
+              <div className="flex max-h-[4.5rem] shrink-0 flex-wrap gap-1 overflow-y-auto">
+                {[
+                  { key: null as string | null, label: t("allZones") },
+                  ...(halls.hasBlank ? [{ key: "", label: t("zoneMain") }] : []),
+                  ...halls.named,
+                ].map((hall) => {
+                  const selected = activeHall === hall.key;
+                  const count = occupiedIn(hall.key);
+                  const label = hall.label;
+                  return (
+                    <button
+                      key={hall.key ?? "all"}
+                      type="button"
+                      onClick={() => setHallFilter(hall.key)}
+                      title={label}
+                      className={`inline-flex h-8 max-w-[7.25rem] items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${
+                        selected ? "bg-[#2980B9] text-white" : "bg-white text-[#34495E] ring-1 ring-[#D5DADF]"
+                      }`}
+                    >
+                      <span className="truncate">{label}</span>
+                      {count > 0 ? (
+                        <span
+                          className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                            selected ? "bg-white text-[#2980B9]" : "bg-[#2980B9] text-white"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+            {!hotelMode && openChips.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {openChips.map((chip) => (
                       <button
                         key={chip.id}
                         type="button"
                         onClick={() => void focusTicket(chip.id, t("takeaway"))}
-                        className={`${CARD_CLASS} px-3 py-2 text-left text-sm ${
-                          chip.id === activeTicketId ? "border-[#2980B9]" : ""
+                        className={`${CARD_CLASS} flex h-24 w-full flex-col px-3 py-2 text-left ${
+                          chip.id === activeTicketId ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                         }`}
                       >
-                        <span className="font-medium">
+                        <span className="text-base font-semibold">
                           {t("takeaway")}
                           {chip.dayNo ? ` #${chip.dayNo}` : ""}
                         </span>
-                        <span className="mt-0.5 block text-[#34495E]">
-                          {Number(chip.totalAzn).toFixed(2)} {tc("azn")}
+                        <span className="mt-auto flex items-end justify-between gap-2">
+                          <span className="text-xs text-[#7F8C8D]">
+                            {chip.openedAt ? bakuTimeLabel(chip.openedAt) : ""}
+                          </span>
+                          <span className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                            {Number(chip.totalAzn).toFixed(2)} {tc("azn")}
+                          </span>
                         </span>
                       </button>
                     ))}
                   </div>
-                )}
-              </>
             )}
             <ColorLegend
               items={[
@@ -746,44 +930,58 @@ export default function FloorPanel() {
               {tables.length === 0 && (
                 <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTables")}</p>
               )}
-              {tables.map((table) => (
+              {tables.length > 0 && visibleTables.length === 0 && (
+                <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTablesInZone")}</p>
+              )}
+              {visibleTables.map((table) => (
                 <button
                   key={table.id}
                   type="button"
                   onClick={() => selectTable(table)}
-                  className={`${CARD_CLASS} p-3 text-left transition hover:border-[#2980B9] ${
-                    table.status === "OCCUPIED" ? "bg-[#F4F6F7]" : ""
+                  className={`${CARD_CLASS} flex h-24 w-full flex-col p-3 text-left transition hover:border-[#2980B9] ${
+                    table.status === "OCCUPIED" ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                   } ${draft?.kind === "table" && draft.tableId === table.id ? "border-[#2980B9]" : ""}`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-base font-semibold">{table.code}</span>
-                    <span className="rounded-lg bg-[#EBEDF0] px-2 py-0.5 text-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-base font-semibold leading-5">{table.name}</span>
+                    <span
+                      className={`shrink-0 rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                        table.status === "OCCUPIED"
+                          ? "bg-[#2980B9] text-white"
+                          : "bg-[#EBEDF0] text-[#34495E]"
+                      }`}
+                    >
                       {table.status === "OCCUPIED" ? t("statusOccupied") : t("statusFree")}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-[#7F8C8D]">{table.name}</p>
+                  <span className="mt-auto flex items-end justify-between gap-2">
+                    <span className="text-xs text-[#7F8C8D]">
+                      {table.openedAt ? bakuTimeLabel(table.openedAt) : ""}
+                    </span>
+                    {table.status === "OCCUPIED" && table.openTotalAzn != null ? (
+                      <span className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                        {Number(table.openTotalAzn).toFixed(2)} {tc("azn")}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
+            </div>
           </div>
 
-          <div className={`${CARD_CLASS} p-3`}>
-            <input
-              type="search"
-              value={menuQuery}
-              onChange={(e) => setMenuQuery(e.target.value)}
-              placeholder={t("menuSearch")}
-              className={`${INPUT_CLASS} mb-2 w-full`}
-            />
-            <div className="mb-2 flex gap-1 overflow-x-auto">
+          <div className={`${CARD_CLASS} grid min-h-0 gap-3 overflow-hidden p-3 lg:grid-cols-[12rem_minmax(0,1fr)]`}>
+            <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
               {menuCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
-                  className={`shrink-0 rounded px-2 py-1 text-xs ${
+                  className={`rounded-md px-3 py-2.5 text-left text-base font-semibold ${
                     !query && cat.id === activeCategoryId
                       ? "bg-[#2980B9] text-white"
-                      : "bg-[#EBEDF0] text-[#34495E]"
+                      : "bg-[#F4F6F7] text-[#2C3E50]"
                   }`}
                   onClick={() => {
                     setMenuQuery("");
@@ -794,106 +992,152 @@ export default function FloorPanel() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="flex min-h-0 flex-col">
+            <input
+              type="search"
+              value={menuQuery}
+              onChange={(e) => setMenuQuery(e.target.value)}
+              placeholder={t("menuSearch")}
+              className={`${INPUT_CLASS} mb-3 w-full shrink-0`}
+            />
+            <div className="min-h-0 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {visibleDishes.map((m) => (
-                <div
-                  key={m.id}
-                  className={`rounded border border-[#D5DADF] p-2 text-left text-sm ${
-                    soldOutIds.has(m.id) ? "opacity-40" : ""
+                <div key={m.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => void addDish(m)}
+                  disabled={soldOutIds.has(m.id)}
+                  className={`flex h-32 w-full flex-col items-center justify-center rounded-md border border-[#D5DADF] bg-white px-2 text-center ${
+                    soldOutIds.has(m.id) ? "opacity-40" : "hover:border-[#2980B9]"
                   }`}
                 >
+                  <span className="line-clamp-2 text-lg font-semibold leading-6 text-[#2C3E50]">
+                    {m.name}
+                  </span>
+                  <span className="mt-2 text-base font-bold tabular-nums text-[#1E8449]">
+                    {Number(m.priceAzn).toFixed(2)} {tc("azn")}
+                  </span>
+                </button>
+                {canSoldOut ? (
                   <button
                     type="button"
-                    onClick={() => void addDish(m)}
-                    disabled={soldOutIds.has(m.id)}
-                    className="w-full text-left"
+                    className="absolute right-1 top-1 rounded p-1 text-[#7F8C8D] hover:text-[#C0392B]"
+                    aria-label={soldOutIds.has(m.id) ? t("inStock") : t("soldOut")}
+                    onClick={() => void toggleSoldOut(m)}
                   >
-                    <span className="block font-medium">{m.name}</span>
-                    <span className="text-xs text-[#7F8C8D]">
-                      {Number(m.priceAzn).toFixed(2)} {tc("azn")}
-                    </span>
+                    <Ban className="h-3.5 w-3.5" />
                   </button>
-                  {canSoldOut && (
-                    <button
-                      type="button"
-                      className="mt-1 text-[10px] text-[#2980B9]"
-                      onClick={() => void toggleSoldOut(m)}
-                    >
-                      {soldOutIds.has(m.id) ? t("inStock") : t("soldOut")}
-                    </button>
-                  )}
+                ) : null}
                 </div>
               ))}
             </div>
+            </div>
+            </div>
           </div>
 
-          <div className={`${CARD_CLASS} flex min-h-[24rem] flex-col p-4`}>
-            <p className="text-xs font-semibold text-[#34495E]">{t("ticketTitle")}</p>
+          <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {t("ticketTitle")}
+            </p>
+            {lastPaid ? (
+              <p className="mt-2 text-sm text-[#1E8449]">
+                {t("paidBanner", {
+                  no: lastPaid.dayNo ?? "—",
+                  amount: lastPaid.amount.toFixed(2),
+                  change:
+                    lastPaid.change == null
+                      ? ""
+                      : t("changeDue", { amount: lastPaid.change.toFixed(2) }),
+                })}
+              </p>
+            ) : null}
             {checkOpen ? (
               <>
                 <p className="mt-1 text-base font-semibold">{heading || t("ticketTitle")}</p>
-                <ul className="mt-3 flex-1 space-y-2">
-                  {ticketLines.map((line) => (
-                    <li key={line.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 flex-1">
-                        {line.description}
-                        <span className="mt-0.5 block text-xs text-[#7F8C8D]">
-                          {(line.qty * Number(line.unitPriceAzn)).toFixed(2)} {tc("azn")}
-                        </span>
-                      </span>
-                      {canEditLines && (
-                        <span className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            className="h-7 w-7 rounded border border-[#D5DADF] text-[#34495E]"
-                            aria-label={t("qtyMinus")}
-                            onClick={() => void changeQty(line, line.qty - 1)}
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center">{line.qty}</span>
-                          <button
-                            type="button"
-                            className="h-7 w-7 rounded border border-[#D5DADF] text-[#34495E]"
-                            aria-label={t("qtyPlus")}
-                            onClick={() => void changeQty(line, line.qty + 1)}
-                          >
-                            +
-                          </button>
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
                   {ticketLines.length === 0 ? (
-                    <li className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</li>
-                  ) : null}
-                </ul>
-                <p className="mt-3 border-t border-[#D5DADF] pt-3 text-lg font-semibold">
-                  {(ticketTotal ?? 0).toFixed(2)} {tc("azn")}
-                </p>
+                    <p className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</p>
+                  ) : (
+                    <CheckLines
+                      lines={ticketLines}
+                      onQty={(line, qty) => void changeQty(line, qty)}
+                      onRemove={(line) => void changeQty(line, 0)}
+                      azn={tc("azn")}
+                      labels={{
+                        name: t("colName"),
+                        qty: t("colQty"),
+                        price: t("colPrice"),
+                        sum: t("colSum"),
+                        minus: t("qtyMinus"),
+                        plus: t("qtyPlus"),
+                        remove: t("qtyMinus"),
+                      }}
+                      discount={
+                        canDiscount
+                          ? (() => {
+                        const gross = ticketLines.reduce(
+                          (sum, line) => sum + line.qty * Number(line.unitPriceAzn),
+                          0,
+                        );
+                        const pct = Math.min(100, Math.max(0, Number(discountInput) || 0));
+                        const net = Math.round(gross * (1 - pct / 100) * 100) / 100;
+                        const amount = Math.round((gross - net) * 100) / 100;
+                        return {
+                          label: t("discountPercent"),
+                          value: discountInput,
+                          onChange: setDiscountInput,
+                          onBlur: () => void persistDiscount(),
+                          amountText: pct > 0 ? `−${amount.toFixed(2)}` : null,
+                          netText: `${net.toFixed(2)} ${tc("azn")}`,
+                        };
+                      })()
+                          : undefined
+                      }
+                      tender={
+                        canPay
+                          ? {
+                              label: t("cashReceived"),
+                              value: cashReceived,
+                              onChange: setCashReceived,
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
+                </div>
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded bg-[#27AE60] px-3 py-2 text-sm text-white"
-                      onClick={() => void pay("CASH")}
-                    >
-                      {t("payCash")}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded bg-[#2980B9] px-3 py-2 text-sm text-white"
-                      onClick={() => void pay("CARD")}
-                    >
-                      {t("payCard")}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B]"
-                      onClick={() => void cancelTicket()}
-                    >
-                      {t("cancelTicket")}
-                    </button>
+                  <div className="mt-3 shrink-0 space-y-2">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        className="rounded bg-[#27AE60] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("CASH")}
+                      >
+                        {t("payCash")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded bg-[#2980B9] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("CARD")}
+                      >
+                        {t("payCard")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded bg-[#1A5276] px-3 py-2 text-sm text-white"
+                        onClick={() => void pay("TRANSFER")}
+                      >
+                        {t("payTransfer")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B]"
+                        onClick={() => void cancelTicket()}
+                      >
+                        {t("cancelTicket")}
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
@@ -901,8 +1145,9 @@ export default function FloorPanel() {
               <p className="mt-3 text-sm text-[#7F8C8D]">{t("openTableFirst")}</p>
             )}
           </div>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

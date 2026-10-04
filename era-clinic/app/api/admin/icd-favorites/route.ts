@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  getRouteSession,
-  handleRouteError,
-  jsonError,
-  jsonOk,
-} from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   getTenantIcdFavorites,
@@ -25,8 +20,8 @@ const retireSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
     const [codes, version] = await Promise.all([
       getTenantIcdFavorites(),
       getLocalIcd10Version(),

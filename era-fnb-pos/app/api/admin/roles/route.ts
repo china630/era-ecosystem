@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { assertFnbEntitled, jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { assertAnyPermission, assertPermission } from "@/lib/auth/require";
 import {
   PERMISSIONS,
@@ -18,7 +18,6 @@ import {
   normalizeFnbRoleCode,
 } from "@/lib/auth/fnb-role-admin";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordFbAudit } from "@/lib/satellite-audit";
 import { editionForOrg } from "@/lib/auth/fnb-permission.service";
 
@@ -30,11 +29,10 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     assertAnyPermission(session, [PERMISSIONS.ACCESS_MANAGE]);
 
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const edition = await editionForOrg(organizationId);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
@@ -71,11 +69,10 @@ export async function GET(request: Request) {
 
 export async function POST(req: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(req);
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const edition = await editionForOrg(organizationId);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 

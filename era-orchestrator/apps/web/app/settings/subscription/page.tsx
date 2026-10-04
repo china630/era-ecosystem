@@ -16,6 +16,7 @@ import { fetchPublicPricingSnapshot } from "../../../lib/pricing/fetch-public-pr
 import { buildModuleLabeler } from "../../../lib/module-labels";
 import { getOrchAccessToken, orchFetch } from "../../../lib/orch-api";
 import { useAuth } from "../../../lib/auth-context";
+import { FnbEditionCard } from "../../../components/settings/fnb-edition-card";
 
 const FINANCE_GROUP = new Set([
   "finance_core",
@@ -314,6 +315,8 @@ export default function SubscriptionPage() {
           <p className="text-xs text-[#7F8C8D]">{tSub("trialHint")}</p>
         </div>
       )}
+
+      {ready && !loading ? <FnbEditionCard /> : null}
 
       {ready && !loading ? (
         <div className={`${CARD_CONTAINER_CLASS} mt-4 space-y-5 p-4`}>

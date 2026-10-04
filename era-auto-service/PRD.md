@@ -36,6 +36,8 @@ SMB СТО ведут заказ-наряды в Excel; запчасти и вы
 | Механик | `TECHNICIAN` | Работы по ЗН |
 | Менеджер СТО | `STO_MANAGER` | Боксы, персонал точки |
 
+**Variant A (AS-RBAC-01, 2026-10-04):** the codes above are system packages of grants (`screen:` / `api:` / `admin:`), edited on `/admin/access` by the holder of `admin:access_manage` (default `STO_MANAGER`). Advisor and technician keep the same full workshop package (work orders, appointments, vehicles, parts, tools, calendar); settings and access go to `STO_MANAGER`. The service-due cron stays on its platform secret. ADR [auto-domain-permissions-and-rbac](../docs/adr/auto-domain-permissions-and-rbac.md).
+
 ---
 
 ## §4. Modules

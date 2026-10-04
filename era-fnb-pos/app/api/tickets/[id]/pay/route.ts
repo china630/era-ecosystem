@@ -1,5 +1,4 @@
 import type { TicketLine } from "@prisma/client";
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runPlatformCommerceHooks } from "@era/satellite-kit";
@@ -14,14 +13,16 @@ import {
   resolveTicketSettlement,
   shouldFiscalizeAtPos,
 } from "@/lib/billing-router";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
+import { requireOpenShift } from "@/lib/open-shift";
 
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD", "TRANSFER"]),
   amount: z.number().positive().optional(),
+  cashTendered: z.number().nonnegative().optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),
   fiscalDeviceId: z.string().min(1).max(64).optional(),
@@ -32,9 +33,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
   try {
-  const session = await getSessionFromRequest(request);
+  const session = await getSatelliteSession();
   const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_PAY);
   if (denied) {
     if (denied.status === 401) return denied;
@@ -66,10 +66,21 @@ export async function POST(
 
   const liveLines = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID");
   const amount = body.amount ?? Number(ticket.totalAzn);
+  const due = Number(ticket.totalAzn);
+  let cashTendered: number | null = null;
+  let changeAzn: number | null = null;
+  if (body.method === "CASH") {
+    cashTendered = body.cashTendered ?? due;
+    if (cashTendered + 0.001 < due) {
+      return NextResponse.json({ error: "Cash tendered is less than the check" }, { status: 400 });
+    }
+    changeAzn = Math.round((cashTendered - due) * 100) / 100;
+  }
   if (liveLines.length === 0 || amount <= 0) {
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }
   const organizationId = requestOrganizationId();
+  const openShift = await requireOpenShift(ticket.outletId);
 
   const settlement = await resolveTicketSettlement(ticket);
   const payBlock = payBlockedReason(settlement);
@@ -126,7 +137,15 @@ export async function POST(
 
   await prisma.ticket.update({
     where: { id },
-    data: { status: "CLOSED", closedAt: new Date() },
+    data: {
+      status: "CLOSED",
+      closedAt: new Date(),
+      paymentMethod: body.method,
+      cashTenderedAzn: cashTendered,
+      changeAzn,
+      shiftId: openShift.id,
+      closedByName: sessionActorName(session),
+    },
   });
   await releaseTableForTicket(id, ticket.tableId);
 
@@ -216,6 +235,8 @@ export async function POST(
       ticketId: id,
       method: body.method,
       amount,
+      cashTendered,
+      changeAzn,
       status: "PAID",
       fiscal: {
         receiptId: fiscal.receiptId,

@@ -11,7 +11,9 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  useOpsNavProfile,
 } from "@era/satellite-kit/ui";
+import { PERMISSIONS as P } from "@/lib/auth/permissions";
 
 type OrderRow = {
   id: string;
@@ -28,6 +30,9 @@ export default function OrdersPage() {
   const tNav = useTranslations("nav");
   const tImp = useTranslations("importOrders");
   const tPick = useTranslations("pickLists");
+  const { profile } = useOpsNavProfile();
+  const canImportOrders = profile?.permissions.includes(P.SCREEN_ADMIN_IMPORT_ORDERS) === true;
+  const canPickLists = profile?.permissions.includes(P.SCREEN_PICK_LISTS) === true;
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -95,12 +100,16 @@ export default function OrdersPage() {
         subtitle={t("subtitle")}
         actions={
           <div className="flex gap-2">
-            <Link href="/admin/import-orders" className={SECONDARY_BUTTON_CLASS}>
-              {tImp("title")}
-            </Link>
-            <Link href="/pick-lists" className={SECONDARY_BUTTON_CLASS}>
-              {tPick("title")}
-            </Link>
+            {canImportOrders ? (
+              <Link href="/admin/import-orders" className={SECONDARY_BUTTON_CLASS}>
+                {tImp("title")}
+              </Link>
+            ) : null}
+            {canPickLists ? (
+              <Link href="/pick-lists" className={SECONDARY_BUTTON_CLASS}>
+                {tPick("title")}
+              </Link>
+            ) : null}
             <Link href="/" className={PRIMARY_BUTTON_CLASS}>
               {tNav("home")}
             </Link>

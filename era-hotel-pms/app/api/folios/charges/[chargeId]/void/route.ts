@@ -1,7 +1,7 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { voidCharge } from '@/lib/services/folio.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { prisma } from '@/lib/prisma';
@@ -12,7 +12,7 @@ export async function POST(
   { params }: { params: Promise<{ chargeId: string }> },
 ) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_VOID);
     const { chargeId } = await params;
     const before = await prisma.folioCharge.findUnique({

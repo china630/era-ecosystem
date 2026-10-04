@@ -5,7 +5,7 @@ import {
   listRevenueGlMappings,
   upsertRevenueGlMapping,
 } from '@/lib/services/revenue-gl-mapping.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 
 const upsertSchema = z.object({
@@ -15,7 +15,7 @@ const upsertSchema = z.object({
 
 export async function GET() {
   try {
-    assertMasterDataRead(await getSessionFromHeaders());
+    assertMasterDataRead(await getSatelliteSession());
     return jsonOk(serialize(await listRevenueGlMappings()));
   } catch (err) {
     return handleRouteError(err);
@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    assertMasterDataWrite(await getSessionFromHeaders());
+    assertMasterDataWrite(await getSatelliteSession());
     const body = upsertSchema.parse(await request.json());
     const updated = await upsertRevenueGlMapping(body.revenueCodeId, body.glAccountCode);
     return jsonOk(serialize(updated));

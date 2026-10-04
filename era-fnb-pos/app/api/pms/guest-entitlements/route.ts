@@ -1,16 +1,15 @@
-import { assertFnbEntitled, handleRouteError } from "@/lib/api-utils";
+import { handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { fetchGuestEntitlements } from "@/lib/pms-bridge-client";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 
 export async function GET(request: Request) {
   try {
-    await assertFnbEntitled();
     await assertHotelFnbFeature("in-house");
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.PMS_ENTITLEMENTS);
     if (denied) return denied;
 

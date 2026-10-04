@@ -6,7 +6,7 @@ import {
   updateSalesContract,
   getContractUtilization,
 } from '@/lib/services/sales-contract.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
@@ -32,8 +32,9 @@ const updateSchema = z.object({
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataRead(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataRead(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const url = new URL(_req.url);
     if (url.searchParams.get('utilization') === '1') {
@@ -47,8 +48,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireHotelModule('hotel_distribution');
-    assertMasterDataWrite(await getSessionFromHeaders());
+    const session = await getSatelliteSession();
+    assertMasterDataWrite(session);
+    await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const body = updateSchema.parse(await request.json());
     const updated = await updateSalesContract(id, body);

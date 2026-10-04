@@ -3,7 +3,7 @@ import { HotelLookupKind } from '@prisma/client';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createHotelLookup, listHotelLookups } from '@/lib/services/master-data.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertMasterDataRead, assertMasterDataWrite } from '@/lib/auth/master-data-guard';
 
 const kindSchema = z.nativeEnum(HotelLookupKind);
@@ -17,7 +17,7 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    assertMasterDataRead(await getSessionFromHeaders());
+    assertMasterDataRead(await getSatelliteSession());
     const url = new URL(request.url);
     const kindRaw = url.searchParams.get('kind');
     const activeOnly = url.searchParams.get('activeOnly') === '1';
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    assertMasterDataWrite(await getSessionFromHeaders());
+    assertMasterDataWrite(await getSatelliteSession());
     const body = createSchema.parse(await request.json());
     return jsonOk(serialize(await createHotelLookup(body)), 201);
   } catch (err) {

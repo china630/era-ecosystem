@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -26,14 +26,14 @@ const upsertSchema = z.object({
 });
 
 async function rosterForbidden(
-  session: Awaited<ReturnType<typeof getRouteSession>>,
+  session: Awaited<ReturnType<typeof getSatelliteSession>>,
 ) {
   return requireClinicPermission(session, CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER);
 }
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await rosterForbidden(session);
     if (denied) return denied;
     const url = new URL(req.url);
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await rosterForbidden(session);
     if (denied) return denied;
     const body = upsertSchema.parse(await req.json());
@@ -82,7 +82,7 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await rosterForbidden(session);
     if (denied) return denied;
     const id = new URL(req.url).searchParams.get("id");

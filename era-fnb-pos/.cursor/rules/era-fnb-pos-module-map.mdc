@@ -2,29 +2,34 @@
 
 | Route | API | Role |
 |-------|-----|------|
-| `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — menu, Take away chips, wide check with qty and cash/card |
-| `/pin` | `POST /api/auth/pin` | Cashier/waiter/kitchen PIN (not owner password) |
+| `/floor` | tickets, lines qty, pay, void, tables, outlets, sold-out | Cashier till — hall chips (`PosHall`, blank hall = main) above the table cards, vertical category rail and dishes in one block, check on the right |
+| `/sales` | `GET /api/sales?scope=today\|shift&date=&channel=&method=&shiftId=` | Sales journal (`screen:sales` — cashier and manager, not waiter). “Today” is the business day. Rows show who closed the check and the shift open time. Drawer filter lists that day’s shifts. Cash drawer is one strip per closed shift |
+| `/pin` | `POST /api/auth/terminal`, `POST /api/auth/pin` | Tablet pair (owner/manager password, no owner session) then name + PIN |
 | `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order). Outlet by `publicSlug` per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |
 | `/kds` | kds fire | `fnb_kitchen_kds` |
 | `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions | `admin:access_manage` + `screen:admin.access` — Variant A matrix |
 | `/admin/menu` | menu CRUD, `/api/menu/[id]/prices`, `/api/menu/export`, `/api/menu/suggest` | `api:menu.manage` / `screen:admin.menu` |
 | `/admin/tables` | tables | `api:tables.manage` / `screen:admin.tables` |
-| `/pin` | `POST /api/auth/pin` `{ organizationId, outletId, pin }` | PIN package grants; fail-closed if outlet unbound |
+| `/pin` | `POST /api/auth/terminal`, `POST /api/auth/pin` `{ staffId, pin }` | Paired tablet only. Five failures lock that person for 15 minutes. Çıxış and idle of a PIN session return to this name list |
 
-Hotel-only (403 when edition=kafe): banquets, in-house, room-charge, defer-to-hub, room-service.
+Hotel-only (403 `FNB_HOTEL_MODE_OFF` when `hotelMode=false`, regardless of edition): banquets, in-house, room-charge, defer-to-hub, room-service.
+
+Edition / preset / hotel mode are three fields on `FnbOrgProfile` (`src/lib/fnb-edition.ts`, ADR era-kafe-edition §1a). `GET /api/edition` → `{ edition, hotelMode, enabledPresets, allowedPresets, kitchen, activeModules }`. `/api/auth/me` also returns `edition`, `enabledPresets`, `activeModules`, `hotelMode`.
+
+Sidebar: `useOpsNavProfile` + `visibleOpsNavItems` (`@era/satellite-kit/ui`). Each row carries kit conditions: `permission` (screen grant), `preset` (`cafe` / `restaurant`), and `/kds` also `module: fnb_kitchen_kds` (`/api/auth/me` injects it when the kitchen is on). The shell reads only `/api/auth/me` and paints once. No provisional till menu.
 
 Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet/T-01. Ops tables/menu/tickets default outlet **KAFE** when present (`resolveOpsOutlet`). Public signup: orch S2S `POST /api/internal/v1/kafe/bootstrap-owner` (owner password, not PIN). Quotas: 120 ticket creates/min/org, 600 QR reads/min/IP.
 
 **SaaS:** login JWT `organizationId`; Kafe onboard upserts `SatelliteEndpoint` to pool URL (`ERA_FNB_POS_ORIGIN`). Schema+kit SHARED is in production path; live two-org field UAT remains a Product-Readiness 🟡, not a missing process. Line tables `ticket_lines`, `menu_item_prices`, `daily_menu_entries` carry `"organizationId"` (hotel column name), backfilled from the parent.
-| `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |
+| `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel (`POST /api/shifts/drop`, Z close with counted cash) | Waiter / manager |
 | `/kds` | kds fire | Kitchen |
 | `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — category rail + one dish table (name, price); search; inactive hidden; PLU/recipe/image inside dish modal |
 | `/admin/import` | `/api/import`, `/api/import/[entity]` | Manager / super-admin — Nafta cutover `#30`–`#32` (groups, cards, walk-in cheques) |
-| `/admin/tables` | `/api/tables`, `/api/tables/[id]` | Manager — static table master CRUD |
+| `/admin/tables` | `/api/halls`, `/api/halls/[id]`, `/api/tables`, `/api/tables/[id]` | Manager — halls on the left, tables of the selected hall on the right. `hallId` null is the main hall. |
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
-| `/admin/settings` | outlet config | Admin |
+| `/admin/settings` | `GET/PATCH /api/settings/business-day`, `GET/PATCH /api/settings/presets` | Café nav «Parametrlər». Business day start (Asia/Baku, default 05:00), also shown beside Z. Edition (read-only) and halls (presets, `CatalogField` MULTI, clamped to edition; 403 `FNB_PRESET_NOT_IN_EDITION`) |
 
 Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). CP staff: `POST /api/integration/staff-provision` (`enterRequestTenant`, scrypt User hash, SHA-256 PIN roster). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
 
-**SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware `x-era-organization-id`; `assertFnbEntitled` → ALS; ops stamps via `requestOrganizationId()`. Not sellable SHARED pool / no TENANT Scaffold ✅.
+**SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware (kit `createSatelliteStaffMiddleware`) `x-era-organization-id`; `getSatelliteSession` (`src/lib/session.ts`): token org, active user or PIN roster row, `requireFnbSatellite(org)`, grants from the role (one call per handler inside `try`; no process bind); ops stamps via `requestOrganizationId()`. Password logout sets `era_fnb_login_choice=password` so a paired tablet redirects to `/login`; `/pin` clears it. Not sellable SHARED pool / no TENANT Scaffold ✅.

@@ -1,11 +1,10 @@
-import { assertFnbEntitled } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
@@ -14,34 +13,38 @@ import { handleRouteError } from "@/lib/api-utils";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { attachDayNos } from "@/lib/ticket-helpers";
+import { requireCurrentShift } from "@/lib/open-shift";
 
 export async function GET(request: Request) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
-  if (denied) return denied;
-  const url = new URL(request.url);
-  const beoId = url.searchParams.get("beoId");
-  const serviceChannel = url.searchParams.get("serviceChannel");
-  const outletIdParam = url.searchParams.get("outletId");
-  const selectedOutlet = outletIdParam ?? (await getSelectedOutletId());
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
+    if (denied) return denied;
+    const url = new URL(request.url);
+    const beoId = url.searchParams.get("beoId");
+    const serviceChannel = url.searchParams.get("serviceChannel");
+    const outletIdParam = url.searchParams.get("outletId");
+    const selectedOutlet = outletIdParam ?? (await getSelectedOutletId());
 
-  const tickets = await prisma.ticket.findMany({
-    where: {
-      status: { in: ["OPEN", "HELD"] },
-      ...(beoId ? { beoId } : {}),
-      ...(serviceChannel ? { serviceChannel } : {}),
-      ...(selectedOutlet ? { outletId: selectedOutlet } : {}),
-    },
-    include: {
-      table: true,
-      lines: true,
-      outlet: { select: { code: true, name: true } },
-    },
-    orderBy: { openedAt: "desc" },
-    take: 100,
-  });
-  return NextResponse.json(await attachDayNos(tickets));
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        status: { in: ["OPEN", "HELD"] },
+        ...(beoId ? { beoId } : {}),
+        ...(serviceChannel ? { serviceChannel } : {}),
+        ...(selectedOutlet ? { outletId: selectedOutlet } : {}),
+      },
+      include: {
+        table: true,
+        lines: true,
+        outlet: { select: { code: true, name: true } },
+      },
+      orderBy: { openedAt: "desc" },
+      take: 100,
+    });
+    return NextResponse.json(await attachDayNos(tickets));
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 const createSchema = z.object({
@@ -66,8 +69,7 @@ const createSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(request);
+    const session = await getSatelliteSession();
     const denied = denyUnlessPermission(session, PERMISSIONS.TICKETS_OPEN);
     if (denied) return denied;
 
@@ -79,6 +81,7 @@ export async function POST(request: Request) {
       await assertHotelFnbFeature("hotel-ticket");
     }
     const outlet = await resolveOpsOutlet(body.outletCode);
+    await requireCurrentShift(outlet.id);
 
     const lines = body.lines ?? [];
     for (const l of lines) {
@@ -105,6 +108,7 @@ export async function POST(request: Request) {
       serviceChannel: channel,
       walkInLabel: body.walkInLabel,
       beoId: body.beoId,
+      openedByName: sessionActorName(session),
       subtotalAzn: subtotal,
       totalAzn: subtotal,
       lines: {

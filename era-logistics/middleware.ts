@@ -1,76 +1,24 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
-  authCookieName,
-  eraPathnameRequestHeaders,
-  getBearerOrCookieToken,
-  isPublicApiPath,
-  nextWithOptionalHostBoundOrg,
+  createSatelliteStaffMiddleware,
   redirectNoStore,
-  verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
+import { isPublicStaffPage, routePermissions } from "@/lib/auth/page-route-permissions";
+import { sessionHasAnyPermission } from "@/lib/auth/permission-check";
 
-const COOKIE = authCookieName();
-
-function withPath(request: NextRequest) {
-  return eraPathnameRequestHeaders(request.headers, request.nextUrl.pathname);
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const reqHeaders = withPath(request);
-
-  if (pathname.startsWith("/api")) {
-    if (isPublicApiPath(pathname)) {
-      return NextResponse.next({ request: { headers: reqHeaders } });
-    }
-    const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    try {
-      const session = await verifySatelliteSession(token);
-      const headers = new Headers(reqHeaders);
-      headers.set("x-user-id", session.sub);
-      headers.set("x-user-role", session.role);
-      if (session.organizationId) {
-        headers.set("x-era-organization-id", session.organizationId);
-      }
-      return NextResponse.next({ request: { headers } });
-    } catch {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-  }
-
-  if (
-    pathname === "/login" ||
-    pathname === "/sso/callback" ||
-    pathname === "/help" ||
-    pathname.startsWith("/help/")
-  ) {
-    if (pathname === "/login") {
-      return nextWithOptionalHostBoundOrg(
-        reqHeaders,
-        request.headers.get("x-forwarded-host") || request.headers.get("host"),
-      );
-    }
-    return NextResponse.next({ request: { headers: reqHeaders } });
-  }
-  const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
-  if (!token) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return redirectNoStore(url);
-  }
-  try {
-    await verifySatelliteSession(token);
-    return NextResponse.next({ request: { headers: reqHeaders } });
-  } catch {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return redirectNoStore(url);
-  }
-}
+export const middleware = createSatelliteStaffMiddleware<NextRequest>({
+  isPublicPage: isPublicStaffPage,
+  authorizePage: ({ request, pathname, session }) => {
+    const required = routePermissions(pathname);
+    if (required === "auth") return null;
+    if (required && sessionHasAnyPermission(session, required)) return null;
+    const forbiddenUrl = request.nextUrl.clone();
+    forbiddenUrl.pathname = "/login";
+    forbiddenUrl.search = "";
+    forbiddenUrl.searchParams.set("error", "forbidden");
+    return redirectNoStore(forbiddenUrl);
+  },
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

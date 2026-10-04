@@ -4,7 +4,7 @@ import {
   jsonOk,
   jsonError,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -35,7 +35,7 @@ const ALL_FILTER_STATUSES: ProcedureOrderStatus[] = [
 
 export async function GET(request: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_READ);
     if (denied) return denied;
 
@@ -200,7 +200,7 @@ const createSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,

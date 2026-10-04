@@ -1,6 +1,6 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { pullOtaReservations } from '@/lib/channel/ota-pull.service';
@@ -8,9 +8,9 @@ import { requireHotelModule } from '@/lib/hotel-module-gate';
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
-    await requireHotelModule('hotel_distribution');
+    await requireHotelModule('hotel_distribution', session.organizationId);
 
     const url = new URL(request.url);
     const sinceParam = url.searchParams.get('since');

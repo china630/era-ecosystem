@@ -1,7 +1,6 @@
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getAgencySession } from '@/lib/auth/agency-session';
-import { requireHotelModule } from '@/lib/hotel-module-gate';
+import { requireAgencyPortalSession } from '@/lib/auth/agency-session';
 import { prisma } from '@/lib/prisma';
 import { uploadReservationAttachmentFile } from '@/lib/services/reservation-attachments.service';
 
@@ -14,8 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireHotelModule('hotel_agency_portal');
-    const session = await getAgencySession();
+    const session = await requireAgencyPortalSession();
     const { id } = await params;
     const reservation = await prisma.reservation.findFirst({
       where: { id, agencyId: session.agencyId },

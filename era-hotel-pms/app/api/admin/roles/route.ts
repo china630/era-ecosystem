@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getSessionFromHeaders } from "@/lib/auth/session";
+import { getSatelliteSession } from "@/lib/auth/session";
 import { assertAnyPermission, assertPermission } from "@/lib/auth/require";
 import {
   PERMISSIONS,
@@ -18,7 +18,6 @@ import {
   normalizeHotelRoleCode,
 } from "@/lib/auth/hotel-role-admin";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordHotelAudit } from "@/lib/satellite-audit";
 
 const createSchema = z.object({
@@ -29,13 +28,13 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertAnyPermission(session, [
       PERMISSIONS.ACCESS_MANAGE,
       PERMISSIONS.USERS_MANAGE,
     ]);
 
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     await ensureSystemHotelRoles(prisma, organizationId);
 
     const roles = await prisma.role.findMany({
@@ -70,10 +69,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     await ensureSystemHotelRoles(prisma, organizationId);
 
     const body = createSchema.parse(await req.json());

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { suggestShareDoors } from '@/lib/services/share-assignment.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -14,7 +14,7 @@ const querySchema = z.object({
 /** Suggest compatible share doors for an unassigned share-eligible stay. */
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const url = new URL(request.url);
     const parsed = querySchema.parse({

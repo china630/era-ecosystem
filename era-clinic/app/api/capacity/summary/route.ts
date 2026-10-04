@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  runCronForEachTenant,
-  runWithSatelliteTenant,
-  satelliteRuntimeConfig,
-} from "@era/satellite-kit";
+import { runCronForEachTenant, runWithSatelliteTenant } from "@era/satellite-kit";
 import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import {
   evaluateAndPublishCapacity,
@@ -22,7 +18,7 @@ function authorize(request: Request): boolean {
 
 /**
  * Read capacity summary (bridge S2S).
- * Tenant: requires `x-era-organization-id` (no silent process bind on SHARED).
+ * Tenant: the caller's `x-era-organization-id` (service path; no process bind).
  */
 export async function GET(request: Request) {
   if (!authorize(request)) return unauthorized();
@@ -33,15 +29,6 @@ export async function GET(request: Request) {
   if (!organizationId) {
     return NextResponse.json(
       { error: "x-era-organization-id required" },
-      { status: 400 },
-    );
-  }
-  if (
-    satelliteRuntimeConfig().deploymentTopology === "SHARED" &&
-    !organizationId
-  ) {
-    return NextResponse.json(
-      { error: "x-era-organization-id required on SHARED pool" },
       { status: 400 },
     );
   }

@@ -53,7 +53,8 @@
     "inbox": "Inbox",
     "settings": "Настройки",
     "import": "Импорт",
-    "logout": "Выход"
+    "logout": "Выход",
+    "access": "Доступ"
   },
   "leads": {
     "title": "ERA CRM Field",
@@ -186,6 +187,60 @@
     "localeToggleAria": "Язык",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "У вас нет доступа к этой странице"
+  },
+  "settingsAccess": {
+    "title": "Роли и доступ",
+    "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить роли",
+    "saveFailed": "Не удалось сохранить",
+    "role": "Роль",
+    "clone": "Клонировать роль",
+    "save": "Сохранить",
+    "reset": "Сбросить к умолчаниям",
+    "delete": "Удалить роль",
+    "newCode": "Код новой роли",
+    "newName": "Название",
+    "cloneFrom": "Скопировать права из",
+    "create": "Создать",
+    "saved": "Права сохранены",
+    "resetDone": "Умолчания восстановлены",
+    "created": "Роль создана",
+    "deleted": "Роль удалена",
+    "deleteInUse": "Перед удалением переназначьте пользователей этой роли",
+    "assignTitle": "Назначить роль пользователю",
+    "assignUser": "Пользователь",
+    "assignRole": "Роль",
+    "assign": "Назначить",
+    "assigned": "Роль назначена",
+    "groups": {
+      "screens": "Экраны",
+      "leads": "Лиды и воронка",
+      "field": "Полевая работа",
+      "admin": "Администрирование"
+    },
+    "perms": {
+      "screen_home": "Главная",
+      "screen_leads": "Воронка",
+      "screen_leads_detail": "Карточка лида",
+      "screen_inbox": "Входящие",
+      "screen_visits": "Визиты",
+      "screen_admin_access": "Экран доступа",
+      "api_leads_read": "Просмотр лидов",
+      "api_leads_write": "Создание и правка лидов",
+      "api_leads_stage": "Смена этапа воронки",
+      "api_leads_convert": "Конвертация лида",
+      "api_leads_follow_up": "Планирование контакта",
+      "api_leads_assign": "Назначение ответственного",
+      "api_inbox": "Входящие сообщения",
+      "api_visits": "Регистрация визитов",
+      "api_lookups": "Справочники",
+      "api_users_list": "Список ответственных",
+      "admin_import": "Импорт лидов",
+      "admin_pipeline": "Правила воронки и настройки",
+      "admin_access_manage": "Управление ролями и доступом"
+    }
   }
 }

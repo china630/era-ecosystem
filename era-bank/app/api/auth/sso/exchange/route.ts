@@ -7,8 +7,6 @@ import {
   SATELLITE_ROLE,
   signSatelliteSession,
   ssoExchangeBodySchema,
-  satelliteOrganizationId,
-  satelliteRuntimeConfig,
 } from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
@@ -48,22 +46,6 @@ export async function POST(request: Request) {
     }
     if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
       return jsonError("SSO ticket already used", 401);
-    }
-
-    const topology = satelliteRuntimeConfig().deploymentTopology;
-    let deployOrg: string | null = null;
-    try {
-      deployOrg = satelliteOrganizationId();
-    } catch {
-      deployOrg = null;
-    }
-    if (
-      topology !== "SHARED" &&
-      deployOrg &&
-      deployOrg !== "demo-org" &&
-      body.organizationId !== deployOrg
-    ) {
-      return jsonError("SSO organization mismatch", 401);
     }
 
     enterSatelliteTenant({ organizationId: body.organizationId });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { assertFnbEntitled, jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { getSessionFromRequest } from "@/lib/session";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/session";
 import { assertPermission } from "@/lib/auth/require";
 import {
   PERMISSIONS,
@@ -17,7 +17,6 @@ import {
   templatePermissionsForReset,
 } from "@/lib/auth/ensure-system-fnb-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordFbAudit } from "@/lib/satellite-audit";
 import { editionForOrg } from "@/lib/auth/fnb-permission.service";
 
@@ -30,12 +29,11 @@ type RouteParams = { params: Promise<{ code: string }> };
 
 export async function GET(req: Request, { params }: RouteParams) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(req);
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const edition = await editionForOrg(organizationId);
     const role = await prisma.role.findFirst({
       where: { organizationId, code },
@@ -62,12 +60,11 @@ export async function GET(req: Request, { params }: RouteParams) {
 
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
-    await assertFnbEntitled();
-    const session = await getSessionFromRequest(req);
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.ACCESS_MANAGE);
 
     const { code } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = session.organizationId;
     const edition = await editionForOrg(organizationId);
     const body = patchSchema.parse(await req.json());
     const role = await prisma.role.findFirst({

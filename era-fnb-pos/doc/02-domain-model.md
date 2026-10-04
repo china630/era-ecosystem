@@ -27,6 +27,7 @@ Property
 | departmentCode | → ERP department |
 | active | |
 | propertyCode | Связь с hotel property |
+| terminalRevokedAt | Set on Z. Tablet pairing cookies issued before this moment stop listing names |
 
 ### Table (Resource)
 
@@ -34,7 +35,8 @@ Property
 |------|----------|
 | code | `T-01` … |
 | seats | Вместимость |
-| zone | Зал / терраса |
+| hallId | Зал (`PosHall`). Пусто — основной зал. Чипы на зале читают это поле |
+| zone | Старый текст. Чипы его не читают |
 | status | FREE, OCCUPIED, RESERVED, DIRTY |
 | currentTicketId | nullable |
 
@@ -65,6 +67,9 @@ Property
 | guestName | walk-in text |
 | roomChargeReservationId | при оплате на номер |
 | openedAt, closedAt | |
+| shiftId | Shift that closed the check. Set on pay. Older checks are matched by close time inside the shift interval |
+| openedByName | Staff who opened the check |
+| closedByName | Staff who took payment. Shown on the check and in the journal |
 | subtotal, discount, total | |
 | externalRef | Для печати |
 

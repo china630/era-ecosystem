@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getHotelProfile, upsertHotelProfile } from '@/lib/services/hotel.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -16,7 +16,7 @@ const schema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertAnyPermission(session, [
       PERMISSIONS.RESERVATIONS_READ,
       PERMISSIONS.MASTER_DATA_MANAGE,
@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const body = schema.parse(await request.json());
     const profile = await upsertHotelProfile(body);

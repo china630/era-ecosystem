@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
 import { findUserByCredential } from "./login-user";
-import {
-  resetOrganizationBindForTests,
-  setRuntimeOrganizationId,
-} from "../tenancy/organization-bind-core";
+import { resetOrganizationBindForTests } from "../tenancy/organization-bind-core";
 
 describe("findUserByCredential org scope", () => {
   const calls: unknown[] = [];
@@ -40,12 +37,12 @@ describe("findUserByCredential org scope", () => {
     assert.equal(where.organizationId, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
   });
 
-  it("without org uses process bind only (never cross-org)", async () => {
+  it("without org returns null even when the process bind is set", async () => {
+    const { setRuntimeOrganizationId } = await import("../tenancy/organization-bind-core");
     setRuntimeOrganizationId("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-    await findUserByCredential(mockPrisma(), "reception");
-    assert.equal(calls.length, 1);
-    const where = (calls[0] as { where: { organizationId: string } }).where;
-    assert.equal(where.organizationId, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    const row = await findUserByCredential(mockPrisma(), "reception");
+    assert.equal(row, null);
+    assert.equal(calls.length, 0);
   });
 
   it("returns null when unbound in production (no cross-org find)", async () => {

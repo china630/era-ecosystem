@@ -1,8 +1,10 @@
-import type { SessionPayload } from './jwt';
+import type { SatelliteSessionPayload } from '@era/satellite-kit';
 import { assertAnyPermission, assertPermission } from './require';
 import { PERMISSIONS } from './permissions';
 
-export function assertMasterDataRead(session: SessionPayload | null): void {
+export function assertMasterDataRead<S extends SatelliteSessionPayload>(
+  session: S | null,
+): asserts session is S {
   assertAnyPermission(session, [
     PERMISSIONS.MASTER_DATA_MANAGE,
     PERMISSIONS.RESERVATIONS_READ,
@@ -11,6 +13,8 @@ export function assertMasterDataRead(session: SessionPayload | null): void {
   ]);
 }
 
-export function assertMasterDataWrite(session: SessionPayload | null): void {
+export function assertMasterDataWrite<S extends SatelliteSessionPayload>(
+  session: S | null,
+): asserts session is S {
   assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
 }

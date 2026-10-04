@@ -1,5 +1,5 @@
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 import { userPermissions } from '@/lib/services/user.service';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
@@ -11,29 +11,18 @@ import { ensureSystemHotelRoles } from '@/lib/auth/ensure-system-hotel-roles';
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     if (!session) return jsonError('Unauthorized', 401);
 
-    const organizationId =
-      session.organizationId?.trim() ||
-      (
-        await prisma.user.findUnique({
-          where: { id: session.sub },
-          select: { organizationId: true },
-        })
-      )?.organizationId;
-    if (organizationId) {
-      // Wave 2: remap leftover legacy keys for active sessions (idempotent at v2).
-      await ensureSystemHotelRoles(prisma, organizationId);
-    }
+    const organizationId = session.organizationId;
+    // Wave 2: remap leftover legacy keys for active sessions (idempotent at v2).
+    await ensureSystemHotelRoles(prisma, organizationId);
 
     const user = await prisma.user.findUnique({
       where: { id: session.sub },
       include: { role: true },
     });
-    if (!user || user.status !== 'ACTIVE') {
-      return jsonError('Unauthorized', 401);
-    }
+    if (!user) return jsonError('Unauthorized', 401);
 
     const profile = await prisma.hotelProfile.findFirst({
       select: { name: true, organizationId: true },
@@ -56,9 +45,9 @@ export async function GET() {
       : userPermissions(user);
 
     const canRunElektrawebImport = await canRunHotelImport({
+      organizationId,
       email: user.email,
       login: user.login,
-      status: user.status,
       roleCode: user.role.code,
       permissions,
       isOwner: session.isOwner === true || user.role.code === 'BUSINESS_OWNER',

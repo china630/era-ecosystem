@@ -66,7 +66,7 @@ describe("clinic nav presets", () => {
 
   it("every nav preset code is a known preset", () => {
     for (const entry of CLINIC_NAV) {
-      for (const code of entry.presets ?? []) {
+      for (const code of entry.preset ?? []) {
         expect(Object.values(CLINIC_PRESET)).toContain(code);
       }
     }

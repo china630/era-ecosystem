@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { verifySatelliteSession, type SatelliteSessionPayload } from "@era/satellite-kit";
 import {
   enterBridgeTenant,
   getElektrawebBridgePolicy,
@@ -10,7 +11,6 @@ import {
   isElektrawebBridgeS2SRole,
   sessionMayUseBridge,
 } from "@/lib/integration/elektraweb-bridge/grants";
-import { verifyToken as verifySessionToken, type SessionPayload } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/prisma";
 import { effectiveRolePermissions } from "@/lib/auth/permissions";
 
@@ -113,9 +113,9 @@ export async function authenticateBridgeRequest(request: Request): Promise<Bridg
     // fall through to session JWT
   }
 
-  let session: SessionPayload;
+  let session: SatelliteSessionPayload;
   try {
-    session = await verifySessionToken(token);
+    session = await verifySatelliteSession(token);
   } catch {
     throw new Error("Unauthorized");
   }

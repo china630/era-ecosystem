@@ -23,7 +23,7 @@ import { effectiveRolePermissions } from "@/lib/auth/permissions";
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
-  /** Required on SHARED pool; appliance may omit (process bind). */
+  /** Required unless the host already names the organization. */
   orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 

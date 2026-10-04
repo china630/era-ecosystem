@@ -1,8 +1,9 @@
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const trips = await prisma.trip.findMany({
       where: { status: { in: ["PLANNED", "IN_TRANSIT"] } },
       include: {

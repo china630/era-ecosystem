@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { requestOrganizationId } from '@/lib/request-organization';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
@@ -21,10 +20,10 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireHotelModule('hotel_agency_portal');
-    await requireHotelModule('hotel_distribution');
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
+    await requireHotelModule('hotel_agency_portal', session.organizationId);
+    await requireHotelModule('hotel_distribution', session.organizationId);
 
     const { id } = await ctx.params;
     const agency = await prisma.agency.findUnique({ where: { id } });
@@ -50,7 +49,7 @@ export async function POST(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        organizationId: requestOrganizationId(),
+        organizationId: session.organizationId,
         email: body.email,
         fullName: body.fullName,
         password: body.password,

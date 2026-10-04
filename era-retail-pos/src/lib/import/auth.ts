@@ -1,52 +1,17 @@
-import {
-  authCookieName,
-  getBearerOrCookieToken,
-  sessionHasRole,
-  sessionIsPlatformSuperAdmin,
-  verifySatelliteSession,
-} from "@era/satellite-kit";
-import { cookies, headers } from "next/headers";
-import { assertRetailEntitled } from "@/lib/api-utils";
+import { getSatelliteSession } from "@/lib/api-utils";
+import { assertPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export type RetailImportAccess = {
   userId: string;
-  via: "platform_super_admin" | "outlet_admin";
 };
 
-const OWNER_ROLES = new Set([
-  "OUTLET_ADMIN",
-  "SHIFT_SUPERVISOR",
-  "BUSINESS_OWNER",
-  "OWNER",
-  "DIRECTOR",
-]);
-
-/** Elektraweb cutover import — platform super-admin or outlet admin. */
+/**
+ * Elektraweb cutover import — `admin:import` (seeded on supervisor and outlet
+ * admin; owner and platform super-admin bypass). The single session read for import routes.
+ */
 export async function assertRetailImportAccess(): Promise<RetailImportAccess> {
-  await assertRetailEntitled();
-
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    throw new Error("Unauthorized");
-  }
-
-  const token = getBearerOrCookieToken(cookieStore, headerStore, authCookieName());
-  if (!token) throw new Error("Unauthorized");
-
-  const session = await verifySatelliteSession(token);
-  if (sessionIsPlatformSuperAdmin(session)) {
-    return { userId: session.sub, via: "platform_super_admin" };
-  }
-
-  const allowed =
-    [...OWNER_ROLES].some((role) => sessionHasRole(session, role)) ||
-    session.isOwner === true;
-  if (!allowed) {
-    throw new Error("Forbidden: import requires platform super-admin or outlet admin");
-  }
-  return { userId: session.sub, via: "outlet_admin" };
+  const session = await getSatelliteSession();
+  assertPermission(session, PERMISSIONS.ADMIN_IMPORT);
+  return { userId: session.sub };
 }

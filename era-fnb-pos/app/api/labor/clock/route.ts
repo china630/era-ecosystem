@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError, assertFnbEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { pinMatches } from "@/lib/labor-pin";
 import { prisma } from "@/lib/prisma";
+import { getSatelliteSession } from "@/lib/session";
 
 const bodySchema = z.object({
   staffCode: z.string().min(1),
@@ -10,8 +11,8 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  await assertFnbEntitled();
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = bodySchema.parse(await req.json());
     const staff = await prisma.staffRoster.findFirst({
       where: { staffCode: body.staffCode },

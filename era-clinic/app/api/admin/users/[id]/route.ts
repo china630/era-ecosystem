@@ -10,7 +10,6 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 import { parseClinicRoleStaffKind } from "@/lib/clinic-roles";
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -32,7 +31,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (denied) return denied;
 
     const { id } = await params;
-    const organizationId = requestOrganizationId();
+    const organizationId = gate.session.organizationId;
     await ensureSystemClinicRoles(prisma, organizationId);
 
     const body = patchSchema.parse(await req.json());

@@ -1,8 +1,9 @@
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const [bays, appointments] = await Promise.all([
       prisma.bay.findMany({ include: { lifts: true }, orderBy: { code: "asc" } }),
       prisma.appointment.findMany({

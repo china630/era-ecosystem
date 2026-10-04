@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { lookupGlobalPersonByFin, resolvePersonIdentity } from '@era/satellite-kit';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { buildMdmPersonLookupBody } from '@/lib/mdm-person-lookup-body';
@@ -28,7 +28,7 @@ const schema = z
 /** Resolve MDM global person id from FIN / passport (SP7 guest linkage). */
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {

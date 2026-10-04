@@ -49,6 +49,7 @@ model Outlet {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
   tables             PosTable[]
+  halls              PosHall[]
   tickets            Ticket[]
   shifts             PosShift[]
   menuCategories     MenuCategory[]
@@ -56,6 +57,8 @@ model Outlet {
   soldOut            MenuItemSoldOut[]
   staff              StaffRoster[]
   publicSlug         String?  @unique @map("public_slug")
+  /** PINs on this point stop working until a manager pairs the tablet again. Set on Z. */
+  terminalRevokedAt  DateTime? @map("terminal_revoked_at")
 
   @@map("outlets")
   @@unique([organizationId, code])
@@ -77,10 +80,26 @@ model DeliveryInboxOrder {
   @@index([organizationId])
 }
 
+model PosHall {
+  id             String     @id @default(cuid())
+  organizationId String
+  outletId       String     @map("outlet_id")
+  name           String
+  sortOrder      Int        @default(0) @map("sort_order")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  outlet         Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tables         PosTable[]
+
+  @@index([outletId, sortOrder])
+  @@index([organizationId])
+  @@map("pos_halls")
+}
+
 model PosTable {
   id              String      @id @default(cuid())
   organizationId String @map("organization_id")
   outletId        String      @map("outlet_id")
+  hallId          String?     @map("hall_id")
   code            String
   name            String
   seats           Int         @default(4)
@@ -90,10 +109,12 @@ model PosTable {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   outlet          Outlet      @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  hall            PosHall?    @relation(fields: [hallId], references: [id], onDelete: SetNull)
   tickets         Ticket[]    @relation("TableTickets")
   reservations    TableReservation[]
 
   @@unique([outletId, code])
+  @@index([hallId])
   @@map("pos_tables")
   @@index([organizationId])
 }
@@ -119,10 +140,12 @@ model MenuCategory {
   organizationId String @map("organization_id")
   outletId  String     @map("outlet_id")
   name      String
+  code      String
   sortOrder Int        @default(0) @map("sort_order")
   items     MenuItem[]
   outlet    Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
 
+  @@unique([outletId, code])
   @@map("menu_categories")
   @@index([organizationId])
 }
@@ -217,15 +240,23 @@ model Ticket {
   subtotalAzn             Decimal      @default(0) @map("subtotal_azn") @db.Decimal(12, 2)
   discountPercent         Decimal      @default(0) @map("discount_percent") @db.Decimal(5, 2)
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
+  paymentMethod           String?      @map("payment_method")
+  cashTenderedAzn         Decimal?     @map("cash_tendered_azn") @db.Decimal(12, 2)
+  changeAzn               Decimal?     @map("change_azn") @db.Decimal(12, 2)
+  shiftId                 String?      @map("shift_id")
+  openedByName            String?      @map("opened_by_name")
+  closedByName            String?      @map("closed_by_name")
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")
   externalRef             String?      @map("external_ref")
   outlet                  Outlet       @relation(fields: [outletId], references: [id], onDelete: Cascade)
   table                   PosTable?    @relation("TableTickets", fields: [tableId], references: [id])
+  shift                   PosShift?    @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   lines                   TicketLine[]
 
   @@index([outletId, status])
   @@index([beoId])
+  @@index([shiftId])
   @@unique([organizationId, externalRef])
   @@map("tickets")
   @@index([organizationId])
@@ -259,24 +290,48 @@ model PosShift {
   openedAt    DateTime       @default(now()) @map("opened_at")
   closedAt    DateTime?      @map("closed_at")
   openingCash Decimal        @default(0) @map("opening_cash") @db.Decimal(12, 2)
+  countedCash Decimal?       @map("counted_cash") @db.Decimal(12, 2)
+  expectedCash Decimal?      @map("expected_cash") @db.Decimal(12, 2)
+  cashVariance Decimal?      @map("cash_variance") @db.Decimal(12, 2)
+  openedBy    String?        @map("opened_by")
   /** Bound fiscal KKM for this ops shift (F3). */
   fiscalDeviceId String?     @map("fiscal_device_id")
   /** Bound bank POS for card tenders (F3). */
   bankTerminalId String?     @map("bank_terminal_id")
   outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  drops       PosCashDrop[]
+  tickets     Ticket[]
 
   @@index([outletId, status])
   @@map("pos_shifts")
   @@index([organizationId])
 }
 
+model PosCashDrop {
+  id             String   @id @default(cuid())
+  organizationId String
+  shiftId        String   @map("shift_id")
+  amountAzn      Decimal  @map("amount_azn") @db.Decimal(12, 2)
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  shift          PosShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([shiftId])
+  @@index([organizationId])
+  @@map("pos_cash_drops")
+}
+
 model FnbOrgProfile {
   organizationId String   @id @map("organization_id")
-  edition        String   @default("hotel")
+  /// `kafe` (ERA Kafe) or `fnb` (full F&B). Hotel department is `hotelMode`, not an edition.
+  edition        String   @default("fnb")
   hotelMode      Boolean  @default(true) @map("hotel_mode")
+  /// Halls that run: `cafe` / `restaurant` / `banquet`, clamped to what the edition allows.
+  enabledPresets String[] @default([]) @map("enabled_presets")
   waiterPinPacks Int      @default(1) @map("waiter_pin_packs")
-  activeModules  String[] @default([]) @map("active_modules")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  activeModules    String[] @default([]) @map("active_modules")
+  businessDayStart String   @default("05:00") @map("business_day_start")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("fnb_org_profiles")
 }
@@ -293,6 +348,8 @@ model StaffRoster {
   financeEmployeeId String? @map("finance_employee_id")
   cpEmploymentId  String? @unique @map("cp_employment_id")
   active         Boolean  @default(true)
+  pinFailCount   Int      @default(0) @map("pin_fail_count")
+  pinLockedUntil DateTime? @map("pin_locked_until")
   createdAt      DateTime @default(now()) @map("created_at")
   outlet         Outlet?  @relation(fields: [outletId], references: [id])
 

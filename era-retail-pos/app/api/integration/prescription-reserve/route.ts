@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSatelliteSession, handleRouteError, jsonError } from "@/lib/api-utils";
 
 export async function POST(request: Request) {
+  try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
+  } catch (err) {
+    return handleRouteError(err);
+  }
   const body = (await request.json()) as {
     patientRef?: string;
     visitId?: string;

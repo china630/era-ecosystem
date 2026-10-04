@@ -109,6 +109,19 @@ export {
 export { SATELLITE_NOTIFICATION_LABELS_EN } from "./satellite-notification-labels";
 export { useControlPlaneSubscription, type ControlPlaneQuotaSnapshot } from "./use-control-plane-subscription";
 export { useSatelliteOpsSession, type SatelliteOpsSession } from "./use-satellite-ops-session";
+export {
+  OPS_NAV_PROFILE_REFRESH_EVENT,
+  opsNavProfileFromMe,
+  opsNavRowGated,
+  opsNavRowVisible,
+  useOpsNavProfile,
+  visibleOpsNavItems,
+  visibleOpsNavSections,
+  type OpsNavAllow,
+  type OpsNavCondition,
+  type OpsNavProfile,
+  type OpsNavStatus,
+} from "./use-ops-nav-profile";
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
 export { EraDataGrid } from "./era-data-grid";
 export {

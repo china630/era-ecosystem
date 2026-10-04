@@ -4,7 +4,6 @@ import {
   enterSatelliteTenant,
   jsonLoginHostBinding,
   readStaffLoginJson,
-  resolveSatelliteOrganizationId,
   resolveStaffLoginTenant,
   satelliteRuntimeConfig,
   signSatelliteSession,
@@ -23,7 +22,7 @@ import { hasBankPermissionBypass } from "@/lib/auth/permission-check";
 const schema = z.object({
   login: z.string().min(1),
   password: z.string().min(1),
-  /** SHARED pool: required. Appliance: omit → process bind only. */
+  /** Required unless the host already names the organization. */
   orgNo: z.string().regex(ORG_NO_RE).optional(),
 });
 
@@ -43,29 +42,20 @@ export async function POST(request: Request) {
       return jsonError(tenant.error, tenant.status);
     }
 
-    let organizationId = tenant.organizationId?.trim() || "";
+    const organizationId = tenant.organizationId?.trim() || "";
     if (!organizationId) {
-      try {
-        organizationId = resolveSatelliteOrganizationId().organizationId;
-      } catch {
-        organizationId = "";
-      }
+      return jsonError("orgNo is required", 400);
     }
 
     // Enter ALS before OpsUser lookup so the Prisma tenant extension cannot
-    // AND-merge leftover process bind (compose ERA_BANK_ORGANIZATION_ID) against
-    // a different orgNo UUID on SHARED.
-    if (organizationId) {
-      enterSatelliteTenant({ organizationId });
-    }
+    // AND-merge a leftover process bind against this organization.
+    enterSatelliteTenant({ organizationId });
 
     const username = body.login.trim();
-    const user = organizationId
-      ? await prisma.opsUser.findFirst({
-          where: { organizationId, username },
-          include: { opsRole: true },
-        })
-      : null;
+    const user = await prisma.opsUser.findFirst({
+      where: { organizationId, username },
+      include: { opsRole: true },
+    });
 
     if (
       !(await verifySatelliteUserPassword(body.password, {

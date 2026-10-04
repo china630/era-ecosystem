@@ -6,7 +6,7 @@ import {
   listBookingStays,
   updateBookingEnvelope,
 } from '@/lib/services/booking-stays.service';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -39,7 +39,7 @@ const addStaySchema = z.object({
 
 export async function GET(_req: Request, ctx: Ctx) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const { id } = await ctx.params;
     return jsonOk(serialize(await listBookingStays(id)));
@@ -50,7 +50,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 export async function PATCH(request: Request, ctx: Ctx) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await ctx.params;
     const body = patchSchema.parse(await request.json());
@@ -62,7 +62,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
 export async function POST(request: Request, ctx: Ctx) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await ctx.params;
     const body = addStaySchema.parse(await request.json());

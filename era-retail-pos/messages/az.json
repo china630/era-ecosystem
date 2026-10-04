@@ -103,7 +103,8 @@
     "localeToggleAria": "Dil",
     "localeAz": "AZ",
     "localeRu": "RU",
-    "localeEn": "EN"
+    "localeEn": "EN",
+    "forbidden": "Bu səhifəyə girişiniz yoxdur"
   },
   "admin": {
     "supplierMatch": {
@@ -133,7 +134,8 @@
     "replenishment": "Tamamlama",
     "import": "Cutover import",
     "settings": "Parametrlər",
-    "executive": "Executive"
+    "executive": "Executive",
+    "access": "Giriş hüquqları"
   },
   "cutoverImport": {
     "title": "Elektraweb import",
@@ -170,5 +172,59 @@
     "nextPhase": "Növbəti faza",
     "prevPhase": "Əvvəlki faza",
     "phaseProgress": "Faza {current} / {total}"
+  },
+  "settingsAccess": {
+    "title": "Rollar və giriş",
+    "subtitle": "Rol paketləri və onların verdiyi ekranlar və əməliyyatlar",
+    "loading": "Yüklənir…",
+    "loadFailed": "Rolları yükləmək mümkün olmadı",
+    "saveFailed": "Yadda saxlamaq mümkün olmadı",
+    "role": "Rol",
+    "clone": "Rolu klonla",
+    "save": "Yadda saxla",
+    "reset": "Standartlara qaytar",
+    "delete": "Rolu sil",
+    "newCode": "Yeni rol kodu",
+    "newName": "Ad",
+    "cloneFrom": "İcazələri buradan köçür",
+    "create": "Yarat",
+    "saved": "İcazələr yadda saxlanıldı",
+    "resetDone": "Standartlar bərpa edildi",
+    "created": "Rol yaradıldı",
+    "deleted": "Rol silindi",
+    "deleteInUse": "Silməzdən əvvəl bu rolun istifadəçilərini başqa rola keçirin",
+    "assignTitle": "İstifadəçiyə rol təyin et",
+    "assignUser": "İstifadəçi",
+    "assignRole": "Rol",
+    "assign": "Təyin et",
+    "assigned": "Rol təyin edildi",
+    "groups": {
+      "screens": "Ekranlar",
+      "sales": "Satış",
+      "shifts": "Növbələr",
+      "stock": "Anbar qalığı",
+      "admin": "İdarəetmə"
+    },
+    "perms": {
+      "screen_home": "Ana səhifə",
+      "screen_pos": "POS terminalı",
+      "screen_stock_check": "Qalıq yoxlanışı",
+      "screen_settings": "Mağaza ayarları",
+      "screen_admin_access": "Giriş hüquqları ekranı",
+      "api_receipts_sell": "Satış (çeklər, ödəniş, qaytarma, promo)",
+      "api_receipts_void_line": "Çeki və ya sətri ləğv et",
+      "api_shifts_open": "Növbəni aç",
+      "api_shifts_close": "Növbəni bağla",
+      "api_shifts_x_report": "X-hesabat",
+      "api_stock_check": "Qalığı yoxla",
+      "api_presets": "Vertikal presetlər",
+      "api_offline_sync": "Oflayn sinxronizasiya",
+      "api_fiscal_devices": "Fiskal cihazlar",
+      "api_uploads": "Qoşmaları yüklə",
+      "api_integrations_stock": "Klinika anbar inteqrasiyası",
+      "admin_import": "İdxal, təchizatçı uyğunlaşdırması, ehtiyatın bərpası",
+      "admin_settings": "Satış nöqtəsi inteqrasiyaları",
+      "admin_access_manage": "Rolları və girişi idarə et"
+    }
   }
 }

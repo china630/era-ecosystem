@@ -3,7 +3,7 @@ import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { listGroupReservationsWithBalance } from '@/lib/services/reports.service';
 import { prisma } from '@/lib/prisma';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -20,7 +20,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     return jsonOk(serialize(await listGroupReservationsWithBalance()));
   } catch (err) {
@@ -30,7 +30,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
     const group = await prisma.reservationGroup.create({

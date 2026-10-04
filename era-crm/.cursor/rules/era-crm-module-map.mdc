@@ -48,4 +48,8 @@ alwaysApply: false
 
 | Admin import UI | `app/admin/import/` | SatAdmin upload (v3.0) |
 
+| Access matrix (CRM-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `admin/users`, `auth/session/refresh-permissions`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
+
+**RBAC Variant A (CRM-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). `/api/leads` and `/api/leads/[id]` assert `api:leads.read` / `api:leads.write` per method. Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. ADR crm-domain-permissions-and-rbac.
+
 **Tenancy (CP-TENANT-01):** `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_crm")` (AC-CRM-TENANT 🟡 — not live SHARED pool).

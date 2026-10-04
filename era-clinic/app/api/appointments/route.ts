@@ -3,7 +3,7 @@ import {
   jsonOk,
   jsonError,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -38,7 +38,7 @@ const createSchema = z
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const deniedRead = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_APPOINTMENTS_READ,
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_APPOINTMENTS_WRITE,

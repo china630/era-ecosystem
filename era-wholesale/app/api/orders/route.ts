@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, assertWholesaleEntitled } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -15,7 +15,7 @@ const createSchema = z.object({
 
 export async function GET() {
   try {
-    await assertWholesaleEntitled();
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const orders = await prisma.b2BOrder.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -28,6 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const body = createSchema.parse(await req.json());
     const order = await prisma.b2BOrder.create({
       data: {

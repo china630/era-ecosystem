@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { createLostFound, listLostFound, updateLostFoundStatus } from '@/lib/services/wave-b-master.service';
@@ -22,7 +22,7 @@ const statusSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const guestId = new URL(req.url).searchParams.get('guestId') ?? undefined;
     return jsonOk(serialize(await listLostFound(guestId)));
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = statusSchema.parse(await request.json());
     return jsonOk(serialize(await updateLostFoundStatus(body.id, body.status)));
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
     if (body.photoData && !body.photoData.startsWith('data:image/')) {

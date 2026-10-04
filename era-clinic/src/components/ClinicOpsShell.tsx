@@ -11,12 +11,16 @@ import {
   SatelliteHeaderLocale,
   SatelliteNotificationBell,
   SATELLITE_NOTIFICATION_LABELS_EN,
+  useOpsNavProfile,
+  visibleOpsNavItems,
+  visibleOpsNavSections,
   type HeaderProfileMenuItem,
 } from "@era/satellite-kit/ui";
-import { useClinicAuth } from "@/hooks/useClinicAuth";
-import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
+import { CLINIC_AUTH_REFRESH_EVENT } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { buildClinicNav, CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
+import { clinicNavCatalog, CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
+
+const REFRESH_EVENTS = [CLINIC_AUTH_REFRESH_EVENT] as const;
 
 const ALL_NAV_HREFS = [...CLINIC_TOP_NAV, ...CLINIC_NAV].map((entry) => entry.href);
 
@@ -38,29 +42,35 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
   const t = useTranslations("nav");
   const tMeta = useTranslations("meta");
   const locale = useLocale() as Locale;
-  const { auth } = useClinicAuth();
-  const canAdmin = auth?.canViewClinicAdmin === true;
-  const permissions = auth?.permissions ?? [];
-  const enabledPresets = auth?.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT];
+  const { profile, status } = useOpsNavProfile({ refreshEvents: REFRESH_EVENTS });
+  const navReady = status === "ready" && profile != null;
+  const canAdmin = profile?.raw.canViewClinicAdmin === true;
   const canMasterData =
-    permissions.includes(CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA) || canAdmin;
+    (profile?.permissions ?? []).includes(CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA) || canAdmin;
 
-  const { topItems, sections } = useMemo(() => {
-    const presetEnabled = (code: ClinicPresetCode) => enabledPresets.includes(code);
-    return buildClinicNav({ permissions, presetEnabled }, (key) => t(key as "home"));
-  }, [permissions, enabledPresets, t]);
+  const catalog = useMemo(() => clinicNavCatalog((key) => t(key as "home")), [t]);
+  const topItems = useMemo(
+    () => visibleOpsNavItems(catalog.topItems, status, profile),
+    [catalog, status, profile],
+  );
+  const sections = useMemo(
+    () => visibleOpsNavSections(catalog.sections, status, profile),
+    [catalog, status, profile],
+  );
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   }
 
-  const profileItems: HeaderProfileMenuItem[] = [
-    { label: t("changePassword"), href: "/account/password" },
-    ...(canMasterData
-      ? [{ label: t("masterData"), href: "/admin/master-data" }]
-      : [{ label: t("settings"), href: "/help" }]),
-  ];
+  const profileItems: HeaderProfileMenuItem[] = navReady
+    ? [
+        { label: t("changePassword"), href: "/account/password" },
+        canMasterData
+          ? { label: t("masterData"), href: "/admin/master-data" }
+          : { label: t("settings"), href: "/help" },
+      ]
+    : [];
 
   if (pathname.startsWith("/print")) {
     return <>{children}</>;
@@ -74,8 +84,8 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
       resolveActive={resolveClinicActive}
       profile={
         <HeaderProfileMenu
-          displayName={auth?.displayName ?? tMeta("title")}
-          email={auth?.email ?? undefined}
+          displayName={navReady ? profile.displayName : ""}
+          email={profile?.email ?? undefined}
           items={profileItems}
           onLogout={() => void logout()}
           logoutLabel={t("logout", { defaultValue: "Logout" })}
@@ -84,7 +94,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
       organization={
         <HeaderOrganization
           variant="label"
-          organizationName={auth?.organizationName}
+          organizationName={profile?.organizationName}
         />
       }
       notifications={

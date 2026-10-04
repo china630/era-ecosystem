@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
 type TripTracking = Prisma.TripGetPayload<{
@@ -14,6 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     const { token } = await params;
     const trip = (await prisma.trip.findUnique({
       where: { trackingToken: token } as never,

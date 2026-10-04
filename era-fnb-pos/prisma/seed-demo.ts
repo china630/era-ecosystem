@@ -109,12 +109,14 @@ async function main() {
     create: {
       edition: "kafe",
       hotelMode: false,
+      enabledPresets: ["cafe"],
       waiterPinPacks: 1,
       activeModules: ["industry_fnb_pos", "fnb_waiter_pin"],
     },
     update: {
       edition: "kafe",
       hotelMode: false,
+      enabledPresets: ["cafe"],
       waiterPinPacks: 1,
       activeModules: ["industry_fnb_pos", "fnb_waiter_pin"],
     },
@@ -209,6 +211,7 @@ async function main() {
       data: {
         outletId: outlet.id,
         name: "Əsas",
+        code: "ESAS",
         sortOrder: 1,
       },
     }));

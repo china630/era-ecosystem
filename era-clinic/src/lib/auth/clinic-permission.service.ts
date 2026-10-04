@@ -49,19 +49,16 @@ export async function resolveEffectivePermissionsForUser(
   });
 }
 
-/** DB-authoritative — JWT permissions are ignored for API guards. */
+/**
+ * `session` comes from `getSatelliteSession`, which already reloaded the
+ * grants from the DB; the JWT copy never reaches this check.
+ */
 export async function assertClinicPermission(
   session: SatelliteSessionPayload | null,
   permission: ClinicPermission,
 ): Promise<NextResponse | null> {
   if (!session) return jsonUnauthorized();
-  const perms = await permissionsForUser(session.sub);
-  if (
-    !sessionHasClinicPermission(
-      { ...session, permissions: perms },
-      permission,
-    )
-  ) {
+  if (!sessionHasClinicPermission(session, permission)) {
     return jsonForbidden("Forbidden");
   }
   return null;

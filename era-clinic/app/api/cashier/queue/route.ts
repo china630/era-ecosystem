@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -23,7 +23,7 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_CASHIER);
     if (denied) return denied;
 

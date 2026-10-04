@@ -1,15 +1,19 @@
-import { jsonOk, jsonError, handleRouteError, assertCrmEntitled } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
 import { updateLeadSchema, toPrismaPartyData } from "@/lib/lead-schemas";
 import { syncContactRef, validatePartyForStage } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
+import { assertPermission } from "@/lib/auth/require";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await assertCrmEntitled();
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    assertPermission(session, PERMISSIONS.LEADS_READ);
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },
@@ -34,7 +38,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await assertCrmEntitled();
+    const session = await getSatelliteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    assertPermission(session, PERMISSIONS.LEADS_WRITE);
     const { id } = await params;
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return jsonError("Lead not found", 404);

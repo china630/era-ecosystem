@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import {
   listResources,
@@ -18,8 +18,8 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
-    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
     return jsonOk(await listResources());
   } catch (err) {
     return handleRouteError(err);

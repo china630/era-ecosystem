@@ -1,32 +1,36 @@
-import { assertFnbEntitled, jsonError } from "@/lib/api-utils";
+import { jsonError, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSatelliteSession } from "@/lib/session";
 import { attachDayNos } from "@/lib/ticket-helpers";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
-  const session = await getSessionFromRequest(request);
-  const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
-  if (denied) return denied;
-  const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
-    include: {
-      lines: true,
-      table: true,
-      outlet: { select: { code: true, name: true } },
-    },
-  });
-  if (!ticket) return jsonError("Ticket not found", 404);
-  const [withDay] = await attachDayNos([ticket]);
-  return NextResponse.json(withDay ?? ticket);
+  try {
+    const session = await getSatelliteSession();
+    const denied = denyUnlessAnyPermission(session, TILL_READ_TICKETS);
+    if (denied) return denied;
+    const { id } = await params;
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        lines: true,
+        table: true,
+        shift: { select: { openedAt: true } },
+        outlet: { select: { code: true, name: true } },
+      },
+    });
+    if (!ticket) return jsonError("Ticket not found", 404);
+    const [withDay] = await attachDayNos([ticket]);
+    return NextResponse.json(withDay ?? ticket);
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 const patchSchema = z.object({
@@ -39,29 +43,33 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await assertFnbEntitled();
-  const { id } = await params;
-  const body = patchSchema.parse(await request.json());
+  try {
+    if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
+    const { id } = await params;
+    const body = patchSchema.parse(await request.json());
 
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
-  if (!ticket) {
-    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    const ticket = await prisma.ticket.findUnique({ where: { id } });
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.ticket.update({
+      where: { id },
+      data: {
+        roomChargeReservationId:
+          body.roomChargeReservationId !== undefined
+            ? body.roomChargeReservationId || null
+            : body.roomNumber !== undefined
+              ? body.roomNumber || null
+              : ticket.roomChargeReservationId,
+        guestName:
+          body.guestName !== undefined ? body.guestName || null : ticket.guestName,
+      },
+      include: { lines: true, table: true, outlet: true },
+    });
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    return handleRouteError(err);
   }
-
-  const updated = await prisma.ticket.update({
-    where: { id },
-    data: {
-      roomChargeReservationId:
-        body.roomChargeReservationId !== undefined
-          ? body.roomChargeReservationId || null
-          : body.roomNumber !== undefined
-            ? body.roomNumber || null
-            : ticket.roomChargeReservationId,
-      guestName:
-        body.guestName !== undefined ? body.guestName || null : ticket.guestName,
-    },
-    include: { lines: true, table: true, outlet: true },
-  });
-
-  return NextResponse.json(updated);
 }

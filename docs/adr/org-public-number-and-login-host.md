@@ -59,9 +59,7 @@ Applies to local `POST /api/auth/login` on: clinic, hotel-pms, fnb-pos, retail-p
 
 Bank is on the **same topology ladder** (`SHARED` / `DEDICATED` / `ONPREM`) until the owner writes an exception. One-deploy = one bank is the usual **appliance**, not the login/product law. Branches / МФР are a posting dimension **inside** one licensed org — they do not replace `orgNo`. `ERA_BANK_ORGANIZATION_ID` is emergency process bind, not SHARED request tenant.
 
-**SHARED:** `orgNo` required. Regex `^[1-9][0-9]{5}$`. Resolve to UUID (local Sync cache, else S2S), then credential lookup **inside that org** (`findUserByCredential` or `OpsUser` `{ organizationId, username }`) + `enterSatelliteTenant`. JWT `organizationId` = UUID.
-
-**DEDICATED / ONPREM:** `orgNo` may be omitted; process bind UUID is the tenant. Number is still shown in control plane.
+**SHARED, DEDICATED, and ONPREM:** `orgNo` required unless the Host already names the org (ERA `{orgNo}` subdomain or a bound white-label host). Regex `^[1-9][0-9]{5}$`. Resolve to UUID (local Sync cache, else S2S), then credential lookup **inside that org** (`findUserByCredential` or `OpsUser` `{ organizationId, username }`) + `enterSatelliteTenant`. JWT `organizationId` = UUID. Without `orgNo` or a host binding, `POST /api/auth/login` returns 400. `findUserByCredential` does not fall back to the process bind. `ERA_SATELLITE_ORGANIZATION_ID` / `ERA_BANK_ORGANIZATION_ID` stay bootstrap for the process, not the staff login tenant. The number is still shown in the control plane.
 
 **Cut UUID from this surface:**
 

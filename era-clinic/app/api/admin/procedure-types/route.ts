@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, getSatelliteSession, jsonError, requireClinicPermission } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   listProcedureTypes,
   createProcedureType,
@@ -39,8 +40,17 @@ const createSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
+    const deniedMaster = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
+    );
+    const deniedTemplates = await requireClinicPermission(
+      session,
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+    );
+    if (deniedMaster && deniedTemplates) return deniedMaster;
     const locale =
       new URL(req.url).searchParams.get("locale") ??
       req.headers.get("x-era-locale") ??

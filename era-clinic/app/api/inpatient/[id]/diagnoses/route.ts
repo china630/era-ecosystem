@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  getRouteSession,
+  getSatelliteSession,
   handleRouteError,
   jsonError,
   jsonOk,
@@ -25,7 +25,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
     if (denied) return denied;
 
@@ -41,7 +41,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
     if (denied) return denied;
@@ -60,7 +60,7 @@ export async function POST(
 
 export async function DELETE(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_INPATIENT);
     if (denied) return denied;
 

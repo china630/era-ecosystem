@@ -45,16 +45,6 @@ function adminSession(overrides: Partial<Session> = {}): Session {
   };
 }
 
-function mockStoredPermissions(roleCode: string, permissions: string[]) {
-  (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-    id: "admin-1",
-    role: {
-      code: roleCode,
-      permissionsJson: JSON.stringify(permissions),
-    },
-  });
-}
-
 describe("Clinic RBAC admin matrix (Wave 2)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,24 +54,30 @@ describe("Clinic RBAC admin matrix (Wave 2)", () => {
     const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.CLINIC_ADMIN].filter(
       (p) => p !== CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
     );
-    mockStoredPermissions(CLINIC_ROLE.CLINIC_ADMIN, perms);
     const res = await assertClinicPermission(
-      adminSession(),
+      { ...adminSession(), permissions: perms },
       CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
     );
     expect(res?.status).toBe(403);
   });
 
   it("CLINIC_ADMIN with screen:admin.catalog → pass", async () => {
-    mockStoredPermissions(
-      CLINIC_ROLE.CLINIC_ADMIN,
-      DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.CLINIC_ADMIN],
-    );
     const res = await assertClinicPermission(
-      adminSession(),
+      {
+        ...adminSession(),
+        permissions: [...DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.CLINIC_ADMIN]],
+      },
       CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
     );
     expect(res).toBeNull();
+  });
+
+  it("assertClinicPermission uses session grants without a DB read", async () => {
+    await assertClinicPermission(
+      { ...adminSession(), permissions: [] },
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+    );
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
   it("sessionHasClinicPermission does not bypass on CLINIC_ADMIN role alone", () => {

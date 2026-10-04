@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runCronForEachTenant } from '@era/satellite-kit';
+import { handleRouteError, jsonError } from '@/lib/api-utils';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { prisma } from '@/lib/prisma';
@@ -25,29 +27,42 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  await requireHotelModule('hotel_service');
-  const rows = await prisma.recurringServiceSchedule.findMany({
-    orderBy: { nextDueAt: 'asc' },
-    take: 100,
-  });
-  return NextResponse.json(rows);
+  try {
+    const session = await getSatelliteSession();
+    if (!session) return jsonError('Unauthorized', 401);
+    await requireHotelModule('hotel_service', session.organizationId);
+    const rows = await prisma.recurringServiceSchedule.findMany({
+      orderBy: { nextDueAt: 'asc' },
+      take: 100,
+    });
+    return NextResponse.json(rows);
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 export async function POST(req: Request) {
-  await requireHotelModule('hotel_service');
-  const body = createSchema.parse(await req.json());
-  const row = await prisma.recurringServiceSchedule.create({
-    data: {
-      title: body.title,
-      category: body.category,
-      cadence: body.cadence,
-      nextDueAt: new Date(body.nextDueAt),
-      roomId: body.roomId,
-      location: body.location,
-      eventKey: body.eventKey,
-    },
-  });
-  return NextResponse.json(row, { status: 201 });
+  try {
+    const session = await getSatelliteSession();
+    if (!session) return jsonError('Unauthorized', 401);
+    await requireHotelModule('hotel_service', session.organizationId);
+    const body = createSchema.parse(await req.json());
+    const row = await prisma.recurringServiceSchedule.create({
+      data: {
+        organizationId: session.organizationId,
+        title: body.title,
+        category: body.category,
+        cadence: body.cadence,
+        nextDueAt: new Date(body.nextDueAt),
+        roomId: body.roomId,
+        location: body.location,
+        eventKey: body.eventKey,
+      },
+    });
+    return NextResponse.json(row, { status: 201 });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 /**

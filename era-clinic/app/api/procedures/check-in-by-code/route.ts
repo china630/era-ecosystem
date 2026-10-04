@@ -3,7 +3,7 @@ import {
   jsonError,
   jsonOk,
   handleRouteError,
-  getRouteSession,
+  getSatelliteSession,
   requireClinicPermission,
   sessionHasClinicPermission,
 } from "@/lib/api-utils";
@@ -27,7 +27,7 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getRouteSession();
+    const session = await getSatelliteSession();
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN);
     if (denied) return denied;
 

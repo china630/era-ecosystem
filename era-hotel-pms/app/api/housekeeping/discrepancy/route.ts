@@ -2,7 +2,7 @@ import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { getSessionFromHeaders } from '@/lib/auth/session';
+import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { recordDiscrepancy, escalateVisitFlags } from '@/lib/services/hk-nafta.service';
@@ -10,7 +10,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const date = new URL(request.url).searchParams.get('date') ?? todayBakuYmd();
     const rows = await prisma.hkDiscrepancy.findMany({
@@ -33,7 +33,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromHeaders();
+    const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
     if (!body.kind) {
