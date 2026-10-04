@@ -1,8 +1,3 @@
-import { Prisma } from '@prisma/client';
-import {
-  assertTenantRawOrganizationId,
-  assertTenantRawSqlMentionsOrg,
-} from '@era/satellite-kit/tenancy';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 
@@ -12,42 +7,68 @@ export type OccupancyDayRow = {
   revenue: number;
 };
 
+const SOLD_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT'] as const;
+
+function utcDay(iso: string): Date {
+  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function ymd(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function eachDay(fromIso: string, toIso: string): string[] {
+  const days: string[] = [];
+  const cursor = utcDay(fromIso);
+  const end = utcDay(toIso).getTime();
+  while (cursor.getTime() <= end) {
+    days.push(ymd(cursor));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return days;
+}
+
+/** Rooms sold and room revenue for each calendar day in [fromIso, toIso]. */
 export async function queryOccupancyDays(fromIso: string, toIso: string): Promise<OccupancyDayRow[]> {
-  const organizationId = assertTenantRawOrganizationId(requestOrganizationId());
-  const query = Prisma.sql`
-    WITH days AS (
-      SELECT generate_series(${fromIso}::date, ${toIso}::date, interval '1 day')::date AS day
-    ),
-    sold AS (
-      SELECT d.day, COUNT(*)::int AS rooms_sold
-      FROM days d
-      JOIN "Reservation" r
-        ON r."organizationId" = ${organizationId}
-       AND r.status IN ('CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT')
-       AND r."checkInDate"::date <= d.day
-       AND r."checkOutDate"::date > d.day
-      GROUP BY d.day
-    ),
-    rev AS (
-      SELECT f."businessDate"::date AS day, COALESCE(SUM(f.amount), 0)::float8 AS revenue
-      FROM "FolioCharge" f
-      WHERE f."organizationId" = ${organizationId}
-        AND f."businessDate"::date BETWEEN ${fromIso}::date AND ${toIso}::date
-      GROUP BY 1
-    )
-    SELECT d.day::text AS day,
-           COALESCE(s.rooms_sold, 0)::int AS "roomsSold",
-           COALESCE(v.revenue, 0)::float8 AS revenue
-    FROM days d
-    LEFT JOIN sold s ON s.day = d.day
-    LEFT JOIN rev v ON v.day = d.day
-    ORDER BY d.day
-  `;
-  assertTenantRawSqlMentionsOrg(query.strings.join(' '));
-  const rows = await prisma.$queryRaw<OccupancyDayRow[]>(query);
-  return rows.map((row) => ({
-    day: String(row.day).slice(0, 10),
-    roomsSold: Number(row.roomsSold) || 0,
-    revenue: Number(row.revenue) || 0,
-  }));
+  const organizationId = requestOrganizationId();
+  const from = utcDay(fromIso);
+  const toExclusive = utcDay(toIso);
+  toExclusive.setUTCDate(toExclusive.getUTCDate() + 1);
+
+  const [reservations, charges] = await Promise.all([
+    prisma.reservation.findMany({
+      where: {
+        organizationId,
+        status: { in: [...SOLD_STATUSES] },
+        checkInDate: { lt: toExclusive },
+        checkOutDate: { gt: from },
+      },
+      select: { checkInDate: true, checkOutDate: true },
+    }),
+    prisma.folioCharge.findMany({
+      where: {
+        organizationId,
+        businessDate: { gte: from, lt: toExclusive },
+      },
+      select: { businessDate: true, amount: true },
+    }),
+  ]);
+
+  return eachDay(fromIso, toIso).map((day) => {
+    const start = utcDay(day);
+    const next = new Date(start);
+    next.setUTCDate(next.getUTCDate() + 1);
+    const roomsSold = reservations.filter(
+      (row) => row.checkInDate < next && row.checkOutDate > start,
+    ).length;
+    const revenue = charges.reduce((sum, row) => {
+      if (row.businessDate < start || row.businessDate >= next) return sum;
+      return sum + Number(row.amount);
+    }, 0);
+    return { day, roomsSold, revenue };
+  });
 }
