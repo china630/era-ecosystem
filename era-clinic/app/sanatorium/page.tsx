@@ -10,6 +10,7 @@ import {
   Eye,
   LayoutGrid,
   ListChecks,
+  Plus,
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -965,6 +966,7 @@ export default function SanatoriumPage() {
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t("registerWalkIn")}
             </button>
           }

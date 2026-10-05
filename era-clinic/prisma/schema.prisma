@@ -1437,6 +1437,7 @@ model ServiceDepartment {
   nameAz         String?               @map("name_az")
   nameRu         String?               @map("name_ru")
   nameEn         String?               @map("name_en")
+  active         Boolean               @default(true)
   createdAt      DateTime              @default(now()) @map("created_at")
   updatedAt      DateTime              @updatedAt @map("updated_at")
   catalogRows    ServiceCatalogCache[]

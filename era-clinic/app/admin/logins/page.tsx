@@ -66,8 +66,8 @@ export default function ClinicAdminLoginsPage() {
   }, [debouncedQ, from, to, tc]);
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title={t("loginsTitle")} subtitle={t("loginsSubtitle")} />
+    <div className="space-y-4">
+      <PageHeader className="!mb-0" title={t("loginsTitle")} subtitle={t("loginsSubtitle")} />
       <EraListFilterBar
         resetLabel={tc("filterReset")}
         onReset={() => {

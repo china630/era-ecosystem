@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -278,8 +279,8 @@ export default function ClinicAdminAccessPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+    <div className="space-y-4">
+      <PageHeader className="!mb-0" title={t("title")} subtitle={t("subtitle")} />
 
       <div className={CARD_CONTAINER_CLASS + " p-4 space-y-4"}>
         <div className="flex flex-wrap items-end gap-3">
@@ -316,6 +317,7 @@ export default function ClinicAdminAccessPage() {
               disabled={busy || loading}
               onClick={() => setShowCreate((v) => !v)}
             >
+              <Plus className="h-4 w-4" aria-hidden />
               {t("createRole")}
             </button>
             {selectedRole && !selectedRole.isSystem ? (

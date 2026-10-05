@@ -83,8 +83,8 @@ export default function ClinicAdminUsersPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title={t("usersTitle")} subtitle={t("usersSubtitle")} />
+    <div className="space-y-4">
+      <PageHeader className="!mb-0" title={t("usersTitle")} subtitle={t("usersSubtitle")} />
       <div className={CARD_CONTAINER_CLASS + " p-4"}>
         {loading ? (
           <p className="text-sm text-muted-foreground">{tc("loading")}</p>

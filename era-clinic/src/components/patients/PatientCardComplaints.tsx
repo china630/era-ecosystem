@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -150,6 +150,7 @@ export function PatientCardComplaints({
         </h2>
         {!readOnly && resolvedEpisodeId ? (
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t("addComplaint")}
           </button>
         ) : null}

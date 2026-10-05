@@ -370,8 +370,9 @@ export default function PhysioSitesAdminPage() {
   const editing = tab === "sites" ? editSite : editList;
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <PageHeader
+        className="!mb-0"
         title={t("title")}
         subtitle={t("subtitle")}
         actions={

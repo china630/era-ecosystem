@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Eye, Trash2 } from "lucide-react";
+import { Check, Eye, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   DatePicker,
@@ -475,6 +475,7 @@ export default function LabOrdersPage() {
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t("createTitle")}
             </button>
           }

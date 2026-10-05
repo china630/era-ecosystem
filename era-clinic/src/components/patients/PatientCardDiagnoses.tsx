@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -76,6 +77,7 @@ export function PatientCardDiagnoses({
             className={PRIMARY_BUTTON_CLASS}
             onClick={() => panelRef.current?.openCreate()}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             {t("addDiagnosis")}
           </button>
         ) : null}

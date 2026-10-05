@@ -241,6 +241,7 @@ export default function PatientsPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
+          className="!mb-0"
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
@@ -253,6 +254,7 @@ export default function PatientsPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
+            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={() => setFilterState(emptyListFilters())}
           >

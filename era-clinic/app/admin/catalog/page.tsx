@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Pencil, Plus } from "lucide-react";
 import { localizedCatalogDescription } from "@era/clinic-domain";
@@ -71,6 +71,7 @@ export default function CatalogAdminPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const search = useSearchParams();
+  const router = useRouter();
   const editCode = search.get("edit");
   const openedEdit = useRef("");
   const formId = useId();
@@ -92,19 +93,43 @@ export default function CatalogAdminPage() {
   const [saving, setSaving] = useState(false);
   const [rows, setRows] = useState<CatalogRow[]>([]);
   const [deptRows, setDeptRows] = useState<
-    Array<{ code: string; nameAz: string | null; nameRu: string | null; nameEn: string | null }>
+    Array<{
+      code: string;
+      nameAz: string | null;
+      nameRu: string | null;
+      nameEn: string | null;
+      active?: boolean;
+    }>
   >([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState({
     packageIncluded: "" as PackageFilter,
-    department: "",
+    department: search.get("department") ?? "",
     kind: "" as KindFilter,
     missingListPrice: "" as MissingListFilter,
   });
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
+
+  const departmentQuery = search.get("department") ?? "";
+  const departmentQuerySeen = useRef(departmentQuery);
+  useEffect(() => {
+    if (departmentQuerySeen.current === departmentQuery) return;
+    departmentQuerySeen.current = departmentQuery;
+    setFilters((prev) => ({ ...prev, department: departmentQuery }));
+  }, [departmentQuery]);
+
+  function setDepartmentFilter(code: string) {
+    departmentQuerySeen.current = code;
+    setFilters((prev) => ({ ...prev, department: code }));
+    const params = new URLSearchParams(search.toString());
+    if (code) params.set("department", code);
+    else params.delete("department");
+    const qs = params.toString();
+    router.replace(qs ? `/admin/catalog?${qs}` : "/admin/catalog");
+  }
 
   const latestSync = rows.reduce<Date | null>((max, row) => {
     const d = new Date(row.syncedAt);
@@ -125,12 +150,21 @@ export default function CatalogAdminPage() {
         .map((row) => ({
           code: row.code,
           label: localizedDepartmentName(row, locale),
+          active: row.active !== false,
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [deptRows, locale],
   );
+  const priceDepartments = useMemo(
+    () => departments.filter((dep) => dep.active || dep.code === draft.department),
+    [departments, draft.department],
+  );
   const deptKind =
-    departments.length <= 12 ? "CLOSED_SMALL" : departments.length <= 40 ? "CLOSED_MEDIUM" : "SEARCHABLE";
+    priceDepartments.length <= 12
+      ? "CLOSED_SMALL"
+      : priceDepartments.length <= 40
+        ? "CLOSED_MEDIUM"
+        : "SEARCHABLE";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -366,6 +400,7 @@ export default function CatalogAdminPage() {
 
   function resetFilters() {
     setQ("");
+    setDepartmentFilter("");
     setFilters({
       packageIncluded: "" as PackageFilter,
       department: "",
@@ -465,12 +500,12 @@ export default function CatalogAdminPage() {
           label={t("department")}
           preset="select"
           value={filters.department}
-          onChange={(e) => setFilters({ ...filters, department: e.target.value })}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
         >
           <option value="">{t("filterDepartmentAll")}</option>
           {departments.map((dep) => (
             <option key={dep.code} value={dep.code}>
-              {dep.label}
+              {dep.active ? dep.label : `${dep.label} · ${t("departmentInactive")}`}
             </option>
           ))}
         </FieldSelect>
@@ -604,7 +639,7 @@ export default function CatalogAdminPage() {
             label={t("department")}
             value={draft.department}
             emptyLabel="—"
-            options={departments.map((dep) => ({ value: dep.code, label: dep.label }))}
+            options={priceDepartments.map((dep) => ({ value: dep.code, label: dep.label }))}
             onChange={(next) => setDraft({ ...draft, department: String(next ?? "") })}
           />
           {draft.department ? (
