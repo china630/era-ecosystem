@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
 
 export type CubeDimension = 'date' | 'department' | 'agency' | 'revenueCode' | 'roomType';
 
@@ -16,11 +17,12 @@ export interface CubeResult {
 }
 
 function toIso(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return bakuDateKey(d);
 }
 
+/** Baku midnight as an instant; charge and stay instants are compared against it. */
 function dayStart(iso: string): Date {
-  return new Date(`${iso}T00:00:00.000Z`);
+  return bakuDayBounds(iso).start;
 }
 
 function addDays(d: Date, n: number): Date {

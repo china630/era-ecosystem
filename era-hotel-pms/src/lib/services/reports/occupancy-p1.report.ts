@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { safePct, safeDiv } from '@/lib/reports/ratio';
 import {
   countDoorsUsedOnNight,
   type ShareReservationSlice,
@@ -128,7 +129,7 @@ function doorsOnNight(
 
 export interface OccupancyGraphRow {
   date: string;
-  occupancyPct: number;
+  occupancyPct: number | null;
   /** Physical doors occupied (share-aware). */
   roomsSold: number;
   roomsAvailable: number;
@@ -156,7 +157,7 @@ export async function queryOccupancyGraph(from: Date, to: Date): Promise<Occupan
   while (cursor < windowEnd) {
     const doors = doorsOnNight(reservations, cursor, maxBedByType);
     const guests = guestNightsOnNight(reservations, cursor);
-    const pct = sellable > 0 ? Math.round((doors / sellable) * 1000) / 10 : 0;
+    const pct = safePct(doors, sellable);
     rows.push({
       date: toIso(cursor),
       occupancyPct: pct,
@@ -178,7 +179,7 @@ export interface OccupancyGraphDetailRow {
   /** Doors occupied (share-aware). */
   sold: number;
   quota: number;
-  occupancyPct: number;
+  occupancyPct: number | null;
   guestNights: number;
 }
 
@@ -203,7 +204,7 @@ export async function queryOccupancyGraphDetail(from: Date, to: Date): Promise<O
     for (const rt of roomTypes) {
       const sold = doorsOnNight(reservations, cursor, maxBedByType, rt.id);
       const guests = guestNightsOnNight(reservations, cursor, rt.id);
-      const pct = rt.baseQuota > 0 ? Math.round((sold / rt.baseQuota) * 1000) / 10 : 0;
+      const pct = safePct(sold, rt.baseQuota);
       rows.push({
         date: dateStr,
         roomTypeCode: rt.code,
@@ -228,7 +229,7 @@ export interface ForecastWoRevRow {
   stayovers: number;
   sold: number;
   available: number;
-  occupancyPct: number;
+  occupancyPct: number | null;
 }
 
 export interface ForecastWoRevResult {
@@ -255,7 +256,7 @@ export async function queryForecastWoRev(from: Date, to: Date): Promise<Forecast
     const sold = doorsOnNight(reservations, cursor, maxBedByType);
     const stayovers = Math.max(0, guestNightsOnNight(reservations, cursor) - arrivals);
     const available = Math.max(sellable - sold, 0);
-    const occupancyPct = sellable > 0 ? Math.round((sold / sellable) * 1000) / 10 : 0;
+    const occupancyPct = safePct(sold, sellable);
     rows.push({ date: dateStr, arrivals, departures, stayovers, sold, available, occupancyPct });
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
@@ -314,10 +315,10 @@ export interface ForecastRow {
   departures: number;
   sold: number;
   available: number;
-  occupancyPct: number;
+  occupancyPct: number | null;
   revenue: number;
-  adr: number;
-  revPar: number;
+  adr: number | null;
+  revPar: number | null;
 }
 
 export interface ForecastResult {
@@ -352,10 +353,10 @@ export async function queryForecast(from: Date, to: Date): Promise<ForecastResul
     const departures = indexOcc(reservations).departures.get(dateStr) ?? 0;
     const sold = doorsOnNight(reservations, cursor, maxBedByType);
     const available = Math.max(sellable - sold, 0);
-    const occupancyPct = sellable > 0 ? Math.round((sold / sellable) * 1000) / 10 : 0;
+    const occupancyPct = safePct(sold, sellable);
     const revenue = revenueByDate.get(dateStr) ?? 0;
-    const adr = sold > 0 ? Math.round((revenue / sold) * 100) / 100 : 0;
-    const revPar = sellable > 0 ? Math.round((revenue / sellable) * 100) / 100 : 0;
+    const adr = safeDiv(revenue, sold);
+    const revPar = safeDiv(revenue, sellable);
     rows.push({ date: dateStr, arrivals, departures, sold, available, occupancyPct, revenue, adr, revPar });
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
@@ -367,10 +368,10 @@ export async function queryForecast(from: Date, to: Date): Promise<ForecastResul
 export interface ForecastCompareRow {
   date: string;
   currentSold: number;
-  currentOccPct: number;
+  currentOccPct: number | null;
   currentRevenue: number;
   priorSold: number;
-  priorOccPct: number;
+  priorOccPct: number | null;
   priorRevenue: number;
 }
 
@@ -458,10 +459,10 @@ export async function queryForecastCompare(from: Date, to: Date): Promise<Foreca
     rows.push({
       date: curDateStr,
       currentSold,
-      currentOccPct: sellable > 0 ? Math.round((currentSold / sellable) * 1000) / 10 : 0,
+      currentOccPct: safePct(currentSold, sellable),
       currentRevenue,
       priorSold,
-      priorOccPct: sellable > 0 ? Math.round((priorSold / sellable) * 1000) / 10 : 0,
+      priorOccPct: safePct(priorSold, sellable),
       priorRevenue,
     });
   }
@@ -478,9 +479,9 @@ export interface RoomTypeYoyRow {
   roomTypeCode: string;
   roomTypeName: string;
   currentNights: number;
-  currentOccPct: number;
+  currentOccPct: number | null;
   priorNights: number;
-  priorOccPct: number;
+  priorOccPct: number | null;
   changeNights: number;
 }
 
@@ -536,9 +537,9 @@ export async function queryRoomTypeYoy(from: Date, to: Date): Promise<RoomTypeYo
       roomTypeCode: rt.code,
       roomTypeName: rt.name,
       currentNights,
-      currentOccPct: capacity > 0 ? Math.round((currentNights / capacity) * 1000) / 10 : 0,
+      currentOccPct: safePct(currentNights, capacity),
       priorNights,
-      priorOccPct: capacity > 0 ? Math.round((priorNights / capacity) * 1000) / 10 : 0,
+      priorOccPct: safePct(priorNights, capacity),
       changeNights: currentNights - priorNights,
     };
   });

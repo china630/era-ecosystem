@@ -50,7 +50,7 @@ function walk(dir, out = []) {
   return out;
 }
 
-function loadMergedNamespaces(locale) {
+function loadMergedMessages(locale) {
   const azBase = JSON.parse(
     fs.readFileSync(path.join(commonDir, "common.az.json"), "utf8"),
   );
@@ -60,11 +60,19 @@ function loadMergedNamespaces(locale) {
   const app = JSON.parse(
     fs.readFileSync(path.join(messagesDir, `${locale}.json`), "utf8"),
   );
-  const merged =
-    locale === "az"
-      ? mergeMessages(mergeMessages(azBase, common), app)
-      : mergeMessages(mergeMessages(azBase, app), common);
-  return new Set(Object.keys(merged));
+  return locale === "az"
+    ? mergeMessages(mergeMessages(azBase, common), app)
+    : mergeMessages(mergeMessages(azBase, app), common);
+}
+
+/** `a.b` resolves like next-intl: nested object path, not a flat key. */
+function hasNamespace(messages, ns) {
+  let node = messages;
+  for (const part of ns.split(".")) {
+    if (!node || typeof node !== "object" || !(part in node)) return false;
+    node = node[part];
+  }
+  return Boolean(node) && typeof node === "object";
 }
 
 const namespaces = new Set();
@@ -84,9 +92,9 @@ const locales = fs
 
 const errors = [];
 for (const locale of locales) {
-  const known = loadMergedNamespaces(locale);
+  const messages = loadMergedMessages(locale);
   for (const ns of namespaces) {
-    if (!known.has(ns)) {
+    if (!hasNamespace(messages, ns)) {
       errors.push(`[${locale}] missing namespace "${ns}" (referenced in app/src)`);
     }
   }

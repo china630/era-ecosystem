@@ -181,6 +181,35 @@ export async function ingestElektrawebBridgeEnvelope(
         const hid = rowHotelId(row);
         if (hid != null) await assertHotelIdMatches(hid);
 
+        if (objectName === 'QA_EASYPMS_RESDETAIL') {
+          const { elektraNightLine, writeElektraNightLine } = await import(
+            '@/lib/integration/elektraweb-daily-rates'
+          );
+          const night = elektraNightLine(row);
+          if (night) {
+            const stay = await prisma.reservation.findFirst({
+              where: { externalRef: night.externalRef },
+              select: { id: true, organizationId: true },
+            });
+            if (!stay) {
+              summary.skipped += 1;
+              summary.errors.push({
+                index: i,
+                message: `Daily rate for unknown reservation ${night.externalRef}`,
+              });
+              continue;
+            }
+            await writeElektraNightLine(prisma, {
+              reservationId: stay.id,
+              organizationId: stay.organizationId,
+              night,
+            });
+            summary.accepted += 1;
+            summary.updated += 1;
+            continue;
+          }
+        }
+
         if (objectName === 'QA_EASYPMS_NOTES') {
           const r = await upsertReservationNoteFromElektrawebRow(row);
           if (r.action === 'skipped') {

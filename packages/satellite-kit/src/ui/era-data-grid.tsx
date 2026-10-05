@@ -49,6 +49,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
   layout = "flow",
   embedded = false,
   rowClassName,
+  onRowClick,
   page: controlledPage,
   pageSize: controlledPageSize,
   total: controlledTotal,
@@ -148,12 +149,14 @@ export function EraDataGrid<T extends Record<string, unknown>>({
             return (
               <tr
                 key={rowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={[
                   // Drop default bg-white when a status tint is provided (Tailwind conflict).
                   tint
                     ? "border-b border-[#D5DADF] transition-colors hover:bg-[#F1F5F9]"
                     : DATA_TABLE_TR_CLASS,
                   tint,
+                  onRowClick ? "cursor-pointer" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}

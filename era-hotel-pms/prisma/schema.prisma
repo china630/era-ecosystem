@@ -293,6 +293,15 @@ model HotelProfile {
   propertyCode             String
   organizationId           String   
   roomCapacity             Int       @default(78)
+  /// Sleeping places for Bed%; null = not set, reports print an em dash.
+  bedCapacity              Int?
+  /// Report letterhead. printName falls back to name; logoPath is relative to the server data dir.
+  printName                String?
+  address                  String?   @db.Text
+  phone                    String?
+  email                    String?
+  website                  String?
+  logoPath                 String?
   integrationSettingsJson  String?   @db.Text
   currentBusinessDate      DateTime? @db.Date
   businessDateLocked       Boolean   @default(false)
@@ -2353,6 +2362,20 @@ model CashShift {
   openedAt   DateTime        @default(now())
   closedAt   DateTime?
   pendingSettlements SettlementPendingCharge[]
+  @@index([organizationId])
+}
+
+/// Close stamp for one Front Cash row (paying department × tender) on a business date.
+/// The row itself is the day's folio postings; there is no separate "open cash" action.
+model CashDeskClose {
+  id                String   @id @default(uuid())
+  organizationId    String
+  businessDate      DateTime @db.Date
+  payingDepartment  String
+  tender            String
+  closedAt          DateTime @default(now())
+
+  @@unique([organizationId, businessDate, payingDepartment, tender])
   @@index([organizationId])
 }
 

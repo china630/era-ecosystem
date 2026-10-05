@@ -12,6 +12,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import GuestCardModal from '@/components/GuestCardModal';
+import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -29,6 +30,7 @@ export default function InHousePage() {
   const tc = useTranslations('common');
   const [rows, setRows] = useState<InHouseGuest[]>([]);
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
+  const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
 
@@ -122,13 +124,13 @@ export default function InHousePage() {
             header: t('folio'),
             render: (r) =>
               can(PERMISSIONS.FOLIO_READ) ? (
-                <Link
-                  href={`/folio/${r.reservationId}`}
+                <button
+                  type="button"
                   className="text-[#2980B9] hover:underline"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={() => setFolioReservationId(r.reservationId)}
                 >
                   {t('openFolio')}
-                </Link>
+                </button>
               ) : (
                 '—'
               ),
@@ -142,6 +144,12 @@ export default function InHousePage() {
         open={Boolean(guestCardId)}
         guestId={guestCardId}
         onClose={() => setGuestCardId(null)}
+      />
+      <ReservationCardModal
+        open={Boolean(folioReservationId)}
+        reservationId={folioReservationId}
+        initialTab="folio"
+        onClose={() => setFolioReservationId(null)}
       />
     </>
   );

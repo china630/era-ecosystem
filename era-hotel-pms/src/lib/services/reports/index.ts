@@ -2,9 +2,13 @@ import { queryTrialBalancePeriod } from './trial-balance-period.service';
 import { queryCashReport } from './cash-report.service';
 import { queryFolioTransactions } from './folio-transactions.service';
 import { queryDepartmentRevenues } from './department-revenues.service';
-import { queryDailyManagement } from './daily-management.report';
+import {
+  queryDailyManagement,
+  queryDailyManagementSummary,
+  queryDateRangeManagement,
+} from './flash.report';
 import { queryMonthlyDailyAnalysis } from './monthly-daily-analysis.report';
-import { queryInHouse } from './in-house.report';
+import { queryInHouse, queryMainCurrent } from './guest-ledger.report';
 import { queryAnnualOccupancy } from './annual-occupancy.report';
 import {
   queryOccupancyGraph,
@@ -18,12 +22,6 @@ import {
 } from './occupancy-p1.report';
 import { querySales, queryDistribution, queryQuota, queryManagerView } from './analysis-p1.report';
 import {
-  queryDailyManagementSummary,
-  queryMainCurrent,
-  queryDateRangeManagement,
-} from './daily-p1.report';
-import {
-  queryTrialBalance,
   queryDepartmentPayments,
   queryCumulativeRevenue,
   queryDeptCurrency,
@@ -71,15 +69,16 @@ function asDim(value: string | undefined, fallback: CubeDimension): CubeDimensio
   return fallback;
 }
 
+/** Single-day reports (business_date) anchor on the End date; the pack sends from = to. */
 const QUERY_MAP: Record<string, (from: string, to: string, extras?: ReportQueryExtras) => Promise<unknown>> = {
   'trial-balance-period': queryTrialBalancePeriod,
   'cash-report': queryCashReport,
   'folio-transactions': queryFolioTransactions,
   'department-revenues': queryDepartmentRevenues,
-  'daily-management': (from) => queryDailyManagement(new Date(from)),
-  'in-house': (from) => queryInHouse(new Date(from)),
-  'monthly-daily-analysis': (from, to) => queryMonthlyDailyAnalysis(new Date(from), new Date(to)),
-  'annual-occupancy': (from, to) => queryAnnualOccupancy(new Date(from), new Date(to)),
+  'daily-management': (_from, to) => queryDailyManagement(to),
+  'in-house': (_from, to) => queryInHouse(to),
+  'monthly-daily-analysis': (from, to) => queryMonthlyDailyAnalysis(from, to),
+  'annual-occupancy': (from, to) => queryAnnualOccupancy(from, to),
 
   'occupancy-graph': (from, to) => queryOccupancyGraph(new Date(from), new Date(to)),
   'occupancy-graph-detail': (from, to) => queryOccupancyGraphDetail(new Date(from), new Date(to)),
@@ -95,17 +94,17 @@ const QUERY_MAP: Record<string, (from: string, to: string, extras?: ReportQueryE
   quota: (from, to) => queryQuota(new Date(from), new Date(to)),
   'manager-view': (from, to) => queryManagerView(new Date(from), new Date(to)),
 
-  'daily-management-summary': (from) => queryDailyManagementSummary(new Date(from)),
-  'main-current': (from) => queryMainCurrent(new Date(from)),
-  'date-range-management': (from, to) => queryDateRangeManagement(new Date(from), new Date(to)),
+  'daily-management-summary': (_from, to) => queryDailyManagementSummary(to),
+  'main-current': (_from, to) => queryMainCurrent(to),
+  'date-range-management': (from, to) => queryDateRangeManagement(from, to),
 
-  'trial-balance': (from) => queryTrialBalance(new Date(from)),
-  'department-payments': (from) => queryDepartmentPayments(new Date(from)),
+  'trial-balance': (_from, to) => queryTrialBalancePeriod(to, to),
+  'department-payments': (_from, to) => queryDepartmentPayments(new Date(to)),
   'cumulative-revenue': (from, to) => queryCumulativeRevenue(new Date(from), new Date(to)),
-  'dept-currency': (from) => queryDeptCurrency(new Date(from)),
-  discounts: (from) => queryDiscounts(new Date(from)),
-  'transferred-discounts': (from) => queryTransferredDiscounts(new Date(from)),
-  'dept-pivot': (from) => queryDeptPivot(new Date(from)),
+  'dept-currency': (_from, to) => queryDeptCurrency(new Date(to)),
+  discounts: (_from, to) => queryDiscounts(new Date(to)),
+  'transferred-discounts': (_from, to) => queryTransferredDiscounts(new Date(to)),
+  'dept-pivot': (_from, to) => queryDeptPivot(new Date(to)),
 
   'agency-analysis': (from, to) => queryAgencyAnalysis(new Date(from), new Date(to)),
   'agency-monthly': (from, to) => queryAgencyMonthly(new Date(from), new Date(to)),
@@ -162,7 +161,7 @@ export { queryTrialBalancePeriod } from './trial-balance-period.service';
 export { queryCashReport } from './cash-report.service';
 export { queryFolioTransactions } from './folio-transactions.service';
 export { queryDepartmentRevenues } from './department-revenues.service';
-export { queryDailyManagement } from './daily-management.report';
+export { queryDailyManagement } from './flash.report';
 export { queryMonthlyDailyAnalysis } from './monthly-daily-analysis.report';
-export { queryInHouse } from './in-house.report';
+export { queryInHouse } from './guest-ledger.report';
 export { queryAnnualOccupancy } from './annual-occupancy.report';

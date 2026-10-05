@@ -33,6 +33,7 @@ import {
   isClinicHttpBridgeEnabled,
   notifyClinicCheckIn,
 } from '@/lib/integration/clinic-check-in-bridge';
+import { fillDailyRatesFromHeader } from '@/lib/integration/elektraweb-daily-rates';
 
 export type ReservationBridgeResult = UpsertResult & {
   events: string[];
@@ -151,7 +152,9 @@ export async function upsertReservationFromElektrawebRow(
       adults: data.adults,
       children11_6: data.children11_6,
       voucherNo: data.voucherNo,
-      totalAmount: data.totalAmount,
+      ...((await prisma.reservationDailyRate.count({ where: { reservationId: existing?.id ?? '' } })) > 0
+        ? {}
+        : { totalAmount: data.totalAmount }),
       shareNo: data.shareNo,
       // shareEligible is owned by applyElektrawebSharePair (may clear orphans).
     },
@@ -169,6 +172,16 @@ export async function upsertReservationFromElektrawebRow(
       },
     });
   }
+
+  await fillDailyRatesFromHeader(prisma, {
+    reservationId: reservation.id,
+    organizationId: reservation.organizationId,
+    checkIn: reservation.checkInDate,
+    checkOut: reservation.checkOutDate,
+    nightly:
+      num(row.MANUALDAILYRATE) ?? num(row.MANUALRATE) ?? num(row.DAILYPRICE) ?? num(row.RATEPRICE),
+    total: num(row.TOTALPRICE) ?? num(row.MCTOTALPRICE),
+  });
 
   const isSecond = isElektrawebShareSecond(shareSignals);
   await applyElektrawebSharePair(prisma, {

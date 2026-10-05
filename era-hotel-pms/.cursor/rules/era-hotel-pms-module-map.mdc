@@ -121,7 +121,8 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; modal line items + pay/void |
 | `/front-cash/folio-balances` | `GET /api/front-cash/folio-balances?tab=` | Reservation with folio balances (HOT-CASH-07) |
 | `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations on `/folio/[id]` |
-| `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal tabs + Z modal + close (HOT-CASH-06) |
+| `/front-cash/desk` | `GET/POST /api/front-cash/desk` | Day position by department × tender; close time. No open-shift button |
+| `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal tabs + Z modal (HOT-CASH-06) |
 | `/front-cash/agency-ledger` | agency ledger + statement lines + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL (HOT-CL-03); Finance re-push (HOT-CL-04) |
 | `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
 | `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
@@ -129,7 +130,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
 | `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
-| `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Filters + CSV (HOT-NA-04) |
+| `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Not in the night-audit menu. Linked from the EOD pack. Filters + CSV (HOT-NA-04) |
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
 | `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
@@ -189,11 +190,12 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Role |
 |-------|-----|------|
-| `/reports` | `GET /api/reports/{slug}`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, shared period, Show, PDF and Excel. Category hubs and old slug URLs redirect here. |
+| `/reports` | `GET /api/reports/{slug}/layout?from&to&lang[&dim]` → `{ layout }`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, Start/End always visible, period radios (manual edit clears the radio), Show, PDF and Excel. Screen, PDF and Excel render the same `ReportLayout` sections (`src/lib/reports/layouts/*`). `GET /api/reports/{slug}` is an alias of `/layout`, shadowed by static routes such as `guest-demographics`. Category hubs and old slug URLs redirect here. |
 | `/reports/analytics` | booking analytics API | Sidebar Tools (not inside the report catalog) |
-| `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Sidebar Tools. Room-type occupancy grid (not a catalog slug) |
-| `/reports/nightly-pack` | `GET /api/reports/{slug}`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit, ZIP for that date |
+| `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Under Reports (not Tools). Room-type occupancy grid, color legend (not a catalog slug) |
+| `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit (each on its `resolveDateMode` ending on that day), ZIP for that date |
 | `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |
+| `/settings/policies#letterhead` | `GET/PUT /api/hotel/profile`, `GET/POST/DELETE /api/hotel/profile/logo` | Print letterhead (name, address, phone, email, website, logo) on every report PDF/Excel and the HK floor sheet. Logo file under `HOTEL_DATA_DIR` (default `./data`). Write = `MASTER_DATA_MANAGE`. PUT is partial: an omitted field keeps its value, an empty string clears it. First save without a profile takes the active room count as `roomCapacity` and `HOTEL_PROPERTY_CODE` as the property code |
 
 ## Settings / RBAC (HOT-RBAC-01)
 
@@ -201,7 +203,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 |-------|-----|-------|
 | `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
 | `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | Local logins; workforce (`cpEmploymentId`) name and password stay on provision. Position is `User.positionTitle` |
-| `/settings/logins` | `GET /api/admin/user-logins` | Successful staff and SSO sign-ins (`UserLogin`) |
+| `/settings/logins` | `GET /api/admin/user-logins?q&from&to` | Successful staff and SSO sign-ins (`UserLogin`). `q` matches login, name, or IP; `from`/`to` are Asia/Baku days (swapped if reversed) |
 | `/settings/integration` | integration settings API | `?view=events` outbound, `?view=gl` revenue→GL, `?view=journal` outbound journal |
 | `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
 | Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |

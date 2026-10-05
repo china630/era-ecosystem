@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { KeyRound, Trash2 } from "lucide-react";
+import { KeyRound, Plus, Trash2 } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -250,19 +250,23 @@ export default function HotelAccessPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-
-      <div className={CARD_CONTAINER_CLASS + " p-4 space-y-4"}>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
           <button
             type="button"
-            className={SECONDARY_BUTTON_CLASS}
+            className={PRIMARY_BUTTON_CLASS}
             disabled={busy || loading}
             onClick={() => setShowCreate((v) => !v)}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             {t("createRole")}
           </button>
-        </div>
+        }
+      />
+
+      <div className={CARD_CONTAINER_CLASS + " p-4 space-y-4"}>
 
         {showCreate ? (
           <div className="rounded-md border border-border p-3 space-y-3 bg-muted/20">
@@ -378,6 +382,7 @@ export default function HotelAccessPage() {
       <EraModal
         open={permOpen && Boolean(selectedRole)}
         title={selectedRole ? `${selectedRole.name} (${selectedRole.code})` : t("permissions")}
+        maxWidthClass="max-w-5xl"
         onClose={() => setPermOpen(false)}
         footer={
           <EraModalFooter
@@ -413,16 +418,19 @@ export default function HotelAccessPage() {
                   return (
                     <label
                       key={perm}
-                      className="flex items-center gap-2 rounded border border-[#D5DADF] px-3 py-2 text-sm text-[#34495E]"
+                      className="flex items-start gap-2 rounded border border-[#D5DADF] px-3 py-2 text-sm text-[#34495E]"
                     >
                       <input
                         type="checkbox"
-                        className={MODAL_CHECKBOX_CLASS}
+                        className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
                         checked={draft.has(perm)}
                         disabled={busy || loading}
                         onChange={() => togglePermission(perm)}
                       />
-                      <span className="font-medium">{t(`perm_${labelKey}` as never)}</span>
+                      <span className="flex flex-col">
+                        <span className="font-medium">{t(`perm_${labelKey}` as never)}</span>
+                        <span className="font-mono text-[11px] text-[#7F8C8D]">{perm}</span>
+                      </span>
                     </label>
                   );
                 })}

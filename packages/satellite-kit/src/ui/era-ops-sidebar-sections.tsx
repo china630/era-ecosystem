@@ -76,7 +76,7 @@ function NavBranch({
   const [open, setOpen] = useState(active);
   const Icon = item.icon;
   useEffect(() => {
-    if (active) setOpen(true);
+    setOpen(active);
   }, [active]);
 
   return (
@@ -85,7 +85,7 @@ function NavBranch({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS}
+        className={`${active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS} w-full text-left`}
       >
         {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
         <span className="flex-1 truncate">{item.label}</span>
@@ -140,7 +140,7 @@ function CollapsibleSection({
   const Icon = section.icon;
 
   useEffect(() => {
-    if (sectionActive) setOpen(true);
+    setOpen(sectionActive);
   }, [sectionActive]);
 
   return (

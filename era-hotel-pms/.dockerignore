@@ -5,6 +5,7 @@ node_modules
 .env.local
 .env.*.local
 logs
+data
 doc/screens
 doc/archive
 doc/.cache

@@ -30,12 +30,48 @@ Every report screen uses one toolbar (kit `EraListFilterBar` + `DatePicker`).
 
 | EW control | ERA |
 |------------|-----|
-| Start / End Date | `from` / `to` (`DatePicker`) |
-| Period presets | `PeriodPreset`: Default · Today · Yesterday · Tomorrow · This Week · This Month · Last Month · This Year · Last Year |
-| Default | Report `date_mode` (see §3) applied to current **business date** |
+| Start / End Date | `from` / `to` (`DatePicker`). Both fields are always visible. |
+| Period presets | Radio chips (`CatalogField` `CLOSED_SMALL`): Default · Today · Yesterday · Tomorrow · This Week · This Month · Last Month · This Year · Last Year |
+| Default | Report `date_mode` (see §3). Day reports open on the current **business date**. `month_to_closed` / `year_to_closed` reports open on the 1st of the month or 1 Jan through the last **closed** day, with no radio selected. |
 | Pdf / Excel | **Export PDF** and **Export Excel** on the same period. FastReport `.frx` is not ported. |
 
-Presets rewrite `from`/`to`; they do not bypass `date_mode` semantics for nightly ZIP (pack uses closed NA date, not wall clock).
+A radio writes both `from` and `to` (This Month = 1st → last day of the month). Typing or picking either date clears the radio; the fields then hold the user range. Presets never move the nightly ZIP: the pack uses `resolveDateMode` ending on the closed NA date, so a year report in the pack ends on that day, not on 31 Dec. Pure helpers: `src/lib/reports/date-bar.ts`.
+
+### 2.1 One layout for screen, PDF and Excel
+
+- Each slug has a builder in `src/lib/reports/layouts/*` (registry `REPORT_LAYOUT_BUILDERS`). It returns a `ReportLayout`: ordered sections, each with columns (`text` / `int` / `money` / `pct` / `date` / `datetime`) and rows (`data` / `group` / `subtotal` / `total`).
+- `GET /api/reports/{slug}/layout` returns `{ layout }` for the screen (`ReportLayoutView`). The PDF (`renderLayoutSections`) and Excel (`layoutToXlsxBuffer`) render the same sections in the same order, so the three outputs carry the same columns and totals.
+- Family shapes follow the Elektra samples:
+  - Daily flash (B-01…B-07) has a KPI block with Today / Tomorrow / Month to date / Year to date columns, then revenue (Net / VAT / Total per period) and payments.
+  - Trial balance (C-01, C-08) shows Balance brought forward, then charges, then payments as negative amounts, then the closing balance.
+  - Day series (A-11, A-07) has one row per date and a period total.
+  - Cubes and pivots show one matrix section per measure.
+- Day boundaries are Asia/Baku civil days. Stays are indexed once per period (`indexStayDays` in `stay-ledger.ts`; a shared room counts once per night).
+- Cell rules:
+  - `null` in a `pct` or `money` cell prints an em dash, while `''` prints blank.
+  - ISO days in date columns print as `DD.MM.YYYY`, and the period header uses the same format.
+  - Labels come from `reportsPdf.col.*` / `sec.*` / `val.*` in en, az and ru.
+
+### 2.2 Letterhead
+
+Every report PDF, every Excel sheet, the nightly ZIP members and the HK floor sheet start with the same letterhead:
+
+- the hotel name, address, phone, email, website and logo, from `HotelProfile`;
+- the report title;
+- the period and the print time.
+
+SatAdmin edits it on `/settings/policies#letterhead`. The logo is stored under `HOTEL_DATA_DIR` (default `./data`). Empty fields stay blank and do not break the export. Excel reserves `XLSX_LETTERHEAD_ROWS` (7) rows, and the first section starts right after them.
+
+### 2.3 Occupancy ratios
+
+- Room % = rooms sold / room capacity. Bed % = guests / `bedCapacity`.
+- When the denominator is 0 or unset, the cell is `null` and prints an em dash (`safePct` / `safeDiv` in `src/lib/reports/ratio.ts`).
+- `bedCapacity` stays optional. Shared rooms raise the guest count, while capacity remains room nights. Bed % stays blank until the hotel enters a bed capacity.
+
+Known gaps:
+- The P1 services `occupancy-p1.report.ts` and `agency-p1.report.ts` still bucket by UTC date.
+- The flash has no same-day-last-year block.
+- No second currency.
 
 ---
 

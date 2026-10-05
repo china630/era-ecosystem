@@ -110,6 +110,8 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   embedded?: boolean;
   /** Extra class names on each data row (status tint, etc.). */
   rowClassName?: (row: T) => string | undefined;
+  /** Click on the row body. Buttons inside a cell should stopPropagation. */
+  onRowClick?: (row: T) => void;
   /** Server mode: current page (1-based). */
   page?: number;
   /** Server mode: page size. */

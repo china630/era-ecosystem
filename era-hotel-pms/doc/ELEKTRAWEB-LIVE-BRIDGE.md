@@ -246,7 +246,7 @@ Raw HAR = gitignored (`*.har`) — live tokens + guest PII.
 | Future / reserved | `/app/grid/res-all/reservation` | `QA_HOTEL_RESERVATION_RESERVATION` | `HOTELID=31606` |
 | In-house | `/app/grid/res-all/inHouse` | `QA_HOTEL_RESERVATION` | `RESSTATEID=3` + `HOTELID` |
 | Check-out (tab on same res-all page) | `/app/grid/res-all/…` tab | `QA_HOTEL_RESERVATION_CHECKOUT` | `HOTELID` (sample: all rows CheckOut) |
-| Card open | (from either grid) | `QA_EASYPMS_RESDETAIL` + `QA_HOTEL_RES_GUEST` | by Res Id |
+| Card open | (from either grid) | `QA_EASYPMS_RESDETAIL` + `QA_HOTEL_RES_GUEST` | by Res Id. Night rows (`STAYDATE` / `RATEPRICE` / `FIXPRICE`) become `ReservationDailyRate`. A header-only total is spread across the stay and does not replace an existing grid. |
 | Reservation Notes | `/app/grid/allresnotes` | `QA_EASYPMS_NOTES` | date range; long `NOTETYPE` + `NOTES` + `RESID` |
 
 Same browser page + tab filter is enough: each tab hits a **different Select object** (F5 alone may re-fetch only the active tab — mixed HAR with both Reservation list + CheckOut tab is fine).

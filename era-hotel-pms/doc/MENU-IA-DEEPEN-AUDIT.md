@@ -29,7 +29,7 @@ Coverage: `docs/COVERAGE_MATRIX.md`. UAT: [`UAT-SMOKE.md`](./UAT-SMOKE.md) §28.
 - Not “year closed in production”.
 - Not “all EW Night Audit reports”.
 - Not “perfect cancel/extend telemetry” (no dedicated `cancelledAt` column; classification is best-effort).
-- Not “cash shift Z equals fiscal register Z” (open-shift line only; close still on `/night-audit`).
+- Not “cash shift Z equals fiscal register Z”. Close time is on `/front-cash/desk`, not an open-shift button on night audit.
 
 ## Residual backlog (optional next)
 

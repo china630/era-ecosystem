@@ -1,10 +1,12 @@
 import { prisma } from '@/lib/prisma';
+import { bakuDateKey } from '@era/satellite-kit/time';
+import { safePct } from '@/lib/reports/ratio';
 
 export interface ThreeYearOccRow {
   month: string;
-  y0: { year: number; occPct: number; roomsSold: number };
-  y1: { year: number; occPct: number; roomsSold: number };
-  y2: { year: number; occPct: number; roomsSold: number };
+  y0: { year: number; occPct: number | null; roomsSold: number };
+  y1: { year: number; occPct: number | null; roomsSold: number };
+  y2: { year: number; occPct: number | null; roomsSold: number };
 }
 
 export interface ThreeYearRevRow {
@@ -24,7 +26,7 @@ function yearStart(year: number): Date {
 
 async function sellableRooms(): Promise<number> {
   const profile = await prisma.hotelProfile.findFirst({ select: { roomCapacity: true } });
-  if (profile?.roomCapacity && profile.roomCapacity > 0) return profile.roomCapacity;
+  if (profile) return profile.roomCapacity;
   return prisma.room.count({ where: { deleted: false, disabled: false } });
 }
 
@@ -65,7 +67,7 @@ export async function queryThreeYearOcc(_from: Date, to: Date): Promise<ThreeYea
     const cell = (year: number) => {
       const roomsSold = sold.get(`${year}-${month}`) ?? 0;
       const avail = sellable * daysIn(year, Number(month));
-      const occPct = avail > 0 ? Math.round((roomsSold / avail) * 1000) / 10 : 0;
+      const occPct = safePct(roomsSold, avail);
       return { year, occPct, roomsSold };
     };
     return { month, y0: cell(years[0]), y1: cell(years[1]), y2: cell(years[2]) };
@@ -85,7 +87,7 @@ export async function queryThreeYearRev(_from: Date, to: Date): Promise<ThreeYea
 
   const rev = new Map<string, number>();
   for (const c of charges) {
-    const key = `${c.businessDate.getUTCFullYear()}-${monthKey(c.businessDate)}`;
+    const key = bakuDateKey(c.businessDate).slice(0, 7);
     rev.set(key, (rev.get(key) ?? 0) + Number(c.amount));
   }
 
