@@ -473,7 +473,7 @@ export function PatientCardClinicalSections({
         {episodeId ? (
           <EpisodeAssignBlocks
             packageTitle={t("assignPackageTitle", { defaultValue: "Procedures in package" })}
-            extrasTitle={t("assignExtrasTitle", { defaultValue: "Additional procedures" })}
+            extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
             day1Label={t("day1AutoAssign", { defaultValue: "Day-1 auto (≤3)" })}
             readOnly={readOnly || !anamnesisOk}
             day1Busy={day1Busy}

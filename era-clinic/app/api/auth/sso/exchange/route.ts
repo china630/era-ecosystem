@@ -10,6 +10,7 @@ import {
 import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
 import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 import { prisma } from "@/lib/prisma";
+import { recordUserLogin } from "@/domain/auth/user-login.service";
 
 /**
  * SEC-SSO-02 + SEC-SSO-01: HMAC role bind + one-time signature consume.
@@ -56,6 +57,12 @@ export async function POST(request: Request) {
       select: { id: true },
     });
     const permissions = dbUser ? await permissionsForUser(dbUser.id) : [];
+    if (dbUser) {
+      await recordUserLogin(
+        { id: dbUser.id, organizationId: body.organizationId, login: user.login },
+        request,
+      );
+    }
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,

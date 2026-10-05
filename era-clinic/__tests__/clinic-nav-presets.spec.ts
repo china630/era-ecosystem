@@ -37,6 +37,8 @@ describe("clinic nav presets", () => {
     expect(links).toContain("/nurse");
     expect(links).toContain("/admin/program-templates");
     expect(links).toContain("/admin/access");
+    expect(links).toContain("/admin/users");
+    expect(links).toContain("/admin/logins");
     expect(links).not.toContain("/reception/queue");
     expect(links).not.toContain("/cashier");
     expect(links).not.toContain("/doctor");

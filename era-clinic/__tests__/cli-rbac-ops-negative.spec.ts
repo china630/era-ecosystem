@@ -168,6 +168,8 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     ];
     expect(hrefs).not.toContain("/patients");
     expect(hrefs).not.toContain("/admin/access");
+    expect(hrefs).not.toContain("/admin/users");
+    expect(hrefs).not.toContain("/admin/logins");
   });
 });
 

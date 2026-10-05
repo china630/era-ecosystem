@@ -433,6 +433,12 @@ export type PackageAssignedAgg = {
   paramsLines: string[];
   /** Balance line burned (pool code or procedureCode). */
   packageQuotaCode: string;
+  /** First order in the group, copied onto a paid overflow line. */
+  note?: string;
+  physioFields?: Record<string, unknown> | null;
+  siteIds?: string[];
+  siteApplyMode?: "TURN" | "TOGETHER" | null;
+  siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
 };
 
 /**
@@ -726,6 +732,22 @@ export async function getPackageAssignSnapshot(
         paramsLabel: nextLines.join(" · "),
         paramsLines: nextLines,
         packageQuotaCode: quotaCodeOf(o),
+        note: o.note ?? "",
+        physioFields:
+          o.physioFields && typeof o.physioFields === "object" && !Array.isArray(o.physioFields)
+            ? (o.physioFields as Record<string, unknown>)
+            : null,
+        siteIds: o.sites.map((s) => s.siteId),
+        siteApplyMode:
+          o.siteApplyMode === "TURN" || o.siteApplyMode === "TOGETHER" ? o.siteApplyMode : null,
+        siteLaterality: Object.fromEntries(
+          o.sites.map((s) => [
+            s.siteId,
+            s.laterality === "LEFT" || s.laterality === "RIGHT" || s.laterality === "BOTH"
+              ? s.laterality
+              : null,
+          ]),
+        ),
       });
     }
   }

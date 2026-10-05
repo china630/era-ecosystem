@@ -11,6 +11,7 @@ import {
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
 import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
@@ -214,8 +215,9 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
 }
 
 /**
- * Reception Pay: all-or-nothing — charge all → place all → ticket all.
- * Requires paymentReceiptRef (guest payment proof). Walk-in must have receipt; in-house may use folio.
+ * Reception Pay: all-or-nothing — one system receipt for the batch, then charge all → place all.
+ * The receipt number is yyyymmdd-xxx (Baku day, per organization). It is written on every order
+ * and appended to the folio / Elektraweb description.
  * On any charge failure: leave all as PENDING_PAY (rollback status flips).
  */
 export async function payAndScheduleExtras(
@@ -223,20 +225,13 @@ export async function payAndScheduleExtras(
   actorUserId: string,
   organizationId?: string | null,
   opts?: { paymentReceiptRef?: string | null },
-): Promise<{ printPaths: string[]; placed: number; orders: unknown[] }> {
+): Promise<{ printPaths: string[]; placed: number; orders: unknown[]; paymentReceiptRef: string }> {
   if (!orderIds.length) {
     throw new PackageAssignError("No procedures selected", "INVALID", 400);
   }
-  const receipt = opts?.paymentReceiptRef?.trim();
-  if (!receipt) {
-    throw new PackageAssignError(
-      "Payment receipt reference required before Pay",
-      "RECEIPT_REQUIRED",
-      400,
-    );
-  }
 
   const orgId = resolveClinicCutoverOrgId(organizationId);
+  const receipt = await allocateClinicReceiptNo(orgId);
   enterSatelliteTenant({ organizationId: orgId });
 
   const orders = await prisma.procedureOrder.findMany({
@@ -262,7 +257,7 @@ export async function payAndScheduleExtras(
       const charge = await resolveProcedureCharge(order, { burnQuota: false });
       const amount = charge.amountNet > 0 ? charge.amountNet : Number(order.amountNet);
       const ticketId = extraTicketIdForOrder(order.id);
-      const description = order.procedureName;
+      const description = `${order.procedureName} · çek ${receipt}`;
 
       if (dualRun && hotelOrganizationId) {
         await postHotelElektrawebOutbox({
@@ -352,7 +347,7 @@ export async function payAndScheduleExtras(
     { orderIds, placed, printPaths, paymentReceiptRef: receipt },
   );
 
-  return { printPaths, placed, orders: issuedOrders };
+  return { printPaths, placed, orders: issuedOrders, paymentReceiptRef: receipt };
 }
 
 /**

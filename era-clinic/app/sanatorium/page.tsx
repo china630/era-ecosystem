@@ -60,10 +60,7 @@ import {
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { IcdPicker } from "@/components/IcdPicker";
-import {
-  EpisodeAssignBlocks,
-  EpisodeScheduleCards,
-} from "@/components/sanatorium/EpisodeAssignChrome";
+import { EpisodeAssignBlocks } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -249,9 +246,6 @@ export default function SanatoriumPage() {
   >([]);
   const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
   const [packageModalOpen, setPackageModalOpen] = useState(false);
-  const [scheduleCards, setScheduleCards] = useState<
-    Array<{ id: string; title: string; subtitle?: string; status: string; atLabel?: string }>
-  >([]);
   const [pendingExtras, setPendingExtras] = useState<
     Array<{ id: string; procedureName: string; amountNet: number }>
   >([]);
@@ -363,7 +357,6 @@ export default function SanatoriumPage() {
     const res = await fetch(`/api/patients/${patientRefId}/card-feed?section=plan&offset=0`);
     if (!res.ok) {
       setProposedOrders([]);
-      setScheduleCards([]);
       return;
     }
     const data = await res.json();
@@ -388,20 +381,6 @@ export default function SanatoriumPage() {
       }));
     setProposedOrders(proposed);
     setSelectedProposed(new Set(proposed.slice(0, 3).map((o) => o.id)));
-    // CLI-57 schedule cards — in-plan statuses only
-    setScheduleCards(
-      events
-        .filter((ev) =>
-          ["SCHEDULED", "CHECKED_IN", "COMPLETED", "IN_PROGRESS"].includes(ev.status),
-        )
-        .map((ev) => ({
-          id: ev.id,
-          title: ev.title.replace(/^Procedure · /, ""),
-          subtitle: ev.subtitle ?? ev.codes?.[0],
-          status: ev.status,
-          atLabel: ev.atLabel,
-        })),
-    );
   }, []);
 
   const loadPendingExtras = useCallback(async (episodeId: string) => {
@@ -1087,113 +1066,6 @@ export default function SanatoriumPage() {
       >
         {selected ? (
           <div className="space-y-4 text-[13px]">
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setComplaintModalOpen(true)}
-              >
-                {t("addComplaint")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setDiagnosisModalOpen(true)}
-              >
-                {t("addDiagnosis")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setLabModalOpen(true)}
-              >
-                {t("orderLab")}
-              </button>
-            </div>
-
-            <div>
-              <h3 className="mb-1 font-semibold">{t("complaints")}</h3>
-              <ul className="list-disc pl-5">
-                {selected.complaints.map((c) => (
-                  <li key={c.id} className="flex flex-wrap items-center gap-2">
-                    <span>{c.text}</span>
-                    <button
-                      type="button"
-                      className={TABLE_ROW_ICON_BTN_CLASS}
-                      aria-label={tc("delete")}
-                      onClick={() => void deleteComplaintRow(c.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                    </button>
-                  </li>
-                ))}
-                {selected.complaints.length === 0 ? (
-                  <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
-                ) : null}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-1 font-semibold">{t("diagnoses")}</h3>
-              <ul className="list-disc pl-5">
-                {selected.diagnoses.map((d) => {
-                  const code = d.icdCode?.code;
-                  const title = d.icdCode
-                    ? locale.startsWith("ru")
-                      ? d.icdCode.titleRu
-                      : locale.startsWith("az")
-                        ? d.icdCode.titleAz?.trim() || d.icdCode.titleRu
-                        : d.icdCode.titleEn
-                    : null;
-                  return (
-                    <li key={d.id} className="flex flex-wrap items-center gap-2">
-                      <span>
-                        {code ? `${code}${title ? ` — ${title}` : ""}` : "—"}
-                        {d.note ? ` (${d.note})` : ""}
-                      </span>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={tc("delete")}
-                        onClick={() => void deleteDiagnosisRow(d.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                      </button>
-                    </li>
-                  );
-                })}
-                {selected.diagnoses.length === 0 ? (
-                  <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
-                ) : null}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-1 font-semibold">{t("labOrders")}</h3>
-              <ul>
-                {selected.labOrders.map((o) => (
-                  <li key={o.id} className="flex flex-wrap items-center gap-2">
-                    <span>
-                      {labOrderLabel(o)} — {o.status}{" "}
-                      <Link href={`/lab-orders/${o.id}`} className={LINK_ACCENT_CLASS}>
-                        {t("workflow")}
-                      </Link>
-                    </span>
-                    {o.status === "ORDERED" ? (
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={t("labCancelOrder")}
-                        onClick={() => void cancelLabRow(o.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-                {selected.labOrders.length === 0 ? (
-                  <li className={TEXT_MUTED_CLASS}>—</li>
-                ) : null}
-              </ul>
-            </div>
 
             {program ? (
               <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
@@ -1240,8 +1112,8 @@ export default function SanatoriumPage() {
                     packageTitle={t("assignPackageTitle", {
                       defaultValue: "Procedures in package",
                     })}
-                    extrasTitle={t("assignExtrasTitle", {
-                      defaultValue: "Additional procedures",
+                    extrasTitle={t("extrasAwaiting", {
+                      defaultValue: "Additional procedures (awaiting payment)",
                     })}
                     day1Label={t("day1AutoAssign", {
                       defaultValue: "Day-1 auto (≤3)",
@@ -1251,6 +1123,13 @@ export default function SanatoriumPage() {
                     hidePackage={selected.patientOrigin === "WALK_IN"}
                     onPackagePlus={() => setPackageModalOpen(true)}
                     onExtrasPlus={() => setPackageModalOpen(true)}
+                    extrasPending={pendingExtras.map((p) => ({
+                      id: p.id,
+                      title: p.procedureName,
+                      amountNet: p.amountNet,
+                      status: "PENDING_PAY",
+                    }))}
+                    pendingPayLabel={t("pendingPay")}
                     onDay1={
                       selected.patientOrigin === "WALK_IN"
                         ? undefined
@@ -1282,23 +1161,7 @@ export default function SanatoriumPage() {
                           }
                     }
                   />
-                  {pendingExtras.length > 0 ? (
-                    <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                      {pendingExtras.map((p) => (
-                        <li key={p.id}>
-                          {p.procedureName} · {p.amountNet.toFixed(2)} AZN · {t("pendingPay")}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
                 </div>
-                <EpisodeScheduleCards
-                  title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
-                  emptyLabel={t("scheduleCardsEmpty", {
-                    defaultValue: "No scheduled procedures yet.",
-                  })}
-                  items={scheduleCards}
-                />
               </div>
             ) : selected.patientOrigin === "WALK_IN" ? (
               <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
@@ -1306,8 +1169,8 @@ export default function SanatoriumPage() {
                   packageTitle={t("assignPackageTitle", {
                     defaultValue: "Procedures in package",
                   })}
-                  extrasTitle={t("assignExtrasTitle", {
-                    defaultValue: "Additional procedures",
+                  extrasTitle={t("extrasAwaiting", {
+                    defaultValue: "Additional procedures (awaiting payment)",
                   })}
                   day1Label={t("day1AutoAssign", {
                     defaultValue: "Day-1 auto (≤3)",
@@ -1316,22 +1179,13 @@ export default function SanatoriumPage() {
                   hidePackage
                   onPackagePlus={() => setPackageModalOpen(true)}
                   onExtrasPlus={() => setPackageModalOpen(true)}
-                />
-                {pendingExtras.length > 0 ? (
-                  <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                    {pendingExtras.map((p) => (
-                      <li key={p.id}>
-                        {p.procedureName} · {p.amountNet.toFixed(2)} AZN · {t("pendingPay")}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <EpisodeScheduleCards
-                  title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
-                  emptyLabel={t("scheduleCardsEmpty", {
-                    defaultValue: "No scheduled procedures yet.",
-                  })}
-                  items={scheduleCards}
+                  extrasPending={pendingExtras.map((p) => ({
+                    id: p.id,
+                    title: p.procedureName,
+                    amountNet: p.amountNet,
+                    status: "PENDING_PAY",
+                  }))}
+                  pendingPayLabel={t("pendingPay")}
                 />
               </div>
             ) : (

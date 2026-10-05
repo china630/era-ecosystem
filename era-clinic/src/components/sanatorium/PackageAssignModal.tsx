@@ -54,6 +54,11 @@ export type PackageAssignedAgg = {
   paramsLines?: string[];
   /** Balance line burned (pool or same as procedureCode). */
   packageQuotaCode?: string | null;
+  note?: string;
+  physioFields?: Record<string, unknown> | null;
+  siteIds?: string[];
+  siteApplyMode?: "TURN" | "TOGETHER" | null;
+  siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
 };
 
 type PoolEligibleSku = { code: string; name: string };
@@ -487,6 +492,15 @@ export function PackageAssignModal({
         })),
     [balances],
   );
+
+  const replaceToOptions = useMemo(() => {
+    const map = new Map<string, { value: string; label: string }>();
+    for (const row of packageCodeOptions) map.set(row.value, row);
+    for (const list of Object.values(poolEligible)) {
+      for (const sku of list) map.set(sku.code, { value: sku.code, label: sku.name || sku.code });
+    }
+    return [...map.values()];
+  }, [packageCodeOptions, poolEligible]);
 
   const poolSkuOptions = useMemo(() => {
     if (!formBurnPool) return [];
@@ -958,22 +972,50 @@ export function PackageAssignModal({
     const quota = row.packageQuotaCode || row.procedureCode;
     const rem = draftRemaining.get(quota) ?? 0;
     if (rem < 1) {
-      pushPaid(row.procedureCode, row.procedureName, 1);
+      const fromDraft = draft.find((d) => draftMatchesAssigned(d, row));
+      pushPaid(row.procedureCode, row.procedureName, 1, {
+        note: fromDraft?.note ?? row.note ?? "",
+        physioFields: fromDraft?.physioFields ?? row.physioFields ?? null,
+        siteIds: fromDraft?.siteIds ?? row.siteIds ?? [],
+        siteApplyMode: fromDraft?.siteApplyMode ?? row.siteApplyMode ?? null,
+        siteLaterality: fromDraft?.siteLaterality ?? row.siteLaterality,
+        paramsLabel: fromDraft?.paramsLabel ?? row.paramsLabel ?? "",
+      });
       return;
     }
     pushDraft({
       procedureCode: row.procedureCode,
       procedureName: row.procedureName,
       qty: 1,
-      note: "",
+      note: row.note ?? "",
+      physioFields: row.physioFields ?? null,
+      siteIds: row.siteIds ?? [],
+      siteApplyMode: row.siteApplyMode ?? null,
+      siteLaterality: row.siteLaterality,
       paramsLabel: row.paramsLabel ?? "",
       fingerprint: `params:${row.paramsLabel ?? ""}`,
       burnPoolCode: quota !== row.procedureCode ? quota : null,
     });
   }
 
+  function peelPaid(code: string, paramsLabel: string): boolean {
+    const exact = extraDraft.find((r) => r.procedureCode === code && r.paramsLabel === paramsLabel);
+    const row = exact ?? extraDraft.find((r) => r.procedureCode === code);
+    if (!row) return false;
+    setExtraDraft((prev) =>
+      prev.flatMap((item) => {
+        if (item.key !== row.key) return [item];
+        if (item.qty <= 1) return [];
+        return [{ ...item, qty: item.qty - 1 }];
+      }),
+    );
+    return true;
+  }
+
   function bumpMinusOne(row: PackageAssignedAgg) {
-    if (row.locked || row.qty < 1) return;
+    if (row.locked) return;
+    if (peelPaid(row.procedureCode, row.paramsLabel ?? "")) return;
+    if (row.qty < 1) return;
     const key = assignedKey(row);
     const matching = draft.find((d) => draftMatchesAssigned(d, row));
     if (matching) {
@@ -999,7 +1041,14 @@ export function PackageAssignModal({
     const quota = line.burnPoolCode || line.procedureCode;
     const rem = draftRemaining.get(quota) ?? 0;
     if (rem < 1) {
-      pushPaid(line.procedureCode, line.procedureName, 1);
+      pushPaid(line.procedureCode, line.procedureName, 1, {
+        note: line.note,
+        physioFields: line.physioFields ?? null,
+        siteIds: line.siteIds ?? [],
+        siteApplyMode: line.siteApplyMode ?? null,
+        siteLaterality: line.siteLaterality,
+        paramsLabel: line.paramsLabel,
+      });
       return;
     }
     setDraft((prev) =>
@@ -1117,7 +1166,7 @@ export function PackageAssignModal({
           {labels.softWarnPrefix}: {softWarn}
         </p>
       ) : null}
-      <div className="grid h-[min(70vh,40rem)] min-h-0 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <div className="grid h-[min(82vh,48rem)] min-h-0 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
           <h4 className="text-sm font-medium">{tPhysio("packageBalanceTitle")}</h4>
           {balances.filter((b) => b.assignable !== false).length === 0 ? (
@@ -1197,17 +1246,9 @@ export function PackageAssignModal({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-col">
+        <div className="relative flex min-h-0 flex-col">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h4 className="text-sm font-medium">{tPhysio("assignedReceiptTitle")}</h4>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy || assigned.every((a) => a.locked)}
-              onClick={() => openReplace()}
-            >
-              {labels.replace ?? "Replace"}
-            </button>
           </div>
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
           {assigned.filter((row) => !pendingCancel.has(assignedKey(row))).length ===
@@ -1262,18 +1303,7 @@ export function PackageAssignModal({
                       ))}
                     </div>
                     {!row.locked ? (
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <button
-                          type="button"
-                          className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                          disabled={busy}
-                          onClick={() => bumpPlusOne(row)}
-                          title={labels.qtyUp ?? "+1"}
-                          aria-label={labels.qtyUp ?? "+1"}
-                        >
-                          <Plus className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                        <span className="w-6 text-center">{totalQty}</span>
+                      <div className="flex shrink-0 items-center gap-1">
                         <button
                           type="button"
                           className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
@@ -1284,6 +1314,20 @@ export function PackageAssignModal({
                         >
                           <Minus className="h-3.5 w-3.5" aria-hidden />
                         </button>
+                        <span className="w-6 text-center tabular-nums">{totalQty}</span>
+                        <button
+                          type="button"
+                          className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                          disabled={busy}
+                          onClick={() => bumpPlusOne(row)}
+                          title={labels.qtyUp ?? "+1"}
+                          aria-label={labels.qtyUp ?? "+1"}
+                        >
+                          <Plus className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <span className={`w-28 text-right text-[12px] ${TEXT_MUTED_CLASS}`}>
+                          {tPhysio("fromPackage")}
+                        </span>
                         <button
                           type="button"
                           className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
@@ -1304,9 +1348,12 @@ export function PackageAssignModal({
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                         </button>
-                        <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{tPhysio("fromPackage")}</span>
                       </div>
-                    ) : null}
+                    ) : (
+                      <span className={`w-28 shrink-0 text-right text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {tPhysio("fromPackage")}
+                      </span>
+                    )}
                   </li>
                 );
                 });
@@ -1326,18 +1373,7 @@ export function PackageAssignModal({
                       </p>
                     ))}
                   </div>
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <button
-                      type="button"
-                      className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                      disabled={busy}
-                      onClick={() => bumpLeftoverPlus(d)}
-                      title={labels.qtyUp ?? "+1"}
-                      aria-label={labels.qtyUp ?? "+1"}
-                    >
-                      <Plus className="h-3.5 w-3.5" aria-hidden />
-                    </button>
-                    <span className="w-6 text-center">{d.qty}</span>
+                  <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
                       className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
@@ -1348,6 +1384,21 @@ export function PackageAssignModal({
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden />
                     </button>
+                    <span className="w-6 text-center tabular-nums">{d.qty}</span>
+                    <button
+                      type="button"
+                      className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                      disabled={busy}
+                      onClick={() => bumpLeftoverPlus(d)}
+                      title={labels.qtyUp ?? "+1"}
+                      aria-label={labels.qtyUp ?? "+1"}
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                    <span className={`w-28 text-right text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {tPhysio("fromPackage")}
+                    </span>
+                    <span className="inline-flex h-6 w-6" aria-hidden />
                     <button
                       type="button"
                       className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
@@ -1357,85 +1408,91 @@ export function PackageAssignModal({
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden />
                     </button>
-                    <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{tPhysio("fromPackage")}</span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-          {extraDraft.length > 0 || extraPending.length > 0 ? (
-            <div className={`${CARD_CONTAINER_CLASS} space-y-2 px-3 py-2 text-[13px]`}>
-              <h4 className="font-medium">{tPhysio("assignExtrasTitle")}</h4>
-              <ul className="space-y-1">
-                {extraPending.map((row) => (
-                  <li key={row.id} className="flex justify-between gap-2">
-                    <span className="min-w-0 truncate">{row.procedureName}</span>
-                    <span className="shrink-0">{row.amountNet.toFixed(2)} AZN</span>
-                  </li>
-                ))}
-                {extraDraft.map((row) => (
-                  <li key={row.key} className="flex items-center justify-between gap-2">
-                    <span className="w-40 min-w-0 truncate">{row.procedureName}</span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                        disabled={busy}
-                        onClick={() =>
-                          setExtraDraft((prev) =>
-                            prev.map((item) =>
-                              item.key === row.key ? { ...item, qty: item.qty + 1 } : item,
-                            ),
-                          )
-                        }
-                        aria-label={labels.qtyUp ?? "+1"}
-                      >
-                        <Plus className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                      <span className="w-6 text-center">{row.qty}</span>
-                      <button
-                        type="button"
-                        className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                        disabled={busy || row.qty < 1}
-                        onClick={() =>
-                          setExtraDraft((prev) =>
-                            prev.flatMap((item) => {
-                              if (item.key !== row.key) return [item];
-                              if (item.qty <= 1) return [];
-                              return [{ ...item, qty: item.qty - 1 }];
-                            }),
-                          )
-                        }
-                        aria-label={labels.qtyDown ?? "−1"}
-                      >
-                        <Minus className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                      <span className="w-16 text-right">{row.amountNet.toFixed(2)}</span>
-                      <span className="w-16 text-right">{(row.amountNet * row.qty).toFixed(2)}</span>
-                      <button
-                        type="button"
-                        className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                        onClick={() =>
-                          setExtraDraft((prev) => prev.filter((x) => x.key !== row.key))
-                        }
-                        aria-label={labels.delete}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          {extraPending.map((row) => (
+            <div
+              key={row.id}
+              className={`${CARD_CONTAINER_CLASS} flex items-center justify-between gap-2 px-3 py-2 text-[13px]`}
+            >
+              <span className="min-w-0 truncate font-medium">{row.procedureName}</span>
+              <span className="w-28 shrink-0 text-right text-[12px]">{row.amountNet.toFixed(2)} AZN</span>
             </div>
-          ) : null}
+          ))}
+          {extraDraft.map((row) => (
+            <div
+              key={row.key}
+              className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
+            >
+              <div className="min-w-0">
+                <div className="font-medium">{row.procedureName}</div>
+                {paramLinesOf(row.paramsLabel).map((line) => (
+                  <p key={line} className={`text-[12px] leading-snug ${TEXT_MUTED_CLASS}`}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                  disabled={busy || row.qty < 1}
+                  onClick={() =>
+                    setExtraDraft((prev) =>
+                      prev.flatMap((item) => {
+                        if (item.key !== row.key) return [item];
+                        if (item.qty <= 1) return [];
+                        return [{ ...item, qty: item.qty - 1 }];
+                      }),
+                    )
+                  }
+                  aria-label={labels.qtyDown ?? "−1"}
+                >
+                  <Minus className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                <span className="w-6 text-center tabular-nums">{row.qty}</span>
+                <button
+                  type="button"
+                  className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                  disabled={busy}
+                  onClick={() =>
+                    setExtraDraft((prev) =>
+                      prev.map((item) =>
+                        item.key === row.key ? { ...item, qty: item.qty + 1 } : item,
+                      ),
+                    )
+                  }
+                  aria-label={labels.qtyUp ?? "+1"}
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                <span className="w-28 text-right text-[12px] tabular-nums">
+                  {row.amountNet.toFixed(2)}
+                  <span className={`block ${TEXT_MUTED_CLASS}`}>
+                    {(row.amountNet * row.qty).toFixed(2)}
+                  </span>
+                </span>
+                <span className="inline-flex h-6 w-6" aria-hidden />
+                <button
+                  type="button"
+                  className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                  onClick={() => setExtraDraft((prev) => prev.filter((x) => x.key !== row.key))}
+                  aria-label={labels.delete}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+            </div>
+          ))}
           </div>
-          <p className="border-t border-slate-200 pt-2 text-sm font-semibold">
+          <p className="border-t border-slate-200 pt-2 text-right text-base font-semibold">
             {tPhysio("amountDue")}: {(extraDraftTotal + extraPendingTotal).toFixed(2)} AZN
           </p>
-        </div>
-
           {formBurnPool || formCode ? (
-            <div className="absolute top-0 right-0 bottom-0 z-10 mt-0 max-h-full w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-lg md:w-[calc(50%-0.5rem)]">
+            <div className="absolute inset-0 z-10 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3">
               <div className="mb-2 flex items-start justify-between gap-2">
                 <h4 className="min-w-0 flex-1 font-medium">
                   {formBurnPool && !formCode
@@ -1560,7 +1617,7 @@ export function PackageAssignModal({
           ) : null}
 
           {replaceOpen ? (
-            <div className="absolute top-0 right-0 bottom-0 z-20 mt-0 max-h-full w-full overflow-y-auto rounded-lg border border-amber-200 bg-amber-50/90 p-3 shadow-lg md:w-[calc(50%-0.5rem)]">
+            <div className="absolute inset-0 z-20 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
               <h4 className="mb-2 font-medium">{labels.replace ?? "Replace"}</h4>
               <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
                 {tPhysio("packageAssignOutOfPackage")}
@@ -1581,7 +1638,7 @@ export function PackageAssignModal({
                   label={labels.replaceTo ?? "To"}
                   value={replaceTo}
                   onChange={(v) => setReplaceTo(String(v ?? ""))}
-                  options={allCodes.length ? allCodes : packageCodeOptions}
+                  options={replaceToOptions}
                   widthPreset="select"
                 />
               </div>
@@ -1615,6 +1672,7 @@ export function PackageAssignModal({
               </div>
             </div>
           ) : null}
+        </div>
       </div>
     </ModalShell>
   );
