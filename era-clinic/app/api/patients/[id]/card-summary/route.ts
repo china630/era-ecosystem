@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { getPatientCardSummary } from "@/domain/patient/patient-card.service";
+import { readUiLocale } from "@/lib/request-locale";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -25,7 +26,8 @@ export async function GET(
     });
     if (!exists) return jsonError("Not found", 404);
     const episodeId = new URL(req.url).searchParams.get("episode") ?? undefined;
-    return jsonOk(await getPatientCardSummary(id, { episodeId }));
+    const locale = await readUiLocale(req);
+    return jsonOk(await getPatientCardSummary(id, { episodeId, locale }));
   } catch (err) {
     return handleRouteError(err);
   }

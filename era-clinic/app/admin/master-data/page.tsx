@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
@@ -44,6 +44,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 type Practitioner = {
@@ -180,10 +182,8 @@ export default function MasterDataPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
   const [catalogOptions, setCatalogOptions] = useState<CatalogOption[]>([]);
-  const [catalogPick, setCatalogPick] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [needsSite, setNeedsSite] = useState(true);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
@@ -390,7 +390,6 @@ export default function MasterDataPage() {
     if (tab === "practitioners" && blockPractitionerCreate) return;
     setEditingId(null);
     setForm({});
-    setCatalogPick("");
     resetModalExtras();
     if (tab === "procedureTypes") {
       setRequirements(defaultProcedureRequirements());
@@ -466,7 +465,6 @@ export default function MasterDataPage() {
 
   async function openEditProcedureType(row: ProcedureType) {
     setEditingId(row.id);
-    setCatalogPick("");
     setForm({
       code: row.code,
       name: row.name,
@@ -538,7 +536,6 @@ export default function MasterDataPage() {
   }
 
   async function save() {
-    setMsg(null);
     const base =
       tab === "practitioners"
         ? "/api/admin/practitioners"
@@ -630,7 +627,6 @@ export default function MasterDataPage() {
     } else {
       payload = {
         code: form.code,
-        name: form.name,
         durationMin: Number(form.durationMin || "30"),
         resourceGapMinutes: Number(form.resourceGapMinutes ?? "5"),
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
@@ -652,7 +648,7 @@ export default function MasterDataPage() {
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
-      setMsg(tc("saveFailed"));
+      showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
       return;
     }
     const saved = await res.json();
@@ -665,7 +661,7 @@ export default function MasterDataPage() {
         body: JSON.stringify({ procedureTypeIds: selectedSkillIds }),
       });
       if (!skillsRes.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError(await skillsRes.json().catch(() => ({})), tc("saveFailed"));
         return;
       }
     }
@@ -689,7 +685,7 @@ export default function MasterDataPage() {
           }),
         });
         if (!reqRes.ok) {
-          setMsg(tc("saveFailed"));
+          showApiError(await reqRes.json().catch(() => ({})), tc("saveFailed"));
           return;
         }
         const consRes = await fetch(`/api/admin/procedure-types/${typeId}/consumables`, {
@@ -707,7 +703,7 @@ export default function MasterDataPage() {
           }),
         });
         if (!consRes.ok) {
-          setMsg(tc("saveFailed"));
+          showApiError(await consRes.json().catch(() => ({})), tc("saveFailed"));
           return;
         }
         const poolCodes = physicalResourceCodesFromRequirements(requirements);
@@ -732,7 +728,7 @@ export default function MasterDataPage() {
     }
 
     setModalOpen(false);
-    setMsg(tc("saved"));
+    showSuccess(tc("saved"));
     await loadAll();
   }
 
@@ -749,12 +745,11 @@ export default function MasterDataPage() {
     const res = await fetch(base, { method: "DELETE" });
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { code?: string };
-      if (body.code === "WORKFORCE_DEACTIVATE_VIA_CP") setMsg(t("deleteViaWorkforce"));
-      else if (body.code === "IN_USE") setMsg(t("deleteInUse"));
-      else setMsg(tc("failed"));
+      if (body.code === "WORKFORCE_DEACTIVATE_VIA_CP") showApiError({ error: t("deleteViaWorkforce") });
+      else if (body.code === "IN_USE") showApiError({ error: t("deleteInUse") });
+      else showApiError(body, tc("failed"));
       return;
     }
-    setMsg(null);
     await loadAll();
   }
 
@@ -804,6 +799,7 @@ export default function MasterDataPage() {
           <>
             {!(tab === "practitioners" && blockPractitionerCreate) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="h-4 w-4" aria-hidden />
                 {tc("add")}
               </button>
             ) : null}
@@ -815,7 +811,6 @@ export default function MasterDataPage() {
           {t("workforceHireViaCp")}
         </p>
       ) : null}
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <div className={TAB_STRIP_CLASS}>
         {tabs.map((x) => (
           <button
@@ -1089,38 +1084,59 @@ export default function MasterDataPage() {
         closeLabel={tc("close")}
       >
         <div className="space-y-4">
-          {!editingId && tab === "procedureTypes" && catalogOptions.length > 0 ? (
-            <FieldSelect
-              label={t("pickFromCatalog")}
-              preset="select"
-              value={catalogPick}
-              onChange={(e) => {
-                const code = e.target.value;
-                setCatalogPick(code);
-                if (!code) return;
-                const match = catalogOptions.find((c) => c.code === code);
-                if (match) {
-                  const gate = inferPhysioTypeGate(match.code, match.description);
-                  setForm({ ...form, code: match.code, name: match.description });
-                  setNeedsSite(gate.needsSite);
-                  setPhysioOrderFields(gate.fields);
-                  setAllowedSiteCodes(gate.allowedSiteCodes);
-                }
-              }}
-            >
-              <option value="">{t("manualCode")}</option>
-              {catalogOptions.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} — {c.description}
-                </option>
-              ))}
-            </FieldSelect>
+          {tab === "procedureTypes" ? (
+            <>
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("serviceFromCatalog")}
+                value={form.code ?? ""}
+                emptyLabel="—"
+                options={catalogOptions.map((c) => ({
+                  value: c.code,
+                  label: localizedCatalogDescription(c, locale) || c.code,
+                }))}
+                onChange={(next) => {
+                  if (editingId) return;
+                  const code = String(next ?? "");
+                  const match = catalogOptions.find((c) => c.code === code);
+                  if (match) {
+                    const gate = inferPhysioTypeGate(match.code, match.description);
+                    setForm({ ...form, code: match.code });
+                    setNeedsSite(gate.needsSite);
+                    setPhysioOrderFields(gate.fields);
+                    setAllowedSiteCodes(gate.allowedSiteCodes);
+                  } else {
+                    setForm({ ...form, code });
+                  }
+                }}
+              />
+              {form.code ? (
+                <div className="flex flex-wrap gap-3 text-[13px]">
+                  {(
+                    [
+                      ["descriptionAz", "AZ"],
+                      ["descriptionRu", "RU"],
+                      ["descriptionEn", "EN"],
+                    ] as const
+                  ).map(([key, lang]) => {
+                    const match = catalogOptions.find((c) => c.code === form.code);
+                    const text = match?.[key]?.trim();
+                    return (
+                      <a
+                        key={key}
+                        className="text-[#1F4E79] underline"
+                        href={`/admin/catalog?edit=${encodeURIComponent(form.code ?? "")}`}
+                      >
+                        {text || lang}
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </>
           ) : null}
           {!editingId &&
-            (tab === "practitioners" ||
-              tab === "rooms" ||
-              tab === "resources" ||
-              tab === "procedureTypes") && (
+            (tab === "practitioners" || tab === "rooms" || tab === "resources") && (
               <Field
                 label={t("code")}
                 preset="code"
@@ -1294,12 +1310,6 @@ export default function MasterDataPage() {
           {tab === "procedureTypes" && (
             <>
               <FieldRow cols={2}>
-                <Field
-                  label={t("name")}
-                  preset="shortText"
-                  value={form.name ?? ""}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
                 <CatalogField
                   kind="CLOSED_SMALL"
                   label={t("bodyPart")}

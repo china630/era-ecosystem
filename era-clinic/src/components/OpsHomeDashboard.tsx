@@ -29,6 +29,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { CLINIC_PRESET, type ClinicPresetCode } from "@/domain/presets/clinic-presets";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
@@ -228,7 +229,6 @@ export function OpsHomeDashboard({
   const hasInpatient = enabledPresets.includes(CLINIC_PRESET.INPATIENT_DAY);
 
   const [summary, setSummary] = useState<OpsDaySummary | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const statusLabel = useCallback(
@@ -257,12 +257,11 @@ export function OpsHomeDashboard({
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const params = new URLSearchParams({ date, locale });
     const res = await fetch(`/api/ops/day-summary?${params}`);
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? t("loadFailed"));
+      showApiError(data, t("loadFailed"));
       setSummary(null);
     } else {
       setSummary((data.data ?? data) as OpsDaySummary);
@@ -278,13 +277,7 @@ export function OpsHomeDashboard({
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
 
-  if (error && !summary) {
-    return <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p>;
-  }
-
-  if (!summary) {
-    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("loadFailed")}</p>;
-  }
+  if (!summary) return null;
 
   const overdueTone =
     summary.overdueProcedures > 5 ? "danger" : summary.overdueProcedures > 0 ? "warn" : "default";
@@ -297,8 +290,6 @@ export function OpsHomeDashboard({
 
   return (
     <div className="space-y-5">
-      {error ? <p className={`text-xs ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
-
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {hasOutpatient || hasSanatorium ? (
           <MetricTile

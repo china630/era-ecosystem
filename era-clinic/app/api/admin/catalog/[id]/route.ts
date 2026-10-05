@@ -3,6 +3,7 @@ import { ServiceCatalogKind } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { recordCatalogPriceIfChanged } from "@/domain/catalog/catalog-price-history";
+import { resolveDepartmentWrite } from "@/domain/catalog/service-department.service";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuDayBounds } from "@era/satellite-kit/time";
@@ -16,6 +17,7 @@ const patchSchema = z.object({
   listAmount: z.number().nonnegative().nullable().optional(),
   packageIncluded: z.boolean().optional(),
   department: z.string().optional().nullable(),
+  departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
@@ -57,6 +59,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     const effectiveFrom = body.effectiveFrom
       ? bakuDayBounds(body.effectiveFrom).start
       : new Date();
+    const dept =
+      body.departmentCode !== undefined || body.department !== undefined
+        ? await resolveDepartmentWrite(existing.organizationId || requestOrganizationId(), {
+            departmentCode: body.departmentCode,
+            department: body.department,
+          })
+        : null;
     const row = await prisma.serviceCatalogCache.update({
       where: { id },
       data: {
@@ -67,7 +76,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
         ...(body.amount != null ? { amount: body.amount } : {}),
         ...(body.listAmount !== undefined ? { listAmount: body.listAmount } : {}),
         ...(body.packageIncluded != null ? { packageIncluded: body.packageIncluded } : {}),
-        ...(body.department !== undefined ? { department: body.department?.trim() || null } : {}),
+        ...(dept
+          ? { department: dept.department, departmentCode: dept.departmentCode }
+          : {}),
         ...(body.kind != null ? { kind: body.kind } : {}),
         syncedAt: new Date(),
       },

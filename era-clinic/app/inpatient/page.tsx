@@ -13,6 +13,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
 import { DiagnosisPanel } from "@/components/DiagnosisPanel";
@@ -52,7 +54,6 @@ export default function InpatientPage() {
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [expandedWardId, setExpandedWardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({ bedId: "", patientRefId: "" });
@@ -120,7 +121,6 @@ export default function InpatientPage() {
   }
 
   async function submitAssign() {
-    setMsg(null);
     const res = await fetch("/api/inpatient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -132,16 +132,15 @@ export default function InpatientPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMsg(json.error ?? tc("failed"));
+      showApiError(json, tc("failed"));
       return;
     }
     setAssignOpen(false);
-    setMsg(t("assigned"));
+    showSuccess(t("assigned"));
     await load();
   }
 
   async function submitTransfer() {
-    setMsg(null);
     const res = await fetch("/api/inpatient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -153,16 +152,15 @@ export default function InpatientPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMsg(json.error ?? tc("failed"));
+      showApiError(json, tc("failed"));
       return;
     }
     setTransferOpen(false);
-    setMsg(t("transferred"));
+    showSuccess(t("transferred"));
     await load();
   }
 
   async function discharge(admissionId: string) {
-    setMsg(null);
     const res = await fetch("/api/inpatient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -170,10 +168,10 @@ export default function InpatientPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMsg(json.error ?? tc("failed"));
+      showApiError(json, tc("failed"));
       return;
     }
-    setMsg(t("discharged"));
+    showSuccess(t("discharged"));
     await load();
   }
 
@@ -193,8 +191,6 @@ export default function InpatientPage() {
           </div>
         }
       />
-
-      {msg ? <p className="mb-4 text-[13px]">{msg}</p> : null}
 
       {loading ? (
         <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>

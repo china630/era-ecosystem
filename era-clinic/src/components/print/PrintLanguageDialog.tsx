@@ -9,7 +9,7 @@ import { normalizePrintLang } from "@/domain/print/print-types";
 type Props = {
   open: boolean;
   onClose: () => void;
-  /** Path without query, e.g. /print/lab-order/abc */
+  /** Path, optionally with a query (`?episode=`). Language is appended with `?` or `&`. */
   href: string | null;
   title?: string;
 };
@@ -25,7 +25,8 @@ export function PrintLanguageDialog({ open, onClose, href, title }: Props) {
 
   function submit() {
     if (!href) return;
-    const url = `${href}?lang=${lang}&autoprint=1`;
+    const joiner = href.includes("?") ? "&" : "?";
+    const url = `${href}${joiner}lang=${encodeURIComponent(lang)}&autoprint=1`;
     window.open(url, "_blank", "noopener,noreferrer");
     onClose();
   }

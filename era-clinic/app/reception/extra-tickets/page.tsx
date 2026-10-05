@@ -18,9 +18,9 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
 
@@ -42,7 +42,6 @@ export default function ExtraTicketsPage() {
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [receiptRef, setReceiptRef] = useState("");
   const [q, setQ] = useState("");
   const [origin, setOrigin] = useState("");
@@ -117,11 +116,10 @@ export default function ExtraTicketsPage() {
   async function issue(orderIds: string[]) {
     if (!orderIds.length) return;
     if (!receiptRef.trim()) {
-      setError(t("receiptRequired"));
+      showApiError({ error: t("receiptRequired") });
       return;
     }
     setBusy(true);
-    setError(null);
     try {
       const res = await fetch("/api/procedures/issue-ticket", {
         method: "POST",
@@ -133,7 +131,7 @@ export default function ExtraTicketsPage() {
       });
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error || t("issueFailed"));
+        showApiError(d, t("issueFailed"));
         return;
       }
       const payload = d.data ?? d;
@@ -210,9 +208,6 @@ export default function ExtraTicketsPage() {
               emptyLabel={tc("all")}
             />
           </EraListFilterBar>
-        }
-        toolbar={
-          error ? <p className={`px-1 text-sm ${TEXT_DANGER_CLASS}`}>{error}</p> : null
         }
         table={
           <table className={DATA_TABLE_CLASS}>

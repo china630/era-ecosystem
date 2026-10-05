@@ -8,10 +8,12 @@ import {
   purgeNonCabinProcedureTypes,
   auditMasterChange,
 } from "@/lib/services/clinic-master-data.service";
+import { localizedCatalogDescription } from "@era/clinic-domain";
+import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
   code: z.string().min(1),
-  name: z.string().min(1),
+  name: z.string().min(1).optional(),
   durationMin: z.number().int().positive().optional(),
   resourceGapMinutes: z.number().int().min(0).max(240).optional(),
   patientRestMinutes: z.number().int().min(0).max(240).optional(),
@@ -75,7 +77,21 @@ export async function POST(req: Request) {
     const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const body = createSchema.parse(await req.json());
-    const row = await createProcedureType(body);
+    let name = body.name?.trim();
+    if (!name) {
+      const cat = await prisma.serviceCatalogCache.findFirst({
+        where: { code: body.code.trim() },
+        select: {
+          code: true,
+          description: true,
+          descriptionAz: true,
+          descriptionRu: true,
+          descriptionEn: true,
+        },
+      });
+      name = cat ? localizedCatalogDescription(cat, "az") : body.code.trim();
+    }
+    const row = await createProcedureType({ ...body, name });
     await auditMasterChange(
       { userId: guard.session.sub, request: req },
       "procedureType",

@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, FieldSelect, TEXT_DANGER_CLASS, TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  FieldSelect,
+  TEXT_MUTED_CLASS,
+  showApiError,
+} from "@era/satellite-kit/ui";
 
 type Summary = {
   date: string;
@@ -30,7 +35,6 @@ export function ExecutiveDashboard({
   const [practitionerId, setPractitionerId] = useState("");
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,13 +45,12 @@ export function ExecutiveDashboard({
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const params = new URLSearchParams({ date });
     if (practitionerId) params.set("practitionerId", practitionerId);
     const res = await fetch(`/api/executive/summary?${params}`);
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? t("loadFailed"));
+      showApiError(data, t("loadFailed"));
       setSummary(null);
     } else {
       setSummary((data.data ?? data) as Summary);
@@ -63,13 +66,7 @@ export function ExecutiveDashboard({
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
 
-  if (error) {
-    return <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p>;
-  }
-
-  if (!summary) {
-    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("loadFailed")}</p>;
-  }
+  if (!summary) return null;
 
   return (
     <div className="space-y-4">

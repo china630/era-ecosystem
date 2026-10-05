@@ -9,9 +9,10 @@ type Props = {
   patientId: string | null;
   open: boolean;
   onClose: () => void;
+  onOpenDayPlan?: (episodeId: string) => void;
 };
 
-export function PatientCardModal({ patientId, open, onClose }: Props) {
+export function PatientCardModal({ patientId, open, onClose, onOpenDayPlan }: Props) {
   const t = useTranslations("patientRegistry");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
 
@@ -28,6 +29,7 @@ export function PatientCardModal({ patientId, open, onClose }: Props) {
         patientId={patientId}
         showBackLink={false}
         onPatientLoaded={setPatient}
+        onOpenDayPlan={onOpenDayPlan}
       />
     </ModalShell>
   );

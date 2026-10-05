@@ -21,7 +21,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   PageHeader,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
+  showApiError,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
   usePaginatedList,
@@ -187,7 +187,6 @@ export default function LabOrdersPage() {
   const [externalResult, setExternalResult] = useState(false);
   const [resultDate, setResultDate] = useState("");
   const [externalResultsText, setExternalResultsText] = useState("");
-  const [createError, setCreateError] = useState<string | null>(null);
   const [labRepeatOpen, setLabRepeatOpen] = useState(false);
   const [pendingRepeatCode, setPendingRepeatCode] = useState("");
   const [pendingCreatePayload, setPendingCreatePayload] = useState<Record<
@@ -292,7 +291,6 @@ export default function LabOrdersPage() {
 
   async function createOrder(confirmRepeat = false) {
     if (!form.patientRefCode.trim() || selectedCodes.length === 0) return;
-    setCreateError(null);
     const expanded = expandPackageCodes(selectedCodes, catalogItems);
     const payload: Record<string, unknown> = pendingCreatePayload && confirmRepeat
       ? { ...pendingCreatePayload, confirmRepeat: true }
@@ -330,7 +328,7 @@ export default function LabOrdersPage() {
     const data = await res.json();
     if (!res.ok) {
       if (res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
-        setCreateError(t("labAlreadyOpen"));
+        showApiError(data, t("labAlreadyOpen"));
         setPendingCreatePayload(null);
         return;
       }
@@ -342,9 +340,7 @@ export default function LabOrdersPage() {
         setLabRepeatOpen(true);
         return;
       }
-      const errMsg =
-        data?.error ?? data?.message ?? (res.status === 400 ? "Request failed" : tc("failed"));
-      setCreateError(String(errMsg));
+      showApiError(data, tc("failed"));
       return;
     }
     const order = data.data ?? data;
@@ -357,7 +353,6 @@ export default function LabOrdersPage() {
     setExternalResult(false);
     setResultDate("");
     setExternalResultsText("");
-    setCreateError(null);
     if (order?.id) {
       await loadOrders();
       setWorkflowId(order.id as string);
@@ -585,7 +580,6 @@ export default function LabOrdersPage() {
         title={t("createTitle")}
         onClose={() => {
           setCreateOpen(false);
-          setCreateError(null);
         }}
       >
         <div className="space-y-3">
@@ -660,12 +654,10 @@ export default function LabOrdersPage() {
             value={form.visitId}
             onChange={(e) => setForm({ ...form, visitId: e.target.value })}
           />
-          {createError ? <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{createError}</p> : null}
         </div>
         <ModalFooter
           onCancel={() => {
             setCreateOpen(false);
-            setCreateError(null);
           }}
           onSubmit={() => void createOrder()}
           submitLabel={tc("save")}

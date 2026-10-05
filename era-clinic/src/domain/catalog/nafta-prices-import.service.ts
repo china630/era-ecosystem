@@ -7,6 +7,10 @@ import {
   catalogKindBecomesProcedureType,
   inferServiceCatalogKind,
 } from "@/domain/catalog/service-catalog-kind";
+import {
+  departmentFallbackLabel,
+  ensureServiceDepartment,
+} from "@/domain/catalog/service-department.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 export type NaftaPriceRow = {
@@ -70,7 +74,11 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
     // Commercial package amount stays 0 when included; listAmount keeps retail.
     const amount = packageIncluded ? 0 : Number(row.amount ?? 0);
     const listAmount = hasRowAmount ? rowAmount : null;
-    const department = row.department?.trim() || null;
+    const departmentLabel = row.department?.trim() || null;
+    const dept = departmentLabel
+      ? await ensureServiceDepartment(organizationId, departmentLabel)
+      : null;
+    const department = dept ? departmentFallbackLabel(dept) : null;
     const kind = inferServiceCatalogKind(code, department);
 
     await prisma.serviceCatalogCache.upsert({
@@ -86,6 +94,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         listAmount,
         packageIncluded,
         department,
+        departmentCode: dept?.code ?? null,
         kind,
         syncedAt: now,
       },
@@ -98,6 +107,7 @@ export async function importNaftaPricesFromRows(rows: NaftaPriceRow[]) {
         listAmount,
         packageIncluded,
         department,
+        departmentCode: dept?.code ?? null,
         kind,
         syncedAt: now,
       },

@@ -8,8 +8,8 @@ import {
   CatalogField,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 
 import { formatPractitionerLabel } from "@/domain/staff/practitioner-label";
@@ -53,7 +53,6 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [pickId, setPickId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/care-team`);
@@ -90,7 +89,6 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   async function addDoctor() {
     if (!pickId || readOnly) return;
     setBusy(true);
-    setErr(null);
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/care-team`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -99,7 +97,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setErr((data as { error?: string }).error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     setPickId("");
@@ -109,7 +107,6 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   async function removeDoctor(practitionerId: string) {
     if (readOnly) return;
     setBusy(true);
-    setErr(null);
     const res = await fetch(
       `/api/sanatorium/episodes/${episodeId}/care-team?practitionerId=${encodeURIComponent(practitionerId)}`,
       { method: "DELETE" },
@@ -120,11 +117,11 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
         error?: string;
         code?: string;
       };
-      setErr(
-        data.code === "LAST_CARE_DOCTOR"
-          ? t("careTeamLastDoctor")
-          : (data.error ?? tc("failed")),
-      );
+      if (data.code === "LAST_CARE_DOCTOR") {
+        showApiError({ error: t("careTeamLastDoctor") });
+      } else {
+        showApiError(data, tc("failed"));
+      }
       return;
     }
     await load();
@@ -188,7 +185,6 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
             </button>
           </div>
         ) : null}
-        {err ? <p className={`text-sm ${TEXT_DANGER_CLASS}`}>{err}</p> : null}
         {items.length === 0 && !readOnly ? (
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("careTeamGateHint")}</p>
         ) : null}

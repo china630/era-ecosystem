@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { useTranslations } from "next-intl";
+import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@/lib/baku-day";
 
 type ProcOrder = {
@@ -26,8 +27,6 @@ export default function CheckInPage() {
   const [code, setCode] = useState("");
   const [orders, setOrders] = useState<ProcOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [msgTone, setMsgTone] = useState<"ok" | "err">("ok");
 
   const dateParam = useMemo(() => {
     return new Intl.DateTimeFormat("en-CA", {
@@ -61,7 +60,6 @@ export default function CheckInPage() {
   }, [auth?.role, auth?.checkInMode, dateParam, router]);
 
   async function submit() {
-    setMsg(null);
     const trimmed = code.trim();
     if (!trimmed) return;
 
@@ -72,8 +70,7 @@ export default function CheckInPage() {
     });
     const d = await res.json().catch(() => ({}));
     if (res.ok) {
-      setMsg("Checked in");
-      setMsgTone("ok");
+      showSuccess(t("checkInOk"));
       setCode("");
       // reload just the displayed list
       const d2 = await fetch(`/api/procedures?date=${encodeURIComponent(dateParam)}&status=SCHEDULED`).then(
@@ -81,8 +78,7 @@ export default function CheckInPage() {
       );
       if (d2?.orders) setOrders(d2.orders as ProcOrder[]);
     } else {
-      setMsg(d?.message ?? "Check-in failed");
-      setMsgTone("err");
+      showApiError(d, t("failed"));
     }
   }
 
@@ -112,10 +108,6 @@ export default function CheckInPage() {
           {t("save")}
         </button>
       </div>
-
-      {msg ? (
-        <p className={`mt-3 text-sm ${msgTone === "ok" ? "text-green-700" : "text-red-700"}`}>{msg}</p>
-      ) : null}
 
       <div className="mt-4">
         {loading ? (

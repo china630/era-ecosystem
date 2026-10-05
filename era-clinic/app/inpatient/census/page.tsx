@@ -13,6 +13,8 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
+  showSuccess,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay } from "@/lib/baku-day";
@@ -33,7 +35,6 @@ export default function InpatientCensusPage() {
   const tc = useTranslations("common");
   const [rows, setRows] = useState<CensusRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferForm, setTransferForm] = useState({
     admissionId: "",
@@ -130,7 +131,6 @@ export default function InpatientCensusPage() {
   }
 
   async function submitTransfer() {
-    setMsg(null);
     const res = await fetch("/api/inpatient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -142,16 +142,15 @@ export default function InpatientCensusPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMsg(json.error ?? tc("failed"));
+      showApiError(json, tc("failed"));
       return;
     }
     setTransferOpen(false);
-    setMsg(t("transferred"));
+    showSuccess(t("transferred"));
     await load();
   }
 
   async function discharge(admissionId: string) {
-    setMsg(null);
     const res = await fetch("/api/inpatient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -159,10 +158,10 @@ export default function InpatientCensusPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMsg(json.error ?? tc("failed"));
+      showApiError(json, tc("failed"));
       return;
     }
-    setMsg(t("discharged"));
+    showSuccess(t("discharged"));
     await load();
   }
 
@@ -177,7 +176,6 @@ export default function InpatientCensusPage() {
           </Link>
         }
       />
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
         <EraDataGrid
           columns={columns}

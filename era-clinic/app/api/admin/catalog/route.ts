@@ -3,6 +3,7 @@ import { ServiceCatalogKind } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { recordCatalogPriceIfChanged } from "@/domain/catalog/catalog-price-history";
+import { resolveDepartmentWrite } from "@/domain/catalog/service-department.service";
 import { parseCatalogKindQuery } from "@/domain/catalog/service-catalog-kind";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -19,6 +20,7 @@ const writeSchema = z.object({
   listAmount: z.number().nonnegative().nullable().optional(),
   packageIncluded: z.boolean().optional(),
   department: z.string().optional().nullable(),
+  departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
@@ -83,6 +85,7 @@ export async function POST(req: Request) {
     const effectiveFrom = body.effectiveFrom
       ? bakuDayBounds(body.effectiveFrom).start
       : new Date();
+    const dept = await resolveDepartmentWrite(organizationId, body);
     const row = await prisma.serviceCatalogCache.create({
       data: {
         organizationId,
@@ -94,7 +97,8 @@ export async function POST(req: Request) {
         amount: body.amount,
         listAmount,
         packageIncluded: body.packageIncluded ?? false,
-        department: body.department?.trim() || null,
+        department: dept.department,
+        departmentCode: dept.departmentCode,
         kind: body.kind ?? "OTHER",
         syncedAt: new Date(),
       },

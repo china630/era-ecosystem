@@ -12,6 +12,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
@@ -158,6 +159,8 @@ type Props = {
   readOnly?: boolean;
   /** Bump to reload card-summary (intake checklist after anamnesis/complaint). */
   refreshKey?: number;
+  /** When set, opens the sanatorium treatment chart instead of navigating to the same URL. */
+  onOpenDayPlan?: (episodeId: string) => void;
 };
 
 export function PatientCardClinicalSections({
@@ -168,6 +171,7 @@ export function PatientCardClinicalSections({
   anamnesisOk = true,
   readOnly = false,
   refreshKey = 0,
+  onOpenDayPlan,
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
@@ -192,19 +196,21 @@ export function PatientCardClinicalSections({
   const [planOffset, setPlanOffset] = useState(0);
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
-  const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
   const [day1Busy, setDay1Busy] = useState(false);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
-    const q = episodeId ? `?episode=${encodeURIComponent(episodeId)}` : "";
+    const params = new URLSearchParams();
+    if (episodeId) params.set("episode", episodeId);
+    params.set("locale", locale);
+    const q = `?${params.toString()}`;
     const res = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
     const data = await res.json();
     const row = (data.data ?? data) as CardSummary;
     setSummary(row);
     setLoading(false);
-  }, [patientRefId, episodeId, refreshKey]);
+  }, [patientRefId, episodeId, locale, refreshKey]);
 
   useEffect(() => {
     void loadSummary();
@@ -231,6 +237,7 @@ export function PatientCardClinicalSections({
       });
       if (fromIso) params.set("from", fromIso);
       if (episodeId) params.set("episode", episodeId);
+      params.set("locale", locale);
       const res = await fetch(`/api/patients/${patientRefId}/card-feed?${params}`);
       const data = await res.json();
       const row = data.data ?? data;
@@ -240,7 +247,7 @@ export function PatientCardClinicalSections({
       setHistHasMore(Boolean(row.hasMore));
       setHistLoading(false);
     },
-    [patientRefId, episodeId, histTypes, fromIso, histOffset],
+    [patientRefId, episodeId, histTypes, fromIso, histOffset, locale],
   );
 
   const loadPlan = useCallback(
@@ -252,6 +259,7 @@ export function PatientCardClinicalSections({
         offset: String(offset),
       });
       if (episodeId) params.set("episode", episodeId);
+      params.set("locale", locale);
       const res = await fetch(`/api/patients/${patientRefId}/card-feed?${params}`);
       const data = await res.json();
       const row = data.data ?? data;
@@ -261,7 +269,7 @@ export function PatientCardClinicalSections({
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
     },
-    [patientRefId, episodeId, planOffset],
+    [patientRefId, episodeId, planOffset, locale],
   );
 
   useEffect(() => {
@@ -490,13 +498,18 @@ export function PatientCardClinicalSections({
                       .then(async (res) => {
                         if (!res.ok) {
                           const d = await res.json();
-                          setConfirmMsg(
-                            packageAssignBlockText(t, d.code) ?? d.error ?? "Day-1 failed",
+                          showApiError(
+                            {
+                              error:
+                                packageAssignBlockText(t, d.code) ?? d.error ?? tc("failed"),
+                            },
                           );
                           return;
                         }
-                        setConfirmMsg(null);
-                        const q = episodeId ? `?episode=${encodeURIComponent(episodeId)}` : "";
+                        const q = `?${new URLSearchParams({
+                          ...(episodeId ? { episode: episodeId } : {}),
+                          locale,
+                        }).toString()}`;
                         const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
                         if (r.ok) {
                           const d = await r.json();
@@ -514,7 +527,6 @@ export function PatientCardClinicalSections({
             })}
           </p>
         )}
-        {confirmMsg ? <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{confirmMsg}</p> : null}
       </section>
 
       <section className="space-y-2">
@@ -543,7 +555,10 @@ export function PatientCardClinicalSections({
             episodeId={episodeId}
             onClose={() => setPackageModalOpen(false)}
             onSaved={async () => {
-              const q = `?episode=${encodeURIComponent(episodeId)}`;
+              const q = `?${new URLSearchParams({
+                episode: episodeId,
+                locale,
+              }).toString()}`;
               const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
               if (r.ok) {
                 const d = await r.json();
@@ -657,12 +672,22 @@ export function PatientCardClinicalSections({
       >
         {episodeId ? (
           <p className="mb-3 text-[13px]">
-            <Link
-              href={`/sanatorium?episode=${encodeURIComponent(episodeId)}`}
-              className={LINK_ACCENT_CLASS}
-            >
-              {t("openDayPlan")}
-            </Link>
+            {onOpenDayPlan ? (
+              <button
+                type="button"
+                className={LINK_ACCENT_CLASS}
+                onClick={() => onOpenDayPlan(episodeId)}
+              >
+                {t("openDayPlan")}
+              </button>
+            ) : (
+              <Link
+                href={`/sanatorium?episode=${encodeURIComponent(episodeId)}`}
+                className={LINK_ACCENT_CLASS}
+              >
+                {t("openDayPlan")}
+              </Link>
+            )}
           </p>
         ) : null}
         <EpisodeScheduleCards

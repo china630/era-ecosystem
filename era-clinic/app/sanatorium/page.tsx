@@ -49,6 +49,8 @@ import {
   SECONDARY_BUTTON_CLASS,
   PageHeader,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
+  showSuccess,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
@@ -225,7 +227,6 @@ export default function SanatoriumPage() {
   const [programStartsOn, setProgramStartsOn] = useState(todayBakuYmd());
   const searchParams = useSearchParams();
   const deepLinkHandled = useRef(false);
-  const [msg, setMsg] = useState("");
   const [complaintModalOpen, setComplaintModalOpen] = useState(false);
   const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
   const [labModalOpen, setLabModalOpen] = useState(false);
@@ -423,7 +424,7 @@ export default function SanatoriumPage() {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/procedure-types")
+    void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
       .then((r) => r.json())
       .then((d) => {
         const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
@@ -431,7 +432,7 @@ export default function SanatoriumPage() {
         setProcedureTypeNames(new Map(rows.map((r) => [r.code, r.name])));
       })
       .catch(() => null);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void fetch("/api/diagnostic-catalog?kinds=lab_panel&applyFavorites=false")
@@ -526,13 +527,13 @@ export default function SanatoriumPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      setMsg(t("failed"));
+      showApiError(await res.json().catch(() => ({})), t("failed"));
       return;
     }
     const data = (await res.json().catch(() => ({}))) as {
       softWarn?: string;
     };
-    setMsg(
+    showSuccess(
       data.softWarn
         ? t("day1SoftWarn", {
             defaultValue:
@@ -562,7 +563,8 @@ export default function SanatoriumPage() {
     setBulkCancelOpen(false);
     setBulkCancelReason("");
     setBulkCancelReplace("");
-    setMsg(res.ok ? t("bulkCancelled", { defaultValue: "Procedures cancelled" }) : t("failed"));
+    if (res.ok) showSuccess(t("bulkCancelled", { defaultValue: "Procedures cancelled" }));
+    else showApiError(await res.json().catch(() => ({})), t("failed"));
     if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
 
@@ -598,11 +600,11 @@ export default function SanatoriumPage() {
     const data = await res.json();
     setBusy(false);
     if (res.status === 409 && data.code === "ANAMNESIS_REQUIRED") {
-      setMsg(data.error ?? t("anamnesisRequiredForProgram"));
+      showApiError(data, t("anamnesisRequiredForProgram"));
       return;
     }
     if (action === "instantiate-program" && res.status === 409) {
-      setMsg(t("alreadyHasProgram"));
+      showApiError({ error: t("alreadyHasProgram") });
       return;
     }
     if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_COMPLETED") {
@@ -612,16 +614,18 @@ export default function SanatoriumPage() {
       return;
     }
     if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
-      setMsg(data.error ?? t("labAlreadyOpen"));
+      showApiError(data, t("labAlreadyOpen"));
       return;
     }
-    setMsg(
-      res.ok
-        ? action === "instantiate-program" || action === "complete-checkup"
+    if (res.ok) {
+      showSuccess(
+        action === "instantiate-program" || action === "complete-checkup"
           ? t("programStarted")
-          : t("saved")
-        : (data.error ?? t("failed")),
-    );
+          : t("saved"),
+      );
+    } else {
+      showApiError(data, t("failed"));
+    }
     if (res.ok) {
       if (action === "complaint") {
         setComplaint("");
@@ -651,7 +655,7 @@ export default function SanatoriumPage() {
   async function registerWalkIn() {
     const validationError = validateWalkIn();
     if (validationError) {
-      setMsg(validationError);
+      showApiError({ error: validationError });
       return;
     }
     setBusy(true);
@@ -678,12 +682,12 @@ export default function SanatoriumPage() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMsg(data.error ?? t("failed"));
+      showApiError(data, t("failed"));
       return;
     }
     setWalkInModalOpen(false);
     setWalkIn(emptyWalkIn());
-    setMsg(t("walkInRegistered"));
+    showSuccess(t("walkInRegistered"));
     await loadList();
     const ep = data.data ?? data;
     if (ep?.id) setSelectedId(ep.id);
@@ -700,7 +704,8 @@ export default function SanatoriumPage() {
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? t("rescheduled") : (data.error ?? t("failed")));
+    if (res.ok) showSuccess(t("rescheduled"));
+    else showApiError(data, t("failed"));
     setRescheduleOrderId(null);
     if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
@@ -714,7 +719,8 @@ export default function SanatoriumPage() {
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? t("procedureCancelled") : (data.error ?? t("failed")));
+    if (res.ok) showSuccess(t("procedureCancelled"));
+    else showApiError(data, t("failed"));
     await reloadEpisode();
   }
 
@@ -752,13 +758,13 @@ export default function SanatoriumPage() {
         return;
       }
       if (!res.ok) {
-        setMsg(data.error ?? t("failed"));
+        showApiError(data, t("failed"));
         return;
       }
       setPaidSameDayOpen(false);
       setPaidSameDayConfirm(false);
       setPaidSameDayCode("");
-      setMsg(t("paidSameDayAdded", { defaultValue: "Paid same-day procedure added" }));
+      showSuccess(t("paidSameDayAdded", { defaultValue: "Paid same-day procedure added" }));
       if (selectedId) await loadSchedule(selectedId, chartDate);
     } finally {
       setBusy(false);
@@ -774,7 +780,8 @@ export default function SanatoriumPage() {
       { method: "DELETE" },
     );
     setBusy(false);
-    setMsg(res.ok ? t("saved") : t("failed"));
+    if (res.ok) showSuccess(t("saved"));
+    else showApiError(await res.json().catch(() => ({})), t("failed"));
     if (res.ok) await reloadEpisode();
   }
 
@@ -787,7 +794,8 @@ export default function SanatoriumPage() {
       { method: "DELETE" },
     );
     setBusy(false);
-    setMsg(res.ok ? t("saved") : t("failed"));
+    if (res.ok) showSuccess(t("saved"));
+    else showApiError(await res.json().catch(() => ({})), t("failed"));
     if (res.ok) await reloadEpisode();
   }
 
@@ -796,7 +804,8 @@ export default function SanatoriumPage() {
     setBusy(true);
     const res = await fetch(`/api/lab-orders/${orderId}`, { method: "DELETE" });
     setBusy(false);
-    setMsg(res.ok ? t("labCancelled") : t("failed"));
+    if (res.ok) showSuccess(t("labCancelled"));
+    else showApiError(await res.json().catch(() => ({})), t("failed"));
     if (res.ok) await reloadEpisode();
   }
 
@@ -829,7 +838,8 @@ export default function SanatoriumPage() {
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    setMsg(res.ok ? t("closeWalkInOk") : (data.error ?? t("failed")));
+    if (res.ok) showSuccess(t("closeWalkInOk"));
+    else showApiError(data, t("failed"));
     if (res.ok) {
       if (selectedId === episodeId) {
         setSelectedId("");
@@ -980,7 +990,6 @@ export default function SanatoriumPage() {
             </button>
           }
         />
-        {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
       </div>
 
       <EraListWorkspace
@@ -1255,10 +1264,13 @@ export default function SanatoriumPage() {
                               .then(async (res) => {
                                 if (!res.ok) {
                                   const d = await res.json();
-                                  window.alert(
-                                    packageAssignBlockText(tCard, d.code) ??
-                                      d.error ??
-                                      "Day-1 assign failed",
+                                  showApiError(
+                                    {
+                                      error:
+                                        packageAssignBlockText(tCard, d.code) ??
+                                        d.error ??
+                                        t("failed"),
+                                    },
                                   );
                                   return;
                                 }
@@ -1274,7 +1286,7 @@ export default function SanatoriumPage() {
                     <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {pendingExtras.map((p) => (
                         <li key={p.id}>
-                          {p.procedureName} · {p.amountNet.toFixed(2)} AZN · PENDING_PAY
+                          {p.procedureName} · {p.amountNet.toFixed(2)} AZN · {t("pendingPay")}
                         </li>
                       ))}
                     </ul>
@@ -1309,7 +1321,7 @@ export default function SanatoriumPage() {
                   <ul className={`mt-2 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
                     {pendingExtras.map((p) => (
                       <li key={p.id}>
-                        {p.procedureName} · {p.amountNet.toFixed(2)} AZN · PENDING_PAY
+                        {p.procedureName} · {p.amountNet.toFixed(2)} AZN · {t("pendingPay")}
                       </li>
                     ))}
                   </ul>
@@ -1357,9 +1369,7 @@ export default function SanatoriumPage() {
                           .then(async (res) => {
                             if (!res.ok) {
                               const d = await res.json().catch(() => ({}));
-                              window.alert(
-                                (d as { error?: string }).error ?? "Confirm failed",
-                              );
+                              showApiError(d, t("failed"));
                               return;
                             }
                             await loadList();
@@ -1386,9 +1396,7 @@ export default function SanatoriumPage() {
                           .then(async (res) => {
                             if (!res.ok) {
                               const d = await res.json().catch(() => ({}));
-                              window.alert(
-                                (d as { error?: string }).error ?? "Undo failed",
-                              );
+                              showApiError(d, t("failed"));
                               return;
                             }
                             await loadList();
@@ -1664,7 +1672,7 @@ export default function SanatoriumPage() {
             onCancel={() => setLabModalOpen(false)}
             onSubmit={() => {
               if (!testCode) {
-                setMsg(t("failed"));
+                showApiError({ error: t("failed") });
                 return;
               }
               void postAction("lab", { testCode });
@@ -1898,6 +1906,12 @@ export default function SanatoriumPage() {
         patientId={patientCardId}
         open={Boolean(patientCardId)}
         onClose={() => setPatientCardId(null)}
+        onOpenDayPlan={(episodeId) => {
+          setPatientCardId(null);
+          setSelectedId(episodeId);
+          setChartModalOpen(true);
+          void loadDetail(episodeId);
+        }}
       />
 
       {selectedId ? (

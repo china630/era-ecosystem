@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -20,6 +20,8 @@ import {
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
   SECONDARY_BUTTON_CLASS,
   TAB_ITEM_ACTIVE_CLASS,
   TAB_ITEM_CLASS,
@@ -99,6 +101,9 @@ const ORDERABLE_KINDS = new Set([
   "package",
 ]);
 
+/** Blank fields belong on studies and visit exams, not lab panels or packages. */
+const FORM_FIELD_KINDS = new Set(["imaging", "functional", "endoscopy", "visit"]);
+
 type FavoriteItem = {
   code: string;
   kind: string;
@@ -126,12 +131,14 @@ export default function DiagnosticCatalogAdminPage() {
   // Favorites tab state (migrated from /admin/catalog-favorites)
   const [favKeys, setFavKeys] = useState<string[]>([]);
   const [favItems, setFavItems] = useState<FavoriteItem[]>([]);
-  const [analyteMode, setAnalyteMode] = useState(false);
-  const [serviceFormStash, setServiceFormStash] = useState<Record<string, string> | null>(null);
+  const [analyteEditOpen, setAnalyteEditOpen] = useState(false);
+  const [analytesOpen, setAnalytesOpen] = useState(false);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
+  const [fieldsServiceId, setFieldsServiceId] = useState<string | null>(null);
+  const [panelTitle, setPanelTitle] = useState("");
   const [favMode, setFavMode] = useState<"first" | "only">("first");
   const [favLoading, setFavLoading] = useState(true);
   const [favSaving, setFavSaving] = useState(false);
-  const [favMsg, setFavMsg] = useState<string | null>(null);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [services, setServices] = useState<DiagnosticService[]>([]);
   const [analytes, setAnalytes] = useState<DiagnosticAnalyte[]>([]);
@@ -143,8 +150,6 @@ export default function DiagnosticCatalogAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [formFields, setFormFields] = useState<CatalogFieldDef[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
-
   const loadModalities = useCallback(async () => {
     const res = await fetch("/api/admin/diagnostic-catalog/modalities?includeInactive=true");
     setModalities(unwrap<Modality[]>(await res.json()));
@@ -231,26 +236,20 @@ export default function DiagnosticCatalogAdminPage() {
 
   async function saveFavorites() {
     setFavSaving(true);
-    setFavMsg(null);
     const res = await fetch("/api/admin/catalog-favorites", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          keys: favKeys.filter((key) => key.startsWith("code:")),
-          mode: favMode,
-        }),
+      body: JSON.stringify({
+        keys: favKeys.filter((key) => key.startsWith("code:")),
+        mode: favMode,
+      }),
     });
     setFavSaving(false);
-    setFavMsg(res.ok ? tFav("saved") : tFav("saveFailed"));
+    if (res.ok) showSuccess(tFav("saved"));
+    else showApiError(await res.json().catch(() => ({})), tFav("saveFailed"));
   }
 
-  const selectedService = useMemo(
-    () => services.find((s) => s.id === selectedServiceId) ?? null,
-    [services, selectedServiceId],
-  );
-
   function openCreate() {
-    setAnalyteMode(false);
     setEditingId(null);
     setFormFields([]);
     setForm(
@@ -279,11 +278,21 @@ export default function DiagnosticCatalogAdminPage() {
     setModalOpen(true);
   }
 
-  function openEditService(row: DiagnosticService) {
-    setAnalyteMode(false);
-    setEditingId(row.id);
-    if (row.kind === "lab_panel") setSelectedServiceId(row.id);
+  function openAnalytes(row: DiagnosticService) {
+    setSelectedServiceId(row.id);
+    setPanelTitle(localeTitle(row));
+    setAnalytesOpen(true);
+  }
+
+  function openFields(row: DiagnosticService) {
+    setFieldsServiceId(row.id);
+    setPanelTitle(localeTitle(row));
     setFormFields(parseCatalogFieldsJson(row.fieldsJson));
+    setFieldsOpen(true);
+  }
+
+  function openEditService(row: DiagnosticService) {
+    setEditingId(row.id);
     let includesText = "";
     try {
       includesText = row.includesJson ? (JSON.parse(row.includesJson) as string[]).join(", ") : "";
@@ -307,8 +316,7 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   function openEditAnalyte(row: DiagnosticAnalyte) {
-    setServiceFormStash(form);
-    setAnalyteMode(true);
+    setAnalyteEditOpen(true);
     setEditingId(row.id);
     setForm({
       code: row.code,
@@ -325,11 +333,9 @@ export default function DiagnosticCatalogAdminPage() {
         : "",
       sortOrder: String(row.sortOrder),
     });
-    setModalOpen(true);
   }
 
   async function save() {
-    setMsg(null);
     if (tab === "modalities") {
       const payload = {
         code: form.code?.trim(),
@@ -349,28 +355,16 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
         return;
       }
       setModalOpen(false);
-      setMsg(tc("saved"));
+      showSuccess(tc("saved"));
       await loadModalities();
       return;
     }
 
     if (tab === "services") {
-      const fields =
-        formFields.length > 0
-          ? formFields.filter((f) => f.key.trim()).map((f) => ({
-              ...f,
-              key: f.key.trim(),
-              label: {
-                en: f.label?.en ?? "",
-                ru: f.label?.ru ?? "",
-                az: f.label?.az ?? "",
-              },
-            }))
-          : null;
       const includes = form.includes?.trim()
         ? form.includes.split(",").map((c) => c.trim()).filter(Boolean)
         : null;
@@ -383,7 +377,6 @@ export default function DiagnosticCatalogAdminPage() {
         titleRu: form.titleRu?.trim(),
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
-        fields,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
@@ -397,22 +390,23 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
         return;
       }
       setModalOpen(false);
-      setMsg(tc("saved"));
+      showSuccess(tc("saved"));
       await loadServices();
-      return;
     }
+  }
 
-    if (analyteMode && selectedServiceId) {
+  async function saveAnalyte() {
+    if (!selectedServiceId) return;
       let valueOptions;
       if (form.valueOptionsJson?.trim()) {
         try {
           valueOptions = JSON.parse(form.valueOptionsJson);
         } catch {
-          setMsg(t("invalidValueOptions"));
+          showApiError({ error: t("invalidValueOptions") });
           return;
         }
       }
@@ -438,21 +432,45 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
         return;
       }
-      setAnalyteMode(false);
-      if (serviceFormStash) setForm(serviceFormStash);
-      setEditingId(selectedServiceId);
-      setMsg(tc("saved"));
+      setAnalyteEditOpen(false);
+      showSuccess(tc("saved"));
       await loadAnalytes(selectedServiceId);
+      await loadServices();
+  }
+
+  async function saveFields() {
+    if (!fieldsServiceId) return;
+    const fields = formFields
+      .filter((f) => f.key.trim())
+      .map((f) => ({
+        ...f,
+        key: f.key.trim(),
+        label: {
+          en: f.label?.en ?? "",
+          ru: f.label?.ru ?? "",
+          az: f.label?.az ?? "",
+        },
+      }));
+    const res = await fetch(`/api/admin/diagnostic-catalog/services/${fieldsServiceId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: fields.length > 0 ? fields : null }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+      return;
     }
+    setFieldsOpen(false);
+    showSuccess(tc("saved"));
+    await loadServices();
   }
 
   function startNewAnalyte() {
     if (!selectedServiceId) return;
-    setServiceFormStash(form);
-    setAnalyteMode(true);
+    setAnalyteEditOpen(true);
     setEditingId(null);
     setForm({ valueType: "NUMERIC" });
   }
@@ -478,10 +496,16 @@ export default function DiagnosticCatalogAdminPage() {
   async function removeAnalyte(id: string) {
     if (!selectedServiceId) return;
     if (!window.confirm(tc("confirmDelete"))) return;
-    await fetch(`/api/admin/diagnostic-catalog/services/${selectedServiceId}/analytes/${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(
+      `/api/admin/diagnostic-catalog/services/${selectedServiceId}/analytes/${id}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => ({})), tc("failed"));
+      return;
+    }
     await loadAnalytes(selectedServiceId);
+    await loadServices();
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -500,6 +524,7 @@ export default function DiagnosticCatalogAdminPage() {
         actions={
           showAddButton ? (
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="h-4 w-4" aria-hidden />
               {tc("add")}
             </button>
           ) : tab === "favorites" ? (
@@ -514,7 +539,6 @@ export default function DiagnosticCatalogAdminPage() {
           ) : null
         }
       />
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <div className={TAB_STRIP_CLASS}>
         {tabs.map((x) => (
           <button
@@ -678,6 +702,26 @@ export default function DiagnosticCatalogAdminPage() {
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div className="flex gap-1">
+                          {row.kind === "lab_panel" ? (
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={t("manageAnalytes")}
+                              onClick={() => openAnalytes(row)}
+                            >
+                              <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          ) : null}
+                          {FORM_FIELD_KINDS.has(row.kind) ? (
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={t("fields")}
+                              onClick={() => openFields(row)}
+                            >
+                              <TextCursorInput className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
@@ -771,7 +815,6 @@ export default function DiagnosticCatalogAdminPage() {
                 </ul>
               </div>
 
-              {favMsg ? <p className={`text-[13px] ${TEXT_SUCCESS_CLASS}`}>{favMsg}</p> : null}
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{tFav("hint")}</p>
             </>
           )}
@@ -827,7 +870,7 @@ export default function DiagnosticCatalogAdminPage() {
             </>
           )}
 
-          {tab === "services" && !analyteMode && (
+          {tab === "services" && (
             <>
               {!editingId ? (
                 <Field
@@ -896,89 +939,79 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.includes ?? ""}
                 onChange={(e) => setForm({ ...form, includes: e.target.value })}
               />
-              <CatalogFieldsEditor
-                value={formFields}
-                onChange={setFormFields}
-                labels={{
-                  fieldsTitle: t("fieldsEditorTitle"),
-                  addField: t("addField"),
-                  key: t("fieldKey"),
-                  type: t("fieldType"),
-                  labelEn: t("titleEn"),
-                  labelRu: t("titleRu"),
-                  labelAz: t("titleAz"),
-                  unit: t("unit"),
-                  required: t("fieldRequired"),
-                  options: t("fieldOptions"),
-                  optionsHint: t("fieldOptionsHint"),
-                  moveUp: t("moveUp"),
-                  moveDown: t("moveDown"),
-                  empty: t("fieldsEmpty"),
-                  remove: tc("delete"),
-                }}
-              />
               <Field
                 label={t("sortOrder")}
                 preset="count"
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
-              {editingId && form.kind === "lab_panel" ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-medium">{t("tabAnalytes")}</p>
-                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={startNewAnalyte}>
-                      {tc("add")}
-                    </button>
-                  </div>
-                  <ul className="max-h-48 space-y-1 overflow-y-auto text-[13px]">
-                    {analytes.map((row) => (
-                      <li key={row.id} className="flex items-center gap-2">
-                        <span className="flex-1">
-                          {(locale.startsWith("ru")
-                            ? row.labelRu
-                            : locale.startsWith("az")
-                              ? row.labelAz
-                              : row.labelEn) || row.labelEn}{" "}
-                          · {row.code}
-                        </span>
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("edit")}
-                          onClick={() => openEditAnalyte(row)}
-                        >
-                          <Pencil className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          aria-label={tc("delete")}
-                          onClick={() => void removeAnalyte(row.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
             </>
           )}
+        </div>
+        <ModalFooter
+          onCancel={() => setModalOpen(false)}
+          cancelLabel={tc("cancel")}
+          onSubmit={() => void save()}
+          submitLabel={tc("save")}
+        />
+      </ModalShell>
 
-          {analyteMode && (
-            <>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => {
-                  setAnalyteMode(false);
-                  if (serviceFormStash) setForm(serviceFormStash);
-                  setEditingId(selectedServiceId);
-                }}
-              >
-                {t("tabServices")}
-              </button>
+      <ModalShell
+        open={analytesOpen}
+        title={t("analytesFor", { service: panelTitle })}
+        closeLabel={tc("close")}
+        onClose={() => setAnalytesOpen(false)}
+      >
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={startNewAnalyte}>
+              {tc("add")}
+            </button>
+          </div>
+          {analytes.length === 0 ? (
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("emptyAnalytes")}</p>
+          ) : (
+          <ul className="max-h-80 space-y-1 overflow-y-auto text-[13px]">
+            {analytes.map((row) => (
+              <li key={row.id} className="flex items-center gap-2">
+                <span className="flex-1">
+                  {(locale.startsWith("ru")
+                    ? row.labelRu
+                    : locale.startsWith("az")
+                      ? row.labelAz
+                      : row.labelEn) || row.labelEn}{" "}
+                  · {row.code}
+                </span>
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("edit")}
+                  onClick={() => openEditAnalyte(row)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={tc("delete")}
+                  onClick={() => void removeAnalyte(row.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+          )}
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={analyteEditOpen}
+        title={editingId ? tc("edit") : tc("add")}
+        closeLabel={tc("close")}
+        onClose={() => setAnalyteEditOpen(false)}
+      >
+        <div className="space-y-4">
               <Field
                 label={t("code")}
                 preset="code"
@@ -1050,13 +1083,46 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
-            </>
-          )}
         </div>
         <ModalFooter
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => setAnalyteEditOpen(false)}
           cancelLabel={tc("cancel")}
-          onSubmit={() => void save()}
+          onSubmit={() => void saveAnalyte()}
+          submitLabel={tc("save")}
+        />
+      </ModalShell>
+
+      <ModalShell
+        open={fieldsOpen}
+        title={t("fieldsFor", { service: panelTitle })}
+        closeLabel={tc("close")}
+        onClose={() => setFieldsOpen(false)}
+      >
+        <CatalogFieldsEditor
+          value={formFields}
+          onChange={setFormFields}
+          labels={{
+            fieldsTitle: t("fieldsEditorTitle"),
+            addField: t("addField"),
+            key: t("fieldKey"),
+            type: t("fieldType"),
+            labelEn: t("titleEn"),
+            labelRu: t("titleRu"),
+            labelAz: t("titleAz"),
+            unit: t("unit"),
+            required: t("fieldRequired"),
+            options: t("fieldOptions"),
+            optionsHint: t("fieldOptionsHint"),
+            moveUp: t("moveUp"),
+            moveDown: t("moveDown"),
+            empty: t("fieldsEmpty"),
+            remove: tc("delete"),
+          }}
+        />
+        <ModalFooter
+          onCancel={() => setFieldsOpen(false)}
+          cancelLabel={tc("cancel")}
+          onSubmit={() => void saveFields()}
           submitLabel={tc("save")}
         />
       </ModalShell>

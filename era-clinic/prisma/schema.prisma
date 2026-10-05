@@ -1429,6 +1429,23 @@ model PatientContraindication {
   @@index([organizationId])
 }
 
+/// Commercial department. One card per distinct imported label (AZ and RU strings stay separate).
+model ServiceDepartment {
+  id             String                @id @default(cuid())
+  organizationId String
+  code           String
+  nameAz         String?               @map("name_az")
+  nameRu         String?               @map("name_ru")
+  nameEn         String?               @map("name_en")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  catalogRows    ServiceCatalogCache[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("service_department")
+}
+
 enum ServiceCatalogKind {
   PROCEDURE
   DIAGNOSTIC
@@ -1450,7 +1467,11 @@ model ServiceCatalogCache {
   /// Retail / walk-in / over-quota list price (kept when package `amount` is 0).
   listAmount      Decimal?           @map("list_amount") @db.Decimal(12, 2)
   packageIncluded Boolean            @default(false) @map("package_included")
+  /// Legacy label kept in sync with the department card (import and filters).
   department      String?
+  /// ServiceDepartment.code. Empty means the assign modal groups the row as Other.
+  departmentCode  String?            @map("department_code")
+  departmentRef   ServiceDepartment? @relation(fields: [organizationId, departmentCode], references: [organizationId, code], onDelete: SetNull, onUpdate: Cascade)
   kind            ServiceCatalogKind @default(OTHER)
   syncedAt        DateTime           @default(now())
   prices          ServiceCatalogPrice[]
@@ -1458,6 +1479,7 @@ model ServiceCatalogCache {
   @@unique([organizationId, code])
   @@index([kind])
   @@index([organizationId])
+  @@index([organizationId, departmentCode])
 }
 
 /// Append-only retail / commercial price. Current row on ServiceCatalogCache is the latest.

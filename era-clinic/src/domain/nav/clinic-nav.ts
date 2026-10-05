@@ -11,12 +11,15 @@ import {
   Wallet,
   BedDouble,
   FileSpreadsheet,
+  Globe,
   Package,
   FileInput,
   GitBranch,
   Users,
   Database,
   BookOpen,
+  Building2,
+  PersonStanding,
   MapPin,
   Beaker,
   ScrollText,
@@ -44,6 +47,7 @@ import {
 export type ClinicNavGroupId =
   | "frontdesk"
   | "clinical"
+  | "reports"
   | "setup:catalogs"
   | "setup:rules"
   | "platform"
@@ -52,17 +56,20 @@ export type ClinicNavGroupId =
   | "mod:wellness";
 
 export type ClinicNavEntry = {
-  href: string;
+  /** Omit on a collapsible parent that only groups children. */
+  href?: string;
   labelKey: string;
   icon: LucideIcon;
   group: ClinicNavGroupId;
   /** When set, only sessions with this permission see the item. */
   permission?: ClinicPermission;
+  anyPermission?: readonly ClinicPermission[];
   /**
    * Visible when any listed preset is on.
    * Omit for the shared core (home, patients, lab, catalogs, platform).
    */
   preset?: readonly ClinicPresetCode[];
+  children?: ClinicNavEntry[];
 };
 
 export type ClinicNavItem = EraOpsNavItem & OpsNavCondition;
@@ -79,6 +86,7 @@ type NavTranslator = (key: string) => string;
 const GROUP_ORDER: ClinicNavGroupId[] = [
   "frontdesk",
   "clinical",
+  "reports",
   "mod:sanatorium",
   "mod:inpatient",
   "mod:wellness",
@@ -93,6 +101,7 @@ const GROUP_META: Record<
 > = {
   frontdesk: { titleKey: "sectionFrontdesk", icon: ClipboardList },
   clinical: { titleKey: "sectionClinical", icon: Activity },
+  reports: { titleKey: "sectionReports", icon: FileSpreadsheet },
   "mod:sanatorium": {
     titleKey: "moduleSanatorium",
     icon: HeartPulse,
@@ -186,20 +195,29 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   },
+
+  // Reports
   {
     href: "/reports/diagnoses",
     labelKey: "diagnosisReport",
     icon: FileSpreadsheet,
-    group: "clinical",
+    group: "reports",
     permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   },
   {
     href: "/reports/procedures",
     labelKey: "procedureReport",
     icon: FileSpreadsheet,
-    group: "clinical",
+    group: "reports",
     permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
+    href: "/reports/patients-by-country",
+    labelKey: "patientCountryReport",
+    icon: Globe,
+    group: "reports",
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   },
 
   // Module: Sanatoriya
@@ -263,6 +281,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   },
   {
+    href: "/admin/departments",
+    labelKey: "departments",
+    icon: Building2,
+    group: "setup:catalogs",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+  },
+  {
     href: "/admin/diagnostic-catalog",
     labelKey: "diagnosticCatalog",
     icon: Beaker,
@@ -319,7 +344,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
   {
     href: "/admin/lookups",
     labelKey: "lookups",
-    icon: BookOpen,
+    icon: PersonStanding,
     group: "setup:catalogs",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
@@ -354,11 +379,19 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   },
   {
-    href: "/admin/access",
-    labelKey: "accessControl",
-    icon: Shield,
+    labelKey: "accounts",
+    icon: Users,
     group: "platform",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+    anyPermission: [CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS],
+    children: [
+      {
+        href: "/admin/access",
+        labelKey: "accessControl",
+        icon: Shield,
+        group: "platform",
+        permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      },
+    ],
   },
 ];
 
@@ -368,7 +401,9 @@ function toNavItem(entry: ClinicNavEntry, t: NavTranslator): ClinicNavItem {
     label: t(entry.labelKey),
     icon: entry.icon,
     permission: entry.permission,
+    anyPermission: entry.anyPermission ? [...entry.anyPermission] : undefined,
     preset: entry.preset,
+    children: entry.children?.map((child) => toNavItem(child, t)),
   };
 }
 
@@ -415,11 +450,36 @@ export function buildClinicNav(
   };
 }
 
-/** First admin href the session may open (nav order). */
+/** Every href in the catalog, including nested rows. */
+export function collectClinicNavHrefs(): string[] {
+  const walk = (entries: readonly ClinicNavEntry[]): string[] => {
+    const hrefs: string[] = [];
+    for (const entry of entries) {
+      if (entry.href) hrefs.push(entry.href);
+      if (entry.children) hrefs.push(...walk(entry.children));
+    }
+    return hrefs;
+  };
+  return walk([...CLINIC_TOP_NAV, ...CLINIC_NAV]);
+}
+
+/** First admin href the session may open (nav order, including nested rows). */
 export function firstAllowedAdminHref(permissions: string[]): string | null {
-  for (const entry of CLINIC_NAV) {
-    if (!entry.permission?.startsWith("screen:admin.")) continue;
-    if (permissions.includes(entry.permission)) return entry.href;
-  }
-  return null;
+  const walk = (entries: readonly ClinicNavEntry[]): string | null => {
+    for (const entry of entries) {
+      if (
+        entry.href &&
+        entry.permission?.startsWith("screen:admin.") &&
+        permissions.includes(entry.permission)
+      ) {
+        return entry.href;
+      }
+      if (entry.children) {
+        const nested = walk(entry.children);
+        if (nested) return nested;
+      }
+    }
+    return null;
+  };
+  return walk(CLINIC_NAV);
 }

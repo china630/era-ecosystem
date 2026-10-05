@@ -161,10 +161,13 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
       (key) => key,
     );
     const hrefs = [
-      ...nav.topItems.map((i) => i.href),
-      ...nav.sections.flatMap((s) => s.items.map((i) => i.href)),
+      ...nav.topItems.flatMap((i) => [i.href, ...(i.children ?? []).map((c) => c.href)]),
+      ...nav.sections.flatMap((s) =>
+        s.items.flatMap((i) => [i.href, ...(i.children ?? []).map((c) => c.href)]),
+      ),
     ];
     expect(hrefs).not.toContain("/patients");
+    expect(hrefs).not.toContain("/admin/access");
   });
 });
 

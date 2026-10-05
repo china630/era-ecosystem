@@ -17,6 +17,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { IcdPicker } from "@/components/IcdPicker";
 import { authorLabelFrom } from "@/domain/staff/practitioner-label";
@@ -87,7 +88,6 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     const [kind, setKind] = useState("ADMISSION");
     const [chapter, setChapter] = useState("");
     const [busy, setBusy] = useState(false);
-    const [msg, setMsg] = useState("");
 
     const load = useCallback(async () => {
       const res = await fetch(apiBase);
@@ -106,7 +106,6 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       setRole("PRIMARY");
       setKind("ADMISSION");
       setChapter("");
-      setMsg("");
       setOpen(true);
     }
 
@@ -119,17 +118,15 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       setRole(row.role ?? "PRIMARY");
       setKind(row.kind ?? "ADMISSION");
       setChapter("");
-      setMsg("");
       setOpen(true);
     }
 
     async function save() {
       if (!icdCodeId) {
-        setMsg(t("codeRequired"));
+        showApiError({ error: t("codeRequired") });
         return;
       }
       setBusy(true);
-      setMsg("");
       if (editingId) {
         const res = await fetch(apiBase, {
           method: "PATCH",
@@ -143,7 +140,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
         setBusy(false);
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setMsg(data.error ?? tc("failed"));
+          showApiError(data, tc("failed"));
           return;
         }
       } else {
@@ -160,7 +157,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
         setBusy(false);
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setMsg(data.error ?? tc("failed"));
+          showApiError(data, tc("failed"));
           return;
         }
       }
@@ -237,7 +234,6 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
             <li className={TEXT_MUTED_CLASS}>—</li>
           ) : null}
         </ul>
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
         <ModalShell
           open={open}
           title={editingId ? tc("edit") : t("addDiagnosis")}

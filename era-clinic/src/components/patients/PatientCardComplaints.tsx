@@ -13,6 +13,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 
 import {
@@ -53,7 +54,6 @@ export function PatientCardComplaints({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,21 +80,18 @@ export function PatientCardComplaints({
   function openCreate() {
     setEditingId(null);
     setText("");
-    setMsg("");
     setOpen(true);
   }
 
   function openEdit(row: Row) {
     setEditingId(row.id);
     setText(row.text);
-    setMsg("");
     setOpen(true);
   }
 
   async function save() {
     if (!text.trim()) return;
     setBusy(true);
-    setMsg("");
     if (editingId) {
       const res = await fetch(`/api/patients/${patientRefId}/complaints`, {
         method: "PATCH",
@@ -104,7 +101,7 @@ export function PatientCardComplaints({
       setBusy(false);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
     } else {
@@ -120,7 +117,7 @@ export function PatientCardComplaints({
       setBusy(false);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -209,7 +206,6 @@ export function PatientCardComplaints({
             ) : null}
           </ul>
         )}
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
       </div>
       <ModalShell
         open={open}

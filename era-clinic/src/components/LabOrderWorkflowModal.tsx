@@ -18,6 +18,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import {
   TemplateResultForm,
@@ -172,7 +173,6 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
   const [order, setOrder] = useState<LabOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   const [catalogItem, setCatalogItem] = useState<DiagnosticCatalogItem | null>(null);
   const [metaFields, setMetaFields] = useState<CatalogFieldDef[]>([]);
   const [metaValues, setMetaValues] = useState<Record<string, string>>({});
@@ -186,7 +186,6 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     async (opts?: { silent?: boolean }) => {
       if (!orderId) return;
       if (!opts?.silent) setLoading(true);
-      setError("");
       const res = await fetch(`/api/lab-orders/${orderId}`);
       let found: LabOrder | null = null;
       if (res.ok) {
@@ -255,7 +254,6 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       setResultsModalOpen(false);
       setPrintNotice("");
       setPrintOpen(false);
-      setError("");
     }
   }, [open, orderId, loadOrder]);
 
@@ -301,11 +299,10 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
   async function cancelOrder() {
     if (!orderId || !window.confirm(tList("cancelConfirm"))) return;
     setBusy(true);
-    setError("");
     const res = await fetch(`/api/lab-orders/${orderId}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? t("actionFailed"));
+      showApiError(data, t("actionFailed"));
       setBusy(false);
       return;
     }
@@ -317,7 +314,6 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
   async function runAction(path: string, body?: unknown) {
     if (!orderId) return;
     setBusy(true);
-    setError("");
     const res = await fetch(`/api/lab-orders/${orderId}/${path}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -325,7 +321,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? t("actionFailed"));
+      showApiError(data, t("actionFailed"));
       setBusy(false);
       return;
     }
@@ -477,8 +473,6 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                   </li>
                 ))}
               </ol>
-
-              {error ? <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
 
               {order.status === "ORDERED" ? (
                 <button

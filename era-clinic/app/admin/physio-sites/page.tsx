@@ -26,6 +26,7 @@ import {
   TAB_ITEM_CLASS,
   TAB_STRIP_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { PHYSIO_SITE_KINDS } from "@/domain/physio/physio-catalog";
@@ -123,7 +124,6 @@ export default function PhysioSitesAdminPage() {
   const [lists, setLists] = useState<ListRow[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
   const [editList, setEditList] = useState<ListRow | null>(null);
   const [siteForm, setSiteForm] = useState(emptySite);
@@ -146,7 +146,6 @@ export default function PhysioSitesAdminPage() {
   const listKind = tab === "programs" ? "DEVICE_PROGRAM" : tab === "substances" ? "SUBSTANCE" : null;
 
   const load = useCallback(async () => {
-    setMsg(null);
     if (tab === "queue") {
       const params = new URLSearchParams({ status: queueStatus });
       if (qDebounced) params.set("q", qDebounced);
@@ -227,7 +226,6 @@ export default function PhysioSitesAdminPage() {
   }, [queue, sites]);
 
   function openCreate() {
-    setMsg(null);
     if (tab === "sites") {
       setEditSite(null);
       setSiteForm(emptySite());
@@ -274,7 +272,6 @@ export default function PhysioSitesAdminPage() {
 
   async function saveSite() {
     setBusy(true);
-    setMsg(null);
     const payload = {
       kind: siteForm.kind,
       prikaz817: siteForm.prikaz817,
@@ -300,7 +297,7 @@ export default function PhysioSitesAdminPage() {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg((data as { error?: string }).error ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setOpen(false);
@@ -310,7 +307,6 @@ export default function PhysioSitesAdminPage() {
   async function saveList() {
     if (!listKind) return;
     setBusy(true);
-    setMsg(null);
     const payload = {
       titleAz: listForm.titleAz,
       titleRu: listForm.titleRu,
@@ -330,7 +326,7 @@ export default function PhysioSitesAdminPage() {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg((data as { error?: string }).error ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setOpen(false);
@@ -339,13 +335,12 @@ export default function PhysioSitesAdminPage() {
 
   async function queuePatch(id: string, action: "ignore" | "alias") {
     setBusy(true);
-    setMsg(null);
     const body: { action: "ignore" | "alias"; siteId?: string } = { action };
     if (action === "alias") {
       const siteId = aliasSiteById[id];
       if (!siteId) {
         setBusy(false);
-        setMsg(t("pickSiteFirst"));
+        showApiError({ error: t("pickSiteFirst") });
         return;
       }
       body.siteId = siteId;
@@ -358,7 +353,7 @@ export default function PhysioSitesAdminPage() {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg((data as { error?: string }).error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     await load();
@@ -423,7 +418,6 @@ export default function PhysioSitesAdminPage() {
           />
         ) : null}
       </EraListFilterBar>
-      {msg ? <p className="text-[13px] text-[#E74C3C]">{msg}</p> : null}
       {tab === "queue" ? (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>

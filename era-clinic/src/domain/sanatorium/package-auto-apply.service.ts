@@ -128,13 +128,27 @@ function selectAutoBlocks(
     if (p.assignMode === "AUTO_ON_OPEN") return true;
     if (
       autoApplyState === "PENDING_DOCTOR" &&
-      p.requiresDoctor &&
-      p.assignMode === "AUTO_DAY1"
+      p.assignMode === "AUTO_DAY1" &&
+      (p.requiresDoctor || p.fulfillment === "VISIT")
     ) {
       return true;
     }
     return false;
   });
+}
+
+/**
+ * A LAB/EXAM line stored with the default PROCEDURE_ORDER is still a study.
+ * Explicit LAB_ORDER / VISIT is kept. Assign mode is not changed.
+ */
+export function fulfillmentRespectingStudyKind(
+  kind: string | null | undefined,
+  fulfillment: string | null | undefined,
+): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
+  if (fulfillment === "LAB_ORDER" || fulfillment === "VISIT") return fulfillment;
+  if (kind === "LAB") return "LAB_ORDER";
+  if (kind === "EXAM") return "VISIT";
+  return "PROCEDURE_ORDER";
 }
 
 function axesFromLegacyTemplateProc(p: {
@@ -155,12 +169,7 @@ function axesFromLegacyTemplateProc(p: {
     p.assignMode === "MANUAL"
       ? p.assignMode
       : "MANUAL";
-  const fulfillment =
-    p.fulfillment === "LAB_ORDER" ||
-    p.fulfillment === "VISIT" ||
-    p.fulfillment === "PROCEDURE_ORDER"
-      ? p.fulfillment
-      : "PROCEDURE_ORDER";
+  const fulfillment = fulfillmentRespectingStudyKind(p.kind, p.fulfillment);
   const quotaBasis = p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS";
   const axes: EntitlementBlockAxes = {
     assignMode,
@@ -219,7 +228,10 @@ export async function applyPackageAutoBlocks(
     } satisfies EntitlementSnapshot);
 
   const selected = selectAutoBlocks(
-    snap.procedures,
+    snap.procedures.map((block) => ({
+      ...block,
+      fulfillment: fulfillmentRespectingStudyKind(block.kind, block.fulfillment),
+    })),
     opts.trigger,
     instance.autoApplyState,
   );
