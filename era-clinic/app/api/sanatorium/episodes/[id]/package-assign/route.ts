@@ -13,6 +13,7 @@ import {
   assignPackageProcedures,
   getPackageAssignSnapshot,
 } from "@/domain/sanatorium/package-assign.service";
+import { readUiLocale } from "@/lib/request-locale";
 
 const lineSchema = z.object({
   procedureCode: z.string().min(1),
@@ -41,7 +42,7 @@ function mapAssignError(err: unknown) {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -55,7 +56,8 @@ export async function GET(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
-    const snap = await getPackageAssignSnapshot(id);
+    const locale = await readUiLocale(req);
+    const snap = await getPackageAssignSnapshot(id, locale);
     return jsonOk(snap);
   } catch (err) {
     const mapped = mapAssignError(err);

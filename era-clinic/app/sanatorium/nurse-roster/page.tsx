@@ -27,6 +27,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 type Warning = { kind: string; from: string; to: string; note: string | null };
@@ -112,7 +114,6 @@ export default function NurseRosterPage() {
   const [view, setView] = useState<RosterView | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [dayOverrides, setDayOverrides] = useState<DayOverride[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [absenceForm, setAbsenceForm] = useState({
@@ -151,14 +152,13 @@ export default function NurseRosterPage() {
 
   const load = useCallback(async () => {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch(
         `/api/sanatorium/nurse-roster?yearMonth=${yearMonth}&staffKind=${staffKind}`,
       );
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("loadFailed"));
+        showApiError(data, t("loadFailed"));
         return;
       }
       setView(data);
@@ -285,7 +285,6 @@ export default function NurseRosterPage() {
 
   async function save() {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster", {
         method: "PUT",
@@ -303,13 +302,13 @@ export default function NurseRosterPage() {
       });
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setView(data);
       setLines(data.lines);
       setDayOverrides(data.dayOverrides ?? []);
-      setMsg(t("saved"));
+      showSuccess(t("saved"));
     } finally {
       setBusy(false);
     }
@@ -317,7 +316,6 @@ export default function NurseRosterPage() {
 
   async function postAction(action: "approve" | "copyPrevious") {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster", {
         method: "POST",
@@ -326,14 +324,14 @@ export default function NurseRosterPage() {
       });
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setView(data);
       setLines(data.lines);
       setDayOverrides(data.dayOverrides ?? []);
       setPage(1);
-      setMsg(action === "approve" ? t("approved") : t("copied"));
+      showSuccess(action === "approve" ? t("approved") : t("copied"));
     } finally {
       setBusy(false);
     }
@@ -341,7 +339,7 @@ export default function NurseRosterPage() {
 
   async function addAbsence() {
     if (!absenceForm.practitionerId || !absenceForm.startsOn || !absenceForm.endsOn) {
-      setMsg(t("absenceRequired"));
+      showApiError({ error: t("absenceRequired") });
       return;
     }
     setBusy(true);
@@ -353,7 +351,7 @@ export default function NurseRosterPage() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setAbsenceOpen(false);
@@ -378,11 +376,10 @@ export default function NurseRosterPage() {
 
   async function saveSubstitute() {
     if (!subForm.procedureTypeId || !subForm.dutyDate || !subForm.practitionerId) {
-      setMsg(t("substituteRequired"));
+      showApiError({ error: t("substituteRequired") });
       return;
     }
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster/day-overrides", {
         method: "PUT",
@@ -398,11 +395,11 @@ export default function NurseRosterPage() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setSubOpen(false);
-      setMsg(t("substituteSaved"));
+      showSuccess(t("substituteSaved"));
       await load();
     } finally {
       setBusy(false);
@@ -528,8 +525,6 @@ export default function NurseRosterPage() {
           {t("addAbsence")}
         </button>
       </div>
-
-      {msg ? <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
 
       {matrixView === "procedures" ? (
         <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

@@ -23,6 +23,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { pickL10n, type DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -195,8 +196,6 @@ export default function ProgramTemplatesAdminPage() {
   const [labCategory, setLabCategory] = useState("");
   const [memberQuery, setMemberQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingVersion, setEditingVersion] = useState<number>(1);
@@ -217,12 +216,10 @@ export default function ProgramTemplatesAdminPage() {
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockOriginalCode, setBlockOriginalCode] = useState<string | null>(null);
   const [blockDraft, setBlockDraft] = useState<ProgramBlock | null>(null);
-  const [blockError, setBlockError] = useState<string | null>(null);
   const [memberPick, setMemberPick] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    setLoadError(null);
     try {
       const qs = includeRetired ? "?includeRetired=1" : "";
       const [pRes, ptRes, diagRes] = await Promise.all([
@@ -232,7 +229,7 @@ export default function ProgramTemplatesAdminPage() {
       ]);
       if (!pRes.ok) {
         setRows([]);
-        setLoadError(tc("failed"));
+        showApiError(await pRes.json().catch(() => ({})), tc("failed"));
         return;
       }
       const pJson = await pRes.json();
@@ -265,7 +262,7 @@ export default function ProgramTemplatesAdminPage() {
       }
     } catch {
       setRows([]);
-      setLoadError(tc("failed"));
+      showApiError({ error: tc("failed") });
     } finally {
       setLoading(false);
     }
@@ -414,7 +411,6 @@ export default function ProgramTemplatesAdminPage() {
     setKnots([]);
     setKnotNights("10");
     setMatrixNights([...KNOT_NIGHT_CHIPS]);
-    setSaveError(null);
     closeBlockModal();
     setOpen(true);
   }
@@ -468,7 +464,6 @@ export default function ProgramTemplatesAdminPage() {
         setKnotNights(String(fromKnots.includes(dur) ? dur : fromKnots[0]));
       }
     }
-    setSaveError(null);
     closeBlockModal();
     setOpen(true);
   }
@@ -477,7 +472,6 @@ export default function ProgramTemplatesAdminPage() {
     setBlockModalOpen(false);
     setBlockOriginalCode(null);
     setBlockDraft(null);
-    setBlockError(null);
     setMemberPick("");
     setLabCategory("");
     setMemberQuery("");
@@ -486,7 +480,6 @@ export default function ProgramTemplatesAdminPage() {
   function openBlockCreate() {
     setBlockOriginalCode(null);
     setBlockDraft(emptyBlockDraft(blocks));
-    setBlockError(null);
     setMemberPick("");
     setLabCategory("");
     setMemberQuery("");
@@ -502,7 +495,6 @@ export default function ProgramTemplatesAdminPage() {
       fulfillment: fulfillmentFromKind(kind),
       memberCodes: [...b.memberCodes],
     });
-    setBlockError(null);
     setMemberPick("");
     setLabCategory("");
     setMemberQuery("");
@@ -559,14 +551,14 @@ export default function ProgramTemplatesAdminPage() {
       !blockDraft.quotaBasis ||
       blockDraft.requiresDoctor === null
     ) {
-      setBlockError(t("validationRequired"));
+      showApiError({ error: t("validationRequired") });
       return;
     }
     const conflict = blocks.some(
       (b) => b.procedureCode === code && b.procedureCode !== blockOriginalCode,
     );
     if (conflict) {
-      setBlockError(t("duplicateBlockCode"));
+      showApiError({ error: t("duplicateBlockCode") });
       return;
     }
 
@@ -665,12 +657,11 @@ export default function ProgramTemplatesAdminPage() {
   }
 
   async function save() {
-    setSaveError(null);
     const name = form.name.trim();
     const code = form.code.trim();
     const durationDays = Number(form.durationDays);
     if (!name || (!editingId && !code) || !Number.isFinite(durationDays) || durationDays < 1) {
-      setSaveError(t("validationRequired"));
+      showApiError({ error: t("validationRequired") });
       return;
     }
     if (
@@ -678,21 +669,21 @@ export default function ProgramTemplatesAdminPage() {
       form.effectiveTo &&
       form.effectiveTo < form.effectiveFrom
     ) {
-      setSaveError(t("validityRangeInvalid"));
+      showApiError({ error: t("validityRangeInvalid") });
       return;
     }
     if (blocks.length === 0) {
-      setSaveError(t("addBlockFirst"));
+      showApiError({ error: t("addBlockFirst") });
       return;
     }
     const codes = new Set<string>();
     for (const b of blocks) {
       if (!b.procedureCode.trim()) {
-        setSaveError(t("validationRequired"));
+        showApiError({ error: t("validationRequired") });
         return;
       }
       if (codes.has(b.procedureCode)) {
-        setSaveError(t("duplicateBlockCode"));
+        showApiError({ error: t("duplicateBlockCode") });
         return;
       }
       codes.add(b.procedureCode);
@@ -752,7 +743,7 @@ export default function ProgramTemplatesAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setSaveError(tc("saveFailed"));
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
         return;
       }
       setOpen(false);
@@ -784,7 +775,7 @@ export default function ProgramTemplatesAdminPage() {
         body: JSON.stringify({ olderThanDays: 0 }),
       });
       if (!res.ok) {
-        setLoadError(tc("failed"));
+        showApiError(await res.json().catch(() => ({})), tc("failed"));
         return;
       }
       await load();
@@ -820,13 +811,12 @@ export default function ProgramTemplatesAdminPage() {
               {t("purgeRetired")}
             </button>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="h-4 w-4" aria-hidden />
               {tc("add")}
             </button>
           </div>
         }
       />
-
-      {loadError ? <p className={`mb-3 text-[13px] ${TEXT_MUTED_CLASS}`}>{loadError}</p> : null}
 
       <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -1212,7 +1202,6 @@ export default function ProgramTemplatesAdminPage() {
             )}
           </section>
 
-          {saveError ? <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{saveError}</p> : null}
         </div>
         <ModalFooter
           onCancel={() => {
@@ -1362,9 +1351,6 @@ export default function ProgramTemplatesAdminPage() {
               )}
             </div>
 
-            {blockError ? (
-              <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{blockError}</p>
-            ) : null}
           </div>
         ) : null}
         <ModalFooter

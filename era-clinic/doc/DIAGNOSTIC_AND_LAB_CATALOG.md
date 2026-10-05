@@ -2,7 +2,7 @@
 
 **Version:** 1.2.0 (AZ clinic + MediClub/Exonlab routine layer)  
 Source of truth: [`../prisma/seed-data/diagnostic-lab-catalog.json`](../prisma/seed-data/diagnostic-lab-catalog.json)  
-Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTemplate`). Org overlay (`Modality` / `DiagnosticService`) is copy-if-empty on Connect/login/catalog GET. Nafta overlay: wizard / `db:seed:diagnostic-catalog:nafta` (not droplet boot). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md) and ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).  
+Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTemplate`). Org overlay (`Modality` / `DiagnosticService`) is copy-if-empty on Connect/login/catalog GET. Nafta overlay: wizard / `db:seed:diagnostic-catalog:nafta` (not droplet boot). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. Lab panels open analytes from a row icon; imaging, functional, endoscopy, and visit rows open form fields the same way. The service card does not edit either list, and saving it does not send `fields`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md) and ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).  
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 

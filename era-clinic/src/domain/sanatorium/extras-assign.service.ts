@@ -113,20 +113,6 @@ export async function remainingPackageQuotaCode(
   return null;
 }
 
-/** A procedure that still has package quota must not be written as a paid extra. */
-async function assertNoRemainingPackageQuota(
-  episodeId: string,
-  procedureCode: string,
-): Promise<void> {
-  const open = await remainingPackageQuotaCode(episodeId, procedureCode);
-  if (!open) return;
-  throw new PackageAssignError(
-    `Procedure ${procedureCode} still has package quota`,
-    "QUOTA_REMAINING",
-    409,
-  );
-}
-
 /** Doctor prescribe: PENDING_PAY only (not on schedule). */
 export async function prescribeExtras(
   episodeId: string,
@@ -142,7 +128,7 @@ export async function prescribeExtras(
 
   for (const line of lines) {
     if (line.qty < 1) continue;
-    await assertNoRemainingPackageQuota(episodeId, line.procedureCode);
+    // Overflow past package quota is a paid extra. Quota no longer blocks the write.
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
       throw new PackageAssignError(

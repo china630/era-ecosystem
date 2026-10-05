@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -20,8 +20,8 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
   type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
@@ -98,7 +98,6 @@ export default function PatientsPage() {
   const [filterState, setFilterState] = useState(emptyListFilters);
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const filters = useMemo(() => filterState, [filterState]);
@@ -209,7 +208,6 @@ export default function PatientsPage() {
   );
 
   async function save() {
-    setError(null);
     const res = await fetch("/api/patients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -231,7 +229,7 @@ export default function PatientsPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setOpen(false);
@@ -246,6 +244,7 @@ export default function PatientsPage() {
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
               {tc("add")}
             </button>
           }
@@ -457,7 +456,6 @@ export default function PatientsPage() {
             value={form.finCode}
             onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
           />
-          {error ? <p className={`text-xs ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
         </div>
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />
       </ModalShell>

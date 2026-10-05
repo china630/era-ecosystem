@@ -19,6 +19,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
@@ -83,8 +85,6 @@ export default function NursePage() {
   const [qrOrders, setQrOrders] = useState<Proc[]>([]);
   const [qrPatient, setQrPatient] = useState<string | null>(null);
   const [qrPatientRefId, setQrPatientRefId] = useState<string | null>(null);
-  const [msg, setMsg] = useState("");
-  const [msgTone, setMsgTone] = useState<"ok" | "err">("ok");
   const [loading, setLoading] = useState(true);
   const [nowTick, setNowTick] = useState(() => Date.now());
 
@@ -163,11 +163,6 @@ export default function NursePage() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [orders]);
 
-  function show(message: string, tone: "ok" | "err" = "ok") {
-    setMsg(message);
-    setMsgTone(tone);
-  }
-
   function statusLabel(s: string) {
     const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW", "CANCELLED"] as const;
     if ((known as readonly string[]).includes(s)) {
@@ -184,7 +179,6 @@ export default function NursePage() {
   }
 
   async function scanQr() {
-    show("");
     const res = await fetch("/api/nurse/qr-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -192,7 +186,7 @@ export default function NursePage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      show(data.error ?? t("qrFailed"), "err");
+      showApiError(data, t("qrFailed"));
       setQrOrders([]);
       setQrPatient(null);
       setQrPatientRefId(null);
@@ -204,13 +198,12 @@ export default function NursePage() {
     setQrPatientRefId(payload.patientRefId ?? null);
     setQrOrders(payload.orders ?? []);
     setActiveQrToken(payload.qrToken ?? qrToken.trim());
-    show(t("qrSuccess"));
+    showSuccess(t("qrSuccess"));
   }
 
   async function checkIn(id: string) {
-    show("");
     if (checkInRequiresQr && !activeQrToken) {
-      show(t("qrRequiredFirst"), "err");
+      showApiError({ error: t("qrRequiredFirst") });
       return;
     }
     const body =
@@ -222,10 +215,10 @@ export default function NursePage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      show(data.error ?? t("checkInFailed"), "err");
+      showApiError(data, t("checkInFailed"));
       return;
     }
-    show(t("checkInOk"));
+    showSuccess(t("checkInOk"));
     await load();
     if (qrToken.trim()) await scanQr();
   }
@@ -414,13 +407,6 @@ export default function NursePage() {
   return (
     <>
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      {msg ? (
-        <p
-          className={`mb-3 text-sm ${msgTone === "err" ? TEXT_DANGER_CLASS : TEXT_SUCCESS_CLASS}`}
-        >
-          {msg}
-        </p>
-      ) : null}
 
       {isDemoStaffFilter ? (
         <div className="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 p-3">

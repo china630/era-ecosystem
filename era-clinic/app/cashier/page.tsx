@@ -21,8 +21,8 @@ import {
   SECONDARY_BUTTON_CLASS,
   PageHeader,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { CashierSettleModal } from "@/components/CashierSettleModal";
 import { bakuDateTimeDisplay } from "@/lib/baku-day";
@@ -126,7 +126,6 @@ export default function CashierPage() {
   const [pageSize, setPageSize] = useState(25);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueueRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
   const [charges, setCharges] = useState<ChargeLogRow[]>([]);
@@ -158,7 +157,6 @@ export default function CashierPage() {
 
   const loadTab = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const qs = new URLSearchParams({
         page: String(page),
@@ -173,7 +171,10 @@ export default function CashierPage() {
         if (filters.channel) qs.set("channel", filters.channel);
         const res = await fetch(`/api/cashier/queue?${qs}`);
         const d = await res.json();
-        if (!res.ok) throw new Error(d.error ?? t("loadFailed"));
+        if (!res.ok) {
+          showApiError(d, t("loadFailed"));
+          return;
+        }
         const payload = d.data ?? d;
         setQueue(payload.data ?? []);
         setTotal(payload.total ?? 0);
@@ -182,7 +183,10 @@ export default function CashierPage() {
         if (shift?.id) qs.set("shiftId", "");
         const res = await fetch(`/api/cashier/receipts?${qs}`);
         const d = await res.json();
-        if (!res.ok) throw new Error(d.error ?? t("loadFailed"));
+        if (!res.ok) {
+          showApiError(d, t("loadFailed"));
+          return;
+        }
         const payload = d.data ?? d;
         setReceipts(payload.data ?? []);
         setTotal(payload.total ?? 0);
@@ -191,13 +195,16 @@ export default function CashierPage() {
         qs.set("overQuotaOnly", "true");
         const res = await fetch(`/api/cashier/over-quota?${qs}`);
         const d = await res.json();
-        if (!res.ok) throw new Error(d.error ?? t("loadFailed"));
+        if (!res.ok) {
+          showApiError(d, t("loadFailed"));
+          return;
+        }
         const payload = d.data ?? d;
         setCharges(payload.data ?? []);
         setTotal(payload.total ?? 0);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("loadFailed"));
+      showApiError({ error: e instanceof Error ? e.message : t("loadFailed") });
     } finally {
       setLoading(false);
     }
@@ -257,7 +264,7 @@ export default function CashierPage() {
     const res = await fetch(`/api/cashier/shifts/${shift.id}/close`, { method: "POST" });
     const d = await res.json();
     if (!res.ok) {
-      setError(d.error ?? t("closeShiftFailed"));
+      showApiError(d, t("closeShiftFailed"));
       return;
     }
     const payload = d.data ?? d;
@@ -276,7 +283,7 @@ export default function CashierPage() {
     });
     if (!res.ok) {
       const d = await res.json();
-      setError(d.error ?? t("voidFailed"));
+      showApiError(d, t("voidFailed"));
       return;
     }
     void loadTab();
@@ -290,7 +297,7 @@ export default function CashierPage() {
 
   async function settleOverQuota(id: string) {
     if (!shift) {
-      setError(t("needOpenShift"));
+      showApiError({ error: t("needOpenShift") });
       return;
     }
     const res = await fetch(`/api/cashier/over-quota/${id}/settle`, {
@@ -300,7 +307,7 @@ export default function CashierPage() {
     });
     const d = await res.json();
     if (!res.ok) {
-      setError(d.error ?? t("paymentFailed"));
+      showApiError(d, t("paymentFailed"));
       return;
     }
     void loadTab();
@@ -475,8 +482,6 @@ export default function CashierPage() {
           </FieldSelect>
         )}
       </EraListFilterBar>
-
-      {error && <p className={`mb-2 text-sm ${TEXT_DANGER_CLASS}`}>{error}</p>}
 
       <div className={DATA_TABLE_SHELL_CLASS}>
         <div className={DATA_TABLE_SCROLL_CLASS}>

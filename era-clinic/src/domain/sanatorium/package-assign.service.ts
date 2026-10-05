@@ -479,7 +479,10 @@ async function loadEpisodeForAssign(
   return episode;
 }
 
-export async function getPackageAssignSnapshot(episodeId: string): Promise<{
+export async function getPackageAssignSnapshot(
+  episodeId: string,
+  locale = "az",
+): Promise<{
   balances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
@@ -617,7 +620,18 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   const types = await prisma.procedureType.findMany({
     select: { code: true, name: true, needsSite: true },
   });
-  const typeRows = types.map((t) => ({ ...t, active: true as boolean | null }));
+  const { loadCatalogDisplayNameMap } = await import(
+    "@/domain/catalog/catalog-display-name.service"
+  );
+  const catalogNames = await loadCatalogDisplayNameMap(
+    [...types.map((t) => t.code), ...orders.map((o) => o.procedureCode)],
+    locale,
+  );
+  const typeRows = types.map((t) => ({
+    ...t,
+    name: catalogNames.get(t.code) || t.name,
+    active: true as boolean | null,
+  }));
   const patientSex = episode.patientRef?.sex ?? null;
 
   const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
@@ -705,7 +719,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       batchMap.set(key, {
         assignBatchId: o.assignBatchId,
         procedureCode: o.procedureCode,
-        procedureName: o.procedureName,
+        procedureName: catalogNames.get(o.procedureCode) || o.procedureName,
         qty: 1,
         statusKind: consumed ? "consumed" : "active",
         locked,

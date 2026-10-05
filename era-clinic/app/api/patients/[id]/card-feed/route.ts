@@ -14,6 +14,7 @@ import {
 } from "@/domain/patient/patient-card.service";
 import type { TimelineEventType } from "@/domain/patient/patient-timeline.service";
 import { prisma } from "@/lib/prisma";
+import { readUiLocale } from "@/lib/request-locale";
 
 const querySchema = z.object({
   section: z.enum(["history", "plan"]).default("history"),
@@ -68,6 +69,7 @@ export async function GET(
     if (to && Number.isNaN(to.getTime())) return jsonError("Invalid to", 400);
 
     if (query.section === "plan") {
+      const locale = await readUiLocale(req);
       return jsonOk(
         await getPatientPlanPage(id, {
           offset: query.offset,
@@ -75,6 +77,7 @@ export async function GET(
           from,
           to,
           episodeId: query.episode,
+          locale,
         }),
       );
     }

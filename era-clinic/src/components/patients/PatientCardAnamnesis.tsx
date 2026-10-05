@@ -11,6 +11,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import {
   authorLabelFrom,
@@ -44,7 +45,6 @@ export function PatientCardAnamnesis({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
 
   const hasAnamnesis = Boolean(text.trim());
 
@@ -55,13 +55,11 @@ export function PatientCardAnamnesis({
 
   function openCreate() {
     setDraft("");
-    setMsg("");
     setOpen(true);
   }
 
   function openEdit() {
     setDraft(text);
-    setMsg("");
     setOpen(true);
   }
 
@@ -69,7 +67,6 @@ export function PatientCardAnamnesis({
     const trimmed = draft.trim();
     if (!trimmed) return;
     setBusy(true);
-    setMsg("");
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -78,7 +75,7 @@ export function PatientCardAnamnesis({
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setMsg((data as { error?: string }).error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     const payload = (data.data ?? data) as {
@@ -141,7 +138,6 @@ export function PatientCardAnamnesis({
         ) : (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
         )}
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
       </div>
       <ModalShell
         open={open}

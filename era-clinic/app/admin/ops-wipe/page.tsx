@@ -17,6 +17,8 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 
@@ -40,7 +42,6 @@ export default function ClinicOpsWipePage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [phrase, setPhrase] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,7 +53,7 @@ export default function ClinicOpsWipePage() {
         counts?: Counts;
       };
       if (!res.ok) {
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
       setOrganizationId(data.organizationId ?? "");
@@ -73,11 +74,10 @@ export default function ClinicOpsWipePage() {
 
   async function wipe() {
     if (phrase !== "WIPE") {
-      setMsg(t("phraseMismatch"));
+      showApiError({ error: t("phraseMismatch") });
       return;
     }
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/admin/ops-wipe", {
         method: "POST",
@@ -86,13 +86,13 @@ export default function ClinicOpsWipePage() {
       });
       const data = (await res.json()) as { error?: string; counts?: Counts };
       if (!res.ok) {
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
       setCounts(data.counts ?? null);
       setConfirmOpen(false);
       setPhrase("");
-      setMsg(t("done"));
+      showSuccess(t("done"));
     } finally {
       setBusy(false);
     }
@@ -117,7 +117,6 @@ export default function ClinicOpsWipePage() {
           </button>
         }
       />
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <p className={`mb-3 text-[13px] ${TEXT_MUTED_CLASS}`}>{t("keepsCatalogs")}</p>
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>

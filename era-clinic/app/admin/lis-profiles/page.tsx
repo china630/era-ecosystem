@@ -21,6 +21,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 type LisProfile = {
@@ -59,7 +61,6 @@ export default function LisProfilesAdminPage() {
   const t = useTranslations("lisProfiles");
   const tc = useTranslations("common");
   const [profiles, setProfiles] = useState<LisProfile[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -107,7 +108,6 @@ export default function LisProfilesAdminPage() {
   }
 
   async function saveProfile() {
-    setMsg(null);
     const payload = {
       name: form.name.trim(),
       format: form.format,
@@ -123,29 +123,29 @@ export default function LisProfilesAdminPage() {
       },
     );
     if (!res.ok) {
-      setMsg(tc("saveFailed"));
+      showApiError({ error: tc("saveFailed") });
       return;
     }
     setModalOpen(false);
-    setMsg(editingId ? t("updated") : t("created"));
+    showSuccess(editingId ? t("updated") : t("created"));
     await load();
   }
 
   async function deleteProfile(id: string) {
     if (!window.confirm(t("confirmDelete"))) return;
     const res = await fetch(`/api/admin/lis-profiles/${id}`, { method: "DELETE" });
-    setMsg(res.ok ? t("deleted") : tc("failed"));
+    if (res.ok) showSuccess(t("deleted"));
+    else showApiError({ error: tc("failed") });
     await load();
   }
 
   async function runImport(e: React.FormEvent) {
     e.preventDefault();
     if (!importProfileId || !importPatientRefId || !importFile) {
-      setMsg(t("importMissingFields"));
+      showApiError({ error: t("importMissingFields") });
       return;
     }
     setImportBusy(true);
-    setMsg(null);
     try {
       const csvText = await importFile.text();
       const res = await fetch("/api/lab-orders/import", {
@@ -160,11 +160,11 @@ export default function LisProfilesAdminPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setMsg(json.error ?? tc("failed"));
+        showApiError(json, tc("failed"));
         return;
       }
       const count = json.data?.imported ?? json.imported ?? 0;
-      setMsg(t("importSuccess", { count }));
+      showSuccess(t("importSuccess", { count }));
       setImportFile(null);
     } finally {
       setImportBusy(false);
@@ -182,10 +182,6 @@ export default function LisProfilesAdminPage() {
           </button>
         }
       />
-
-      {msg ? (
-        <p className="mb-4 text-[13px]">{msg}</p>
-      ) : null}
 
       <div className={`${CARD_CONTAINER_CLASS} mb-6 space-y-3 p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>

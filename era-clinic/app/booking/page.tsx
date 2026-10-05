@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { PageHeader } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  PageHeader,
+  showApiError,
+  showSuccess,
+} from "@era/satellite-kit/ui";
 
 export default function BookingWidgetPage() {
   const t = useTranslations("booking");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [when, setWhen] = useState("");
-  const [msg, setMsg] = useState("");
 
   async function book() {
     const ref = phone || `WEB-${Date.now()}`;
@@ -24,7 +28,11 @@ export default function BookingWidgetPage() {
         scheduledAt: new Date(when).toISOString(),
       }),
     });
-    setMsg(res.ok ? t("success") : t("error"));
+    if (res.ok) {
+      showSuccess(t("success"));
+      return;
+    }
+    showApiError(await res.json().catch(() => ({})), t("error"));
   }
 
   return (
@@ -52,7 +60,6 @@ export default function BookingWidgetPage() {
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void book()}>
           {t("submit")}
         </button>
-        {msg && <p className="text-sm text-green-700">{msg}</p>}
       </div>
     </>
   );

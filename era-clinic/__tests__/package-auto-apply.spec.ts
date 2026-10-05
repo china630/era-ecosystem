@@ -17,10 +17,26 @@ jest.mock("@/domain/sanatorium/entitlement-usage.service", () => ({
   syncEntitlementUsage: jest.fn().mockResolvedValue(0),
 }));
 
+jest.mock("@/domain/sanatorium/entitlement-charge.service", () => ({
+  resolveEntitlementCharge: jest.fn().mockResolvedValue({
+    amountNet: 0,
+    overQuota: false,
+    priceMissing: false,
+    reason: "in_quota",
+  }),
+  applyPriceMissingFallback: (charge: {
+    amountNet: number;
+    overQuota: boolean;
+    priceMissing: boolean;
+    reason: string;
+  }) => charge,
+}));
+
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import {
   applyPackageAutoBlocks,
+  fulfillmentRespectingStudyKind,
   resolveAutoBlockServiceCode,
 } from "@/domain/sanatorium/package-auto-apply.service";
 
@@ -32,6 +48,20 @@ const mocked = prisma as unknown as {
   labOrder: { findFirst: jest.Mock };
   programInstance: { update: jest.Mock };
 };
+
+describe("fulfillmentRespectingStudyKind", () => {
+  it("reads LAB and EXAM when fulfillment is the procedure default", () => {
+    expect(fulfillmentRespectingStudyKind("LAB", "PROCEDURE_ORDER")).toBe("LAB_ORDER");
+    expect(fulfillmentRespectingStudyKind("EXAM", "PROCEDURE_ORDER")).toBe("VISIT");
+    expect(fulfillmentRespectingStudyKind("LAB", null)).toBe("LAB_ORDER");
+  });
+
+  it("keeps an explicit study fulfillment and does not retarget treatment", () => {
+    expect(fulfillmentRespectingStudyKind("LAB", "VISIT")).toBe("VISIT");
+    expect(fulfillmentRespectingStudyKind("PHYSIO", "PROCEDURE_ORDER")).toBe("PROCEDURE_ORDER");
+    expect(fulfillmentRespectingStudyKind("BATH", null)).toBe("PROCEDURE_ORDER");
+  });
+});
 
 describe("resolveAutoBlockServiceCode", () => {
   it("resolves GYN-OR-URO by sex", () => {
@@ -252,6 +282,83 @@ describe("applyPackageAutoBlocks", () => {
     if ("skipped" in r) return;
     expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
   });
+
+  it("AUTO lab stored as PROCEDURE_ORDER still creates a lab order", async () => {
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(
+      episodeWithBlock({
+        procedureCode: "LAB-CBC",
+        procedureName: "CBC",
+        kind: "LAB",
+        fulfillment: "PROCEDURE_ORDER",
+        requiresDoctor: false,
+      }),
+    );
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue(null);
+
+    const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
+    if ("skipped" in r) return;
+    expect(r.createdLabCodes).toEqual(["LAB-CBC"]);
+    expect(createLabOrderWithItems).toHaveBeenCalled();
+  });
+
+  it("MANUAL lab is not created just because its kind is LAB", async () => {
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(
+      episodeWithBlock({
+        procedureCode: "LAB-CBC",
+        procedureName: "CBC",
+        kind: "LAB",
+        fulfillment: "PROCEDURE_ORDER",
+        requiresDoctor: false,
+        assignMode: "MANUAL",
+      }),
+    );
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue(null);
+
+    const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
+    if ("skipped" in r) return;
+    expect(r.createdLabCodes).toEqual([]);
+    expect(createLabOrderWithItems).not.toHaveBeenCalled();
+  });
+
+  it("CARE_TEAM retries a day-1 exam that was waiting on a doctor", async () => {
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(
+      episodeWithBlock({
+        procedureCode: "NEURO",
+        procedureName: "Neurologist",
+        kind: "EXAM",
+        fulfillment: "PROCEDURE_ORDER",
+        requiresDoctor: false,
+        assignMode: "AUTO_DAY1",
+        autoApplyState: "PENDING_DOCTOR",
+      }),
+    );
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue({ practitionerId: "doc1" });
+
+    const r = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in r) return;
+    expect(r.createdVisitCodes).toEqual(["NEURO"]);
+    expect(mocked.visit.create).toHaveBeenCalled();
+  });
+
+  it("CARE_TEAM does not create a day-1 lab that is not waiting on a doctor", async () => {
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(
+      episodeWithBlock({
+        procedureCode: "LAB-CBC",
+        procedureName: "CBC",
+        kind: "LAB",
+        fulfillment: "PROCEDURE_ORDER",
+        requiresDoctor: false,
+        assignMode: "AUTO_DAY1",
+        autoApplyState: "PENDING_DOCTOR",
+      }),
+    );
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue({ practitionerId: "doc1" });
+
+    const r = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in r) return;
+    expect(r.createdLabCodes).toEqual([]);
+    expect(createLabOrderWithItems).not.toHaveBeenCalled();
+  });
 });
 
 function episodeWithBlock(block: {
@@ -260,6 +367,8 @@ function episodeWithBlock(block: {
   kind: string;
   fulfillment: string;
   requiresDoctor: boolean;
+  assignMode?: string;
+  autoApplyState?: string;
 }) {
   return {
     id: "ep1",
@@ -273,7 +382,7 @@ function episodeWithBlock(block: {
       id: "pi1",
       templateId: "t1",
       programCode: "PKG-STANDART",
-      autoApplyState: "PENDING",
+      autoApplyState: block.autoApplyState ?? "PENDING",
       entitlementSnapshot: {
         version: 1,
         templateId: "t1",

@@ -9,8 +9,8 @@ import {
   LINK_ACCENT_CLASS,
   ModalFooter,
   ModalShell,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { bakuDateKey, bakuTimeLabel, parseBakuDateTime } from "@/lib/baku-day";
 
@@ -50,12 +50,10 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
   const [patientRefId, setPatientRefId] = useState("");
   const [practitionerCode, setPractitionerCode] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setError(null);
     setPatientRefId("");
     void fetch("/api/admin/practitioners")
       .then((r) => r.json())
@@ -82,11 +80,10 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
 
   async function submit() {
     if (!patientRefId) {
-      setError(t("patientRequired"));
+      showApiError({ error: t("patientRequired") });
       return;
     }
     setBusy(true);
-    setError(null);
     const res = await fetch("/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -99,7 +96,7 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError((data as { error?: string }).error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     setPatientRefId("");
@@ -148,7 +145,6 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
           value={scheduledAt}
           onChange={(e) => setScheduledAt(e.target.value)}
         />
-        {error ? <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p> : null}
       </div>
       <ModalFooter onCancel={onClose} onSubmit={() => void submit()} submitLabel={busy ? "…" : tc("save")} />
     </ModalShell>

@@ -9,6 +9,8 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
+import { readUiLocale } from "@/lib/request-locale";
 import {
   deletePendingExtra,
   listExtraUnitPrices,
@@ -36,7 +38,7 @@ const prescribeSchema = z.object({
 });
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -52,11 +54,16 @@ export async function GET(
     if (scopeDenied) return scopeDenied;
     const rows = await listPendingExtras(id);
     const prices = await listExtraUnitPrices();
+    const locale = await readUiLocale(req);
+    const catalogNames = await loadCatalogDisplayNameMap(
+      rows.map((row) => row.procedureCode),
+      locale,
+    );
     return jsonOk({
       items: rows.map((r) => ({
         id: r.id,
         procedureCode: r.procedureCode,
-        procedureName: r.procedureName,
+        procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
         amountNet: Number(r.amountNet),
         note: r.note,
         status: r.status,

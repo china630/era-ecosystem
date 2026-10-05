@@ -9,8 +9,8 @@ import {
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
   DATA_TABLE_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -54,7 +54,6 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
   const locale = useLocale();
   const [bill, setBill] = useState<UnifiedBill | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [extraDiscount, setExtraDiscount] = useState("0");
   const [payments, setPayments] = useState<PaymentRow[]>([{ method: "CASH", amount: "" }]);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
@@ -67,18 +66,20 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
       return;
     }
     setLoading(true);
-    setError(null);
     setResult(null);
     void fetch(`/api/cashier/bills/${visitId}`)
       .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error ?? t("loadBillFailed"));
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          showApiError(d, t("loadBillFailed"));
+          return;
+        }
         const b = (d.data ?? d) as UnifiedBill;
         setBill(b);
         setPayments([{ method: "CASH", amount: String(b.amountNet) }]);
         setExtraDiscount("0");
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => showApiError({ error: e.message || t("loadBillFailed") }))
       .finally(() => setLoading(false));
   }, [visitId, t]);
 
@@ -95,7 +96,6 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
   async function settle(forceLocal = false) {
     if (!visitId) return;
     setBusy(true);
-    setError(null);
     try {
       const body: Record<string, unknown> = {
         shiftId: shiftId ?? undefined,
@@ -114,11 +114,14 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t("paymentFailed"));
+      if (!res.ok) {
+        showApiError(data, t("paymentFailed"));
+        return;
+      }
       setResult(data.data ?? data);
       onSettled();
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("paymentFailed"));
+      showApiError({ error: e instanceof Error ? e.message : t("paymentFailed") });
     } finally {
       setBusy(false);
     }
@@ -156,7 +159,6 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
       }
     >
       {loading && <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("loading")}</p>}
-      {error && <p className={`text-sm ${TEXT_DANGER_CLASS}`}>{error}</p>}
       {bill && !result && (
         <div className="space-y-4">
           <div className="text-sm">

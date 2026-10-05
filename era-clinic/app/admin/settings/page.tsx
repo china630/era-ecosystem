@@ -23,6 +23,8 @@ import {
   PageHeader,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { PrintSettingsPanel } from "@/components/print/PrintSettingsPanel";
 
@@ -108,7 +110,6 @@ export default function ClinicAdminSettingsPage() {
   const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
   const [draftWork, setDraftWork] = useState<WorkHours>(WORK_DEFAULTS);
   const [draftSched, setDraftSched] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
-  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     void fetch("/api/admin/settings")
@@ -237,10 +238,10 @@ export default function ClinicAdminSettingsPage() {
         ),
       });
       setOpen(false);
-      setMsg(tc("saved"));
+      showSuccess(tc("saved"));
       window.location.reload();
     } else {
-      setMsg(tc("saveFailed"));
+      showApiError({ error: tc("saveFailed") });
     }
   }
 
@@ -259,7 +260,6 @@ export default function ClinicAdminSettingsPage() {
           </Link>
         }
       />
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className={DATA_TABLE_HEAD_ROW_CLASS}>

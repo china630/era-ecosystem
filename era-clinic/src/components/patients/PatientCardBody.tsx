@@ -28,6 +28,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import type { PractitionerAuthorRef } from "@/domain/staff/practitioner-label";
@@ -120,6 +122,7 @@ type Props = {
   panel?: string | null;
   showBackLink?: boolean;
   onPatientLoaded?: (patient: PatientCardPatient) => void;
+  onOpenDayPlan?: (episodeId: string) => void;
 };
 
 export function PatientCardBody({
@@ -127,6 +130,7 @@ export function PatientCardBody({
   panel,
   showBackLink = true,
   onPatientLoaded,
+  onOpenDayPlan,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
@@ -141,7 +145,6 @@ export function PatientCardBody({
   const [ciCount, setCiCount] = useState(0);
   const [careTeamCount, setCareTeamCount] = useState(0);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
-  const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const locale = useLocale();
@@ -233,7 +236,6 @@ export function PatientCardBody({
     const ep = episodes.find((e) => e.id === nextId);
     setAnamnesis(ep?.anamnesisText ?? "");
     setCareTeamCount(0);
-    setMsg(null);
   }
 
   const onCareTeamChange = useCallback((items: { id: string }[]) => {
@@ -266,7 +268,7 @@ export function PatientCardBody({
     const key = day1ProgramToastKey(
       payload as Parameters<typeof day1ProgramToastKey>[0],
     );
-    if (key) setMsg(t(key));
+    if (key) showSuccess(t(key));
   }
 
   async function lookupMdm() {
@@ -305,7 +307,7 @@ export function PatientCardBody({
     });
     const lookup = await lookupRes.json();
     if (!lookup.globalPersonId) {
-      setMsg(t("mdmNotFound"));
+      showApiError({ error: t("mdmNotFound") });
       return;
     }
     const mergeRes = await fetch("/api/mdm/person-merge", {
@@ -321,16 +323,15 @@ export function PatientCardBody({
     });
     const merged = await mergeRes.json();
     if (!mergeRes.ok) {
-      setMsg(merged.error ?? tc("saveFailed"));
+      showApiError(merged, tc("saveFailed"));
       return;
     }
-    setMsg(t("mergeFinSuccess"));
+    showSuccess(t("mergeFinSuccess"));
     await load();
   }
 
   async function savePatient() {
     if (!patient) return;
-    setMsg(null);
     const res = await fetch(`/api/patients/${patient.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -352,11 +353,11 @@ export function PatientCardBody({
     });
     const data = await res.json();
     if (!res.ok) {
-      setMsg(data.error ?? data.message ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setEditOpen(false);
-    setMsg(tc("saved"));
+    showSuccess(tc("saved"));
     await load();
   }
 
@@ -483,7 +484,6 @@ export function PatientCardBody({
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
             </p>
           ) : null}
-          {msg ? <p>{msg}</p> : null}
         </div>
 
         <section className="space-y-2">
@@ -601,6 +601,7 @@ export function PatientCardBody({
               readOnly={episodeReadOnly}
               anamnesisOk={anamnesisOk}
               refreshKey={clinicalRefreshKey}
+              onOpenDayPlan={onOpenDayPlan}
             />
           </>
         ) : null}

@@ -12,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   ModalFooter,
   ModalShell,
+  showApiError,
 } from '@era/satellite-kit/ui';
 import { useClinicAuth } from '@/hooks/useClinicAuth';
 import type { ImportSummary } from '@/lib/import/types';
@@ -82,14 +83,12 @@ export function ImportModal({
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function reset() {
     setStep('pick');
     setFile(null);
     setPreview(null);
     setResult(null);
-    setError(null);
     setBusy(false);
   }
 
@@ -101,12 +100,11 @@ export function ImportModal({
   async function handlePreview() {
     if (!file) return;
     setBusy(true);
-    setError(null);
     try {
       setPreview(await uploadImportFile(entity, file, true));
       setStep('preview');
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      showApiError({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
     }
@@ -115,13 +113,12 @@ export function ImportModal({
   async function handleConfirm() {
     if (!file) return;
     setBusy(true);
-    setError(null);
     try {
       setResult(await uploadImportFile(entity, file, false));
       setStep('done');
       onComplete?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      showApiError({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
     }
@@ -157,8 +154,6 @@ export function ImportModal({
         )
       }
     >
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-
       {step === 'pick' && (
         <div className="space-y-3">
           <input

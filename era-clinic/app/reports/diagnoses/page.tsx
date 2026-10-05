@@ -16,6 +16,7 @@ import {
   ListPaginationFooter,
   PageHeader,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
@@ -46,7 +47,6 @@ export default function DiagnosisReportPage() {
   const [chapters, setChapters] = useState<Array<{ code: string; title: string }>>([]);
   const [items, setItems] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -74,14 +74,13 @@ export default function DiagnosisReportPage() {
 
   const load = useCallback(async () => {
     setBusy(true);
-    setMsg("");
     const params = new URLSearchParams({ from, to, source, locale });
     if (chapter) params.set("chapter", chapter);
     const res = await fetch(`/api/reports/diagnoses?${params}`);
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMsg(data.error ?? tc("failed"));
+      showApiError(data, tc("failed"));
       return;
     }
     setItems(data.items ?? data.data?.items ?? []);
@@ -146,7 +145,6 @@ export default function DiagnosisReportPage() {
             </FieldSelect>
           </EraListFilterBar>
         }
-        toolbar={msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
         table={
           <table className={DATA_TABLE_CLASS}>
             <thead>

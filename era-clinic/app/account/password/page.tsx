@@ -7,6 +7,8 @@ import {
   FORM_STACK_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 export default function AccountPasswordPage() {
@@ -15,15 +17,11 @@ export default function AccountPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setOk(false);
     if (newPassword !== confirmPassword) {
-      setError(t("mismatch"));
+      showApiError({ error: t("mismatch") });
       return;
     }
     setBusy(true);
@@ -35,15 +33,15 @@ export default function AccountPasswordPage() {
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        setError(body.error || t("failed"));
+        showApiError(body, t("failed"));
         return;
       }
-      setOk(true);
+      showSuccess(t("success"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      setError(t("failed"));
+      showApiError({ error: t("failed") });
     } finally {
       setBusy(false);
     }
@@ -81,8 +79,6 @@ export default function AccountPasswordPage() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
-        {error ? <p className="text-sm text-[#E74C3C]">{error}</p> : null}
-        {ok ? <p className="text-sm text-[#27AE60]">{t("success")}</p> : null}
         <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
           {busy ? t("busy") : t("submit")}
         </button>

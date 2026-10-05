@@ -12,6 +12,7 @@ import {
   type TimelineEventType,
 } from "@/domain/patient/patient-timeline.service";
 import { prisma } from "@/lib/prisma";
+import { readUiLocale } from "@/lib/request-locale";
 
 const querySchema = z.object({
   types: z.string().optional(),
@@ -58,6 +59,7 @@ export async function GET(
       await getPatientTimeline(id, {
         types: types?.length ? types : undefined,
         limitDays: query.limitDays,
+        locale: await readUiLocale(req),
       }),
     );
   } catch (err) {
