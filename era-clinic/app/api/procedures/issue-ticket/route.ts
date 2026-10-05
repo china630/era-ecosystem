@@ -85,6 +85,7 @@ export async function POST(request: Request) {
       return jsonOk({
         paid: true,
         placed: result.placed,
+        paymentReceiptRef: result.paymentReceiptRef,
         printPath: result.printPaths[0] ?? null,
         printPaths: result.printPaths,
         count: result.orders.length,

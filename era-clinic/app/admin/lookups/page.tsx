@@ -57,8 +57,9 @@ export default function ClinicLookupsAdminPage() {
   }, [load]);
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <PageHeader
+        className="!mb-0"
         title={t("lookupsTitle")}
         actions={
           <button

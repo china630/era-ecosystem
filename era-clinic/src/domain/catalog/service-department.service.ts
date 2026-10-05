@@ -15,7 +15,14 @@ export function departmentFallbackLabel(row: DepartmentNames): string {
 }
 
 export async function listServiceDepartments() {
-  return prisma.serviceDepartment.findMany({ orderBy: { code: "asc" } });
+  const rows = await prisma.serviceDepartment.findMany({
+    orderBy: { code: "asc" },
+    include: { _count: { select: { catalogRows: true } } },
+  });
+  return rows.map(({ _count, ...row }) => ({
+    ...row,
+    serviceCount: _count.catalogRows,
+  }));
 }
 
 /** One card per distinct label. Existing cards are not overwritten. */

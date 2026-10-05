@@ -19,6 +19,7 @@ import {
   serializePresetsCookie,
 } from "@/domain/presets/preset-cookie";
 import { prisma } from "@/lib/prisma";
+import { recordUserLogin } from "@/domain/auth/user-login.service";
 
 const schema = z.object({
   login: z.string().min(1),
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
     await ensureClinicCatalogIfEmpty(prisma, organizationId);
 
     const permissions = await permissionsForUser(user.id);
+    await recordUserLogin(
+      { id: user.id, organizationId, login: user.login },
+      request,
+    );
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,

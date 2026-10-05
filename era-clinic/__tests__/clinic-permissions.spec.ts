@@ -89,6 +89,12 @@ describe("clinic default permissions", () => {
     expect(routePermission("/admin/access")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
     );
+    expect(routePermission("/admin/users")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+    );
+    expect(routePermission("/admin/logins")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+    );
     expect(routePermission("/admin/diagnostic-catalog")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
     );

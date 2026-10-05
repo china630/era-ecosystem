@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Pencil, RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
@@ -161,6 +161,21 @@ export function PatientCardBody({
     () => episodes.find((e) => e.id === selectedEpisodeId) ?? null,
     [episodes, selectedEpisodeId],
   );
+
+  async function retryPackageApply() {
+    if (!selectedEpisodeId) return;
+    const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}/package-apply`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(data, tc("saveFailed"));
+      return;
+    }
+    showSuccess(t("retryPackageDone"));
+    setClinicalRefreshKey((n) => n + 1);
+  }
+
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
@@ -396,14 +411,27 @@ export function PatientCardBody({
                 {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
               </p>
             </div>
-            <button
-              type="button"
-              className={TABLE_ROW_ICON_BTN_CLASS}
-              aria-label={tc("edit")}
-              onClick={() => setEditOpen(true)}
-            >
-              <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              {isSuperAdmin && selectedEpisode?.status === "OPEN" ? (
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("retryPackageApply")}
+                  title={t("retryPackageApply")}
+                  onClick={() => void retryPackageApply()}
+                >
+                  <RefreshCw className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            </div>
           </div>
           {isSuperAdmin ? (
             <p>

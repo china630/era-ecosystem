@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -119,6 +119,7 @@ export function PatientCardAnamnesis({
               </button>
             ) : (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="h-4 w-4" aria-hidden />
                 {t("addAnamnesis")}
               </button>
             )}

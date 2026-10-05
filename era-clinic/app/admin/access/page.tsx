@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -26,17 +28,6 @@ type RoleRow = {
   permissions: ClinicPermission[];
 };
 
-type UserRow = {
-  id: string;
-  login: string;
-  fullName: string;
-  email?: string | null;
-  status: string;
-  isCrossSystem: boolean;
-  roleCode: string;
-  roleName: string;
-};
-
 const STAFF_KIND_OPTIONS = [
   { value: "DOCTOR", label: "DOCTOR" },
   { value: "NURSE", label: "NURSE" },
@@ -48,7 +39,6 @@ export default function ClinicAdminAccessPage() {
   const t = useTranslations("adminAccess");
   const tc = useTranslations("common");
   const [roles, setRoles] = useState<RoleRow[]>([]);
-  const [users, setUsers] = useState<UserRow[]>([]);
   const [selectedCode, setSelectedCode] = useState<string>("");
   const [draft, setDraft] = useState<Set<ClinicPermission>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -58,6 +48,7 @@ export default function ClinicAdminAccessPage() {
   const [newName, setNewName] = useState("");
   const [cloneFrom, setCloneFrom] = useState("DOCTOR");
   const [staffKindDraft, setStaffKindDraft] = useState("NONE");
+  const [matrixOpen, setMatrixOpen] = useState(false);
 
   const selectedRole = roles.find((r) => r.code === selectedCode);
 
@@ -79,19 +70,6 @@ export default function ClinicAdminAccessPage() {
     [roles],
   );
 
-  const loadUsers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/users");
-      if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("loadError"));
-        return;
-      }
-      setUsers((await res.json()) as UserRow[]);
-    } catch (e) {
-      showApiError({ error: e instanceof Error ? e.message : tc("loadError") });
-    }
-  }, [tc]);
-
   const loadRoles = useCallback(async () => {
     setLoading(true);
     try {
@@ -109,13 +87,12 @@ export default function ClinicAdminAccessPage() {
       if (rows.length > 0 && !rows.some((r) => r.code === cloneFrom)) {
         setCloneFrom(rows[0]!.code);
       }
-      await loadUsers();
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc("loadError") });
     } finally {
       setLoading(false);
     }
-  }, [cloneFrom, loadUsers, tc]);
+  }, [cloneFrom, tc]);
 
   const loadRoleDraft = useCallback(
     async (code: string) => {
@@ -301,33 +278,9 @@ export default function ClinicAdminAccessPage() {
     }
   }
 
-  async function assignUserRole(userId: string, roleCode: string) {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roleCode }),
-      });
-      if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), t("assignError"));
-        return;
-      }
-      showSuccess(t("assigned"));
-      await loadUsers();
-      await loadRoles();
-    } catch (e) {
-      showApiError({
-        error: e instanceof Error ? e.message : t("assignError"),
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+    <div className="space-y-4">
+      <PageHeader className="!mb-0" title={t("title")} subtitle={t("subtitle")} />
 
       <div className={CARD_CONTAINER_CLASS + " p-4 space-y-4"}>
         <div className="flex flex-wrap items-end gap-3">
@@ -364,6 +317,7 @@ export default function ClinicAdminAccessPage() {
               disabled={busy || loading}
               onClick={() => setShowCreate((v) => !v)}
             >
+              <Plus className="h-4 w-4" aria-hidden />
               {t("createRole")}
             </button>
             {selectedRole && !selectedRole.isSystem ? (
@@ -477,12 +431,71 @@ export default function ClinicAdminAccessPage() {
         {loading ? (
           <p className="text-sm text-muted-foreground">{tc("loading")}</p>
         ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="py-1 pr-3">{t("roleCode")}</th>
+                <th className="py-1 pr-3">{t("roleName")}</th>
+                <th className="py-1 pr-3">{t("roleUsers")}</th>
+                <th className="py-1" />
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map((role) => (
+                <tr key={role.code} className="border-t border-border">
+                  <td className="py-2 pr-3 font-mono">{role.code}</td>
+                  <td className="py-2 pr-3">{role.name}</td>
+                  <td className="py-2 pr-3">{role.userCount ?? 0}</td>
+                  <td className="py-2 text-right">
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      onClick={() => {
+                        setSelectedCode(role.code);
+                        setMatrixOpen(true);
+                      }}
+                    >
+                      {t("openMatrix")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <ModalShell
+        open={matrixOpen}
+        title={selectedRole ? `${selectedRole.name} (${selectedRole.code})` : t("openMatrix")}
+        onClose={() => setMatrixOpen(false)}
+        maxWidthClass="max-w-5xl"
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        ) : (
           <div className="space-y-6">
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy || loading || !selectedCode}
+                onClick={() => void resetDefaults()}
+              >
+                {t("resetDefaults")}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy || loading || !selectedCode}
+                onClick={() => void save()}
+              >
+                {busy ? tc("saving") : tc("save")}
+              </button>
+            </div>
             {grouped.map((group) => (
               <section key={group.id}>
-                <h2 className="text-sm font-semibold mb-2">
-                  {t(`groups.${group.id}`)}
-                </h2>
+                <h2 className="text-sm font-semibold mb-2">{t(`groups.${group.id}`)}</h2>
                 <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {group.permissions.map((perm) => (
                     <li key={perm}>
@@ -497,8 +510,7 @@ export default function ClinicAdminAccessPage() {
                         <span>
                           <span className="font-medium text-sm">
                             {(() => {
-                              const key =
-                                `permissions.${perm.replace(/\./g, "_")}` as const;
+                              const key = `permissions.${perm.replace(/\./g, "_")}` as const;
                               return t.has(key) ? t(key) : perm;
                             })()}
                           </span>
@@ -514,54 +526,7 @@ export default function ClinicAdminAccessPage() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className={CARD_CONTAINER_CLASS + " p-4 space-y-3"}>
-        <div>
-          <h2 className="text-base font-semibold">{t("usersTitle")}</h2>
-          <p className="text-sm text-muted-foreground">{t("usersSubtitle")}</p>
-        </div>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">{tc("loading")}</p>
-        ) : users.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("usersEmpty")}</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {users.map((u) => (
-              <li
-                key={u.id}
-                className="flex flex-wrap items-center gap-3 py-2 text-sm"
-              >
-                <div className="min-w-[12rem] flex-1">
-                  <div className="font-medium">{u.fullName}</div>
-                  <div className="font-mono text-xs text-muted-foreground">
-                    {u.login}
-                    {u.status !== "ACTIVE" ? ` · ${u.status}` : ""}
-                    {u.isCrossSystem ? ` · ${t("crossSystemBadge")}` : ""}
-                  </div>
-                </div>
-                <div className="min-w-[12rem] w-56">
-                  <CatalogField
-                    kind={roles.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
-                    label={t("assignRole")}
-                    value={u.roleCode}
-                    onChange={(v) => {
-                      const next = String(v ?? "");
-                      if (next && next !== u.roleCode) {
-                        void assignUserRole(u.id, next);
-                      }
-                    }}
-                    options={roleOptions}
-                    emptyLabel={null}
-                    disabled={busy || roles.length === 0}
-                    widthPreset="select"
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      </ModalShell>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -186,6 +186,7 @@ export default function WardsAdminPage() {
               ← {tNav("masterData")}
             </Link>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateWard}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t("addWard")}
             </button>
           </>
@@ -220,6 +221,7 @@ export default function WardsAdminPage() {
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openCreateBed(ward.id)}>
+                  <Plus className="h-4 w-4" aria-hidden />
                   {t("addBed")}
                 </button>
               </div>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
+import { listServiceDepartments } from "@/domain/catalog/service-department.service";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
   try {
     const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
-    const rows = await prisma.serviceDepartment.findMany({ orderBy: { code: "asc" } });
+    const rows = await listServiceDepartments();
     return jsonOk(rows);
   } catch (err) {
     return handleRouteError(err);

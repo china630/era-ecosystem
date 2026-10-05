@@ -460,6 +460,8 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/admin/audit": CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
   "/admin/settings": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/access": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+  "/admin/users": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+  "/admin/logins": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
 };
 
 const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermission }> =
@@ -629,6 +631,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
+  { prefix: "/api/admin/user-logins", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },

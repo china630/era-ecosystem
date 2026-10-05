@@ -23,6 +23,7 @@ import {
   MapPin,
   Beaker,
   ScrollText,
+  KeyRound,
   Shield,
   ClipboardList,
   Activity,
@@ -385,9 +386,23 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     anyPermission: [CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS],
     children: [
       {
+        href: "/admin/users",
+        labelKey: "users",
+        icon: Users,
+        group: "platform",
+        permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      },
+      {
         href: "/admin/access",
         labelKey: "accessControl",
         icon: Shield,
+        group: "platform",
+        permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      },
+      {
+        href: "/admin/logins",
+        labelKey: "logins",
+        icon: KeyRound,
         group: "platform",
         permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
       },

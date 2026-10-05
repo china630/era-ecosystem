@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -178,6 +178,7 @@ export default function LisProfilesAdminPage() {
         subtitle={t("subtitle")}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t("addProfile")}
           </button>
         }

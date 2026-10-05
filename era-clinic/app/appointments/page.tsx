@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -189,6 +190,7 @@ export default function AppointmentsPage() {
               setCreateOpen(true);
             }}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             {t("createTitle")}
           </button>
         }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -186,6 +187,7 @@ export default function InpatientPage() {
               {t("censusLink")}
             </Link>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openAssign()}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t("assignBed")}
             </button>
           </div>

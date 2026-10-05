@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
-  LIST_PAGE_SHELL_CLASS,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
@@ -29,9 +28,9 @@ export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) 
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-    <div className={LIST_PAGE_SHELL_CLASS}>
+    <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className="min-h-0 flex-1 space-y-6 overflow-auto pb-2">
+      <div className="space-y-6">
         <div
           className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end justify-between gap-3 px-4 py-3`}
         >

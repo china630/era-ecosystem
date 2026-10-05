@@ -7,7 +7,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   FieldSelect,
@@ -184,6 +184,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
             {!hideTitle ? <h3 className="font-semibold">{title}</h3> : <span />}
             {!readOnly && !hideAddButton ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="h-4 w-4" aria-hidden />
                 {t("addDiagnosis")}
               </button>
             ) : null}
