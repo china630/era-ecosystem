@@ -44,7 +44,10 @@ function isRoomRevenue(code: string | undefined): boolean {
   return c === 'ROOM' || c === 'LODGING' || c.startsWith('ROOM');
 }
 
-export async function listReservationFolioBalances(tab: FolioBalanceTab): Promise<{
+export async function listReservationFolioBalances(
+  tab: FolioBalanceTab,
+  filter: { q?: string; dateFrom?: string; dateTo?: string } = {},
+): Promise<{
   tab: FolioBalanceTab;
   rows: FolioBalanceRow[];
 }> {
@@ -53,8 +56,30 @@ export async function listReservationFolioBalances(tab: FolioBalanceTab): Promis
       ? { in: ['CONFIRMED', 'OPTION', 'IN_HOUSE'] as Array<'CONFIRMED' | 'OPTION' | 'IN_HOUSE'> }
       : { in: ['IN_HOUSE'] as Array<'IN_HOUSE'> };
 
+  const q = filter.q?.trim();
   const reservations = await prisma.reservation.findMany({
-    where: { status: statusFilter },
+    where: {
+      status: statusFilter,
+      ...(filter.dateFrom || filter.dateTo
+        ? {
+            checkInDate: {
+              ...(filter.dateFrom ? { gte: new Date(`${filter.dateFrom}T00:00:00.000Z`) } : {}),
+              ...(filter.dateTo ? { lte: new Date(`${filter.dateTo}T23:59:59.999Z`) } : {}),
+            },
+          }
+        : {}),
+      ...(q
+        ? {
+            OR: [
+              { guest: { fullName: { contains: q, mode: 'insensitive' } } },
+              { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
+              { agency: { name: { contains: q, mode: 'insensitive' } } },
+              { agency: { code: { contains: q, mode: 'insensitive' } } },
+              { company: { name: { contains: q, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
+    },
     include: {
       guest: { select: { fullName: true } },
       agency: { select: { name: true, code: true } },

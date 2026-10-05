@@ -17,6 +17,7 @@ import {
 import { classifyElektraRateCode, resolveElektraSellPath } from '@/lib/integration/elektraweb-sell-path';
 import { resolveGuestIdForReservationImport } from '@/lib/import/resolve-reservation-guest';
 import { syncReservationPaxFromImport } from '@/lib/import/sync-reservation-pax-import';
+import { fillDailyRatesFromHeader } from '@/lib/integration/elektraweb-daily-rates';
 
 const rowSchema = z.object({
   externalRef: z.string().min(1),
@@ -38,6 +39,8 @@ const rowSchema = z.object({
   recordType: z.string().optional().nullable(),
   roomCount: z.number().int().optional().nullable(),
   shareNo: z.string().optional().nullable(),
+  nightlyPrice: z.number().optional().nullable(),
+  totalPrice: z.number().optional().nullable(),
 });
 
 export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
@@ -74,6 +77,12 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     ShareNo: 'shareNo',
     'Share No': 'shareNo',
     SHARENO: 'shareNo',
+    'Manual Daily Rate': 'nightlyPrice',
+    'Daily Rate': 'nightlyPrice',
+    MANUALDAILYRATE: 'nightlyPrice',
+    Total: 'totalPrice',
+    'Total Price': 'totalPrice',
+    TOTALPRICE: 'totalPrice',
   },
   rowSchema,
   mapRow: (raw) => {
@@ -97,6 +106,8 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       recordType: cellString(raw.recordType),
       roomCount: parseElektrawebRoomCount(raw.roomCount),
       shareNo: cellString(raw.shareNo),
+      nightlyPrice: cellNumber(raw.nightlyPrice),
+      totalPrice: cellNumber(raw.totalPrice),
     };
   },
   upsert: async (tx, row, dryRun) => {
@@ -167,7 +178,7 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       checkOutDate: row.checkOutDate,
       status: mapReservationStatus(row.status),
       paymentMethod: 'CASH' as const,
-      totalAmount: toDecimal(0),
+      totalAmount: toDecimal(row.totalPrice ?? 0),
       adults: row.adults ?? 1,
       children11_6: row.children ?? 0,
       voucherNo: row.voucherNo ?? undefined,
@@ -229,6 +240,17 @@ export const reservationsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       primaryGuestId: guestId,
       guestName: row.guestName,
     });
+    if (!dryRun) {
+      await fillDailyRatesFromHeader(tx, {
+        reservationId: reservation.id,
+        organizationId: reservation.organizationId,
+        checkIn: reservation.checkInDate,
+        checkOut: reservation.checkOutDate,
+        nightly: row.nightlyPrice ?? null,
+        total: row.totalPrice ?? null,
+      });
+    }
+
     if (pax.paxCount > 1) {
       console.info(
         `[import:reservations] Res ${row.externalRef}: ${pax.paxCount} pax (${pax.linkedCount} linked to Guest Cards)`,

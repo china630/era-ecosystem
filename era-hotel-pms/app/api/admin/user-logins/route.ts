@@ -5,11 +5,16 @@ import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { listUserLogins } from '@/lib/services/user.service';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.USERS_MANAGE);
-    const rows = await listUserLogins();
+    const url = new URL(request.url);
+    const rows = await listUserLogins({
+      q: url.searchParams.get('q') ?? undefined,
+      from: url.searchParams.get('from') ?? undefined,
+      to: url.searchParams.get('to') ?? undefined,
+    });
     return jsonOk(
       serialize(
         rows.map((row) => ({

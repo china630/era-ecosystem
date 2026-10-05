@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -10,8 +10,12 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  Field,
   PageHeader,
   showApiError,
+  useDebouncedValue,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 
@@ -28,29 +32,73 @@ export default function UserLoginsPage() {
   const t = useTranslations('logins');
   const tc = useTranslations('common');
   const [rows, setRows] = useState<LoginRow[]>([]);
+  const [q, setQ] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/user-logins');
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, tc('loadError'));
-        setRows([]);
-        return;
-      }
-      setRows(Array.isArray(data) ? data : []);
-    } catch (e) {
-      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
-    }
-  }, [tc]);
+  const filtered = Boolean(debouncedQ.trim() || from || to);
 
   useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const params = new URLSearchParams();
+        if (debouncedQ.trim()) params.set('q', debouncedQ.trim());
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        const res = await fetch(`/api/admin/user-logins?${params}`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          showApiError(data, tc('loadError'));
+          setRows([]);
+          return;
+        }
+        setRows(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (cancelled) return;
+        showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+      }
+    }
     void load();
-  }, [load]);
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQ, from, to, tc]);
 
   return (
     <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setFrom('');
+          setTo('');
+        }}
+      >
+        <Field
+          label={t('searchHint')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <DatePicker
+          label={tc('from')}
+          value={from}
+          onChange={setFrom}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <DatePicker
+          label={tc('to')}
+          value={to}
+          onChange={setTo}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+      </EraListFilterBar>
       <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
@@ -78,7 +126,7 @@ export default function UserLoginsPage() {
               {rows.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
-                    {t('empty')}
+                    {filtered ? t('emptyFiltered') : t('empty')}
                   </td>
                 </tr>
               ) : null}

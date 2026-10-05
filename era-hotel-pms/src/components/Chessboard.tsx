@@ -1,12 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   LIST_PAGE_SHELL_CLASS,
-  CatalogField,
-  PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -14,9 +11,8 @@ import { EraModal, EraModalFooter } from '@/components/EraModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomInfoModal from '@/components/RoomInfoModal';
 import RoomRackView from '@/components/RoomRackView';
-import { computeRackDisplayState, deriveSharePoolForDate } from '@/lib/room-rack-display';
+import { computeRackDisplayState } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { normalizeShareGender } from '@/lib/share-gender';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -80,101 +76,7 @@ interface Arrival {
   checkOutDate?: string;
 }
 
-function roomAssignableForArrival(
-  room: Room,
-  arrival: Arrival,
-  fromKey: string,
-  toKey: string,
-): boolean {
-  if (['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return true;
-  if (room.status !== 'OCCUPIED') return false;
-  const shareOk =
-    arrival.shareEligible &&
-    (arrival.adults ?? 1) === 1 &&
-    Boolean(normalizeShareGender(arrival.shareGender));
-  if (!shareOk) return false;
-  const pool = deriveSharePoolForDate(room, fromKey, toKey) ?? room.sharePool;
-  if (!pool) {
-    return true;
-  }
-  const g = normalizeShareGender(arrival.shareGender);
-  const poolG = normalizeShareGender(pool.gender);
-  if (!g || !poolG || g !== poolG) return false;
-  return pool.occupied < pool.capacity;
-}
-
-function UnassignedArrivalRow({
-  arrival,
-  rooms,
-  dateKeyFrom,
-  dateKeyTo,
-  busy,
-  onAssign,
-  onOpen,
-  assignLabel,
-  assignRoomLabel,
-  assignHint,
-  roomStatusLabel,
-}: {
-  arrival: Arrival;
-  rooms: Room[];
-  dateKeyFrom: string;
-  dateKeyTo: string;
-  busy: boolean;
-  onAssign: (reservationId: string, roomId: string) => void;
-  onOpen: (id: string) => void;
-  assignLabel: string;
-  assignRoomLabel: string;
-  assignHint: string;
-  roomStatusLabel: (status: RoomStatus) => string;
-}) {
-  const [roomId, setRoomId] = useState('');
-  const options = rooms
-    .filter((r) => r.roomType.code === arrival.roomType.code)
-    .filter((r) => roomAssignableForArrival(r, arrival, dateKeyFrom, dateKeyTo))
-    .map((r) => {
-      const pool = deriveSharePoolForDate(r, dateKeyFrom, dateKeyTo) ?? r.sharePool;
-      const shareHint =
-        pool && r.status === 'OCCUPIED' ? ` · share ${pool.occupied}/${pool.capacity}` : '';
-      return {
-        value: r.id,
-        label: `${r.roomNumber} (${roomStatusLabel(r.status)}${shareHint})`,
-      };
-    });
-
-  return (
-    <li className="flex flex-wrap items-end gap-2">
-      <button
-        type="button"
-        className="mb-1 text-[#2980B9] hover:underline"
-        onClick={() => onOpen(arrival.id)}
-      >
-        {arrival.guest.fullName} — {arrival.roomType.code}
-      </button>
-      <CatalogField
-        kind="SEARCHABLE"
-        label={assignRoomLabel}
-        className="w-56 shrink-0"
-        value={roomId}
-        onChange={(v) => setRoomId(Array.isArray(v) ? (v[0] ?? '') : v)}
-        options={options}
-        emptyLabel={assignRoomLabel}
-      />
-      <button
-        type="button"
-        disabled={busy || !roomId}
-        className={PRIMARY_BUTTON_CLASS}
-        onClick={() => onAssign(arrival.id, roomId)}
-      >
-        {assignLabel}
-      </button>
-      <span className="mb-1 text-[11px] text-[#7F8C8D]">{assignHint}</span>
-    </li>
-  );
-}
-
 export default function Chessboard() {
-  const router = useRouter();
   const { can } = useAuth();
   const t = useTranslations('chessboard');
   const tCommon = useTranslations('common');
@@ -320,41 +222,29 @@ export default function Chessboard() {
   }
 
   function openReservationCard(reservationId?: string | null) {
-    if (reservationId) {
-      router.push(`/reservations/${reservationId}`);
-      return;
-    }
-    setEditReservationId(null);
+    setEditReservationId(reservationId ?? null);
     setBookingModalOpen(true);
   }
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
-      {arrivals.length > 0 && (
-        <section className="mb-3 max-h-40 shrink-0 overflow-y-auto rounded-xl border border-[#D5DADF] bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('arrivalsTitle')}</h2>
-          <ul className="space-y-2 text-[13px] text-[#34495E]">
-            {arrivals
-              .filter((a) => !a.room && a.status === 'CONFIRMED')
-              .map((a) => (
-                <UnassignedArrivalRow
-                  key={a.id}
-                  arrival={a}
-                  rooms={rooms}
-                  dateKeyFrom={filterDateFrom}
-                  dateKeyTo={filterDateTo}
-                  busy={busy}
-                  onAssign={assignToRoom}
-                  onOpen={openReservationCard}
-                  assignLabel={t('assign')}
-                  assignRoomLabel={t('assignRoom')}
-                  assignHint={t('assignableOnlyHint')}
-                  roomStatusLabel={roomStatusLabel}
-                />
-              ))}
-          </ul>
-        </section>
-      )}
+      {arrivals.some((a) => !a.room && a.status === 'CONFIRMED') ? (
+        <div className="mb-2 flex shrink-0 flex-wrap gap-2 text-[13px]">
+          <span className="text-amber-800">{t('unassigned')}</span>
+          {arrivals
+            .filter((a) => !a.room && a.status === 'CONFIRMED')
+            .map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => openReservationCard(a.id)}
+                className="rounded-lg border border-[#D5DADF] bg-white px-2 py-0.5 text-[#34495E]"
+              >
+                {a.guest.fullName}
+              </button>
+            ))}
+        </div>
+      ) : null}
 
       <RoomRackView
         rooms={

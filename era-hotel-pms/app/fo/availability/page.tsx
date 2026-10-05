@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   DatePicker,
@@ -140,14 +139,6 @@ export default function RoomTypeAvailabilityPage() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-[12px] text-[#7F8C8D]">
-        {t('seeAlso')}{' '}
-        <Link href="/fo/reservations" className="text-[#2980B9] underline">{t('reservationList')}</Link>
-        {' · '}
-        <Link href="/fo/room-plan" className="text-[#2980B9] underline">{t('roomPlan')}</Link>
-        {' · '}
-        <Link href="/fo/rack" className="text-[#2980B9] underline">{t('rack')}</Link>
-      </p>
       <ReservationCardModal open={createOpen} onClose={() => setCreateOpen(false)} reservationId={null} />
     </>
   );

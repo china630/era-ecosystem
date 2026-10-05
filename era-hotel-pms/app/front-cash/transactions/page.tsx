@@ -20,7 +20,6 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   showApiError,
-  showSuccess,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
@@ -120,7 +119,6 @@ export default function FrontCashTransactionsPage() {
   const [to, setTo] = useState(todayIso);
   const [cashShiftId, setCashShiftId] = useState('');
   const [journal, setJournal] = useState<Journal | null>(null);
-  const [busy, setBusy] = useState(false);
   const [journalTab, setJournalTab] = useState<'payments' | 'deposits'>('payments');
   const [zOpen, setZOpen] = useState(false);
   const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
@@ -151,26 +149,6 @@ export default function FrontCashTransactionsPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function closeShift() {
-    if (!confirm(t('confirmCloseShift'))) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/cash/shifts?action=close', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, tc('error'));
-        return;
-      }
-      showSuccess(t('shiftClosed'));
-      setCashShiftId('');
-      await load();
-    } catch (e) {
-      showApiError({ error: e instanceof Error ? e.message : tc('error') });
-    } finally {
-      setBusy(false);
-    }
-  }
 
   function printZ() {
     window.print();
@@ -205,16 +183,6 @@ export default function FrontCashTransactionsPage() {
             >
               {t('printZ')}
             </button>
-            {journal?.openShift && can(PERMISSIONS.CASH_SHIFT) ? (
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy}
-                onClick={() => void closeShift()}
-              >
-                {t('closeShift')}
-              </button>
-            ) : null}
           </div>
         }
       />
@@ -293,17 +261,9 @@ export default function FrontCashTransactionsPage() {
 
       <section className={`${CARD_CONTAINER_CLASS} mb-3 grid gap-2 p-3 text-[13px] text-[#34495E] md:grid-cols-3 print:hidden`}>
         <div>
-          <div className="text-[12px] text-[#7F8C8D]">{t('openShift')}</div>
-          {journal?.openShift ? (
-            <div>
-              {journal.openShift.cashier} · {journal.openShift.registerId}
-              {journal.openShift.isPrimary ? ` · ${t('primaryShift')}` : ''}
-            </div>
-          ) : (
-            <div className="text-[#7F8C8D]">{t('noOpenShift')}</div>
-          )}
-          <Link href="/night-audit" className="text-[#2980B9] hover:underline">
-            {t('manageShift')}
+          <div className="text-[12px] text-[#7F8C8D]">{t('deskSummary')}</div>
+          <Link href="/front-cash/desk" className="text-[#2980B9] hover:underline">
+            {t('openDesk')}
           </Link>
         </div>
         <div>

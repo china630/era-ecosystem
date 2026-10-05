@@ -74,7 +74,7 @@ Short sidebar (Elektraweb shape); EOD report pack is a **hub**, not 20 menu rows
 | End of day | `/night-audit` | Close-day console: business date, pre-check gates, polish preview, Run NA |
 | EOD reports | `/night-audit/reports` | Closed-date hub: **nightly pack** members (deep links to `/reports/*`) + Download ZIP; NA-only ops grids stay here |
 | EOD logs | `/night-audit/logs` | NA run history (who / when / steps / errors) — single log screen |
-| Reservation updates | `/night-audit/reservation-updates` | Reservation changes in audit window (cancel/extend/notes) |
+| Reservation updates | `/night-audit/reservation-updates` | Not a night-audit menu row. Linked from the EOD pack. Reservation changes in the audit window |
 | End of year | `/night-audit/year-end` | Year close/open (Last/First day). **In menu now**; implement when asked at year-end |
 
 **Inside EOD reports hub (not sidebar):**  
@@ -251,7 +251,7 @@ SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md)
 |-----------|-----|------------|
 | All reports | `/reports` | Shared period, grouped list, PDF + Excel. Old category and slug URLs redirect here |
 | Nightly pack | `/reports/nightly-pack` | Eight morning-pack forms for the last closed audit, plus ZIP for that date |
-| Tools | `/reports/analytics`, `/reports/occupancy/grid` | Own menu. Not rows in the report catalog |
+| Tools | `/reports/analytics` | Own menu. Occupancy grid lives under Reports, not Tools |
 
 SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pack` redirects.
 
@@ -293,7 +293,7 @@ SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pa
 11. Banquets  
 12. Medical  
 13. Reports  
-14. Tools (analytics, occupancy grid)  
+14. Tools (analytics). Occupancy grid is under Reports.  
 15. Other  
 16. Settings  
 17. External links (footer / header)  

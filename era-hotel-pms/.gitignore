@@ -6,5 +6,6 @@ out/
 .env.local
 .env*.local
 logs/
+/data/
 *.log
 .DS_Store

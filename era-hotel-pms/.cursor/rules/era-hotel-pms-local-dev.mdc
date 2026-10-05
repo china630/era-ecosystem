@@ -23,7 +23,7 @@ Next.js App Router: `app/` (UI) + `app/api/` (Route Handlers). Prisma: `prisma/s
 
 ## Env (satellite)
 
-`DATABASE_URL`, `ERA_SATELLITE_ORGANIZATION_ID`, `ERA_HOTEL_GUEST_MDM_STRICT` (prod: `true`), `CONTROL_PLANE_URL`, `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, JWT/cookie secrets.
+`DATABASE_URL`, `ERA_SATELLITE_ORGANIZATION_ID`, `ERA_HOTEL_GUEST_MDM_STRICT` (prod: `true`), `CONTROL_PLANE_URL`, `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, JWT/cookie secrets. Optional `HOTEL_DATA_DIR` — folder for the letterhead logo (default `./data` under the app; mount a volume in Docker so the logo survives rebuilds).
 
 ## i18n
 

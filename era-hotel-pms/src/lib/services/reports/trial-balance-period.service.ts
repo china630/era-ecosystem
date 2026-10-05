@@ -1,120 +1,122 @@
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { civilWindow, round2, splitGross, ymdParam } from '@/lib/reports/civil-days';
+import { loadChargeDays, loadRevenueCodes } from './stay-ledger';
 
-function dayStart(iso: string) {
-  return new Date(`${iso}T00:00:00.000Z`);
+export interface TrialBalanceLine {
+  code: string;
+  name: string;
+  net: number;
+  vat: number;
+  gross: number;
 }
 
-export interface TrialBalanceRow {
-  department: string;
-  departmentName: string;
-  bf: number;
-  debit: number;
-  credit: number;
-  balance: number;
+export interface TrialBalanceDepartment extends TrialBalanceLine {
+  codes: TrialBalanceLine[];
 }
 
 export interface TrialBalancePeriodResult {
   from: string;
   to: string;
-  rows: TrialBalanceRow[];
-  totalBf: number;
-  totalDebit: number;
-  totalCredit: number;
-  totalBalance: number;
+  /** Guest ledger brought forward: all charges minus all payments before `from`. */
+  openingBalance: number;
+  departments: TrialBalanceDepartment[];
+  chargesNet: number;
+  chargesVat: number;
+  chargesGross: number;
+  /** Positive amounts; layouts print them negative. Refunds reduce the method total. */
+  payments: { method: string; amount: number }[];
+  paymentsTotal: number;
+  closingBalance: number;
+}
+
+function signed(kind: string, amount: unknown): number {
+  const n = Number(amount ?? 0);
+  return kind === 'REFUND' ? -n : n;
 }
 
 export async function queryTrialBalancePeriod(
-  fromIso: string,
-  toIso: string,
+  fromParam: string | Date,
+  toParam: string | Date,
 ): Promise<TrialBalancePeriodResult> {
-  const fromDate = dayStart(fromIso);
-  const toDate = dayStart(toIso);
-  const toNext = new Date(toDate);
-  toNext.setUTCDate(toNext.getUTCDate() + 1);
+  const from = ymdParam(fromParam);
+  const to = ymdParam(toParam) < from ? from : ymdParam(toParam);
+  const window = civilWindow(from, to);
 
-  const [chargesBefore, chargesInPeriod, paymentsInPeriod] = await Promise.all([
-    prisma.folioCharge.groupBy({
-      by: ['departmentId'],
-      where: { businessDate: { lt: fromDate }, departmentId: { not: null } },
-      _sum: { amount: true },
-    }),
-    prisma.folioCharge.groupBy({
-      by: ['departmentId'],
-      where: {
-        businessDate: { gte: fromDate, lt: toNext },
-        departmentId: { not: null },
-      },
-      _sum: { amount: true },
-    }),
+  const [chargesBefore, paymentsBefore, chargeDays, codes, paymentsInPeriod] = await Promise.all([
+    prisma.folioCharge.aggregate({ where: { businessDate: { lt: window.gte } }, _sum: { amount: true } }),
     prisma.folioPayment.groupBy({
-      by: ['paymentMethod'],
-      where: { createdAt: { gte: fromDate, lt: toNext } },
+      by: ['kind'],
+      where: { createdAt: { lt: window.gte } },
+      _sum: { amount: true },
+    }),
+    loadChargeDays(from, to),
+    loadRevenueCodes(),
+    prisma.folioPayment.groupBy({
+      by: ['paymentMethod', 'kind'],
+      where: { createdAt: { gte: window.gte, lt: window.lt } },
       _sum: { amount: true },
     }),
   ]);
 
-  const departments = await prisma.department.findMany({
-    select: { id: true, code: true, name: true },
-  });
-  const deptMap = new Map(departments.map((d) => [d.id, d]));
-
-  const totalPayments = paymentsInPeriod.reduce(
-    (s, p) => s + Number(p._sum.amount ?? 0),
-    0,
+  const openingBalance = round2(
+    Number(chargesBefore._sum.amount ?? 0) - paymentsBefore.reduce((s, p) => s + signed(p.kind, p._sum.amount), 0),
   );
 
-  const bfMap = new Map<string, number>();
-  for (const row of chargesBefore) {
-    if (row.departmentId) bfMap.set(row.departmentId, Number(row._sum.amount ?? 0));
+  const deptMap = new Map<string, TrialBalanceDepartment>();
+  for (const c of chargeDays) {
+    const code = codes.get(c.revenueCodeId);
+    const split = splitGross(c.gross, code?.vatRate ?? 0);
+    const deptCode = code?.departmentCode ?? 'OTHER';
+    const dept =
+      deptMap.get(deptCode) ??
+      { code: deptCode, name: code?.departmentName ?? 'Other', net: 0, vat: 0, gross: 0, codes: [] };
+    dept.net += split.net;
+    dept.vat += split.vat;
+    dept.gross += split.gross;
+    const rcCode = code?.code ?? c.revenueCodeId;
+    let line = dept.codes.find((l) => l.code === rcCode);
+    if (!line) {
+      line = { code: rcCode, name: code?.name ?? rcCode, net: 0, vat: 0, gross: 0 };
+      dept.codes.push(line);
+    }
+    line.net += split.net;
+    line.vat += split.vat;
+    line.gross += split.gross;
+    deptMap.set(deptCode, dept);
   }
 
-  const debitMap = new Map<string, number>();
-  for (const row of chargesInPeriod) {
-    if (row.departmentId) debitMap.set(row.departmentId, Number(row._sum.amount ?? 0));
+  const departments = [...deptMap.values()]
+    .map((d) => ({
+      ...d,
+      net: round2(d.net),
+      vat: round2(d.vat),
+      gross: round2(d.gross),
+      codes: d.codes
+        .map((l) => ({ ...l, net: round2(l.net), vat: round2(l.vat), gross: round2(l.gross) }))
+        .sort((a, b) => a.code.localeCompare(b.code)),
+    }))
+    .sort((a, b) => a.code.localeCompare(b.code));
+
+  const payMap = new Map<string, number>();
+  for (const p of paymentsInPeriod) {
+    payMap.set(p.paymentMethod, (payMap.get(p.paymentMethod) ?? 0) + signed(p.kind, p._sum.amount));
   }
+  const payments = [...payMap.entries()]
+    .map(([method, amount]) => ({ method, amount: round2(amount) }))
+    .sort((a, b) => a.method.localeCompare(b.method));
 
-  const allDeptIds = new Set([...bfMap.keys(), ...debitMap.keys()]);
-  const rows: TrialBalanceRow[] = [];
-
-  for (const deptId of allDeptIds) {
-    const dept = deptMap.get(deptId);
-    const bf = bfMap.get(deptId) ?? 0;
-    const debit = debitMap.get(deptId) ?? 0;
-    rows.push({
-      department: dept?.code ?? deptId,
-      departmentName: dept?.name ?? deptId,
-      bf,
-      debit,
-      credit: 0,
-      balance: bf + debit,
-    });
-  }
-
-  rows.push({
-    department: 'PAYMENTS',
-    departmentName: 'Payments',
-    bf: 0,
-    debit: 0,
-    credit: totalPayments,
-    balance: -totalPayments,
-  });
-
-  for (const pm of paymentsInPeriod) {
-    rows.push({
-      department: `PAY:${pm.paymentMethod}`,
-      departmentName: pm.paymentMethod,
-      bf: 0,
-      debit: 0,
-      credit: Number(pm._sum.amount ?? 0),
-      balance: -Number(pm._sum.amount ?? 0),
-    });
-  }
-
-  const totalBf = rows.reduce((s, r) => s + r.bf, 0);
-  const totalDebit = rows.reduce((s, r) => s + r.debit, 0);
-  const totalCredit = rows.reduce((s, r) => s + r.credit, 0);
-  const totalBalance = rows.reduce((s, r) => s + r.balance, 0);
-
-  return { from: fromIso, to: toIso, rows, totalBf, totalDebit, totalCredit, totalBalance };
+  const chargesGross = round2(departments.reduce((s, d) => s + d.gross, 0));
+  const paymentsTotal = round2(payments.reduce((s, p) => s + p.amount, 0));
+  return {
+    from,
+    to,
+    openingBalance,
+    departments,
+    chargesNet: round2(departments.reduce((s, d) => s + d.net, 0)),
+    chargesVat: round2(departments.reduce((s, d) => s + d.vat, 0)),
+    chargesGross,
+    payments,
+    paymentsTotal,
+    closingBalance: round2(openingBalance + chargesGross - paymentsTotal),
+  };
 }

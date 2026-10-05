@@ -456,8 +456,25 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
   const PDFDocument = (await import('pdfkit')).default;
   const pages = await generateAllFloorSheets(workDateIso);
   const labels = SHEET_PDF_LABELS[lang];
+  const [{ drawLetterhead }, { formatReportTimestamp }, { getReportLetterhead }] = await Promise.all([
+    import('@/lib/reports/pdf-render'),
+    import('@/lib/reports/pdf-i18n'),
+    import('@/lib/services/hotel-letterhead.service'),
+  ]);
+  const letterhead = await getReportLetterhead();
+  const printedAt = formatReportTimestamp(lang);
   const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 28 });
   registerUnicodeFonts(doc);
+  const drawSheetLetterhead = () => {
+    const bottom = drawLetterhead(doc, letterhead, {
+      x: 28,
+      y: 28,
+      width: doc.page.width - 56,
+      generatedAt: printedAt,
+    });
+    doc.x = 28;
+    doc.y = bottom + 6;
+  };
   doc.font(PDF_FONT_UNICODE);
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
@@ -468,7 +485,8 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
   const cols = [42, 36, 44, 130, 64, 88, 52, 58, 58, 32, 32];
   pages.forEach((page, index) => {
     if (index > 0) doc.addPage();
-    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor} · ${workDateIso}`);
+    drawSheetLetterhead();
+    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor} · ${workDateIso}`, 28, doc.y);
     doc.moveDown(0.4);
     let y = doc.y;
     const headers = labels.headers;
@@ -511,7 +529,8 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
     doc.y = y;
   });
   if (pages.length === 0) {
-    doc.fontSize(12).text(`${labels.title} · ${workDateIso}`);
+    drawSheetLetterhead();
+    doc.fontSize(12).text(`${labels.title} · ${workDateIso}`, 28, doc.y);
   }
   doc.end();
   return done;

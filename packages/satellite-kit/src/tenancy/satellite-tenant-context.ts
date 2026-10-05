@@ -11,7 +11,26 @@ export type SatelliteTenantContext = {
 
 export type SatelliteTenantFilter = { mode: "apply"; organizationId: string };
 
-const als = new AsyncLocalStorage<SatelliteTenantContext>();
+type TenantState = {
+  als: AsyncLocalStorage<SatelliteTenantContext>;
+  orgByWorkStore: WeakMap<object, string>;
+};
+
+/**
+ * One store per process. Next bundles this module separately for
+ * instrumentation and each route, and the dev Prisma client cached on
+ * globalThis keeps the copy that created it.
+ */
+const TENANT_STATE_KEY = Symbol.for("era.satellite-kit.tenant-state");
+const tenantState: TenantState = ((globalThis as Record<symbol, unknown>)[TENANT_STATE_KEY] as
+  | TenantState
+  | undefined) ?? {
+  als: new AsyncLocalStorage<SatelliteTenantContext>(),
+  orgByWorkStore: new WeakMap<object, string>(),
+};
+(globalThis as Record<symbol, unknown>)[TENANT_STATE_KEY] = tenantState;
+
+const als = tenantState.als;
 
 /**
  * Next.js drops `enterWith` across `await`. `enterSatelliteTenant` also
@@ -19,7 +38,7 @@ const als = new AsyncLocalStorage<SatelliteTenantContext>();
  * The process bind is used only when there is no request (cron, workers).
  * A request with no entered org throws.
  */
-const orgByWorkStore = new WeakMap<object, string>();
+const orgByWorkStore = tenantState.orgByWorkStore;
 
 function currentWorkStore(): object | undefined {
   try {

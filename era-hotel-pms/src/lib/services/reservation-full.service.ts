@@ -1,5 +1,7 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
 import { normalizeListPagination } from '@era/satellite-kit';
@@ -681,22 +683,37 @@ export async function listReservationsForGrid(
     ];
   }
 
-  const [rows, total] = await Promise.all([
-    prisma.reservation.findMany({
-      where,
-      include: {
-        room: true,
-        roomType: true,
-        guest: true,
-        agency: true,
-        notes: true,
-      },
-      orderBy: [{ checkInDate: 'desc' }, { id: 'desc' }],
-      skip,
-      take: pageSize,
-    }),
-    prisma.reservation.count({ where }),
-  ]);
+  const today = todayBakuYmd();
+  const ranked = await prisma.reservation.findMany({
+    where,
+    select: { id: true, checkInDate: true },
+  });
+  ranked.sort((a, b) => {
+    const aKey = hotelDateKey(a.checkInDate);
+    const bKey = hotelDateKey(b.checkInDate);
+    const aFuture = aKey >= today ? 0 : 1;
+    const bFuture = bKey >= today ? 0 : 1;
+    if (aFuture !== bFuture) return aFuture - bFuture;
+    if (aKey !== bKey) return aFuture === 0 ? (aKey < bKey ? -1 : 1) : aKey < bKey ? 1 : -1;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+  const pageIds = ranked.slice(skip, skip + pageSize).map((row) => row.id);
+  const total = ranked.length;
+  const loaded =
+    pageIds.length === 0
+      ? []
+      : await prisma.reservation.findMany({
+          where: { id: { in: pageIds } },
+          include: {
+            room: true,
+            roomType: true,
+            guest: true,
+            agency: true,
+            notes: true,
+          },
+        });
+  const order = new Map(pageIds.map((id, index) => [id, index]));
+  const rows = loaded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 
   const items = rows.map((r) => {
     const filled = r.notes.filter((n) => (n.text ?? '').trim().length > 0);

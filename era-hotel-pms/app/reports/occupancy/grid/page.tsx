@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { EraListFilterBar, DatePicker, PageHeader } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  LIST_PAGE_SHELL_CLASS,
+  PageHeader,
+  showApiError,
+} from '@era/satellite-kit/ui';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface OccupancyCell {
@@ -27,21 +40,25 @@ interface OccupancyGrid {
   rows: OccupancyRow[];
 }
 
+function cellTone(free: number): string {
+  if (free >= 3) return 'bg-[#E8F8F5]';
+  if (free >= 0) return 'bg-[#FEF9E7]';
+  return 'bg-[#FDEDEC]';
+}
+
 export default function OccupancyGridPage() {
   const t = useTranslations('reports');
   const tc = useTranslations('common');
   const [from, setFrom] = useState(() => hotelDateKey());
-  const [days, setDays] = useState(14);
+  const [days, setDays] = useState('14');
   const [grid, setGrid] = useState<OccupancyGrid | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setError(null);
-    const qs = new URLSearchParams({ from, days: String(days) });
+    const qs = new URLSearchParams({ from, days });
     const res = await fetch(`/api/reports/occupancy?${qs}`);
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(body.error ?? tc('loadError'));
+      showApiError(body, tc('loadError'));
       setGrid(null);
       return;
     }
@@ -53,69 +70,83 @@ export default function OccupancyGridPage() {
   }, [load]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-6">
+    <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader title={t('occupancyTitle')} subtitle={t('occupancySubtitle')} />
-      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setDays(14)}>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setFrom(hotelDateKey());
+          setDays('14');
+        }}
+      >
         <DatePicker
           label={t('dateFrom')}
           value={from}
           onChange={setFrom}
           placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <CatalogField
+          kind="OPS_HOT"
+          label={t('horizon')}
+          value={days}
+          emptyLabel={null}
+          options={[
+            { value: '14', label: t('days14') },
+            { value: '30', label: t('days30') },
+          ]}
+          onChange={(value) => setDays(Array.isArray(value) ? (value[0] ?? '14') : value || '14')}
         />
       </EraListFilterBar>
-      <div className="flex gap-2">
-        {[14, 30].map((d) => (
-          <button
-            key={d}
-            type="button"
-            onClick={() => setDays(d)}
-            className={`rounded-md border px-3 py-1.5 text-sm ${
-              days === d ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
-            }`}
-          >
-            {d === 14 ? t('days14') : t('days30')}
-          </button>
-        ))}
+      <div className="mb-3 flex flex-wrap gap-4 text-[12px] text-[#34495E]">
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-4 w-8 rounded border border-[#D5DADF] bg-[#E8F8F5]" />
+          {t('legendFree')}
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-4 w-8 rounded border border-[#D5DADF] bg-[#FEF9E7]" />
+          {t('legendTight')}
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-4 w-8 rounded border border-[#D5DADF] bg-[#FDEDEC]" />
+          {t('legendOver')}
+        </span>
       </div>
-      {error && <p className="text-red-600">{error}</p>}
-      {grid && (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full text-xs">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 py-2 text-left">{t('type')}</th>
-                {grid.dates.map((d) => (
-                  <th key={d} className="px-1 py-2 text-center">
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('type')}</th>
+                {(grid?.dates ?? []).map((d) => (
+                  <th key={d} className={DATA_TABLE_TH_LEFT_CLASS}>
                     {d.slice(5)}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-right">{t('avgPct')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('avgPct')}</th>
               </tr>
             </thead>
             <tbody>
-              {grid.rows.map((row) => (
-                <tr key={row.roomTypeId} className="border-t">
-                  <td className="px-2 py-1 font-medium">
+              {(grid?.rows ?? []).map((row) => (
+                <tr key={row.roomTypeId} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>
                     {row.code} · {row.name}
                   </td>
                   {row.cells.map((cell) => {
                     const free = cell.available - cell.sold;
-                    const cls =
-                      free >= 3 ? 'bg-green-50' : free >= 0 ? 'bg-amber-50' : 'bg-red-50';
                     return (
-                      <td key={cell.date} className={`px-1 py-1 text-center ${cls}`}>
+                      <td key={cell.date} className={`${DATA_TABLE_TD_CLASS} text-center ${cellTone(free)}`}>
                         {cell.sold}/{cell.total}
                       </td>
                     );
                   })}
-                  <td className="px-2 py-1 text-right">{row.avgOccupancyPct.toFixed(1)}%</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.avgOccupancyPct.toFixed(1)}%</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
-      <p className="text-xs text-gray-500">{t('legend')}</p>
+      </div>
     </div>
   );
 }

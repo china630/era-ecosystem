@@ -1,3 +1,4 @@
+import { bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import {
@@ -122,10 +123,33 @@ export async function updateUser(
   });
 }
 
-export async function listUserLogins(limit = 200) {
+export async function listUserLogins(opts: { q?: string; from?: string; to?: string; limit?: number } = {}) {
+  let from = opts.from?.trim();
+  let to = opts.to?.trim();
+  if (from && to && from > to) {
+    const swap = from;
+    from = to;
+    to = swap;
+  }
+  const createdAt: { gte?: Date; lt?: Date } = {};
+  if (from) createdAt.gte = bakuDayBounds(from).start;
+  if (to) createdAt.lt = bakuDayBounds(to).end;
+  const q = opts.q?.trim();
   return prisma.userLogin.findMany({
+    where: {
+      ...(createdAt.gte || createdAt.lt ? { createdAt } : {}),
+      ...(q
+        ? {
+            OR: [
+              { login: { contains: q, mode: 'insensitive' } },
+              { user: { fullName: { contains: q, mode: 'insensitive' } } },
+              { ipAddress: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: 'desc' },
-    take: limit,
+    take: opts.limit ?? 200,
     include: { user: { select: { fullName: true, login: true } } },
   });
 }
