@@ -18,25 +18,31 @@ describe('listReservationsForGrid pagination', () => {
 
   it('defaults to LIVE statuses and pages without take:500', async () => {
     const { prisma } = await import('@/lib/prisma');
-    (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
-    (prisma.reservation.count as jest.Mock).mockResolvedValue(0);
+    const ranked = Array.from({ length: 30 }, (_, i) => ({
+      id: `r${String(i).padStart(2, '0')}`,
+      checkInDate: new Date('2099-01-01T00:00:00.000Z'),
+    }));
+    (prisma.reservation.findMany as jest.Mock).mockImplementation((args: { select?: unknown }) =>
+      Promise.resolve(args.select ? ranked : []),
+    );
 
     const { listReservationsForGrid } = await import(
       '@/lib/services/reservation-full.service'
     );
-    await listReservationsForGrid({ page: 1, pageSize: 25 });
+    const result = await listReservationsForGrid({ page: 1, pageSize: 25 });
 
-    expect(prisma.reservation.findMany).toHaveBeenCalledWith(
+    const rankQuery = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0];
+    expect(rankQuery.take).not.toBe(500);
+    expect(rankQuery.where).toEqual(
       expect.objectContaining({
-        skip: 0,
-        take: 25,
-        where: expect.objectContaining({
-          groupId: null,
-          status: { in: ['OPTION', 'CONFIRMED', 'IN_HOUSE'] },
-        }),
+        groupId: null,
+        status: { in: ['OPTION', 'CONFIRMED', 'IN_HOUSE'] },
       }),
     );
-    expect(prisma.reservation.count).toHaveBeenCalled();
+    expect(result.total).toBe(30);
+    expect(result.page).toBe(1);
+    const pageQuery = (prisma.reservation.findMany as jest.Mock).mock.calls[1][0];
+    expect(pageQuery.where.id.in).toHaveLength(25);
   });
 
   it('guestId without status defaults to ALL (history deep link)', async () => {
@@ -57,8 +63,10 @@ describe('listReservationsForGrid pagination', () => {
 
   it('ALL does not restrict status; hasNotes and guestId apply', async () => {
     const { prisma } = await import('@/lib/prisma');
-    (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
-    (prisma.reservation.count as jest.Mock).mockResolvedValue(3);
+    (prisma.reservation.findMany as jest.Mock).mockResolvedValue([
+      { id: 'r1', checkInDate: new Date('2099-01-01T00:00:00.000Z') },
+      { id: 'r2', checkInDate: new Date('2099-01-02T00:00:00.000Z') },
+    ]);
     (prisma.reservationNote.findMany as jest.Mock).mockResolvedValue([
       { reservationId: 'r1', text: 'note one' },
       { reservationId: 'r2', text: 'note two' },
@@ -75,7 +83,8 @@ describe('listReservationsForGrid pagination', () => {
       pageSize: 25,
     });
 
-    expect(result.total).toBe(3);
+    expect(result.total).toBe(2);
+    expect(result.items).toEqual([]);
     expect(result.page).toBe(2);
     expect(prisma.reservationNote.findMany).toHaveBeenCalled();
     const where = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0]
@@ -83,9 +92,7 @@ describe('listReservationsForGrid pagination', () => {
     expect(where.status).toBeUndefined();
     expect(where.guestId).toBe('guest-1');
     expect(where.id).toEqual({ in: ['r1', 'r2'] });
-    expect(prisma.reservation.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: 25, take: 25 }),
-    );
+    expect((prisma.reservation.findMany as jest.Mock).mock.calls[0][0].take).not.toBe(500);
   });
 
   it('hasNotes with no note rows returns empty page', async () => {
