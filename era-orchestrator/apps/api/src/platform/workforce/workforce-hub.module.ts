@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 
 import { MdmModule } from "../../mdm/mdm.module";
 
@@ -131,15 +131,15 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
 
     MdmModule,
 
-    SubscriptionModule,
+    forwardRef(() => SubscriptionModule),
 
     PlatformSharedModule,
 
-    SatelliteEventsModule,
+    forwardRef(() => SatelliteEventsModule),
 
     CatalogGatewayModule,
 
-    QuotaModule,
+    forwardRef(() => QuotaModule),
 
   ],
 
