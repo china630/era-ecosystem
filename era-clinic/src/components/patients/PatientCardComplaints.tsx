@@ -32,6 +32,7 @@ type Props = {
   episodeId?: string | null;
   readOnly?: boolean;
   onChanged?: () => void;
+  onCountChange?: (count: number) => void;
   /** Day-1 package open result from complaint POST (toast on card). */
   onDay1Program?: (payload: unknown) => void;
 };
@@ -41,6 +42,7 @@ export function PatientCardComplaints({
   episodeId,
   readOnly = false,
   onChanged,
+  onCountChange,
   onDay1Program,
 }: Props) {
   const t = useTranslations("patientCard");
@@ -62,16 +64,19 @@ export function PatientCardComplaints({
     if (res.ok) {
       const raw = await res.json();
       const row = raw.data ?? raw;
-      setItems(Array.isArray(row.items) ? row.items : []);
+      const nextItems = Array.isArray(row.items) ? row.items : [];
+      setItems(nextItems);
+      onCountChange?.(nextItems.length);
       setResolvedEpisodeId(
         typeof row.episodeId === "string" ? row.episodeId : episodeId ?? null,
       );
     } else {
       setItems([]);
+      onCountChange?.(0);
       setResolvedEpisodeId(episodeId ?? null);
     }
     setLoading(false);
-  }, [patientRefId, episodeId]);
+  }, [patientRefId, episodeId, onCountChange]);
 
   useEffect(() => {
     void load();

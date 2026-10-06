@@ -144,6 +144,8 @@ export function PatientCardBody({
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
   const [careTeamCount, setCareTeamCount] = useState(0);
+  const [complaintCount, setComplaintCount] = useState(0);
+  const [diagnosisCount, setDiagnosisCount] = useState(0);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -179,6 +181,7 @@ export function PatientCardBody({
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
+  const studiesUnlocked = anamnesisOk && complaintCount > 0 && diagnosisCount > 0;
   const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
   const episodeOptions = useMemo(
     () => episodes.map((e) => ({ value: e.id, label: e.label })),
@@ -251,10 +254,17 @@ export function PatientCardBody({
     const ep = episodes.find((e) => e.id === nextId);
     setAnamnesis(ep?.anamnesisText ?? "");
     setCareTeamCount(0);
+    setComplaintCount(0);
+    setDiagnosisCount(0);
   }
 
   const onCareTeamChange = useCallback((items: { id: string }[]) => {
-    setCareTeamCount(items.length);
+    setCareTeamCount((prev) => {
+      if (prev === 0 && items.length > 0) {
+        setClinicalRefreshKey((n) => n + 1);
+      }
+      return items.length;
+    });
   }, []);
 
   function onAnamnesisSaved(payload: {
@@ -612,6 +622,7 @@ export function PatientCardBody({
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
               onChanged={() => setClinicalRefreshKey((n) => n + 1)}
+              onCountChange={setComplaintCount}
               onDay1Program={applyDay1Toast}
             />
 
@@ -619,6 +630,7 @@ export function PatientCardBody({
               patientRefId={patient.id}
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
+              onCountChange={setDiagnosisCount}
             />
 
             <PatientCardClinicalSections
@@ -628,6 +640,7 @@ export function PatientCardBody({
               patientOrigin={selectedEpisode?.patientOrigin}
               readOnly={episodeReadOnly}
               anamnesisOk={anamnesisOk}
+              studiesUnlocked={studiesUnlocked}
               refreshKey={clinicalRefreshKey}
               onOpenDayPlan={onOpenDayPlan}
             />

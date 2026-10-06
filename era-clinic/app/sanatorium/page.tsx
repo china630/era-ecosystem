@@ -953,6 +953,10 @@ export default function SanatoriumPage() {
   );
 
   const program = selected?.programInstance;
+  const proceduresUnlocked =
+    Boolean(selected?.anamnesisText?.trim()) &&
+    (selected?.complaints.length ?? 0) > 0 &&
+    (selected?.diagnoses.length ?? 0) > 0;
   const canCompleteCheckup =
     Boolean(selected) &&
     !program &&
@@ -1109,6 +1113,7 @@ export default function SanatoriumPage() {
                     })}
                   </ul>
                 </div>
+                {proceduresUnlocked ? (
                 <div>
                   <EpisodeAssignBlocks
                     packageTitle={t("assignPackageTitle", {
@@ -1164,8 +1169,10 @@ export default function SanatoriumPage() {
                     }
                   />
                 </div>
+                ) : null}
               </div>
             ) : selected.patientOrigin === "WALK_IN" ? (
+              proceduresUnlocked ? (
               <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
                 <EpisodeAssignBlocks
                   packageTitle={t("assignPackageTitle", {
@@ -1190,6 +1197,7 @@ export default function SanatoriumPage() {
                   pendingPayLabel={t("pendingPay")}
                 />
               </div>
+              ) : null
             ) : (
               <div className={`border-dashed ${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-2`}>
                 {!selected.checkupCompletedAt && (
