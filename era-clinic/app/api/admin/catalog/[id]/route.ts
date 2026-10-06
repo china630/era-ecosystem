@@ -95,3 +95,47 @@ export async function PATCH(req: Request, ctx: Ctx) {
     return handleRouteError(err);
   }
 }
+
+export async function DELETE(req: Request, ctx: Ctx) {
+  try {
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
+    const { id } = await ctx.params;
+    const existing = await prisma.serviceCatalogCache.findFirst({ where: { id } });
+    if (!existing) return jsonError("Not found", 404);
+    const orgId = existing.organizationId;
+    const code = existing.code;
+    const [procedures, visitLines, labItems, receipts, labHeaders] = await Promise.all([
+      prisma.procedureOrder.count({
+        where: { organizationId: orgId, procedureCode: code },
+      }),
+      prisma.visitServiceLine.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.labOrderItem.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.clinicReceiptLine.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.labOrder.count({
+        where: {
+          organizationId: orgId,
+          OR: [
+            { testCode: code },
+            { testCode: { startsWith: `${code},` } },
+            { testCode: { endsWith: `,${code}` } },
+            { testCode: { contains: `,${code},` } },
+          ],
+        },
+      }),
+    ]);
+    if (procedures + visitLines + labItems + receipts + labHeaders > 0) {
+      return jsonError("Catalog price is referenced by orders", 409);
+    }
+    await prisma.serviceCatalogCache.delete({ where: { id } });
+    return jsonOk({ id });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}

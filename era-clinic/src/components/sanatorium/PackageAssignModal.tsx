@@ -82,6 +82,7 @@ type PackageBlockReason =
   | "NO_PROGRAM_CODE"
   | "NO_ANAMNESIS"
   | "NO_COMPLAINT"
+  | "NO_DIAGNOSIS"
   | "NO_CARE_TEAM"
   | "INSTANTIATE_FAILED";
 
@@ -336,6 +337,7 @@ export function PackageAssignModal({
       "NO_PROGRAM_CODE",
       "NO_ANAMNESIS",
       "NO_COMPLAINT",
+      "NO_DIAGNOSIS",
       "NO_CARE_TEAM",
       "INSTANTIATE_FAILED",
     ];
@@ -461,6 +463,7 @@ export function PackageAssignModal({
   const clinicalLock =
     blockReason === "NO_ANAMNESIS" ||
     blockReason === "NO_COMPLAINT" ||
+    blockReason === "NO_DIAGNOSIS" ||
     blockReason === "NO_CARE_TEAM";
   const extraDraftTotal = extraDraft.reduce((sum, row) => sum + row.amountNet * row.qty, 0);
   const extraPendingTotal = extraPending.reduce((sum, row) => sum + row.amountNet, 0);

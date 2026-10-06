@@ -96,6 +96,8 @@ type ListFilters = {
   modality: string;
   dateFrom: string;
   dateTo: string;
+  sort: string;
+  sortDir: "" | "asc" | "desc";
 };
 
 const emptyFilters: ListFilters = {
@@ -105,6 +107,8 @@ const emptyFilters: ListFilters = {
   modality: "",
   dateFrom: "",
   dateTo: "",
+  sort: "",
+  sortDir: "",
 };
 
 function serviceDisplayName(
@@ -214,6 +218,10 @@ export default function LabOrdersPage() {
       if (f.q.trim()) params.set("q", f.q.trim());
       if (f.dateFrom) params.set("dateFrom", f.dateFrom);
       if (f.dateTo) params.set("dateTo", f.dateTo);
+      if (f.sort && f.sortDir) {
+        params.set("sort", f.sort);
+        params.set("sortDir", f.sortDir);
+      }
       const res = await fetch(`/api/lab-orders?${params}`);
       if (!res.ok) throw new Error("Failed to load lab orders");
       return res.json();
@@ -381,6 +389,7 @@ export default function LabOrdersPage() {
       {
         key: "patient",
         header: t("colPatient"),
+        sortable: true,
         render: (order) => (
           <div>
             <div className="font-medium">{order.patientRef.fullName}</div>
@@ -410,6 +419,7 @@ export default function LabOrdersPage() {
       {
         key: "status",
         header: tc("status"),
+        sortable: true,
         render: (order) =>
           (LAB_ORDER_STATUSES as readonly string[]).includes(order.status)
             ? t(`orderStatus.${order.status}` as "orderStatus.ORDERED")
@@ -418,11 +428,13 @@ export default function LabOrdersPage() {
       {
         key: "amount",
         header: t("colAmount"),
+        sortable: true,
         render: (order) => amountLabel(order, t("inPackage")),
       },
       {
         key: "created",
         header: t("colCreated"),
+        sortable: true,
         render: (order) => {
           const d = labOrderListDate(order);
           return d ? bakuDateDisplay(d) : "—";
@@ -556,6 +568,14 @@ export default function LabOrdersPage() {
             pagination={false}
             paginationMode="server"
             embedded
+            sort={
+              filters.sort && filters.sortDir
+                ? { key: filters.sort, dir: filters.sortDir }
+                : null
+            }
+            onSortChange={(next) =>
+              setFilters((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
+            }
           />
         }
         footer={

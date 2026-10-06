@@ -116,6 +116,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
         <SatelliteNotificationBell labels={SATELLITE_NOTIFICATION_LABELS_EN} />
       }
       locale={<SatelliteHeaderLocale locale={locale} />}
+      contentClassName="!pt-0"
     >
       {children}
     </EraAppRouteShell>

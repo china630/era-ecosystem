@@ -129,6 +129,15 @@ export async function GET(req: Request) {
       episodeStatus,
       page: pageRaw ? Number(pageRaw) : undefined,
       pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
+      sort:
+        params.get("sort") === "fullName" ||
+        params.get("sort") === "refCode" ||
+        params.get("sort") === "sex" ||
+        params.get("sort") === "ageYears" ||
+        params.get("sort") === "bloodGroup"
+          ? (params.get("sort") as "fullName" | "refCode" | "sex" | "ageYears" | "bloodGroup")
+          : undefined,
+      sortDir: params.get("sortDir") === "asc" ? "asc" : params.get("sortDir") === "desc" ? "desc" : undefined,
       careTeamPractitionerId:
         scope.mode === "ASSIGNED" ? scope.practitionerId ?? undefined : undefined,
     });

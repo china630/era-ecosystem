@@ -95,7 +95,16 @@ export async function POST(
         await import("@/lib/auth/session-practitioner")
       ).resolveSessionPractitionerId(session!.sub),
     });
-    return jsonOk(row, 201);
+    const { tryOpenProgramAfterTherapistStage } = await import(
+      "@/domain/sanatorium/open-program-after-therapist.service"
+    );
+    let day1Program = null;
+    try {
+      day1Program = await tryOpenProgramAfterTherapistStage(episode.id);
+    } catch (err) {
+      console.error("[day1] open program after diagnosis failed", episode.id, err);
+    }
+    return jsonOk({ ...row, day1Program }, 201);
   } catch (err) {
     return handleRouteError(err);
   }
