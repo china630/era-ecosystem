@@ -271,6 +271,7 @@ export default function WorkforceRoleDirectoryPage() {
           </tbody>
         </table>
         }
+      >
       </EraListWorkspace>
     </div>
   );
