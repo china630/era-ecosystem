@@ -276,7 +276,7 @@ export default function WorkforceEmploymentsPage() {
   const [loginEditSatelliteKeys, setLoginEditSatelliteKeys] = useState<string[]>([]);
   const [loginModalError, setLoginModalError] = useState<string | null>(null);
   const loginSatelliteOptions = useMemo(() => {
-    const keys = new Set(entitledSatelliteOptions.map((s) => s.key));
+    const keys = new Set<string>(entitledSatelliteOptions.map((s) => s.key));
     for (const key of loginEditSatelliteKeys) keys.add(key);
     return satelliteFilterOptions.filter((s) => keys.has(s.key));
   }, [entitledSatelliteOptions, loginEditSatelliteKeys, satelliteFilterOptions]);
