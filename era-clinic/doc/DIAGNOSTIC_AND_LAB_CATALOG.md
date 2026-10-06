@@ -6,7 +6,7 @@ Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTem
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
-Commercial prices live on `ServiceCatalogCache` (`amount`, `listAmount`) with append-only `ServiceCatalogPrice` history. Finance sync writes them when the finance catalog answers; an empty finance response does not invent demo prices. SatAdmin can add and edit rows on `/admin/catalog`. This diagnostic catalog owns **codes + form fields / analytes / packages**, not the price text in parentheses.  
+Commercial prices live on `ServiceCatalogCache` (`amount` = in-package price, `listAmount` = out-of-package price) with append-only `ServiceCatalogPrice` history. Admin labels on `/admin/catalog` use those names. Form fields for a diagnostic service open as a table; row order is the order on the result form. Finance sync writes them when the finance catalog answers; an empty finance response does not invent demo prices. SatAdmin can add and edit rows on `/admin/catalog`. This diagnostic catalog owns **codes + form fields / analytes / packages**, not the price text in parentheses. The cashier bill uses the service title (`titleAz`, then `titleRu`, then `titleEn`) as the fiscal line name for a lab item.  
 Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the rest). Rare send-out: SatAdmin add, not this JSON.
 
 **v1.2 sources:** Nafta Analyses price list; Exonlab special panels; MediClub public lab menus (biochem, general clinical, infections); Liv/Eurolab category pages. Not Referans 7000 / LOINC.

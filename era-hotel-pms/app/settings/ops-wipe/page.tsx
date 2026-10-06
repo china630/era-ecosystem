@@ -21,29 +21,14 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  normalizeWipeSelection,
+  OPS_PARENTS,
+  OPS_WIPE_UI_KEYS,
+  type OpsWipeKey,
+} from '@/lib/ops-wipe-selection';
 
 type Counts = Record<string, number>;
-
-const COUNT_KEYS = [
-  'guests',
-  'reservations',
-  'folios',
-  'folioCharges',
-  'folioPayments',
-  'reservationNotes',
-  'guestNotes',
-  'conciergeOrders',
-  'banquetEvents',
-  'medicalOrders',
-  'medicalAlerts',
-  'elektrawebOutbox',
-  'procedureAppointments',
-  'labResults',
-  'tourBookings',
-  'transferOrders',
-  'migrationRegistrations',
-  'tourismSubmissions',
-] as const;
 
 const confirmFormId = 'ops-wipe-confirm-form';
 
@@ -57,6 +42,18 @@ export default function OpsWipePage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [phrase, setPhrase] = useState('');
   const [busy, setBusy] = useState(false);
+  const [opsOn, setOpsOn] = useState<Set<string>>(() => new Set(OPS_WIPE_UI_KEYS));
+
+  function toggleOps(key: OpsWipeKey) {
+    setOpsOn((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+        for (const parent of OPS_PARENTS[key]) next.delete(parent);
+      } else next.add(key);
+      return new Set(normalizeWipeSelection([...next]));
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,7 +80,9 @@ export default function OpsWipePage() {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
-  const total = counts ? COUNT_KEYS.reduce((sum, key) => sum + (counts[key] ?? 0), 0) : 0;
+  const total = counts
+    ? OPS_WIPE_UI_KEYS.reduce((sum, key) => sum + (opsOn.has(key) ? (counts[key] ?? 0) : 0), 0)
+    : 0;
 
   async function wipe(e: React.FormEvent) {
     e.preventDefault();
@@ -95,7 +94,11 @@ export default function OpsWipePage() {
     const res = await fetch('/api/admin/ops-wipe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ organizationId, confirmPhrase: phrase }),
+      body: JSON.stringify({
+        organizationId,
+        confirmPhrase: phrase,
+        ops: [...opsOn],
+      }),
     });
     const data = await res.json();
     setBusy(false);
@@ -119,6 +122,7 @@ export default function OpsWipePage() {
             <p className="m-0 text-[12px] text-[#7F8C8D]">
               {t('orgLabel')}: <span className="font-mono">{organizationId || '—'}</span>
             </p>
+            <p className="m-0 mt-1 text-[12px] text-[#7F8C8D]">{t('linkHint')}</p>
           </div>
           <div className="flex gap-2">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()} disabled={loading}>
@@ -127,7 +131,7 @@ export default function OpsWipePage() {
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
-              disabled={!counts || total === 0 || loading}
+              disabled={!counts || opsOn.size === 0 || total === 0 || loading}
               onClick={() => {
                 setPhrase('');
                 setConfirmOpen(true);
@@ -147,9 +151,18 @@ export default function OpsWipePage() {
               </tr>
             </thead>
             <tbody>
-              {COUNT_KEYS.map((key) => (
+              {OPS_WIPE_UI_KEYS.map((key) => (
                 <tr key={key} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{t(`entities.${key}`)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={opsOn.has(key)}
+                        onChange={() => toggleOps(key)}
+                      />
+                      {t(`entities.${key}`)}
+                    </label>
+                  </td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                     {counts ? String(counts[key] ?? 0) : '…'}
                   </td>

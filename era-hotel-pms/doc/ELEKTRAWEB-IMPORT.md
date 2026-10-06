@@ -190,10 +190,10 @@ The dry run prints, per channel plan, how many reservations, stay slices, sales 
 
 Variant A (keep master data, reload guests → reservations → folios):
 
-- **UI:** `/settings/ops-wipe` (platform super-admin only; nav **Operational wipe** under Settings). Shows counts for the session org → **Wipe** → type `WIPE` to confirm.
+- **UI:** `/settings/ops-wipe` (platform super-admin only; nav **Operational wipe** under Settings). Shows counts for the session org. Each row has a checkbox (all on). Unchecking a lower row also unchecks every row above that it references, so a parent is not deleted while a child key still points at it. **Wipe** → type `WIPE` deletes only the checked rows.
 - **CLI:** `npx tsx scripts/ops/wipe-hotel-ops-transactional.ts --org=<uuid> [--dry-run]`.
 
-Both call `src/lib/services/ops-wipe.service.ts`. Deleted: guests, reservations, folios and their charges/payments/settlements/deposits/fiscal docs, reservation and guest notes, concierge orders, banquet events, medical orders/alerts, Elektraweb folio outbox. Cascade (also counted on the screen): procedure appointments, lab results, tour bookings, transfer orders, migration registrations, tourism tax submissions. Rooms return to `AVAILABLE`. Kept: room types, rooms, rate plans, revenue codes, agencies, lookups, users; finance-core and MDM are untouched.
+Both call `src/lib/services/ops-wipe.service.ts`. The CLI, and the screen with every box left on, deletes guests, reservations, folios and their charges/payments/settlements/deposits/fiscal docs, reservation and guest notes, concierge orders, banquet events, medical orders/alerts, Elektraweb folio outbox, plus procedure appointments, lab results, tour bookings, transfer orders, migration registrations and tourism tax submissions. Rooms return to `AVAILABLE` only when reservations are included. A cleared child box keeps that child and every parent it references. Kept either way: room types, rooms, rate plans, revenue codes, agencies, lookups, users; finance-core and MDM are untouched.
 
 ---
 

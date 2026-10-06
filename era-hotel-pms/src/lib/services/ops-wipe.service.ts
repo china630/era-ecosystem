@@ -1,5 +1,10 @@
 import { isSentinelOrganizationId } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
+import {
+  normalizeWipeSelection,
+  OPS_WIPE_KEYS,
+  type OpsWipeKey,
+} from '@/lib/ops-wipe-selection';
 
 /**
  * Operational wipe for one hotel org: guests, reservations, folios, notes, concierge and banquet orders,
@@ -103,42 +108,101 @@ export async function countOpsWipe(organizationId: string): Promise<OpsWipeCount
   };
 }
 
-/** Deletes the operational bucket in FK-safe order inside one transaction; returns the pre-wipe counts. */
-export async function runOpsWipe(organizationId: string): Promise<OpsWipeCounts> {
+export type OpsWipeResult = {
+  before: OpsWipeCounts;
+  deletedKeys: OpsWipeKey[];
+};
+
+/**
+ * Deletes the chosen operational keys for one org. Omitted selection wipes every ops key.
+ * A parent is skipped when a child that references it is not selected.
+ * Rows with no checkbox (settlements, deposits, stays, party, POS bookings, channel errors)
+ * go with the folio or reservation they hang on. Loose ids that are not foreign keys
+ * (concierge and laundry charge, tour payment, banquet master folio, card-auth folio,
+ * migration registration's reservation id) are cleared when that target is wiped. Master data stays.
+ */
+export async function runOpsWipe(
+  organizationId: string,
+  selection?: { ops?: string[] },
+): Promise<OpsWipeResult> {
   const org = assertOrg(organizationId);
+  const chosen = new Set(normalizeWipeSelection(selection?.ops ?? [...OPS_WIPE_KEYS]));
   const before = await countOpsWipe(org);
   const byOrg = { organizationId: org };
+  const has = (key: OpsWipeKey) => chosen.has(key);
 
   await prisma.$transaction(
     async (tx) => {
-      await tx.medicalAlert.deleteMany({ where: byOrg });
-      await tx.medicalOrder.deleteMany({ where: byOrg });
-      await tx.conciergeOrder.deleteMany({ where: byOrg });
-      await tx.banquetEvent.deleteMany({ where: byOrg });
+      if (has('labResults')) await tx.labResult.deleteMany({ where: byOrg });
+      if (has('medicalOrders')) await tx.medicalOrder.deleteMany({ where: byOrg });
+      if (has('medicalAlerts')) await tx.medicalAlert.deleteMany({ where: byOrg });
+      if (has('conciergeOrders')) await tx.conciergeOrder.deleteMany({ where: byOrg });
+      if (has('banquetEvents')) await tx.banquetEvent.deleteMany({ where: byOrg });
 
-      await tx.folioPayment.deleteMany({ where: { folio: byOrg } });
-      await tx.folioCharge.deleteMany({ where: { folio: byOrg } });
-      await tx.folioSettlement.deleteMany({ where: { folio: byOrg } });
-      await tx.folioDeposit.deleteMany({ where: { reservation: byOrg } });
-      await tx.fiscalDocument.deleteMany({ where: { reservation: byOrg } });
-      await tx.folio.deleteMany({ where: byOrg });
+      if (has('folioPayments')) {
+        await tx.tourBooking.updateMany({
+          where: { ...byOrg, folioPaymentId: { not: null } },
+          data: { folioPaymentId: null },
+        });
+        await tx.folioPayment.deleteMany({ where: { folio: byOrg } });
+      }
+      if (has('folioCharges')) {
+        await tx.conciergeOrder.updateMany({
+          where: { ...byOrg, folioChargeId: { not: null } },
+          data: { folioChargeId: null },
+        });
+        await tx.laundryTicket.updateMany({
+          where: { ...byOrg, folioChargeId: { not: null } },
+          data: { folioChargeId: null },
+        });
+        await tx.posRoomChargeIdempotency.deleteMany({ where: byOrg });
+        await tx.folioCharge.deleteMany({ where: { folio: byOrg } });
+      }
+      if (has('folios')) {
+        await tx.banquetEvent.updateMany({
+          where: { ...byOrg, masterFolioId: { not: null } },
+          data: { masterFolioId: null },
+        });
+        await tx.cardAuthorization.updateMany({
+          where: { ...byOrg, folioId: { not: null } },
+          data: { folioId: null },
+        });
+        await tx.folioSettlement.deleteMany({ where: { folio: byOrg } });
+        await tx.folio.deleteMany({ where: byOrg });
+      }
 
-      await tx.stay.deleteMany({ where: { reservation: byOrg } });
-      await tx.reservationDailyRate.deleteMany({ where: { reservation: byOrg } });
-      await tx.reservationGuest.deleteMany({ where: { reservation: byOrg } });
-      await tx.reservationNote.deleteMany({ where: byOrg });
-      await tx.reservation.deleteMany({ where: byOrg });
+      if (has('procedureAppointments')) await tx.procedureAppointment.deleteMany({ where: byOrg });
+      if (has('tourBookings')) await tx.tourBooking.deleteMany({ where: byOrg });
+      if (has('transferOrders')) await tx.transferOrder.deleteMany({ where: byOrg });
+      if (has('tourismSubmissions')) await tx.tourismSubmission.deleteMany({ where: byOrg });
+      if (has('reservationNotes')) await tx.reservationNote.deleteMany({ where: byOrg });
+      if (has('migrationRegistrations')) await tx.migrationRegistration.deleteMany({ where: byOrg });
 
-      await tx.elektrawebFolioOutbox.deleteMany({ where: byOrg });
-      await tx.guest.deleteMany({ where: byOrg });
+      if (has('reservations')) {
+        await tx.migrationRegistration.updateMany({
+          where: { ...byOrg, reservationId: { not: null } },
+          data: { reservationId: null },
+        });
+        await tx.folioDeposit.deleteMany({ where: { reservation: byOrg } });
+        await tx.fiscalDocument.deleteMany({ where: { reservation: byOrg } });
+        await tx.channelSyncError.deleteMany({ where: { ...byOrg, reservationId: { not: null } } });
+        await tx.posReservation.deleteMany({ where: { ...byOrg, reservationId: { not: null } } });
+        await tx.stay.deleteMany({ where: { reservation: byOrg } });
+        await tx.reservationDailyRate.deleteMany({ where: { reservation: byOrg } });
+        await tx.reservationGuest.deleteMany({ where: { reservation: byOrg } });
+        await tx.reservation.deleteMany({ where: byOrg });
+        await tx.room.updateMany({
+          where: { organizationId: org, deleted: false },
+          data: { status: 'AVAILABLE' },
+        });
+      }
 
-      await tx.room.updateMany({
-        where: { organizationId: org, deleted: false },
-        data: { status: 'AVAILABLE' },
-      });
+      if (has('guestNotes')) await tx.guestNote.deleteMany({ where: byOrg });
+      if (has('elektrawebOutbox')) await tx.elektrawebFolioOutbox.deleteMany({ where: byOrg });
+      if (has('guests')) await tx.guest.deleteMany({ where: byOrg });
     },
     { maxWait: 10_000, timeout: 180_000 },
   );
 
-  return before;
+  return { before, deletedKeys: [...chosen] };
 }

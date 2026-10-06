@@ -134,11 +134,31 @@ export default function NurseRosterPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [nursePage, setNursePage] = useState(1);
+  const [procedureQuery, setProcedureQuery] = useState("");
+
+  function procedureMatches(line: { procedureName: string; procedureCode: string }) {
+    const query = procedureQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      line.procedureName.toLowerCase().includes(query) ||
+      line.procedureCode.toLowerCase().includes(query)
+    );
+  }
+
+  const visibleLines = useMemo(() => {
+    const query = procedureQuery.trim().toLowerCase();
+    if (!query) return lines;
+    return lines.filter(
+      (line) =>
+        line.procedureName.toLowerCase().includes(query) ||
+        line.procedureCode.toLowerCase().includes(query),
+    );
+  }, [lines, procedureQuery]);
 
   const pagedLines = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return lines.slice(start, start + pageSize);
-  }, [lines, page, pageSize]);
+    return visibleLines.slice(start, start + pageSize);
+  }, [visibleLines, page, pageSize]);
 
   const staffRows = view?.staff ?? [];
   const pagedStaff = useMemo(() => {
@@ -149,7 +169,7 @@ export default function NurseRosterPage() {
   useEffect(() => {
     setPage(1);
     setNursePage(1);
-  }, [yearMonth, staffKind, pageSize, matrixView]);
+  }, [yearMonth, staffKind, pageSize, matrixView, procedureQuery]);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -426,7 +446,13 @@ export default function NurseRosterPage() {
     <div className="space-y-4">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      <EraListFilterBar resetLabel={tc("filterReset")} onReset={() => setMatrixView("procedures")}>
+      <EraListFilterBar
+        resetLabel={tc("filterReset")}
+        onReset={() => {
+          setMatrixView("procedures");
+          setProcedureQuery("");
+        }}
+      >
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("staffKind")}
@@ -444,6 +470,12 @@ export default function NurseRosterPage() {
           }
           options={viewOptions}
           emptyLabel={null}
+        />
+        <Field
+          label={t("procedureFilter")}
+          preset="shortText"
+          value={procedureQuery}
+          onChange={(e) => setProcedureQuery(e.target.value)}
         />
         <div className="flex items-end gap-2">
           <button
@@ -625,13 +657,20 @@ export default function NurseRosterPage() {
                     </tr>
                   );
                 })}
+                {procedureQuery.trim() && visibleLines.length === 0 ? (
+                  <tr>
+                    <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={6}>
+                      {tc("notFound")}
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
-            total={lines.length}
+            total={visibleLines.length}
             loading={busy}
             onPageChange={setPage}
             onPageSizeChange={(n) => {
@@ -687,11 +726,18 @@ export default function NurseRosterPage() {
                             if (!id || owned.includes(id)) return;
                             setNurseProcedures(s.id, [...owned, id]);
                           }}
-                          options={procedureOptions.filter((o) => !owned.includes(o.value))}
+                          options={procedureOptions.filter((option) => {
+                            if (owned.includes(option.value)) return false;
+                            const line = lines.find((item) => item.procedureTypeId === option.value);
+                            return line ? procedureMatches(line) : true;
+                          })}
                           emptyLabel={t("addCabinet")}
                         />
                         <ul className="mt-2 space-y-2">
-                          {owned.map((id) => {
+                          {owned.filter((id) => {
+                            const line = lines.find((item) => item.procedureTypeId === id);
+                            return line ? procedureMatches(line) : true;
+                          }).map((id) => {
                             const line = lines.find((l) => l.procedureTypeId === id);
                             const overs = dayOverrides.filter((o) => o.procedureTypeId === id);
                             return (

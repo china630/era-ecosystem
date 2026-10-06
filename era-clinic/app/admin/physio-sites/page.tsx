@@ -4,6 +4,12 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Pencil, Plus } from "lucide-react";
 import {
+  SortableTh,
+  sortRows,
+  toggleColumnSort,
+  type ColumnSort,
+} from "@/components/sortable-column-header";
+import {
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -133,11 +139,39 @@ export default function PhysioSitesAdminPage() {
   const [aliasSiteById, setAliasSiteById] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sort, setSort] = useState<ColumnSort | null>(null);
+
+  const sortedSites = useMemo(
+    () =>
+      sortRows(sites, sort, (row, key) => {
+        if (key === "code") return row.code;
+        if (key === "kind") return row.kind;
+        if (key === "aliases") return row.aliases?.length ?? 0;
+        if (key === "active") return row.active ? 1 : 0;
+        return row.titleLa ? `${row.titleAz} / ${row.titleLa}` : row.titleAz;
+      }),
+    [sites, sort],
+  );
+
+  const sortedLists = useMemo(
+    () =>
+      sortRows(lists, sort, (row, key) => {
+        if (key === "code") return row.code;
+        if (key === "aliases") return row.aliases?.length ?? 0;
+        if (key === "active") return row.active ? 1 : 0;
+        return row.titleAz;
+      }),
+    [lists, sort],
+  );
 
   const pagedSites = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return sites.slice(start, start + pageSize);
-  }, [sites, page, pageSize]);
+    return sortedSites.slice(start, start + pageSize);
+  }, [sortedSites, page, pageSize]);
+
+  useEffect(() => {
+    setSort(null);
+  }, [tab]);
 
   useEffect(() => {
     setPage(1);
@@ -366,7 +400,6 @@ export default function PhysioSitesAdminPage() {
     { id: "queue", label: t("tabQueue") },
   ];
 
-  const rows = tab === "sites" ? sites : lists;
   const editing = tab === "sites" ? editSite : editList;
 
   return (
@@ -491,18 +524,58 @@ export default function PhysioSitesAdminPage() {
         <table className={DATA_TABLE_CLASS}>
           <thead>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
+              <SortableTh
+                label={t("code")}
+                columnKey="code"
+                sort={sort}
+                onSort={(key) => {
+                  setSort((current) => toggleColumnSort(current, key));
+                  setPage(1);
+                }}
+              />
+              <SortableTh
+                label={t("name")}
+                columnKey="name"
+                sort={sort}
+                onSort={(key) => {
+                  setSort((current) => toggleColumnSort(current, key));
+                  setPage(1);
+                }}
+              />
               {tab === "sites" ? (
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("kind")}</th>
+                <SortableTh
+                  label={t("kind")}
+                  columnKey="kind"
+                  sort={sort}
+                  onSort={(key) => {
+                    setSort((current) => toggleColumnSort(current, key));
+                    setPage(1);
+                  }}
+                />
               ) : null}
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("aliases")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("active")}</th>
+              <SortableTh
+                label={t("aliases")}
+                columnKey="aliases"
+                sort={sort}
+                onSort={(key) => {
+                  setSort((current) => toggleColumnSort(current, key));
+                  setPage(1);
+                }}
+              />
+              <SortableTh
+                label={t("active")}
+                columnKey="active"
+                sort={sort}
+                onSort={(key) => {
+                  setSort((current) => toggleColumnSort(current, key));
+                  setPage(1);
+                }}
+              />
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
             </tr>
           </thead>
           <tbody>
-            {(tab === "sites" ? pagedSites : rows).map((row) => (
+            {(tab === "sites" ? pagedSites : sortedLists).map((row) => (
               <tr
                 key={row.id}
                 className={`${DATA_TABLE_TR_CLASS} cursor-pointer`}

@@ -5,6 +5,12 @@ import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
+import {
+  SortableTh,
+  sortRows,
+  toggleColumnSort,
+  type ColumnSort,
+} from "@/components/sortable-column-header";
 import { PHYSIO_ORDER_FIELD_CODES } from "@/domain/physio/physio-order-fields";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import {
@@ -207,6 +213,7 @@ export default function MasterDataPage() {
   );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sort, setSort] = useState<ColumnSort | null>(null);
 
   const cpWorkforceMode = workforcePolicy?.hireMode === "cp_workforce";
   const blockPractitionerCreate = cpWorkforceMode;
@@ -302,7 +309,13 @@ export default function MasterDataPage() {
   useEffect(() => {
     setQ("");
     setPage(1);
+    setSort(null);
   }, [tab]);
+
+  function onSort(key: string) {
+    setSort((current) => toggleColumnSort(current, key));
+    setPage(1);
+  }
 
   const filteredPractitioners = useMemo(
     () =>
@@ -358,18 +371,64 @@ export default function MasterDataPage() {
     return arr.slice(start, start + pageSize);
   }
 
-  const pagedPractitioners = useMemo(
-    () => slicePage(filteredPractitioners),
-    [filteredPractitioners, page, pageSize],
+  const sortedPractitioners = useMemo(
+    () =>
+      sortRows(filteredPractitioners, sort, (row, key) => {
+        if (key === "name") return row.fullName;
+        if (key === "code") return row.code;
+        if (key === "staffKind") {
+          if (row.staffKind === "NURSE") return t("staffKindNurse");
+          if (row.staffKind === "LAB") return t("staffKindLab");
+          return t("staffKindDoctor");
+        }
+        if (key === "specialty") return row.specialty ?? "";
+        if (key === "mdm") return row.globalPersonId ? 1 : 0;
+        if (key === "finance") return row.financeEmployeeId ? 1 : 0;
+        if (key === "slot") return row.defaultSlotMinutes ?? null;
+        return "";
+      }),
+    [filteredPractitioners, sort, t],
   );
-  const pagedRooms = useMemo(() => slicePage(filteredRooms), [filteredRooms, page, pageSize]);
+  const sortedRooms = useMemo(
+    () =>
+      sortRows(filteredRooms, sort, (row, key) => (key === "code" ? row.code : row.name)),
+    [filteredRooms, sort],
+  );
+  const sortedResources = useMemo(
+    () =>
+      sortRows(filteredResources, sort, (row, key) => {
+        if (key === "code") return row.code;
+        if (key === "kind") return row.kind;
+        if (key === "room") return row.room?.code ?? "";
+        return row.name;
+      }),
+    [filteredResources, sort],
+  );
+  const sortedProcedureTypes = useMemo(
+    () =>
+      sortRows(filteredProcedureTypes, sort, (row, key) => {
+        if (key === "code") return row.code;
+        if (key === "duration") return row.durationMin;
+        if (key === "gap") return row.resourceGapMinutes ?? 5;
+        if (key === "rest") return row.patientRestMinutes ?? 15;
+        if (key === "resource") return displayProcedureResourceCode(row);
+        return row.name;
+      }),
+    [filteredProcedureTypes, sort],
+  );
+
+  const pagedPractitioners = useMemo(
+    () => slicePage(sortedPractitioners),
+    [sortedPractitioners, page, pageSize],
+  );
+  const pagedRooms = useMemo(() => slicePage(sortedRooms), [sortedRooms, page, pageSize]);
   const pagedResources = useMemo(
-    () => slicePage(filteredResources),
-    [filteredResources, page, pageSize],
+    () => slicePage(sortedResources),
+    [sortedResources, page, pageSize],
   );
   const pagedProcedureTypes = useMemo(
-    () => slicePage(filteredProcedureTypes),
-    [filteredProcedureTypes, page, pageSize],
+    () => slicePage(sortedProcedureTypes),
+    [sortedProcedureTypes, page, pageSize],
   );
 
   function resetModalExtras() {
@@ -857,13 +916,13 @@ export default function MasterDataPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("staffKind")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("specialty")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("mdmBadge")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("financeLinked")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("defaultSlotMinutes")}</th>
+                  <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("staffKind")} columnKey="staffKind" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("specialty")} columnKey="specialty" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("mdmBadge")} columnKey="mdm" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("financeLinked")} columnKey="finance" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("defaultSlotMinutes")} columnKey="slot" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -932,8 +991,8 @@ export default function MasterDataPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
+                  <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -971,10 +1030,10 @@ export default function MasterDataPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("kind")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("room")}</th>
+                  <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("kind")} columnKey="kind" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("room")} columnKey="room" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -1014,12 +1073,12 @@ export default function MasterDataPage() {
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("durationMin")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceGapMinutes")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patientRestMinutes")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("resourceCode")}</th>
+                  <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("durationMin")} columnKey="duration" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("resourceGapMinutes")} columnKey="gap" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("patientRestMinutes")} columnKey="rest" sort={sort} onSort={onSort} />
+                  <SortableTh label={t("resourceCode")} columnKey="resource" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>

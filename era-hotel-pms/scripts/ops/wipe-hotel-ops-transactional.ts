@@ -2,8 +2,9 @@
  * Wipe hotel transactional ops for one org (Nafta re-import variant A).
  *
  * Removes guests, reservations, folios, notes, concierge and banquet orders — keeps master data
- * (room types, rooms, agencies, rate plans, revenue codes, lookups). Same bucket as the
- * super-admin screen `/settings/ops-wipe` (`src/lib/services/ops-wipe.service.ts`).
+ * (room types, rooms, agencies, rate plans, revenue codes, lookups). Same service as the
+ * super-admin screen `/settings/ops-wipe` (`src/lib/services/ops-wipe.service.ts`). This CLI
+ * passes no selection, so the whole operational bucket is wiped. The screen can wipe a subset.
  *
  * Usage (staging):
  *   npx tsx scripts/ops/wipe-hotel-ops-transactional.ts --org=<uuid> [--dry-run]
@@ -39,7 +40,7 @@ async function main() {
     return;
   }
   const deleted = await runOpsWipe(orgId);
-  print(deleted);
+  print(deleted.before);
   console.log('Reservations/folios cleared; rooms set AVAILABLE');
   const remaining = await prisma.guest.count({ where: { organizationId: orgId } });
   console.log(`Guest rows remaining: ${remaining}`);
