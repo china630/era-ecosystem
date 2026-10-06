@@ -29,6 +29,11 @@ export type PersonHrProfile = $Result.DefaultSelection<Prisma.$PersonHrProfilePa
  */
 export type PersonAddress = $Result.DefaultSelection<Prisma.$PersonAddressPayload>
 /**
+ * Model PersonKinContact
+ * 
+ */
+export type PersonKinContact = $Result.DefaultSelection<Prisma.$PersonKinContactPayload>
+/**
  * Model PersonIdentifier
  * 
  */
@@ -139,6 +144,17 @@ export const PersonAddressKind: {
 export type PersonAddressKind = (typeof PersonAddressKind)[keyof typeof PersonAddressKind]
 
 
+export const KinshipKind: {
+  SPOUSE: 'SPOUSE',
+  PARENT: 'PARENT',
+  CHILD: 'CHILD',
+  SIBLING: 'SIBLING',
+  OTHER: 'OTHER'
+};
+
+export type KinshipKind = (typeof KinshipKind)[keyof typeof KinshipKind]
+
+
 export const StatisticalCategory: {
   REFUGEE: 'REFUGEE',
   IDP: 'IDP',
@@ -181,6 +197,10 @@ export const MaritalStatus: typeof $Enums.MaritalStatus
 export type PersonAddressKind = $Enums.PersonAddressKind
 
 export const PersonAddressKind: typeof $Enums.PersonAddressKind
+
+export type KinshipKind = $Enums.KinshipKind
+
+export const KinshipKind: typeof $Enums.KinshipKind
 
 export type StatisticalCategory = $Enums.StatisticalCategory
 
@@ -336,6 +356,16 @@ export class PrismaClient<
     * ```
     */
   get personAddress(): Prisma.PersonAddressDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.personKinContact`: Exposes CRUD operations for the **PersonKinContact** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PersonKinContacts
+    * const personKinContacts = await prisma.personKinContact.findMany()
+    * ```
+    */
+  get personKinContact(): Prisma.PersonKinContactDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.personIdentifier`: Exposes CRUD operations for the **PersonIdentifier** model.
@@ -823,6 +853,7 @@ export namespace Prisma {
     GlobalNaturalPerson: 'GlobalNaturalPerson',
     PersonHrProfile: 'PersonHrProfile',
     PersonAddress: 'PersonAddress',
+    PersonKinContact: 'PersonKinContact',
     PersonIdentifier: 'PersonIdentifier',
     GlobalLegalEntity: 'GlobalLegalEntity',
     PersonAccessRequest: 'PersonAccessRequest',
@@ -843,7 +874,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "globalNaturalPerson" | "personHrProfile" | "personAddress" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
+      modelProps: "globalNaturalPerson" | "personHrProfile" | "personAddress" | "personKinContact" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1066,6 +1097,80 @@ export namespace Prisma {
           count: {
             args: Prisma.PersonAddressCountArgs<ExtArgs>
             result: $Utils.Optional<PersonAddressCountAggregateOutputType> | number
+          }
+        }
+      }
+      PersonKinContact: {
+        payload: Prisma.$PersonKinContactPayload<ExtArgs>
+        fields: Prisma.PersonKinContactFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PersonKinContactFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PersonKinContactFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          findFirst: {
+            args: Prisma.PersonKinContactFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PersonKinContactFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          findMany: {
+            args: Prisma.PersonKinContactFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>[]
+          }
+          create: {
+            args: Prisma.PersonKinContactCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          createMany: {
+            args: Prisma.PersonKinContactCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PersonKinContactCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>[]
+          }
+          delete: {
+            args: Prisma.PersonKinContactDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          update: {
+            args: Prisma.PersonKinContactUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          deleteMany: {
+            args: Prisma.PersonKinContactDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PersonKinContactUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PersonKinContactUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>[]
+          }
+          upsert: {
+            args: Prisma.PersonKinContactUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonKinContactPayload>
+          }
+          aggregate: {
+            args: Prisma.PersonKinContactAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePersonKinContact>
+          }
+          groupBy: {
+            args: Prisma.PersonKinContactGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PersonKinContactGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PersonKinContactCountArgs<ExtArgs>
+            result: $Utils.Optional<PersonKinContactCountAggregateOutputType> | number
           }
         }
       }
@@ -1550,6 +1655,7 @@ export namespace Prisma {
     globalNaturalPerson?: GlobalNaturalPersonOmit
     personHrProfile?: PersonHrProfileOmit
     personAddress?: PersonAddressOmit
+    personKinContact?: PersonKinContactOmit
     personIdentifier?: PersonIdentifierOmit
     globalLegalEntity?: GlobalLegalEntityOmit
     personAccessRequest?: PersonAccessRequestOmit
@@ -1640,6 +1746,7 @@ export namespace Prisma {
     accessGrants: number
     accessLogs: number
     addresses: number
+    kinContacts: number
     mergedFrom: number
   }
 
@@ -1649,6 +1756,7 @@ export namespace Prisma {
     accessGrants?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessGrantsArgs
     accessLogs?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessLogsArgs
     addresses?: boolean | GlobalNaturalPersonCountOutputTypeCountAddressesArgs
+    kinContacts?: boolean | GlobalNaturalPersonCountOutputTypeCountKinContactsArgs
     mergedFrom?: boolean | GlobalNaturalPersonCountOutputTypeCountMergedFromArgs
   }
 
@@ -1696,6 +1804,13 @@ export namespace Prisma {
    */
   export type GlobalNaturalPersonCountOutputTypeCountAddressesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PersonAddressWhereInput
+  }
+
+  /**
+   * GlobalNaturalPersonCountOutputType without action
+   */
+  export type GlobalNaturalPersonCountOutputTypeCountKinContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonKinContactWhereInput
   }
 
   /**
@@ -1968,6 +2083,7 @@ export namespace Prisma {
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
     hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
     addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
+    kinContacts?: boolean | GlobalNaturalPerson$kinContactsArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -2040,6 +2156,7 @@ export namespace Prisma {
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
     hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
     addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
+    kinContacts?: boolean | GlobalNaturalPerson$kinContactsArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -2060,6 +2177,7 @@ export namespace Prisma {
       accessLogs: Prisma.$PersonAccessLogPayload<ExtArgs>[]
       hrProfile: Prisma.$PersonHrProfilePayload<ExtArgs> | null
       addresses: Prisma.$PersonAddressPayload<ExtArgs>[]
+      kinContacts: Prisma.$PersonKinContactPayload<ExtArgs>[]
       mergedInto: Prisma.$GlobalNaturalPersonPayload<ExtArgs> | null
       mergedFrom: Prisma.$GlobalNaturalPersonPayload<ExtArgs>[]
     }
@@ -2504,6 +2622,7 @@ export namespace Prisma {
     accessLogs<T extends GlobalNaturalPerson$accessLogsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     hrProfile<T extends GlobalNaturalPerson$hrProfileArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$hrProfileArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     addresses<T extends GlobalNaturalPerson$addressesArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$addressesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    kinContacts<T extends GlobalNaturalPerson$kinContactsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$kinContactsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mergedInto<T extends GlobalNaturalPerson$mergedIntoArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedIntoArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     mergedFrom<T extends GlobalNaturalPerson$mergedFromArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedFromArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -3088,6 +3207,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PersonAddressScalarFieldEnum | PersonAddressScalarFieldEnum[]
+  }
+
+  /**
+   * GlobalNaturalPerson.kinContacts
+   */
+  export type GlobalNaturalPerson$kinContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    where?: PersonKinContactWhereInput
+    orderBy?: PersonKinContactOrderByWithRelationInput | PersonKinContactOrderByWithRelationInput[]
+    cursor?: PersonKinContactWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PersonKinContactScalarFieldEnum | PersonKinContactScalarFieldEnum[]
   }
 
   /**
@@ -5388,6 +5531,1095 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PersonAddressInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PersonKinContact
+   */
+
+  export type AggregatePersonKinContact = {
+    _count: PersonKinContactCountAggregateOutputType | null
+    _min: PersonKinContactMinAggregateOutputType | null
+    _max: PersonKinContactMaxAggregateOutputType | null
+  }
+
+  export type PersonKinContactMinAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kinship: $Enums.KinshipKind | null
+    nameCipher: string | null
+    phoneCipher: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonKinContactMaxAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kinship: $Enums.KinshipKind | null
+    nameCipher: string | null
+    phoneCipher: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonKinContactCountAggregateOutputType = {
+    id: number
+    personId: number
+    kinship: number
+    nameCipher: number
+    phoneCipher: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PersonKinContactMinAggregateInputType = {
+    id?: true
+    personId?: true
+    kinship?: true
+    nameCipher?: true
+    phoneCipher?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonKinContactMaxAggregateInputType = {
+    id?: true
+    personId?: true
+    kinship?: true
+    nameCipher?: true
+    phoneCipher?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonKinContactCountAggregateInputType = {
+    id?: true
+    personId?: true
+    kinship?: true
+    nameCipher?: true
+    phoneCipher?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PersonKinContactAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonKinContact to aggregate.
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonKinContacts to fetch.
+     */
+    orderBy?: PersonKinContactOrderByWithRelationInput | PersonKinContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PersonKinContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonKinContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonKinContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PersonKinContacts
+    **/
+    _count?: true | PersonKinContactCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PersonKinContactMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PersonKinContactMaxAggregateInputType
+  }
+
+  export type GetPersonKinContactAggregateType<T extends PersonKinContactAggregateArgs> = {
+        [P in keyof T & keyof AggregatePersonKinContact]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePersonKinContact[P]>
+      : GetScalarType<T[P], AggregatePersonKinContact[P]>
+  }
+
+
+
+
+  export type PersonKinContactGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonKinContactWhereInput
+    orderBy?: PersonKinContactOrderByWithAggregationInput | PersonKinContactOrderByWithAggregationInput[]
+    by: PersonKinContactScalarFieldEnum[] | PersonKinContactScalarFieldEnum
+    having?: PersonKinContactScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PersonKinContactCountAggregateInputType | true
+    _min?: PersonKinContactMinAggregateInputType
+    _max?: PersonKinContactMaxAggregateInputType
+  }
+
+  export type PersonKinContactGroupByOutputType = {
+    id: string
+    personId: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt: Date
+    updatedAt: Date
+    _count: PersonKinContactCountAggregateOutputType | null
+    _min: PersonKinContactMinAggregateOutputType | null
+    _max: PersonKinContactMaxAggregateOutputType | null
+  }
+
+  type GetPersonKinContactGroupByPayload<T extends PersonKinContactGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PersonKinContactGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PersonKinContactGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PersonKinContactGroupByOutputType[P]>
+            : GetScalarType<T[P], PersonKinContactGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PersonKinContactSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kinship?: boolean
+    nameCipher?: boolean
+    phoneCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personKinContact"]>
+
+  export type PersonKinContactSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kinship?: boolean
+    nameCipher?: boolean
+    phoneCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personKinContact"]>
+
+  export type PersonKinContactSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kinship?: boolean
+    nameCipher?: boolean
+    phoneCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personKinContact"]>
+
+  export type PersonKinContactSelectScalar = {
+    id?: boolean
+    personId?: boolean
+    kinship?: boolean
+    nameCipher?: boolean
+    phoneCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PersonKinContactOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "personId" | "kinship" | "nameCipher" | "phoneCipher" | "createdAt" | "updatedAt", ExtArgs["result"]["personKinContact"]>
+  export type PersonKinContactInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonKinContactIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonKinContactIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+
+  export type $PersonKinContactPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PersonKinContact"
+    objects: {
+      person: Prisma.$GlobalNaturalPersonPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      personId: string
+      kinship: $Enums.KinshipKind
+      nameCipher: string
+      phoneCipher: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["personKinContact"]>
+    composites: {}
+  }
+
+  type PersonKinContactGetPayload<S extends boolean | null | undefined | PersonKinContactDefaultArgs> = $Result.GetResult<Prisma.$PersonKinContactPayload, S>
+
+  type PersonKinContactCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PersonKinContactFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PersonKinContactCountAggregateInputType | true
+    }
+
+  export interface PersonKinContactDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PersonKinContact'], meta: { name: 'PersonKinContact' } }
+    /**
+     * Find zero or one PersonKinContact that matches the filter.
+     * @param {PersonKinContactFindUniqueArgs} args - Arguments to find a PersonKinContact
+     * @example
+     * // Get one PersonKinContact
+     * const personKinContact = await prisma.personKinContact.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PersonKinContactFindUniqueArgs>(args: SelectSubset<T, PersonKinContactFindUniqueArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PersonKinContact that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PersonKinContactFindUniqueOrThrowArgs} args - Arguments to find a PersonKinContact
+     * @example
+     * // Get one PersonKinContact
+     * const personKinContact = await prisma.personKinContact.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PersonKinContactFindUniqueOrThrowArgs>(args: SelectSubset<T, PersonKinContactFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonKinContact that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactFindFirstArgs} args - Arguments to find a PersonKinContact
+     * @example
+     * // Get one PersonKinContact
+     * const personKinContact = await prisma.personKinContact.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PersonKinContactFindFirstArgs>(args?: SelectSubset<T, PersonKinContactFindFirstArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonKinContact that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactFindFirstOrThrowArgs} args - Arguments to find a PersonKinContact
+     * @example
+     * // Get one PersonKinContact
+     * const personKinContact = await prisma.personKinContact.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PersonKinContactFindFirstOrThrowArgs>(args?: SelectSubset<T, PersonKinContactFindFirstOrThrowArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PersonKinContacts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PersonKinContacts
+     * const personKinContacts = await prisma.personKinContact.findMany()
+     * 
+     * // Get first 10 PersonKinContacts
+     * const personKinContacts = await prisma.personKinContact.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const personKinContactWithIdOnly = await prisma.personKinContact.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PersonKinContactFindManyArgs>(args?: SelectSubset<T, PersonKinContactFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PersonKinContact.
+     * @param {PersonKinContactCreateArgs} args - Arguments to create a PersonKinContact.
+     * @example
+     * // Create one PersonKinContact
+     * const PersonKinContact = await prisma.personKinContact.create({
+     *   data: {
+     *     // ... data to create a PersonKinContact
+     *   }
+     * })
+     * 
+     */
+    create<T extends PersonKinContactCreateArgs>(args: SelectSubset<T, PersonKinContactCreateArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PersonKinContacts.
+     * @param {PersonKinContactCreateManyArgs} args - Arguments to create many PersonKinContacts.
+     * @example
+     * // Create many PersonKinContacts
+     * const personKinContact = await prisma.personKinContact.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PersonKinContactCreateManyArgs>(args?: SelectSubset<T, PersonKinContactCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PersonKinContacts and returns the data saved in the database.
+     * @param {PersonKinContactCreateManyAndReturnArgs} args - Arguments to create many PersonKinContacts.
+     * @example
+     * // Create many PersonKinContacts
+     * const personKinContact = await prisma.personKinContact.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PersonKinContacts and only return the `id`
+     * const personKinContactWithIdOnly = await prisma.personKinContact.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PersonKinContactCreateManyAndReturnArgs>(args?: SelectSubset<T, PersonKinContactCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PersonKinContact.
+     * @param {PersonKinContactDeleteArgs} args - Arguments to delete one PersonKinContact.
+     * @example
+     * // Delete one PersonKinContact
+     * const PersonKinContact = await prisma.personKinContact.delete({
+     *   where: {
+     *     // ... filter to delete one PersonKinContact
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PersonKinContactDeleteArgs>(args: SelectSubset<T, PersonKinContactDeleteArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PersonKinContact.
+     * @param {PersonKinContactUpdateArgs} args - Arguments to update one PersonKinContact.
+     * @example
+     * // Update one PersonKinContact
+     * const personKinContact = await prisma.personKinContact.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PersonKinContactUpdateArgs>(args: SelectSubset<T, PersonKinContactUpdateArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PersonKinContacts.
+     * @param {PersonKinContactDeleteManyArgs} args - Arguments to filter PersonKinContacts to delete.
+     * @example
+     * // Delete a few PersonKinContacts
+     * const { count } = await prisma.personKinContact.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PersonKinContactDeleteManyArgs>(args?: SelectSubset<T, PersonKinContactDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonKinContacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PersonKinContacts
+     * const personKinContact = await prisma.personKinContact.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PersonKinContactUpdateManyArgs>(args: SelectSubset<T, PersonKinContactUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonKinContacts and returns the data updated in the database.
+     * @param {PersonKinContactUpdateManyAndReturnArgs} args - Arguments to update many PersonKinContacts.
+     * @example
+     * // Update many PersonKinContacts
+     * const personKinContact = await prisma.personKinContact.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PersonKinContacts and only return the `id`
+     * const personKinContactWithIdOnly = await prisma.personKinContact.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PersonKinContactUpdateManyAndReturnArgs>(args: SelectSubset<T, PersonKinContactUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PersonKinContact.
+     * @param {PersonKinContactUpsertArgs} args - Arguments to update or create a PersonKinContact.
+     * @example
+     * // Update or create a PersonKinContact
+     * const personKinContact = await prisma.personKinContact.upsert({
+     *   create: {
+     *     // ... data to create a PersonKinContact
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PersonKinContact we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PersonKinContactUpsertArgs>(args: SelectSubset<T, PersonKinContactUpsertArgs<ExtArgs>>): Prisma__PersonKinContactClient<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PersonKinContacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactCountArgs} args - Arguments to filter PersonKinContacts to count.
+     * @example
+     * // Count the number of PersonKinContacts
+     * const count = await prisma.personKinContact.count({
+     *   where: {
+     *     // ... the filter for the PersonKinContacts we want to count
+     *   }
+     * })
+    **/
+    count<T extends PersonKinContactCountArgs>(
+      args?: Subset<T, PersonKinContactCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PersonKinContactCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PersonKinContact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PersonKinContactAggregateArgs>(args: Subset<T, PersonKinContactAggregateArgs>): Prisma.PrismaPromise<GetPersonKinContactAggregateType<T>>
+
+    /**
+     * Group by PersonKinContact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonKinContactGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PersonKinContactGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PersonKinContactGroupByArgs['orderBy'] }
+        : { orderBy?: PersonKinContactGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PersonKinContactGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPersonKinContactGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PersonKinContact model
+   */
+  readonly fields: PersonKinContactFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PersonKinContact.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PersonKinContactClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    person<T extends GlobalNaturalPersonDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPersonDefaultArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PersonKinContact model
+   */
+  interface PersonKinContactFieldRefs {
+    readonly id: FieldRef<"PersonKinContact", 'String'>
+    readonly personId: FieldRef<"PersonKinContact", 'String'>
+    readonly kinship: FieldRef<"PersonKinContact", 'KinshipKind'>
+    readonly nameCipher: FieldRef<"PersonKinContact", 'String'>
+    readonly phoneCipher: FieldRef<"PersonKinContact", 'String'>
+    readonly createdAt: FieldRef<"PersonKinContact", 'DateTime'>
+    readonly updatedAt: FieldRef<"PersonKinContact", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PersonKinContact findUnique
+   */
+  export type PersonKinContactFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonKinContact to fetch.
+     */
+    where: PersonKinContactWhereUniqueInput
+  }
+
+  /**
+   * PersonKinContact findUniqueOrThrow
+   */
+  export type PersonKinContactFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonKinContact to fetch.
+     */
+    where: PersonKinContactWhereUniqueInput
+  }
+
+  /**
+   * PersonKinContact findFirst
+   */
+  export type PersonKinContactFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonKinContact to fetch.
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonKinContacts to fetch.
+     */
+    orderBy?: PersonKinContactOrderByWithRelationInput | PersonKinContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonKinContacts.
+     */
+    cursor?: PersonKinContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonKinContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonKinContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonKinContacts.
+     */
+    distinct?: PersonKinContactScalarFieldEnum | PersonKinContactScalarFieldEnum[]
+  }
+
+  /**
+   * PersonKinContact findFirstOrThrow
+   */
+  export type PersonKinContactFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonKinContact to fetch.
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonKinContacts to fetch.
+     */
+    orderBy?: PersonKinContactOrderByWithRelationInput | PersonKinContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonKinContacts.
+     */
+    cursor?: PersonKinContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonKinContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonKinContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonKinContacts.
+     */
+    distinct?: PersonKinContactScalarFieldEnum | PersonKinContactScalarFieldEnum[]
+  }
+
+  /**
+   * PersonKinContact findMany
+   */
+  export type PersonKinContactFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonKinContacts to fetch.
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonKinContacts to fetch.
+     */
+    orderBy?: PersonKinContactOrderByWithRelationInput | PersonKinContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PersonKinContacts.
+     */
+    cursor?: PersonKinContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonKinContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonKinContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonKinContacts.
+     */
+    distinct?: PersonKinContactScalarFieldEnum | PersonKinContactScalarFieldEnum[]
+  }
+
+  /**
+   * PersonKinContact create
+   */
+  export type PersonKinContactCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PersonKinContact.
+     */
+    data: XOR<PersonKinContactCreateInput, PersonKinContactUncheckedCreateInput>
+  }
+
+  /**
+   * PersonKinContact createMany
+   */
+  export type PersonKinContactCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PersonKinContacts.
+     */
+    data: PersonKinContactCreateManyInput | PersonKinContactCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PersonKinContact createManyAndReturn
+   */
+  export type PersonKinContactCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * The data used to create many PersonKinContacts.
+     */
+    data: PersonKinContactCreateManyInput | PersonKinContactCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonKinContact update
+   */
+  export type PersonKinContactUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PersonKinContact.
+     */
+    data: XOR<PersonKinContactUpdateInput, PersonKinContactUncheckedUpdateInput>
+    /**
+     * Choose, which PersonKinContact to update.
+     */
+    where: PersonKinContactWhereUniqueInput
+  }
+
+  /**
+   * PersonKinContact updateMany
+   */
+  export type PersonKinContactUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PersonKinContacts.
+     */
+    data: XOR<PersonKinContactUpdateManyMutationInput, PersonKinContactUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonKinContacts to update
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * Limit how many PersonKinContacts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonKinContact updateManyAndReturn
+   */
+  export type PersonKinContactUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * The data used to update PersonKinContacts.
+     */
+    data: XOR<PersonKinContactUpdateManyMutationInput, PersonKinContactUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonKinContacts to update
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * Limit how many PersonKinContacts to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonKinContact upsert
+   */
+  export type PersonKinContactUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PersonKinContact to update in case it exists.
+     */
+    where: PersonKinContactWhereUniqueInput
+    /**
+     * In case the PersonKinContact found by the `where` argument doesn't exist, create a new PersonKinContact with this data.
+     */
+    create: XOR<PersonKinContactCreateInput, PersonKinContactUncheckedCreateInput>
+    /**
+     * In case the PersonKinContact was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PersonKinContactUpdateInput, PersonKinContactUncheckedUpdateInput>
+  }
+
+  /**
+   * PersonKinContact delete
+   */
+  export type PersonKinContactDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
+    /**
+     * Filter which PersonKinContact to delete.
+     */
+    where: PersonKinContactWhereUniqueInput
+  }
+
+  /**
+   * PersonKinContact deleteMany
+   */
+  export type PersonKinContactDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonKinContacts to delete
+     */
+    where?: PersonKinContactWhereInput
+    /**
+     * Limit how many PersonKinContacts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonKinContact without action
+   */
+  export type PersonKinContactDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonKinContact
+     */
+    select?: PersonKinContactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonKinContact
+     */
+    omit?: PersonKinContactOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonKinContactInclude<ExtArgs> | null
   }
 
 
@@ -10827,6 +12059,19 @@ export namespace Prisma {
   export type PersonAddressScalarFieldEnum = (typeof PersonAddressScalarFieldEnum)[keyof typeof PersonAddressScalarFieldEnum]
 
 
+  export const PersonKinContactScalarFieldEnum: {
+    id: 'id',
+    personId: 'personId',
+    kinship: 'kinship',
+    nameCipher: 'nameCipher',
+    phoneCipher: 'phoneCipher',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PersonKinContactScalarFieldEnum = (typeof PersonKinContactScalarFieldEnum)[keyof typeof PersonKinContactScalarFieldEnum]
+
+
   export const PersonIdentifierScalarFieldEnum: {
     id: 'id',
     personId: 'personId',
@@ -11033,6 +12278,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'KinshipKind'
+   */
+  export type EnumKinshipKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'KinshipKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'KinshipKind[]'
+   */
+  export type ListEnumKinshipKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'KinshipKind[]'>
+    
+
+
+  /**
    * Reference to a field of type 'PersonIdentifierType'
    */
   export type EnumPersonIdentifierTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonIdentifierType'>
@@ -11124,6 +12383,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogListRelationFilter
     hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
     addresses?: PersonAddressListRelationFilter
+    kinContacts?: PersonKinContactListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }
@@ -11151,6 +12411,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogOrderByRelationAggregateInput
     hrProfile?: PersonHrProfileOrderByWithRelationInput
     addresses?: PersonAddressOrderByRelationAggregateInput
+    kinContacts?: PersonKinContactOrderByRelationAggregateInput
     mergedInto?: GlobalNaturalPersonOrderByWithRelationInput
     mergedFrom?: GlobalNaturalPersonOrderByRelationAggregateInput
   }
@@ -11181,6 +12442,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogListRelationFilter
     hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
     addresses?: PersonAddressListRelationFilter
+    kinContacts?: PersonKinContactListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }, "id" | "finBlindIndex">
@@ -11383,6 +12645,71 @@ export namespace Prisma {
     postalCipher?: StringNullableWithAggregatesFilter<"PersonAddress"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PersonAddress"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PersonAddress"> | Date | string
+  }
+
+  export type PersonKinContactWhereInput = {
+    AND?: PersonKinContactWhereInput | PersonKinContactWhereInput[]
+    OR?: PersonKinContactWhereInput[]
+    NOT?: PersonKinContactWhereInput | PersonKinContactWhereInput[]
+    id?: UuidFilter<"PersonKinContact"> | string
+    personId?: UuidFilter<"PersonKinContact"> | string
+    kinship?: EnumKinshipKindFilter<"PersonKinContact"> | $Enums.KinshipKind
+    nameCipher?: StringFilter<"PersonKinContact"> | string
+    phoneCipher?: StringFilter<"PersonKinContact"> | string
+    createdAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }
+
+  export type PersonKinContactOrderByWithRelationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kinship?: SortOrder
+    nameCipher?: SortOrder
+    phoneCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    person?: GlobalNaturalPersonOrderByWithRelationInput
+  }
+
+  export type PersonKinContactWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PersonKinContactWhereInput | PersonKinContactWhereInput[]
+    OR?: PersonKinContactWhereInput[]
+    NOT?: PersonKinContactWhereInput | PersonKinContactWhereInput[]
+    personId?: UuidFilter<"PersonKinContact"> | string
+    kinship?: EnumKinshipKindFilter<"PersonKinContact"> | $Enums.KinshipKind
+    nameCipher?: StringFilter<"PersonKinContact"> | string
+    phoneCipher?: StringFilter<"PersonKinContact"> | string
+    createdAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }, "id">
+
+  export type PersonKinContactOrderByWithAggregationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kinship?: SortOrder
+    nameCipher?: SortOrder
+    phoneCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PersonKinContactCountOrderByAggregateInput
+    _max?: PersonKinContactMaxOrderByAggregateInput
+    _min?: PersonKinContactMinOrderByAggregateInput
+  }
+
+  export type PersonKinContactScalarWhereWithAggregatesInput = {
+    AND?: PersonKinContactScalarWhereWithAggregatesInput | PersonKinContactScalarWhereWithAggregatesInput[]
+    OR?: PersonKinContactScalarWhereWithAggregatesInput[]
+    NOT?: PersonKinContactScalarWhereWithAggregatesInput | PersonKinContactScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PersonKinContact"> | string
+    personId?: UuidWithAggregatesFilter<"PersonKinContact"> | string
+    kinship?: EnumKinshipKindWithAggregatesFilter<"PersonKinContact"> | $Enums.KinshipKind
+    nameCipher?: StringWithAggregatesFilter<"PersonKinContact"> | string
+    phoneCipher?: StringWithAggregatesFilter<"PersonKinContact"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"PersonKinContact"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PersonKinContact"> | Date | string
   }
 
   export type PersonIdentifierWhereInput = {
@@ -11726,6 +13053,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -11753,6 +13081,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -11778,6 +13107,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -11805,6 +13135,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -12033,6 +13364,75 @@ export namespace Prisma {
     cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
     regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
     postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonKinContactCreateInput = {
+    id?: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    person: GlobalNaturalPersonCreateNestedOneWithoutKinContactsInput
+  }
+
+  export type PersonKinContactUncheckedCreateInput = {
+    id?: string
+    personId: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonKinContactUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    person?: GlobalNaturalPersonUpdateOneRequiredWithoutKinContactsNestedInput
+  }
+
+  export type PersonKinContactUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonKinContactCreateManyInput = {
+    id?: string
+    personId: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonKinContactUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonKinContactUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12486,6 +13886,12 @@ export namespace Prisma {
     none?: PersonAddressWhereInput
   }
 
+  export type PersonKinContactListRelationFilter = {
+    every?: PersonKinContactWhereInput
+    some?: PersonKinContactWhereInput
+    none?: PersonKinContactWhereInput
+  }
+
   export type GlobalNaturalPersonNullableScalarRelationFilter = {
     is?: GlobalNaturalPersonWhereInput | null
     isNot?: GlobalNaturalPersonWhereInput | null
@@ -12519,6 +13925,10 @@ export namespace Prisma {
   }
 
   export type PersonAddressOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PersonKinContactOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -12854,6 +14264,53 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type EnumKinshipKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.KinshipKind | EnumKinshipKindFieldRefInput<$PrismaModel>
+    in?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumKinshipKindFilter<$PrismaModel> | $Enums.KinshipKind
+  }
+
+  export type PersonKinContactCountOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kinship?: SortOrder
+    nameCipher?: SortOrder
+    phoneCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonKinContactMaxOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kinship?: SortOrder
+    nameCipher?: SortOrder
+    phoneCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonKinContactMinOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kinship?: SortOrder
+    nameCipher?: SortOrder
+    phoneCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumKinshipKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.KinshipKind | EnumKinshipKindFieldRefInput<$PrismaModel>
+    in?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumKinshipKindWithAggregatesFilter<$PrismaModel> | $Enums.KinshipKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumKinshipKindFilter<$PrismaModel>
+    _max?: NestedEnumKinshipKindFilter<$PrismaModel>
+  }
+
   export type EnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
     in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
@@ -13117,6 +14574,13 @@ export namespace Prisma {
     connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
   }
 
+  export type PersonKinContactCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput> | PersonKinContactCreateWithoutPersonInput[] | PersonKinContactUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonKinContactCreateOrConnectWithoutPersonInput | PersonKinContactCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonKinContactCreateManyPersonInputEnvelope
+    connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+  }
+
   export type GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
@@ -13169,6 +14633,13 @@ export namespace Prisma {
     connectOrCreate?: PersonAddressCreateOrConnectWithoutPersonInput | PersonAddressCreateOrConnectWithoutPersonInput[]
     createMany?: PersonAddressCreateManyPersonInputEnvelope
     connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+  }
+
+  export type PersonKinContactUncheckedCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput> | PersonKinContactCreateWithoutPersonInput[] | PersonKinContactUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonKinContactCreateOrConnectWithoutPersonInput | PersonKinContactCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonKinContactCreateManyPersonInputEnvelope
+    connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
   }
 
   export type GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput = {
@@ -13282,6 +14753,20 @@ export namespace Prisma {
     deleteMany?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
   }
 
+  export type PersonKinContactUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput> | PersonKinContactCreateWithoutPersonInput[] | PersonKinContactUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonKinContactCreateOrConnectWithoutPersonInput | PersonKinContactCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonKinContactUpsertWithWhereUniqueWithoutPersonInput | PersonKinContactUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonKinContactCreateManyPersonInputEnvelope
+    set?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    disconnect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    delete?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    update?: PersonKinContactUpdateWithWhereUniqueWithoutPersonInput | PersonKinContactUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonKinContactUpdateManyWithWhereWithoutPersonInput | PersonKinContactUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
+  }
+
   export type GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
@@ -13386,6 +14871,20 @@ export namespace Prisma {
     deleteMany?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
   }
 
+  export type PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput> | PersonKinContactCreateWithoutPersonInput[] | PersonKinContactUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonKinContactCreateOrConnectWithoutPersonInput | PersonKinContactCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonKinContactUpsertWithWhereUniqueWithoutPersonInput | PersonKinContactUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonKinContactCreateManyPersonInputEnvelope
+    set?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    disconnect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    delete?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+    update?: PersonKinContactUpdateWithWhereUniqueWithoutPersonInput | PersonKinContactUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonKinContactUpdateManyWithWhereWithoutPersonInput | PersonKinContactUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
+  }
+
   export type GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
@@ -13447,6 +14946,24 @@ export namespace Prisma {
     upsert?: GlobalNaturalPersonUpsertWithoutAddressesInput
     connect?: GlobalNaturalPersonWhereUniqueInput
     update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutAddressesInput, GlobalNaturalPersonUpdateWithoutAddressesInput>, GlobalNaturalPersonUncheckedUpdateWithoutAddressesInput>
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutKinContactsInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutKinContactsInput, GlobalNaturalPersonUncheckedCreateWithoutKinContactsInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutKinContactsInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type EnumKinshipKindFieldUpdateOperationsInput = {
+    set?: $Enums.KinshipKind
+  }
+
+  export type GlobalNaturalPersonUpdateOneRequiredWithoutKinContactsNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutKinContactsInput, GlobalNaturalPersonUncheckedCreateWithoutKinContactsInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutKinContactsInput
+    upsert?: GlobalNaturalPersonUpsertWithoutKinContactsInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutKinContactsInput, GlobalNaturalPersonUpdateWithoutKinContactsInput>, GlobalNaturalPersonUncheckedUpdateWithoutKinContactsInput>
   }
 
   export type GlobalNaturalPersonCreateNestedOneWithoutIdentifiersInput = {
@@ -13790,6 +15307,23 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type NestedEnumKinshipKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.KinshipKind | EnumKinshipKindFieldRefInput<$PrismaModel>
+    in?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumKinshipKindFilter<$PrismaModel> | $Enums.KinshipKind
+  }
+
+  export type NestedEnumKinshipKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.KinshipKind | EnumKinshipKindFieldRefInput<$PrismaModel>
+    in?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.KinshipKind[] | ListEnumKinshipKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumKinshipKindWithAggregatesFilter<$PrismaModel> | $Enums.KinshipKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumKinshipKindFilter<$PrismaModel>
+    _max?: NestedEnumKinshipKindFilter<$PrismaModel>
+  }
+
   export type NestedEnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
     in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
@@ -14025,6 +15559,34 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PersonKinContactCreateWithoutPersonInput = {
+    id?: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonKinContactUncheckedCreateWithoutPersonInput = {
+    id?: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonKinContactCreateOrConnectWithoutPersonInput = {
+    where: PersonKinContactWhereUniqueInput
+    create: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonKinContactCreateManyPersonInputEnvelope = {
+    data: PersonKinContactCreateManyPersonInput | PersonKinContactCreateManyPersonInput[]
+    skipDuplicates?: boolean
+  }
+
   export type GlobalNaturalPersonCreateWithoutMergedFromInput = {
     id?: string
     finBlindIndex?: string | null
@@ -14047,6 +15609,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
   }
 
@@ -14073,6 +15636,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput = {
@@ -14102,6 +15666,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14127,6 +15692,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14321,6 +15887,35 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PersonAddress"> | Date | string
   }
 
+  export type PersonKinContactUpsertWithWhereUniqueWithoutPersonInput = {
+    where: PersonKinContactWhereUniqueInput
+    update: XOR<PersonKinContactUpdateWithoutPersonInput, PersonKinContactUncheckedUpdateWithoutPersonInput>
+    create: XOR<PersonKinContactCreateWithoutPersonInput, PersonKinContactUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonKinContactUpdateWithWhereUniqueWithoutPersonInput = {
+    where: PersonKinContactWhereUniqueInput
+    data: XOR<PersonKinContactUpdateWithoutPersonInput, PersonKinContactUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonKinContactUpdateManyWithWhereWithoutPersonInput = {
+    where: PersonKinContactScalarWhereInput
+    data: XOR<PersonKinContactUpdateManyMutationInput, PersonKinContactUncheckedUpdateManyWithoutPersonInput>
+  }
+
+  export type PersonKinContactScalarWhereInput = {
+    AND?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
+    OR?: PersonKinContactScalarWhereInput[]
+    NOT?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
+    id?: UuidFilter<"PersonKinContact"> | string
+    personId?: UuidFilter<"PersonKinContact"> | string
+    kinship?: EnumKinshipKindFilter<"PersonKinContact"> | $Enums.KinshipKind
+    nameCipher?: StringFilter<"PersonKinContact"> | string
+    phoneCipher?: StringFilter<"PersonKinContact"> | string
+    createdAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonKinContact"> | Date | string
+  }
+
   export type GlobalNaturalPersonUpsertWithoutMergedFromInput = {
     update: XOR<GlobalNaturalPersonUpdateWithoutMergedFromInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
     create: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
@@ -14354,6 +15949,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
   }
 
@@ -14380,6 +15976,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
   }
 
   export type GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput = {
@@ -14441,6 +16038,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -14467,6 +16065,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14507,6 +16106,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -14533,6 +16133,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -14557,6 +16158,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -14583,6 +16185,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14623,6 +16226,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -14649,6 +16253,127 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonCreateWithoutKinContactsInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    emailCipher?: string | null
+    nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutKinContactsInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    emailCipher?: string | null
+    nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutKinContactsInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutKinContactsInput, GlobalNaturalPersonUncheckedCreateWithoutKinContactsInput>
+  }
+
+  export type GlobalNaturalPersonUpsertWithoutKinContactsInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutKinContactsInput, GlobalNaturalPersonUncheckedUpdateWithoutKinContactsInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutKinContactsInput, GlobalNaturalPersonUncheckedCreateWithoutKinContactsInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutKinContactsInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutKinContactsInput, GlobalNaturalPersonUncheckedUpdateWithoutKinContactsInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutKinContactsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutKinContactsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -14673,6 +16398,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -14699,6 +16425,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14739,6 +16466,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -14765,6 +16493,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -14789,6 +16518,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -14815,6 +16545,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14855,6 +16586,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -14881,6 +16613,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -14905,6 +16638,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -14931,6 +16665,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -14971,6 +16706,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -14997,6 +16733,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -15021,6 +16758,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -15047,6 +16785,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -15087,6 +16826,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -15113,6 +16853,7 @@ export namespace Prisma {
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -15158,6 +16899,15 @@ export namespace Prisma {
     cityCipher?: string | null
     regionCipher?: string | null
     postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonKinContactCreateManyPersonInput = {
+    id?: string
+    kinship: $Enums.KinshipKind
+    nameCipher: string
+    phoneCipher: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15318,6 +17068,33 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PersonKinContactUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonKinContactUncheckedUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonKinContactUncheckedUpdateManyWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
+    nameCipher?: StringFieldUpdateOperationsInput | string
+    phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type GlobalNaturalPersonUpdateWithoutMergedIntoInput = {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15340,6 +17117,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -15365,6 +17143,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
