@@ -6,7 +6,7 @@ Full wipe of **transactional** hotel data, then Elektraweb wizard import in cano
 
 **Removes:** guests, reservations, folios, reservation and guest notes, guest CRM, concierge orders, banquet events, medical orders/alerts, EW outbox rows for the org — and by cascade procedure appointments, lab results, tour bookings, transfer orders, migration registrations, tourism tax submissions.
 
-**UI alternative to §2:** `/settings/ops-wipe` (platform super-admin) — counts for the session org, then confirm by typing `WIPE`. Same service as the CLI (`src/lib/services/ops-wipe.service.ts`). See [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §4.4.
+**UI alternative to §2:** `/settings/ops-wipe` (platform super-admin) — counts for the session org, checkboxes top to bottom, then confirm by typing `WIPE`. Unchecking a child clears the parents it references. The CLI still wipes the whole operational bucket. Same service (`src/lib/services/ops-wipe.service.ts`). See [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §4.4.
 
 **Before re-import on a DB imported before 2026-10-04:** run `scripts/ops/reclass-elektra-rate-channels.ts --org=<uuid> --dry-run` (then without `--dry-run`) so channel rate plans (BOOKING, EXPEDIA, …) retire onto BAR + OTA source — [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md) §4.3.
 

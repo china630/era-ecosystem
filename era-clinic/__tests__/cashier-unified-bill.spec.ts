@@ -58,7 +58,16 @@ describe("buildUnifiedBill", () => {
           amountNet: 40,
           items: [
             { id: "li0", serviceCode: "CARDIO-ECG", amountNet: 0 },
-            { id: "li1", serviceCode: "LAB-CBC", amountNet: 15 },
+            {
+              id: "li1",
+              serviceCode: "LAB-CBC",
+              amountNet: 15,
+              diagnosticService: {
+                titleAz: "Qanın ümumi analizi",
+                titleRu: "Общий анализ крови",
+                titleEn: "Complete blood count",
+              },
+            },
           ],
         },
       ],
@@ -85,5 +94,8 @@ describe("buildUnifiedBill", () => {
     );
     expect(bill!.amountGross).toBe(100);
     expect(bill!.lines.every((l) => l.amount > 0)).toBe(true);
+    expect(bill!.lines.find((l) => l.serviceCode === "LAB-CBC")?.description).toBe(
+      "Qanın ümumi analizi",
+    );
   });
 });

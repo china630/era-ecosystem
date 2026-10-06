@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { recordClinicAudit } from "@/lib/satellite-audit";
+import { readUiLocale } from "@/lib/request-locale";
 import {
   deleteDayOverride,
   listDayOverrides,
@@ -40,11 +41,13 @@ export async function GET(req: Request) {
     const yearMonth = url.searchParams.get("yearMonth") ?? "";
     const staffKindRaw = url.searchParams.get("staffKind") ?? "NURSE";
     const dutyDate = url.searchParams.get("dutyDate") ?? undefined;
+    const locale = await readUiLocale(req);
     return jsonOk(
       await listDayOverrides({
         yearMonth,
         staffKind: staffKindRaw === "LAB" ? "LAB" : "NURSE",
         dutyDate,
+        locale,
       }),
     );
   } catch (err) {

@@ -207,7 +207,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | `/settings/integration` | integration settings API | `?view=events` outbound, `?view=gl` revenue→GL, `?view=journal` outbound journal |
 | `/settings/import` | `GET/POST /api/import*` | `api:import.elektraweb` ∩ `hotel_migration_pro` (not role-name allowlist) |
 | Elektraweb bridge | `/api/integrations/elektraweb-bridge/*` | Staff: DB grant `api:integration.elektraweb_bridge` ∩ policy; S2S `role=bridge` |
-| `/settings/ops-wipe` | `GET/POST /api/admin/ops-wipe` | Platform super-admin only (`PLATFORM_SUPER_ADMIN_EMAILS`); session org only, counts → confirm `WIPE`; service `ops-wipe.service.ts` (shared with CLI `scripts/ops/wipe-hotel-ops-transactional.ts`); keeps master data; audit `OpsWipe` |
+| `/settings/ops-wipe` | `GET/POST /api/admin/ops-wipe` | Platform super-admin only (`PLATFORM_SUPER_ADMIN_EMAILS`); session org only; checkboxes, unchecking a child clears parents it references (server reapplies); confirm `WIPE` deletes the checked rows. CLI `scripts/ops/wipe-hotel-ops-transactional.ts` calls the same service with no selection and wipes the whole bucket. Keeps master data; audit `OpsWipe` |
 | Role clone / matrix Save | `POST /api/admin/roles`, `PATCH …/permissions` | Stamp `permissionCatalogVersion` so ensure does not restore stripped Wave-1 keys |
 | Staff `/login` / SSO | JWT `permissions[]`; ensure system roles + `permissionCatalogVersion`=3 (`screen:*` + `api:*`) | Hotel_Admin does **not** bypass matrix; page middleware fail-closed inventory |
 

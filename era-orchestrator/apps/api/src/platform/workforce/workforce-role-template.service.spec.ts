@@ -3,11 +3,13 @@ import { WorkforceRoleTemplateService } from "./workforce-role-template.service"
 
 describe("WorkforceRoleTemplateService", () => {
   const prisma = {
+    $transaction: jest.fn(async (fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma)),
     satelliteRoleTemplate: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       upsert: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
     workforcePosition: {
       findFirst: jest.fn(),
@@ -67,5 +69,31 @@ describe("WorkforceRoleTemplateService", () => {
         satelliteRole: "INVALID_ROLE",
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("upsert keeps the chosen role and drops every other role for that cell", async () => {
+    prisma.workforcePosition.findFirst.mockResolvedValue({ id: "p1" });
+    prisma.satelliteRoleTemplate.upsert.mockResolvedValue({
+      id: "tmpl-nurse",
+      satelliteRole: "NURSE",
+    });
+    prisma.satelliteRoleTemplate.deleteMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      svc.upsert("org1", "u1", {
+        positionId: "p1",
+        satelliteKey: "industry_clinic",
+        satelliteRole: "NURSE",
+      }),
+    ).resolves.toMatchObject({ satelliteRole: "NURSE" });
+
+    expect(prisma.satelliteRoleTemplate.deleteMany).toHaveBeenCalledWith({
+      where: {
+        workforceScopeId: "scope1",
+        positionId: "p1",
+        satelliteKey: "industry_clinic",
+        satelliteRole: { not: "NURSE" },
+      },
+    });
   });
 });

@@ -10,10 +10,16 @@ import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   DatePicker,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   EraDataGrid,
   EraListFilterBar,
   useDebouncedValue,
   Field,
+  FieldRow,
   FieldSelect,
   ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
@@ -615,8 +621,7 @@ export default function CatalogAdminPage() {
         }
       >
         <form id={formId} className="space-y-3" onSubmit={(e) => void saveCatalog(e)}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
+          <FieldRow cols={3}>
           {editing ? (
             <Field label={t("code")} preset="code" value={draft.code} readOnly />
           ) : (
@@ -648,26 +653,16 @@ export default function CatalogAdminPage() {
             }))}
             onChange={(next) => setDraft({ ...draft, kind: String(next) })}
           />
-          <Field
-            label={t("amount")}
-            preset="amount"
-            value={draft.amount}
-            onChange={(e) => setDraft({ ...draft, amount: e.target.value })}
+          <CatalogField
+            kind={deptKind}
+            label={t("department")}
+            value={draft.department}
+            emptyLabel="—"
+            options={priceDepartments.map((dep) => ({ value: dep.code, label: dep.label }))}
+            onChange={(next) => setDraft({ ...draft, department: String(next ?? "") })}
           />
-          <Field
-            label={t("listAmount")}
-            preset="amount"
-            value={draft.listAmount}
-            onChange={(e) => setDraft({ ...draft, listAmount: e.target.value })}
-          />
-          <DatePicker
-            label={t("effectiveFrom")}
-            placeholder={tc("datePlaceholder")}
-            value={draft.effectiveFrom}
-            onChange={(value) => setDraft({ ...draft, effectiveFrom: value })}
-          />
-            </div>
-            <div className="space-y-3">
+          </FieldRow>
+          <FieldRow cols={3}>
           <Field
             label={t("descriptionAz")}
             preset="shortText"
@@ -686,16 +681,27 @@ export default function CatalogAdminPage() {
             value={draft.descriptionEn}
             onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })}
           />
-            </div>
-          </div>
-          <CatalogField
-            kind={deptKind}
-            label={t("department")}
-            value={draft.department}
-            emptyLabel="—"
-            options={priceDepartments.map((dep) => ({ value: dep.code, label: dep.label }))}
-            onChange={(next) => setDraft({ ...draft, department: String(next ?? "") })}
+          </FieldRow>
+          <FieldRow cols={3}>
+          <Field
+            label={t("amount")}
+            preset="amount"
+            value={draft.amount}
+            onChange={(e) => setDraft({ ...draft, amount: e.target.value })}
           />
+          <Field
+            label={t("listAmount")}
+            preset="amount"
+            value={draft.listAmount}
+            onChange={(e) => setDraft({ ...draft, listAmount: e.target.value })}
+          />
+          <DatePicker
+            label={t("effectiveFrom")}
+            placeholder={tc("datePlaceholder")}
+            value={draft.effectiveFrom}
+            onChange={(value) => setDraft({ ...draft, effectiveFrom: value })}
+          />
+          </FieldRow>
           {draft.department ? (
             <div className="flex flex-wrap gap-3 text-[13px]">
               {(["nameAz", "nameRu", "nameEn"] as const).map((key, index) => {
@@ -724,16 +730,30 @@ export default function CatalogAdminPage() {
             {t("packageLabel")}
           </label>
           {history.length > 0 ? (
-            <div>
-              <p className="mb-1 text-[13px] font-medium">{t("priceHistory")}</p>
-              <ul className="space-y-1 text-[13px]">
-                {history.map((row) => (
-                  <li key={row.id}>
-                    {bakuDateTimeDisplay(row.effectiveFrom)} · {row.amount} AZN
-                    {row.listAmount != null ? ` · list ${row.listAmount}` : ""}
-                  </li>
-                ))}
-              </ul>
+            <div className="overflow-hidden rounded border border-[#D5DADF]">
+              <p className="border-b border-[#D5DADF] bg-[#F4F6F7] px-3 py-2 text-[13px] font-semibold text-[#34495E]">
+                {t("priceHistory")}
+              </p>
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("effectiveFrom")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("amount")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("listAmount")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((row) => (
+                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.effectiveFrom)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.amount} AZN</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {row.listAmount != null ? `${row.listAmount} AZN` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : null}
         </form>

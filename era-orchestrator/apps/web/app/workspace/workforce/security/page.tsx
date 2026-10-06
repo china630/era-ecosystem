@@ -65,7 +65,21 @@ type TemplateRow = {
   positionId: string;
   satelliteKey: string;
   satelliteRole: string;
+  isDefault?: boolean;
+  updatedAt?: string;
 };
+
+/** One painted role per cell: the newest default, not whichever row the list returned last. */
+function preferredTemplate(rows: readonly TemplateRow[]): TemplateRow | undefined {
+  const defaults = rows.filter((row) => row.isDefault !== false);
+  const pool = defaults.length > 0 ? defaults : [...rows];
+  pool.sort((a, b) => {
+    const byTime = (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "");
+    if (byTime !== 0) return byTime;
+    return b.id.localeCompare(a.id);
+  });
+  return pool[0];
+}
 
 export default function WorkforceSecurityMatrixPage() {
   const searchParams = useSearchParams();
@@ -112,9 +126,17 @@ export default function WorkforceSecurityMatrixPage() {
   );
 
   const templateByCell = useMemo(() => {
-    const m = new Map<string, TemplateRow>();
+    const grouped = new Map<string, TemplateRow[]>();
     for (const row of templates) {
-      m.set(`${row.positionId}:${row.satelliteKey}`, row);
+      const key = `${row.positionId}:${row.satelliteKey}`;
+      const list = grouped.get(key);
+      if (list) list.push(row);
+      else grouped.set(key, [row]);
+    }
+    const m = new Map<string, TemplateRow>();
+    for (const [key, list] of grouped) {
+      const picked = preferredTemplate(list);
+      if (picked) m.set(key, picked);
     }
     return m;
   }, [templates]);
@@ -274,36 +296,41 @@ export default function WorkforceSecurityMatrixPage() {
     if (busyCell) return;
     setBusyCell(cellKey);
     setMatrixError(null);
-    const existing = templateByCell.get(cellKey);
+    const previous = templates.filter(
+      (row) => row.positionId === positionId && row.satelliteKey === satelliteKey,
+    );
+    const dropCell = (rows: TemplateRow[]) =>
+      rows.filter(
+        (row) => !(row.positionId === positionId && row.satelliteKey === satelliteKey),
+      );
     try {
       if (!role) {
-        if (existing) {
-          const res = await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
+        setTemplates((prev) => dropCell(prev));
+        for (const row of previous) {
+          if (row.id.startsWith("pending:")) continue;
+          const res = await wfFetch(`role-templates/${row.id}`, { method: "DELETE" });
           if (!res.ok) throw new Error(await res.text());
         }
-        setTemplates((prev) =>
-          prev.filter(
-            (row) => !(row.positionId === positionId && row.satelliteKey === satelliteKey),
-          ),
-        );
-      } else {
-        if (existing && existing.satelliteRole !== role) {
-          const delRes = await wfFetch(`role-templates/${existing.id}`, { method: "DELETE" });
-          if (!delRes.ok) throw new Error(await delRes.text());
-        }
-        const putRes = await wfFetch("role-templates", {
-          method: "PUT",
-          body: JSON.stringify({ positionId, satelliteKey, satelliteRole: role }),
-        });
-        if (!putRes.ok) throw new Error(await putRes.text());
-        const row = (await putRes.json()) as TemplateRow;
-        setTemplates((prev) => {
-          const rest = prev.filter(
-            (r) => !(r.positionId === positionId && r.satelliteKey === satelliteKey),
-          );
-          return [...rest, row];
-        });
+        return;
       }
+      setTemplates((prev) => [
+        ...dropCell(prev),
+        {
+          id: previous[0]?.id ?? `pending:${cellKey}`,
+          positionId,
+          satelliteKey,
+          satelliteRole: role,
+          isDefault: true,
+          updatedAt: new Date().toISOString(),
+        },
+      ]);
+      const putRes = await wfFetch("role-templates", {
+        method: "PUT",
+        body: JSON.stringify({ positionId, satelliteKey, satelliteRole: role }),
+      });
+      if (!putRes.ok) throw new Error(await putRes.text());
+      const row = (await putRes.json()) as TemplateRow;
+      setTemplates((prev) => [...dropCell(prev), row]);
     } catch (err) {
       setMatrixError(err instanceof Error ? err.message : tCommon("saveFailed"));
       await reloadTemplates();

@@ -7,12 +7,19 @@ import Link from "next/link";
 import { Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { localizedDepartmentName } from "@/domain/catalog/department-label";
 import {
+  SortableTh,
+  sortRows,
+  toggleColumnSort,
+  type ColumnSort,
+} from "@/components/sortable-column-header";
+import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   Field,
   FORM_STACK_CLASS,
   LINK_ACCENT_CLASS,
@@ -22,6 +29,7 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
@@ -53,11 +61,37 @@ export default function DepartmentsAdminPage() {
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<ColumnSort | null>(null);
+
+  const visibleRows = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    const filtered = query
+      ? rows.filter((row) =>
+          [row.code, row.nameAz, row.nameRu, row.nameEn, localizedDepartmentName(row, locale)]
+            .filter((value) => value != null && String(value).trim() !== "")
+            .some((value) => String(value).toLowerCase().includes(query)),
+        )
+      : rows;
+    return sortRows(filtered, sort, (row, key) => {
+      if (key === "code") return row.code;
+      if (key === "name") return localizedDepartmentName(row, locale);
+      if (key === "az") return row.nameAz ?? "";
+      if (key === "ru") return row.nameRu ?? "";
+      if (key === "en") return row.nameEn ?? "";
+      if (key === "count") return row.serviceCount;
+      return "";
+    });
+  }, [rows, q, sort, locale]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return rows.slice(start, start + pageSize);
-  }, [rows, page, pageSize]);
+    return visibleRows.slice(start, start + pageSize);
+  }, [visibleRows, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, sort, pageSize]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/departments");
@@ -179,20 +213,65 @@ export default function DepartmentsAdminPage() {
           </button>
         }
       />
+      <EraListFilterBar resetLabel={tc("filterReset")} onReset={() => setQ("")}>
+        <Field
+          label={t("departmentSearch")}
+          preset="shortText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
       <div className={DATA_TABLE_VIEWPORT_CLASS}>
         <table className={DATA_TABLE_CLASS}>
           <thead>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("department")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>AZ</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>RU</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>EN</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("serviceCount")}</th>
+              <SortableTh
+                label={t("code")}
+                columnKey="code"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
+              <SortableTh
+                label={t("department")}
+                columnKey="name"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
+              <SortableTh
+                label="AZ"
+                columnKey="az"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
+              <SortableTh
+                label="RU"
+                columnKey="ru"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
+              <SortableTh
+                label="EN"
+                columnKey="en"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
+              <SortableTh
+                label={t("serviceCount")}
+                columnKey="count"
+                sort={sort}
+                onSort={(key) => setSort((current) => toggleColumnSort(current, key))}
+              />
               <th className={DATA_TABLE_TH_LEFT_CLASS} />
             </tr>
           </thead>
           <tbody>
+            {q.trim() && visibleRows.length === 0 ? (
+              <tr>
+                <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={7}>
+                  {tc("notFound")}
+                </td>
+              </tr>
+            ) : null}
             {pagedRows.map((row) => (
               <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -250,7 +329,7 @@ export default function DepartmentsAdminPage() {
         <ListPaginationFooter
           page={page}
           pageSize={pageSize}
-          total={rows.length}
+            total={visibleRows.length}
           onPageChange={setPage}
           onPageSizeChange={(n) => {
             setPageSize(n);

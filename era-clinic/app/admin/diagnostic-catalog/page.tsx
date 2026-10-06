@@ -4,8 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  SortableTh,
+  sortRows,
+  toggleColumnSort,
+  type ColumnSort,
+} from "@/components/sortable-column-header";
+import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
+  EraListFilterBar,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -101,6 +108,15 @@ const ORDERABLE_KINDS = new Set([
   "package",
 ]);
 
+const CANON_KINDS = [
+  "imaging",
+  "functional",
+  "endoscopy",
+  "lab_panel",
+  "visit",
+  "package",
+];
+
 /** Blank fields belong on studies and visit exams, not lab panels or packages. */
 const FORM_FIELD_KINDS = new Set(["imaging", "functional", "endoscopy", "visit"]);
 
@@ -144,6 +160,14 @@ export default function DiagnosticCatalogAdminPage() {
   const [analytes, setAnalytes] = useState<DiagnosticAnalyte[]>([]);
   const [serviceModalityFilter, setServiceModalityFilter] = useState("");
   const [serviceKindFilter, setServiceKindFilter] = useState("");
+  const [serviceQuery, setServiceQuery] = useState("");
+  const [modalityQuery, setModalityQuery] = useState("");
+  const [modalityKindFilter, setModalityKindFilter] = useState("");
+  const [modalityStatusFilter, setModalityStatusFilter] = useState("");
+  const [favQuery, setFavQuery] = useState("");
+  const [favKindFilter, setFavKindFilter] = useState("");
+  const [modalitySort, setModalitySort] = useState<ColumnSort | null>(null);
+  const [serviceSort, setServiceSort] = useState<ColumnSort | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -200,9 +224,17 @@ export default function DiagnosticCatalogAdminPage() {
   );
 
   const filteredServices = useMemo(() => {
-    if (!serviceKindFilter) return orderableServices;
-    return orderableServices.filter((s) => s.kind === serviceKindFilter);
-  }, [orderableServices, serviceKindFilter]);
+    const byKind = serviceKindFilter
+      ? orderableServices.filter((s) => s.kind === serviceKindFilter)
+      : orderableServices;
+    const query = serviceQuery.trim().toLowerCase();
+    if (!query) return byKind;
+    return byKind.filter((row) =>
+      [row.titleAz, row.titleRu, row.titleEn, row.code, row.serviceCode, row.category].some(
+        (value) => String(value ?? "").toLowerCase().includes(query),
+      ),
+    );
+  }, [orderableServices, serviceKindFilter, serviceQuery]);
 
   const kindOptions = useMemo(() => {
     const set = new Set(orderableServices.map((s) => s.kind).filter(Boolean));
@@ -224,6 +256,71 @@ export default function DiagnosticCatalogAdminPage() {
     const key = `kind_${kind}` as "kind_visit";
     return t.has(key) ? t(key) : kind;
   }
+
+  const modalityKindOptions = useMemo(() => {
+    const set = new Set(modalities.map((row) => row.kind).filter(Boolean));
+    return [...set].sort();
+  }, [modalities]);
+
+  const visibleModalities = useMemo(() => {
+    const query = modalityQuery.trim().toLowerCase();
+    const matched = modalities.filter((row) => {
+      if (modalityKindFilter && row.kind !== modalityKindFilter) return false;
+      if (modalityStatusFilter === "active" && !row.active) return false;
+      if (modalityStatusFilter === "inactive" && row.active) return false;
+      if (!query) return true;
+      return [row.titleAz, row.titleRu, row.titleEn, row.code].some((value) =>
+        String(value ?? "").toLowerCase().includes(query),
+      );
+    });
+    return sortRows(matched, modalitySort, (row, key) => {
+      if (key === "title") return localeTitle(row);
+      if (key === "code") return row.code;
+      if (key === "kind") return kindLabel(row.kind);
+      if (key === "sort") return row.sortOrder;
+      if (key === "status") return row.active ? 1 : 0;
+      return "";
+    });
+  }, [modalities, modalityQuery, modalityKindFilter, modalityStatusFilter, modalitySort, locale, t]);
+
+  const displayServices = useMemo(
+    () =>
+      sortRows(filteredServices, serviceSort, (row, key) => {
+        if (key === "title") return localeTitle(row);
+        if (key === "code") return row.code;
+        if (key === "modality") return row.modality?.code ?? "";
+        if (key === "category") return row.category ?? "";
+        if (key === "serviceCode") return row.serviceCode ?? "";
+        if (key === "analytes") return row.kind === "lab_panel" ? (row._count?.analytes ?? 0) : null;
+        if (key === "status") return row.active ? 1 : 0;
+        return "";
+      }),
+    [filteredServices, serviceSort, locale],
+  );
+
+  const favoriteKindOptions = useMemo(() => {
+    const set = new Set(favoriteChoices.map((item) => item.kind).filter(Boolean));
+    return [...set].sort();
+  }, [favoriteChoices]);
+
+  const visibleFavorites = useMemo(() => {
+    const query = favQuery.trim().toLowerCase();
+    return favoriteChoices.filter((item) => {
+      if (favKindFilter && item.kind !== favKindFilter) return false;
+      if (!query) return true;
+      return [item.title.az, item.title.ru, item.title.en, item.code].some((value) =>
+        String(value ?? "").toLowerCase().includes(query),
+      );
+    });
+  }, [favoriteChoices, favQuery, favKindFilter]);
+
+  const kindChoices = useMemo(() => {
+    const set = new Set(CANON_KINDS);
+    for (const row of modalities) if (row.kind) set.add(row.kind);
+    for (const row of services) if (row.kind) set.add(row.kind);
+    if (form.kind) set.add(form.kind);
+    return [...set];
+  }, [modalities, services, form.kind]);
 
   const visitModalityId = useMemo(
     () => modalities.find((m) => m.code === "VISIT" || m.kind === "visit")?.id ?? "",
@@ -256,10 +353,10 @@ export default function DiagnosticCatalogAdminPage() {
       tab === "services"
         ? {
             modalityId: serviceModalityFilter || modalities[0]?.id || "",
-            kind: serviceKindFilter || "",
+            kind: serviceKindFilter || "lab_panel",
             active: "true",
           }
-        : { active: "true" },
+        : { kind: "imaging", active: "true" },
     );
     setModalOpen(true);
   }
@@ -553,21 +650,87 @@ export default function DiagnosticCatalogAdminPage() {
       </div>
 
       {tab === "modalities" && (
+        <div className="space-y-3">
+          <EraListFilterBar
+            resetLabel={tc("filterReset")}
+            onReset={() => {
+              setModalityQuery("");
+              setModalityKindFilter("");
+              setModalityStatusFilter("");
+            }}
+          >
+            <Field
+              label={tc("search")}
+              preset="shortText"
+              value={modalityQuery}
+              onChange={(e) => setModalityQuery(e.target.value)}
+            />
+            <FieldSelect
+              label={t("filterKind")}
+              preset="select"
+              value={modalityKindFilter}
+              onChange={(e) => setModalityKindFilter(e.target.value)}
+              className="max-w-xs"
+            >
+              <option value="">{t("allKinds")}</option>
+              {modalityKindOptions.map((kind) => (
+                <option key={kind} value={kind}>
+                  {kindLabel(kind)}
+                </option>
+              ))}
+            </FieldSelect>
+            <FieldSelect
+              label={t("status")}
+              preset="select"
+              value={modalityStatusFilter}
+              onChange={(e) => setModalityStatusFilter(e.target.value)}
+              className="max-w-xs"
+            >
+              <option value="">{t("allStatuses")}</option>
+              <option value="active">{t("statusActive")}</option>
+              <option value="inactive">{t("statusInactive")}</option>
+            </FieldSelect>
+          </EraListFilterBar>
         <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("kind")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("sortOrder")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("status")}</th>
+                  <SortableTh
+                    label={t("columnTitle")}
+                    columnKey="title"
+                    sort={modalitySort}
+                    onSort={(key) => setModalitySort((current) => toggleColumnSort(current, key))}
+                  />
+                  <SortableTh
+                    label={t("code")}
+                    columnKey="code"
+                    sort={modalitySort}
+                    onSort={(key) => setModalitySort((current) => toggleColumnSort(current, key))}
+                  />
+                  <SortableTh
+                    label={t("kind")}
+                    columnKey="kind"
+                    sort={modalitySort}
+                    onSort={(key) => setModalitySort((current) => toggleColumnSort(current, key))}
+                  />
+                  <SortableTh
+                    label={t("sortOrder")}
+                    columnKey="sort"
+                    sort={modalitySort}
+                    onSort={(key) => setModalitySort((current) => toggleColumnSort(current, key))}
+                  />
+                  <SortableTh
+                    label={t("status")}
+                    columnKey="status"
+                    sort={modalitySort}
+                    onSort={(key) => setModalitySort((current) => toggleColumnSort(current, key))}
+                  />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
               <tbody>
-                {modalities.map((row) => (
+                {visibleModalities.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{localeTitle(row)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -606,10 +769,12 @@ export default function DiagnosticCatalogAdminPage() {
                     </td>
                   </tr>
                 ))}
-                {modalities.length === 0 ? (
+                {visibleModalities.length === 0 ? (
                   <tr>
                     <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={6}>
-                      {t("emptyModalities")}
+                      {modalityQuery.trim() || modalityKindFilter || modalityStatusFilter
+                        ? tc("notFound")
+                        : t("emptyModalities")}
                     </td>
                   </tr>
                 ) : null}
@@ -617,11 +782,19 @@ export default function DiagnosticCatalogAdminPage() {
             </table>
           </div>
         </div>
+        </div>
       )}
 
       {tab === "services" && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
+            <Field
+              label={tc("search")}
+              preset="shortText"
+              value={serviceQuery}
+              onChange={(e) => setServiceQuery(e.target.value)}
+              className="max-w-xs"
+            />
             <FieldSelect
               label={t("filterModality")}
               preset="select"
@@ -672,18 +845,53 @@ export default function DiagnosticCatalogAdminPage() {
               <table className={DATA_TABLE_CLASS}>
                 <thead>
                   <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("modality")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("category")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("serviceCode")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("analytesCount")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("status")}</th>
+                    <SortableTh
+                    label={t("columnTitle")}
+                    columnKey="title"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("code")}
+                    columnKey="code"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("modality")}
+                    columnKey="modality"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("category")}
+                    columnKey="category"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("serviceCode")}
+                    columnKey="serviceCode"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("analytesCount")}
+                    columnKey="analytes"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
+                    <SortableTh
+                    label={t("status")}
+                    columnKey="status"
+                    sort={serviceSort}
+                    onSort={(key) => setServiceSort((current) => toggleColumnSort(current, key))}
+                  />
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredServices.map((row) => (
+                  {displayServices.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{localeTitle(row)}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
@@ -746,10 +954,12 @@ export default function DiagnosticCatalogAdminPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredServices.length === 0 ? (
+                  {displayServices.length === 0 ? (
                     <tr>
                       <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={8}>
-                        {t("emptyServices")}
+                        {serviceQuery.trim() || serviceKindFilter || serviceModalityFilter
+                          ? tc("notFound")
+                          : t("emptyServices")}
                       </td>
                     </tr>
                   ) : null}
@@ -792,8 +1002,31 @@ export default function DiagnosticCatalogAdminPage() {
 
               <div>
                 <p className="mb-2 text-[13px] font-medium">{tFav("services")}</p>
+                <div className="mb-3 flex flex-wrap items-end gap-3">
+                  <Field
+                    label={tc("search")}
+                    preset="shortText"
+                    value={favQuery}
+                    onChange={(e) => setFavQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <FieldSelect
+                    label={t("filterKind")}
+                    preset="select"
+                    value={favKindFilter}
+                    onChange={(e) => setFavKindFilter(e.target.value)}
+                    className="max-w-xs"
+                  >
+                    <option value="">{t("allKinds")}</option>
+                    {favoriteKindOptions.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {kindLabel(kind)}
+                      </option>
+                    ))}
+                  </FieldSelect>
+                </div>
                 <ul className={`${CARD_CONTAINER_CLASS} max-h-96 space-y-1 overflow-y-auto p-2`}>
-                  {favoriteChoices.map((item) => {
+                  {visibleFavorites.map((item) => {
                     const key = `code:${item.code}`;
                     return (
                       <li key={key}>
@@ -812,6 +1045,9 @@ export default function DiagnosticCatalogAdminPage() {
                       </li>
                     );
                   })}
+                  {visibleFavorites.length === 0 && (favQuery.trim() || favKindFilter) ? (
+                    <li className={`px-2 py-1.5 text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("notFound")}</li>
+                  ) : null}
                 </ul>
               </div>
 
@@ -837,12 +1073,18 @@ export default function DiagnosticCatalogAdminPage() {
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                 />
               ) : null}
-              <Field
+              <FieldSelect
                 label={t("kind")}
-                preset="code"
+                preset="select"
                 value={form.kind ?? ""}
                 onChange={(e) => setForm({ ...form, kind: e.target.value })}
-              />
+              >
+                {kindChoices.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kindLabel(kind)}
+                  </option>
+                ))}
+              </FieldSelect>
               <Field
                 label={t("titleEn")}
                 preset="shortText"
@@ -900,12 +1142,18 @@ export default function DiagnosticCatalogAdminPage() {
                   value={form.category ?? ""}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                 />
-                <Field
+                <FieldSelect
                   label={t("kind")}
-                  preset="code"
+                  preset="select"
                   value={form.kind ?? ""}
                   onChange={(e) => setForm({ ...form, kind: e.target.value })}
-                />
+                >
+                  {kindChoices.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {kindLabel(kind)}
+                    </option>
+                  ))}
+                </FieldSelect>
               </FieldRow>
               <Field
                 label={t("titleEn")}
@@ -961,9 +1209,11 @@ export default function DiagnosticCatalogAdminPage() {
         title={t("analytesFor", { service: panelTitle })}
         closeLabel={tc("close")}
         onClose={() => setAnalytesOpen(false)}
+        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+        bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="space-y-3">
-          <div className="flex justify-end">
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex shrink-0 justify-end">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={startNewAnalyte}>
               {tc("add")}
             </button>
@@ -971,36 +1221,73 @@ export default function DiagnosticCatalogAdminPage() {
           {analytes.length === 0 ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("emptyAnalytes")}</p>
           ) : (
-          <ul className="max-h-80 space-y-1 overflow-y-auto text-[13px]">
-            {analytes.map((row) => (
-              <li key={row.id} className="flex items-center gap-2">
-                <span className="flex-1">
-                  {(locale.startsWith("ru")
-                    ? row.labelRu
-                    : locale.startsWith("az")
-                      ? row.labelAz
-                      : row.labelEn) || row.labelEn}{" "}
-                  · {row.code}
-                </span>
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  aria-label={tc("edit")}
-                  onClick={() => openEditAnalyte(row)}
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  aria-label={tc("delete")}
-                  onClick={() => void removeAnalyte(row.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
+            <div className="min-h-0 flex-1 overflow-auto">
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("unit")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMin")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMax")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("section")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("valueType")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("valueOptions")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("sortOrder")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytes.map((row) => (
+                    <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {(locale.startsWith("ru")
+                          ? row.labelRu
+                          : locale.startsWith("az")
+                            ? row.labelAz
+                            : row.labelEn) || row.labelEn}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.unit || "—"}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.refMin || "—"}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.refMax || "—"}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.section || "—"}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {row.valueType === "QUALITATIVE"
+                          ? t("valueTypeQualitative")
+                          : t("valueTypeNumeric")}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {row.valueOptions?.length
+                          ? row.valueOptions.map((opt) => opt.code).join(", ")
+                          : "—"}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.sortOrder}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={tc("edit")}
+                            onClick={() => openEditAnalyte(row)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={tc("delete")}
+                            onClick={() => void removeAnalyte(row.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </ModalShell>
@@ -1097,10 +1384,21 @@ export default function DiagnosticCatalogAdminPage() {
         title={t("fieldsFor", { service: panelTitle })}
         closeLabel={tc("close")}
         onClose={() => setFieldsOpen(false)}
+        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+        bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
+        footer={
+          <ModalFooter
+            onCancel={() => setFieldsOpen(false)}
+            cancelLabel={tc("cancel")}
+            onSubmit={() => void saveFields()}
+            submitLabel={tc("save")}
+          />
+        }
       >
         <CatalogFieldsEditor
           value={formFields}
           onChange={setFormFields}
+          locale={locale}
           labels={{
             fieldsTitle: t("fieldsEditorTitle"),
             addField: t("addField"),
@@ -1109,6 +1407,7 @@ export default function DiagnosticCatalogAdminPage() {
             labelEn: t("titleEn"),
             labelRu: t("titleRu"),
             labelAz: t("titleAz"),
+            columnTitle: t("columnTitle"),
             unit: t("unit"),
             required: t("fieldRequired"),
             options: t("fieldOptions"),
@@ -1117,13 +1416,13 @@ export default function DiagnosticCatalogAdminPage() {
             moveDown: t("moveDown"),
             empty: t("fieldsEmpty"),
             remove: tc("delete"),
+            actions: tc("actions"),
+            edit: tc("edit"),
+            add: tc("add"),
+            cancel: tc("cancel"),
+            save: tc("save"),
+            close: tc("close"),
           }}
-        />
-        <ModalFooter
-          onCancel={() => setFieldsOpen(false)}
-          cancelLabel={tc("cancel")}
-          onSubmit={() => void saveFields()}
-          submitLabel={tc("save")}
         />
       </ModalShell>
     </>
