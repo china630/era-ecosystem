@@ -21,7 +21,12 @@ export class WorkforceRoleTemplateService {
         ...(positionId ? { positionId } : {}),
       },
       include: { position: { include: { orgUnit: true } } },
-      orderBy: [{ positionId: "asc" }, { satelliteKey: "asc" }],
+      orderBy: [
+        { positionId: "asc" },
+        { satelliteKey: "asc" },
+        { isDefault: "desc" },
+        { updatedAt: "desc" },
+      ],
     });
   }
 
@@ -49,22 +54,33 @@ export class WorkforceRoleTemplateService {
     });
     if (!position) throw new NotFoundException("Position not found");
 
-    const row = await this.prisma.satelliteRoleTemplate.upsert({
-      where: {
-        positionId_satelliteKey_satelliteRole: {
+    const row = await this.prisma.$transaction(async (tx) => {
+      const saved = await tx.satelliteRoleTemplate.upsert({
+        where: {
+          positionId_satelliteKey_satelliteRole: {
+            positionId: data.positionId,
+            satelliteKey: data.satelliteKey,
+            satelliteRole: role,
+          },
+        },
+        create: {
+          workforceScopeId: link.workforceScopeId,
           positionId: data.positionId,
           satelliteKey: data.satelliteKey,
           satelliteRole: role,
+          isDefault: data.isDefault ?? true,
         },
-      },
-      create: {
-        workforceScopeId: link.workforceScopeId,
-        positionId: data.positionId,
-        satelliteKey: data.satelliteKey,
-        satelliteRole: role,
-        isDefault: data.isDefault ?? true,
-      },
-      update: { isDefault: data.isDefault ?? true },
+        update: { isDefault: data.isDefault ?? true },
+      });
+      await tx.satelliteRoleTemplate.deleteMany({
+        where: {
+          workforceScopeId: link.workforceScopeId,
+          positionId: data.positionId,
+          satelliteKey: data.satelliteKey,
+          satelliteRole: { not: role },
+        },
+      });
+      return saved;
     });
     await this.audit.log({
       organizationId,
