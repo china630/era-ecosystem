@@ -27,6 +27,7 @@ export function assertYearMonth(yearMonth: string): string {
 }
 
 import { isWoProcedureCode } from "@/lib/import/seed-catalog-match";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
 async function listProcedureTypesOrdered() {
   const rows = await prisma.procedureType.findMany({
@@ -159,9 +160,25 @@ async function seedLinesFromPrevious(
   return prev?.yearMonth ?? null;
 }
 
+async function withCatalogProcedureNames<T extends { procedureCode: string; procedureName: string }>(
+  rows: T[],
+  locale: string | undefined,
+): Promise<T[]> {
+  if (!locale || rows.length === 0) return rows;
+  const names = await loadCatalogDisplayNameMap(
+    rows.map((row) => row.procedureCode),
+    locale,
+  );
+  return rows.map((row) => {
+    const name = names.get(row.procedureCode)?.trim();
+    return name ? { ...row, procedureName: name } : row;
+  });
+}
+
 export async function getOrCreateDutyRoster(input: {
   yearMonth: string;
   staffKind?: PractitionerStaffKind;
+  locale?: string;
 }) {
   const yearMonth = assertYearMonth(input.yearMonth);
   const staffKind = input.staffKind ?? "NURSE";
@@ -190,7 +207,7 @@ export async function getOrCreateDutyRoster(input: {
   }
   if (!roster) throw new Error("Failed to ensure staff duty roster");
 
-  return loadRosterView(roster.id, yearMonth, staffKind);
+  return loadRosterView(roster.id, yearMonth, staffKind, input.locale);
 }
 
 async function syncMissingProcedureLines(rosterId: string) {
@@ -215,6 +232,7 @@ async function loadRosterView(
   rosterId: string,
   yearMonth: string,
   staffKind: PractitionerStaffKind,
+  locale?: string,
 ) {
   const roster = await prisma.staffDutyRoster.findUniqueOrThrow({
     where: { id: rosterId },
@@ -237,6 +255,28 @@ async function loadRosterView(
     listDayOffsInMonth(yearMonth, staffIds),
   ]);
 
+  const lines = roster.lines.map((line: {
+    id: string;
+    procedureTypeId: string;
+    procedureType: { code: string; name: string };
+    practitionerId: string | null;
+    practitioner: { fullName: string } | null;
+    stable: boolean;
+    note: string | null;
+  }) => ({
+    id: line.id,
+    procedureTypeId: line.procedureTypeId,
+    procedureCode: line.procedureType.code,
+    procedureName: line.procedureType.name,
+    practitionerId: line.practitionerId,
+    practitionerName: line.practitioner?.fullName ?? null,
+    stable: line.stable,
+    note: line.note,
+    warnings: line.practitionerId
+      ? absenceWarningsForPractitioner(line.practitionerId, absences, dayOffs)
+      : [],
+  }));
+
   return {
     roster: {
       id: roster.id,
@@ -248,27 +288,7 @@ async function loadRosterView(
       copiedFromYearMonth: roster.copiedFromYearMonth,
       note: roster.note,
     },
-    lines: roster.lines.map((line: {
-      id: string;
-      procedureTypeId: string;
-      procedureType: { code: string; name: string };
-      practitionerId: string | null;
-      practitioner: { fullName: string } | null;
-      stable: boolean;
-      note: string | null;
-    }) => ({
-      id: line.id,
-      procedureTypeId: line.procedureTypeId,
-      procedureCode: line.procedureType.code,
-      procedureName: line.procedureType.name,
-      practitionerId: line.practitionerId,
-      practitionerName: line.practitioner?.fullName ?? null,
-      stable: line.stable,
-      note: line.note,
-      warnings: line.practitionerId
-        ? absenceWarningsForPractitioner(line.practitionerId, absences, dayOffs)
-        : [],
-    })),
+    lines: await withCatalogProcedureNames(lines, locale),
     staff: staff.map((s) => ({
       id: s.id,
       code: s.code,
@@ -285,7 +305,10 @@ async function loadRosterView(
       endsOn: a.endsOn.toISOString().slice(0, 10),
       note: a.note,
     })),
-    dayOverrides: await listDayOverridesForRoster(rosterId, yearMonth),
+    dayOverrides: await withCatalogProcedureNames(
+      await listDayOverridesForRoster(rosterId, yearMonth),
+      locale,
+    ),
   };
 }
 
@@ -299,6 +322,7 @@ export type DutyLineWrite = {
 export async function saveDutyRoster(input: {
   yearMonth: string;
   staffKind?: PractitionerStaffKind;
+  locale?: string;
   lines: DutyLineWrite[];
   note?: string | null;
 }) {
@@ -344,12 +368,13 @@ export async function saveDutyRoster(input: {
     }
   });
 
-  return loadRosterView(view.roster.id, yearMonth, staffKind);
+  return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
 }
 
 export async function approveDutyRoster(input: {
   yearMonth: string;
   staffKind?: PractitionerStaffKind;
+  locale?: string;
   approvedByUserId: string;
 }) {
   const yearMonth = assertYearMonth(input.yearMonth);
@@ -363,12 +388,13 @@ export async function approveDutyRoster(input: {
       approvedByUserId: input.approvedByUserId,
     },
   });
-  return loadRosterView(view.roster.id, yearMonth, staffKind);
+  return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
 }
 
 export async function copyDutyRosterFromPrevious(input: {
   yearMonth: string;
   staffKind?: PractitionerStaffKind;
+  locale?: string;
 }) {
   const yearMonth = assertYearMonth(input.yearMonth);
   const staffKind = input.staffKind ?? "NURSE";
@@ -409,7 +435,7 @@ export async function copyDutyRosterFromPrevious(input: {
       data: { copiedFromYearMonth: prev.yearMonth, status: "DRAFT" },
     });
   });
-  return loadRosterView(view.roster.id, yearMonth, staffKind);
+  return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
 }
 
 export async function createStaffAbsence(input: {
@@ -469,11 +495,12 @@ export async function listDayOverridesForRoster(rosterId: string, yearMonth: str
 export async function listDayOverrides(input: {
   yearMonth: string;
   staffKind?: PractitionerStaffKind;
+  locale?: string;
   dutyDate?: string;
 }) {
   const yearMonth = assertYearMonth(input.yearMonth);
   const staffKind = input.staffKind ?? "NURSE";
-  const view = await getOrCreateDutyRoster({ yearMonth, staffKind });
+  const view = await getOrCreateDutyRoster({ yearMonth, staffKind, locale: input.locale });
   let overrides = view.dayOverrides;
   if (input.dutyDate) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dutyDate)) {

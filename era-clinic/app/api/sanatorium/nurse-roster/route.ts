@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { recordClinicAudit } from "@/lib/satellite-audit";
+import { readUiLocale } from "@/lib/request-locale";
 import {
   approveDutyRoster,
   copyDutyRosterFromPrevious,
@@ -54,7 +55,8 @@ export async function GET(req: Request) {
       yearMonth,
       staffKind: staffKindRaw === "LAB" ? "LAB" : "NURSE",
     });
-    return jsonOk(await getOrCreateDutyRoster(parsed));
+    const locale = await readUiLocale(req);
+    return jsonOk(await getOrCreateDutyRoster({ ...parsed, locale }));
   } catch (err) {
     return handleRouteError(err);
   }
@@ -66,7 +68,8 @@ export async function PUT(req: Request) {
     const denied = await rosterForbidden(session);
     if (denied) return denied;
     const body = saveSchema.parse(await req.json());
-    const result = await saveDutyRoster(body);
+    const locale = await readUiLocale(req);
+    const result = await saveDutyRoster({ ...body, locale });
     await recordClinicAudit(
       { userId: session!.sub, request: req },
       "staffDutyRoster",
@@ -93,8 +96,9 @@ export async function POST(req: Request) {
       })
       .parse(await req.json());
 
+    const locale = await readUiLocale(req);
     if (body.action === "copyPrevious") {
-      const result = await copyDutyRosterFromPrevious(body);
+      const result = await copyDutyRosterFromPrevious({ ...body, locale });
       await recordClinicAudit(
         { userId: session!.sub, request: req },
         "staffDutyRoster",
@@ -108,6 +112,7 @@ export async function POST(req: Request) {
     const result = await approveDutyRoster({
       yearMonth: body.yearMonth,
       staffKind: body.staffKind,
+      locale,
       approvedByUserId: session!.sub,
     });
     await recordClinicAudit(

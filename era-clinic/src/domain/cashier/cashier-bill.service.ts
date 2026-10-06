@@ -36,6 +36,24 @@ export type UnifiedBill = {
   settlementPendingId: string | null;
 };
 
+/** Fiscal / cashier line name for a lab item: diagnostic catalog title, then the code. */
+export function labLineDescription(item: {
+  serviceCode: string;
+  diagnosticService?: {
+    titleAz?: string | null;
+    titleRu?: string | null;
+    titleEn?: string | null;
+  } | null;
+}): string {
+  const svc = item.diagnosticService;
+  return (
+    svc?.titleAz?.trim() ||
+    svc?.titleRu?.trim() ||
+    svc?.titleEn?.trim() ||
+    item.serviceCode
+  );
+}
+
 export function billingTargetToChannel(
   target: BillingTargetKind,
 ): ClinicReceiptChannel {
@@ -69,7 +87,13 @@ export async function buildUnifiedBill(visitId: string): Promise<UnifiedBill | n
       receipts: { where: { status: "PAID" }, take: 1 },
       labOrders: {
         include: {
-          items: true,
+          items: {
+            include: {
+              diagnosticService: {
+                select: { titleAz: true, titleRu: true, titleEn: true },
+              },
+            },
+          },
         },
       },
       procedureOrders: {
@@ -102,7 +126,7 @@ export async function buildUnifiedBill(visitId: string): Promise<UnifiedBill | n
         if (amount <= 0) continue;
         lines.push({
           serviceCode: item.serviceCode,
-          description: item.serviceCode,
+          description: labLineDescription(item),
           amount,
           sourceType: "LAB_ITEM",
           sourceId: item.id,

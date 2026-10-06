@@ -8,6 +8,7 @@ import { countOpsWipe, runOpsWipe } from '@/lib/services/ops-wipe.service';
 const confirmSchema = z.object({
   organizationId: z.string().uuid(),
   confirmPhrase: z.literal('WIPE'),
+  ops: z.array(z.string()).optional(),
 });
 
 async function superAdminSession() {
@@ -40,7 +41,10 @@ export async function POST(request: Request) {
         status: 409,
       });
     }
-    const deleted = await runOpsWipe(session.organizationId);
+    const deleted = await runOpsWipe(
+      session.organizationId,
+      body.ops ? { ops: body.ops } : undefined,
+    );
     await recordHotelAudit({ userId: session.sub, request }, 'OpsWipe', session.organizationId, 'WIPE', {
       deleted,
     });
