@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
+import { linkExistingAutoOrdersToPackage } from "@/domain/sanatorium/package-auto-apply.service";
 import { episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
 import { episodeCareTeamDenied } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
@@ -71,6 +72,11 @@ export async function tryOpenProgramAfterTherapistStage(
       where: { id: episodeId },
       data: { checkupCompletedAt: new Date(), programCode },
     });
+    try {
+      await linkExistingAutoOrdersToPackage(episodeId);
+    } catch (linkErr) {
+      console.error("[day1] link existing auto orders", episodeId, linkErr);
+    }
     return { opened: true, programCode };
   } catch (err) {
     if (isUniqueViolation(err)) {

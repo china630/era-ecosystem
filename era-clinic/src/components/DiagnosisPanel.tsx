@@ -48,6 +48,7 @@ type Props = {
   hideTitle?: boolean;
   /** When true, parent renders the add button (use ref.openCreate). */
   hideAddButton?: boolean;
+  onCount?: (count: number) => void;
 };
 
 export type DiagnosisPanelHandle = {
@@ -73,6 +74,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       readOnly = false,
       hideTitle = false,
       hideAddButton = false,
+      onCount,
     },
     ref,
   ) {
@@ -92,8 +94,10 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     const load = useCallback(async () => {
       const res = await fetch(apiBase);
       const data = await res.json();
-      setItems(data.items ?? data.data?.items ?? []);
-    }, [apiBase]);
+      const next = data.items ?? data.data?.items ?? [];
+      setItems(next);
+      onCount?.(Array.isArray(next) ? next.length : 0);
+    }, [apiBase, onCount]);
 
     useEffect(() => {
       void load();

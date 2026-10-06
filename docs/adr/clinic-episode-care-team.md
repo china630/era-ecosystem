@@ -85,9 +85,9 @@ CLOSED episode: care team read-only.
 
 ### D5 — Intake visits / package auto-apply
 
-`instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits (labs may still open per existing rules) until a doctor is assigned.
+`instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits until a doctor is assigned. Episode open does **not** call it: without a `ProgramInstance` no ECG/USG orders are created.
 
-**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. Hard-coded `instantiateIntakePackage` remains only as fallback when there is no `ProgramInstance`.
+**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. There is no hard-coded intake fallback when there is no `ProgramInstance`. The first care-team doctor runs `CARE_TEAM` and creates every `AUTO_ON_OPEN` and `AUTO_DAY1` order from the current template, before the quota instance exists. Opening the package on anamnesis and a complaint does not assign those studies. It only links orders already created at the doctor onto the new quota. The sanatorium treatment chart hides procedure assign until anamnesis, one complaint, and one ICD-10, same as the patient card. `MANUAL_RETRY` re-reads the current template axes (not night quotas) and creates the same missing auto blocks.
 
 ### D6 — Appointments (deferred design)
 

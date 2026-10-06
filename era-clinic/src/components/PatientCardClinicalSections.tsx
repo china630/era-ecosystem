@@ -156,6 +156,8 @@ type Props = {
   patientOrigin?: string | null;
   /** When false, confirm procedures buttons are disabled (ANAMNESIS_REQUIRED). */
   anamnesisOk?: boolean;
+  /** Package procedures and schedule. Anamnesis + complaint + ICD-10. Intake shows with the doctor. */
+  studiesUnlocked?: boolean;
   readOnly?: boolean;
   /** Bump to reload card-summary (intake checklist after anamnesis/complaint). */
   refreshKey?: number;
@@ -169,6 +171,7 @@ export function PatientCardClinicalSections({
   episodeId,
   patientOrigin,
   anamnesisOk = true,
+  studiesUnlocked = false,
   readOnly = false,
   refreshKey = 0,
   onOpenDayPlan,
@@ -306,6 +309,7 @@ export function PatientCardClinicalSections({
 
   return (
     <div className="space-y-6">
+      {resultsPreview.length > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -372,7 +376,9 @@ export function PatientCardClinicalSections({
           )}
         </div>
       </section>
+      ) : null}
 
+      {(summary?.examNotesPreview?.length ?? 0) > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -413,6 +419,7 @@ export function PatientCardClinicalSections({
           )}
         </div>
       </section>
+      ) : null}
 
       {intakeChecklist?.items?.length ? (
         <section className="space-y-2">
@@ -466,6 +473,7 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
+      {studiesUnlocked ? (
       <section className="space-y-2">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
           {t("assignSectionTitle", { defaultValue: "Procedure assign" })}
@@ -528,7 +536,9 @@ export function PatientCardClinicalSections({
           </p>
         )}
       </section>
+      ) : null}
 
+      {studiesUnlocked ? (
       <section className="space-y-2">
         <EpisodeScheduleCards
           title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
@@ -547,8 +557,9 @@ export function PatientCardClinicalSections({
           }))}
         />
       </section>
+      ) : null}
 
-      {episodeId ? (
+      {studiesUnlocked && episodeId ? (
         <>
           <PackageAssignModal
             open={packageModalOpen}

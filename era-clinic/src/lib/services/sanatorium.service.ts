@@ -5,8 +5,6 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { splitFullNameToParts } from '@era/satellite-kit';
 import { applyPackageAutoBlocks } from '@/domain/sanatorium/package-auto-apply.service';
-/** @deprecated Prefer applyPackageAutoBlocks — kept as fallback when no ProgramInstance. */
-import { instantiateIntakePackage } from '@/domain/patient/instantiate-intake.service';
 import {
   assertLabOrderCanCreate,
   findEpisodeLabConflict,
@@ -106,15 +104,12 @@ async function findOpenEpisodeForStay(
   });
 }
 
+/** Package auto-blocks only. No hard-coded ECG/USG when the course has no program yet. */
 async function safeInstantiateIntake(episodeId: string) {
   try {
-    const auto = await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
-    if (auto && "skipped" in auto && auto.skipped === "NO_PROGRAM") {
-      // @deprecated — hard-coded PKG-NAFTA-INTAKE path when episode has no ProgramInstance yet
-      await instantiateIntakePackage(episodeId);
-    }
+    await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
   } catch (err) {
-    console.error("[sanatorium] package auto-apply / intake failed", episodeId, err);
+    console.error("[sanatorium] package auto-apply failed", episodeId, err);
   }
 }
 
