@@ -108,6 +108,62 @@ export function resolveAutoBlockServiceCode(
   return code;
 }
 
+/** Block codes whose Auto flag means a diagnostic order, even if fulfillment is still the procedure default. */
+const DIAGNOSTIC_LAB_ALIASES = new Set(["CARDIO-ECG", "USG-ABD"]);
+
+/**
+ * LAB/EXAM kind wins over a stored PROCEDURE_ORDER default.
+ * ECG/USG blocks saved as CUSTOM + procedure still book CARDIO-ECG / USG-ABD when Auto.
+ */
+export function effectiveAutoFulfillment(
+  block: { kind?: string | null; fulfillment?: string | null; procedureCode: string },
+  sex: string | null | undefined,
+): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
+  const base = fulfillmentRespectingStudyKind(block.kind, block.fulfillment);
+  if (base !== "PROCEDURE_ORDER") return base;
+  const resolved = resolveAutoBlockServiceCode(block.procedureCode, sex);
+  if (resolved && DIAGNOSTIC_LAB_ALIASES.has(resolved)) return "LAB_ORDER";
+  return "PROCEDURE_ORDER";
+}
+
+type TemplateAxisRow = {
+  procedureCode: string;
+  assignMode?: string | null;
+  fulfillment?: string | null;
+  kind?: string | null;
+  requiresDoctor?: boolean | null;
+};
+
+/** Copy assign mode, kind, and fulfillment from the current template. Quotas stay on the course snapshot. */
+export function overlayTemplateAxes(
+  procedures: SnapshotProc[],
+  current: TemplateAxisRow[],
+): SnapshotProc[] {
+  const byCode = new Map(current.map((row) => [row.procedureCode, row]));
+  return procedures.map((row) => {
+    const next = byCode.get(row.procedureCode);
+    if (!next) return row;
+    const axes = axesFromLegacyTemplateProc({
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      quotaTotal: row.quotaTotal,
+      sortOrder: row.sortOrder,
+      kind: next.kind ?? row.kind,
+      assignMode: next.assignMode,
+      fulfillment: next.fulfillment,
+      quotaBasis: row.quotaBasis,
+      requiresDoctor: next.requiresDoctor,
+    });
+    return {
+      ...row,
+      ...axes,
+      quotaTotal: row.quotaTotal,
+      quotaBasis: row.quotaBasis,
+      procedureName: row.procedureName,
+    };
+  });
+}
+
 function selectAutoBlocks(
   procedures: SnapshotProc[],
   trigger: AutoApplyTrigger,
@@ -123,18 +179,27 @@ function selectAutoBlocks(
         (p.assignMode === "AUTO_ON_OPEN" && autoApplyState !== "APPLIED"),
     );
   }
-  // CARE_TEAM | MANUAL_RETRY — retry doctor-gated + AUTO_ON_OPEN
-  return procedures.filter((p) => {
-    if (p.assignMode === "AUTO_ON_OPEN") return true;
-    if (
-      autoApplyState === "PENDING_DOCTOR" &&
-      p.requiresDoctor &&
-      p.assignMode === "AUTO_DAY1"
-    ) {
-      return true;
-    }
-    return false;
-  });
+  // First doctor and the super-admin retry both book every auto block.
+  if (trigger === "MANUAL_RETRY" || trigger === "CARE_TEAM") {
+    return procedures.filter(
+      (p) => p.assignMode === "AUTO_ON_OPEN" || p.assignMode === "AUTO_DAY1",
+    );
+  }
+  return [];
+}
+
+/**
+ * A LAB/EXAM line stored with the default PROCEDURE_ORDER is still a study.
+ * Explicit LAB_ORDER / VISIT is kept. Assign mode is not changed.
+ */
+export function fulfillmentRespectingStudyKind(
+  kind: string | null | undefined,
+  fulfillment: string | null | undefined,
+): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
+  if (fulfillment === "LAB_ORDER" || fulfillment === "VISIT") return fulfillment;
+  if (kind === "LAB") return "LAB_ORDER";
+  if (kind === "EXAM") return "VISIT";
+  return "PROCEDURE_ORDER";
 }
 
 function axesFromLegacyTemplateProc(p: {
@@ -155,12 +220,7 @@ function axesFromLegacyTemplateProc(p: {
     p.assignMode === "MANUAL"
       ? p.assignMode
       : "MANUAL";
-  const fulfillment =
-    p.fulfillment === "LAB_ORDER" ||
-    p.fulfillment === "VISIT" ||
-    p.fulfillment === "PROCEDURE_ORDER"
-      ? p.fulfillment
-      : "PROCEDURE_ORDER";
+  const fulfillment = fulfillmentRespectingStudyKind(p.kind, p.fulfillment);
   const quotaBasis = p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS";
   const axes: EntitlementBlockAxes = {
     assignMode,
@@ -203,30 +263,68 @@ export async function applyPackageAutoBlocks(
     throw new Error("Episode patient not found");
   }
   const instance = episode.programInstance;
-  if (!instance) {
+  const programCode = (instance?.programCode ?? episode.programCode)?.trim() || "";
+  if (!instance && (opts.trigger !== "CARE_TEAM" || !programCode)) {
     return { skipped: "NO_PROGRAM" };
   }
 
-  const snap =
-    parseEntitlementSnapshot(instance.entitlementSnapshot) ??
-    ({
-      version: instance.template?.version ?? 1,
-      templateId: instance.templateId,
-      code: instance.programCode,
-      procedures: (instance.template?.procedures ?? []).map(axesFromLegacyTemplateProc),
+  const currentTemplate = await prisma.programTemplate.findFirst({
+    where: {
+      organizationId: episode.organizationId,
+      code: programCode,
+      isCurrent: true,
+    },
+    include: { procedures: true },
+  });
+
+  let snap =
+    (instance ? parseEntitlementSnapshot(instance.entitlementSnapshot) : null) ??
+    (instance
+      ? ({
+          version: instance.template?.version ?? 1,
+          templateId: instance.templateId,
+          code: instance.programCode,
+          procedures: (instance.template?.procedures ?? []).map(axesFromLegacyTemplateProc),
+          knots: [],
+          members: [],
+        } satisfies EntitlementSnapshot)
+      : null);
+
+  if (!snap) {
+    if (!currentTemplate?.procedures.length) return { skipped: "NO_PROGRAM" };
+    snap = {
+      version: currentTemplate.version,
+      templateId: currentTemplate.id,
+      code: currentTemplate.code,
+      procedures: currentTemplate.procedures.map(axesFromLegacyTemplateProc),
       knots: [],
       members: [],
-    } satisfies EntitlementSnapshot);
+    };
+  }
 
+  let axesRewritten = false;
+  if (instance && opts.trigger === "MANUAL_RETRY") {
+    if (currentTemplate?.procedures.length) {
+      snap = {
+        ...snap,
+        procedures: overlayTemplateAxes(snap.procedures, currentTemplate.procedures),
+      };
+      axesRewritten = true;
+    }
+  }
+
+  const sex = episode.patientRef.sex;
   const selected = selectAutoBlocks(
-    snap.procedures,
+    snap.procedures.map((block) => ({
+      ...block,
+      fulfillment: effectiveAutoFulfillment(block, sex),
+    })),
     opts.trigger,
-    instance.autoApplyState,
+    instance?.autoApplyState ?? "PENDING",
   );
 
   const patientRefId = episode.patientRefId;
   const organizationId = episode.organizationId;
-  const sex = episode.patientRef.sex;
   const practitionerId = await resolveCareTeamPractitioner(episodeId);
 
   const createdVisitCodes: string[] = [];
@@ -327,20 +425,22 @@ export async function applyPackageAutoBlocks(
         serviceCode,
         description: VISIT_TITLES[serviceCode] ?? block.procedureName ?? serviceCode,
         amount: charge.amountNet,
-        inPackage: true,
-        packageQuotaCode: block.procedureCode,
+        inPackage: Boolean(instance),
+        packageQuotaCode: instance ? block.procedureCode : null,
       },
     });
     createdVisitCodes.push(serviceCode);
     quotaCodesTouched.add(block.procedureCode);
   }
 
-  for (const quotaCode of quotaCodesTouched) {
-    await syncEntitlementUsage({
-      instanceId: instance.id,
-      episodeId,
-      quotaCode,
-    });
+  if (instance) {
+    for (const quotaCode of quotaCodesTouched) {
+      await syncEntitlementUsage({
+        instanceId: instance.id,
+        episodeId,
+        quotaCode,
+      });
+    }
   }
 
   const autoEligible = selected.filter((p) => p.fulfillment !== "PROCEDURE_ORDER");
@@ -359,7 +459,10 @@ export async function applyPackageAutoBlocks(
     const anySkipped =
       skippedVisitCodes.length > 0 || skippedLabCodes.length > 0;
     if (!anyCreated && !anySkipped && autoEligible.length === 0) {
-      autoApplyState = instance.autoApplyState === "PENDING" ? "APPLIED" : instance.autoApplyState;
+      autoApplyState =
+        !instance || instance.autoApplyState === "PENDING"
+          ? "APPLIED"
+          : instance.autoApplyState;
     } else if (anyCreated && anySkipped) {
       autoApplyState = "PARTIAL";
     } else {
@@ -381,14 +484,17 @@ export async function applyPackageAutoBlocks(
     pendingDoctor ? "pending_doctor" : null,
   ].filter(Boolean);
 
-  await prisma.programInstance.update({
-    where: { id: instance.id },
-    data: {
-      autoApplyState,
-      autoApplyAt: new Date(),
-      autoApplyNote: noteParts.join("; ").slice(0, 500),
-    },
-  });
+  if (instance) {
+    await prisma.programInstance.update({
+      where: { id: instance.id },
+      data: {
+        autoApplyState,
+        autoApplyAt: new Date(),
+        autoApplyNote: noteParts.join("; ").slice(0, 500),
+        ...(axesRewritten ? { entitlementSnapshot: snap } : {}),
+      },
+    });
+  }
 
   return {
     episodeId,
@@ -400,4 +506,67 @@ export async function applyPackageAutoBlocks(
     skippedProcedureCodes,
     pendingDoctor,
   };
+}
+
+/**
+ * Package open does not create studies. Orders made at the first doctor were
+ * outside the quota; once the instance exists, mark those auto lines in-package.
+ */
+export async function linkExistingAutoOrdersToPackage(episodeId: string): Promise<void> {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    include: { patientRef: true, programInstance: true },
+  });
+  const instance = episode?.programInstance;
+  const snap = instance ? parseEntitlementSnapshot(instance.entitlementSnapshot) : null;
+  if (!episode?.patientRef || !instance || !snap) return;
+
+  const sex = episode.patientRef.sex;
+  const selected = selectAutoBlocks(
+    snap.procedures.map((block) => ({
+      ...block,
+      fulfillment: effectiveAutoFulfillment(block, sex),
+    })),
+    "CARE_TEAM",
+    instance.autoApplyState,
+  );
+  const { syncEntitlementUsage } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+
+  for (const block of selected) {
+    if (block.fulfillment === "PROCEDURE_ORDER") continue;
+    const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
+    if (!serviceCode) continue;
+    if (block.fulfillment === "LAB_ORDER") {
+      await prisma.labOrderItem.updateMany({
+        where: {
+          inPackage: false,
+          serviceCode,
+          labOrder: {
+            clinicalEpisodeId: episodeId,
+            status: { not: "CANCELLED" },
+          },
+        },
+        data: { inPackage: true, packageQuotaCode: block.procedureCode },
+      });
+    } else {
+      await prisma.visitServiceLine.updateMany({
+        where: {
+          inPackage: false,
+          serviceCode,
+          visit: {
+            clinicalEpisodeId: episodeId,
+            status: { not: "CANCELLED" },
+          },
+        },
+        data: { inPackage: true, packageQuotaCode: block.procedureCode },
+      });
+    }
+    await syncEntitlementUsage({
+      instanceId: instance.id,
+      episodeId,
+      quotaCode: block.procedureCode,
+    });
+  }
 }

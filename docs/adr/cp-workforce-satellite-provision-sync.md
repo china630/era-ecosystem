@@ -48,4 +48,5 @@ Dedicated list APIs for bindings, manual grants, employments. Default `pageSize`
 
 - Migration adds provision columns on `workforce_role_bindings`.
 - Worker patches `APPLIED`/`FAILED` after bridge.
-- Nafta: migrate orch → deploy orch → hotel → clinic → fnb → reprovision bindings missing `satelliteUserId`.
+- Nafta: migrate orch → deploy orch → hotel → clinic → fnb → retail → reprovision bindings missing `satelliteUserId`.
+- Turning off an operational satellite module revokes that org's active bindings and emits `STAFF_DEACTIVATED` before cancellation. Retail (`industry_retail`) is on this bus (`RETAIL_API_URL`, local role `CASHIER` / `SHIFT_SUPERVISOR` / `OUTLET_ADMIN`).

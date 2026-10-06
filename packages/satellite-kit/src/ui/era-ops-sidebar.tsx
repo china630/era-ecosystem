@@ -43,6 +43,31 @@ export function EraOpsSidebarNav({ items }: { items: EraOpsNavItem[] }) {
               </a>
             );
           }
+          const kids = (item.children ?? []).filter((child) => !child.hidden && child.href);
+          if (kids.length > 0) {
+            return (
+              <div key={item.id ?? item.label} className="mt-2">
+                <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+                  {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {kids.map((child) => {
+                  const ChildIcon = child.icon;
+                  const childClass = child.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
+                  return (
+                    <Link
+                      key={child.id ?? child.href}
+                      href={child.href!}
+                      className={`${childClass} pl-8`}
+                    >
+                      {ChildIcon ? <ChildIcon className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                      <span className="truncate">{child.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          }
           if (!item.href) return null;
           return (
             <Link key={item.id ?? item.href} href={item.href} className={className}>

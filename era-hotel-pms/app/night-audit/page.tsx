@@ -5,17 +5,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
-  CatalogField,
-  FORM_FIELD_GROUP_CLASS,
-  FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { PageHeader } from '@era/satellite-kit/ui';
-import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { hotelDateKey } from '@/lib/hotel-calendar';
@@ -63,6 +57,7 @@ interface NightAuditStatus {
     unassignedArrivals: number;
     noShowCandidates: number;
   };
+  unclosedCashRows?: number;
 }
 
 interface NightAuditRunRow {
@@ -81,17 +76,8 @@ export default function OperationsPage() {
   const [status, setStatus] = useState<NightAuditStatus | null>(null);
   const [runs, setRuns] = useState<NightAuditRunRow[]>([]);
   const [noShows, setNoShows] = useState<Reservation[]>([]);
-  const [cashier, setCashier] = useState('');
-  const [registerId, setRegisterId] = useState('REG-01');
-  const [fiscalDeviceId, setFiscalDeviceId] = useState('');
-  const [bankTerminalId, setBankTerminalId] = useState('');
-  const [kkms, setKkms] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
-  const [banks, setBanks] = useState<{ id: string; label: string; kind: string; providerId: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [shiftModalOpen, setShiftModalOpen] = useState(false);
-
-  const openShiftFormId = 'open-cash-shift-form';
   const [tourismFailed, setTourismFailed] = useState<
     { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
   >([]);
@@ -126,79 +112,18 @@ export default function OperationsPage() {
     if (can(PERMISSIONS.RESERVATIONS_CANCEL)) loadNoShows();
   }, [loadStatus, loadRuns, loadTourism, loadNoShows, can]);
 
-  useEffect(() => {
-    if (!shiftModalOpen) return;
-    void fetch(`/api/fiscal/devices?register=${encodeURIComponent(registerId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        const devices = (data?.devices ?? []) as {
-          id: string;
-          label: string;
-          kind: string;
-          providerId: string;
-        }[];
-        setKkms(devices.filter((d) => d.kind === 'FISCAL_KKM'));
-        setBanks(devices.filter((d) => d.kind === 'BANK_POS'));
-        if (data?.defaults?.fiscalDeviceId) setFiscalDeviceId(String(data.defaults.fiscalDeviceId));
-        if (data?.defaults?.bankTerminalId) setBankTerminalId(String(data.defaults.bankTerminalId));
-      })
-      .catch(() => undefined);
-  }, [shiftModalOpen, registerId]);
-
   async function retryTourism(id: string) {
     const res = await fetch(`/api/tourism/${id}/retry`, { method: 'POST' });
     setMsg(res.ok ? t('tourismRetrySent') : t('retryFailed'));
     await loadTourism();
   }
 
-  const hasOpenShift = status?.openShift?.status === 'OPEN';
+  const unclosedCashRows = status?.unclosedCashRows ?? 0;
+  const cashBlocked = unclosedCashRows > 0;
   const pendingCount = status?.pendingSettlement?.count ?? 0;
   const pendingBlocksNa =
     pendingCount > 0 && status?.pendingSettlement?.policy === 'BLOCK';
-  const naBlocked = hasOpenShift || pendingBlocksNa;
-
-  async function openShift(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setMsg(null);
-    try {
-      const res = await fetch('/api/cash/shifts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cashier: cashier || 'Cashier',
-          registerId,
-          ...(fiscalDeviceId ? { fiscalDeviceId } : {}),
-          ...(bankTerminalId ? { bankTerminalId } : {}),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? tc('failed'));
-      setMsg(t('shiftOpened'));
-      setShiftModalOpen(false);
-      await loadStatus();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : tc('error'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function closeShift() {
-    setBusy(true);
-    setMsg(null);
-    try {
-      const res = await fetch('/api/cash/shifts?action=close', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? tc('failed'));
-      setMsg(t('shiftClosed'));
-      await loadStatus();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : tc('error'));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const naBlocked = cashBlocked || pendingBlocksNa;
 
   async function runNightAudit() {
     setBusy(true);
@@ -280,38 +205,6 @@ export default function OperationsPage() {
         </section>
       )}
 
-      {can(PERMISSIONS.CASH_SHIFT) && (
-        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
-          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('cashShift')}</h2>
-          {hasOpenShift && status?.openShift ? (
-            <div className="mb-3 text-[13px] text-amber-800">
-              {t('openShiftDetail', {
-                cashier: status.openShift.cashier,
-                register: status.openShift.registerId,
-                time: bakuDateTimeDisplay(status.openShift.openedAt),
-              })}
-            </div>
-          ) : (
-            <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('noOpenShift')}</p>
-          )}
-          {!hasOpenShift && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setShiftModalOpen(true)}
-              className={PRIMARY_BUTTON_CLASS}
-            >
-              {t('openShift')}
-            </button>
-          )}
-          {hasOpenShift && (
-            <button type="button" disabled={busy} onClick={closeShift} className={SECONDARY_BUTTON_CLASS}>
-              {t('closeShift')}
-            </button>
-          )}
-        </section>
-      )}
-
       <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('nightAudit')}</h2>
@@ -331,8 +224,17 @@ export default function OperationsPage() {
             ({status?.businessDay?.status ?? status?.businessDate?.businessDayStatus ?? tc('dash')})
           </li>
           <li>
-            {t('cashShiftStatus')}{' '}
-            {hasOpenShift ? t('cashShiftOpenBlock') : t('cashShiftOk')}
+            {t('cashDeskStatus')}{' '}
+            {cashBlocked ? (
+              <>
+                {t('cashDeskOpenBlock', { count: unclosedCashRows })}{' '}
+                <Link href="/front-cash/desk" className="text-[#2980B9] hover:underline">
+                  {t('openCashDesk')}
+                </Link>
+              </>
+            ) : (
+              t('cashDeskOk')
+            )}
           </li>
           {status?.polishPreview ? (
             <li className="mt-2 rounded-lg border border-[#D5DADF] bg-[#F8FAFC] px-3 py-2">
@@ -364,7 +266,7 @@ export default function OperationsPage() {
             </li>
           )}
         </ul>
-        {hasOpenShift && <p className="mb-3 text-[13px] text-rose-600">{t('closeShiftsBeforeNa')}</p>}
+        {cashBlocked && <p className="mb-3 text-[13px] text-rose-600">{t('closeCashDeskBeforeNa')}</p>}
         {pendingBlocksNa && (
           <p className="mb-3 text-[13px] text-rose-600">{t('pendingSettlementBlock')}</p>
         )}
@@ -446,74 +348,6 @@ export default function OperationsPage() {
         </section>
       )}
 
-      <EraModal
-        open={shiftModalOpen}
-        title={t('openShift')}
-        onClose={() => setShiftModalOpen(false)}
-        footer={
-          <EraModalFooter
-            formId={openShiftFormId}
-            onCancel={() => setShiftModalOpen(false)}
-            busy={busy}
-            submitLabel={t('openShift')}
-          />
-        }
-      >
-        <form id={openShiftFormId} onSubmit={openShift} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-cashier">
-              {t('cashierPlaceholder')}
-            </label>
-            <input
-              id="shift-cashier"
-              placeholder={t('cashierPlaceholder')}
-              className={MODAL_INPUT_CLASS}
-              value={cashier}
-              onChange={(e) => setCashier(e.target.value)}
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-register">
-              {t('registerPlaceholder')}
-            </label>
-            <input
-              id="shift-register"
-              placeholder={t('registerPlaceholder')}
-              className={MODAL_INPUT_CLASS}
-              value={registerId}
-              onChange={(e) => setRegisterId(e.target.value)}
-            />
-          </div>
-          {kkms.length > 0 ? (
-            <CatalogField
-              kind="ENTITY_REF"
-              id="shift-kkm"
-              label={t('fiscalDevice')}
-              value={fiscalDeviceId}
-              onChange={(v) => setFiscalDeviceId(String(v ?? ''))}
-              options={kkms.map((d) => ({
-                value: d.id,
-                label: `${d.label} (${d.providerId})`,
-              }))}
-              emptyLabel={t('autoDefault')}
-            />
-          ) : null}
-          {banks.length > 0 ? (
-            <CatalogField
-              kind="ENTITY_REF"
-              id="shift-bank"
-              label={t('bankTerminal')}
-              value={bankTerminalId}
-              onChange={(v) => setBankTerminalId(String(v ?? ''))}
-              options={banks.map((d) => ({
-                value: d.id,
-                label: `${d.label} (${d.providerId})`,
-              }))}
-              emptyLabel={t('autoDefault')}
-            />
-          ) : null}
-        </form>
-      </EraModal>
     </>
   );
 }

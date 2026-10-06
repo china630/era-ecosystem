@@ -11,6 +11,7 @@ import {
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
 } from '@era/satellite-kit/ui';
 import type { ImportSummary } from '@/lib/import/types';
 import { uploadImportFile, runFilelessImportEntity } from '@/lib/import/upload';
@@ -74,7 +75,6 @@ export function ImportStepRow({
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(storedStatus ? null : null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [chunkLine, setChunkLine] = useState<string | null>(null);
 
   const summary = phase === 'done' ? result : preview;
@@ -82,7 +82,6 @@ export function ImportStepRow({
 
   async function handleFilelessRun(dryRun: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const s = await runFilelessImportEntity(entity, dryRun);
       if (dryRun) {
@@ -96,7 +95,7 @@ export function ImportStepRow({
       }
       setExpanded(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      showApiError({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
     }
@@ -110,7 +109,6 @@ export function ImportStepRow({
     const upload = allowMultiple ? files : file;
     if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
-    setError(null);
     setChunkLine(null);
     try {
       const s = await uploadImportFile(entity, upload, true, (current, total, name) => {
@@ -123,7 +121,7 @@ export function ImportStepRow({
       setPhase('preview');
       setExpanded(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      showApiError({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
       setChunkLine(null);
@@ -138,7 +136,6 @@ export function ImportStepRow({
     const upload = allowMultiple ? files : file;
     if (!upload || (Array.isArray(upload) && upload.length === 0)) return;
     setBusy(true);
-    setError(null);
     setChunkLine(null);
     try {
       const s = await uploadImportFile(entity, upload, false, (current, total, name) => {
@@ -153,7 +150,7 @@ export function ImportStepRow({
       const stored = saveImportStepStatus(entity, s, storedName);
       onStatusChange(entity, stored);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      showApiError({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
       setChunkLine(null);
@@ -166,7 +163,6 @@ export function ImportStepRow({
     setFiles([]);
     setPreview(null);
     setResult(null);
-    setError(null);
     setChunkLine(null);
     setExpanded(true);
     clearImportStepStatus(entity);
@@ -237,7 +233,6 @@ export function ImportStepRow({
               </p>
             ) : null}
 
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
             {chunkLine ? <p className="text-[13px] text-[#2980B9]">{chunkLine}</p> : null}
 
             {(phase === 'idle' || phase === 'preview') && !fileless && (
@@ -252,7 +247,6 @@ export function ImportStepRow({
                     setFiles(picked);
                     setFile(picked[0] ?? null);
                     setPreview(null);
-                    setError(null);
                     if (phase === 'preview') setPhase('idle');
                   }}
                 />

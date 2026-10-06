@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -17,6 +17,8 @@ import {
   TAB_STRIP_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
 
 type CompatRule = {
@@ -66,7 +68,6 @@ export default function ProcedureRulesPage() {
   const [seqRules, setSeqRules] = useState<SeqRule[]>([]);
   const [rotationRules, setRotationRules] = useState<RotationRule[]>([]);
   const [substitutionRules, setSubstitutionRules] = useState<SubstitutionRule[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -186,7 +187,6 @@ export default function ProcedureRulesPage() {
   }
 
   async function saveRule() {
-    setMsg(null);
     if (tab === 'compat') {
       const payload = editingId
         ? {
@@ -208,7 +208,8 @@ export default function ProcedureRulesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      setMsg(res.ok ? (editingId ? tc('saved') : t('added')) : tc('failed'));
+      if (res.ok) showSuccess(editingId ? tc('saved') : t('added'));
+      else showApiError({ error: tc('failed') });
     } else if (tab === 'sequence') {
       const payload = editingId
         ? {
@@ -226,7 +227,8 @@ export default function ProcedureRulesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      setMsg(res.ok ? (editingId ? tc('saved') : t('added')) : tc('failed'));
+      if (res.ok) showSuccess(editingId ? tc('saved') : t('added'));
+      else showApiError({ error: tc('failed') });
     } else if (tab === 'rotation') {
       const memberCodes = rotationForm.memberCodes;
       const res = await fetch('/api/admin/procedure-rotation-rules', {
@@ -241,7 +243,8 @@ export default function ProcedureRulesPage() {
           restProcedureCode: rotationForm.restProcedureCode.trim() || null,
         }),
       });
-      setMsg(res.ok ? t('added') : tc('failed'));
+      if (res.ok) showSuccess(t('added'));
+      else showApiError({ error: tc('failed') });
     } else {
       const res = await fetch('/api/admin/procedure-substitution-rules', {
         method: 'POST',
@@ -252,7 +255,8 @@ export default function ProcedureRulesPage() {
           note: substitutionForm.note || null,
         }),
       });
-      setMsg(res.ok ? t('added') : tc('failed'));
+      if (res.ok) showSuccess(t('added'));
+      else showApiError({ error: tc('failed') });
     }
     setOpen(false);
     await load();
@@ -276,7 +280,7 @@ export default function ProcedureRulesPage() {
     const res = await fetch(url, { method: 'DELETE' });
     setDeleteId(null);
     if (!res.ok) {
-      setMsg(tc('failed'));
+      showApiError({ error: tc('failed') });
       return;
     }
     await load();
@@ -307,11 +311,11 @@ export default function ProcedureRulesPage() {
         subtitle={t('subtitle')}
         actions={
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="h-4 w-4" aria-hidden />
             {tc('add')}
           </button>
         }
       />
-      {msg ? <p className="mb-4 text-[13px]">{msg}</p> : null}
       <div className={TAB_STRIP_CLASS}>
         {(
           [

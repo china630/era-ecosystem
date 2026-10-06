@@ -28,9 +28,9 @@ export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) 
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className="space-y-6 pb-10">
+      <div className="space-y-6">
         <div
           className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end justify-between gap-3 px-4 py-3`}
         >
@@ -59,6 +59,6 @@ export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) 
 
         <OpsHomeDashboard date={date} refreshKey={refreshKey} />
       </div>
-    </>
+    </div>
   );
 }

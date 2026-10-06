@@ -137,7 +137,8 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     const path = qIndex >= 0 ? bare.slice(0, qIndex) : bare;
     const query = qIndex >= 0 ? bare.slice(qIndex + 1) : '';
     if (path === '/') return pathname === '/';
-    const pathOk = pathname === path || pathname.startsWith(`${path}/`);
+    // `/reports` is the workspace; sibling pages must not keep that item lit.
+    const pathOk = path === '/reports' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
     if (!pathOk) return false;
     if (!query) {
       if (path === '/settings/integration') {
@@ -283,6 +284,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Banknote,
           items: sectionItems([
             {
+              id: 'fc-desk',
+              href: '/front-cash/desk',
+              labelKey: 'frontCashDesk',
+              icon: Banknote,
+              permission: PERMISSIONS.SCREEN_FRONT_CASH,
+            },
+            {
               id: 'fc-pending',
               href: '/front-cash/pending',
               labelKey: 'pendingSettlement',
@@ -351,13 +359,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'endOfDayLogs',
               icon: FileBarChart,
               permission: PERMISSIONS.SCREEN_NIGHT_AUDIT,
-            },
-            {
-              id: 'na-res-updates',
-              href: '/night-audit/reservation-updates',
-              labelKey: 'reservationUpdates',
-              icon: ClipboardList,
-              permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
               id: 'na-year-end',
@@ -723,24 +724,17 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: Package,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
-          ]),
-        },
-        {
-          id: 'hotel_reports_tools',
-          title: t('reportsTools'),
-          icon: BarChart3,
-          items: sectionItems([
-            {
-              id: 'rep-analytics',
-              href: '/reports/analytics',
-              labelKey: 'analytics',
-              icon: BarChart3,
-              permission: PERMISSIONS.SCREEN_REPORTS,
-            },
             {
               id: 'rep-occ-grid',
               href: '/reports/occupancy/grid',
               labelKey: 'reportsOccupancyGrid',
+              icon: BarChart3,
+              permission: PERMISSIONS.SCREEN_REPORTS,
+            },
+            {
+              id: 'rep-analytics',
+              href: '/reports/analytics',
+              labelKey: 'analytics',
               icon: BarChart3,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },

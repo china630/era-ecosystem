@@ -7,6 +7,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import {
   TemplateResultForm,
@@ -39,7 +41,6 @@ export function VisitCpoePanel({ visitId }: Props) {
   const [metaValues, setMetaValues] = useState<Record<string, string>>({});
   const [lines, setLines] = useState<ResultLineState[]>([]);
   const [entries, setEntries] = useState<CpoeRow[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [printHref, setPrintHref] = useState<string | null>(null);
   const [printOpen, setPrintOpen] = useState(false);
@@ -76,11 +77,10 @@ export function VisitCpoePanel({ visitId }: Props) {
 
   async function save() {
     if (!selected) {
-      setMsg(t("cpoePickTemplate"));
+      showApiError({ error: t("cpoePickTemplate") });
       return;
     }
     setSaving(true);
-    setMsg(null);
     try {
       const payload = buildCpoePayloadSnapshot({
         item: selected,
@@ -96,11 +96,12 @@ export function VisitCpoePanel({ visitId }: Props) {
           payloadJson: JSON.stringify(payload),
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError(data, tc("saveFailed"));
         return;
       }
-      setMsg(t("cpoeSaved"));
+      showSuccess(t("cpoeSaved"));
       await loadEntries();
     } finally {
       setSaving(false);
@@ -156,7 +157,6 @@ export function VisitCpoePanel({ visitId }: Props) {
           {t("cpoeRefresh")}
         </button>
       </div>
-      {msg ? <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
       {entries.length > 0 ? (
         <ul className="space-y-1 text-[12px]">
           {entries.map((e) => (

@@ -18,9 +18,10 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
 
@@ -42,8 +43,6 @@ export default function ExtraTicketsPage() {
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [receiptRef, setReceiptRef] = useState("");
   const [q, setQ] = useState("");
   const [origin, setOrigin] = useState("");
   const qDebounced = useDebouncedValue(q, 300);
@@ -116,24 +115,18 @@ export default function ExtraTicketsPage() {
 
   async function issue(orderIds: string[]) {
     if (!orderIds.length) return;
-    if (!receiptRef.trim()) {
-      setError(t("receiptRequired"));
-      return;
-    }
     setBusy(true);
-    setError(null);
     try {
       const res = await fetch("/api/procedures/issue-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderIds,
-          paymentReceiptRef: receiptRef.trim(),
         }),
       });
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error || t("issueFailed"));
+        showApiError(d, t("issueFailed"));
         return;
       }
       const payload = d.data ?? d;
@@ -146,7 +139,8 @@ export default function ExtraTicketsPage() {
         }
       }
       setSelected(new Set());
-      setReceiptRef("");
+      const receiptNo = payload.paymentReceiptRef as string | undefined;
+      if (receiptNo) showSuccess(t("receiptIssued", { no: receiptNo }));
       await load();
     } finally {
       setBusy(false);
@@ -168,15 +162,7 @@ export default function ExtraTicketsPage() {
             resetLabel={tc("filterReset")}
             onReset={resetFilters}
             actionsExtra={
-              <div className="flex flex-wrap items-end gap-2">
-                <Field
-                  label={t("receiptRef")}
-                  preset="shortText"
-                  value={receiptRef}
-                  onChange={(e) => setReceiptRef(e.target.value)}
-                  placeholder={t("receiptPlaceholder")}
-                />
-                <div className="flex flex-col items-end gap-1 pb-0.5">
+              <div className="flex flex-col items-end gap-1 pb-0.5">
                   {selected.size > 0 ? (
                     <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {t("selectedTotal")}: {selectedTotal.toFixed(2)} AZN
@@ -191,7 +177,6 @@ export default function ExtraTicketsPage() {
                     {t("pay")}
                   </button>
                 </div>
-              </div>
             }
           >
             <Field
@@ -210,9 +195,6 @@ export default function ExtraTicketsPage() {
               emptyLabel={tc("all")}
             />
           </EraListFilterBar>
-        }
-        toolbar={
-          error ? <p className={`px-1 text-sm ${TEXT_DANGER_CLASS}`}>{error}</p> : null
         }
         table={
           <table className={DATA_TABLE_CLASS}>

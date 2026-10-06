@@ -14,7 +14,7 @@ import {
 } from "@/lib/auth/ensure-system-fnb-roles";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import {
-  resolveFnbRoleCode,
+  isSystemFnbRoleCode,
   roleCodeToPinRole,
 } from "@/lib/auth/permissions";
 
@@ -67,16 +67,15 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);
 
-    const roleCode = resolveFnbRoleCode(p.satelliteRole);
-    if (!roleCode) {
-      throw new UnknownSatelliteRoleError(p.satelliteRole);
-    }
+    const code = p.satelliteRole.trim();
     const role = await prisma.role.findFirst({
-      where: { organizationId, code: roleCode },
+      where: { organizationId, code },
     });
     if (!role) throw new UnknownSatelliteRoleError(p.satelliteRole);
 
-    const pinRole = roleCodeToPinRole(roleCode);
+    const pinRole = isSystemFnbRoleCode(role.code)
+      ? roleCodeToPinRole(role.code)
+      : role.code;
     const pin = p.pin ?? "000000";
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const cpEmploymentId = p.cpEmploymentId;

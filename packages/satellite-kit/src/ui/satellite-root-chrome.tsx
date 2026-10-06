@@ -21,7 +21,7 @@ type Props = {
 export async function SatelliteRootChrome({
   children,
   barePublicPrefixes = [],
-  shellClassName = "min-h-screen w-full min-w-0",
+  shellClassName = "flex h-dvh min-h-0 w-full min-w-0 flex-col overflow-hidden",
 }: Props) {
   const pathname = (await headers()).get(ERA_PATHNAME_HEADER) ?? "";
   if (isBarePublicWebPath(pathname, barePublicPrefixes)) {
@@ -31,7 +31,7 @@ export async function SatelliteRootChrome({
   return (
     <div className={shellClassName}>
       <PlatformSessionBarServer />
-      {children}
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }

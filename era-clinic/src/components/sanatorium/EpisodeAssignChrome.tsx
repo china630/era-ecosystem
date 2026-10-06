@@ -97,7 +97,7 @@ export function EpisodeAssignBlocks({
   extrasTitle,
   day1Label,
   onPackagePlus,
-  onExtrasPlus,
+  onExtrasPlus: _onExtrasPlus,
   onDay1,
   day1Busy,
   day1Disabled,
@@ -134,20 +134,9 @@ export function EpisodeAssignBlocks({
           </div>
         </div>
       ) : null}
+      {extrasPending.length > 0 ? (
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold">{extrasTitle}</h3>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly}
-            onClick={onExtrasPlus}
-            aria-label={extrasTitle}
-          >
-            +
-          </button>
-        </div>
-        {extrasPending.length > 0 ? (
+        <h3 className="font-semibold">{extrasTitle}</h3>
           <ul className="space-y-1.5">
             {extrasPending.map((row) => (
               <li
@@ -161,8 +150,8 @@ export function EpisodeAssignBlocks({
               </li>
             ))}
           </ul>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

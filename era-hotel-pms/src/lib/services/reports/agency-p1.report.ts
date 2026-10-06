@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { safePct, safeDiv } from '@/lib/reports/ratio';
 
 function toIso(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -60,7 +61,7 @@ export interface AgencyAnalysisRow {
   agencyName: string;
   roomNights: number;
   revenue: number;
-  avgRate: number;
+  avgRate: number | null;
   commissionPct: number;
   commissionAmount: number;
 }
@@ -93,7 +94,7 @@ export async function queryAgencyAnalysis(from: Date, to: Date): Promise<AgencyA
       agencyName: v.name,
       roomNights: v.nights,
       revenue: Math.round(v.revenue * 100) / 100,
-      avgRate: v.nights > 0 ? Math.round((v.revenue / v.nights) * 100) / 100 : 0,
+      avgRate: safeDiv(v.revenue, v.nights),
       commissionPct: v.commPct,
       commissionAmount: Math.round(v.revenue * v.commPct / 100 * 100) / 100,
     }));
@@ -178,7 +179,7 @@ export interface AgencyMonthlyOccRow {
   agencyName: string;
   month: string;
   roomNights: number;
-  occupancyPct: number;
+  occupancyPct: number | null;
 }
 
 export interface AgencyMonthlyOccResult {
@@ -213,7 +214,7 @@ export async function queryAgencyMonthlyOcc(from: Date, to: Date): Promise<Agenc
         agencyName: v.name,
         month: v.month,
         roomNights: v.nights,
-        occupancyPct: capacity > 0 ? Math.round((v.nights / capacity) * 1000) / 10 : 0,
+        occupancyPct: safePct(v.nights, capacity),
       };
     });
 
@@ -388,8 +389,8 @@ export interface SegmentAnalysisRow {
   segment: string;
   roomNights: number;
   revenue: number;
-  avgRate: number;
-  pctOfTotal: number;
+  avgRate: number | null;
+  pctOfTotal: number | null;
 }
 
 export interface SegmentAnalysisResult {
@@ -421,8 +422,8 @@ export async function querySegmentAnalysis(from: Date, to: Date): Promise<Segmen
       segment,
       roomNights: v.nights,
       revenue: Math.round(v.revenue * 100) / 100,
-      avgRate: v.nights > 0 ? Math.round((v.revenue / v.nights) * 100) / 100 : 0,
-      pctOfTotal: totalNights > 0 ? Math.round((v.nights / totalNights) * 1000) / 10 : 0,
+      avgRate: safeDiv(v.revenue, v.nights),
+      pctOfTotal: safePct(v.nights, totalNights),
     }));
 
   return { rows, totalNights, totalRevenue: Math.round(totalRevenue * 100) / 100 };
@@ -517,7 +518,7 @@ export interface AgencyProfitabilityRow {
   revenue: number;
   commissionAmount: number;
   netRevenue: number;
-  avgNetRate: number;
+  avgNetRate: number | null;
 }
 
 export interface AgencyProfitabilityResult {
@@ -554,7 +555,7 @@ export async function queryAgencyProfitability(from: Date, to: Date): Promise<Ag
         revenue: Math.round(v.revenue * 100) / 100,
         commissionAmount: comm,
         netRevenue: net,
-        avgNetRate: v.nights > 0 ? Math.round((net / v.nights) * 100) / 100 : 0,
+        avgNetRate: safeDiv(net, v.nights),
       };
     });
 

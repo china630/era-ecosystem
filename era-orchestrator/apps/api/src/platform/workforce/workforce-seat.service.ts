@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
 } from "@nestjs/common";
-import { RoleBindingStatus, TariffTier } from "@era365/database";
+import { Prisma, RoleBindingStatus, TariffTier } from "@era365/database";
 import { TARIFF_TIER_LIMITS } from "../../billing/tariff-limits";
 import { resolveOrganizationUuid } from "../../common/organization-id.util";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -89,12 +89,49 @@ export class WorkforceSeatService {
     }
   }
 
+  /**
+   * One row per person in a scope (and per employment). Release marks it REVOKED
+   * and leaves the row, so a later grant must reopen it. A second insert hits
+   * `@@unique([workforceScopeId, globalPersonId])` and surfaces as HTTP 500
+   * after the satellite binding was already saved.
+   */
   async allocateSeat(
     workforceScopeId: string,
     globalPersonId: string,
     employmentId: string,
+    db: Prisma.TransactionClient | PrismaService = this.prisma,
   ) {
-    return this.prisma.workforceSeatAllocation.create({
+    const byPerson = await db.workforceSeatAllocation.findUnique({
+      where: {
+        workforceScopeId_globalPersonId: { workforceScopeId, globalPersonId },
+      },
+    });
+    const existing =
+      byPerson ??
+      (await db.workforceSeatAllocation.findUnique({
+        where: { employmentId },
+      }));
+    if (
+      existing &&
+      existing.status === RoleBindingStatus.ACTIVE &&
+      existing.employmentId === employmentId &&
+      existing.globalPersonId === globalPersonId &&
+      existing.workforceScopeId === workforceScopeId
+    ) {
+      return existing;
+    }
+    if (existing) {
+      return db.workforceSeatAllocation.update({
+        where: { id: existing.id },
+        data: {
+          workforceScopeId,
+          globalPersonId,
+          employmentId,
+          status: RoleBindingStatus.ACTIVE,
+        },
+      });
+    }
+    return db.workforceSeatAllocation.create({
       data: {
         workforceScopeId,
         globalPersonId,

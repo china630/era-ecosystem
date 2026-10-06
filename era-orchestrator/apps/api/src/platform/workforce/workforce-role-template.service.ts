@@ -1,16 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  defaultRoleForSatellite,
-  isValidSatelliteRole,
-  NAFTA_POSITION_ROLE_SEED,
-} from "@era/contracts";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
+import { WorkforceSatelliteRoleCatalogService } from "./workforce-satellite-role-catalog.service";
 
 @Injectable()
 export class WorkforceRoleTemplateService {
@@ -18,6 +10,7 @@ export class WorkforceRoleTemplateService {
     private readonly prisma: PrismaService,
     private readonly scope: WorkforceScopeService,
     private readonly audit: WorkforceAuditService,
+    private readonly catalog: WorkforceSatelliteRoleCatalogService,
   ) {}
 
   async list(organizationId: string, positionId?: string) {
@@ -43,10 +36,11 @@ export class WorkforceRoleTemplateService {
     },
   ) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
-    const role = data.satelliteRole.trim().toUpperCase();
-    if (!isValidSatelliteRole(data.satelliteKey, role)) {
-      throw new BadRequestException(`Invalid role ${role} for ${data.satelliteKey}`);
-    }
+    const role = await this.catalog.assertAssignable(
+      organizationId,
+      data.satelliteKey,
+      data.satelliteRole,
+    );
     const position = await this.prisma.workforcePosition.findFirst({
       where: {
         id: data.positionId,
@@ -102,52 +96,30 @@ export class WorkforceRoleTemplateService {
   async resolveRole(
     positionId: string,
     satelliteKey: string,
+    organizationId: string,
   ): Promise<string> {
     const tmpl = await this.prisma.satelliteRoleTemplate.findFirst({
       where: { positionId, satelliteKey, isDefault: true },
       orderBy: { updatedAt: "desc" },
     });
-    if (tmpl) return tmpl.satelliteRole;
-    const position = await this.prisma.workforcePosition.findUnique({
-      where: { id: positionId },
-    });
-    const name = position?.name.toLowerCase() ?? "";
-    for (const seed of NAFTA_POSITION_ROLE_SEED) {
-      if (
-        seed.satelliteKey === satelliteKey &&
-        name.includes(seed.positionNamePattern.toLowerCase())
-      ) {
-        return seed.satelliteRole;
-      }
+    if (!tmpl) {
+      throw new BadRequestException({
+        code: "SATELLITE_ROLE_UNSET",
+        message: `No ${satelliteKey} role is set for this position`,
+      });
     }
-    return defaultRoleForSatellite(satelliteKey);
+    return this.catalog.assertAssignable(
+      organizationId,
+      satelliteKey,
+      tmpl.satelliteRole,
+    );
   }
 
   async seedDefaultsForPosition(
-    workforceScopeId: string,
-    positionId: string,
-    positionName: string,
+    _workforceScopeId: string,
+    _positionId: string,
+    _positionName: string,
   ) {
-    const name = positionName.toLowerCase();
-    for (const seed of NAFTA_POSITION_ROLE_SEED) {
-      if (!name.includes(seed.positionNamePattern.toLowerCase())) continue;
-      await this.prisma.satelliteRoleTemplate.upsert({
-        where: {
-          positionId_satelliteKey_satelliteRole: {
-            positionId,
-            satelliteKey: seed.satelliteKey,
-            satelliteRole: seed.satelliteRole,
-          },
-        },
-        create: {
-          workforceScopeId,
-          positionId,
-          satelliteKey: seed.satelliteKey,
-          satelliteRole: seed.satelliteRole,
-          isDefault: true,
-        },
-        update: { isDefault: true },
-      });
-    }
+    return;
   }
 }

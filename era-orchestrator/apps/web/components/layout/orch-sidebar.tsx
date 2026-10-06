@@ -42,6 +42,8 @@ import {
   type OpsNavProfile,
 } from "@era/satellite-kit/ui/nav";
 import { useAuth } from "../../lib/auth-context";
+import { useSubscription } from "../../lib/subscription-context";
+import { workforceNavHref } from "../../lib/workforce-packages";
 
 /** Same bypass as `useAuth().can`: platform super admin and org owner pass every screen key. */
 function allowOrch(permission: string, profile: OpsNavProfile): boolean {
@@ -68,6 +70,9 @@ export function OrchSidebar({
   const pathname = usePathname() ?? "";
   const t = useTranslations("nav");
   const { ready, user } = useAuth();
+  const { snapshot } = useSubscription();
+  const wf = (path: string) =>
+    workforceNavHref(path, snapshot ? (snapshot.activeModules ?? []) : null);
   /** The menu paints once the session is known; until then it stays empty. */
   const navProfile = useMemo(
     () => (ready && user ? opsNavProfileFromMe(user) : null),
@@ -155,7 +160,7 @@ export function OrchSidebar({
         />
         {show({ permission: "screen:workspace.me" }) ? (
           <SideNavItem
-            href="/workspace/me"
+            href={wf("/workspace/me")}
             label={t("wfMe")}
             isActive={pathname.startsWith("/workspace/me")}
             icon={Users}
@@ -199,7 +204,7 @@ export function OrchSidebar({
           sectionActive={sections.workforce}
         >
           <SideNavItem
-            href="/workspace/workforce/employments"
+            href={wf("/workspace/workforce/employments")}
             label={t("wfEmployments")}
             isActive={pathname.startsWith("/workspace/workforce/employments")}
             icon={Users}
@@ -207,7 +212,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/group"
+            href={wf("/workspace/workforce/group")}
             label={t("wfGroup")}
             isActive={pathname.startsWith("/workspace/workforce/group")}
             icon={Building2}
@@ -215,7 +220,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/org-structure"
+            href={wf("/workspace/workforce/org-structure")}
             label={t("wfOrgStructure")}
             isActive={pathname.startsWith("/workspace/workforce/org-structure")}
             icon={Network}
@@ -223,7 +228,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/positions"
+            href={wf("/workspace/workforce/positions")}
             label={t("wfPositions")}
             isActive={pathname.startsWith("/workspace/workforce/positions")}
             icon={Tags}
@@ -231,7 +236,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/absences"
+            href={wf("/workspace/workforce/absences")}
             label={t("wfAbsences")}
             isActive={pathname.startsWith("/workspace/workforce/absences")}
             icon={CalendarOff}
@@ -239,7 +244,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/requests"
+            href={wf("/workspace/workforce/requests")}
             label={t("wfRequests")}
             isActive={pathname.startsWith("/workspace/workforce/requests")}
             icon={Inbox}
@@ -247,7 +252,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/vacation-plans"
+            href={wf("/workspace/workforce/vacation-plans")}
             label={t("wfVacationPlans")}
             isActive={pathname.startsWith("/workspace/workforce/vacation-plans")}
             icon={Palmtree}
@@ -255,7 +260,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/personnel-orders"
+            href={wf("/workspace/workforce/personnel-orders")}
             label={t("wfPersonnelOrders")}
             isActive={pathname.startsWith("/workspace/workforce/personnel-orders")}
             icon={Package}
@@ -263,7 +268,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/staff-schedule"
+            href={wf("/workspace/workforce/staff-schedule")}
             label={t("wfStaffSchedule")}
             isActive={pathname.startsWith("/workspace/workforce/staff-schedule")}
             icon={ClipboardList}
@@ -271,7 +276,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/places"
+            href={wf("/workspace/workforce/places")}
             label={t("wfPlaces")}
             isActive={pathname.startsWith("/workspace/workforce/places")}
             icon={MapPin}
@@ -279,7 +284,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/shifts"
+            href={wf("/workspace/workforce/shifts")}
             label={t("wfShifts")}
             isActive={pathname.startsWith("/workspace/workforce/shifts")}
             icon={Clock}
@@ -287,7 +292,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/roster"
+            href={wf("/workspace/workforce/roster")}
             label={t("wfRoster")}
             isActive={pathname.startsWith("/workspace/workforce/roster")}
             icon={CalendarDays}
@@ -295,7 +300,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/attendance"
+            href={wf("/workspace/workforce/attendance")}
             label={t("wfAttendance")}
             isActive={pathname.startsWith("/workspace/workforce/attendance")}
             icon={Fingerprint}
@@ -303,7 +308,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/floor"
+            href={wf("/workspace/workforce/floor")}
             label={t("wfFloor")}
             isActive={pathname.startsWith("/workspace/workforce/floor")}
             icon={LayoutGrid}
@@ -311,7 +316,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/timesheets"
+            href={wf("/workspace/workforce/timesheets")}
             label={t("wfTimesheets")}
             isActive={pathname.startsWith("/workspace/workforce/timesheets")}
             icon={Table2}
@@ -319,7 +324,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/plan-fact"
+            href={wf("/workspace/workforce/plan-fact")}
             label={t("wfPlanFact")}
             isActive={pathname.startsWith("/workspace/workforce/plan-fact")}
             icon={GitCompare}
@@ -333,7 +338,7 @@ export function OrchSidebar({
             sectionActive={pathname.startsWith("/workspace/workforce/security")}
           >
             <SideNavItem
-              href="/workspace/workforce/security"
+              href={wf("/workspace/workforce/security")}
               label={t("wfSecurityMatrix")}
               isActive={
                 pathname === "/workspace/workforce/security" ||
@@ -344,7 +349,7 @@ export function OrchSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/workspace/workforce/security/grants"
+              href={wf("/workspace/workforce/security/grants")}
               label={t("wfSecurityGrants")}
               isActive={pathname.startsWith("/workspace/workforce/security/grants")}
               icon={Shield}
@@ -352,7 +357,7 @@ export function OrchSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/workspace/workforce/security/bindings"
+              href={wf("/workspace/workforce/security/bindings")}
               label={t("wfSecurityBindings")}
               isActive={pathname.startsWith("/workspace/workforce/security/bindings")}
               icon={Users}
@@ -360,7 +365,15 @@ export function OrchSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/workspace/workforce/security/audit"
+              href={wf("/workspace/workforce/security/roles")}
+              label={t("wfSecurityRoles")}
+              isActive={pathname.startsWith("/workspace/workforce/security/roles")}
+              icon={Tags}
+              nested
+              onNavClick={onNavClick}
+            />
+            <SideNavItem
+              href={wf("/workspace/workforce/security/audit")}
               label={t("wfSecurityAudit")}
               isActive={pathname.startsWith("/workspace/workforce/security/audit")}
               icon={ShieldAlert}
@@ -369,7 +382,7 @@ export function OrchSidebar({
             />
           </CollapsibleNavSection>
           <SideNavItem
-            href="/workspace/workforce/export"
+            href={wf("/workspace/workforce/export")}
             label={t("wfExport")}
             isActive={pathname.startsWith("/workspace/workforce/export")}
             icon={Package}
@@ -377,7 +390,7 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/workspace/workforce/migration"
+            href={wf("/workspace/workforce/migration")}
             label={t("wfMigration")}
             isActive={pathname.startsWith("/workspace/workforce/migration")}
             icon={FolderInput}

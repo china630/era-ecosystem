@@ -433,6 +433,12 @@ export type PackageAssignedAgg = {
   paramsLines: string[];
   /** Balance line burned (pool code or procedureCode). */
   packageQuotaCode: string;
+  /** First order in the group, copied onto a paid overflow line. */
+  note?: string;
+  physioFields?: Record<string, unknown> | null;
+  siteIds?: string[];
+  siteApplyMode?: "TURN" | "TOGETHER" | null;
+  siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
 };
 
 /**
@@ -479,7 +485,10 @@ async function loadEpisodeForAssign(
   return episode;
 }
 
-export async function getPackageAssignSnapshot(episodeId: string): Promise<{
+export async function getPackageAssignSnapshot(
+  episodeId: string,
+  locale = "az",
+): Promise<{
   balances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
@@ -492,6 +501,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
     | "NO_PROGRAM_CODE"
     | "NO_ANAMNESIS"
     | "NO_COMPLAINT"
+    | "NO_DIAGNOSIS"
     | "NO_CARE_TEAM"
     | "INSTANTIATE_FAILED"
     | null;
@@ -536,6 +546,7 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
         ? "INSTANTIATE_FAILED"
         : opened.reason === "NO_ANAMNESIS" ||
             opened.reason === "NO_COMPLAINT" ||
+            opened.reason === "NO_DIAGNOSIS" ||
             opened.reason === "NO_CARE_TEAM" ||
             opened.reason === "INSTANTIATE_FAILED"
           ? opened.reason
@@ -617,7 +628,18 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
   const types = await prisma.procedureType.findMany({
     select: { code: true, name: true, needsSite: true },
   });
-  const typeRows = types.map((t) => ({ ...t, active: true as boolean | null }));
+  const { loadCatalogDisplayNameMap } = await import(
+    "@/domain/catalog/catalog-display-name.service"
+  );
+  const catalogNames = await loadCatalogDisplayNameMap(
+    [...types.map((t) => t.code), ...orders.map((o) => o.procedureCode)],
+    locale,
+  );
+  const typeRows = types.map((t) => ({
+    ...t,
+    name: catalogNames.get(t.code) || t.name,
+    active: true as boolean | null,
+  }));
   const patientSex = episode.patientRef?.sex ?? null;
 
   const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
@@ -705,13 +727,29 @@ export async function getPackageAssignSnapshot(episodeId: string): Promise<{
       batchMap.set(key, {
         assignBatchId: o.assignBatchId,
         procedureCode: o.procedureCode,
-        procedureName: o.procedureName,
+        procedureName: catalogNames.get(o.procedureCode) || o.procedureName,
         qty: 1,
         statusKind: consumed ? "consumed" : "active",
         locked,
         paramsLabel: nextLines.join(" · "),
         paramsLines: nextLines,
         packageQuotaCode: quotaCodeOf(o),
+        note: o.note ?? "",
+        physioFields:
+          o.physioFields && typeof o.physioFields === "object" && !Array.isArray(o.physioFields)
+            ? (o.physioFields as Record<string, unknown>)
+            : null,
+        siteIds: o.sites.map((s) => s.siteId),
+        siteApplyMode:
+          o.siteApplyMode === "TURN" || o.siteApplyMode === "TOGETHER" ? o.siteApplyMode : null,
+        siteLaterality: Object.fromEntries(
+          o.sites.map((s) => [
+            s.siteId,
+            s.laterality === "LEFT" || s.laterality === "RIGHT" || s.laterality === "BOTH"
+              ? s.laterality
+              : null,
+          ]),
+        ),
       });
     }
   }

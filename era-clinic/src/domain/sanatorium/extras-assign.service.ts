@@ -2,6 +2,7 @@
  * CLI-57 — paid extras: prescribe → PENDING_PAY → Pay → place + ticket ×3.
  */
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
@@ -11,15 +12,15 @@ import {
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
 import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { postHotelRoomCharge } from "@/lib/billing-router";
 import {
   extraTicketIdForOrder,
   extraTicketPrintPath,
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
-import { postHotelElektrawebOutbox } from "@/lib/elektraweb-outbox-client";
 import {
   getClinicHotelOrganizationId,
   resolveClinicCutoverOrgId,
@@ -113,20 +114,6 @@ export async function remainingPackageQuotaCode(
   return null;
 }
 
-/** A procedure that still has package quota must not be written as a paid extra. */
-async function assertNoRemainingPackageQuota(
-  episodeId: string,
-  procedureCode: string,
-): Promise<void> {
-  const open = await remainingPackageQuotaCode(episodeId, procedureCode);
-  if (!open) return;
-  throw new PackageAssignError(
-    `Procedure ${procedureCode} still has package quota`,
-    "QUOTA_REMAINING",
-    409,
-  );
-}
-
 /** Doctor prescribe: PENDING_PAY only (not on schedule). */
 export async function prescribeExtras(
   episodeId: string,
@@ -142,7 +129,7 @@ export async function prescribeExtras(
 
   for (const line of lines) {
     if (line.qty < 1) continue;
-    await assertNoRemainingPackageQuota(episodeId, line.procedureCode);
+    // Overflow past package quota is a paid extra. Quota no longer blocks the write.
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
       throw new PackageAssignError(
@@ -213,9 +200,25 @@ export async function listExtraUnitPrices(): Promise<Record<string, number>> {
     // listAmount is the retail price; amount stays 0 for package-included SKUs.
     const list = r.listAmount != null ? Number(r.listAmount) : NaN;
     const n = Number.isFinite(list) && list > 0 ? list : Number(r.amount);
-    if (r.code && n > 0) out[r.code] = n;
+    if (!r.code) continue;
+    if (n > 0) out[r.code] = n;
+    else if (!(out[r.code] > 0)) out[r.code] = DEFAULT_OVER_QUOTA_AZN;
   }
   return out;
+}
+
+const PAID_EXTRA_STATUSES = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
+
+/** Paid extras already on the schedule. Not editable from the package modal. */
+export async function listPaidExtras(episodeId: string) {
+  return prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: false,
+      status: { in: [...PAID_EXTRA_STATUSES] },
+    },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
 export async function deletePendingExtra(orderId: string): Promise<void> {
@@ -228,8 +231,9 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
 }
 
 /**
- * Reception Pay: all-or-nothing — charge all → place all → ticket all.
- * Requires paymentReceiptRef (guest payment proof). Walk-in must have receipt; in-house may use folio.
+ * Reception Pay: all-or-nothing — one system receipt for the batch, then charge all → place all.
+ * The receipt number is yyyymmdd-xxx (Baku day, per organization). It is written on every order
+ * and appended to the folio / Elektraweb description.
  * On any charge failure: leave all as PENDING_PAY (rollback status flips).
  */
 export async function payAndScheduleExtras(
@@ -237,20 +241,13 @@ export async function payAndScheduleExtras(
   actorUserId: string,
   organizationId?: string | null,
   opts?: { paymentReceiptRef?: string | null },
-): Promise<{ printPaths: string[]; placed: number; orders: unknown[] }> {
+): Promise<{ printPaths: string[]; placed: number; orders: unknown[]; paymentReceiptRef: string }> {
   if (!orderIds.length) {
     throw new PackageAssignError("No procedures selected", "INVALID", 400);
   }
-  const receipt = opts?.paymentReceiptRef?.trim();
-  if (!receipt) {
-    throw new PackageAssignError(
-      "Payment receipt reference required before Pay",
-      "RECEIPT_REQUIRED",
-      400,
-    );
-  }
 
   const orgId = resolveClinicCutoverOrgId(organizationId);
+  const receipt = await allocateClinicReceiptNo(orgId);
   enterSatelliteTenant({ organizationId: orgId });
 
   const orders = await prisma.procedureOrder.findMany({
@@ -266,8 +263,8 @@ export async function payAndScheduleExtras(
     ? await getClinicHotelOrganizationId(orgId)
     : null;
 
-  // Phase 1: receipt already required. Walk-in without reservation = FO cash already taken (receipt).
-  // In-house without dual-run uses hotel folio when reservationId present.
+  // In-house with a reservation posts MEDICAL onto the hotel folio.
+  // Walk-in without a reservation: receipt only. Zero amount does not call the hotel.
 
   // Phase 2: charge all first; on failure leave PENDING_PAY (nothing placed yet)
   const chargedMeta: Array<{ orderId: string; amount: number; ticketId: string }> = [];
@@ -276,29 +273,23 @@ export async function payAndScheduleExtras(
       const charge = await resolveProcedureCharge(order, { burnQuota: false });
       const amount = charge.amountNet > 0 ? charge.amountNet : Number(order.amountNet);
       const ticketId = extraTicketIdForOrder(order.id);
-      const description = order.procedureName;
+      const description = `${order.procedureName} · çek ${receipt}`;
 
-      if (dualRun && hotelOrganizationId) {
-        await postHotelElektrawebOutbox({
-          hotelOrganizationId,
-          idempotencyKey: `pay-${ticketId}`,
-          patientOrigin: order.patientOrigin === "IN_HOUSE" ? "IN_HOUSE" : "WALK_IN",
+      if (order.patientOrigin === "IN_HOUSE" && !order.reservationId) {
+        throw new PackageAssignError(
+          "In-house extra needs a hotel reservation before the folio charge",
+          "FOLIO_CHARGE_FAILED",
+          502,
+        );
+      }
+      if (order.reservationId && amount > 0) {
+        await postHotelRoomCharge({
+          hotelOrganizationId: hotelOrganizationId ?? undefined,
           reservationId: order.reservationId,
-          procedureCode: order.procedureCode,
-          procedureName: order.procedureName,
           amount,
           description,
+          externalTicketId: `pay-${ticketId}`,
         });
-      } else if (order.reservationId) {
-        const billingTarget = await resolveBillingTarget(order.patientOrigin);
-        if (billingTarget === "HOTEL_FOLIO") {
-          await postHotelRoomCharge({
-            reservationId: order.reservationId,
-            amount,
-            description,
-            externalTicketId: ticketId,
-          });
-        }
       }
       // Walk-in with receipt: FO already collected cash; clinic records receipt only.
       chargedMeta.push({ orderId: order.id, amount, ticketId });
@@ -366,7 +357,7 @@ export async function payAndScheduleExtras(
     { orderIds, placed, printPaths, paymentReceiptRef: receipt },
   );
 
-  return { printPaths, placed, orders: issuedOrders };
+  return { printPaths, placed, orders: issuedOrders, paymentReceiptRef: receipt };
 }
 
 /**

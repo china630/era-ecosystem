@@ -1,11 +1,14 @@
 import { prisma } from '@/lib/prisma';
+import { safePct, safeDiv } from '@/lib/reports/ratio';
+import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
 
 function toIso(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return bakuDateKey(d);
 }
 
+/** Baku midnight as an instant; charge and stay instants are compared against it. */
 function dayStart(iso: string): Date {
-  return new Date(`${iso}T00:00:00.000Z`);
+  return bakuDayBounds(iso).start;
 }
 
 function addDays(d: Date, n: number): Date {
@@ -233,7 +236,7 @@ export interface DefiniteReservationRow {
   checkIn: string;
   checkOut: string;
   nights: number;
-  rate: number;
+  rate: number | null;
   agency: string | null;
   source: string | null;
 }
@@ -276,7 +279,7 @@ export async function queryDefiniteReservation(from: Date, to: Date): Promise<De
       checkIn: toIso(r.checkInDate),
       checkOut: toIso(r.checkOutDate),
       nights,
-      rate: nights > 0 ? Math.round((Number(r.totalAmount) / nights) * 100) / 100 : 0,
+      rate: safeDiv(Number(r.totalAmount), nights),
       agency: r.agency?.name ?? null,
       source: r.source?.name ?? null,
     };
@@ -358,7 +361,7 @@ export async function queryCrmReport(from: Date, to: Date): Promise<CrmReportRes
 export interface GuestDemographicsRow {
   nationality: string;
   guestCount: number;
-  pctOfTotal: number;
+  pctOfTotal: number | null;
 }
 
 export interface GuestDemographicsResult {
@@ -393,7 +396,7 @@ export async function queryGuestDemographics(from: Date, to: Date): Promise<Gues
     .map(([nationality, guestCount]) => ({
       nationality,
       guestCount,
-      pctOfTotal: totalGuests > 0 ? Math.round((guestCount / totalGuests) * 1000) / 10 : 0,
+      pctOfTotal: safePct(guestCount, totalGuests),
     }));
 
   return { rows, totalGuests };

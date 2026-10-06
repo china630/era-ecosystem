@@ -1,93 +1,12 @@
 import { prisma } from '@/lib/prisma';
+import { civilDay, civilWindow, ymdParam } from '@/lib/reports/civil-days';
 
 function toIso(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return ymdParam(d);
 }
 
-function dayStart(iso: string): Date {
-  return new Date(`${iso}T00:00:00.000Z`);
-}
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setUTCDate(r.getUTCDate() + n);
-  return r;
-}
-
-// ── trial-balance (single day, not period) ──
-
-export interface TrialBalanceRow {
-  departmentCode: string;
-  departmentName: string;
-  debit: number;
-  credit: number;
-  balance: number;
-}
-
-export interface TrialBalanceResult {
-  businessDate: string;
-  rows: TrialBalanceRow[];
-  totalDebit: number;
-  totalCredit: number;
-  totalBalance: number;
-}
-
-export async function queryTrialBalance(businessDate: Date): Promise<TrialBalanceResult> {
-  const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
-
-  const charges = await prisma.folioCharge.findMany({
-    where: { businessDate: start },
-    select: {
-      amount: true,
-      department: { select: { code: true, name: true } },
-      revenueCode: { select: { department: { select: { code: true, name: true } } } },
-    },
-  });
-
-  const payments = await prisma.folioPayment.findMany({
-    where: { createdAt: { gte: start, lt: addDays(start, 1) } },
-    select: { amount: true, kind: true },
-  });
-
-  const deptMap = new Map<string, { code: string; name: string; debit: number; credit: number }>();
-  for (const c of charges) {
-    const dept = c.department ?? c.revenueCode?.department;
-    const code = dept?.code ?? 'OTHER';
-    const name = dept?.name ?? 'Other';
-    const e = deptMap.get(code) ?? { code, name, debit: 0, credit: 0 };
-    e.debit += Number(c.amount);
-    deptMap.set(code, e);
-  }
-
-  for (const p of payments) {
-    const code = 'PAYMENTS';
-    const e = deptMap.get(code) ?? { code, name: 'Payments', debit: 0, credit: 0 };
-    if (p.kind === 'REFUND') {
-      e.debit += Number(p.amount);
-    } else {
-      e.credit += Number(p.amount);
-    }
-    deptMap.set(code, e);
-  }
-
-  const rows: TrialBalanceRow[] = [...deptMap.values()]
-    .sort((a, b) => a.code.localeCompare(b.code))
-    .map((d) => ({
-      departmentCode: d.code,
-      departmentName: d.name,
-      debit: Math.round(d.debit * 100) / 100,
-      credit: Math.round(d.credit * 100) / 100,
-      balance: Math.round((d.debit - d.credit) * 100) / 100,
-    }));
-
-  return {
-    businessDate: dateIso,
-    rows,
-    totalDebit: rows.reduce((s, r) => s + r.debit, 0),
-    totalCredit: rows.reduce((s, r) => s + r.credit, 0),
-    totalBalance: rows.reduce((s, r) => s + r.balance, 0),
-  };
+function dayWhere(iso: string): { gte: Date; lt: Date } {
+  return civilWindow(iso, iso);
 }
 
 // ── department-payments ──
@@ -108,12 +27,12 @@ export interface DepartmentPaymentsResult {
 
 export async function queryDepartmentPayments(businessDate: Date): Promise<DepartmentPaymentsResult> {
   const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
+  const day = dayWhere(dateIso);
 
   const payments = await prisma.folioPayment.findMany({
     where: {
       kind: 'PAYMENT',
-      createdAt: { gte: start, lt: addDays(start, 1) },
+      createdAt: day,
     },
     select: {
       amount: true,
@@ -162,11 +81,10 @@ export interface CumulativeRevenueResult {
 }
 
 export async function queryCumulativeRevenue(from: Date, to: Date): Promise<CumulativeRevenueResult> {
-  const windowStart = dayStart(toIso(from));
-  const windowEnd = addDays(dayStart(toIso(to)), 1);
+  const window = civilWindow(toIso(from), toIso(to));
 
   const charges = await prisma.folioCharge.findMany({
-    where: { businessDate: { gte: windowStart, lt: windowEnd } },
+    where: { businessDate: window },
     select: {
       businessDate: true,
       amount: true,
@@ -183,7 +101,7 @@ export async function queryCumulativeRevenue(from: Date, to: Date): Promise<Cumu
     const dept = c.department ?? c.revenueCode?.department;
     const code = dept?.code ?? 'OTHER';
     const name = dept?.name ?? 'Other';
-    const dateStr = toIso(c.businessDate);
+    const dateStr = civilDay(c.businessDate);
 
     if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, new Map());
     const dayDepts = dailyMap.get(dateStr)!;
@@ -228,10 +146,10 @@ export interface DeptCurrencyResult {
 
 export async function queryDeptCurrency(businessDate: Date): Promise<DeptCurrencyResult> {
   const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
+  const day = dayWhere(dateIso);
 
   const charges = await prisma.folioCharge.findMany({
-    where: { businessDate: start },
+    where: { businessDate: day },
     select: {
       amount: true,
       department: { select: { code: true, name: true } },
@@ -240,7 +158,7 @@ export async function queryDeptCurrency(businessDate: Date): Promise<DeptCurrenc
   });
 
   const dailyRates = await prisma.reservationDailyRate.findMany({
-    where: { stayDate: start, currencyCode: { not: 'AZN' } },
+    where: { stayDate: day, currencyCode: { not: 'AZN' } },
     select: {
       amount: true,
       currencyCode: true,
@@ -291,11 +209,11 @@ export interface DiscountsResult {
 
 export async function queryDiscounts(businessDate: Date): Promise<DiscountsResult> {
   const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
+  const day = dayWhere(dateIso);
 
   const charges = await prisma.folioCharge.findMany({
     where: {
-      businessDate: start,
+      businessDate: day,
       amount: { lt: 0 },
     },
     select: {
@@ -345,11 +263,11 @@ export interface TransferredDiscountsResult {
 
 export async function queryTransferredDiscounts(businessDate: Date): Promise<TransferredDiscountsResult> {
   const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
+  const day = dayWhere(dateIso);
 
   const charges = await prisma.folioCharge.findMany({
     where: {
-      businessDate: start,
+      businessDate: day,
       amount: { lt: 0 },
       description: { contains: 'transfer' },
     },
@@ -402,10 +320,10 @@ export interface DeptPivotResult {
 
 export async function queryDeptPivot(businessDate: Date): Promise<DeptPivotResult> {
   const dateIso = toIso(businessDate);
-  const start = dayStart(dateIso);
+  const day = dayWhere(dateIso);
 
   const charges = await prisma.folioCharge.findMany({
-    where: { businessDate: start },
+    where: { businessDate: day },
     select: {
       amount: true,
       department: { select: { code: true, name: true } },

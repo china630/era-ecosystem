@@ -20,11 +20,21 @@ describe("WorkforceRoleTemplateService", () => {
     }),
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
+  const catalog = {
+    assertAssignable: jest.fn(async (_org: string, _key: string, code: string) => {
+      const trimmed = code.trim();
+      if (trimmed === "INVALID_ROLE") {
+        throw new BadRequestException({ code: "SATELLITE_ROLE_UNKNOWN" });
+      }
+      return trimmed;
+    }),
+  };
 
   const svc = new WorkforceRoleTemplateService(
     prisma as never,
     scope as never,
     audit as never,
+    catalog as never,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -35,19 +45,16 @@ describe("WorkforceRoleTemplateService", () => {
     });
 
     await expect(
-      svc.resolveRole("pos1", "industry_clinic"),
+      svc.resolveRole("pos1", "industry_clinic", "org1"),
     ).resolves.toBe("DOCTOR");
   });
 
-  it("resolveRole falls back to Nafta seed pattern for therapist", async () => {
+  it("resolveRole refuses a position with no satellite role", async () => {
     prisma.satelliteRoleTemplate.findFirst.mockResolvedValue(null);
-    prisma.workforcePosition.findUnique.mockResolvedValue({
-      name: "Therapist",
-    });
 
     await expect(
-      svc.resolveRole("pos1", "industry_clinic"),
-    ).resolves.toBe("DOCTOR");
+      svc.resolveRole("pos1", "industry_clinic", "org1"),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it("upsert rejects invalid satellite role", async () => {

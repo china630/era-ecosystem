@@ -6,12 +6,27 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
+const optionalText = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .nullish()
+    .transform((v) => (v === undefined ? undefined : v === null || v.trim() === '' ? null : v.trim()));
+
 const schema = z.object({
   name: z.string().min(1),
   currency: z.string().optional(),
   timezone: z.string().optional(),
-  propertyCode: z.string().min(1),
-  roomCapacity: z.number().int().optional(),
+  propertyCode: z.string().min(1).optional(),
+  roomCapacity: z.number().int().min(0).optional(),
+  bedCapacity: z.number().int().min(0).nullish(),
+  printName: optionalText(200),
+  address: optionalText(500),
+  phone: optionalText(60),
+  email: optionalText(200).refine((v) => v == null || z.string().email().safeParse(v).success, {
+    message: 'Invalid email',
+  }),
+  website: optionalText(200),
 });
 
 export async function GET() {

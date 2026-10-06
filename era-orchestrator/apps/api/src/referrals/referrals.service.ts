@@ -240,10 +240,17 @@ export class ReferralsService {
         amount: true,
       },
     });
-    const now = new Date();
+    const baseByOrg = new Map<string, number>();
     for (const it of items) {
+      baseByOrg.set(
+        it.organizationId,
+        (baseByOrg.get(it.organizationId) ?? 0) + Number(it.amount),
+      );
+    }
+    const now = new Date();
+    for (const [organizationId, baseAmount] of baseByOrg) {
       const referral = await this.prisma.referral.findUnique({
-        where: { organizationId: it.organizationId },
+        where: { organizationId },
         include: { partner: true },
       });
       if (!referral?.isActive) continue;
@@ -256,7 +263,7 @@ export class ReferralsService {
         referral.partner.fixedRatePercent != null
           ? Number(referral.partner.fixedRatePercent)
           : referralCommissionTierRate(referredCount);
-      const amountNum = Number(it.amount) * (rate / 100);
+      const amountNum = baseAmount * (rate / 100);
       const amountAzn = new Prisma.Decimal(Math.round(amountNum * 10000) / 10000);
 
       await this.prisma.referralCommission.upsert({

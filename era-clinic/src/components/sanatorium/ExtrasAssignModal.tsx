@@ -10,6 +10,7 @@ import {
   MODAL_INPUT_CLASS,
   CARD_CONTAINER_CLASS,
   CatalogField,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import {
   PhysioSiteChips,
@@ -146,11 +147,9 @@ export function ExtrasAssignModal({
   const [programs, setPrograms] = useState<PhysioCatalogListItem[]>([]);
   const [substances, setSubstances] = useState<PhysioCatalogListItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const load = useCallback(async () => {
     const [typesRes, pendRes, catRes] = await Promise.all([
-      fetch("/api/procedure-types"),
+      fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`),
       fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`),
       fetch("/api/physio-catalog"),
     ]);
@@ -187,7 +186,7 @@ export function ExtrasAssignModal({
         (data.substances ?? data.data?.substances ?? []) as PhysioCatalogListItem[],
       );
     }
-  }, [episodeId]);
+  }, [episodeId, locale]);
 
   const draftTotal = useMemo(
     () => draft.reduce((s, d) => s + d.amountNet * d.qty, 0),
@@ -203,7 +202,6 @@ export function ExtrasAssignModal({
     setDraft([]);
     setCode("");
     setFormOpen(false);
-    setError(null);
     void load();
   }, [open, load]);
 
@@ -267,7 +265,6 @@ export function ExtrasAssignModal({
       return;
     }
     setBusy(true);
-    setError(null);
     try {
       const res = await fetch(
         `/api/sanatorium/episodes/${episodeId}/extras-prescribe`,
@@ -289,7 +286,7 @@ export function ExtrasAssignModal({
       );
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error ?? "Save failed");
+        showApiError(d, tc("saveFailed"));
         return;
       }
       setDraft([]);
@@ -309,7 +306,7 @@ export function ExtrasAssignModal({
       );
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error ?? "Delete failed");
+        showApiError(d, tc("failed"));
         return;
       }
       await load();
@@ -349,7 +346,6 @@ export function ExtrasAssignModal({
         </div>
       }
     >
-      {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
       <div className="relative mb-4 space-y-2">
         <div className="max-w-md">
           <CatalogField

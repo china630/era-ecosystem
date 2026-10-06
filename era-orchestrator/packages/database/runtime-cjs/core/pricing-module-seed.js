@@ -85,16 +85,23 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
     },
     {
         key: "platform_workforce_base",
-        name: "Workforce Base (headcount meter)",
+        name: "Workforce Essential (2 AZN / person)",
         pricePerMonth: 0,
         sortOrder: 31,
         trialEligibleInTrial: true,
     },
     {
         key: "platform_workforce_pro",
-        name: "Workforce PRO (headcount meter + HRIS)",
+        name: "Workforce Professional (4 AZN / person)",
         pricePerMonth: 0,
         sortOrder: 32,
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "platform_workforce_premium",
+        name: "Workforce Premium (6 AZN / person)",
+        pricePerMonth: 0,
+        sortOrder: 33,
         trialEligibleInTrial: true,
     },
     {
@@ -838,16 +845,18 @@ function sameModuleSet(a, b) {
     const right = new Set(b);
     return a.every((k) => right.has(k));
 }
+/** Trial / constructor plans entitle from `customConfig.modules`, not only `activeModules`. */
 function rewriteCustomConfigModules(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw))
         return null;
-    if (!Array.isArray(raw.modules))
+    const base = raw;
+    if (!Array.isArray(base.modules))
         return null;
-    const modules = raw.modules.filter((m) => typeof m === "string");
+    const modules = base.modules.filter((m) => typeof m === "string");
     const next = (0, pricing_catalog_canon_1.rewriteClinicActiveModules)(modules);
     if (sameModuleSet(modules, next))
         return null;
-    return { ...raw, modules: next };
+    return { ...base, modules: next };
 }
 async function rewriteClinicEntitlementArrays(prisma) {
     const retired = [...pricing_catalog_canon_1.RETIRED_CLINIC_MODULE_KEYS];

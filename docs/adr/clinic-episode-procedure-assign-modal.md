@@ -274,7 +274,7 @@ Exact enum names are implementation choice; semantics required:
 | Decision | Detail |
 |----------|--------|
 | `inPackage` | Explicit boolean on `ProcedureOrder` (not `amountNet <= 0`) for package vs paid |
-| Pay | All-or-nothing selected extras; `paymentReceiptRef` required |
+| Pay | All-or-nothing selected extras; one system receipt `yyyymmdd-xxx` per Pay click (not typed) |
 | Walk-in | Hide package assign block; extras only |
 | Replace | Autocomplete from/to; out-of-package → `PENDING_PAY`; FO manager (`api:procedures.fo_manager`) |
 | Physio | Form overlay (package **and** extras) with sites/fields/**laterality**; params under names in modal + print |

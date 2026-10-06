@@ -63,6 +63,8 @@ export type ListPatientsQuery = {
   episodeStatus?: "OPEN" | "CLOSED" | "ALL";
   page?: number;
   pageSize?: number;
+  sort?: "fullName" | "refCode" | "sex" | "ageYears" | "bloodGroup";
+  sortDir?: "asc" | "desc";
   /**
    * CLI-56 — when set (assigned-only doctor), only patients with this practitioner
    * on an episode care team.
@@ -238,10 +240,24 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
     where.episodes = { some: episodeSome };
   }
 
+  const sortDir = input.sortDir === "asc" ? "asc" : "desc";
+  const orderBy: Prisma.PatientRefOrderByWithRelationInput =
+    input.sort === "fullName"
+      ? { fullName: sortDir }
+      : input.sort === "refCode"
+        ? { refCode: sortDir }
+        : input.sort === "sex"
+          ? { sex: sortDir }
+          : input.sort === "bloodGroup"
+            ? { bloodGroup: sortDir }
+            : input.sort === "ageYears"
+              ? { birthDate: sortDir === "asc" ? "desc" : "asc" }
+              : { createdAt: "desc" };
+
   const [rawRows, total, hotelRooms, programCodes] = await Promise.all([
     prisma.patientRef.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {

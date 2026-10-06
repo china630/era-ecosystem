@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getPackEligibleReports } from '@/lib/reports/catalog';
+import { LetterheadSection } from '@/components/settings/LetterheadSection';
 
 type PricingPolicy = {
   occupancyPricingEnabled: boolean;
@@ -223,6 +224,8 @@ export default function PoliciesPage() {
           </ul>
         </section>
         ) : null}
+
+        {canPrice ? <LetterheadSection /> : null}
 
         {canPack ? (
         <section id="reports" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

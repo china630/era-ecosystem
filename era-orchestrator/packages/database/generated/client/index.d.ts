@@ -109,6 +109,11 @@ export type WorkforcePosition = $Result.DefaultSelection<Prisma.$WorkforcePositi
  */
 export type SatelliteRoleTemplate = $Result.DefaultSelection<Prisma.$SatelliteRoleTemplatePayload>
 /**
+ * Model SatelliteRoleCatalog
+ * Role codes owned by a satellite. The workforce matrix picks from this list.
+ */
+export type SatelliteRoleCatalog = $Result.DefaultSelection<Prisma.$SatelliteRoleCatalogPayload>
+/**
  * Model WorkforceRoleBinding
  * 
  */
@@ -1609,6 +1614,16 @@ export class PrismaClient<
   get satelliteRoleTemplate(): Prisma.SatelliteRoleTemplateDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.satelliteRoleCatalog`: Exposes CRUD operations for the **SatelliteRoleCatalog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SatelliteRoleCatalogs
+    * const satelliteRoleCatalogs = await prisma.satelliteRoleCatalog.findMany()
+    * ```
+    */
+  get satelliteRoleCatalog(): Prisma.SatelliteRoleCatalogDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.workforceRoleBinding`: Exposes CRUD operations for the **WorkforceRoleBinding** model.
     * Example usage:
     * ```ts
@@ -2820,6 +2835,7 @@ export namespace Prisma {
     OrgUnitCommercialLink: 'OrgUnitCommercialLink',
     WorkforcePosition: 'WorkforcePosition',
     SatelliteRoleTemplate: 'SatelliteRoleTemplate',
+    SatelliteRoleCatalog: 'SatelliteRoleCatalog',
     WorkforceRoleBinding: 'WorkforceRoleBinding',
     WorkforceManualGrant: 'WorkforceManualGrant',
     WorkforceSeatAllocation: 'WorkforceSeatAllocation',
@@ -2911,7 +2927,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4318,6 +4334,80 @@ export namespace Prisma {
           count: {
             args: Prisma.SatelliteRoleTemplateCountArgs<ExtArgs>
             result: $Utils.Optional<SatelliteRoleTemplateCountAggregateOutputType> | number
+          }
+        }
+      }
+      SatelliteRoleCatalog: {
+        payload: Prisma.$SatelliteRoleCatalogPayload<ExtArgs>
+        fields: Prisma.SatelliteRoleCatalogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SatelliteRoleCatalogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SatelliteRoleCatalogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          findFirst: {
+            args: Prisma.SatelliteRoleCatalogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SatelliteRoleCatalogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          findMany: {
+            args: Prisma.SatelliteRoleCatalogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>[]
+          }
+          create: {
+            args: Prisma.SatelliteRoleCatalogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          createMany: {
+            args: Prisma.SatelliteRoleCatalogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SatelliteRoleCatalogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>[]
+          }
+          delete: {
+            args: Prisma.SatelliteRoleCatalogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          update: {
+            args: Prisma.SatelliteRoleCatalogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          deleteMany: {
+            args: Prisma.SatelliteRoleCatalogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SatelliteRoleCatalogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SatelliteRoleCatalogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>[]
+          }
+          upsert: {
+            args: Prisma.SatelliteRoleCatalogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteRoleCatalogPayload>
+          }
+          aggregate: {
+            args: Prisma.SatelliteRoleCatalogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSatelliteRoleCatalog>
+          }
+          groupBy: {
+            args: Prisma.SatelliteRoleCatalogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SatelliteRoleCatalogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SatelliteRoleCatalogCountArgs<ExtArgs>
+            result: $Utils.Optional<SatelliteRoleCatalogCountAggregateOutputType> | number
           }
         }
       }
@@ -10072,6 +10162,7 @@ export namespace Prisma {
     orgUnitCommercialLink?: OrgUnitCommercialLinkOmit
     workforcePosition?: WorkforcePositionOmit
     satelliteRoleTemplate?: SatelliteRoleTemplateOmit
+    satelliteRoleCatalog?: SatelliteRoleCatalogOmit
     workforceRoleBinding?: WorkforceRoleBindingOmit
     workforceManualGrant?: WorkforceManualGrantOmit
     workforceSeatAllocation?: WorkforceSeatAllocationOmit
@@ -34103,6 +34194,1045 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteRoleTemplateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SatelliteRoleCatalog
+   */
+
+  export type AggregateSatelliteRoleCatalog = {
+    _count: SatelliteRoleCatalogCountAggregateOutputType | null
+    _min: SatelliteRoleCatalogMinAggregateOutputType | null
+    _max: SatelliteRoleCatalogMaxAggregateOutputType | null
+  }
+
+  export type SatelliteRoleCatalogMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    code: string | null
+    name: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatelliteRoleCatalogMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    code: string | null
+    name: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatelliteRoleCatalogCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    satelliteKey: number
+    code: number
+    name: number
+    active: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SatelliteRoleCatalogMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    code?: true
+    name?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatelliteRoleCatalogMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    code?: true
+    name?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatelliteRoleCatalogCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    code?: true
+    name?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SatelliteRoleCatalogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatelliteRoleCatalog to aggregate.
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteRoleCatalogs to fetch.
+     */
+    orderBy?: SatelliteRoleCatalogOrderByWithRelationInput | SatelliteRoleCatalogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SatelliteRoleCatalogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteRoleCatalogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteRoleCatalogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SatelliteRoleCatalogs
+    **/
+    _count?: true | SatelliteRoleCatalogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SatelliteRoleCatalogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SatelliteRoleCatalogMaxAggregateInputType
+  }
+
+  export type GetSatelliteRoleCatalogAggregateType<T extends SatelliteRoleCatalogAggregateArgs> = {
+        [P in keyof T & keyof AggregateSatelliteRoleCatalog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSatelliteRoleCatalog[P]>
+      : GetScalarType<T[P], AggregateSatelliteRoleCatalog[P]>
+  }
+
+
+
+
+  export type SatelliteRoleCatalogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SatelliteRoleCatalogWhereInput
+    orderBy?: SatelliteRoleCatalogOrderByWithAggregationInput | SatelliteRoleCatalogOrderByWithAggregationInput[]
+    by: SatelliteRoleCatalogScalarFieldEnum[] | SatelliteRoleCatalogScalarFieldEnum
+    having?: SatelliteRoleCatalogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SatelliteRoleCatalogCountAggregateInputType | true
+    _min?: SatelliteRoleCatalogMinAggregateInputType
+    _max?: SatelliteRoleCatalogMaxAggregateInputType
+  }
+
+  export type SatelliteRoleCatalogGroupByOutputType = {
+    id: string
+    organizationId: string
+    satelliteKey: string
+    code: string
+    name: string
+    active: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: SatelliteRoleCatalogCountAggregateOutputType | null
+    _min: SatelliteRoleCatalogMinAggregateOutputType | null
+    _max: SatelliteRoleCatalogMaxAggregateOutputType | null
+  }
+
+  type GetSatelliteRoleCatalogGroupByPayload<T extends SatelliteRoleCatalogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SatelliteRoleCatalogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SatelliteRoleCatalogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SatelliteRoleCatalogGroupByOutputType[P]>
+            : GetScalarType<T[P], SatelliteRoleCatalogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SatelliteRoleCatalogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    code?: boolean
+    name?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["satelliteRoleCatalog"]>
+
+  export type SatelliteRoleCatalogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    code?: boolean
+    name?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["satelliteRoleCatalog"]>
+
+  export type SatelliteRoleCatalogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    code?: boolean
+    name?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["satelliteRoleCatalog"]>
+
+  export type SatelliteRoleCatalogSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    code?: boolean
+    name?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SatelliteRoleCatalogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "code" | "name" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["satelliteRoleCatalog"]>
+
+  export type $SatelliteRoleCatalogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SatelliteRoleCatalog"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      satelliteKey: string
+      code: string
+      name: string
+      active: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["satelliteRoleCatalog"]>
+    composites: {}
+  }
+
+  type SatelliteRoleCatalogGetPayload<S extends boolean | null | undefined | SatelliteRoleCatalogDefaultArgs> = $Result.GetResult<Prisma.$SatelliteRoleCatalogPayload, S>
+
+  type SatelliteRoleCatalogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SatelliteRoleCatalogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SatelliteRoleCatalogCountAggregateInputType | true
+    }
+
+  export interface SatelliteRoleCatalogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SatelliteRoleCatalog'], meta: { name: 'SatelliteRoleCatalog' } }
+    /**
+     * Find zero or one SatelliteRoleCatalog that matches the filter.
+     * @param {SatelliteRoleCatalogFindUniqueArgs} args - Arguments to find a SatelliteRoleCatalog
+     * @example
+     * // Get one SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SatelliteRoleCatalogFindUniqueArgs>(args: SelectSubset<T, SatelliteRoleCatalogFindUniqueArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SatelliteRoleCatalog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SatelliteRoleCatalogFindUniqueOrThrowArgs} args - Arguments to find a SatelliteRoleCatalog
+     * @example
+     * // Get one SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SatelliteRoleCatalogFindUniqueOrThrowArgs>(args: SelectSubset<T, SatelliteRoleCatalogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatelliteRoleCatalog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogFindFirstArgs} args - Arguments to find a SatelliteRoleCatalog
+     * @example
+     * // Get one SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SatelliteRoleCatalogFindFirstArgs>(args?: SelectSubset<T, SatelliteRoleCatalogFindFirstArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatelliteRoleCatalog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogFindFirstOrThrowArgs} args - Arguments to find a SatelliteRoleCatalog
+     * @example
+     * // Get one SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SatelliteRoleCatalogFindFirstOrThrowArgs>(args?: SelectSubset<T, SatelliteRoleCatalogFindFirstOrThrowArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SatelliteRoleCatalogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SatelliteRoleCatalogs
+     * const satelliteRoleCatalogs = await prisma.satelliteRoleCatalog.findMany()
+     * 
+     * // Get first 10 SatelliteRoleCatalogs
+     * const satelliteRoleCatalogs = await prisma.satelliteRoleCatalog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const satelliteRoleCatalogWithIdOnly = await prisma.satelliteRoleCatalog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SatelliteRoleCatalogFindManyArgs>(args?: SelectSubset<T, SatelliteRoleCatalogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SatelliteRoleCatalog.
+     * @param {SatelliteRoleCatalogCreateArgs} args - Arguments to create a SatelliteRoleCatalog.
+     * @example
+     * // Create one SatelliteRoleCatalog
+     * const SatelliteRoleCatalog = await prisma.satelliteRoleCatalog.create({
+     *   data: {
+     *     // ... data to create a SatelliteRoleCatalog
+     *   }
+     * })
+     * 
+     */
+    create<T extends SatelliteRoleCatalogCreateArgs>(args: SelectSubset<T, SatelliteRoleCatalogCreateArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SatelliteRoleCatalogs.
+     * @param {SatelliteRoleCatalogCreateManyArgs} args - Arguments to create many SatelliteRoleCatalogs.
+     * @example
+     * // Create many SatelliteRoleCatalogs
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SatelliteRoleCatalogCreateManyArgs>(args?: SelectSubset<T, SatelliteRoleCatalogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SatelliteRoleCatalogs and returns the data saved in the database.
+     * @param {SatelliteRoleCatalogCreateManyAndReturnArgs} args - Arguments to create many SatelliteRoleCatalogs.
+     * @example
+     * // Create many SatelliteRoleCatalogs
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SatelliteRoleCatalogs and only return the `id`
+     * const satelliteRoleCatalogWithIdOnly = await prisma.satelliteRoleCatalog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SatelliteRoleCatalogCreateManyAndReturnArgs>(args?: SelectSubset<T, SatelliteRoleCatalogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SatelliteRoleCatalog.
+     * @param {SatelliteRoleCatalogDeleteArgs} args - Arguments to delete one SatelliteRoleCatalog.
+     * @example
+     * // Delete one SatelliteRoleCatalog
+     * const SatelliteRoleCatalog = await prisma.satelliteRoleCatalog.delete({
+     *   where: {
+     *     // ... filter to delete one SatelliteRoleCatalog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SatelliteRoleCatalogDeleteArgs>(args: SelectSubset<T, SatelliteRoleCatalogDeleteArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SatelliteRoleCatalog.
+     * @param {SatelliteRoleCatalogUpdateArgs} args - Arguments to update one SatelliteRoleCatalog.
+     * @example
+     * // Update one SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SatelliteRoleCatalogUpdateArgs>(args: SelectSubset<T, SatelliteRoleCatalogUpdateArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SatelliteRoleCatalogs.
+     * @param {SatelliteRoleCatalogDeleteManyArgs} args - Arguments to filter SatelliteRoleCatalogs to delete.
+     * @example
+     * // Delete a few SatelliteRoleCatalogs
+     * const { count } = await prisma.satelliteRoleCatalog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SatelliteRoleCatalogDeleteManyArgs>(args?: SelectSubset<T, SatelliteRoleCatalogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatelliteRoleCatalogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SatelliteRoleCatalogs
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SatelliteRoleCatalogUpdateManyArgs>(args: SelectSubset<T, SatelliteRoleCatalogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatelliteRoleCatalogs and returns the data updated in the database.
+     * @param {SatelliteRoleCatalogUpdateManyAndReturnArgs} args - Arguments to update many SatelliteRoleCatalogs.
+     * @example
+     * // Update many SatelliteRoleCatalogs
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SatelliteRoleCatalogs and only return the `id`
+     * const satelliteRoleCatalogWithIdOnly = await prisma.satelliteRoleCatalog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SatelliteRoleCatalogUpdateManyAndReturnArgs>(args: SelectSubset<T, SatelliteRoleCatalogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SatelliteRoleCatalog.
+     * @param {SatelliteRoleCatalogUpsertArgs} args - Arguments to update or create a SatelliteRoleCatalog.
+     * @example
+     * // Update or create a SatelliteRoleCatalog
+     * const satelliteRoleCatalog = await prisma.satelliteRoleCatalog.upsert({
+     *   create: {
+     *     // ... data to create a SatelliteRoleCatalog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SatelliteRoleCatalog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SatelliteRoleCatalogUpsertArgs>(args: SelectSubset<T, SatelliteRoleCatalogUpsertArgs<ExtArgs>>): Prisma__SatelliteRoleCatalogClient<$Result.GetResult<Prisma.$SatelliteRoleCatalogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SatelliteRoleCatalogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogCountArgs} args - Arguments to filter SatelliteRoleCatalogs to count.
+     * @example
+     * // Count the number of SatelliteRoleCatalogs
+     * const count = await prisma.satelliteRoleCatalog.count({
+     *   where: {
+     *     // ... the filter for the SatelliteRoleCatalogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends SatelliteRoleCatalogCountArgs>(
+      args?: Subset<T, SatelliteRoleCatalogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SatelliteRoleCatalogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SatelliteRoleCatalog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SatelliteRoleCatalogAggregateArgs>(args: Subset<T, SatelliteRoleCatalogAggregateArgs>): Prisma.PrismaPromise<GetSatelliteRoleCatalogAggregateType<T>>
+
+    /**
+     * Group by SatelliteRoleCatalog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteRoleCatalogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SatelliteRoleCatalogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SatelliteRoleCatalogGroupByArgs['orderBy'] }
+        : { orderBy?: SatelliteRoleCatalogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SatelliteRoleCatalogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSatelliteRoleCatalogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SatelliteRoleCatalog model
+   */
+  readonly fields: SatelliteRoleCatalogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SatelliteRoleCatalog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SatelliteRoleCatalogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SatelliteRoleCatalog model
+   */
+  interface SatelliteRoleCatalogFieldRefs {
+    readonly id: FieldRef<"SatelliteRoleCatalog", 'String'>
+    readonly organizationId: FieldRef<"SatelliteRoleCatalog", 'String'>
+    readonly satelliteKey: FieldRef<"SatelliteRoleCatalog", 'String'>
+    readonly code: FieldRef<"SatelliteRoleCatalog", 'String'>
+    readonly name: FieldRef<"SatelliteRoleCatalog", 'String'>
+    readonly active: FieldRef<"SatelliteRoleCatalog", 'Boolean'>
+    readonly createdAt: FieldRef<"SatelliteRoleCatalog", 'DateTime'>
+    readonly updatedAt: FieldRef<"SatelliteRoleCatalog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SatelliteRoleCatalog findUnique
+   */
+  export type SatelliteRoleCatalogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter, which SatelliteRoleCatalog to fetch.
+     */
+    where: SatelliteRoleCatalogWhereUniqueInput
+  }
+
+  /**
+   * SatelliteRoleCatalog findUniqueOrThrow
+   */
+  export type SatelliteRoleCatalogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter, which SatelliteRoleCatalog to fetch.
+     */
+    where: SatelliteRoleCatalogWhereUniqueInput
+  }
+
+  /**
+   * SatelliteRoleCatalog findFirst
+   */
+  export type SatelliteRoleCatalogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter, which SatelliteRoleCatalog to fetch.
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteRoleCatalogs to fetch.
+     */
+    orderBy?: SatelliteRoleCatalogOrderByWithRelationInput | SatelliteRoleCatalogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatelliteRoleCatalogs.
+     */
+    cursor?: SatelliteRoleCatalogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteRoleCatalogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteRoleCatalogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteRoleCatalogs.
+     */
+    distinct?: SatelliteRoleCatalogScalarFieldEnum | SatelliteRoleCatalogScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteRoleCatalog findFirstOrThrow
+   */
+  export type SatelliteRoleCatalogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter, which SatelliteRoleCatalog to fetch.
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteRoleCatalogs to fetch.
+     */
+    orderBy?: SatelliteRoleCatalogOrderByWithRelationInput | SatelliteRoleCatalogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatelliteRoleCatalogs.
+     */
+    cursor?: SatelliteRoleCatalogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteRoleCatalogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteRoleCatalogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteRoleCatalogs.
+     */
+    distinct?: SatelliteRoleCatalogScalarFieldEnum | SatelliteRoleCatalogScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteRoleCatalog findMany
+   */
+  export type SatelliteRoleCatalogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter, which SatelliteRoleCatalogs to fetch.
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteRoleCatalogs to fetch.
+     */
+    orderBy?: SatelliteRoleCatalogOrderByWithRelationInput | SatelliteRoleCatalogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SatelliteRoleCatalogs.
+     */
+    cursor?: SatelliteRoleCatalogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteRoleCatalogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteRoleCatalogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteRoleCatalogs.
+     */
+    distinct?: SatelliteRoleCatalogScalarFieldEnum | SatelliteRoleCatalogScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteRoleCatalog create
+   */
+  export type SatelliteRoleCatalogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SatelliteRoleCatalog.
+     */
+    data: XOR<SatelliteRoleCatalogCreateInput, SatelliteRoleCatalogUncheckedCreateInput>
+  }
+
+  /**
+   * SatelliteRoleCatalog createMany
+   */
+  export type SatelliteRoleCatalogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SatelliteRoleCatalogs.
+     */
+    data: SatelliteRoleCatalogCreateManyInput | SatelliteRoleCatalogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SatelliteRoleCatalog createManyAndReturn
+   */
+  export type SatelliteRoleCatalogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * The data used to create many SatelliteRoleCatalogs.
+     */
+    data: SatelliteRoleCatalogCreateManyInput | SatelliteRoleCatalogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SatelliteRoleCatalog update
+   */
+  export type SatelliteRoleCatalogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SatelliteRoleCatalog.
+     */
+    data: XOR<SatelliteRoleCatalogUpdateInput, SatelliteRoleCatalogUncheckedUpdateInput>
+    /**
+     * Choose, which SatelliteRoleCatalog to update.
+     */
+    where: SatelliteRoleCatalogWhereUniqueInput
+  }
+
+  /**
+   * SatelliteRoleCatalog updateMany
+   */
+  export type SatelliteRoleCatalogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SatelliteRoleCatalogs.
+     */
+    data: XOR<SatelliteRoleCatalogUpdateManyMutationInput, SatelliteRoleCatalogUncheckedUpdateManyInput>
+    /**
+     * Filter which SatelliteRoleCatalogs to update
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * Limit how many SatelliteRoleCatalogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatelliteRoleCatalog updateManyAndReturn
+   */
+  export type SatelliteRoleCatalogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * The data used to update SatelliteRoleCatalogs.
+     */
+    data: XOR<SatelliteRoleCatalogUpdateManyMutationInput, SatelliteRoleCatalogUncheckedUpdateManyInput>
+    /**
+     * Filter which SatelliteRoleCatalogs to update
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * Limit how many SatelliteRoleCatalogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatelliteRoleCatalog upsert
+   */
+  export type SatelliteRoleCatalogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SatelliteRoleCatalog to update in case it exists.
+     */
+    where: SatelliteRoleCatalogWhereUniqueInput
+    /**
+     * In case the SatelliteRoleCatalog found by the `where` argument doesn't exist, create a new SatelliteRoleCatalog with this data.
+     */
+    create: XOR<SatelliteRoleCatalogCreateInput, SatelliteRoleCatalogUncheckedCreateInput>
+    /**
+     * In case the SatelliteRoleCatalog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SatelliteRoleCatalogUpdateInput, SatelliteRoleCatalogUncheckedUpdateInput>
+  }
+
+  /**
+   * SatelliteRoleCatalog delete
+   */
+  export type SatelliteRoleCatalogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
+    /**
+     * Filter which SatelliteRoleCatalog to delete.
+     */
+    where: SatelliteRoleCatalogWhereUniqueInput
+  }
+
+  /**
+   * SatelliteRoleCatalog deleteMany
+   */
+  export type SatelliteRoleCatalogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatelliteRoleCatalogs to delete
+     */
+    where?: SatelliteRoleCatalogWhereInput
+    /**
+     * Limit how many SatelliteRoleCatalogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatelliteRoleCatalog without action
+   */
+  export type SatelliteRoleCatalogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteRoleCatalog
+     */
+    select?: SatelliteRoleCatalogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteRoleCatalog
+     */
+    omit?: SatelliteRoleCatalogOmit<ExtArgs> | null
   }
 
 
@@ -124483,6 +125613,20 @@ export namespace Prisma {
   export type SatelliteRoleTemplateScalarFieldEnum = (typeof SatelliteRoleTemplateScalarFieldEnum)[keyof typeof SatelliteRoleTemplateScalarFieldEnum]
 
 
+  export const SatelliteRoleCatalogScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    satelliteKey: 'satelliteKey',
+    code: 'code',
+    name: 'name',
+    active: 'active',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SatelliteRoleCatalogScalarFieldEnum = (typeof SatelliteRoleCatalogScalarFieldEnum)[keyof typeof SatelliteRoleCatalogScalarFieldEnum]
+
+
   export const WorkforceRoleBindingScalarFieldEnum: {
     id: 'id',
     employmentId: 'employmentId',
@@ -128170,6 +129314,74 @@ export namespace Prisma {
     isDefault?: BoolWithAggregatesFilter<"SatelliteRoleTemplate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"SatelliteRoleTemplate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SatelliteRoleTemplate"> | Date | string
+  }
+
+  export type SatelliteRoleCatalogWhereInput = {
+    AND?: SatelliteRoleCatalogWhereInput | SatelliteRoleCatalogWhereInput[]
+    OR?: SatelliteRoleCatalogWhereInput[]
+    NOT?: SatelliteRoleCatalogWhereInput | SatelliteRoleCatalogWhereInput[]
+    id?: UuidFilter<"SatelliteRoleCatalog"> | string
+    organizationId?: UuidFilter<"SatelliteRoleCatalog"> | string
+    satelliteKey?: StringFilter<"SatelliteRoleCatalog"> | string
+    code?: StringFilter<"SatelliteRoleCatalog"> | string
+    name?: StringFilter<"SatelliteRoleCatalog"> | string
+    active?: BoolFilter<"SatelliteRoleCatalog"> | boolean
+    createdAt?: DateTimeFilter<"SatelliteRoleCatalog"> | Date | string
+    updatedAt?: DateTimeFilter<"SatelliteRoleCatalog"> | Date | string
+  }
+
+  export type SatelliteRoleCatalogOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteRoleCatalogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_satelliteKey_code?: SatelliteRoleCatalogOrganizationIdSatelliteKeyCodeCompoundUniqueInput
+    AND?: SatelliteRoleCatalogWhereInput | SatelliteRoleCatalogWhereInput[]
+    OR?: SatelliteRoleCatalogWhereInput[]
+    NOT?: SatelliteRoleCatalogWhereInput | SatelliteRoleCatalogWhereInput[]
+    organizationId?: UuidFilter<"SatelliteRoleCatalog"> | string
+    satelliteKey?: StringFilter<"SatelliteRoleCatalog"> | string
+    code?: StringFilter<"SatelliteRoleCatalog"> | string
+    name?: StringFilter<"SatelliteRoleCatalog"> | string
+    active?: BoolFilter<"SatelliteRoleCatalog"> | boolean
+    createdAt?: DateTimeFilter<"SatelliteRoleCatalog"> | Date | string
+    updatedAt?: DateTimeFilter<"SatelliteRoleCatalog"> | Date | string
+  }, "id" | "organizationId_satelliteKey_code">
+
+  export type SatelliteRoleCatalogOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SatelliteRoleCatalogCountOrderByAggregateInput
+    _max?: SatelliteRoleCatalogMaxOrderByAggregateInput
+    _min?: SatelliteRoleCatalogMinOrderByAggregateInput
+  }
+
+  export type SatelliteRoleCatalogScalarWhereWithAggregatesInput = {
+    AND?: SatelliteRoleCatalogScalarWhereWithAggregatesInput | SatelliteRoleCatalogScalarWhereWithAggregatesInput[]
+    OR?: SatelliteRoleCatalogScalarWhereWithAggregatesInput[]
+    NOT?: SatelliteRoleCatalogScalarWhereWithAggregatesInput | SatelliteRoleCatalogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SatelliteRoleCatalog"> | string
+    organizationId?: UuidWithAggregatesFilter<"SatelliteRoleCatalog"> | string
+    satelliteKey?: StringWithAggregatesFilter<"SatelliteRoleCatalog"> | string
+    code?: StringWithAggregatesFilter<"SatelliteRoleCatalog"> | string
+    name?: StringWithAggregatesFilter<"SatelliteRoleCatalog"> | string
+    active?: BoolWithAggregatesFilter<"SatelliteRoleCatalog"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"SatelliteRoleCatalog"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SatelliteRoleCatalog"> | Date | string
   }
 
   export type WorkforceRoleBindingWhereInput = {
@@ -136436,6 +137648,83 @@ export namespace Prisma {
     satelliteKey?: StringFieldUpdateOperationsInput | string
     satelliteRole?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteRoleCatalogCreateInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    code: string
+    name: string
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteRoleCatalogUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    code: string
+    name: string
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteRoleCatalogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteRoleCatalogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteRoleCatalogCreateManyInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    code: string
+    name: string
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteRoleCatalogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteRoleCatalogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -145263,6 +146552,45 @@ export namespace Prisma {
     satelliteKey?: SortOrder
     satelliteRole?: SortOrder
     isDefault?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteRoleCatalogOrganizationIdSatelliteKeyCodeCompoundUniqueInput = {
+    organizationId: string
+    satelliteKey: string
+    code: string
+  }
+
+  export type SatelliteRoleCatalogCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteRoleCatalogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteRoleCatalogMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }

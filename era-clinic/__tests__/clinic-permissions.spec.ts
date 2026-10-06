@@ -47,7 +47,11 @@ describe("clinic default permissions", () => {
   });
 
   it("nav screen permissions align with role defaults", () => {
-    for (const entry of [...CLINIC_TOP_NAV, ...CLINIC_NAV]) {
+    const entries = [...CLINIC_TOP_NAV, ...CLINIC_NAV].flatMap((entry) => [
+      entry,
+      ...(entry.children ?? []),
+    ]);
+    for (const entry of entries) {
       if (!entry.permission) continue;
       // Every configurable ops role that should see the screen holds the permission in defaults
       // (CLINIC_ADMIN holds ALL). Spot-check: permission appears in at least one non-admin default
@@ -83,6 +87,12 @@ describe("clinic default permissions", () => {
       CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
     );
     expect(routePermission("/admin/access")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+    );
+    expect(routePermission("/admin/users")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+    );
+    expect(routePermission("/admin/logins")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
     );
     expect(routePermission("/admin/diagnostic-catalog")).toBe(

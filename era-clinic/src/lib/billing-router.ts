@@ -98,13 +98,18 @@ export async function postHotelRoomCharge(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel room charge");
   }
+  const ticket = input.externalTicketId.trim();
+  const ticketIsUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      ticket,
+    );
   const res = await fetch(`${base}/api/pos/room-charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-pos-bridge-secret": secret,
       "x-era-organization-id": hotelOrganizationId,
-      "Idempotency-Key": input.externalTicketId,
+      "Idempotency-Key": ticket,
     },
     body: JSON.stringify({
       organizationId: hotelOrganizationId,
@@ -113,7 +118,7 @@ export async function postHotelRoomCharge(input: {
       revenueCode: "MEDICAL",
       amount: input.amount,
       description: input.description,
-      externalTicketId: input.externalTicketId,
+      ...(ticketIsUuid ? { externalTicketId: ticket } : { ticketNumber: ticket }),
     }),
     signal: AbortSignal.timeout(15000),
   });

@@ -22,6 +22,8 @@ describe("computeTrialExpiresEndOfMonthBaku via trial-package", () => {
 describe("DEFAULT_TRIAL_MODULE_SLUGS", () => {
   it("includes platform_workforce for Nafta CP hire path", () => {
     expect(new Set(DEFAULT_TRIAL_MODULE_SLUGS).has("platform_workforce")).toBe(true);
+    expect(new Set(DEFAULT_TRIAL_MODULE_SLUGS).has("platform_workforce_base")).toBe(true);
+    expect(new Set(DEFAULT_TRIAL_MODULE_SLUGS).has("platform_workforce_premium")).toBe(false);
   });
 
   it("excludes paid government and compliance add-ons", () => {

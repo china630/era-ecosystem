@@ -25,11 +25,13 @@ import {
 import { WorkforceAbsencesService } from "./workforce-absences.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceOrgScopeService } from "./workforce-org-scope.service";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 @ApiTags("platform-workforce-absences")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/absences")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("absence")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceAbsencesController {
   constructor(
     private readonly absences: WorkforceAbsencesService,

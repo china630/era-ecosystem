@@ -62,6 +62,21 @@ export async function GET(
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
     const episode = await getEpisode(id);
+    if (episode?.programInstance?.procedureLines?.length) {
+      const { countEntitlementCompleted } = await import(
+        "@/domain/sanatorium/entitlement-usage.service"
+      );
+      const lines = await Promise.all(
+        episode.programInstance.procedureLines.map(async (line) => ({
+          ...line,
+          quotaCompleted: await countEntitlementCompleted({
+            episodeId: id,
+            quotaCode: line.procedureCode,
+          }),
+        })),
+      );
+      episode.programInstance.procedureLines = lines;
+    }
     return jsonOk(episode);
   } catch (err) {
     return handleRouteError(err);

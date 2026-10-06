@@ -9,9 +9,19 @@ type Props = {
   patientId: string | null;
   open: boolean;
   onClose: () => void;
+  panel?: string | null;
+  initialEpisodeId?: string | null;
+  onOpenDayPlan?: (episodeId: string) => void;
 };
 
-export function PatientCardModal({ patientId, open, onClose }: Props) {
+export function PatientCardModal({
+  patientId,
+  open,
+  onClose,
+  panel,
+  initialEpisodeId,
+  onOpenDayPlan,
+}: Props) {
   const t = useTranslations("patientRegistry");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
 
@@ -22,12 +32,15 @@ export function PatientCardModal({ patientId, open, onClose }: Props) {
       open={open}
       title={patient?.fullName ?? t("openCard")}
       onClose={onClose}
-      maxWidthClass="max-w-4xl"
+      maxWidthClass="max-w-4xl w-full max-h-[90vh]"
     >
       <PatientCardBody
         patientId={patientId}
         showBackLink={false}
         onPatientLoaded={setPatient}
+        panel={panel}
+        initialEpisodeId={initialEpisodeId}
+        onOpenDayPlan={onOpenDayPlan}
       />
     </ModalShell>
   );

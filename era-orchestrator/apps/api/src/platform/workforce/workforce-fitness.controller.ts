@@ -19,6 +19,7 @@ import {
 } from "class-validator";
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
@@ -61,7 +62,8 @@ class AttachFitnessDto {
 @ApiTags("platform-workforce-fitness")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("fitness")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceFitnessController {
   constructor(private readonly fitness: WorkforceFitnessService) {}
 

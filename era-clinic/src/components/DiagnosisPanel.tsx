@@ -7,7 +7,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   FieldSelect,
@@ -17,6 +17,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { IcdPicker } from "@/components/IcdPicker";
 import { authorLabelFrom } from "@/domain/staff/practitioner-label";
@@ -47,6 +48,9 @@ type Props = {
   hideTitle?: boolean;
   /** When true, parent renders the add button (use ref.openCreate). */
   hideAddButton?: boolean;
+  onCount?: (count: number) => void;
+  /** Fired when a new diagnosis opens the day-1 package. */
+  onDay1Program?: (result: unknown) => void;
 };
 
 export type DiagnosisPanelHandle = {
@@ -72,6 +76,8 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       readOnly = false,
       hideTitle = false,
       hideAddButton = false,
+      onCount,
+      onDay1Program,
     },
     ref,
   ) {
@@ -87,13 +93,14 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     const [kind, setKind] = useState("ADMISSION");
     const [chapter, setChapter] = useState("");
     const [busy, setBusy] = useState(false);
-    const [msg, setMsg] = useState("");
 
     const load = useCallback(async () => {
       const res = await fetch(apiBase);
       const data = await res.json();
-      setItems(data.items ?? data.data?.items ?? []);
-    }, [apiBase]);
+      const next = data.items ?? data.data?.items ?? [];
+      setItems(next);
+      onCount?.(Array.isArray(next) ? next.length : 0);
+    }, [apiBase, onCount]);
 
     useEffect(() => {
       void load();
@@ -106,7 +113,6 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       setRole("PRIMARY");
       setKind("ADMISSION");
       setChapter("");
-      setMsg("");
       setOpen(true);
     }
 
@@ -119,17 +125,15 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       setRole(row.role ?? "PRIMARY");
       setKind(row.kind ?? "ADMISSION");
       setChapter("");
-      setMsg("");
       setOpen(true);
     }
 
     async function save() {
       if (!icdCodeId) {
-        setMsg(t("codeRequired"));
+        showApiError({ error: t("codeRequired") });
         return;
       }
       setBusy(true);
-      setMsg("");
       if (editingId) {
         const res = await fetch(apiBase, {
           method: "PATCH",
@@ -143,7 +147,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
         setBusy(false);
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setMsg(data.error ?? tc("failed"));
+          showApiError(data, tc("failed"));
           return;
         }
       } else {
@@ -160,9 +164,12 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
         setBusy(false);
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setMsg(data.error ?? tc("failed"));
+          showApiError(data, tc("failed"));
           return;
         }
+        const created = await res.json().catch(() => ({}));
+        const day1 = created.day1Program ?? created.data?.day1Program;
+        if (day1) onDay1Program?.(day1);
       }
       setOpen(false);
       setEditingId(null);
@@ -187,6 +194,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
             {!hideTitle ? <h3 className="font-semibold">{title}</h3> : <span />}
             {!readOnly && !hideAddButton ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                <Plus className="h-4 w-4" aria-hidden />
                 {t("addDiagnosis")}
               </button>
             ) : null}
@@ -237,7 +245,6 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
             <li className={TEXT_MUTED_CLASS}>—</li>
           ) : null}
         </ul>
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
         <ModalShell
           open={open}
           title={editingId ? tc("edit") : t("addDiagnosis")}

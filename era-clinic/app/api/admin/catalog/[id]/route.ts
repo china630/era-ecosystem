@@ -3,6 +3,7 @@ import { ServiceCatalogKind } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { recordCatalogPriceIfChanged } from "@/domain/catalog/catalog-price-history";
+import { resolveDepartmentWrite } from "@/domain/catalog/service-department.service";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuDayBounds } from "@era/satellite-kit/time";
@@ -16,6 +17,7 @@ const patchSchema = z.object({
   listAmount: z.number().nonnegative().nullable().optional(),
   packageIncluded: z.boolean().optional(),
   department: z.string().optional().nullable(),
+  departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
@@ -57,6 +59,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     const effectiveFrom = body.effectiveFrom
       ? bakuDayBounds(body.effectiveFrom).start
       : new Date();
+    const dept =
+      body.departmentCode !== undefined || body.department !== undefined
+        ? await resolveDepartmentWrite(existing.organizationId || requestOrganizationId(), {
+            departmentCode: body.departmentCode,
+            department: body.department,
+          })
+        : null;
     const row = await prisma.serviceCatalogCache.update({
       where: { id },
       data: {
@@ -67,7 +76,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
         ...(body.amount != null ? { amount: body.amount } : {}),
         ...(body.listAmount !== undefined ? { listAmount: body.listAmount } : {}),
         ...(body.packageIncluded != null ? { packageIncluded: body.packageIncluded } : {}),
-        ...(body.department !== undefined ? { department: body.department?.trim() || null } : {}),
+        ...(dept
+          ? { department: dept.department, departmentCode: dept.departmentCode }
+          : {}),
         ...(body.kind != null ? { kind: body.kind } : {}),
         syncedAt: new Date(),
       },
@@ -80,6 +91,50 @@ export async function PATCH(req: Request, ctx: Ctx) {
       effectiveFrom,
     });
     return jsonOk(row);
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function DELETE(req: Request, ctx: Ctx) {
+  try {
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
+    const { id } = await ctx.params;
+    const existing = await prisma.serviceCatalogCache.findFirst({ where: { id } });
+    if (!existing) return jsonError("Not found", 404);
+    const orgId = existing.organizationId;
+    const code = existing.code;
+    const [procedures, visitLines, labItems, receipts, labHeaders] = await Promise.all([
+      prisma.procedureOrder.count({
+        where: { organizationId: orgId, procedureCode: code },
+      }),
+      prisma.visitServiceLine.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.labOrderItem.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.clinicReceiptLine.count({
+        where: { organizationId: orgId, serviceCode: code },
+      }),
+      prisma.labOrder.count({
+        where: {
+          organizationId: orgId,
+          OR: [
+            { testCode: code },
+            { testCode: { startsWith: `${code},` } },
+            { testCode: { endsWith: `,${code}` } },
+            { testCode: { contains: `,${code},` } },
+          ],
+        },
+      }),
+    ]);
+    if (procedures + visitLines + labItems + receipts + labHeaders > 0) {
+      return jsonError("Catalog price is referenced by orders", 409);
+    }
+    await prisma.serviceCatalogCache.delete({ where: { id } });
+    return jsonOk({ id });
   } catch (err) {
     return handleRouteError(err);
   }

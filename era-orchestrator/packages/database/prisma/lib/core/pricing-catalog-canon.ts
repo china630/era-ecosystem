@@ -14,12 +14,14 @@ export const DATA_HUB_XOR = [
 export const WORKFORCE_XOR = [
   "platform_workforce_base",
   "platform_workforce_pro",
+  "platform_workforce_premium",
 ] as const;
 
 export const WORKFORCE_HUB_KEYS = [
   "platform_workforce",
   "platform_workforce_base",
   "platform_workforce_pro",
+  "platform_workforce_premium",
 ] as const;
 
 export const CATALOG_MUTEX_GROUPS: readonly (readonly string[])[] = [
@@ -235,7 +237,7 @@ export function isClinicFeatureEntitled(
 
 /**
  * Keep at most one SKU per XOR group. `prefer` wins when present in the group
- * (the slug just enabled). Workforce hub alias: Base/PRO keep `platform_workforce`.
+ * (the slug just enabled). Workforce hub alias: Essential/Professional/Premium keep `platform_workforce`.
  */
 export function applyCatalogMutex(modules: readonly string[], prefer?: string): string[] {
   const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
@@ -246,7 +248,12 @@ export function applyCatalogMutex(modules: readonly string[], prefer?: string): 
       if (set.has(k)) hits.push(k);
     }
     if (group === WORKFORCE_XOR) {
-      if (set.has("platform_workforce") && !set.has("platform_workforce_base") && !set.has("platform_workforce_pro")) {
+      if (
+        set.has("platform_workforce") &&
+        !set.has("platform_workforce_base") &&
+        !set.has("platform_workforce_pro") &&
+        !set.has("platform_workforce_premium")
+      ) {
         set.add("platform_workforce_base");
         hits.push("platform_workforce_base");
       }
@@ -263,13 +270,151 @@ export function applyCatalogMutex(modules: readonly string[], prefer?: string): 
     set.add(keep);
   }
 
-  if (set.has("platform_workforce_pro")) {
+  if (set.has("platform_workforce_premium")) {
     set.delete("platform_workforce_base");
+    set.delete("platform_workforce_pro");
+    set.add("platform_workforce");
+  } else if (set.has("platform_workforce_pro")) {
+    set.delete("platform_workforce_base");
+    set.delete("platform_workforce_premium");
     set.add("platform_workforce");
   } else if (set.has("platform_workforce_base")) {
     set.delete("platform_workforce_pro");
+    set.delete("platform_workforce_premium");
     set.add("platform_workforce");
   }
 
   return [...set];
+}
+
+/** Per-person Workforce price. Package slug monthly price stays 0. */
+export const WORKFORCE_HEADCOUNT_RATE_AZN = {
+  essential: 2,
+  professional: 4,
+  premium: 6,
+} as const;
+
+export type WorkforcePackageId = keyof typeof WORKFORCE_HEADCOUNT_RATE_AZN;
+
+export type WorkforceFeature =
+  | "hire"
+  | "org"
+  | "security"
+  | "importExport"
+  | "absence"
+  | "vacation"
+  | "shifts"
+  | "timesheet"
+  | "planFact"
+  | "cabinet"
+  | "floor"
+  | "orders"
+  | "staffSchedule"
+  | "fitness"
+  | "group";
+
+const WORKFORCE_FEATURE_RANK: Record<WorkforceFeature, 1 | 2 | 3> = {
+  hire: 1,
+  org: 1,
+  security: 1,
+  importExport: 1,
+  absence: 2,
+  vacation: 2,
+  shifts: 2,
+  timesheet: 2,
+  planFact: 2,
+  cabinet: 2,
+  floor: 3,
+  orders: 3,
+  staffSchedule: 3,
+  fitness: 3,
+  group: 3,
+};
+
+const WORKFORCE_PACKAGE_SLUG: Record<WorkforcePackageId, string> = {
+  essential: "platform_workforce_base",
+  professional: "platform_workforce_pro",
+  premium: "platform_workforce_premium",
+};
+
+/**
+ * 0 = no workforce. A hub slug without a package is Essential, same as a fresh
+ * toggle. Premium for orgs that already had the hub is written by migration
+ * `20261005120000_workforce_packages`, not inferred here.
+ */
+export function workforcePackageRank(modules: readonly string[]): 0 | 1 | 2 | 3 {
+  const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
+  if (set.has("platform_workforce_premium")) return 3;
+  if (set.has("platform_workforce_pro")) return 2;
+  if (set.has("platform_workforce_base") || set.has("platform_workforce")) return 1;
+  return 0;
+}
+
+export function workforceFeatureAllowed(
+  modules: readonly string[],
+  feature: WorkforceFeature,
+): boolean {
+  const rank = workforcePackageRank(modules);
+  return rank >= WORKFORCE_FEATURE_RANK[feature];
+}
+
+export function workforceUpgradeSlug(feature: WorkforceFeature): string {
+  const rank = WORKFORCE_FEATURE_RANK[feature];
+  if (rank <= 1) return WORKFORCE_PACKAGE_SLUG.essential;
+  if (rank === 2) return WORKFORCE_PACKAGE_SLUG.professional;
+  return WORKFORCE_PACKAGE_SLUG.premium;
+}
+
+export function workforceHeadcountRateAzn(modules: readonly string[]): number {
+  const rank = workforcePackageRank(modules);
+  if (rank === 3) return WORKFORCE_HEADCOUNT_RATE_AZN.premium;
+  if (rank === 2) return WORKFORCE_HEADCOUNT_RATE_AZN.professional;
+  if (rank === 1) return WORKFORCE_HEADCOUNT_RATE_AZN.essential;
+  return 0;
+}
+
+const WORKFORCE_NAV: { prefix: string; feature: WorkforceFeature }[] = [
+  { prefix: "/workspace/workforce/security", feature: "security" },
+  { prefix: "/workspace/workforce/employments", feature: "hire" },
+  { prefix: "/workspace/workforce/org-structure", feature: "org" },
+  { prefix: "/workspace/workforce/positions", feature: "org" },
+  { prefix: "/workspace/workforce/export", feature: "importExport" },
+  { prefix: "/workspace/workforce/migration", feature: "importExport" },
+  { prefix: "/workspace/workforce/import", feature: "importExport" },
+  { prefix: "/workspace/workforce/absences", feature: "absence" },
+  { prefix: "/workspace/workforce/vacation-plans", feature: "vacation" },
+  { prefix: "/workspace/workforce/places", feature: "shifts" },
+  { prefix: "/workspace/workforce/shifts", feature: "shifts" },
+  { prefix: "/workspace/workforce/roster", feature: "shifts" },
+  { prefix: "/workspace/workforce/timesheets", feature: "timesheet" },
+  { prefix: "/workspace/workforce/plan-fact", feature: "planFact" },
+  { prefix: "/workspace/workforce/requests", feature: "cabinet" },
+  { prefix: "/workspace/me", feature: "cabinet" },
+  { prefix: "/workspace/workforce/attendance", feature: "floor" },
+  { prefix: "/workspace/workforce/floor", feature: "floor" },
+  { prefix: "/workspace/workforce/personnel-orders", feature: "orders" },
+  { prefix: "/workspace/workforce/staff-schedule", feature: "staffSchedule" },
+  { prefix: "/workspace/workforce/fitness", feature: "fitness" },
+  { prefix: "/workspace/workforce/group", feature: "group" },
+];
+
+export function workforceFeatureForPath(pathname: string): WorkforceFeature | null {
+  const hit = WORKFORCE_NAV.find(
+    (row) => pathname === row.prefix || pathname.startsWith(`${row.prefix}/`),
+  );
+  return hit?.feature ?? null;
+}
+
+/** Real path while the package is unknown or high enough. Otherwise the upgrade anchor. */
+export function workforceNavHref(
+  pathname: string,
+  modules: readonly string[] | null,
+): string {
+  if (!modules) return pathname;
+  const feature = workforceFeatureForPath(pathname);
+  if (!feature) return pathname;
+  const rank = workforcePackageRank(modules);
+  if (rank === 0) return pathname;
+  if (workforceFeatureAllowed(modules, feature)) return pathname;
+  return `/pricing#${workforceUpgradeSlug(feature)}`;
 }

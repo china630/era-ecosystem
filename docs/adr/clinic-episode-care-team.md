@@ -61,15 +61,14 @@ On OPEN courses, DELETE of the last care doctor returns `LAST_CARE_DOCTOR` (409)
 
 ### D3b — Day-1 package open (ops amendment 2026-09-02)
 
-When OPEN episode has **anamnesis AND ≥1 complaint** (both required; ICD optional; labs not required):
+When OPEN episode has **anamnesis AND ≥1 complaint AND ≥1 ICD-10** (all required):
 
-1. `VISIT-SANATORIUM-INTAKE` checklist → DONE.
-2. If `programCode` is set and no `ProgramInstance` yet → **auto-instantiate** package as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) and stamp `checkupCompletedAt` (= therapist stage closed, not “full checkup with labs”).
-3. Doctor confirms first 2–3 on the card (CLI-52). Patient must not wait for ECG/USG results to start package procedures.
+1. If `programCode` is set and no `ProgramInstance` yet → **auto-instantiate** package as `PROPOSED` (`tryOpenProgramAfterTherapistStage`) and stamp `checkupCompletedAt`.
+2. The intake checklist is not this gate. After the first care-team doctor it lists auto analyses and auto diagnostics from the current template (`AUTO_ON_OPEN` / `AUTO_DAY1` that book a lab order, including ECG/USG). It does not paint a fixed Nafta four-slot list and does not wait for the package snapshot.
 
 Concurrent twin open attempts → `ALREADY_OPEN` (unique on episode / P2002). Missing `programCode` → `NO_PROGRAM_CODE` (card toast).
 
-Manual Complete checkup remains available as a fallback / re-entry with the same AND gate (anamnesis + complaint).
+Manual Complete checkup remains available as a fallback / re-entry with the same AND gate (anamnesis + complaint + ICD-10).
 
 ### D4 — Card UX
 
@@ -85,9 +84,9 @@ CLOSED episode: care team read-only.
 
 ### D5 — Intake visits / package auto-apply
 
-`instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits (labs may still open per existing rules) until a doctor is assigned.
+`instantiateIntakePackage` must **not** invent a default “first doctor by code”. Prefer a care-team member as `Visit.practitionerId`; if care team empty, skip creating intake visits until a doctor is assigned. Episode open does **not** call it: without a `ProgramInstance` no ECG/USG orders are created.
 
-**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. Hard-coded `instantiateIntakePackage` remains only as fallback when there is no `ProgramInstance`.
+**Amended 2026-09-08 (W2):** Prefer `applyPackageAutoBlocks` driven by template block axes (`AUTO_ON_OPEN` / `requiresDoctor`). On **any** care-team add when `ProgramInstance.autoApplyState === PENDING_DOCTOR` **or** the team was empty (`before === 0`), call `applyPackageAutoBlocks(…, { trigger: "CARE_TEAM" })` — not a one-shot first-doctor-only hook. There is no hard-coded intake fallback when there is no `ProgramInstance`. The first care-team doctor runs `CARE_TEAM` and creates every `AUTO_ON_OPEN` and `AUTO_DAY1` order from the current template, before the quota instance exists. Opening the package requires anamnesis, one complaint, and one ICD-10. It does not assign those studies. It only links orders already created at the doctor onto the new quota. The sanatorium treatment chart hides procedure assign until anamnesis, one complaint, and one ICD-10, same as the patient card. `MANUAL_RETRY` re-reads the current template axes (not night quotas) and creates the same missing auto blocks.
 
 ### D6 — Appointments (deferred design)
 

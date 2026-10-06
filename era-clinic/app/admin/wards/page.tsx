@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -15,8 +15,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 
 type Bed = { id: string; code: string; status: string };
@@ -48,7 +48,6 @@ export default function WardsAdminPage() {
     bedCode: "",
     bedStatus: "AVAILABLE",
   });
-  const [msg, setMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<ConfirmAction>(null);
 
   const load = useCallback(async () => {
@@ -98,7 +97,6 @@ export default function WardsAdminPage() {
   }
 
   async function saveWard() {
-    setMsg(null);
     if (editingWardId) {
       const res = await fetch(`/api/admin/wards/${editingWardId}`, {
         method: "PATCH",
@@ -109,7 +107,7 @@ export default function WardsAdminPage() {
         }),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError({ error: tc("saveFailed") });
         return;
       }
     } else {
@@ -123,7 +121,7 @@ export default function WardsAdminPage() {
         }),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError({ error: tc("saveFailed") });
         return;
       }
     }
@@ -133,7 +131,6 @@ export default function WardsAdminPage() {
   }
 
   async function saveBed() {
-    setMsg(null);
     if (editingBedId) {
       const res = await fetch(`/api/admin/beds/${editingBedId}`, {
         method: "PATCH",
@@ -144,7 +141,7 @@ export default function WardsAdminPage() {
         }),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError({ error: tc("saveFailed") });
         return;
       }
     } else {
@@ -154,7 +151,7 @@ export default function WardsAdminPage() {
         body: JSON.stringify({ code: form.bedCode }),
       });
       if (!res.ok) {
-        setMsg(tc("saveFailed"));
+        showApiError({ error: tc("saveFailed") });
         return;
       }
     }
@@ -165,7 +162,6 @@ export default function WardsAdminPage() {
 
   async function confirmDelete() {
     if (!confirm) return;
-    setMsg(null);
     const url =
       confirm.type === "ward"
         ? `/api/admin/wards/${confirm.id}`
@@ -173,7 +169,7 @@ export default function WardsAdminPage() {
     const res = await fetch(url, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg(data.message ?? data.error ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
     }
     setConfirm(null);
     await load();
@@ -190,12 +186,12 @@ export default function WardsAdminPage() {
               ← {tNav("masterData")}
             </Link>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateWard}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t("addWard")}
             </button>
           </>
         }
       />
-      {msg ? <p className={`mb-3 text-[13px] ${TEXT_DANGER_CLASS}`}>{msg}</p> : null}
       <div className="space-y-4">
         {wards.map((ward) => (
           <section key={ward.id} className={`${CARD_CONTAINER_CLASS} p-4`}>
@@ -225,6 +221,7 @@ export default function WardsAdminPage() {
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openCreateBed(ward.id)}>
+                  <Plus className="h-4 w-4" aria-hidden />
                   {t("addBed")}
                 </button>
               </div>

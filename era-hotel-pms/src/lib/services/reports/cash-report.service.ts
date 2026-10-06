@@ -1,49 +1,42 @@
 import { prisma } from '@/lib/prisma';
-
-function dayStart(iso: string) {
-  return new Date(`${iso}T00:00:00.000Z`);
-}
-
-function dayEndExclusive(iso: string) {
-  const d = dayStart(iso);
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d;
-}
+import { civilWindow, round2, ymdParam } from '@/lib/reports/civil-days';
 
 export interface CashReportRow {
   id: string;
   time: string;
   guestName: string | null;
   roomNumber: string | null;
+  /** Refunds are negative. */
   amount: number;
   paymentMethod: string;
   kind: string;
   cashier: string | null;
+  reference: string | null;
 }
 
 export interface CashReportResult {
   from: string;
   to: string;
   rows: CashReportRow[];
-  totalCash: number;
-  totalCard: number;
-  totalCityLedger: number;
+  byMethod: { method: string; count: number; amount: number }[];
   grandTotal: number;
 }
 
-export async function queryCashReport(
-  fromIso: string,
-  toIso: string,
-): Promise<CashReportResult> {
-  const from = dayStart(fromIso);
-  const to = dayEndExclusive(toIso);
+export async function queryCashReport(fromParam: string | Date, toParam: string | Date): Promise<CashReportResult> {
+  const from = ymdParam(fromParam);
+  const to = ymdParam(toParam) < from ? from : ymdParam(toParam);
+  const window = civilWindow(from, to);
 
   const payments = await prisma.folioPayment.findMany({
-    where: {
-      createdAt: { gte: from, lt: to },
-      paymentMethod: { in: ['CASH', 'CARD', 'COMPANY_ACCOUNT'] },
-    },
-    include: {
+    where: { createdAt: { gte: window.gte, lt: window.lt } },
+    select: {
+      id: true,
+      createdAt: true,
+      amount: true,
+      kind: true,
+      paymentMethod: true,
+      registerRef: true,
+      bankReference: true,
       folio: {
         select: {
           reservation: {
@@ -56,7 +49,7 @@ export async function queryCashReport(
       },
     },
     orderBy: { createdAt: 'asc' },
-    take: 1000,
+    take: 5000,
   });
 
   const rows: CashReportRow[] = payments.map((p) => ({
@@ -64,16 +57,23 @@ export async function queryCashReport(
     time: p.createdAt.toISOString(),
     guestName: p.folio.reservation?.guest.fullName ?? null,
     roomNumber: p.folio.reservation?.room?.roomNumber ?? null,
-    amount: Number(p.amount),
+    amount: round2(p.kind === 'REFUND' ? -Number(p.amount) : Number(p.amount)),
     paymentMethod: p.paymentMethod,
     kind: p.kind,
     cashier: p.registerRef ?? null,
+    reference: p.bankReference ?? null,
   }));
 
-  const totalCash = rows.filter((r) => r.paymentMethod === 'CASH').reduce((s, r) => s + r.amount, 0);
-  const totalCard = rows.filter((r) => r.paymentMethod === 'CARD').reduce((s, r) => s + r.amount, 0);
-  const totalCityLedger = rows.filter((r) => r.paymentMethod === 'COMPANY_ACCOUNT').reduce((s, r) => s + r.amount, 0);
-  const grandTotal = totalCash + totalCard + totalCityLedger;
+  const methodMap = new Map<string, { method: string; count: number; amount: number }>();
+  for (const r of rows) {
+    const m = methodMap.get(r.paymentMethod) ?? { method: r.paymentMethod, count: 0, amount: 0 };
+    m.count += 1;
+    m.amount += r.amount;
+    methodMap.set(r.paymentMethod, m);
+  }
+  const byMethod = [...methodMap.values()]
+    .map((m) => ({ ...m, amount: round2(m.amount) }))
+    .sort((a, b) => a.method.localeCompare(b.method));
 
-  return { from: fromIso, to: toIso, rows, totalCash, totalCard, totalCityLedger, grandTotal };
+  return { from, to, rows, byMethod, grandTotal: round2(byMethod.reduce((s, m) => s + m.amount, 0)) };
 }

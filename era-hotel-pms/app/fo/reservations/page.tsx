@@ -18,7 +18,7 @@ import {
   usePaginatedList,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Plus } from 'lucide-react';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -147,9 +147,8 @@ export default function ReservationsListPage() {
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
-      <div className="shrink-0">
+      <div className="mb-4 shrink-0">
         <PageHeader
-          className="!mb-0"
           title={t('title')}
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -159,6 +158,7 @@ export default function ReservationsListPage() {
                   className={PRIMARY_BUTTON_CLASS}
                   onClick={() => setCreateOpen(true)}
                 >
+                  <Plus className="h-4 w-4" aria-hidden />
                   {t('add')}
                 </button>
               ) : null}
@@ -169,7 +169,6 @@ export default function ReservationsListPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc('filterReset')}
             onReset={() => {
               setQ('');
@@ -308,6 +307,7 @@ export default function ReservationsListPage() {
             ]}
             rows={rows as (Row & Record<string, unknown>)[]}
             rowKey={(r) => r.id}
+            onRowClick={(r) => setCardId(r.id)}
             emptyMessage={loading ? tc('loading') : tc('empty')}
             pagination={false}
             paginationMode="server"

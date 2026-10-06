@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  DatePicker,
+  EraListFilterBar,
+  Field,
   FilterMenuButton,
   PageHeader,
   showApiError,
+  useDebouncedValue,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
@@ -47,12 +51,20 @@ export default function FolioBalancesPage() {
   const t = useTranslations('folioBalances');
   const tc = useTranslations('common');
   const [tab, setTab] = useState<FolioBalanceTab>('inHouse');
+  const [q, setQ] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
   const [rows, setRows] = useState<Row[]>([]);
   const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/front-cash/folio-balances?tab=${tab}`);
+      const params = new URLSearchParams({ tab });
+      if (debouncedQ.trim()) params.set('q', debouncedQ.trim());
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+      const res = await fetch(`/api/front-cash/folio-balances?${params}`);
       const data = await res.json();
       if (!res.ok) {
         showApiError(data, tc('loadError'));
@@ -62,7 +74,7 @@ export default function FolioBalancesPage() {
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
-  }, [tab, tc]);
+  }, [tab, debouncedQ, dateFrom, dateTo, tc]);
 
   useEffect(() => {
     void load();
@@ -75,7 +87,35 @@ export default function FolioBalancesPage() {
   return (
     <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <div className="mb-3">
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setDateFrom('');
+          setDateTo('');
+          setTab('inHouse');
+        }}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <DatePicker
+          label={tc('from')}
+          value={dateFrom}
+          onChange={setDateFrom}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
+        <DatePicker
+          label={tc('to')}
+          value={dateTo}
+          onChange={setDateTo}
+          placeholder={tc('datePlaceholder')}
+          openCalendarLabel={tc('openCalendar')}
+        />
         <FilterMenuButton
           label={t('tabLabel')}
           value={tab}
@@ -87,7 +127,7 @@ export default function FolioBalancesPage() {
           ]}
           onChange={(v) => setTab(v as FolioBalanceTab)}
         />
-      </div>
+      </EraListFilterBar>
       <HotelDataGrid<Row & Record<string, unknown>>
         columns={[
           { key: 'roomNumber', header: t('colRoom'), render: (r) => r.roomNumber ?? '—' },

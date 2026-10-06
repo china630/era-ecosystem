@@ -8,7 +8,7 @@
 | `/m/[slug]` | `GET /api/public/menu/[slug]` | Public QR read-only (no guest order). Outlet by `publicSlug` per pool org (orch registry / process org) with the tenant filter on; registry down → 503 |
 | `/orders` | tickets, pay, offline replay | Cashier / manager |
 | `/kds` | kds fire | `fnb_kitchen_kds` |
-| `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions | `admin:access_manage` + `screen:admin.access` — Variant A matrix |
+| `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions, `GET /api/internal/v1/workforce/roles` | `admin:access_manage` + `screen:admin.access` — Variant A matrix; role code+name pushed to CP catalog |
 | `/admin/menu` | menu CRUD, `/api/menu/[id]/prices`, `/api/menu/export`, `/api/menu/suggest` | `api:menu.manage` / `screen:admin.menu` |
 | `/admin/tables` | tables | `api:tables.manage` / `screen:admin.tables` |
 | `/pin` | `POST /api/auth/terminal`, `POST /api/auth/pin` `{ staffId, pin }` | Paired tablet only. Five failures lock that person for 15 minutes. Çıxış and idle of a PIN session return to this name list |

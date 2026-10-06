@@ -2,6 +2,9 @@ import {
   applyCatalogMutex,
   isClinicFeatureEntitled,
   isPassThroughCatalogModuleKeyExtended,
+  workforceFeatureAllowed,
+  workforceHeadcountRateAzn,
+  workforceNavHref,
 } from "@era365/database";
 import { bundleDiscountedPriceAzn } from "../billing/billing-entitlement.util";
 
@@ -36,10 +39,11 @@ describe("pricing catalog freeze", () => {
     ).toEqual(["platform_loyalty"]);
   });
 
-  it("keeps workforce hub alias with Base XOR PRO", () => {
+  it("keeps workforce hub alias with Essential XOR Professional XOR Premium", () => {
     const base = applyCatalogMutex(["platform_workforce_base"], "platform_workforce_base");
     expect(base).toEqual(expect.arrayContaining(["platform_workforce", "platform_workforce_base"]));
     expect(base).not.toContain("platform_workforce_pro");
+    expect(base).not.toContain("platform_workforce_premium");
     const pro = applyCatalogMutex(
       ["platform_workforce_base", "platform_workforce_pro"],
       "platform_workforce_pro",
@@ -47,6 +51,39 @@ describe("pricing catalog freeze", () => {
     expect(pro).toContain("platform_workforce_pro");
     expect(pro).toContain("platform_workforce");
     expect(pro).not.toContain("platform_workforce_base");
+    const premium = applyCatalogMutex(
+      ["platform_workforce_pro", "platform_workforce_premium"],
+      "platform_workforce_premium",
+    );
+    expect(premium).toContain("platform_workforce_premium");
+    expect(premium).toContain("platform_workforce");
+    expect(premium).not.toContain("platform_workforce_pro");
+    const freshHub = applyCatalogMutex(["platform_workforce"]);
+    expect(freshHub).toEqual(
+      expect.arrayContaining(["platform_workforce", "platform_workforce_base"]),
+    );
+    expect(freshHub).not.toContain("platform_workforce_premium");
+  });
+
+  it("gates workforce screens by package and prices headcount", () => {
+    expect(workforceFeatureAllowed(["platform_workforce_base", "platform_workforce"], "timesheet")).toBe(
+      false,
+    );
+    expect(workforceFeatureAllowed(["platform_workforce_pro"], "timesheet")).toBe(true);
+    expect(workforceFeatureAllowed(["platform_workforce_pro"], "floor")).toBe(false);
+    expect(workforceFeatureAllowed(["platform_workforce_premium"], "floor")).toBe(true);
+    expect(workforceFeatureAllowed(["platform_workforce"], "hire")).toBe(true);
+    expect(workforceFeatureAllowed(["platform_workforce"], "orders")).toBe(false);
+    expect(workforceHeadcountRateAzn(["platform_workforce"])).toBe(2);
+    expect(workforceHeadcountRateAzn(["platform_workforce_base"])).toBe(2);
+    expect(workforceHeadcountRateAzn(["platform_workforce_pro"])).toBe(4);
+    expect(workforceHeadcountRateAzn(["platform_workforce_premium"])).toBe(6);
+    expect(
+      workforceNavHref("/workspace/workforce/timesheets", [
+        "platform_workforce",
+        "platform_workforce_base",
+      ]),
+    ).toBe("/pricing#platform_workforce_pro");
   });
 
   it("keeps EMR as a single commercial key without retired children", () => {

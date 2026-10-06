@@ -76,6 +76,18 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [~] Email cron body = ZIP download URL (`lang` from `HOTEL_REPORT_EMAIL_LOCALE`, default az)
 - [~] Negative path `__tests__/hotel-reports-negative.spec.ts`
 
+## Stage 4d — Report layouts, letterhead, date bar
+
+> **Honesty (2026-10-05):** code + unit specs + local browser walk; no UAT-SMOKE signoff. Status **API**.
+
+- [~] PDF font path fix (absolute DejaVu, fontkit external) — no `createRequire().resolve` crash
+- [~] `HotelProfile` letterhead fields + logo upload (`/settings/policies#letterhead`, `/api/hotel/profile/logo`, `HOTEL_DATA_DIR`)
+- [~] Same letterhead on report PDF, Excel, nightly ZIP and HK floor sheet
+- [~] `safePct` / `safeDiv`: Room % and Bed % print an em dash when capacity is 0 or `bedCapacity` is unset
+- [~] Date bar: Start/End always visible; radio chips fill both; manual edit clears the radio; pack stays on `resolveDateMode`
+- [~] `ReportLayout` per slug (`src/lib/reports/layouts/*`) shared by screen (`/api/reports/{slug}/layout`), PDF and Excel; Elektra family sections (flash Today/Tomorrow/MTD/YTD, trial balance B/F + negative payments, day series + total)
+- [~] Baku civil-day stay index (`indexStayDays`) for flash and monthly series
+
 ## Stage 5 — Satellite bridge (doc 19)
 
 - [x] Checkout event from FolioCharge (revenue code SKUs)
@@ -154,7 +166,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 
 ## Stage 11 — Phase 1 closure polish
 
-- [x] Cash shift UI on `/operations` (FIN-05)
+- [x] Front cash day summary `/front-cash/desk` blocks night audit while a row is open (FIN-05). No open-shift button.
 - [x] Night audit wizard steps + run history (NA-01)
 - [x] Channel stop-sell CH-01 on `/channel`
 - [x] Master data forms MD-01–04 on `/admin/master-data`

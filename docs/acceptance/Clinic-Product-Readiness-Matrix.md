@@ -36,7 +36,8 @@
 | Nafta slots clock (CLI-25/48) | Card now/next + compact PLAN — Baku labels, `scheduledAt >= now` | 🟡 SCREEN (re-Apply `#23` required on droplet) |
 | МКБ визит/стационар | `/visits/[id]`, `/inpatient` | 🟡 |
 | Visit exam CPOE + print (CLI-10) | `/visits/[id]` CPOE; `/patients/[id]` exam notes; `/print/visit-exam/[id]` | ✅ SHOW (UAT-SMOKE punched; FHIR/whole-visit debt) |
-| МКБ отчёт | `/reports/diagnoses` | 🟡 |
+| МКБ отчёт | `/reports/diagnoses` (меню Hesabatlar) | 🟡 |
+| Пациенты по странам | `/reports/patients-by-country` | 🟡 SCREEN (CLI-56; UAT open) |
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |

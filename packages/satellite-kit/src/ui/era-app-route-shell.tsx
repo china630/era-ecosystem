@@ -17,6 +17,8 @@ export type EraAppRouteShellProps = {
   navSections?: EraOpsNavSection[];
   barePublicPrefixes?: string[];
   contentPadded?: boolean;
+  /** Extra classes on the scrolling main (clinic lists zero the shared top pad). */
+  contentClassName?: string;
   resolveActive?: (pathname: string, href: string) => boolean;
   headerLeft?: ReactNode;
   profile?: EraAppHeaderProps["profile"];
@@ -42,6 +44,7 @@ export function EraAppRouteShell({
   navSections,
   barePublicPrefixes = [],
   contentPadded = true,
+  contentClassName = "",
   resolveActive = defaultActive,
   headerLeft,
   profile,
@@ -141,7 +144,9 @@ export function EraAppRouteShell({
         </EraAppSidebar>
       }
     >
-      <EraOpsContent padded={contentPadded}>{children}</EraOpsContent>
+      <EraOpsContent padded={contentPadded} className={contentClassName}>
+        {children}
+      </EraOpsContent>
     </EraAppShellLayout>
   );
 }

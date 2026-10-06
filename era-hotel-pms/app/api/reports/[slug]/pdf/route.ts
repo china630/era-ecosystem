@@ -3,17 +3,12 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getReportBySlug } from '@/lib/reports/catalog';
-import { parseReportLangParam } from '@/lib/reports/locale';
+import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
 import { reportPdfT } from '@/lib/reports/pdf-i18n';
-import { isImplementedReportSlug, queryReport } from '@/lib/services/reports';
-import { renderReportPdf } from '@/lib/services/reports/pdf-renderers';
-import '@/lib/services/reports/register-p1-pdf';
-import { prisma } from '@/lib/prisma';
-
-async function getPropertyName(): Promise<string> {
-  const profile = await prisma.hotelProfile.findFirst({ select: { name: true } });
-  return profile?.name ?? 'Hotel';
-}
+import { isImplementedReportSlug } from '@/lib/services/reports';
+import { renderLayoutPdf } from '@/lib/services/reports/pdf-renderers';
+import { queryReportLayout, reportPeriodLabel } from '@/lib/services/reports/report-output';
+import { getReportLetterhead } from '@/lib/services/hotel-letterhead.service';
 
 export async function GET(
   request: Request,
@@ -40,23 +35,25 @@ export async function GET(
     if (!lang.ok) return jsonError(lang.message, 400);
 
     const dim = url.searchParams.get('dim') ?? undefined;
-    const data = await queryReport(slug, from, to, dim ? { dim } : undefined);
-    const propertyName = await getPropertyName();
+    const [layout, letterhead] = await Promise.all([
+      queryReportLayout(slug, from, to, lang.locale, dim ? { dim } : undefined),
+      getReportLetterhead(),
+    ]);
 
     const t = reportPdfT(lang.locale);
-    const buffer = await renderReportPdf(slug, data, {
-      propertyName,
+    const buffer = await renderLayoutPdf(layout, {
+      propertyName: letterhead.name || 'Hotel',
+      letterhead,
       locale: lang.locale,
       title: t(def.titleKey),
-      subtitle: `${from} — ${to}`,
+      subtitle: reportPeriodLabel(from, to),
       t,
     });
-    if (!buffer) return jsonError(`PDF renderer not found for "${slug}"`, 501);
 
     return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${slug}_${from}.pdf"`,
+        'Content-Disposition': `inline; filename="${reportFileName(slug, lang.locale, from, 'pdf')}"`,
       },
     });
   } catch (err) {

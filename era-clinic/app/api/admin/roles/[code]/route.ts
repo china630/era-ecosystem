@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publishSatelliteRole } from "@era/satellite-kit";
 import {
   jsonOk,
   handleRouteError,
@@ -88,6 +89,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     );
 
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_clinic",
+      code: updated.code,
+      name: updated.name,
+      active: true,
+    });
+
     return jsonOk({
       code: updated.code,
       name: updated.name,
@@ -140,6 +149,14 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       "ROLE_DELETE",
       { code: role.code, name: role.name },
     );
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_clinic",
+      code: role.code,
+      name: role.name,
+      active: false,
+    });
 
     return jsonOk({ deleted: true, code: role.code });
   } catch (err) {

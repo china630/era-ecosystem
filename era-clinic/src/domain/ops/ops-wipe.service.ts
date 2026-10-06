@@ -2,18 +2,42 @@ import { isSentinelOrganizationId } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Operational wipe for one clinic org: procedure orders and the rows that only
- * exist to place them (allocations and sites cascade, resource bookings that
- * point at an order, charge log). Catalogs (practitioners, rooms, procedure
- * types, patients, visits) stay. Package quota counters are not rebuilt.
+ * Operational rows (patients and visits included) and a separate catalog basket.
+ * A parent stays when a child that points at it is kept.
  */
 
-export type ClinicOpsWipeCounts = {
-  procedureOrders: number;
-  procedureAllocations: number;
-  procedureOrderSites: number;
-  procedureResourceBookings: number;
-  procedureChargeLogs: number;
+export const OPS_WIPE_KEYS = [
+  "procedureOrders",
+  "labOrders",
+  "visits",
+  "episodes",
+  "patients",
+] as const;
+
+export const CATALOG_WIPE_KEYS = [
+  "procedureTypes",
+  "practitioners",
+  "rooms",
+  "programTemplates",
+] as const;
+
+export type OpsWipeKey = (typeof OPS_WIPE_KEYS)[number];
+export type CatalogWipeKey = (typeof CATALOG_WIPE_KEYS)[number];
+
+/** Unchecking `child` also clears every parent in this map. */
+export const OPS_PARENTS: Record<OpsWipeKey, OpsWipeKey[]> = {
+  procedureOrders: ["episodes", "patients"],
+  labOrders: ["episodes", "patients"],
+  visits: ["episodes", "patients"],
+  episodes: ["patients"],
+  patients: [],
+};
+
+const CATALOG_NEEDS_OPS: Record<CatalogWipeKey, OpsWipeKey[]> = {
+  procedureTypes: ["procedureOrders"],
+  practitioners: ["visits"],
+  rooms: ["episodes"],
+  programTemplates: ["episodes"],
 };
 
 function assertOrg(organizationId: string): string {
@@ -26,51 +50,117 @@ function assertOrg(organizationId: string): string {
   return org;
 }
 
-export async function countClinicOpsWipe(
-  organizationId: string,
-): Promise<ClinicOpsWipeCounts> {
-  const org = assertOrg(organizationId);
-  const byOrg = { organizationId: org };
-  const orderBooking = { organizationId: org, procedureOrderId: { not: null } };
+async function countMap(organizationId: string): Promise<Record<string, number>> {
+  const org = { organizationId };
   const [
     procedureOrders,
-    procedureAllocations,
-    procedureOrderSites,
-    procedureResourceBookings,
-    procedureChargeLogs,
+    labOrders,
+    visits,
+    episodes,
+    patients,
+    procedureTypes,
+    practitioners,
+    rooms,
+    programTemplates,
   ] = await Promise.all([
-    prisma.procedureOrder.count({ where: byOrg }),
-    prisma.procedureAllocation.count({ where: byOrg }),
-    prisma.procedureOrderSite.count({ where: byOrg }),
-    prisma.resourceBooking.count({ where: orderBooking }),
-    prisma.procedureChargeLog.count({ where: byOrg }),
+    prisma.procedureOrder.count({ where: org }),
+    prisma.labOrder.count({ where: org }),
+    prisma.visit.count({ where: org }),
+    prisma.clinicalEpisode.count({ where: org }),
+    prisma.patientRef.count({ where: org }),
+    prisma.procedureType.count({ where: org }),
+    prisma.practitioner.count({ where: org }),
+    prisma.room.count({ where: org }),
+    prisma.programTemplate.count({ where: org }),
   ]);
   return {
     procedureOrders,
-    procedureAllocations,
-    procedureOrderSites,
-    procedureResourceBookings,
-    procedureChargeLogs,
+    labOrders,
+    visits,
+    episodes,
+    patients,
+    procedureTypes,
+    practitioners,
+    rooms,
+    programTemplates,
   };
+}
+
+export async function countClinicOpsWipe(organizationId: string) {
+  return countMap(assertOrg(organizationId));
+}
+
+export function normalizeWipeSelection(input: {
+  ops: string[];
+  catalog: string[];
+}): { ops: OpsWipeKey[]; catalog: CatalogWipeKey[] } {
+  const ops = new Set(input.ops.filter((k): k is OpsWipeKey => (OPS_WIPE_KEYS as readonly string[]).includes(k)));
+  for (const key of OPS_WIPE_KEYS) {
+    if (ops.has(key)) continue;
+    for (const parent of OPS_PARENTS[key]) ops.delete(parent);
+  }
+  const catalog = new Set(
+    input.catalog.filter((k): k is CatalogWipeKey =>
+      (CATALOG_WIPE_KEYS as readonly string[]).includes(k),
+    ),
+  );
+  for (const key of CATALOG_WIPE_KEYS) {
+    if (!catalog.has(key)) continue;
+    if (CATALOG_NEEDS_OPS[key].some((need) => !ops.has(need))) catalog.delete(key);
+  }
+  return { ops: [...ops], catalog: [...catalog] };
 }
 
 export async function runClinicOpsWipe(
   organizationId: string,
-): Promise<ClinicOpsWipeCounts> {
+  selection?: { ops?: string[]; catalog?: string[] },
+) {
   const org = assertOrg(organizationId);
-  const before = await countClinicOpsWipe(org);
+  const chosen = normalizeWipeSelection({
+    ops: selection?.ops ?? [...OPS_WIPE_KEYS],
+    catalog: selection?.catalog ?? [],
+  });
+  const before = await countMap(org);
   const byOrg = { organizationId: org };
 
   await prisma.$transaction(
     async (tx) => {
-      await tx.resourceBooking.deleteMany({
-        where: { organizationId: org, procedureOrderId: { not: null } },
-      });
-      await tx.procedureChargeLog.deleteMany({ where: byOrg });
-      await tx.procedureOrder.deleteMany({ where: byOrg });
+      if (chosen.ops.includes("procedureOrders")) {
+        await tx.resourceBooking.deleteMany({
+          where: { organizationId: org, procedureOrderId: { not: null } },
+        });
+        await tx.procedureChargeLog.deleteMany({ where: byOrg });
+        await tx.procedureOrder.deleteMany({ where: byOrg });
+      }
+      if (chosen.ops.includes("labOrders")) {
+        await tx.labOrder.deleteMany({ where: byOrg });
+      }
+      if (chosen.ops.includes("visits")) {
+        await tx.clinicReceipt.deleteMany({ where: byOrg });
+        await tx.visit.deleteMany({ where: byOrg });
+        await tx.appointment.deleteMany({ where: byOrg });
+      }
+      if (chosen.ops.includes("episodes")) {
+        await tx.clinicalEpisode.deleteMany({ where: byOrg });
+      }
+      if (chosen.ops.includes("patients")) {
+        await tx.patientRef.deleteMany({ where: byOrg });
+      }
+      if (chosen.catalog.includes("programTemplates")) {
+        await tx.programTemplate.deleteMany({ where: byOrg });
+      }
+      if (chosen.catalog.includes("procedureTypes")) {
+        await tx.procedureType.deleteMany({ where: byOrg });
+      }
+      if (chosen.catalog.includes("practitioners")) {
+        await tx.practitioner.deleteMany({ where: byOrg });
+      }
+      if (chosen.catalog.includes("rooms")) {
+        await tx.room.deleteMany({ where: byOrg });
+      }
     },
-    { timeout: 60_000 },
+    { timeout: 120_000 },
   );
 
-  return before;
+  return { before, deletedKeys: chosen };
 }

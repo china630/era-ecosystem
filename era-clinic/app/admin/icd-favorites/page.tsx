@@ -10,6 +10,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { IcdPicker } from "@/components/IcdPicker";
 
@@ -25,7 +27,6 @@ export default function AdminIcdFavoritesPage() {
   } | null>(null);
   const [pickId, setPickId] = useState("");
   const [retireCode, setRetireCode] = useState("");
-  const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -41,7 +42,6 @@ export default function AdminIcdFavoritesPage() {
 
   async function save(next: string[]) {
     setBusy(true);
-    setMsg("");
     const res = await fetch("/api/admin/icd-favorites", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -50,20 +50,20 @@ export default function AdminIcdFavoritesPage() {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg(data.error ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setCodes(next);
-    setMsg(tc("saved"));
+    showSuccess(tc("saved"));
   }
 
   async function syncCatalog() {
     setBusy(true);
-    setMsg("");
     const res = await fetch("/api/admin/icd-favorites?action=sync", { method: "POST" });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    setMsg(res.ok ? t("syncOk", { count: data.loaded ?? data.count ?? "—" }) : data.error ?? tc("failed"));
+    if (res.ok) showSuccess(t("syncOk", { count: data.loaded ?? data.count ?? "—" }));
+    else showApiError(data, tc("failed"));
     await load();
   }
 
@@ -77,7 +77,8 @@ export default function AdminIcdFavoritesPage() {
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    setMsg(res.ok ? t("retireOk", { code: retireCode.trim() }) : data.error ?? tc("failed"));
+    if (res.ok) showSuccess(t("retireOk", { code: retireCode.trim() }));
+    else showApiError(data, tc("failed"));
     setRetireCode("");
   }
 
@@ -141,7 +142,6 @@ export default function AdminIcdFavoritesPage() {
             {t("retireSubmit")}
           </button>
         </div>
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
       </div>
     </>
   );

@@ -13,6 +13,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserRole, WorkforcePlaceStatus } from "@era365/database";
@@ -41,7 +42,8 @@ import { WorkforceEmploymentsService } from "./workforce-employments.service";
 @ApiTags("platform-workforce-roster")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("shifts")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceRosterController {
   constructor(
     private readonly roster: WorkforceRosterService,

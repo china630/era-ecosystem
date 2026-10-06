@@ -30,7 +30,7 @@ Port **3210**. Ops satellite — **no ledger in `era_bank` DB**.
 | `/cards`, `/card-txns` | `/api/cards/*`, `/api/card-txns/*` |
 | `/treasury` | `/api/treasury/*` |
 | `/admin/branches`, `/admin/product-factory`, `/admin/eod` | admin proxies |
-| `/admin/access` | `/api/admin/roles`, `…/permissions`, `/api/admin/users`, refresh-permissions — Variant A (`admin:access_manage` + `screen:admin.access`) |
+| `/admin/access` | `/api/admin/roles`, `…/permissions`, `/api/admin/users`, refresh-permissions, `GET /api/internal/v1/workforce/roles` — Variant A (`admin:access_manage` + `screen:admin.access`); `OpsRole` code+name pushed to CP catalog |
 | `/cash` | `/api/cash/*` (`banking_cash`) |
 | `/fees` | `/api/fees/*` (tariffs / SDB / packages) |
 | `/payments/extras` | `/api/payments/standing-orders|virtual-accounts|cheques|sweep-rules` |

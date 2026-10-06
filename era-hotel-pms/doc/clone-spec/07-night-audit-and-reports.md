@@ -31,7 +31,7 @@
 
 | # | Шаг | Авто/ручной | При fail |
 |---|-----|-------------|----------|
-| 1 | Pre-check: open cash shifts | Auto | Block |
+| 1 | Pre-check: front cash rows for the business date without a close time | Auto | Block |
 | 2 | Pre-check: arrivals not assigned | Report | Warn |
 | 3 | Post room charges | Auto | List errors |
 | 4 | Post fixed charges (if any) | Auto | |

@@ -64,6 +64,15 @@ export type EraDataGridColumn<T> = {
   header: string;
   render?: (row: T) => ReactNode;
   className?: string;
+  /** Clickable header. Client lists sort the full row set; server lists must pass onSortChange. */
+  sortable?: boolean;
+  /** Value used for client-side sort. Defaults to row[key]. */
+  sortValue?: (row: T) => string | number | null | undefined;
+};
+
+export type EraDataGridSort = {
+  key: string;
+  dir: "asc" | "desc";
 };
 
 export type EraDataGridPaginationLabels = {
@@ -110,6 +119,8 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   embedded?: boolean;
   /** Extra class names on each data row (status tint, etc.). */
   rowClassName?: (row: T) => string | undefined;
+  /** Click on the row body. Buttons inside a cell should stopPropagation. */
+  onRowClick?: (row: T) => void;
   /** Server mode: current page (1-based). */
   page?: number;
   /** Server mode: page size. */
@@ -120,4 +131,11 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   onPageChange?: (page: number) => void;
   /** Server mode: page size change (should reset page to 1). */
   onPageSizeChange?: (pageSize: number) => void;
+  /** Active sort. Required echo when onSortChange is set (server lists). */
+  sort?: EraDataGridSort | null;
+  /**
+   * Header click. Server lists must refetch with this sort.
+   * Omit on client lists to sort the full `rows` array inside the grid.
+   */
+  onSortChange?: (sort: EraDataGridSort) => void;
 };

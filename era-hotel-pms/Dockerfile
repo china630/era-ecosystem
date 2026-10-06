@@ -34,6 +34,7 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/package.json ./package.json
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 RUN chmod +x /app/scripts/docker-entrypoint.sh
+RUN mkdir -p /app/data/hotel-logos && chown -R nextjs:nodejs /app/data
 USER nextjs
 EXPOSE 3201
 ENV PORT=3201

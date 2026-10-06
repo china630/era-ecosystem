@@ -21,7 +21,7 @@
 | Diaqnostika kataloqu | `/admin/diagnostic-catalog` | `screen:admin.diagnostic_catalog` |
 | Sanatoriya paketləri | `/admin/program-templates` | `screen:admin.program_templates` |
 
-No `/admin/templates` page. Visit exam templates: Services tab → filter **Visit templates** (`kind=visit`). Field designer edits `fieldsJson` (no raw JSON required).
+No `/admin/templates` page. Visit exam templates: Services tab → filter **Visit templates** (`kind=visit`). The form-fields icon on that row edits `fieldsJson` (no raw JSON required). Saving the service card does not send `fields` and does not clear the blank.
 
 Ops exam fill: `/visits/[id]` → CPOE panel (catalog `kinds=visit` + `TemplateResultForm` → `CpoeEntry`).
 

@@ -57,13 +57,15 @@ See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-
 | `CLINIC_API_URL` | orchestrator | `http://clinic:3203` |
 | `HOTEL_PMS_API_URL` | orchestrator | `http://hotel-pms:3201` |
 | `FNB_POS_API_URL` | orchestrator | `http://fnb-pos:3202` |
-| `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos | same value; header `x-satellite-bridge-secret` |
+| `RETAIL_API_URL` | orchestrator | `http://retail-pos:3204` |
+| `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos + retail-pos | same value; header `x-satellite-bridge-secret` |
 | `CLINIC_BRIDGE_SECRET` | clinic (alias for staff-provision) + hotel → clinic lifecycle | may match `SATELLITE_BRIDGE_SECRET` |
 | `ELEKTRAWEB_BRIDGE_ENABLED` | hotel-pms | `1` = process kill switch on (HOT-06); per-org hotel ids are Super-Admin `ElektrawebBridgePolicy`, not env |
+| `HOTEL_DATA_DIR` | hotel-pms | optional; letterhead logo storage (default `./data` in the app dir). Mount a volume in compose |
 
 Public `ERA_CLINIC_ORIGIN` / launcher URLs are **not** the staff fan-out target.
 
-Only **clinic, hotel-pms, fnb-pos** consume `STAFF_PROVISIONED` today. Retail / logistics / construction / CRM / auto / wholesale grants do not create satellite logins — see [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Plan C table.
+**clinic, hotel-pms, fnb-pos, and retail-pos** consume `STAFF_PROVISIONED`. Logistics / construction / CRM / auto / wholesale grants still do not create satellite logins — see [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Plan C table.
 
 ---
 

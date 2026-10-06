@@ -12,7 +12,7 @@ import {
   DATA_TABLE_TR_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "./design-system";
-import type { EraDataGridProps } from "./era-ops-types";
+import type { EraDataGridProps, EraDataGridSort } from "./era-ops-types";
 import {
   DEFAULT_LIST_PAGE_SIZE,
   ListPaginationFooter,
@@ -49,11 +49,14 @@ export function EraDataGrid<T extends Record<string, unknown>>({
   layout = "flow",
   embedded = false,
   rowClassName,
+  onRowClick,
   page: controlledPage,
   pageSize: controlledPageSize,
   total: controlledTotal,
   onPageChange,
   onPageSizeChange,
+  sort = null,
+  onSortChange,
 }: EraDataGridProps<T>) {
   const isServer = paginationMode === "server";
 
@@ -87,12 +90,30 @@ export function EraDataGrid<T extends Record<string, unknown>>({
     if (page > totalPages) setPage(totalPages);
   }, [isServer, page, totalPages]);
 
+  const [localSort, setLocalSort] = useState<EraDataGridSort | null>(null);
+  const activeSort = onSortChange ? sort : localSort;
+
+  const sortedRows = useMemo(() => {
+    if (isServer || onSortChange || !activeSort) return rows;
+    const column = columns.find((col) => col.key === activeSort.key);
+    const dir = activeSort.dir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = column?.sortValue ? column.sortValue(a) : a[activeSort.key];
+      const bv = column?.sortValue ? column.sortValue(b) : b[activeSort.key];
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av ?? "").localeCompare(String(bv ?? ""), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      }) * dir;
+    });
+  }, [isServer, onSortChange, activeSort, rows, columns]);
+
   const pageRows = useMemo(() => {
-    if (!pagination && !isServer) return rows;
+    if (!pagination && !isServer) return sortedRows;
     if (isServer) return rows;
     const start = (pageValue - 1) * pageSizeValue;
-    return rows.slice(start, start + pageSizeValue);
-  }, [pagination, isServer, rows, pageValue, pageSizeValue]);
+    return sortedRows.slice(start, start + pageSizeValue);
+  }, [pagination, isServer, rows, sortedRows, pageValue, pageSizeValue]);
 
   const labels = paginationLabels ?? DEFAULT_PAGINATION_LABELS;
   const scrollClass =
@@ -118,18 +139,50 @@ export function EraDataGrid<T extends Record<string, unknown>>({
 
   const showFooter = pagination && (!isServer || Boolean(onPageChange));
 
+  function handleSort(key: string) {
+    const next: EraDataGridSort =
+      activeSort?.key === key && activeSort.dir === "asc"
+        ? { key, dir: "desc" }
+        : { key, dir: "asc" };
+    if (onSortChange) onSortChange(next);
+    else {
+      setLocalSort(next);
+      setPage(1);
+    }
+  }
+
   const tableEl = (
     <table className={DATA_TABLE_CLASS}>
       <thead>
         <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-          {columns.map((col) => (
-            <th
-              key={col.key}
-              className={`${DATA_TABLE_TH_LEFT_CLASS} ${col.className ?? ""}`}
-            >
-              {col.header}
-            </th>
-          ))}
+          {columns.map((col) => {
+            const sorting = Boolean(col.sortable);
+            const active = sorting && activeSort?.key === col.key;
+            return (
+              <th
+                key={col.key}
+                aria-sort={
+                  active ? (activeSort?.dir === "asc" ? "ascending" : "descending") : undefined
+                }
+                className={`${DATA_TABLE_TH_LEFT_CLASS} ${col.className ?? ""}`}
+              >
+                {sorting ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 text-left font-semibold text-inherit"
+                    onClick={() => handleSort(col.key)}
+                  >
+                    {col.header}
+                    <span className="text-[10px] text-[#7F8C8D]" aria-hidden>
+                      {active ? (activeSort?.dir === "asc" ? "▲" : "▼") : "↕"}
+                    </span>
+                  </button>
+                ) : (
+                  col.header
+                )}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>
@@ -148,12 +201,14 @@ export function EraDataGrid<T extends Record<string, unknown>>({
             return (
               <tr
                 key={rowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={[
                   // Drop default bg-white when a status tint is provided (Tailwind conflict).
                   tint
                     ? "border-b border-[#D5DADF] transition-colors hover:bg-[#F1F5F9]"
                     : DATA_TABLE_TR_CLASS,
                   tint,
+                  onRowClick ? "cursor-pointer" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}

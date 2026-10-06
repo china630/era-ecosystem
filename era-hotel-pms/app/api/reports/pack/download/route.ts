@@ -4,12 +4,12 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getPackDefaults, getReportBySlug, validatePackSlugs } from '@/lib/reports/catalog';
-import { parseReportLangParam } from '@/lib/reports/locale';
+import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
 import { reportPdfT } from '@/lib/reports/pdf-i18n';
-import { queryReport } from '@/lib/services/reports';
-import { renderReportPdf } from '@/lib/services/reports/pdf-renderers';
-import '@/lib/services/reports/register-p1-pdf';
+import { renderLayoutPdf } from '@/lib/services/reports/pdf-renderers';
+import { queryReportLayout, reportPeriodLabel } from '@/lib/services/reports/report-output';
 import { prisma } from '@/lib/prisma';
+import { getReportLetterhead } from '@/lib/services/hotel-letterhead.service';
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { resolveDateMode } from '@/lib/reports/period';
@@ -52,8 +52,8 @@ export async function GET(request: Request) {
     const pack = validatePackSlugs(slugs);
     if (!pack.ok) return jsonError(pack.message, 400);
 
-    const profile = await prisma.hotelProfile.findFirst({ select: { name: true } });
-    const propertyName = profile?.name ?? 'Hotel';
+    const letterhead = await getReportLetterhead();
+    const propertyName = letterhead.name || 'Hotel';
     const t = reportPdfT(lang.locale);
     const zip = new JSZip();
     let added = 0;
@@ -66,19 +66,20 @@ export async function GET(request: Request) {
         const range = resolveDateMode(def.dateMode, bakuCivilUtcDate(businessDate));
         const from = hotelDateKey(range.from);
         const to = hotelDateKey(range.to);
-        const data = await queryReport(slug, from, to);
-        const buf = await renderReportPdf(slug, data, {
+        const layout = await queryReportLayout(slug, from, to, lang.locale);
+        const buf = await renderLayoutPdf(layout, {
           propertyName,
+          letterhead,
           locale: lang.locale,
           title: t(def.titleKey),
-          subtitle: from === to ? from : `${from} — ${to}`,
+          subtitle: reportPeriodLabel(from, to),
           t,
         });
-        if (!buf) continue;
         const order = String(i + 1).padStart(2, '0');
-        zip.file(`${order}_${slug}_${businessDate}.pdf`, buf);
+        zip.file(reportFileName(`${order}_${slug}`, lang.locale, businessDate, 'pdf'), buf);
         added += 1;
-      } catch {
+      } catch (err) {
+        console.error(`[reports] pack member ${slug} failed`, err);
         continue;
       }
     }
@@ -90,7 +91,7 @@ export async function GET(request: Request) {
     return new Response(new Uint8Array(zipBuf), {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="nightly_pack_${businessDate}.zip"`,
+        'Content-Disposition': `attachment; filename="${reportFileName('nightly_pack', lang.locale, businessDate, 'zip')}"`,
       },
     });
   } catch (err) {

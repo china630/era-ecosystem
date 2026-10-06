@@ -13,6 +13,7 @@ import {
 } from '@/lib/services/business-date.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
+import { countUnclosedCashDesk } from '@/lib/services/cash-desk.service';
 import { resolveSettlementPolicy } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
@@ -40,6 +41,7 @@ export async function getNightAuditStatus() {
       roomId: null,
     },
   });
+  const unclosedCashRows = await countUnclosedCashDesk(hotelDateKey(currentBiz));
   const noShowCandidates = await prisma.reservation.count({
     where: {
       status: { in: ['CONFIRMED', 'OPTION'] },
@@ -63,6 +65,7 @@ export async function getNightAuditStatus() {
       unassignedArrivals,
       noShowCandidates,
     },
+    unclosedCashRows,
   };
 }
 
@@ -75,8 +78,11 @@ export async function listNightAuditRuns(limit = 5) {
 }
 
 export async function runNightAudit() {
-  const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
-  if (openShift) throw new Error('Close all cash shifts before night audit');
+  const businessDateForCash = hotelDateKey(await getCurrentBusinessDate());
+  const unclosedCashRows = await countUnclosedCashDesk(businessDateForCash);
+  if (unclosedCashRows > 0) {
+    throw new Error('Close front cash rows for this business date before night audit');
+  }
   await assertNoOpenPosShifts();
   await lockBusinessDateForAudit();
 

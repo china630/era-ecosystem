@@ -10,6 +10,7 @@ import {
   LINK_ACCENT_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -74,7 +75,6 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
   const [days, setDays] = useState<TimelineDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
-  const [error, setError] = useState("");
 
   function eventTitle(ev: TimelineEvent): string {
     if (ev.titleL10n) {
@@ -86,14 +86,13 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
     const params = new URLSearchParams();
     if (filter !== "all") params.set("types", filter);
     params.set("limitDays", "90");
     const res = await fetch(`/api/patients/${patientRefId}/timeline?${params}`);
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? t("loadFailed"));
+      showApiError(data, t("loadFailed"));
       setDays([]);
       setLoading(false);
       return;
@@ -136,8 +135,6 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
       <div className={`${CARD_CONTAINER_CLASS} p-4 sm:p-6`}>
         {loading ? (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
-        ) : error ? (
-          <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p>
         ) : days.length === 0 ? (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("empty")}</p>
         ) : (

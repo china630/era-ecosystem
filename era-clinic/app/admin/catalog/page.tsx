@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { localizedCatalogDescription } from "@era/clinic-domain";
+import { localizedDepartmentName } from "@/domain/catalog/department-label";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -21,8 +23,11 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  showApiError,
+  showSuccess,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
+  type EraDataGridSort,
 } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 
@@ -37,6 +42,7 @@ type CatalogRow = {
   listAmount?: string | null;
   packageIncluded: boolean;
   department: string | null;
+  departmentCode?: string | null;
   syncedAt: string;
   kind?: string;
   displayName?: string;
@@ -65,6 +71,10 @@ export default function CatalogAdminPage() {
   const t = useTranslations("catalogAdmin");
   const tc = useTranslations("common");
   const locale = useLocale();
+  const search = useSearchParams();
+  const router = useRouter();
+  const editCode = search.get("edit");
+  const openedEdit = useRef("");
   const formId = useId();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogRow | null>(null);
@@ -83,18 +93,45 @@ export default function CatalogAdminPage() {
   });
   const [saving, setSaving] = useState(false);
   const [rows, setRows] = useState<CatalogRow[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [deptRows, setDeptRows] = useState<
+    Array<{
+      code: string;
+      nameAz: string | null;
+      nameRu: string | null;
+      nameEn: string | null;
+      active?: boolean;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<EraDataGridSort | null>(null);
   const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState({
     packageIncluded: "" as PackageFilter,
-    department: "",
+    department: search.get("department") ?? "",
     kind: "" as KindFilter,
     missingListPrice: "" as MissingListFilter,
   });
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
+
+  const departmentQuery = search.get("department") ?? "";
+  const departmentQuerySeen = useRef(departmentQuery);
+  useEffect(() => {
+    if (departmentQuerySeen.current === departmentQuery) return;
+    departmentQuerySeen.current = departmentQuery;
+    setFilters((prev) => ({ ...prev, department: departmentQuery }));
+  }, [departmentQuery]);
+
+  function setDepartmentFilter(code: string) {
+    departmentQuerySeen.current = code;
+    setFilters((prev) => ({ ...prev, department: code }));
+    const params = new URLSearchParams(search.toString());
+    if (code) params.set("department", code);
+    else params.delete("department");
+    const qs = params.toString();
+    router.replace(qs ? `/admin/catalog?${qs}` : "/admin/catalog");
+  }
 
   const latestSync = rows.reduce<Date | null>((max, row) => {
     const d = new Date(row.syncedAt);
@@ -109,13 +146,27 @@ export default function CatalogAdminPage() {
     }).length;
   }, [rows]);
 
-  const departments = useMemo(() => {
-    const set = new Set<string>();
-    for (const row of rows) {
-      if (row.department?.trim()) set.add(row.department.trim());
-    }
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [rows]);
+  const departments = useMemo(
+    () =>
+      deptRows
+        .map((row) => ({
+          code: row.code,
+          label: localizedDepartmentName(row, locale),
+          active: row.active !== false,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [deptRows, locale],
+  );
+  const priceDepartments = useMemo(
+    () => departments.filter((dep) => dep.active || dep.code === draft.department),
+    [departments, draft.department],
+  );
+  const deptKind =
+    priceDepartments.length <= 12
+      ? "CLOSED_SMALL"
+      : priceDepartments.length <= 40
+        ? "CLOSED_MEDIUM"
+        : "SEARCHABLE";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -140,6 +191,13 @@ export default function CatalogAdminPage() {
 
   useEffect(() => {
     void load();
+    void (async () => {
+      const res = await fetch("/api/admin/departments");
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = (data.data ?? data) as typeof deptRows;
+      setDeptRows(Array.isArray(list) ? list : []);
+    })();
   }, [load]);
 
   const filteredRows = useMemo(() => {
@@ -152,16 +210,32 @@ export default function CatalogAdminPage() {
       }
       if (filters.packageIncluded === "package" && !row.packageIncluded) return false;
       if (filters.packageIncluded === "paid" && row.packageIncluded) return false;
-      if (filters.department && row.department !== filters.department) return false;
+      if (filters.department && row.departmentCode !== filters.department) return false;
       if (filters.kind && row.kind !== filters.kind) return false;
       return true;
     });
   }, [rows, debouncedQ, filters]);
 
   const pagedRows = useMemo(() => {
+    const sorted = !sort
+      ? filteredRows
+      : [...filteredRows].sort((a, b) => {
+          const dir = sort.dir === "asc" ? 1 : -1;
+          const value = (row: CatalogRow) => {
+            if (sort.key === "code") return row.code;
+            if (sort.key === "amount") return Number(row.amount);
+            if (sort.key === "department") return row.departmentCode ?? row.department ?? "";
+            if (sort.key === "effectiveFrom") return row.effectiveFrom ?? row.syncedAt ?? "";
+            return row.displayName ?? localizedCatalogDescription(row, locale);
+          };
+          const av = value(a);
+          const bv = value(b);
+          if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+          return String(av).localeCompare(String(bv), locale, { numeric: true }) * dir;
+        });
     const start = (page - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, page, pageSize]);
+    return sorted.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize, sort, locale]);
 
   useEffect(() => {
     setPage(1);
@@ -172,12 +246,14 @@ export default function CatalogAdminPage() {
       {
         key: "description",
         header: t("description"),
+        sortable: true,
         render: (row) => row.displayName ?? localizedCatalogDescription(row, locale),
       },
-      { key: "code", header: t("code") },
+      { key: "code", header: t("code"), sortable: true },
       {
         key: "amount",
         header: t("amount"),
+        sortable: true,
         render: (row) => {
           const list = row.listAmount != null ? Number(row.listAmount) : 0;
           if (row.packageIncluded) {
@@ -194,30 +270,62 @@ export default function CatalogAdminPage() {
       {
         key: "department",
         header: t("department"),
-        render: (row) => row.department ?? "—",
+        sortable: true,
+        render: (row) => {
+          const dept = deptRows.find((item) => item.code === row.departmentCode);
+          return dept ? localizedDepartmentName(dept, locale) : row.department ?? "—";
+        },
       },
       {
         key: "effectiveFrom",
         header: t("effectiveFrom"),
+        sortable: true,
         render: (row) => bakuDateTimeDisplay(row.effectiveFrom ?? row.syncedAt),
       },
       {
         key: "actions",
         header: tc("actions"),
         render: (row) => (
-          <button
-            type="button"
-            className={TABLE_ROW_ICON_BTN_CLASS}
-            aria-label={tc("edit")}
-            onClick={() => void openEdit(row)}
-          >
-            <Pencil className="h-3.5 w-3.5" aria-hidden />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("edit")}
+              onClick={() => void openEdit(row)}
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("delete")}
+              onClick={() => void removeRow(row)}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-600" aria-hidden />
+            </button>
+          </div>
         ),
       },
     ],
-    [t, tc, locale],
+    [t, tc, locale, deptRows],
   );
+
+  async function removeRow(row: CatalogRow) {
+    const name = row.displayName ?? row.code;
+    if (!window.confirm(t("deleteConfirm", { name }))) return;
+    const res = await fetch(`/api/admin/catalog/${row.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409) {
+      showApiError({ error: t("deleteBlocked") }, t("deleteBlocked"));
+      return;
+    }
+    if (!res.ok) {
+      showApiError(data, tc("failed"));
+      return;
+    }
+    showSuccess(t("deleted"));
+    await load();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -247,7 +355,7 @@ export default function CatalogAdminPage() {
       amount: String(row.amount ?? ""),
       listAmount: row.listAmount != null ? String(row.listAmount) : "",
       packageIncluded: row.packageIncluded,
-      department: row.department ?? "",
+      department: row.departmentCode ?? "",
       kind: row.kind ?? "OTHER",
       effectiveFrom: todayBakuYmd(),
     });
@@ -259,10 +367,17 @@ export default function CatalogAdminPage() {
     setHistory(data.prices ?? []);
   }
 
+  useEffect(() => {
+    if (!editCode || openedEdit.current === editCode || rows.length === 0) return;
+    const row = rows.find((item) => item.code === editCode);
+    if (!row) return;
+    openedEdit.current = editCode;
+    void openEdit(row);
+  }, [editCode, rows]);
+
   async function saveCatalog(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setMsg(null);
     try {
       const payload = {
         description: draft.descriptionAz || draft.descriptionRu || draft.descriptionEn || draft.code,
@@ -272,7 +387,7 @@ export default function CatalogAdminPage() {
         amount: Number(draft.amount || 0),
         listAmount: draft.listAmount.trim() === "" ? null : Number(draft.listAmount),
         packageIncluded: draft.packageIncluded,
-        department: draft.department,
+        departmentCode: draft.department || null,
         kind: draft.kind,
         effectiveFrom: draft.effectiveFrom,
         ...(editing ? {} : { code: draft.code.trim() }),
@@ -283,9 +398,13 @@ export default function CatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setMsg(res.status === 409 ? t("codeExists") : tc("failed"));
+        showApiError(
+          await res.json().catch(() => ({})),
+          res.status === 409 ? t("codeExists") : tc("failed"),
+        );
         return;
       }
+      showSuccess(tc("saved"));
       setEditorOpen(false);
       await load();
     } finally {
@@ -294,33 +413,31 @@ export default function CatalogAdminPage() {
   }
 
   async function sync() {
-    setMsg(null);
     const res = await fetch("/api/catalog/sync", { method: "POST" });
     const d = await res.json();
     const payload = (d.data ?? d) as { synced?: number; source?: string };
     if (!res.ok) {
-      setMsg(tc("failed"));
+      showApiError(d, tc("failed"));
     } else if (payload.source === "unavailable") {
-      setMsg(t("syncUnavailable"));
+      showApiError({ error: t("syncUnavailable") });
     } else {
-      setMsg(t("synced", { count: payload.synced ?? 0 }));
+      showSuccess(t("synced", { count: payload.synced ?? 0 }));
     }
     await load();
   }
 
   async function importNafta() {
-    setMsg(null);
     const res = await fetch("/api/admin/catalog/import-nafta", { method: "POST" });
     const d = await res.json();
     const payload = d.data ?? d;
     if (!res.ok) {
-      setMsg(tc("failed"));
+      showApiError(d, tc("failed"));
       return;
     }
     if (payload.skipped) {
-      setMsg(payload.message ?? t("importSkipped"));
+      showApiError({ error: payload.message ?? t("importSkipped") });
     } else {
-      setMsg(
+      showSuccess(
         t("imported", {
           catalog: payload.catalogCount ?? 0,
           types: payload.typeCount ?? 0,
@@ -332,6 +449,7 @@ export default function CatalogAdminPage() {
 
   function resetFilters() {
     setQ("");
+    setDepartmentFilter("");
     setFilters({
       packageIncluded: "" as PackageFilter,
       department: "",
@@ -360,7 +478,6 @@ export default function CatalogAdminPage() {
           </>
         }
       />
-      {msg ? <p className="mb-3 text-[13px]">{msg}</p> : null}
       {missingListPriceCount > 0 ? (
         <p className="mb-3 text-[13px] text-amber-700">
           {t("missingListPriceNote", { count: missingListPriceCount })}
@@ -432,12 +549,12 @@ export default function CatalogAdminPage() {
           label={t("department")}
           preset="select"
           value={filters.department}
-          onChange={(e) => setFilters({ ...filters, department: e.target.value })}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
         >
           <option value="">{t("filterDepartmentAll")}</option>
           {departments.map((dep) => (
-            <option key={dep} value={dep}>
-              {dep}
+            <option key={dep.code} value={dep.code}>
+              {dep.active ? dep.label : `${dep.label} · ${t("departmentInactive")}`}
             </option>
           ))}
         </FieldSelect>
@@ -459,6 +576,11 @@ export default function CatalogAdminPage() {
               rows={pagedRows}
               rowKey={(row) => row.id}
               pagination={false}
+              sort={sort}
+              onSortChange={(next) => {
+                setSort(next);
+                setPage(1);
+              }}
             />
             <ListPaginationFooter
               page={page}
@@ -481,6 +603,7 @@ export default function CatalogAdminPage() {
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
         title={editing ? tc("edit") : tc("add")}
+        maxWidthClass="max-w-5xl w-full"
         footer={
           <ModalFooter
             formId={formId}
@@ -492,6 +615,8 @@ export default function CatalogAdminPage() {
         }
       >
         <form id={formId} className="space-y-3" onSubmit={(e) => void saveCatalog(e)}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
           {editing ? (
             <Field label={t("code")} preset="code" value={draft.code} readOnly />
           ) : (
@@ -503,24 +628,6 @@ export default function CatalogAdminPage() {
               onChange={(e) => setDraft({ ...draft, code: e.target.value })}
             />
           )}
-          <Field
-            label={t("descriptionAz")}
-            preset="shortText"
-            value={draft.descriptionAz}
-            onChange={(e) => setDraft({ ...draft, descriptionAz: e.target.value })}
-          />
-          <Field
-            label={t("descriptionRu")}
-            preset="shortText"
-            value={draft.descriptionRu}
-            onChange={(e) => setDraft({ ...draft, descriptionRu: e.target.value })}
-          />
-          <Field
-            label={t("descriptionEn")}
-            preset="shortText"
-            value={draft.descriptionEn}
-            onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })}
-          />
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("filterKind")}
@@ -553,18 +660,60 @@ export default function CatalogAdminPage() {
             value={draft.listAmount}
             onChange={(e) => setDraft({ ...draft, listAmount: e.target.value })}
           />
-          <Field
-            label={t("department")}
-            preset="shortText"
-            value={draft.department}
-            onChange={(e) => setDraft({ ...draft, department: e.target.value })}
-          />
           <DatePicker
             label={t("effectiveFrom")}
             placeholder={tc("datePlaceholder")}
             value={draft.effectiveFrom}
             onChange={(value) => setDraft({ ...draft, effectiveFrom: value })}
           />
+            </div>
+            <div className="space-y-3">
+          <Field
+            label={t("descriptionAz")}
+            preset="shortText"
+            value={draft.descriptionAz}
+            onChange={(e) => setDraft({ ...draft, descriptionAz: e.target.value })}
+          />
+          <Field
+            label={t("descriptionRu")}
+            preset="shortText"
+            value={draft.descriptionRu}
+            onChange={(e) => setDraft({ ...draft, descriptionRu: e.target.value })}
+          />
+          <Field
+            label={t("descriptionEn")}
+            preset="shortText"
+            value={draft.descriptionEn}
+            onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })}
+          />
+            </div>
+          </div>
+          <CatalogField
+            kind={deptKind}
+            label={t("department")}
+            value={draft.department}
+            emptyLabel="—"
+            options={priceDepartments.map((dep) => ({ value: dep.code, label: dep.label }))}
+            onChange={(next) => setDraft({ ...draft, department: String(next ?? "") })}
+          />
+          {draft.department ? (
+            <div className="flex flex-wrap gap-3 text-[13px]">
+              {(["nameAz", "nameRu", "nameEn"] as const).map((key, index) => {
+                const dept = deptRows.find((item) => item.code === draft.department);
+                const text = dept?.[key]?.trim();
+                const lang = ["AZ", "RU", "EN"][index];
+                return (
+                  <a
+                    key={key}
+                    className="text-[#1F4E79] underline"
+                    href={`/admin/departments?edit=${encodeURIComponent(draft.department)}`}
+                  >
+                    {text || lang}
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"

@@ -57,27 +57,20 @@ export async function GET(req: Request) {
     const doctorIdParam = url.searchParams.get("doctorId")?.trim() || undefined;
     const nurseIdParam = url.searchParams.get("nurseId")?.trim() || undefined;
 
-    const myDoctorPractitionerId =
-      sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR)
-        ? (
-            await prisma.practitioner.findFirst({
-              where: { userId: session.sub },
-              select: { id: true, staffKind: true },
-            })
-          )?.id ?? null
-        : null;
+    const linkedDoctor = await prisma.practitioner.findFirst({
+      where: { userId: session.sub, active: true },
+      select: { id: true, staffKind: true },
+    });
+    const selfDoctorId = linkedDoctor?.staffKind === "DOCTOR" ? linkedDoctor.id : null;
 
-    const resolveDoctorPractitionerId = async (): Promise<string | null> => {
-      // Doctors (screen:doctor) are scoped to self; others may filter by doctorId.
-      if (sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR)) {
-        return myDoctorPractitionerId;
-      }
+    const resolveDoctorPractitionerId = (): string | null => {
+      // A linked doctor sees only their own lines. Admin and nurse pick a doctor or see all.
+      if (selfDoctorId) return selfDoctorId;
       return doctorIdParam ?? null;
     };
 
     if (view === "doctor-lines") {
-      const doctorId = await resolveDoctorPractitionerId();
-      if (!doctorId) return jsonOk({ view, items: [], grandTotal: 0 });
+      const doctorId = resolveDoctorPractitionerId();
 
       const statusFilterRaw = url.searchParams.get("status")?.trim();
       const statusFilter = statusFilterRaw
@@ -103,7 +96,7 @@ export async function GET(req: Request) {
 
       const orders = await prisma.procedureOrder.findMany({
         where: {
-          prescribedByPractitionerId: doctorId,
+          ...(doctorId ? { prescribedByPractitionerId: doctorId } : {}),
           scheduledAt: { gte: start, lt: end },
           status: { in: statuses as any },
           ...(procedureQ ? { procedureCode: procedureQ } : {}),
@@ -124,6 +117,7 @@ export async function GET(req: Request) {
           amountNet: true,
           patientOrigin: true,
           quantity: true,
+          prescribedByPractitioner: { select: { fullName: true } },
         },
         orderBy: { scheduledAt: "asc" },
       });
@@ -147,6 +141,7 @@ export async function GET(req: Request) {
           origin: o.patientOrigin,
           quantity: o.quantity,
           totalAmount: o.amountNet.toNumber(),
+          doctorName: o.prescribedByPractitioner?.fullName ?? "",
         };
       });
 
@@ -154,20 +149,11 @@ export async function GET(req: Request) {
     }
 
     if (view === "doctor-bonus") {
-      const doctorId = await resolveDoctorPractitionerId();
-      if (!doctorId) {
-        return jsonOk({
-          view,
-          items: [],
-          grandTotal: 0,
-          grandTotalInHouse: 0,
-          grandTotalWalkIn: 0,
-        });
-      }
+      const doctorId = resolveDoctorPractitionerId();
 
       const rows = await prisma.procedureOrder.findMany({
         where: {
-          prescribedByPractitionerId: doctorId,
+          ...(doctorId ? { prescribedByPractitionerId: doctorId } : {}),
           status: "COMPLETED",
           bonusEligible: true,
           amountNet: { gt: 0 },

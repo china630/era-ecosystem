@@ -40,7 +40,7 @@ Employee create no longer sets `provisionedSatellite*` or emits staff events.
 
 `/workspace/workforce/security` — seats, bindings, audit tail; role matrix via `/role-templates`.
 
-The **role matrix** is position × satellite **default role**, not the current person. Per-person add/revoke is Login & access (or a manual grant). **Bindings** is a read-only journal: person column from MDM; org-unit filter parses `GET org-units` `{ items, scope }` (not a raw array).
+The **role matrix** is position × satellite **default role**, not the current person. The dropdown is the satellite’s own role catalog (code + name), not a fixed enum — see [cp-workforce-satellite-role-catalog.md](./cp-workforce-satellite-role-catalog.md). Columns are the operational PIN satellites the org has purchased (clinic, hotel, F&B, retail). A hidden column does not delete the saved template; buying the module again shows the same cell. Per-person add/revoke is Login & access (or a manual grant). **Bindings** is a read-only journal: person column from MDM; org-unit filter parses `GET org-units` `{ items, scope }` (not a raw array). The satellite filter on grants and bindings uses the same purchased set. Finance and the other industry products are not matrix columns.
 
 ## Consequences
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -13,6 +13,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 
 import {
@@ -31,6 +32,7 @@ type Props = {
   episodeId?: string | null;
   readOnly?: boolean;
   onChanged?: () => void;
+  onCountChange?: (count: number) => void;
   /** Day-1 package open result from complaint POST (toast on card). */
   onDay1Program?: (payload: unknown) => void;
 };
@@ -40,6 +42,7 @@ export function PatientCardComplaints({
   episodeId,
   readOnly = false,
   onChanged,
+  onCountChange,
   onDay1Program,
 }: Props) {
   const t = useTranslations("patientCard");
@@ -53,7 +56,6 @@ export function PatientCardComplaints({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,16 +64,19 @@ export function PatientCardComplaints({
     if (res.ok) {
       const raw = await res.json();
       const row = raw.data ?? raw;
-      setItems(Array.isArray(row.items) ? row.items : []);
+      const nextItems = Array.isArray(row.items) ? row.items : [];
+      setItems(nextItems);
+      onCountChange?.(nextItems.length);
       setResolvedEpisodeId(
         typeof row.episodeId === "string" ? row.episodeId : episodeId ?? null,
       );
     } else {
       setItems([]);
+      onCountChange?.(0);
       setResolvedEpisodeId(episodeId ?? null);
     }
     setLoading(false);
-  }, [patientRefId, episodeId]);
+  }, [patientRefId, episodeId, onCountChange]);
 
   useEffect(() => {
     void load();
@@ -80,21 +85,18 @@ export function PatientCardComplaints({
   function openCreate() {
     setEditingId(null);
     setText("");
-    setMsg("");
     setOpen(true);
   }
 
   function openEdit(row: Row) {
     setEditingId(row.id);
     setText(row.text);
-    setMsg("");
     setOpen(true);
   }
 
   async function save() {
     if (!text.trim()) return;
     setBusy(true);
-    setMsg("");
     if (editingId) {
       const res = await fetch(`/api/patients/${patientRefId}/complaints`, {
         method: "PATCH",
@@ -104,7 +106,7 @@ export function PatientCardComplaints({
       setBusy(false);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
     } else {
@@ -120,7 +122,7 @@ export function PatientCardComplaints({
       setBusy(false);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setMsg(data.error ?? tc("failed"));
+        showApiError(data, tc("failed"));
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -153,6 +155,7 @@ export function PatientCardComplaints({
         </h2>
         {!readOnly && resolvedEpisodeId ? (
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t("addComplaint")}
           </button>
         ) : null}
@@ -209,7 +212,6 @@ export function PatientCardComplaints({
             ) : null}
           </ul>
         )}
-        {msg ? <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
       </div>
       <ModalShell
         open={open}

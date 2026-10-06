@@ -1,4 +1,4 @@
-/** Dual-run extras → hotel Elektraweb outbox (per-org ClinicCutoverPolicy). */
+/** Dual-run policy flag. Paid extras post to the hotel folio, not the Elektraweb SPA map. */
 export async function isClinicElektrawebDualRun(
   organizationId?: string | null,
 ): Promise<boolean> {

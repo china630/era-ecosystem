@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverExternalPackages: ['@prisma/client', 'redis', 'dejavu-fonts-ttf', 'pdfkit'],
+  serverExternalPackages: ['@prisma/client', 'redis', 'dejavu-fonts-ttf', 'pdfkit', 'fontkit'],
   webpack: (config) => {
     config.module.rules.push({
       test: /\.(ttf|otf|woff2?|eot)$/i,

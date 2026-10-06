@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Pencil, RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
@@ -28,6 +28,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import type { PractitionerAuthorRef } from "@/domain/staff/practitioner-label";
@@ -118,15 +120,19 @@ const emptyForm = {
 type Props = {
   patientId: string;
   panel?: string | null;
+  initialEpisodeId?: string | null;
   showBackLink?: boolean;
   onPatientLoaded?: (patient: PatientCardPatient) => void;
+  onOpenDayPlan?: (episodeId: string) => void;
 };
 
 export function PatientCardBody({
   patientId,
   panel,
+  initialEpisodeId,
   showBackLink = true,
   onPatientLoaded,
+  onOpenDayPlan,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
@@ -140,8 +146,9 @@ export function PatientCardBody({
   const [ciOpen, setCiOpen] = useState(false);
   const [ciCount, setCiCount] = useState(0);
   const [careTeamCount, setCareTeamCount] = useState(0);
+  const [complaintCount, setComplaintCount] = useState(0);
+  const [diagnosisCount, setDiagnosisCount] = useState(0);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
-  const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const locale = useLocale();
@@ -158,9 +165,25 @@ export function PatientCardBody({
     () => episodes.find((e) => e.id === selectedEpisodeId) ?? null,
     [episodes, selectedEpisodeId],
   );
+
+  async function retryPackageApply() {
+    if (!selectedEpisodeId) return;
+    const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}/package-apply`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(data, tc("saveFailed"));
+      return;
+    }
+    showSuccess(t("retryPackageDone"));
+    setClinicalRefreshKey((n) => n + 1);
+  }
+
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
+  const studiesUnlocked = anamnesisOk && complaintCount > 0 && diagnosisCount > 0;
   const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
   const episodeOptions = useMemo(
     () => episodes.map((e) => ({ value: e.id, label: e.label })),
@@ -189,13 +212,14 @@ export function PatientCardBody({
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
     if (items.length > 0) {
-      setSelectedEpisodeId(items[0].id);
-      setAnamnesis(items[0].anamnesisText ?? "");
+      const preferred = items.find((item) => item.id === initialEpisodeId) ?? items[0];
+      setSelectedEpisodeId(preferred.id);
+      setAnamnesis(preferred.anamnesisText ?? "");
     } else {
       setSelectedEpisodeId(null);
       setAnamnesis("");
     }
-  }, [patientId]);
+  }, [patientId, initialEpisodeId]);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -233,11 +257,17 @@ export function PatientCardBody({
     const ep = episodes.find((e) => e.id === nextId);
     setAnamnesis(ep?.anamnesisText ?? "");
     setCareTeamCount(0);
-    setMsg(null);
+    setComplaintCount(0);
+    setDiagnosisCount(0);
   }
 
   const onCareTeamChange = useCallback((items: { id: string }[]) => {
-    setCareTeamCount(items.length);
+    setCareTeamCount((prev) => {
+      if (prev === 0 && items.length > 0) {
+        setClinicalRefreshKey((n) => n + 1);
+      }
+      return items.length;
+    });
   }, []);
 
   function onAnamnesisSaved(payload: {
@@ -266,7 +296,7 @@ export function PatientCardBody({
     const key = day1ProgramToastKey(
       payload as Parameters<typeof day1ProgramToastKey>[0],
     );
-    if (key) setMsg(t(key));
+    if (key) showSuccess(t(key));
   }
 
   async function lookupMdm() {
@@ -305,7 +335,7 @@ export function PatientCardBody({
     });
     const lookup = await lookupRes.json();
     if (!lookup.globalPersonId) {
-      setMsg(t("mdmNotFound"));
+      showApiError({ error: t("mdmNotFound") });
       return;
     }
     const mergeRes = await fetch("/api/mdm/person-merge", {
@@ -321,16 +351,15 @@ export function PatientCardBody({
     });
     const merged = await mergeRes.json();
     if (!mergeRes.ok) {
-      setMsg(merged.error ?? tc("saveFailed"));
+      showApiError(merged, tc("saveFailed"));
       return;
     }
-    setMsg(t("mergeFinSuccess"));
+    showSuccess(t("mergeFinSuccess"));
     await load();
   }
 
   async function savePatient() {
     if (!patient) return;
-    setMsg(null);
     const res = await fetch(`/api/patients/${patient.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -352,11 +381,11 @@ export function PatientCardBody({
     });
     const data = await res.json();
     if (!res.ok) {
-      setMsg(data.error ?? data.message ?? tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
       return;
     }
     setEditOpen(false);
-    setMsg(tc("saved"));
+    showSuccess(tc("saved"));
     await load();
   }
 
@@ -395,14 +424,27 @@ export function PatientCardBody({
                 {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
               </p>
             </div>
-            <button
-              type="button"
-              className={TABLE_ROW_ICON_BTN_CLASS}
-              aria-label={tc("edit")}
-              onClick={() => setEditOpen(true)}
-            >
-              <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              {isSuperAdmin && selectedEpisode?.status === "OPEN" ? (
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("retryPackageApply")}
+                  title={t("retryPackageApply")}
+                  onClick={() => void retryPackageApply()}
+                >
+                  <RefreshCw className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            </div>
           </div>
           {isSuperAdmin ? (
             <p>
@@ -483,7 +525,6 @@ export function PatientCardBody({
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
             </p>
           ) : null}
-          {msg ? <p>{msg}</p> : null}
         </div>
 
         <section className="space-y-2">
@@ -584,6 +625,7 @@ export function PatientCardBody({
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
               onChanged={() => setClinicalRefreshKey((n) => n + 1)}
+              onCountChange={setComplaintCount}
               onDay1Program={applyDay1Toast}
             />
 
@@ -591,6 +633,11 @@ export function PatientCardBody({
               patientRefId={patient.id}
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
+              onCountChange={setDiagnosisCount}
+              onDay1Program={(day1) => {
+                applyDay1Toast(day1);
+                setClinicalRefreshKey((n) => n + 1);
+              }}
             />
 
             <PatientCardClinicalSections
@@ -600,7 +647,9 @@ export function PatientCardBody({
               patientOrigin={selectedEpisode?.patientOrigin}
               readOnly={episodeReadOnly}
               anamnesisOk={anamnesisOk}
+              studiesUnlocked={studiesUnlocked}
               refreshKey={clinicalRefreshKey}
+              onOpenDayPlan={onOpenDayPlan}
             />
           </>
         ) : null}

@@ -121,6 +121,7 @@ services:
       CLINIC_API_URL: http://clinic:3203
       HOTEL_PMS_API_URL: http://hotel-pms:3201
       FNB_POS_API_URL: http://fnb-pos:3202
+      RETAIL_API_URL: http://retail-pos:3204
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}

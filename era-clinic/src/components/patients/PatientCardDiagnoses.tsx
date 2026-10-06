@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -18,12 +19,16 @@ type Props = {
   patientRefId: string;
   episodeId?: string | null;
   readOnly?: boolean;
+  onCountChange?: (count: number) => void;
+  onDay1Program?: (result: unknown) => void;
 };
 
 export function PatientCardDiagnoses({
   patientRefId,
   episodeId,
   readOnly = false,
+  onCountChange,
+  onDay1Program,
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
@@ -76,6 +81,7 @@ export function PatientCardDiagnoses({
             className={PRIMARY_BUTTON_CLASS}
             onClick={() => panelRef.current?.openCreate()}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             {t("addDiagnosis")}
           </button>
         ) : null}
@@ -90,6 +96,8 @@ export function PatientCardDiagnoses({
             readOnly={readOnly}
             hideTitle
             hideAddButton
+            onCount={onCountChange}
+            onDay1Program={onDay1Program}
           />
         ) : resolvedEpisodeId === undefined ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>

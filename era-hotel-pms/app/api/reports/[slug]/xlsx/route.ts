@@ -3,9 +3,12 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getReportBySlug } from '@/lib/reports/catalog';
-import { parseReportLangParam } from '@/lib/reports/locale';
-import { reportToXlsxBuffer } from '@/lib/reports/excel';
-import { isImplementedReportSlug, queryReport } from '@/lib/services/reports';
+import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
+import { layoutToXlsxBuffer } from '@/lib/reports/excel';
+import { formatReportTimestamp, reportPdfT } from '@/lib/reports/pdf-i18n';
+import { isImplementedReportSlug } from '@/lib/services/reports';
+import { queryReportLayout, reportPeriodLabel } from '@/lib/services/reports/report-output';
+import { getReportLetterhead } from '@/lib/services/hotel-letterhead.service';
 
 export async function GET(
   request: Request,
@@ -32,13 +35,23 @@ export async function GET(
     if (!lang.ok) return jsonError(lang.message, 400);
 
     const dim = url.searchParams.get('dim') ?? undefined;
-    const data = await queryReport(slug, from, to, dim ? { dim } : undefined);
-    const buffer = await reportToXlsxBuffer(data, lang.locale);
+    const [layout, letterhead] = await Promise.all([
+      queryReportLayout(slug, from, to, lang.locale, dim ? { dim } : undefined),
+      getReportLetterhead(),
+    ]);
+    const t = reportPdfT(lang.locale);
+    const buffer = await layoutToXlsxBuffer(layout, {
+      letterhead,
+      title: t(def.titleKey),
+      period: reportPeriodLabel(from, to),
+      generatedAt: formatReportTimestamp(lang.locale),
+      noDataLabel: t('reportsPdf.noData'),
+    });
 
     return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${slug}_${from}.xlsx"`,
+        'Content-Disposition': `attachment; filename="${reportFileName(slug, lang.locale, from, 'xlsx')}"`,
       },
     });
   } catch (err) {

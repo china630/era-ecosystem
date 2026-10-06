@@ -16,6 +16,7 @@ import {
   EraListFilterBar,
   Field,
   FORM_STACK_CLASS,
+  LINK_ACCENT_CLASS,
   ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   ModalFooter,
@@ -27,6 +28,8 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 type Warning = { kind: string; from: string; to: string; note: string | null };
@@ -112,7 +115,6 @@ export default function NurseRosterPage() {
   const [view, setView] = useState<RosterView | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [dayOverrides, setDayOverrides] = useState<DayOverride[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [absenceForm, setAbsenceForm] = useState({
@@ -151,14 +153,13 @@ export default function NurseRosterPage() {
 
   const load = useCallback(async () => {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch(
         `/api/sanatorium/nurse-roster?yearMonth=${yearMonth}&staffKind=${staffKind}`,
       );
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("loadFailed"));
+        showApiError(data, t("loadFailed"));
         return;
       }
       setView(data);
@@ -285,7 +286,6 @@ export default function NurseRosterPage() {
 
   async function save() {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster", {
         method: "PUT",
@@ -303,13 +303,13 @@ export default function NurseRosterPage() {
       });
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setView(data);
       setLines(data.lines);
       setDayOverrides(data.dayOverrides ?? []);
-      setMsg(t("saved"));
+      showSuccess(t("saved"));
     } finally {
       setBusy(false);
     }
@@ -317,7 +317,6 @@ export default function NurseRosterPage() {
 
   async function postAction(action: "approve" | "copyPrevious") {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster", {
         method: "POST",
@@ -326,14 +325,14 @@ export default function NurseRosterPage() {
       });
       const data = (await res.json()) as RosterView & { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setView(data);
       setLines(data.lines);
       setDayOverrides(data.dayOverrides ?? []);
       setPage(1);
-      setMsg(action === "approve" ? t("approved") : t("copied"));
+      showSuccess(action === "approve" ? t("approved") : t("copied"));
     } finally {
       setBusy(false);
     }
@@ -341,7 +340,7 @@ export default function NurseRosterPage() {
 
   async function addAbsence() {
     if (!absenceForm.practitionerId || !absenceForm.startsOn || !absenceForm.endsOn) {
-      setMsg(t("absenceRequired"));
+      showApiError({ error: t("absenceRequired") });
       return;
     }
     setBusy(true);
@@ -353,7 +352,7 @@ export default function NurseRosterPage() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setAbsenceOpen(false);
@@ -378,11 +377,10 @@ export default function NurseRosterPage() {
 
   async function saveSubstitute() {
     if (!subForm.procedureTypeId || !subForm.dutyDate || !subForm.practitionerId) {
-      setMsg(t("substituteRequired"));
+      showApiError({ error: t("substituteRequired") });
       return;
     }
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/sanatorium/nurse-roster/day-overrides", {
         method: "PUT",
@@ -398,11 +396,11 @@ export default function NurseRosterPage() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setMsg(data.error ?? t("saveFailed"));
+        showApiError(data, t("saveFailed"));
         return;
       }
       setSubOpen(false);
-      setMsg(t("substituteSaved"));
+      showSuccess(t("substituteSaved"));
       await load();
     } finally {
       setBusy(false);
@@ -528,8 +526,6 @@ export default function NurseRosterPage() {
           {t("addAbsence")}
         </button>
       </div>
-
-      {msg ? <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{msg}</p> : null}
 
       {matrixView === "procedures" ? (
         <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
@@ -683,15 +679,63 @@ export default function NurseRosterPage() {
                       <td className={DATA_TABLE_TD_CLASS}>{s.code}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <CatalogField
-                          kind="MULTI"
+                          kind="SEARCHABLE"
                           label=""
-                          value={owned}
+                          value=""
                           onChange={(v) => {
-                            const ids = Array.isArray(v) ? v.map(String) : [String(v)];
-                            setNurseProcedures(s.id, ids);
+                            const id = String(v ?? "");
+                            if (!id || owned.includes(id)) return;
+                            setNurseProcedures(s.id, [...owned, id]);
                           }}
-                          options={procedureOptions}
+                          options={procedureOptions.filter((o) => !owned.includes(o.value))}
+                          emptyLabel={t("addCabinet")}
                         />
+                        <ul className="mt-2 space-y-2">
+                          {owned.map((id) => {
+                            const line = lines.find((l) => l.procedureTypeId === id);
+                            const overs = dayOverrides.filter((o) => o.procedureTypeId === id);
+                            return (
+                              <li key={id} className="text-[12px]">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5">
+                                  {line?.procedureName ?? id}
+                                  <button
+                                    type="button"
+                                    className="text-[#7F8C8D]"
+                                    aria-label={t("removeCabinet")}
+                                    onClick={() =>
+                                      setNurseProcedures(
+                                        s.id,
+                                        owned.filter((x) => x !== id),
+                                      )
+                                    }
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                                {overs.length === 0 ? (
+                                  <button
+                                    type="button"
+                                    className={`mt-1 block ${LINK_ACCENT_CLASS}`}
+                                    onClick={() => openSubstitute(id)}
+                                  >
+                                    {t("substitute")}
+                                  </button>
+                                ) : (
+                                  overs.map((o) => (
+                                    <button
+                                      key={o.id}
+                                      type="button"
+                                      className={`mt-1 block text-left ${LINK_ACCENT_CLASS}`}
+                                      onClick={() => openSubstitute(id, o.dutyDate)}
+                                    >
+                                      {o.dutyDate} — {o.practitionerName}
+                                    </button>
+                                  ))
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {s.warnings.map((w, i) => (
@@ -709,15 +753,6 @@ export default function NurseRosterPage() {
                           ))}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {owned.length > 0 ? (
-                          <button
-                            type="button"
-                            className={SECONDARY_BUTTON_CLASS}
-                            onClick={() => openSubstitute(owned[0]!)}
-                          >
-                            {t("substitute")}
-                          </button>
-                        ) : null}
                         {nurseOverrides.map((o) => (
                           <p
                             key={o.id}

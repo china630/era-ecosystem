@@ -214,7 +214,7 @@ Keep `Reservation.mealPlanId` if present in Reservations export for FO display.
 | Arrival / Departure | dates | ✅ | ✅ |
 | State | `status` | ✅ | ✅ |
 
-After upsert: call `recalcReservationDailyRates(id)` so `ReservationDailyRate` + `totalAmount` come from `quoteStay`, not import snapshot.
+After upsert: write `ReservationDailyRate` from the Elektra night grid (`QA_EASYPMS_RESDETAIL`) or, when only a header total / manual daily rate is present, spread that amount across the stay. Do not call `recalcReservationDailyRates` — a cashier often changes the first or last night, and BAR would erase it. Nights that differ from the common amount, and nights with Fix, stay `manualFlag`.
 
 ---
 

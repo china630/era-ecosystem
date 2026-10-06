@@ -22,6 +22,8 @@ const listQuerySchema = z.object({
   programCode: z.string().optional(),
   includeHotelRooms: z.boolean().optional(),
   includeProgramCodes: z.boolean().optional(),
+  sort: z.enum(["patient", "room", "origin", "program", "status"]).optional(),
+  sortDir: z.enum(["asc", "desc"]).optional(),
 });
 
 const patientNameAliases = z.object({
@@ -90,6 +92,8 @@ export async function GET(req: Request) {
       programCode: url.searchParams.get("programCode") ?? undefined,
       includeHotelRooms: url.searchParams.get("includeHotelRooms") === "1",
       includeProgramCodes: url.searchParams.get("includeProgramCodes") === "1",
+      sort: url.searchParams.get("sort") ?? undefined,
+      sortDir: url.searchParams.get("sortDir") ?? undefined,
     });
     const dataScope = await resolveClinicDataScope(
       session,

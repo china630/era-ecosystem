@@ -9,9 +9,12 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
+import { readUiLocale } from "@/lib/request-locale";
 import {
   deletePendingExtra,
   listExtraUnitPrices,
+  listPaidExtras,
   listPendingExtras,
   prescribeExtras,
 } from "@/domain/sanatorium/extras-assign.service";
@@ -36,7 +39,7 @@ const prescribeSchema = z.object({
 });
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -50,18 +53,32 @@ export async function GET(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
-    const rows = await listPendingExtras(id);
+    const [rows, paid] = await Promise.all([
+      listPendingExtras(id),
+      listPaidExtras(id),
+    ]);
     const prices = await listExtraUnitPrices();
+    const locale = await readUiLocale(req);
+    const catalogNames = await loadCatalogDisplayNameMap(
+      [...rows, ...paid].map((row) => row.procedureCode),
+      locale,
+    );
     return jsonOk({
       items: rows.map((r) => ({
         id: r.id,
         procedureCode: r.procedureCode,
-        procedureName: r.procedureName,
+        procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
         amountNet: Number(r.amountNet),
         note: r.note,
         status: r.status,
       })),
       prices,
+      paid: paid.map((r) => ({
+        id: r.id,
+        procedureCode: r.procedureCode,
+        procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
+        amountNet: Number(r.amountNet),
+      })),
     });
   } catch (err) {
     if (err instanceof PackageAssignError) {

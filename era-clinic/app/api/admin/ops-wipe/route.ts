@@ -10,6 +10,8 @@ import {
 const confirmSchema = z.object({
   organizationId: z.string().uuid(),
   confirmPhrase: z.literal("WIPE"),
+  ops: z.array(z.string()).optional(),
+  catalog: z.array(z.string()).optional(),
 });
 
 async function superAdminSession() {
@@ -45,7 +47,10 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    const deleted = await runClinicOpsWipe(session.organizationId);
+    const deleted = await runClinicOpsWipe(session.organizationId, {
+      ops: body.ops,
+      catalog: body.catalog,
+    });
     await recordClinicAudit(
       { userId: session.sub, request },
       "OpsWipe",

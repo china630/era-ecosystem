@@ -12,6 +12,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { OrganizationId } from "../../common/org-id.decorator";
@@ -27,7 +28,8 @@ import {
 @ApiTags("platform-workforce-timesheets")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/timesheets")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("timesheet")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceTimesheetsController {
   constructor(private readonly timesheets: WorkforceTimesheetsService) {}
 

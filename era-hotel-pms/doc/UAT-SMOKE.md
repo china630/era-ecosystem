@@ -76,9 +76,9 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 
 ## 6. Cash & night audit (FIN-05, NA-01)
 
-1. `/operations` � open cash shift.
-2. Run night audit � must fail with message.
-3. Close shift, run night audit � steps list + COMPLETED.
+1. `/front-cash/desk` — a posting for the business date shows a row with an empty close time.
+2. Run night audit — must fail while that row is open.
+3. Close the row, run night audit — steps list + COMPLETED.
 4. Journal: `NIGHT_AUDIT_CLOSED`.
 
 ### 6b. Settlement hub (pending walk-in)
@@ -394,6 +394,16 @@ Prerequisite: W1 code deployed (`src/lib/reports/`, 8 P0 query services + pages 
 2. `/reports?report=three-year-occ` — Export PDF downloads a file (not an error page).
 3. Email cron (HEADLESS): `POST /api/admin/reports/email-cron?secret=…` body contains ZIP URL with `lang=` from `HOTEL_REPORT_EMAIL_LOCALE` (no UI session). Task Cube is not in Hotel PMS.
 
+### 32b. Letterhead, date bar, shared layout (2026-10-05)
+
+1. SatAdmin `/settings/policies#letterhead`: enter the hotel name, address, phone, email and website → **Save**, then upload a logo. With some contact fields empty, report PDFs still export (blank lines, no error).
+2. `/reports?report=daily-management`: Start and End show the business date and **Default** is selected. Click **This Month** → Start = 1st, End = last day of the month. Change End → no radio stays selected.
+3. Press **Show**: the Rooms and guests block has the columns Today / Tomorrow / Month to date / Year to date. With no bed capacity set, Bed % shows an em dash.
+4. **Export PDF** and **Export Excel**: both start with the letterhead (name, address, contacts, logo) and carry the same sections as the screen; dates print as `DD.MM.YYYY`.
+5. `/reports?report=trial-balance-period` → Show: the first row is Balance brought forward, and payment rows are negative.
+6. `/reports?report=monthly-daily-analysis` opens on the 1st → the last closed day with no radio selected.
+7. `/reports/nightly-pack`: the annual report in the pack ends on the closed day (not 31 Dec).
+
 ## Pass criteria
 
 - `npm run build` succeeds.
@@ -429,7 +439,7 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / HOT-NA-04:
 
-1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → **Payments** / **Deposits** tabs + pending **link** (not a second queue) / method totals; select CashShift → **Print Z** (modal) → **Close shift** (ops packet, not fiscal KKM Z).
+1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → **Payments** / **Deposits** tabs + pending **link** (not a second queue) / method totals; **Print Z** (modal). Day close is `/front-cash/desk`, not a shift button.
 2. **EOD hub (HOT-NA-03):** `/night-audit/reports` — pick date → open **09 Cancelled**, **10 Created**, **11 Folio transactions**, **12 Room price control**, **13 No-shows**, **14 Room moves**, **15 VIP in-house** → each shows a grid; **Export CSV** on report pages.
 3. **Folio day ledger:** `/night-audit/reports/folio-transactions?date=…` — CHARGE and PAYMENT rows for the day; Folio link opens `/folio/[reservationId]`.
 4. **Reservation updates (HOT-NA-04):** `/night-audit/reservation-updates` — filter Action type Cancel/Extend/Note/Other → grid updates; **Export CSV** downloads file.

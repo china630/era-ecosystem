@@ -17,9 +17,9 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
-  TEXT_SUCCESS_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import {
   ResourceDayMatrix,
@@ -55,8 +55,6 @@ export default function SanatoriumResourcesPage() {
   const [patientFilter, setPatientFilter] = useState("");
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("full");
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [msgErr, setMsgErr] = useState(false);
   const [moveOrder, setMoveOrder] = useState<{
     id: string;
     procedureCode?: string;
@@ -94,11 +92,6 @@ export default function SanatoriumResourcesPage() {
     };
   }, [fullscreen]);
 
-  function flash(text: string, err = false) {
-    setMsg(text);
-    setMsgErr(err);
-  }
-
   async function dropOnSlot(resourceId: string, slotTime: string) {
     if (!dragOrderId) return;
     const scheduledAt = new Date(slotTime).toISOString();
@@ -110,10 +103,10 @@ export default function SanatoriumResourcesPage() {
     const data = await res.json();
     setDragOrderId(null);
     if (!res.ok) {
-      flash(data.error ?? t("moveFailed"), true);
+      showApiError(data, t("moveFailed"));
       return;
     }
-    flash(t("moved"));
+    showSuccess(t("moved"));
     await load();
   }
 
@@ -141,11 +134,11 @@ export default function SanatoriumResourcesPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      flash(data.error ?? t("moveFailed"), true);
+      showApiError(data, t("moveFailed"));
       return;
     }
     setMoveOrder(null);
-    flash(t("moved"));
+    showSuccess(t("moved"));
     await load();
   }
 
@@ -159,10 +152,10 @@ export default function SanatoriumResourcesPage() {
     const data = await res.json();
     setCancelId(null);
     if (!res.ok) {
-      flash(data.error ?? t("cancelFailed"), true);
+      showApiError(data, t("cancelFailed"));
       return;
     }
-    flash(t("cancelled"));
+    showSuccess(t("cancelled"));
     await load();
   }
 
@@ -261,17 +254,12 @@ export default function SanatoriumResourcesPage() {
       <p className={`mb-3 text-sm ${SUBSECTION_SURFACE_CLASS}`}>{t("closedDayHint")}</p>
     ) : null;
 
-  const flashMsg = msg ? (
-    <p className={`mb-3 text-sm ${msgErr ? TEXT_DANGER_CLASS : TEXT_SUCCESS_CLASS}`}>{msg}</p>
-  ) : null;
-
   return (
     <>
       {!fullscreen ? (
         <>
           <PageHeader title={t("title")} subtitle={t("subtitle")} />
           {closedHint}
-          {flashMsg}
           {filters}
           <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
         </>
@@ -301,7 +289,6 @@ export default function SanatoriumResourcesPage() {
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 py-3 sm:px-6">
             {closedHint}
-            {flashMsg}
             {filters}
             <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
           </div>

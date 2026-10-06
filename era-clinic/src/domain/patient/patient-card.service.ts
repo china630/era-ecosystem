@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { getClinicSettings } from "@/domain/settings/settings.service";
@@ -169,7 +170,7 @@ function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
 
 export async function getPatientCardSummary(
   patientRefId: string,
-  opts?: { episodeId?: string | null },
+  opts?: { episodeId?: string | null; locale?: string },
 ) {
   const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const now = new Date();
@@ -288,6 +289,18 @@ export async function getPatientCardSummary(
     }),
   ]);
 
+  const catalogNames = await loadCatalogDisplayNameMap(
+    [
+      nextProcedure?.procedureCode,
+      ...upcomingProcedures.map((row) => row.procedureCode),
+      ...proposedProcedures.map((row) => row.procedureCode),
+      ...pendingExtras.map((row) => row.procedureCode),
+    ].filter((code): code is string => Boolean(code)),
+    opts?.locale ?? "az",
+  );
+  const displayProcedureName = (code: string, stored: string) =>
+    catalogNames.get(code) || stored;
+
   return {
     patientRefId,
     limits: {
@@ -323,7 +336,10 @@ export async function getPatientCardSummary(
             id: nextProcedure.id,
             at: nextProcedure.scheduledAt.toISOString(),
             atLabel: bakuDateTimeLabel(nextProcedure.scheduledAt),
-            name: nextProcedure.procedureName,
+            name: displayProcedureName(
+              nextProcedure.procedureCode,
+              nextProcedure.procedureName,
+            ),
             code: nextProcedure.procedureCode,
             status: nextProcedure.status,
           }
@@ -334,11 +350,25 @@ export async function getPatientCardSummary(
       },
     },
     resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
-    planPreview: upcomingProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
-    proposedPreview: proposedProcedures.map((p) => withTimeSubtitle(mapProcedureEvent(p))),
+    planPreview: upcomingProcedures.map((p) =>
+      withTimeSubtitle(
+        mapProcedureEvent({
+          ...p,
+          procedureName: displayProcedureName(p.procedureCode, p.procedureName),
+        }),
+      ),
+    ),
+    proposedPreview: proposedProcedures.map((p) =>
+      withTimeSubtitle(
+        mapProcedureEvent({
+          ...p,
+          procedureName: displayProcedureName(p.procedureCode, p.procedureName),
+        }),
+      ),
+    ),
     pendingExtras: pendingExtras.map((p) => ({
       id: p.id,
-      title: p.procedureName,
+      title: displayProcedureName(p.procedureCode, p.procedureName),
       code: p.procedureCode,
       amountNet: Number(p.amountNet ?? 0),
       status: p.status,
@@ -489,7 +519,14 @@ export async function getPatientHistoryPage(
 
 export async function getPatientPlanPage(
   patientRefId: string,
-  opts: { offset?: number; limit?: number; from?: Date; to?: Date; episodeId?: string },
+  opts: {
+    offset?: number;
+    limit?: number;
+    from?: Date;
+    to?: Date;
+    episodeId?: string;
+    locale?: string;
+  },
 ) {
   const settings = await getClinicSettings();
   const limit = opts.limit ?? settings.patientCardPlanPageSize;
@@ -526,7 +563,16 @@ export async function getPatientPlanPage(
     }),
   ]);
 
-  const events: PatientTimelineEvent[] = rows.map((p) => mapProcedureEvent(p));
+  const catalogNames = await loadCatalogDisplayNameMap(
+    rows.map((row) => row.procedureCode),
+    opts.locale ?? "az",
+  );
+  const events: PatientTimelineEvent[] = rows.map((p) =>
+    mapProcedureEvent({
+      ...p,
+      procedureName: catalogNames.get(p.procedureCode) || p.procedureName,
+    }),
+  );
 
   const hasMore = offset + limit < total;
   return {

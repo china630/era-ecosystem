@@ -17,6 +17,7 @@ import {
   ListPaginationFooter,
   PageHeader,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
 
@@ -28,6 +29,7 @@ type DoctorLinesItem = {
   origin: string;
   quantity: number;
   totalAmount: number;
+  doctorName?: string;
 };
 
 type DoctorBonusItem = {
@@ -79,6 +81,7 @@ export default function ProceduresReportPage() {
   const { auth } = useClinicAuth();
   const canSelectNurse =
     auth?.staffKind === "DOCTOR" || auth?.canViewClinicAdmin === true;
+  const canPickDoctor = auth?.staffKind !== "DOCTOR";
 
   const [view, setView] = useState<"doctor-lines" | "doctor-bonus" | "by-procedure" | "nurse-work">(
     "doctor-lines",
@@ -89,12 +92,13 @@ export default function ProceduresReportPage() {
   const [paid, setPaid] = useState<"" | "paid" | "free">("");
   const [nurseId, setNurseId] = useState<string>("");
   const [nurses, setNurses] = useState<Array<{ id: string; fullName: string }>>([]);
+  const [doctorId, setDoctorId] = useState<string>("");
+  const [doctors, setDoctors] = useState<Array<{ id: string; fullName: string }>>([]);
   const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>(
     [],
   );
 
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [grandTotal, setGrandTotal] = useState<number | null>(null);
   const [bonusBuckets, setBonusBuckets] = useState<{
@@ -116,7 +120,7 @@ export default function ProceduresReportPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [view, from, to, procedure, paid, nurseId, pageSize]);
+  }, [view, from, to, procedure, paid, nurseId, doctorId, pageSize]);
 
   const url = useMemo(() => {
     const params = new URLSearchParams({
@@ -128,12 +132,15 @@ export default function ProceduresReportPage() {
     if (procedure) params.set("procedure", procedure);
     if (paid) params.set("paid", paid);
     if (view === "nurse-work" && nurseId) params.set("nurseId", nurseId);
+    if ((view === "doctor-lines" || view === "doctor-bonus") && doctorId) {
+      params.set("doctorId", doctorId);
+    }
     return `/api/reports/procedures?${params.toString()}`;
-  }, [view, from, to, procedure, paid, nurseId, locale]);
+  }, [view, from, to, procedure, paid, nurseId, doctorId, locale]);
 
   useEffect(() => {
     let cancelled = false;
-    void fetch("/api/procedure-types")
+    void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
       .then(async (res) => (res.ok ? res.json() : null))
       .then((raw) => {
         if (cancelled || !raw) return;
@@ -152,7 +159,7 @@ export default function ProceduresReportPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     if (view !== "nurse-work" || !canSelectNurse) return;
@@ -179,9 +186,33 @@ export default function ProceduresReportPage() {
     };
   }, [view, canSelectNurse, nurses.length]);
 
+  useEffect(() => {
+    if (!canPickDoctor) return;
+    if (view !== "doctor-lines" && view !== "doctor-bonus") return;
+    if (doctors.length > 0) return;
+
+    let cancelled = false;
+    void fetch("/api/reports/procedures/doctors")
+      .then(async (res) => (res.ok ? res.json() : null))
+      .then((raw) => {
+        if (cancelled || !raw) return;
+        const payload = (raw.data ?? raw) as { items?: Array<{ id: string; fullName?: string }> };
+        const rows = payload.items ?? [];
+        if (!Array.isArray(rows)) return;
+        setDoctors(
+          rows
+            .filter((row) => Boolean(row.id))
+            .map((row) => ({ id: row.id, fullName: row.fullName ?? row.id })),
+        );
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, [view, canPickDoctor, doctors.length]);
+
   async function load() {
     setBusy(true);
-    setMsg(null);
     setItems([]);
     setGrandTotal(null);
     setBonusBuckets(null);
@@ -189,7 +220,7 @@ export default function ProceduresReportPage() {
       const res = await fetch(url);
       const d = (await res.json()) as ApiResponse;
       if (!res.ok) {
-        setMsg((d as { error?: string }).error ?? tr("loadFailed"));
+        showApiError(d, tr("loadFailed"));
         return;
       }
       setItems(d.items ?? []);
@@ -207,7 +238,7 @@ export default function ProceduresReportPage() {
         });
       }
     } catch {
-      setMsg(tr("loadFailed"));
+      showApiError({ error: tr("loadFailed") });
     } finally {
       setBusy(false);
     }
@@ -252,6 +283,7 @@ export default function ProceduresReportPage() {
               setProcedure("");
               setPaid("");
               setNurseId("");
+              setDoctorId("");
             }}
           >
             <CatalogField
@@ -301,6 +333,19 @@ export default function ProceduresReportPage() {
               ]}
               emptyLabel={t("all")}
             />
+            {(view === "doctor-lines" || view === "doctor-bonus") && canPickDoctor ? (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={tr("doctor")}
+                value={doctorId}
+                onChange={(value) => setDoctorId(String(value ?? ""))}
+                options={[
+                  { value: "", label: tr("allDoctors") },
+                  ...doctors.map((row) => ({ value: row.id, label: row.fullName })),
+                ]}
+                emptyLabel={tr("allDoctors")}
+              />
+            ) : null}
             {view === "nurse-work" && canSelectNurse ? (
               <CatalogField
                 kind="SEARCHABLE"
@@ -318,9 +363,8 @@ export default function ProceduresReportPage() {
         }
 
         toolbar={
-          msg || grandTotal != null || bonusBuckets ? (
+          grandTotal != null || bonusBuckets ? (
             <div className={`space-y-1 text-sm ${TEXT_MUTED_CLASS}`}>
-              {msg ? <p>{msg}</p> : null}
               {grandTotal != null ? <p>{tr("grandTotal", { amount: grandTotal.toFixed(2) })}</p> : null}
               {bonusBuckets ? (
                 <>
@@ -353,6 +397,9 @@ export default function ProceduresReportPage() {
                 {view === "doctor-lines" ? (
                   <>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    {canPickDoctor ? (
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDoctor")}</th>
+                    ) : null}
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDate")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colStatus")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPaid")}</th>
@@ -398,6 +445,9 @@ export default function ProceduresReportPage() {
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
+                        {canPickDoctor ? (
+                          <td className={DATA_TABLE_TD_CLASS}>{row.doctorName || "—"}</td>
+                        ) : null}
                         <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.procedureDate)}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{lineStatus(row.status)}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{paidLabel(row.paid)}</td>

@@ -22,9 +22,10 @@ import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { useListPagination } from "../../../../lib/use-list-pagination";
 import {
   WORKFORCE_UI_SATELLITES,
-  humanizeSatelliteRole,
-  rolesForSatellite,
+  catalogRolesFor,
+  workforceSatellitesForModules,
 } from "../../../../lib/workforce-satellites";
+import { useSubscription } from "../../../../lib/subscription-context";
 import {
   isWorkforceGate403,
   parseOrgUnitItems,
@@ -38,13 +39,12 @@ function positionHasConfiguredAccess(
   positionId: string,
   templateByCell: Map<string, TemplateRow>,
   satelliteKey: string,
+  visibleKeys: readonly { key: string }[],
 ): boolean {
   if (satelliteKey) {
     return templateByCell.has(`${positionId}:${satelliteKey}`);
   }
-  return WORKFORCE_UI_SATELLITES.some((s) =>
-    templateByCell.has(`${positionId}:${s.key}`),
-  );
+  return visibleKeys.some((s) => templateByCell.has(`${positionId}:${s.key}`));
 }
 
 type Overview = {
@@ -73,10 +73,14 @@ export default function WorkforceSecurityMatrixPage() {
   const t = useTranslations("workforceSecurity");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
+  const { snapshot: subscriptionSnapshot } = useSubscription();
   const [data, setData] = useState<Overview | null>(null);
   const [positions, setPositions] = useState<PositionRow[]>([]);
   const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [catalog, setCatalog] = useState<
+    { satelliteKey: string; code: string; name: string; active: boolean }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [busyCell, setBusyCell] = useState<string | null>(null);
@@ -128,14 +132,28 @@ export default function WorkforceSecurityMatrixPage() {
     [positions, filterOrgUnitId],
   );
 
+  const visibleSatellites = useMemo(
+    () => workforceSatellitesForModules(subscriptionSnapshot?.activeModules),
+    [subscriptionSnapshot?.activeModules],
+  );
+
   const satelliteOptions = useMemo(
     () =>
-      WORKFORCE_UI_SATELLITES.map((s) => ({
+      visibleSatellites.map((s) => ({
         value: s.key,
         label: satelliteLabel(s.key),
       })),
-    [satelliteLabel],
+    [satelliteLabel, visibleSatellites],
   );
+
+  useEffect(() => {
+    if (
+      filterSatellite &&
+      !visibleSatellites.some((s) => s.key === filterSatellite)
+    ) {
+      setFilterSatellite("");
+    }
+  }, [filterSatellite, visibleSatellites]);
 
   const accessStateOptions = useMemo(
     () => [
@@ -163,6 +181,7 @@ export default function WorkforceSecurityMatrixPage() {
           p.id,
           templateByCell,
           filterSatellite,
+          visibleSatellites,
         );
         if (filterAccessState === "configured" && !configured) return false;
         if (filterAccessState === "notConfigured" && configured) return false;
@@ -182,6 +201,7 @@ export default function WorkforceSecurityMatrixPage() {
     filterSatellite,
     filterAccessState,
     templateByCell,
+    visibleSatellites,
   ]);
 
   const filterResetKey = [
@@ -206,11 +226,12 @@ export default function WorkforceSecurityMatrixPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setMatrixError(null);
-    const [ovRes, posRes, tmplRes, ouRes] = await Promise.all([
+    const [ovRes, posRes, tmplRes, ouRes, roleRes] = await Promise.all([
       wfFetch("security/overview"),
       wfFetch("positions?status=ACTIVE"),
       wfFetch("role-templates"),
       wfFetch("org-units"),
+      wfFetch("satellite-roles"),
     ]);
     if (await isWorkforceGate403(ovRes)) {
       setNotEntitled(true);
@@ -230,6 +251,15 @@ export default function WorkforceSecurityMatrixPage() {
     if (ouRes.ok) {
       const units = parseOrgUnitItems<OrgUnitOpt>(await ouRes.json());
       setOrgUnits(Array.isArray(units) ? units : []);
+    }
+    if (roleRes.ok) {
+      const rows = (await roleRes.json()) as {
+        satelliteKey: string;
+        code: string;
+        name: string;
+        active: boolean;
+      }[];
+      setCatalog(Array.isArray(rows) ? rows : []);
     }
     setLoading(false);
   }, []);
@@ -397,7 +427,7 @@ export default function WorkforceSecurityMatrixPage() {
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
-                {WORKFORCE_UI_SATELLITES.map((s) => (
+                {visibleSatellites.map((s) => (
                   <th key={s.key} className={DATA_TABLE_TH_LEFT_CLASS}>
                     {satelliteLabel(s.key)}
                   </th>
@@ -408,7 +438,7 @@ export default function WorkforceSecurityMatrixPage() {
               {total === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td
-                    colSpan={WORKFORCE_UI_SATELLITES.length + 1}
+                    colSpan={visibleSatellites.length + 1}
                     className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
                   >
                     {loading ? t("loading") : emptyMessage}
@@ -423,7 +453,7 @@ export default function WorkforceSecurityMatrixPage() {
                         <span className="ml-1 text-[#7F8C8D]">({p.orgUnit.name})</span>
                       ) : null}
                     </td>
-                    {WORKFORCE_UI_SATELLITES.map((s) => {
+                    {visibleSatellites.map((s) => {
                       const cellKey = `${p.id}:${s.key}`;
                       const tmpl = templateByCell.get(cellKey);
                       const current = tmpl?.satelliteRole ?? "";
@@ -439,9 +469,17 @@ export default function WorkforceSecurityMatrixPage() {
                             }
                           >
                             <option value="">{t("noAccess")}</option>
-                            {rolesForSatellite(s.key).map((r) => (
-                              <option key={r} value={r}>
-                                {humanizeSatelliteRole(r)}
+                            {current &&
+                            !catalogRolesFor(catalog, s.key).some(
+                              (role) => role.code === current,
+                            ) ? (
+                              <option value={current}>
+                                {t("roleNeedsRepick")} ({current})
+                              </option>
+                            ) : null}
+                            {catalogRolesFor(catalog, s.key).map((role) => (
+                              <option key={role.code} value={role.code}>
+                                {role.name}
                               </option>
                             ))}
                           </select>

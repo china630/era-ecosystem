@@ -7,13 +7,14 @@ import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { getPackDefaults } from '@/lib/reports/catalog';
 import { resolveDateMode } from '@/lib/reports/period';
-import { reportToSheets, type TabularSheet } from '@/lib/reports/tabular';
-import { ReportSheet } from '@/components/reports/ReportsWorkspace';
+import type { ReportLayout } from '@/lib/reports/layout';
+import { reportFileName } from '@/lib/reports/locale';
+import { ReportLayoutView } from '@/components/reports/ReportLayoutView';
 
 interface PackBlock {
   slug: string;
   title: string;
-  sheets: TabularSheet[];
+  layout: ReportLayout | null;
   error?: string;
 }
 
@@ -72,7 +73,7 @@ export default function NightlyPackPage() {
             lang: locale,
           });
           try {
-            const res = await fetch(`/api/reports/${encodeURIComponent(report.slug)}?${qs}`, {
+            const res = await fetch(`/api/reports/${encodeURIComponent(report.slug)}/layout?${qs}`, {
               signal: controller.signal,
             });
             const body = await res.json().catch(() => ({ error: res.statusText }));
@@ -80,7 +81,7 @@ export default function NightlyPackPage() {
               next[index] = {
                 slug: report.slug,
                 title: tRoot(report.titleKey as 'reportsPdf.dailyManagement'),
-                sheets: [],
+                layout: null,
                 error: typeof body.error === 'string' ? body.error : t('exportFailed'),
               };
               return;
@@ -88,14 +89,14 @@ export default function NightlyPackPage() {
             next[index] = {
               slug: report.slug,
               title: tRoot(report.titleKey as 'reportsPdf.dailyManagement'),
-              sheets: reportToSheets(body).filter((sheet) => sheet.columns.length > 0),
+              layout: (body as { layout?: ReportLayout }).layout ?? null,
             };
           } catch (err) {
             if (err instanceof DOMException && err.name === 'AbortError') return;
             next[index] = {
               slug: report.slug,
               title: tRoot(report.titleKey as 'reportsPdf.dailyManagement'),
-              sheets: [],
+              layout: null,
               error: err instanceof Error ? err.message : t('exportFailed'),
             };
           }
@@ -124,7 +125,7 @@ export default function NightlyPackPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `morning-pack-${date}.zip`;
+      a.download = reportFileName('nightly_pack', locale, date, 'zip');
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -159,10 +160,10 @@ export default function NightlyPackPage() {
         <div key={block.slug} className="space-y-2">
           <h2 className="text-base font-semibold text-[#34495E]">{block.title}</h2>
           {block.error ? <p className="text-sm text-[#C0392B]">{block.error}</p> : null}
-          {!block.error && block.sheets.length === 0 ? <p className="text-sm text-[#7F8C8D]">{tRoot('reportsPdf.noData')}</p> : null}
-          {block.sheets.map((sheet) => (
-            <ReportSheet key={`${block.slug}-${sheet.name}`} sheet={sheet} locale={locale} />
-          ))}
+          {!block.error && !block.layout ? <p className="text-sm text-[#7F8C8D]">{tRoot('reportsPdf.noData')}</p> : null}
+          {block.layout ? (
+            <ReportLayoutView layout={block.layout} locale={locale} noDataLabel={tRoot('reportsPdf.noData')} />
+          ) : null}
         </div>
       ))}
     </div>

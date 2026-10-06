@@ -80,4 +80,11 @@ export class WorkforceSecurityController {
       { action, globalPersonId, cpEmploymentId, organizationIds },
     );
   }
+
+  @Get("role-directory")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_SECURITY)
+  @ApiOperation({ summary: "Satellite role catalog with staff currently bound to each role" })
+  roleDirectory(@OrganizationId() organizationId: string) {
+    return this.security.roleDirectory(organizationId);
+  }
 }

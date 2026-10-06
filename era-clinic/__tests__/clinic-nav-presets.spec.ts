@@ -4,6 +4,20 @@ import { CLINIC_PERMISSION, DEFAULT_ROLE_PERMISSIONS } from "@/lib/auth/clinic-p
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
 import { hasPresetInList, pathnameRequiresPreset } from "@/domain/presets/preset-cookie";
 
+type NavHrefNode = { href?: string; children?: NavHrefNode[] };
+
+function visibleHrefs(nav: {
+  topItems: NavHrefNode[];
+  sections: { items: NavHrefNode[] }[];
+}): string[] {
+  const walk = (items: NavHrefNode[]): string[] =>
+    items.flatMap((item) => [
+      ...(item.href ? [item.href] : []),
+      ...walk(item.children ?? []),
+    ]);
+  return [...walk(nav.topItems), ...nav.sections.flatMap((section) => walk(section.items))];
+}
+
 function hrefs(enabled: string[]) {
   const nav = buildClinicNav(
     {
@@ -12,10 +26,7 @@ function hrefs(enabled: string[]) {
     },
     (key) => key,
   );
-  return [
-    ...nav.topItems.map((item) => item.href),
-    ...nav.sections.flatMap((section) => section.items.map((item) => item.href)),
-  ];
+  return visibleHrefs(nav);
 }
 
 describe("clinic nav presets", () => {
@@ -25,6 +36,9 @@ describe("clinic nav presets", () => {
     expect(links).toContain("/sanatorium");
     expect(links).toContain("/nurse");
     expect(links).toContain("/admin/program-templates");
+    expect(links).toContain("/admin/access");
+    expect(links).toContain("/admin/users");
+    expect(links).toContain("/admin/logins");
     expect(links).not.toContain("/reception/queue");
     expect(links).not.toContain("/cashier");
     expect(links).not.toContain("/doctor");
@@ -65,11 +79,15 @@ describe("clinic nav presets", () => {
   });
 
   it("every nav preset code is a known preset", () => {
-    for (const entry of CLINIC_NAV) {
-      for (const code of entry.preset ?? []) {
-        expect(Object.values(CLINIC_PRESET)).toContain(code);
+    const walk = (entries: typeof CLINIC_NAV): void => {
+      for (const entry of entries) {
+        for (const code of entry.preset ?? []) {
+          expect(Object.values(CLINIC_PRESET)).toContain(code);
+        }
+        if (entry.children) walk(entry.children);
       }
-    }
+    };
+    walk(CLINIC_NAV);
     expect(CLINIC_PERMISSION.SCREEN_INPATIENT).toBe("screen:inpatient");
   });
 });

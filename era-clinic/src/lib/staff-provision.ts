@@ -8,7 +8,6 @@ import { hashPassword, splitFullNameToParts } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import {
   parseClinicRoleStaffKind,
-  resolveSystemRoleAlias,
 } from "@/lib/clinic-roles";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 import { ensureClinicCatalogFromTemplates } from "@/domain/catalog/ensure-clinic-catalog-from-templates";
@@ -122,8 +121,7 @@ async function resolveUserForLogin(args: {
 }
 
 /**
- * System aliases (ADMIN→CLINIC_ADMIN, …) then lookup Role in org.
- * Unknown custom codes fail — do not silently map to RECEPTION.
+ * Lookup the satellite role code as stored. Does not rewrite aliases.
  */
 async function resolveProvisionRole(
   organizationId: string,
@@ -131,7 +129,7 @@ async function resolveProvisionRole(
 ) {
   await ensureSystemClinicRoles(prisma, organizationId);
   await ensureClinicCatalogFromTemplates(prisma, organizationId);
-  const code = resolveSystemRoleAlias(satelliteRole);
+  const code = satelliteRole.trim();
   const role = await prisma.role.findFirst({
     where: { organizationId, code },
   });

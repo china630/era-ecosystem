@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  publishSatelliteRole,
+  publishSatelliteRoleSnapshot,
+} from "@era/satellite-kit";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/auth/session";
 import { assertAnyPermission, assertPermission } from "@/lib/auth/require";
@@ -41,6 +45,16 @@ export async function GET() {
       where: { organizationId },
       orderBy: [{ isSystem: "desc" }, { code: "asc" }],
       include: { _count: { select: { users: true } } },
+    });
+
+    void publishSatelliteRoleSnapshot({
+      organizationId,
+      satelliteKey: "industry_hotel_pms",
+      roles: roles.map((role) => ({
+        code: role.code,
+        name: role.name,
+        active: true,
+      })),
     });
 
     return jsonOk(
@@ -123,6 +137,14 @@ export async function POST(req: Request) {
         permissionCount: permissions.length,
       },
     );
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_hotel_pms",
+      code: created.code,
+      name: created.name,
+      active: true,
+    });
 
     return jsonOk({
       id: created.id,

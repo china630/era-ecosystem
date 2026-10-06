@@ -1,11 +1,14 @@
 import { prisma } from '@/lib/prisma';
+import { safePct, safeDiv } from '@/lib/reports/ratio';
+import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
 
 function toIso(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return bakuDateKey(d);
 }
 
+/** Baku midnight as an instant; charge and stay instants are compared against it. */
 function dayStart(iso: string): Date {
-  return new Date(`${iso}T00:00:00.000Z`);
+  return bakuDayBounds(iso).start;
 }
 
 function addDays(d: Date, n: number): Date {
@@ -21,7 +24,7 @@ export interface SalesRow {
   sourceName: string;
   roomNights: number;
   revenue: number;
-  avgRate: number;
+  avgRate: number | null;
 }
 
 export interface SalesResult {
@@ -73,7 +76,7 @@ export async function querySales(from: Date, to: Date): Promise<SalesResult> {
       sourceName: v.name,
       roomNights: v.nights,
       revenue: Math.round(v.revenue * 100) / 100,
-      avgRate: v.nights > 0 ? Math.round((v.revenue / v.nights) * 100) / 100 : 0,
+      avgRate: safeDiv(v.revenue, v.nights),
     }));
 
   return {
@@ -88,7 +91,7 @@ export async function querySales(from: Date, to: Date): Promise<SalesResult> {
 export interface DistributionRow {
   segment: string;
   roomNights: number;
-  pctOfTotal: number;
+  pctOfTotal: number | null;
 }
 
 export interface DistributionResult {
@@ -121,7 +124,7 @@ export async function queryDistribution(from: Date, to: Date): Promise<Distribut
     .map(([segment, roomNights]) => ({
       segment,
       roomNights,
-      pctOfTotal: totalNights > 0 ? Math.round((roomNights / totalNights) * 1000) / 10 : 0,
+      pctOfTotal: safePct(roomNights, totalNights),
     }));
 
   return { rows, totalNights };
@@ -134,7 +137,7 @@ export interface QuotaRow {
   roomTypeName: string;
   quota: number;
   actualSold: number;
-  actualOccPct: number;
+  actualOccPct: number | null;
   variance: number;
 }
 
@@ -174,7 +177,7 @@ export async function queryQuota(from: Date, to: Date): Promise<QuotaResult> {
       roomTypeName: rt.name,
       quota,
       actualSold,
-      actualOccPct: quota > 0 ? Math.round((actualSold / quota) * 1000) / 10 : 0,
+      actualOccPct: safePct(actualSold, quota),
       variance: actualSold - quota,
     };
   });
@@ -194,14 +197,14 @@ export interface ManagerViewResult {
   totalRooms: number;
   sellableRooms: number;
   totalReservations: number;
-  occupancyPct: number;
+  occupancyPct: number | null;
   totalRevenue: number;
-  adr: number;
-  revPar: number;
+  adr: number | null;
+  revPar: number | null;
   arrivals: number;
   departures: number;
   cancellations: number;
-  avgLos: number;
+  avgLos: number | null;
 }
 
 export async function queryManagerView(from: Date, to: Date): Promise<ManagerViewResult> {
@@ -253,13 +256,13 @@ export async function queryManagerView(from: Date, to: Date): Promise<ManagerVie
     totalRooms: roomCount,
     sellableRooms,
     totalReservations: totalRes,
-    occupancyPct: capacity > 0 ? Math.round((totalRes / capacity) * 1000) / 10 : 0,
+    occupancyPct: safePct(totalRes, capacity),
     totalRevenue: Math.round(totalRevenue * 100) / 100,
-    adr: totalRes > 0 ? Math.round((totalRevenue / totalRes) * 100) / 100 : 0,
-    revPar: capacity > 0 ? Math.round((totalRevenue / capacity) * 100) / 100 : 0,
+    adr: safeDiv(totalRevenue, totalRes),
+    revPar: safeDiv(totalRevenue, capacity),
     arrivals,
     departures,
     cancellations,
-    avgLos: totalRes > 0 ? Math.round((totalLos / totalRes) * 10) / 10 : 0,
+    avgLos: safeDiv(totalLos, totalRes, 1),
   };
 }

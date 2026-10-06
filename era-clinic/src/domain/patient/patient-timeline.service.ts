@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { bakuDateKey, bakuTimeLabel } from "@/lib/baku-day";
@@ -156,7 +157,7 @@ function labCatalog(
 
 export async function getPatientTimeline(
   patientRefId: string,
-  opts?: { types?: TimelineEventType[]; limitDays?: number },
+  opts?: { types?: TimelineEventType[]; limitDays?: number; locale?: string },
 ): Promise<{ patientRefId: string; days: PatientTimelineDay[] }> {
   const patient = await prisma.patientRef.findUnique({ where: { id: patientRefId } });
   if (!patient) {
@@ -250,12 +251,18 @@ export async function getPatientTimeline(
     });
   }
 
+  const catalogNames = await loadCatalogDisplayNameMap(
+    procedures.map((row) => row.procedureCode),
+    opts?.locale ?? "az",
+  );
+
   for (const p of procedures) {
+    const procedureName = catalogNames.get(p.procedureCode) || p.procedureName;
     events.push({
       id: `procedure:${p.id}`,
       type: "procedure",
       at: p.scheduledAt.toISOString(),
-      title: `Procedure · ${p.procedureName}`,
+      title: `Procedure · ${procedureName}`,
       subtitle: p.procedureCode,
       status: p.status,
       codes: [p.procedureCode],

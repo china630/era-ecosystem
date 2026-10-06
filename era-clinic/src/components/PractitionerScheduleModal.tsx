@@ -13,6 +13,8 @@ import {
   SECONDARY_BUTTON_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 
 type Pattern = "WEEKLY" | "WEEK_PARITY" | "MONTH_DAY_PARITY" | "CYCLE";
@@ -103,12 +105,10 @@ export function PractitionerScheduleModal({
   const [exceptions, setExceptions] = useState<ExceptionForm[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!practitionerId) return;
     setLoading(true);
-    setMsg(null);
     const res = await fetch(`/api/admin/practitioners/${practitionerId}/schedule`);
     const data = await res.json();
     const row = (data.data ?? data) as {
@@ -183,7 +183,6 @@ export function PractitionerScheduleModal({
   async function save() {
     if (!practitionerId) return;
     setSaving(true);
-    setMsg(null);
     const payload = {
       rules: rules.map((r, idx) => ({
         pattern: r.pattern,
@@ -221,12 +220,13 @@ export function PractitionerScheduleModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    const data = await res.json().catch(() => ({}));
     setSaving(false);
     if (res.ok) {
-      setMsg(tc("saved"));
+      showSuccess(tc("saved"));
       onClose();
     } else {
-      setMsg(tc("saveFailed"));
+      showApiError(data, tc("saveFailed"));
     }
   }
 
@@ -477,7 +477,6 @@ export function PractitionerScheduleModal({
             ))}
           </div>
 
-          {msg ? <p className="text-[13px]">{msg}</p> : null}
         </div>
       )}
       <ModalFooter

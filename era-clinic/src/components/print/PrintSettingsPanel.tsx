@@ -13,6 +13,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { DEFAULT_CHECKUP_SECTIONS, type CheckupSectionConfig } from "@/domain/print/print-types";
 
@@ -60,7 +62,6 @@ export function PrintSettingsPanel() {
   const [data, setData] = useState<PrintDraft>(EMPTY);
   const [draft, setDraft] = useState<PrintDraft>(EMPTY);
   const [open, setOpen] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     void fetch("/api/admin/settings")
@@ -100,7 +101,7 @@ export function PrintSettingsPanel() {
       return;
     }
     if (file.size > 400_000) {
-      setMsg(t("logoTooLarge", { defaultValue: "Logo must be under 400KB" }));
+      showApiError({ error: t("logoTooLarge", { defaultValue: "Logo must be under 400KB" }) });
       return;
     }
     const reader = new FileReader();
@@ -134,12 +135,12 @@ export function PrintSettingsPanel() {
       }),
     });
     if (!res.ok) {
-      setMsg(tc("saveFailed"));
+      showApiError({ error: tc("saveFailed") });
       return;
     }
     setData(draft);
     setOpen(false);
-    setMsg(tc("saved"));
+    showSuccess(tc("saved"));
   }
 
   return (
@@ -162,7 +163,6 @@ export function PrintSettingsPanel() {
           {tc("edit")}
         </button>
       </div>
-      {msg ? <p className="mb-2 text-[13px]">{msg}</p> : null}
       <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
         <div className="flex items-center gap-3">
           {data.printLogoDataUrl ? (

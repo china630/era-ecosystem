@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
   EraListFilterBar,
+  LIST_PAGE_SHELL_CLASS,
   useDebouncedValue,
   Field,
   FieldSelect,
@@ -15,8 +17,9 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import AppointmentCreateModal, {
   type AppointmentCreatePrefill,
@@ -53,8 +56,6 @@ export default function AppointmentsPage() {
   const debouncedPatientFilter = useDebouncedValue(patientFilter, 300);
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("full");
   const [dragId, setDragId] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [msgErr, setMsgErr] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [prefill, setPrefill] = useState<AppointmentCreatePrefill | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
@@ -80,11 +81,6 @@ export default function AppointmentsPage() {
     void load();
   }, [load]);
 
-  function flash(text: string, err = false) {
-    setMsg(text);
-    setMsgErr(err);
-  }
-
   const codeByPractitionerId = useMemo(() => {
     const m = new Map<string, string>();
     for (const r of resources) m.set(r.resourceId, r.code);
@@ -102,10 +98,10 @@ export default function AppointmentsPage() {
     const data = await res.json();
     setDragId(null);
     if (!res.ok) {
-      flash(data.error ?? t("rescheduleFailed"), true);
+      showApiError(data, t("rescheduleFailed"));
       return;
     }
-    flash(t("rescheduled"));
+    showSuccess(t("rescheduled"));
     await load();
   }
 
@@ -136,13 +132,13 @@ export default function AppointmentsPage() {
     });
     if (!res.ok) {
       const data = await res.json();
-      flash(data.error ?? tc("failed"), true);
+      showApiError(data, tc("failed"));
       return;
     }
     const data = await res.json();
     const visitId = (data.data ?? data)?.visit?.id ?? detail.visitId;
     setDetail({ ...detail, status: "CHECKED_IN", visitId });
-    flash(t("checkedIn"));
+    showSuccess(t("checkedIn"));
     await load();
   }
 
@@ -155,13 +151,13 @@ export default function AppointmentsPage() {
     });
     if (!res.ok) {
       const data = await res.json();
-      flash(data.error ?? tc("failed"), true);
+      showApiError(data, tc("failed"));
       return;
     }
     setCancelOpen(false);
     setCancelReason("");
     setDetail(null);
-    flash(t("cancelled"));
+    showSuccess(t("cancelled"));
     await load();
   }
 
@@ -181,7 +177,7 @@ export default function AppointmentsPage() {
   };
 
   return (
-    <>
+    <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
@@ -194,11 +190,13 @@ export default function AppointmentsPage() {
               setCreateOpen(true);
             }}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             {t("createTitle")}
           </button>
         }
       />
 
+      <div className="shrink-0">
       <EraListFilterBar
         resetLabel={tc("filterReset")}
         onReset={() => {
@@ -239,12 +237,9 @@ export default function AppointmentsPage() {
           <option value="+3h">{t("horizon3h")}</option>
         </FieldSelect>
       </EraListFilterBar>
+      </div>
 
-      {msg && (
-        <p className={`mb-2 text-sm ${msgErr ? TEXT_DANGER_CLASS : TEXT_MUTED_CLASS}`}>{msg}</p>
-      )}
-
-      <div className={`${CARD_CONTAINER_CLASS} p-3`}>
+      <div className={`${CARD_CONTAINER_CLASS} min-h-0 flex-1 overflow-auto p-3`}>
         {loading ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
         ) : (
@@ -352,6 +347,6 @@ export default function AppointmentsPage() {
           submitLabel={t("cancelConfirm")}
         />
       </ModalShell>
-    </>
+    </div>
   );
 }

@@ -18,11 +18,11 @@ import {
 } from "@era/satellite-kit/ui";
 import { CLINIC_AUTH_REFRESH_EVENT } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { clinicNavCatalog, CLINIC_NAV, CLINIC_TOP_NAV } from "@/domain/nav/clinic-nav";
+import { clinicNavCatalog, collectClinicNavHrefs } from "@/domain/nav/clinic-nav";
 
 const REFRESH_EVENTS = [CLINIC_AUTH_REFRESH_EVENT] as const;
 
-const ALL_NAV_HREFS = [...CLINIC_TOP_NAV, ...CLINIC_NAV].map((entry) => entry.href);
+const ALL_NAV_HREFS = collectClinicNavHrefs();
 
 export function resolveClinicActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -116,6 +116,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
         <SatelliteNotificationBell labels={SATELLITE_NOTIFICATION_LABELS_EN} />
       }
       locale={<SatelliteHeaderLocale locale={locale} />}
+      contentClassName="!pt-0"
     >
       {children}
     </EraAppRouteShell>

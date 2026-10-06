@@ -45,6 +45,7 @@ const WORKFORCE_PLATFORM_KEYS = new Set([
   "platform_workforce",
   "platform_workforce_base",
   "platform_workforce_pro",
+  "platform_workforce_premium",
 ]);
 
 export function isWorkforcePlatformKey(key: string): boolean {

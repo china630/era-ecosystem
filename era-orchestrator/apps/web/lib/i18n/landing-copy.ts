@@ -297,7 +297,7 @@ const landingMarketingRu: LandingMarketingCopy = {
         answer: "В каждой группе выбирается только один SKU.",
         chips: [
           "Data HUB Bronze / Silver / Gold",
-          "Workforce Base / PRO",
+          "Workforce Essential / Professional / Premium",
           "Loyalty XOR Retail promo",
           "Delivery XOR F&B hub",
           "Hotel XOR Clinic sanatorium",
@@ -571,7 +571,7 @@ const landingMarketingAz: LandingMarketingCopy = {
         answer: "Hər qrupda yalnız bir SKU seçilir.",
         chips: [
           "Data HUB Bronze / Silver / Gold",
-          "Workforce Base / PRO",
+          "Workforce Essential / Professional / Premium",
           "Loyalty XOR Retail promo",
           "Delivery XOR F&B hub",
           "Hotel XOR Clinic sanatorium",
