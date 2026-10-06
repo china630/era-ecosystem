@@ -1,4 +1,10 @@
 export {
+  publishSatelliteRole,
+  publishSatelliteRoleSnapshot,
+  resetSatelliteRolePublishForTests,
+  type SatelliteRolePublishRow,
+} from "./workforce/publish-satellite-role";
+export {
   publishToOrchestratorGateway,
   SatelliteEventAuthError,
   satelliteOrganizationId,

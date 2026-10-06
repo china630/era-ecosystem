@@ -1,11 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { KeyRound, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CHECKBOX_CLASS,
+  ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -47,19 +55,10 @@ export default function ClinicAdminAccessPage() {
   const [newCode, setNewCode] = useState("");
   const [newName, setNewName] = useState("");
   const [cloneFrom, setCloneFrom] = useState("DOCTOR");
-  const [staffKindDraft, setStaffKindDraft] = useState("NONE");
+  const [createStaffKind, setCreateStaffKind] = useState("NONE");
   const [matrixOpen, setMatrixOpen] = useState(false);
 
   const selectedRole = roles.find((r) => r.code === selectedCode);
-
-  const roleOptions = useMemo(
-    () =>
-      roles.map((r) => ({
-        value: r.code,
-        label: `${r.name} (${r.code})${r.isSystem ? "" : " *"}`,
-      })),
-    [roles],
-  );
 
   const cloneOptions = useMemo(
     () =>
@@ -110,7 +109,6 @@ export default function ClinicAdminAccessPage() {
           staffKind?: string;
         };
         setDraft(new Set(row.permissions));
-        setStaffKindDraft(row.staffKind ?? "NONE");
       } catch (e) {
         showApiError({ error: e instanceof Error ? e.message : tc("loadError") });
       }
@@ -125,10 +123,6 @@ export default function ClinicAdminAccessPage() {
   useEffect(() => {
     if (selectedCode) void loadRoleDraft(selectedCode);
   }, [selectedCode, loadRoleDraft]);
-
-  useEffect(() => {
-    if (selectedRole?.staffKind) setStaffKindDraft(selectedRole.staffKind);
-  }, [selectedRole?.code, selectedRole?.staffKind]);
 
   const grouped = useMemo(() => PERMISSION_GROUPS, []);
 
@@ -151,20 +145,6 @@ export default function ClinicAdminAccessPage() {
     if (!selectedCode) return;
     setBusy(true);
     try {
-      if (selectedRole && !selectedRole.isSystem) {
-        const metaRes = await fetch(
-          `/api/admin/roles/${encodeURIComponent(selectedCode)}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ staffKind: staffKindDraft }),
-          },
-        );
-        if (!metaRes.ok) {
-          showApiError(await metaRes.json().catch(() => ({})), tc("saveError"));
-          return;
-        }
-      }
       const res = await fetch(
         `/api/admin/roles/${encodeURIComponent(selectedCode)}/permissions`,
         {
@@ -225,6 +205,7 @@ export default function ClinicAdminAccessPage() {
           code: newCode.trim().toUpperCase(),
           name: newName.trim(),
           cloneFrom,
+          staffKind: createStaffKind,
         }),
       });
       if (!res.ok) {
@@ -247,11 +228,11 @@ export default function ClinicAdminAccessPage() {
     }
   }
 
-  async function deleteRole() {
-    if (!selectedRole || selectedRole.isSystem) return;
+  async function deleteRole(role: RoleRow) {
+    if (role.isSystem) return;
     if (
       !window.confirm(
-        t("deleteConfirm", { code: selectedRole.code, name: selectedRole.name }),
+        t("deleteConfirm", { code: role.code, name: role.name }),
       )
     ) {
       return;
@@ -259,7 +240,7 @@ export default function ClinicAdminAccessPage() {
     setBusy(true);
     try {
       const res = await fetch(
-        `/api/admin/roles/${encodeURIComponent(selectedRole.code)}`,
+        `/api/admin/roles/${encodeURIComponent(role.code)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -280,80 +261,23 @@ export default function ClinicAdminAccessPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader className="!mb-0" title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy || loading}
+            onClick={() => setShowCreate((v) => !v)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            {t("createRole")}
+          </button>
+        }
+      />
 
       <div className={CARD_CONTAINER_CLASS + " p-4 space-y-4"}>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[14rem] flex-1 max-w-sm">
-            <CatalogField
-              kind={roles.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
-              label={t("roleLabel")}
-              value={selectedCode}
-              onChange={(v) => setSelectedCode(String(v ?? ""))}
-              options={roleOptions}
-              emptyLabel={null}
-              disabled={loading || busy || roles.length === 0}
-              widthPreset="select"
-            />
-          </div>
-          {selectedRole && !selectedRole.isSystem ? (
-            <div className="min-w-[10rem] w-40">
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("staffKindLabel")}
-                value={staffKindDraft}
-                onChange={(v) => setStaffKindDraft(String(v ?? "NONE"))}
-                options={STAFF_KIND_OPTIONS}
-                emptyLabel={null}
-                disabled={busy}
-                widthPreset="select"
-              />
-            </div>
-          ) : null}
-          <div className="flex flex-wrap gap-2 ml-auto">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy || loading}
-              onClick={() => setShowCreate((v) => !v)}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              {t("createRole")}
-            </button>
-            {selectedRole && !selectedRole.isSystem ? (
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={busy || loading || (selectedRole.userCount ?? 0) > 0}
-                onClick={() => void deleteRole()}
-                title={
-                  (selectedRole.userCount ?? 0) > 0
-                    ? t("deleteBlockedUsers")
-                    : undefined
-                }
-              >
-                {t("deleteRole")}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={busy || loading || !selectedCode}
-              onClick={() => void resetDefaults()}
-            >
-              {t("resetDefaults")}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || loading || !selectedCode}
-              onClick={() => void save()}
-            >
-              {busy ? tc("saving") : tc("save")}
-            </button>
-          </div>
-        </div>
-
         {showCreate ? (
           <div className="rounded-md border border-border p-3 space-y-3 bg-muted/20">
             <p className="text-sm font-medium">{t("createTitle")}</p>
@@ -392,6 +316,16 @@ export default function ClinicAdminAccessPage() {
                 disabled={busy || roles.length === 0}
                 widthPreset="select"
               />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("staffKindLabel")}
+                value={createStaffKind}
+                onChange={(v) => setCreateStaffKind(String(v ?? "NONE"))}
+                options={STAFF_KIND_OPTIONS}
+                emptyLabel={null}
+                disabled={busy}
+                widthPreset="select"
+              />
             </div>
             <div className="flex gap-2">
               <button
@@ -416,52 +350,56 @@ export default function ClinicAdminAccessPage() {
           </div>
         ) : null}
 
-        {selectedRole ? (
-          <p className="text-sm text-muted-foreground">
-            {t("permissionCount", { count: draft.size })}
-            {selectedRole.isSystem
-              ? ` · ${t("systemBadge")}`
-              : ` · ${t("customBadge")}`}
-            {selectedRole.isSystem && selectedRole.staffKind
-              ? ` · staffKind=${selectedRole.staffKind}`
-              : null}
-          </p>
-        ) : null}
-
         {loading ? (
           <p className="text-sm text-muted-foreground">{tc("loading")}</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-muted-foreground">
-                <th className="py-1 pr-3">{t("roleCode")}</th>
-                <th className="py-1 pr-3">{t("roleName")}</th>
-                <th className="py-1 pr-3">{t("roleUsers")}</th>
-                <th className="py-1" />
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((role) => (
-                <tr key={role.code} className="border-t border-border">
-                  <td className="py-2 pr-3 font-mono">{role.code}</td>
-                  <td className="py-2 pr-3">{role.name}</td>
-                  <td className="py-2 pr-3">{role.userCount ?? 0}</td>
-                  <td className="py-2 text-right">
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      onClick={() => {
-                        setSelectedCode(role.code);
-                        setMatrixOpen(true);
-                      }}
-                    >
-                      {t("openMatrix")}
-                    </button>
-                  </td>
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("roleLabel")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("roleUsers")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {roles.map((role) => (
+                  <tr key={role.code} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {role.name}
+                      <span className="ml-2 text-[12px] text-[#7F8C8D]">{role.code}</span>
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{role.userCount ?? 0}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <button
+                        type="button"
+                        className="inline-flex rounded p-1 text-[#2980B9] hover:bg-[#EBF5FB]"
+                        aria-label={t("openMatrix")}
+                        onClick={() => {
+                          setSelectedCode(role.code);
+                          setMatrixOpen(true);
+                        }}
+                      >
+                        <KeyRound className="h-4 w-4" aria-hidden />
+                      </button>
+                      {!role.isSystem ? (
+                        <button
+                          type="button"
+                          className="ml-1 inline-flex rounded p-1 text-[#7F8C8D] hover:bg-[#FDEDEC] hover:text-[#C0392B] disabled:opacity-40"
+                          aria-label={t("deleteRole")}
+                          disabled={busy || (role.userCount ?? 0) > 0}
+                          title={(role.userCount ?? 0) > 0 ? t("deleteBlockedUsers") : undefined}
+                          onClick={() => void deleteRole(role)}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -475,7 +413,7 @@ export default function ClinicAdminAccessPage() {
           <p className="text-sm text-muted-foreground">{tc("loading")}</p>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex justify-end">
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -484,46 +422,44 @@ export default function ClinicAdminAccessPage() {
               >
                 {t("resetDefaults")}
               </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy || loading || !selectedCode}
-                onClick={() => void save()}
-              >
-                {busy ? tc("saving") : tc("save")}
-              </button>
             </div>
             {grouped.map((group) => (
               <section key={group.id}>
-                <h2 className="text-sm font-semibold mb-2">{t(`groups.${group.id}`)}</h2>
-                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <h2 className="mb-2 text-sm font-semibold">{t(`groups.${group.id}`)}</h2>
+                <div className="flex flex-wrap gap-2">
                   {group.permissions.map((perm) => (
-                    <li key={perm}>
-                      <label className="flex items-start gap-2 text-sm cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5"
-                          checked={draft.has(perm)}
-                          onChange={() => togglePermission(perm)}
-                          disabled={busy}
-                        />
-                        <span>
-                          <span className="font-medium text-sm">
-                            {(() => {
-                              const key = `permissions.${perm.replace(/\./g, "_")}` as const;
-                              return t.has(key) ? t(key) : perm;
-                            })()}
-                          </span>
-                          <span className="block font-mono text-[10px] text-muted-foreground">
-                            {perm}
-                          </span>
+                    <label
+                      key={perm}
+                      className="flex items-start gap-2 rounded border border-[#D5DADF] px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+                        checked={draft.has(perm)}
+                        onChange={() => togglePermission(perm)}
+                        disabled={busy}
+                      />
+                      <span>
+                        <span className="font-medium">
+                          {(() => {
+                            const key = `permissions.${perm.replace(/\./g, "_")}` as const;
+                            return t.has(key) ? t(key) : perm;
+                          })()}
                         </span>
-                      </label>
-                    </li>
+                        <span className="block font-mono text-[11px] text-[#7F8C8D]">{perm}</span>
+                      </span>
+                    </label>
                   ))}
-                </ul>
+                </div>
               </section>
             ))}
+            <ModalFooter
+              onCancel={() => setMatrixOpen(false)}
+              onSubmit={() => void save()}
+              busy={busy}
+              submitDisabled={!selectedCode}
+              submitLabel={tc("save")}
+            />
           </div>
         )}
       </ModalShell>

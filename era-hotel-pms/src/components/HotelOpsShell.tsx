@@ -137,7 +137,8 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     const path = qIndex >= 0 ? bare.slice(0, qIndex) : bare;
     const query = qIndex >= 0 ? bare.slice(qIndex + 1) : '';
     if (path === '/') return pathname === '/';
-    const pathOk = pathname === path || pathname.startsWith(`${path}/`);
+    // `/reports` is the workspace; sibling pages must not keep that item lit.
+    const pathOk = path === '/reports' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
     if (!pathOk) return false;
     if (!query) {
       if (path === '/settings/integration') {
@@ -730,13 +731,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: BarChart3,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
-          ]),
-        },
-        {
-          id: 'hotel_reports_tools',
-          title: t('reportsTools'),
-          icon: BarChart3,
-          items: sectionItems([
             {
               id: 'rep-analytics',
               href: '/reports/analytics',

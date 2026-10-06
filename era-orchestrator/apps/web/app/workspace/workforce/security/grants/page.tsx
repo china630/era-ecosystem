@@ -26,10 +26,13 @@ import {
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import {
   WORKFORCE_UI_SATELLITES,
-  humanizeSatelliteRole,
-  rolesForSatellite,
+  catalogRoleName,
+  catalogRolesFor,
+  workforceSatellitesForModules,
+  type CatalogRole,
   type WorkforceUiSatelliteKey,
 } from "../../../../../lib/workforce-satellites";
+import { useSubscription } from "../../../../../lib/subscription-context";
 import {
   isWorkforceGate403,
   workforceFetch as wfFetch,
@@ -81,9 +84,11 @@ export default function WorkforceSecurityGrantsPage() {
   const t = useTranslations("workforceSecurity");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
+  const { snapshot: subscriptionSnapshot } = useSubscription();
   const [employments, setEmployments] = useState<EmploymentRow[]>([]);
   const [persons, setPersons] = useState<Record<string, PersonProfile>>({});
   const [grants, setGrants] = useState<GrantRow[]>([]);
+  const [catalog, setCatalog] = useState<CatalogRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -148,14 +153,28 @@ export default function WorkforceSecurityGrantsPage() {
     [employments, employmentLabel],
   );
 
+  const visibleSatellites = useMemo(
+    () => workforceSatellitesForModules(subscriptionSnapshot?.activeModules),
+    [subscriptionSnapshot?.activeModules],
+  );
+
   const satelliteOptions = useMemo(
     () =>
-      WORKFORCE_UI_SATELLITES.map((s) => ({
+      visibleSatellites.map((s) => ({
         value: s.key,
         label: satelliteLabel(s.key),
       })),
-    [satelliteLabel],
+    [satelliteLabel, visibleSatellites],
   );
+
+  useEffect(() => {
+    if (
+      filterSatellite &&
+      !visibleSatellites.some((s) => s.key === filterSatellite)
+    ) {
+      setFilterSatellite("");
+    }
+  }, [filterSatellite, visibleSatellites]);
 
   const orgUnitOptions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -185,11 +204,23 @@ export default function WorkforceSecurityGrantsPage() {
 
   const filterRoleOptions = useMemo(() => {
     if (!filterSatellite) return [];
-    return rolesForSatellite(filterSatellite).map((r) => ({
-      value: r,
-      label: humanizeSatelliteRole(r),
+    const options = catalogRolesFor(catalog, filterSatellite).map((role) => ({
+      value: role.code,
+      label: role.name,
     }));
-  }, [filterSatellite]);
+    const known = new Set(options.map((option) => option.value));
+    for (const grant of grants) {
+      if (grant.satelliteKey !== filterSatellite || known.has(grant.satelliteRole)) {
+        continue;
+      }
+      known.add(grant.satelliteRole);
+      options.push({
+        value: grant.satelliteRole,
+        label: `${t("roleNeedsRepick")} (${grant.satelliteRole})`,
+      });
+    }
+    return options;
+  }, [catalog, filterSatellite, grants, t]);
 
   const statusOptions = useMemo(
     () => [
@@ -202,11 +233,11 @@ export default function WorkforceSecurityGrantsPage() {
 
   const roleOptions = useMemo(() => {
     if (!grantForm.satelliteKey) return [];
-    return rolesForSatellite(grantForm.satelliteKey).map((r) => ({
-      value: r,
-      label: humanizeSatelliteRole(r),
+    return catalogRolesFor(catalog, grantForm.satelliteKey).map((role) => ({
+      value: role.code,
+      label: role.name,
     }));
-  }, [grantForm.satelliteKey]);
+  }, [catalog, grantForm.satelliteKey]);
 
   const hasActiveFilters =
     filterText.trim() !== "" ||
@@ -288,6 +319,11 @@ export default function WorkforceSecurityGrantsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    const roleRes = await wfFetch("satellite-roles");
+    if (roleRes.ok) {
+      const rows = (await roleRes.json()) as CatalogRole[];
+      setCatalog(Array.isArray(rows) ? rows : []);
+    }
     const ok = await loadEmployments();
     if (ok) await loadGrants();
     setLoading(false);
@@ -489,7 +525,10 @@ export default function WorkforceSecurityGrantsPage() {
                   <tr key={g.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{employmentLabel(g.employmentId)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{satelliteLabel(g.satelliteKey)}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{humanizeSatelliteRole(g.satelliteRole)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {catalogRoleName(catalog, g.satelliteKey, g.satelliteRole) ??
+                        `${t("roleNeedsRepick")} (${g.satelliteRole})`}
+                    </td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{g.reason}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                       {!g.revokedAt ? (

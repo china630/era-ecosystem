@@ -15,6 +15,11 @@ export function parseReportLangParam(request: Request): { ok: true; locale: Loca
   return { ok: true, locale: resolveReportLocale(request) };
 }
 
+/** `<name>_<lang>_<date>.<ext>` — same pattern for report PDF/Excel, pack ZIP and its members. */
+export function reportFileName(name: string, locale: string, date: string, ext: string): string {
+  return `${name}_${locale}_${date}.${ext}`;
+}
+
 export function resolveReportLocale(request: Request): Locale {
   const url = new URL(request.url);
   const param = url.searchParams.get('lang');

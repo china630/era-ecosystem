@@ -2,6 +2,7 @@
  * CLI-57 — paid extras: prescribe → PENDING_PAY → Pay → place + ticket ×3.
  */
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
@@ -199,9 +200,25 @@ export async function listExtraUnitPrices(): Promise<Record<string, number>> {
     // listAmount is the retail price; amount stays 0 for package-included SKUs.
     const list = r.listAmount != null ? Number(r.listAmount) : NaN;
     const n = Number.isFinite(list) && list > 0 ? list : Number(r.amount);
-    if (r.code && n > 0) out[r.code] = n;
+    if (!r.code) continue;
+    if (n > 0) out[r.code] = n;
+    else if (!(out[r.code] > 0)) out[r.code] = DEFAULT_OVER_QUOTA_AZN;
   }
   return out;
+}
+
+const PAID_EXTRA_STATUSES = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
+
+/** Paid extras already on the schedule. Not editable from the package modal. */
+export async function listPaidExtras(episodeId: string) {
+  return prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: false,
+      status: { in: [...PAID_EXTRA_STATUSES] },
+    },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
 export async function deletePendingExtra(orderId: string): Promise<void> {

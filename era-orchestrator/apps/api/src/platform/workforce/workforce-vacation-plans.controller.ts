@@ -11,6 +11,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -27,7 +28,8 @@ import { WorkforceVacationPlansService } from "./workforce-vacation-plans.servic
 @ApiTags("platform-workforce-vacation-plans")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/vacation-plans")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("vacation")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceVacationPlansController {
   constructor(private readonly plans: WorkforceVacationPlansService) {}
 

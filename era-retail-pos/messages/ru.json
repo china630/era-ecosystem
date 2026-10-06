@@ -37,7 +37,12 @@
   },
   "common": {
     "loading": "Загрузка…",
-    "home": "Главная"
+    "home": "Главная",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "loadError": "Не загрузилось",
+    "datePlaceholder": "ДД.ММ.ГГГГ",
+    "openCalendar": "Открыть календарь"
   },
   "pos": {
     "title": "ERA Retail POS",
@@ -135,7 +140,38 @@
     "import": "Импорт cutover",
     "settings": "Настройки",
     "executive": "Executive",
-    "access": "Доступ"
+    "access": "Доступ и роли",
+    "accounts": "Учётные записи",
+    "users": "Пользователи",
+    "logins": "Входы",
+    "logout": "Выйти"
+  },
+  "users": {
+    "title": "Пользователи",
+    "subtitle": "Логины кассы. Пришедшие из control plane включаются и гасятся карточкой сотрудника.",
+    "add": "Пользователь",
+    "edit": "Изменить",
+    "saved": "Сохранено",
+    "password": "Пароль",
+    "colLogin": "Логин",
+    "colName": "Имя",
+    "colRole": "Роль",
+    "colStatus": "Статус",
+    "statusActive": "Активен",
+    "statusDisabled": "Отключён",
+    "workforceNameLocked": "Имя приходит из карточки control plane."
+  },
+  "logins": {
+    "title": "Входы",
+    "subtitle": "Кто и когда входил.",
+    "search": "Поиск",
+    "from": "С даты",
+    "to": "По дату",
+    "empty": "Входов нет",
+    "colWhen": "Время",
+    "colLogin": "Логин",
+    "colName": "Имя",
+    "colIp": "IP"
   },
   "cutoverImport": {
     "title": "Импорт Elektraweb",

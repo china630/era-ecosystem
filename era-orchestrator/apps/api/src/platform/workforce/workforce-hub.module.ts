@@ -22,6 +22,8 @@ import { WorkforceEmploymentsService } from "./workforce-employments.service";
 
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 
+import { WorkforcePackageGuard } from "./workforce-package.guard";
+
 import { WorkforceManualGrantsController } from "./workforce-manual-grants.controller";
 
 import { WorkforceManualGrantService } from "./workforce-manual-grant.service";
@@ -41,6 +43,9 @@ import { WorkforceProvisionService } from "./workforce-provision.service";
 import { WorkforceRoleTemplateService } from "./workforce-role-template.service";
 
 import { WorkforceRoleTemplatesController } from "./workforce-role-templates.controller";
+
+import { WorkforceSatelliteRoleCatalogController, WorkforceSatelliteRoleIngestController } from "./workforce-satellite-role-catalog.controller";
+import { WorkforceSatelliteRoleCatalogService } from "./workforce-satellite-role-catalog.service";
 
 import { WorkforceScopeService } from "./workforce-scope.service";
 
@@ -150,6 +155,10 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
 
     WorkforceRoleTemplatesController,
 
+    WorkforceSatelliteRoleCatalogController,
+
+    WorkforceSatelliteRoleIngestController,
+
     WorkforceManualGrantsController,
 
     WorkforceSecurityController,
@@ -192,6 +201,8 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
 
     WorkforceEntitlementService,
 
+    WorkforcePackageGuard,
+
     WorkforceAuditService,
 
     WorkforceScopeService,
@@ -207,6 +218,8 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
     WorkforceAbsencesService,
 
     WorkforceRoleTemplateService,
+
+    WorkforceSatelliteRoleCatalogService,
 
     WorkforceSeatService,
 

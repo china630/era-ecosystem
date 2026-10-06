@@ -164,6 +164,16 @@ exports.Prisma.PersonAddressScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PersonKinContactScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  kinship: 'kinship',
+  nameCipher: 'nameCipher',
+  phoneCipher: 'phoneCipher',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PersonIdentifierScalarFieldEnum = {
   id: 'id',
   personId: 'personId',
@@ -271,6 +281,14 @@ exports.PersonAddressKind = exports.$Enums.PersonAddressKind = {
   ACTUAL: 'ACTUAL'
 };
 
+exports.KinshipKind = exports.$Enums.KinshipKind = {
+  SPOUSE: 'SPOUSE',
+  PARENT: 'PARENT',
+  CHILD: 'CHILD',
+  SIBLING: 'SIBLING',
+  OTHER: 'OTHER'
+};
+
 exports.PersonIdentifierType = exports.$Enums.PersonIdentifierType = {
   AZ_FIN: 'AZ_FIN',
   PASSPORT: 'PASSPORT',
@@ -295,6 +313,7 @@ exports.Prisma.ModelName = {
   GlobalNaturalPerson: 'GlobalNaturalPerson',
   PersonHrProfile: 'PersonHrProfile',
   PersonAddress: 'PersonAddress',
+  PersonKinContact: 'PersonKinContact',
   PersonIdentifier: 'PersonIdentifier',
   GlobalLegalEntity: 'GlobalLegalEntity',
   PersonAccessRequest: 'PersonAccessRequest',

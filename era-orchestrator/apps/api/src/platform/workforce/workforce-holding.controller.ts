@@ -9,6 +9,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserRole, WorkforceEmploymentStatus } from "@era365/database";
@@ -20,7 +21,8 @@ import { WorkforceHoldingService } from "./workforce-holding.service";
 @ApiTags("platform-workforce-holding")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("group")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceHoldingController {
   constructor(private readonly holdingHr: WorkforceHoldingService) {}
 

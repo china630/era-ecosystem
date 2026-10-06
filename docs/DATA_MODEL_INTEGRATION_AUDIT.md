@@ -89,7 +89,7 @@ From [mdm-satellite-integration-contract.md](./adr/mdm-satellite-integration-con
 | **era-clinic** | staff via event | Practitioner upsert | `staff-provision.ts` | integration route | — | Event-driven; **no PII in event path** | — | **COMPLIANT** (no hire UI) |
 | **era-logistics** | — | no person model | — | — | — | N/A B2B | — | **N/A** |
 | **era-wholesale** | — | no person model | — | — | VÖEN via Finance | N/A | — | **N/A** |
-| **era-retail-pos** | — | no person model | — | — | — | N/A | — | **N/A** |
+| **era-retail-pos** | `User` (staff) | `globalPersonId` + `cpEmploymentId` (no FIN/passport) | `staff-provision.ts` | `/api/integration/staff-provision` | Hesablar `/settings/users` | Event-driven | RET-STAFF-01 API | **COMPLIANT** |
 | **era-construction** | — | no person model | — | — | VÖEN preview | N/A | — | **N/A** |
 | **era-crm** | Lead + `globalPersonId?` | convert → Finance CP auto-create | voen-preview | leads VÖEN persisted | indirect | — | **COMPLIANT** (v3.0) |
 | **era-auto-service** | — | no person model | — | — | VÖEN on work orders | N/A | — | **N/A** |
@@ -165,10 +165,11 @@ No schema drift found for legal-entity ownership (Finance + MDM split is respect
 
 | Source | Event | Consumers | Local person fields | Status |
 |--------|-------|-----------|---------------------|--------|
-| **era-orchestrator (CP)** | `SATELLITE_STAFF_PROVISIONED` v2 | era-fnb-pos, era-clinic, era-hotel-pms | `globalPersonId`, `cpEmploymentId` in payload | **COMPLIANT** (Plan C/E) |
+| **era-orchestrator (CP)** | `SATELLITE_STAFF_PROVISIONED` v2 | era-fnb-pos, era-clinic, era-hotel-pms, era-retail-pos | `globalPersonId`, `cpEmploymentId` in payload | **COMPLIANT** (Plan C/E) |
 | era-finance-core | `WORKFORCE_EMPLOYMENT_HIRED` / `WORKFORCE_ABSENCE_APPROVED` | payroll mirror only | slim Employee + MDM read-through | **COMPLIANT** (Plans A/D) |
 | era-fnb-pos | `handleStaffProvisionEvent` | StaffRoster, User | no FIN/passport locally | **COMPLIANT** |
 | era-clinic | `handleStaffProvisionEvent` | Practitioner + User | `globalPersonId` only; POST practitioners **403** | **COMPLIANT** (v3 cutover) |
+| era-retail-pos | `handleStaffProvisionEvent` | User | `globalPersonId` + `cpEmploymentId`; no FIN | **COMPLIANT** |
 | era-clinic | Admin UI hire | Policy `cp_workforce` → POST blocked; ops PATCH specialty/slots only | **COMPLIANT** (Plan E) |
 
 **Finding (closed v3):** Clean cutover — no `finance_hr` / `local_master` dual path. Master ADR: [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md).

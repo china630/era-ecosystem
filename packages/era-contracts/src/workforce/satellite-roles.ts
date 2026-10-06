@@ -3,12 +3,14 @@ import { z } from "zod";
 export const SATELLITE_KEY_CLINIC = "industry_clinic" as const;
 export const SATELLITE_KEY_HOTEL = "industry_hotel_pms" as const;
 export const SATELLITE_KEY_FNB = "industry_fnb_pos" as const;
+export const SATELLITE_KEY_RETAIL = "industry_retail" as const;
 
 /** Operational industry satellites wired through CP Workforce role matrix / grants. */
 export const WORKFORCE_OPERATIONAL_SATELLITE_KEYS = [
   SATELLITE_KEY_CLINIC,
   SATELLITE_KEY_HOTEL,
   SATELLITE_KEY_FNB,
+  SATELLITE_KEY_RETAIL,
 ] as const;
 
 export type WorkforceOperationalSatelliteKey =
@@ -37,20 +39,31 @@ export const fnbSatelliteRoleSchema = z.enum([
   "STAFF",
 ]);
 
+/** Codes match Retail system roles. STAFF aliases to CASHIER in the satellite. */
+export const retailSatelliteRoleSchema = z.enum([
+  "CASHIER",
+  "SHIFT_SUPERVISOR",
+  "OUTLET_ADMIN",
+  "STAFF",
+]);
+
 export type ClinicSatelliteRole = z.infer<typeof clinicSatelliteRoleSchema>;
 export type HotelSatelliteRole = z.infer<typeof hotelSatelliteRoleSchema>;
 export type FnbSatelliteRole = z.infer<typeof fnbSatelliteRoleSchema>;
+export type RetailSatelliteRole = z.infer<typeof retailSatelliteRoleSchema>;
 
 const ROLES_BY_SATELLITE: Record<string, readonly string[]> = {
   [SATELLITE_KEY_CLINIC]: clinicSatelliteRoleSchema.options,
   [SATELLITE_KEY_HOTEL]: hotelSatelliteRoleSchema.options,
   [SATELLITE_KEY_FNB]: fnbSatelliteRoleSchema.options,
+  [SATELLITE_KEY_RETAIL]: retailSatelliteRoleSchema.options,
 };
 
 const DEFAULT_ROLE_BY_SATELLITE: Record<string, string> = {
   [SATELLITE_KEY_CLINIC]: "RECEPTION",
   [SATELLITE_KEY_HOTEL]: "STAFF",
   [SATELLITE_KEY_FNB]: "STAFF",
+  [SATELLITE_KEY_RETAIL]: "CASHIER",
 };
 
 /** Nafta default position name → satellite role hints for seed scripts. */
@@ -64,6 +77,8 @@ export const NAFTA_POSITION_ROLE_SEED: Array<{
   { positionNamePattern: "врач", satelliteKey: SATELLITE_KEY_CLINIC, satelliteRole: "DOCTOR" },
   { positionNamePattern: "waiter", satelliteKey: SATELLITE_KEY_FNB, satelliteRole: "WAITER" },
   { positionNamePattern: "reception", satelliteKey: SATELLITE_KEY_HOTEL, satelliteRole: "RECEPTION" },
+  { positionNamePattern: "cashier", satelliteKey: SATELLITE_KEY_RETAIL, satelliteRole: "CASHIER" },
+  { positionNamePattern: "kassir", satelliteKey: SATELLITE_KEY_RETAIL, satelliteRole: "CASHIER" },
 ];
 
 export function operationalRolesForSatellite(

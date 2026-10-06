@@ -120,6 +120,7 @@ const emptyForm = {
 type Props = {
   patientId: string;
   panel?: string | null;
+  initialEpisodeId?: string | null;
   showBackLink?: boolean;
   onPatientLoaded?: (patient: PatientCardPatient) => void;
   onOpenDayPlan?: (episodeId: string) => void;
@@ -128,6 +129,7 @@ type Props = {
 export function PatientCardBody({
   patientId,
   panel,
+  initialEpisodeId,
   showBackLink = true,
   onPatientLoaded,
   onOpenDayPlan,
@@ -210,13 +212,14 @@ export function PatientCardBody({
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
     if (items.length > 0) {
-      setSelectedEpisodeId(items[0].id);
-      setAnamnesis(items[0].anamnesisText ?? "");
+      const preferred = items.find((item) => item.id === initialEpisodeId) ?? items[0];
+      setSelectedEpisodeId(preferred.id);
+      setAnamnesis(preferred.anamnesisText ?? "");
     } else {
       setSelectedEpisodeId(null);
       setAnamnesis("");
     }
-  }, [patientId]);
+  }, [patientId, initialEpisodeId]);
 
   const load = useCallback(async () => {
     if (!patientId) return;

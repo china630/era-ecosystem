@@ -13,6 +13,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IsBoolean, IsOptional } from "class-validator";
@@ -38,7 +39,8 @@ class PatchPersonnelOrderSettingsDto {
 @ApiTags("platform-workforce-personnel-orders")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/personnel-orders")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("orders")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforcePersonnelOrdersController {
   constructor(private readonly orders: WorkforcePersonnelOrdersService) {}
 
@@ -174,7 +176,8 @@ export class WorkforcePersonnelOrdersController {
 @ApiTags("platform-workforce-staff-schedule")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/staff-schedule")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("staffSchedule")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class StaffScheduleRevisionsController {
   constructor(private readonly schedules: StaffScheduleRevisionsService) {}
 

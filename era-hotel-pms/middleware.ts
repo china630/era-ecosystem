@@ -5,6 +5,7 @@ import {
   eraPathnameRequestHeaders,
   getBearerOrCookieToken,
   redirectNoStore,
+  redirectReferralToOrchestratorRegister,
   stripSessionHeaders,
   verifyAgencySession,
 } from '@era/satellite-kit/auth/middleware-edge';
@@ -126,6 +127,8 @@ async function agencyResponse(request: NextRequest, pathname: string): Promise<R
 }
 
 export async function middleware(request: NextRequest): Promise<Response> {
+  const referralRedirect = redirectReferralToOrchestratorRegister(request);
+  if (referralRedirect) return referralRedirect;
   const { pathname } = request.nextUrl;
 
   if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {

@@ -125,6 +125,56 @@ export async function countEntitlementUsage(input: {
   return procCount + labCount + visitCount;
 }
 
+const LAB_DONE_STATUSES = ["RESULT_READY", "PUBLISHED", "COMPLETED"] as const;
+
+/** Finished work only. Scheduled, checked-in, and no-show stay out of this count. */
+export async function countEntitlementCompleted(input: {
+  episodeId: string;
+  quotaCode: string;
+}): Promise<number> {
+  const { episodeId, quotaCode } = input;
+  const [procCount, labCount, visitCount] = await Promise.all([
+    prisma.procedureOrder.count({
+      where: {
+        clinicalEpisodeId: episodeId,
+        inPackage: true,
+        status: "COMPLETED",
+        OR: [
+          { packageQuotaCode: quotaCode },
+          { packageQuotaCode: null, procedureCode: quotaCode },
+        ],
+      },
+    }),
+    prisma.labOrderItem.count({
+      where: {
+        inPackage: true,
+        OR: [
+          { packageQuotaCode: quotaCode },
+          { packageQuotaCode: null, serviceCode: quotaCode },
+        ],
+        labOrder: {
+          clinicalEpisodeId: episodeId,
+          status: { in: [...LAB_DONE_STATUSES] },
+        },
+      },
+    }),
+    prisma.visitServiceLine.count({
+      where: {
+        inPackage: true,
+        OR: [
+          { packageQuotaCode: quotaCode },
+          { packageQuotaCode: null, serviceCode: quotaCode },
+        ],
+        visit: {
+          clinicalEpisodeId: episodeId,
+          status: "COMPLETED",
+        },
+      },
+    }),
+  ]);
+  return procCount + labCount + visitCount;
+}
+
 /** Overwrite balance.quotaUsed from the single COUNT source of truth. */
 export async function syncEntitlementUsage(input: {
   instanceId: string;

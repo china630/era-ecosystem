@@ -59,6 +59,7 @@ describe("Platform WF negative paths (AC-CP-WF)", () => {
     };
     const entitlement = new WorkforceEntitlementService(
       subscriptionAccess as never,
+      {} as never,
     );
     await expect(
       entitlement.assertWorkforceHub("00000000-0000-4000-8000-000000000001"),

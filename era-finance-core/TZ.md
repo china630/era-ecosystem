@@ -2215,7 +2215,7 @@ enum SubscriptionTier {
 
 **Модели (Prisma):** `Partner` (код, `displayName`, `ownerUserId?`, `isCorporate`, `fixedRatePercent?`), `Referral` (`partnerId`, `organizationId` @unique, `signupAt`, `windowEndsAt` = signupAt + 12 months, `isActive`, `source`), `ReferralCommission` (помесячное начисление, `status` ACCRUED/PAID/CANCELLED, уникальность по `(referralId, periodYear, periodMonth)`).
 
-**Правила комиссии:** tier-лесенка **10% / 15% / 20%** по количеству активных привлечённых организаций партнёра; `fixedRatePercent` у **Corporate partner** переопределяет tier.
+**Правила комиссии:** tier-лесенка **10% / 15% / 20%** по количеству активных привлечённых организаций партнёра; `fixedRatePercent` у **Corporate partner** переопределяет tier. База — **сумма всех строк** платформенного счёта этой организации за месяц (ядро, сателлиты, аддоны), одна запись `ReferralCommission` на месяц. Код `?ref=` с любого сателлита и Finance уходит на регистрацию оркестратора `/register?ref=`. Привязка только при создании организации.
 
 **REST (канон):**
 - Публичная регистрация: `POST /api/auth/register` принимает опциональный `referralCode`; при валидном коде создаётся строка `Referral` в той же транзакции, что и `Organization`.

@@ -19,9 +19,12 @@ import {
 import { useRequireAuth } from "../../../../../lib/use-require-auth";
 import {
   WORKFORCE_UI_SATELLITES,
-  humanizeSatelliteRole,
-  rolesForSatellite,
+  catalogRoleName,
+  catalogRolesFor,
+  workforceSatellitesForModules,
+  type CatalogRole,
 } from "../../../../../lib/workforce-satellites";
+import { useSubscription } from "../../../../../lib/subscription-context";
 import {
   isWorkforceGate403,
   parseOrgUnitItems,
@@ -56,12 +59,14 @@ export default function WorkforceSecurityBindingsPage() {
   const t = useTranslations("workforceSecurity");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
+  const { snapshot: subscriptionSnapshot } = useSubscription();
   const [items, setItems] = useState<BindingRow[]>([]);
   const [persons, setPersons] = useState<Record<string, PersonProfile>>({});
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
+  const [catalog, setCatalog] = useState<CatalogRole[]>([]);
   const [notEntitled, setNotEntitled] = useState(false);
   const [orgUnits, setOrgUnits] = useState<OrgUnitOpt[]>([]);
   const [positions, setPositions] = useState<PositionOpt[]>([]);
@@ -81,14 +86,28 @@ export default function WorkforceSecurityBindingsPage() {
     [tSys],
   );
 
+  const visibleSatellites = useMemo(
+    () => workforceSatellitesForModules(subscriptionSnapshot?.activeModules),
+    [subscriptionSnapshot?.activeModules],
+  );
+
   const satelliteOptions = useMemo(
     () =>
-      WORKFORCE_UI_SATELLITES.map((s) => ({
+      visibleSatellites.map((s) => ({
         value: s.key,
         label: satelliteLabel(s.key),
       })),
-    [satelliteLabel],
+    [satelliteLabel, visibleSatellites],
   );
+
+  useEffect(() => {
+    if (
+      filterSatellite &&
+      !visibleSatellites.some((s) => s.key === filterSatellite)
+    ) {
+      setFilterSatellite("");
+    }
+  }, [filterSatellite, visibleSatellites]);
 
   const filterPositionOptions = useMemo(() => {
     const rows = positions
@@ -100,11 +119,23 @@ export default function WorkforceSecurityBindingsPage() {
 
   const filterRoleOptions = useMemo(() => {
     if (!filterSatellite) return [];
-    return rolesForSatellite(filterSatellite).map((r) => ({
-      value: r,
-      label: humanizeSatelliteRole(r),
+    const options = catalogRolesFor(catalog, filterSatellite).map((role) => ({
+      value: role.code,
+      label: role.name,
     }));
-  }, [filterSatellite]);
+    const known = new Set(options.map((option) => option.value));
+    for (const binding of items) {
+      if (binding.satelliteKey !== filterSatellite || known.has(binding.satelliteRole)) {
+        continue;
+      }
+      known.add(binding.satelliteRole);
+      options.push({
+        value: binding.satelliteRole,
+        label: `${t("roleNeedsRepick")} (${binding.satelliteRole})`,
+      });
+    }
+    return options;
+  }, [catalog, filterSatellite, items, t]);
 
   const provisionStateOptions = useMemo(
     () => [
@@ -128,10 +159,11 @@ export default function WorkforceSecurityBindingsPage() {
     if (filterRole) qs.set("role", filterRole);
     if (filterProvisionState) qs.set("provisionState", filterProvisionState);
 
-    const [bindRes, ouRes, posRes] = await Promise.all([
+    const [bindRes, ouRes, posRes, roleRes] = await Promise.all([
       wfFetch(`security/bindings?${qs}`),
       wfFetch("org-units"),
       wfFetch("positions?status=ACTIVE"),
+      wfFetch("satellite-roles"),
     ]);
     if (await isWorkforceGate403(bindRes)) {
       setNotEntitled(true);
@@ -139,6 +171,10 @@ export default function WorkforceSecurityBindingsPage() {
       return;
     }
     setNotEntitled(false);
+    if (roleRes.ok) {
+      const rows = (await roleRes.json()) as CatalogRole[];
+      setCatalog(Array.isArray(rows) ? rows : []);
+    }
     if (bindRes.ok) {
       const data = (await bindRes.json()) as {
         items: BindingRow[];
@@ -318,7 +354,8 @@ export default function WorkforceSecurityBindingsPage() {
                       {satelliteLabel(b.satelliteKey)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {humanizeSatelliteRole(b.satelliteRole)}
+                      {catalogRoleName(catalog, b.satelliteKey, b.satelliteRole) ??
+                        `${t("roleNeedsRepick")} (${b.satelliteRole})`}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {b.provisionState === "FAILED" ? (

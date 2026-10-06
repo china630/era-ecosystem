@@ -33,7 +33,7 @@ Empty DB / greenfield pilot: **delete** legacy hire paths in the same release wa
 
 ## Commercial SKU
 
-- **`platform_workforce`** — CP Workforce Hub (included in default trial bundle for Nafta)
+- **`platform_workforce`** — hub alias. Packages: Essential / Professional / Premium ([cp-workforce-packages.md](./cp-workforce-packages.md))
 - **`hr_full`** — Finance payroll extension (optional)
 - **`industry_*`** — satellite entitlements for role templates
 
@@ -43,7 +43,7 @@ Policy: `GET /platform/v1/workforce/policy` → `hireMode: cp_workforce | disabl
 
 | Event | Publisher | Consumer |
 |-------|-----------|----------|
-| `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` | Orchestrator CP | clinic, hotel, fnb, … |
+| `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` | Orchestrator CP | clinic, hotel, fnb, retail |
 | `WORKFORCE_ABSENCE_*` | Orchestrator CP | Finance (mirror) |
 | `WORKFORCE_EMPLOYMENT_HIRED` | Orchestrator CP | Finance (payroll stub) |
 | `WORKFORCE_ORG_UNIT_*`, `WORKFORCE_POSITION_*` | Orchestrator CP | Finance (CostCenter mirror) |

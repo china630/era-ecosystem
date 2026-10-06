@@ -103,16 +103,23 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
   },
   {
     key: "platform_workforce_base",
-    name: "Workforce Base (headcount meter)",
+    name: "Workforce Essential (2 AZN / person)",
     pricePerMonth: 0,
     sortOrder: 31,
     trialEligibleInTrial: true,
   },
   {
     key: "platform_workforce_pro",
-    name: "Workforce PRO (headcount meter + HRIS)",
+    name: "Workforce Professional (4 AZN / person)",
     pricePerMonth: 0,
     sortOrder: 32,
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "platform_workforce_premium",
+    name: "Workforce Premium (6 AZN / person)",
+    pricePerMonth: 0,
+    sortOrder: 33,
     trialEligibleInTrial: true,
   },
   {

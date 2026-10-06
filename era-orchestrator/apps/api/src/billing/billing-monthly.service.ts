@@ -4,6 +4,7 @@ import {
   Prisma,
   shouldWaiveEraFoundation,
   SubscriptionInvoiceStatus,
+  workforceHeadcountRateAzn,
 } from "@era365/database";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
@@ -273,6 +274,21 @@ export class BillingMonthlyService {
           lines.push({
             description: `ERA Banking Core (Foundation) — ${orgName} (VÖEN ${taxId})`,
             amountAzn: bankingFoundationAzn,
+          });
+        }
+      }
+    }
+
+    if (!trialCoversPeriod && orgRow) {
+      const headcountRate = workforceHeadcountRateAzn(orgRow.activeModules ?? []);
+      if (headcountRate > 0) {
+        const headcount = await this.prisma.workforceEmployment.count({
+          where: { organizationId, status: "ACTIVE" },
+        });
+        if (headcount > 0) {
+          lines.push({
+            description: `Workforce headcount ${headcount} × ${headcountRate} AZN — ${orgName} (VÖEN ${taxId})`,
+            amountAzn: roundMoney2(headcount * headcountRate),
           });
         }
       }

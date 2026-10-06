@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
   forwardRef,
@@ -12,7 +13,6 @@ import {
   WORKFORCE_EMPLOYMENT_HIRED,
   WORKFORCE_EMPLOYMENT_TERMINATED,
   WORKFORCE_OPERATIONAL_SATELLITE_KEYS,
-  isValidSatelliteRole,
 } from "@era/contracts";
 import {
   RoleBindingSource,
@@ -74,6 +74,8 @@ function provisionDisplayName(
 
 @Injectable()
 export class WorkforceProvisionService {
+  private readonly logger = new Logger(WorkforceProvisionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mdm: MdmService,
@@ -198,14 +200,12 @@ export class WorkforceProvisionService {
         },
       });
       if (needsNewSeat) {
-        await tx.workforceSeatAllocation.create({
-          data: {
-            workforceScopeId: link.workforceScopeId,
-            globalPersonId,
-            employmentId: row.id,
-            status: RoleBindingStatus.ACTIVE,
-          },
-        });
+        await this.seats.allocateSeat(
+          link.workforceScopeId,
+          globalPersonId,
+          row.id,
+          tx,
+        );
       }
       return {
         ...row,
@@ -219,6 +219,7 @@ export class WorkforceProvisionService {
       const satelliteRole = await this.templates.resolveRole(
         dto.positionId,
         satelliteKey,
+        organizationId,
       );
       const binding = await this.prisma.workforceRoleBinding.create({
         data: {
@@ -490,6 +491,74 @@ export class WorkforceProvisionService {
     return { reprovisioned: bindings.length, cpSaved };
   }
 
+  /**
+   * Org disconnected a satellite: revoke every active binding for that key
+   * and emit STAFF_DEACTIVATED while the endpoint can still be reached.
+   */
+  async revokeAllForSatellite(
+    organizationId: string,
+    satelliteKey: string,
+    actorUserId: string,
+  ): Promise<{ revoked: number }> {
+    const key = satelliteKey.trim();
+    if (
+      !(WORKFORCE_OPERATIONAL_SATELLITE_KEYS as readonly string[]).includes(key)
+    ) {
+      return { revoked: 0 };
+    }
+    const bindings = await this.prisma.workforceRoleBinding.findMany({
+      where: {
+        satelliteKey: key,
+        status: RoleBindingStatus.ACTIVE,
+        employment: { organizationId },
+      },
+      include: {
+        employment: {
+          select: {
+            id: true,
+            globalPersonId: true,
+            financeEmployeeId: true,
+          },
+        },
+      },
+    });
+    if (bindings.length === 0) return { revoked: 0 };
+
+    let anchorOrganizationId = organizationId;
+    try {
+      const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
+      anchorOrganizationId = link.workforceScope.anchorOrganizationId;
+    } catch (err) {
+      this.logger.warn(
+        `revokeAllForSatellite: workforce scope unresolved for org=${organizationId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+    for (const binding of bindings) {
+      await this.prisma.workforceRoleBinding.update({
+        where: { id: binding.id },
+        data: { status: RoleBindingStatus.REVOKED },
+      });
+      await this.emitDeactivated({
+        organizationId: anchorOrganizationId,
+        globalPersonId: binding.employment.globalPersonId,
+        employmentId: binding.employment.id,
+        financeEmployeeId: binding.employment.financeEmployeeId,
+        binding,
+      });
+    }
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "SATELLITE_ACCESS_REVOKED",
+      entityType: "SATELLITE",
+      entityId: key,
+      payload: { revoked: bindings.length },
+    });
+    return { revoked: bindings.length };
+  }
+
   private async syncSatelliteAccess(
     organizationId: string,
     _actorUserId: string,
@@ -556,6 +625,7 @@ export class WorkforceProvisionService {
       const satelliteRole = await this.templates.resolveRole(
         employment.positionId,
         satelliteKey,
+        organizationId,
       );
       const binding = await this.prisma.workforceRoleBinding.upsert({
         where: {

@@ -191,7 +191,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | Route | API | Role |
 |-------|-----|------|
 | `/reports` | `GET /api/reports/{slug}/layout?from&to&lang[&dim]` → `{ layout }`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, Start/End always visible, period radios (manual edit clears the radio), Show, PDF and Excel. Screen, PDF and Excel render the same `ReportLayout` sections (`src/lib/reports/layouts/*`). `GET /api/reports/{slug}` is an alias of `/layout`, shadowed by static routes such as `guest-demographics`. Category hubs and old slug URLs redirect here. |
-| `/reports/analytics` | booking analytics API | Sidebar Tools (not inside the report catalog) |
+| `/reports/analytics` | booking analytics API | Under Reports (not a catalog slug, no PDF). Booking sources, cancellations, guest demographics |
 | `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Under Reports (not Tools). Room-type occupancy grid, color legend (not a catalog slug) |
 | `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit (each on its `resolveDateMode` ending on that day), ZIP for that date |
 | `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |
@@ -201,7 +201,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Notes |
 |-------|-----|-------|
-| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; ADR hotel-domain-permissions-and-rbac |
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions`, `GET /api/internal/v1/workforce/roles` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; role code+name pushed to CP catalog (ADR cp-workforce-satellite-role-catalog) |
 | `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | Local logins; workforce (`cpEmploymentId`) name and password stay on provision. Position is `User.positionTitle` |
 | `/settings/logins` | `GET /api/admin/user-logins?q&from&to` | Successful staff and SSO sign-ins (`UserLogin`). `q` matches login, name, or IP; `from`/`to` are Asia/Baku days (swapped if reversed) |
 | `/settings/integration` | integration settings API | `?view=events` outbound, `?view=gl` revenue→GL, `?view=journal` outbound journal |

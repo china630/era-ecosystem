@@ -4,7 +4,7 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getPackDefaults, getReportBySlug, validatePackSlugs } from '@/lib/reports/catalog';
-import { parseReportLangParam } from '@/lib/reports/locale';
+import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
 import { reportPdfT } from '@/lib/reports/pdf-i18n';
 import { renderLayoutPdf } from '@/lib/services/reports/pdf-renderers';
 import { queryReportLayout, reportPeriodLabel } from '@/lib/services/reports/report-output';
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
           t,
         });
         const order = String(i + 1).padStart(2, '0');
-        zip.file(`${order}_${slug}_${businessDate}.pdf`, buf);
+        zip.file(reportFileName(`${order}_${slug}`, lang.locale, businessDate, 'pdf'), buf);
         added += 1;
       } catch (err) {
         console.error(`[reports] pack member ${slug} failed`, err);
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     return new Response(new Uint8Array(zipBuf), {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="nightly_pack_${businessDate}.zip"`,
+        'Content-Disposition': `attachment; filename="${reportFileName('nightly_pack', lang.locale, businessDate, 'zip')}"`,
       },
     });
   } catch (err) {

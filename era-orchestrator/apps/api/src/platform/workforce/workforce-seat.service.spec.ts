@@ -1,4 +1,4 @@
-import { TariffTier } from "@era365/database";
+import { RoleBindingStatus, TariffTier } from "@era365/database";
 import {
   parseEmployeeCap,
   WorkforceSeatService,
@@ -17,8 +17,10 @@ describe("WorkforceSeatService", () => {
   const prisma = {
     workforceSeatAllocation: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       count: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
       updateMany: jest.fn(),
     },
     organizationSubscription: {
@@ -78,6 +80,50 @@ describe("WorkforceSeatService", () => {
       svc.assertSeatAvailable("scope1", "person4", orgId),
     ).resolves.toBeUndefined();
     expect(systemConfig.getTierQuotas).toHaveBeenCalledWith(TariffTier.TIER_3);
+  });
+
+  it("reopens a revoked seat instead of inserting a second row", async () => {
+    const revoked = {
+      id: "seat-1",
+      workforceScopeId: "scope1",
+      globalPersonId: "person1",
+      employmentId: "emp-1",
+      status: RoleBindingStatus.REVOKED,
+    };
+    prisma.workforceSeatAllocation.findUnique.mockResolvedValueOnce(revoked);
+    prisma.workforceSeatAllocation.update.mockImplementation(
+      async ({ data }: { data: { status: string } }) => ({ ...revoked, ...data }),
+    );
+
+    const row = await svc.allocateSeat("scope1", "person1", "emp-1");
+
+    expect(prisma.workforceSeatAllocation.create).not.toHaveBeenCalled();
+    expect(prisma.workforceSeatAllocation.update).toHaveBeenCalledWith({
+      where: { id: "seat-1" },
+      data: {
+        workforceScopeId: "scope1",
+        globalPersonId: "person1",
+        employmentId: "emp-1",
+        status: RoleBindingStatus.ACTIVE,
+      },
+    });
+    expect(row.status).toBe(RoleBindingStatus.ACTIVE);
+  });
+
+  it("inserts a seat when the person has none", async () => {
+    prisma.workforceSeatAllocation.findUnique.mockResolvedValue(null);
+    prisma.workforceSeatAllocation.create.mockResolvedValue({ id: "seat-new" });
+
+    await svc.allocateSeat("scope1", "person9", "emp-9");
+
+    expect(prisma.workforceSeatAllocation.create).toHaveBeenCalledWith({
+      data: {
+        workforceScopeId: "scope1",
+        globalPersonId: "person9",
+        employmentId: "emp-9",
+        status: RoleBindingStatus.ACTIVE,
+      },
+    });
   });
 
   it("rejects when used meets SystemConfig maxEmployees", async () => {

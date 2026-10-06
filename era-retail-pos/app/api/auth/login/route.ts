@@ -71,6 +71,18 @@ export async function POST(request: Request) {
       isOwner,
       permissions,
     });
+    await prisma.userLogin
+      .create({
+        data: {
+          organizationId,
+          userId: user.id,
+          login: user.login,
+          ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          userAgent: request.headers.get("user-agent"),
+        },
+      })
+      .catch(() => undefined);
+
     const res = jsonOk({
       user: {
         id: user.id,

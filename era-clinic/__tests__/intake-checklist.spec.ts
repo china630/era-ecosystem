@@ -4,6 +4,7 @@ jest.mock("@/lib/prisma", () => ({
     clinicalEpisode: { findUnique: jest.fn() },
     programTemplate: { findFirst: jest.fn() },
     labOrder: { findFirst: jest.fn() },
+    visit: { findFirst: jest.fn() },
   },
 }));
 
@@ -15,6 +16,7 @@ const mockedPrisma = prisma as unknown as {
   clinicalEpisode: { findUnique: jest.Mock };
   programTemplate: { findFirst: jest.Mock };
   labOrder: { findFirst: jest.Mock };
+  visit: { findFirst: jest.Mock };
 };
 
 const template = {
@@ -52,6 +54,14 @@ const template = {
       fulfillment: "VISIT",
       sortOrder: 0,
     },
+    {
+      procedureCode: "GYN",
+      procedureName: "Gynecologist",
+      assignMode: "AUTO_ON_OPEN",
+      kind: "EXAM",
+      fulfillment: "VISIT",
+      sortOrder: 4,
+    },
   ],
 };
 
@@ -65,6 +75,7 @@ describe("getIntakeChecklist", () => {
       _count: { careDoctors: 1 },
     });
     mockedPrisma.programTemplate.findFirst.mockResolvedValue(template);
+    mockedPrisma.visit.findFirst.mockResolvedValue(null);
     mockedPrisma.labOrder.findFirst.mockImplementation(
       async (args: {
         where?: { items?: { some?: { serviceCode?: { in?: string[] } } } };
@@ -78,7 +89,16 @@ describe("getIntakeChecklist", () => {
 
   it("lists auto labs from the current template and skips manual rows", async () => {
     const checklist = await getIntakeChecklist("p1", { episodeId: "ep1" });
-    expect(checklist.items.map((item) => item.slot)).toEqual(["CARDIO-ECG", "LAB-CBC"]);
+    expect(checklist.items.map((item) => item.slot)).toEqual([
+      "CARDIO-ECG",
+      "LAB-CBC",
+      "GYN",
+    ]);
+    expect(checklist.items.find((item) => item.slot === "GYN")).toMatchObject({
+      kind: "visit",
+      status: "MISSING",
+      scheduledAt: null,
+    });
     expect(checklist.items.find((item) => item.slot === "CARDIO-ECG")?.status).toBe("ORDERED");
     expect(checklist.items.find((item) => item.slot === "LAB-CBC")?.status).toBe("MISSING");
     expect(checklist.items.find((item) => item.slot === "VISIT-SANATORIUM-INTAKE")).toBeUndefined();

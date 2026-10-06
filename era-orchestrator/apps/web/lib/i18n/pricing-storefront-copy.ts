@@ -276,7 +276,7 @@ const uiRu: PricingStorefrontUiCopy = {
     "Цены CBS — Sandbox / Pilot. Промышленный контур (AzeriCard / AZIPS) — Custom Quote, setup от 25 000 AZN.",
   platformAddonsTitle: "Платформенные add-on",
   platformAddonsHint:
-    "Кросс-вертикальные сервисы оркестратора. Workforce headcount — 2 AZN Base XOR 4 AZN PRO за человека (не SKU на этой полке).",
+    "Кросс-вертикальные сервисы оркестратора. Workforce — 2 / 4 / 6 AZN за человека (Essential / Professional / Premium).",
   platformAddonsXor:
     "XOR: Data HUB Bronze / Silver / Gold · Loyalty XOR Retail promotions · Delivery XOR F&B delivery hub.",
   industryCopy: {
@@ -567,7 +567,7 @@ const uiAz: PricingStorefrontUiCopy = {
     "CBS qiymətləri Sandbox / Pilot-dur. İstehsal konturu (AzeriCard / AZIPS) — Custom Quote, setup 25 000 AZN-dən.",
   platformAddonsTitle: "Platforma add-on-ları",
   platformAddonsHint:
-    "Orkestratorun kəsişən servisləri. Workforce headcount — şəxs başına 2 AZN Base XOR 4 AZN PRO (bu rəfdə SKU deyil).",
+    "Orkestratorun kəsişən servisləri. Workforce — nəfər başına 2 / 4 / 6 AZN (Essential / Professional / Premium).",
   platformAddonsXor:
     "XOR: Data HUB Bronze / Silver / Gold · Loyalty XOR Retail promotions · Delivery XOR F&B delivery hub.",
   industryCopy: {

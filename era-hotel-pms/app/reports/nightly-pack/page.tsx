@@ -8,6 +8,7 @@ import { hotelDateKey } from '@/lib/hotel-calendar';
 import { getPackDefaults } from '@/lib/reports/catalog';
 import { resolveDateMode } from '@/lib/reports/period';
 import type { ReportLayout } from '@/lib/reports/layout';
+import { reportFileName } from '@/lib/reports/locale';
 import { ReportLayoutView } from '@/components/reports/ReportLayoutView';
 
 interface PackBlock {
@@ -124,7 +125,7 @@ export default function NightlyPackPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `morning-pack-${date}.zip`;
+      a.download = reportFileName('nightly_pack', locale, date, 'zip');
       a.click();
       URL.revokeObjectURL(url);
     } finally {

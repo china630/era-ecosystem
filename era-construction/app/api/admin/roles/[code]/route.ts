@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publishSatelliteRole } from "@era/satellite-kit";
 import { NextResponse } from "next/server";
 import { jsonOk, handleRouteError, jsonError, getSatelliteSession } from "@/lib/api-utils";
 import { assertPermission } from "@/lib/auth/require";
@@ -35,6 +36,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       code: role.code,
       before: { name: role.name },
       after: { name: updated.name },
+    });
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_construction",
+      code: updated.code,
+      name: updated.name,
+      active: true,
     });
 
     return jsonOk({
@@ -79,6 +88,14 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     await recordAudit({ userId: session.sub, request: req }, "Role", role.id, "ROLE_DELETE", {
       code: role.code,
       name: role.name,
+    });
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_construction",
+      code: role.code,
+      name: role.name,
+      active: false,
     });
 
     return jsonOk({ deleted: true, code: role.code });

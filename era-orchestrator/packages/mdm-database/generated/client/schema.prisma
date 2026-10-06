@@ -67,6 +67,14 @@ enum PersonAddressKind {
   ACTUAL
 }
 
+enum KinshipKind {
+  SPOUSE
+  PARENT
+  CHILD
+  SIBLING
+  OTHER
+}
+
 enum StatisticalCategory {
   REFUGEE
   IDP
@@ -105,6 +113,7 @@ model GlobalNaturalPerson {
   accessLogs         PersonAccessLog[]
   hrProfile          PersonHrProfile?
   addresses          PersonAddress[]
+  kinContacts        PersonKinContact[]
   mergedInto         GlobalNaturalPerson?  @relation("PersonMerge", fields: [mergedIntoPersonId], references: [id], onDelete: SetNull)
   mergedFrom         GlobalNaturalPerson[] @relation("PersonMerge")
 
@@ -144,6 +153,20 @@ model PersonAddress {
   @@unique([personId, kind])
   @@index([personId])
   @@map("person_addresses")
+}
+
+model PersonKinContact {
+  id          String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId    String              @map("person_id") @db.Uuid
+  kinship     KinshipKind
+  nameCipher  String              @map("name_cipher")
+  phoneCipher String              @map("phone_cipher")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  person      GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId])
+  @@map("person_kin_contacts")
 }
 
 model PersonIdentifier {

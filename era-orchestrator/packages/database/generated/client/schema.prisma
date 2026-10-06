@@ -701,6 +701,22 @@ model SatelliteRoleTemplate {
   @@map("satellite_role_templates")
 }
 
+/// Role codes owned by a satellite. The workforce matrix picks from this list.
+model SatelliteRoleCatalog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  satelliteKey   String   @map("satellite_key")
+  code           String
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, satelliteKey, code])
+  @@index([organizationId, satelliteKey, active])
+  @@map("satellite_role_catalog")
+}
+
 model WorkforceRoleBinding {
   id                 String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   employmentId       String                  @map("employment_id") @db.Uuid

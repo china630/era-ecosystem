@@ -5,6 +5,7 @@ import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { WorkforceSeatService } from "./workforce-seat.service";
+import { WorkforceSatelliteRoleCatalogService } from "./workforce-satellite-role-catalog.service";
 
 @Injectable()
 export class WorkforceSecurityService {
@@ -14,6 +15,7 @@ export class WorkforceSecurityService {
     private readonly scope: WorkforceScopeService,
     private readonly seats: WorkforceSeatService,
     private readonly employments: WorkforceEmploymentsService,
+    private readonly catalog: WorkforceSatelliteRoleCatalogService,
   ) {}
 
   async overview(organizationId: string) {
@@ -218,6 +220,95 @@ export class WorkforceSecurityService {
       organizationIds: scopedIds,
       persons,
       actors,
+    };
+  }
+
+  /** Catalog rows plus the active staff already bound to each code. */
+  async roleDirectory(organizationId: string) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const catalog = await this.catalog.list(organizationId);
+    const bindings = await this.prisma.workforceRoleBinding.findMany({
+      where: {
+        status: "ACTIVE",
+        employment: { organizationId, status: "ACTIVE" },
+      },
+      include: {
+        employment: { include: { orgUnit: true, position: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    type Holder = {
+      employmentId: string;
+      globalPersonId: string;
+      positionName: string | null;
+      orgUnitName: string | null;
+      manual: boolean;
+      provisionState: string;
+    };
+    const roles = new Map<
+      string,
+      {
+        satelliteKey: string;
+        code: string;
+        name: string;
+        active: boolean;
+        inCatalog: boolean;
+        holders: Holder[];
+      }
+    >();
+    for (const row of catalog) {
+      roles.set(`${row.satelliteKey}\0${row.code}`, {
+        satelliteKey: row.satelliteKey,
+        code: row.code,
+        name: row.name,
+        active: row.active,
+        inCatalog: true,
+        holders: [],
+      });
+    }
+    for (const binding of bindings) {
+      const key = `${binding.satelliteKey}\0${binding.satelliteRole}`;
+      let role = roles.get(key);
+      if (!role) {
+        role = {
+          satelliteKey: binding.satelliteKey,
+          code: binding.satelliteRole,
+          name: binding.satelliteRole,
+          active: false,
+          inCatalog: false,
+          holders: [],
+        };
+        roles.set(key, role);
+      }
+      role.holders.push({
+        employmentId: binding.employmentId,
+        globalPersonId: binding.employment.globalPersonId,
+        positionName: binding.employment.position?.name ?? null,
+        orgUnitName: binding.employment.orgUnit?.name ?? null,
+        manual: binding.source === "MANUAL_GRANT",
+        provisionState: binding.provisionState,
+      });
+    }
+
+    const personIds = [
+      ...new Set(
+        [...roles.values()].flatMap((role) =>
+          role.holders.map((holder) => holder.globalPersonId),
+        ),
+      ),
+    ];
+    const persons =
+      personIds.length > 0
+        ? await this.employments.resolvePersonProfiles(organizationId, personIds)
+        : {};
+    return {
+      roles: [...roles.values()].sort((a, b) =>
+        a.satelliteKey === b.satelliteKey
+          ? a.name.localeCompare(b.name, "en")
+          : a.satelliteKey.localeCompare(b.satelliteKey),
+      ),
+      persons,
     };
   }
 }

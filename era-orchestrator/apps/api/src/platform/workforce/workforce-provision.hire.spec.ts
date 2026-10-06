@@ -27,7 +27,7 @@ describe("WorkforceProvisionService.hire seats", () => {
   const scope = { resolveScopeForCommercialOrg: jest.fn() };
   const positions = { assertSlotAvailable: jest.fn() };
   const templates = { resolveRole: jest.fn() };
-  const seats = { assertSeatAvailable: jest.fn() };
+  const seats = { assertSeatAvailable: jest.fn(), allocateSeat: jest.fn() };
   const audit = { log: jest.fn() };
   const satelliteEvents = { enqueue: jest.fn() };
   const subscriptionAccess = { hasModule: jest.fn() };
@@ -126,7 +126,35 @@ describe("WorkforceProvisionService.hire seats", () => {
     });
 
     expect(seats.assertSeatAvailable).not.toHaveBeenCalled();
+    expect(seats.allocateSeat).not.toHaveBeenCalled();
     expect(prisma.workforceSeatAllocation.create).not.toHaveBeenCalled();
     expect(prisma.workforceEmployment.create).toHaveBeenCalled();
+  });
+
+  it("first satellite hire allocates the seat inside the hire transaction", async () => {
+    templates.resolveRole.mockResolvedValue("NURSE");
+    prisma.workforceRoleBinding.create.mockResolvedValue({
+      id: "bind1",
+      satelliteKey: "industry_clinic",
+    });
+    seats.allocateSeat.mockResolvedValue({ id: "seat-new" });
+
+    await svc.hire(ORG, "actor1", {
+      globalPersonId: PERSON,
+      hireDate: "2026-08-01",
+      orgUnitId: UNIT,
+      positionId: POSITION,
+      satelliteKeys: ["industry_clinic"],
+      pin: "4821",
+    });
+
+    expect(seats.assertSeatAvailable).toHaveBeenCalled();
+    expect(seats.allocateSeat).toHaveBeenCalledWith(
+      "scope1",
+      PERSON,
+      "emp1",
+      prisma,
+    );
+    expect(prisma.workforceSeatAllocation.create).not.toHaveBeenCalled();
   });
 });

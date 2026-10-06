@@ -8,6 +8,9 @@ import type { PublicPricingResponse } from "./public-pricing-types";
  */
 const STATIC_MODULE_LABELS: Record<string, string> = {
   platform_workforce: "Workforce (HR hub)",
+  platform_workforce_base: "Workforce Essential",
+  platform_workforce_pro: "Workforce Professional",
+  platform_workforce_premium: "Workforce Premium",
   nas: "NAS (national standards)",
   foundation: "Foundation",
   ifrs: "IFRS",

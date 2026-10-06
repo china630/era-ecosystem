@@ -18,6 +18,7 @@ import {
 } from "./billing-module-toggle.helpers";
 import { OrganizationBundleService } from "./organization-bundle.service";
 import type { ToggleBundleDto } from "./dto/toggle-bundle.dto";
+import { WorkforceProvisionService } from "../platform/workforce/workforce-provision.service";
 
 @Injectable()
 export class BillingBundleToggleService {
@@ -27,6 +28,7 @@ export class BillingBundleToggleService {
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly pricing: PricingService,
     private readonly orgBundles: OrganizationBundleService,
+    private readonly provision: WorkforceProvisionService,
   ) {}
 
   async toggle(
@@ -212,6 +214,9 @@ export class BillingBundleToggleService {
       };
     }
 
+    for (const key of moduleKeys) {
+      await this.provision.revokeAllForSatellite(organizationId, key, userId);
+    }
     await this.prisma.$transaction(async (tx) => {
       await this.orgBundles.scheduleCancellationInTx(
         tx,

@@ -17,6 +17,8 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/admin/supplier-match", [P.ADMIN_IMPORT]],
   ["/admin/replenishment", [P.ADMIN_IMPORT]],
   ["/admin/access", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
+  ["/settings/users", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
+  ["/settings/logins", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
 ];
 
 export function isPublicStaffPage(pathname: string): boolean {

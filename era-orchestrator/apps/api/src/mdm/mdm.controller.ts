@@ -169,6 +169,7 @@ export class MdmController {
         region?: string | null;
         postal?: string | null;
       }>;
+      kinContacts?: Array<{ kinship: string; name: string; phone: string }>;
     },
     @Headers("authorization") auth?: string,
     @Headers("x-service-token") xToken?: string,

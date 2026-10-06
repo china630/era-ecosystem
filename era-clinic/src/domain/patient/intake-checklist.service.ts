@@ -15,6 +15,8 @@ export type IntakeChecklistItem = {
   status: IntakeChecklistStatus;
   href: string | null;
   recordId: string | null;
+  /** Set on auto doctor visits when a slot is already booked (Asia/Baku instant). */
+  scheduledAt: string | null;
 };
 
 export type IntakeChecklist = {
@@ -76,14 +78,41 @@ async function findLabOrder(
   });
 }
 
+async function findVisit(
+  patientRefId: string,
+  serviceCode: string,
+  episodeId: string,
+): Promise<{ id: string; status: string; scheduledAt: Date | null } | null> {
+  const visit = await prisma.visit.findFirst({
+    where: {
+      patientRefId,
+      clinicalEpisodeId: episodeId,
+      status: { not: "CANCELLED" },
+      serviceLines: { some: { serviceCode } },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      status: true,
+      appointment: { select: { scheduledAt: true } },
+    },
+  });
+  if (!visit) return null;
+  return {
+    id: visit.id,
+    status: visit.status,
+    scheduledAt: visit.appointment?.scheduledAt ?? null,
+  };
+}
+
 function emptyChecklist(packageCode = ""): IntakeChecklist {
   return { packageCode, packageTitle: null, items: [] };
 }
 
 /**
- * Auto analyses and diagnostics from the current package template.
- * Shown only after the first care-team doctor. Does not wait for the package snapshot
- * and does not invent the old Nafta four-slot list.
+ * Auto analyses, diagnostics, and doctor visits from the current package template.
+ * Shown only after the first care-team doctor. Visits appear without a clock;
+ * the card books the slot later. Manual baths and physio stay off this list.
  */
 export async function getIntakeChecklist(
   patientRefId: string,
@@ -128,14 +157,33 @@ export async function getIntakeChecklist(
   for (const block of template.procedures) {
     const mode = block.assignMode;
     if (mode !== "AUTO_ON_OPEN" && mode !== "AUTO_DAY1") continue;
-    if (effectiveAutoFulfillment(block, patient?.sex) !== "LAB_ORDER") continue;
+    const fulfillment = effectiveAutoFulfillment(block, patient?.sex);
+    if (fulfillment !== "LAB_ORDER" && fulfillment !== "VISIT") continue;
     const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, patient?.sex);
     if (!serviceCode || seen.has(serviceCode)) continue;
     seen.add(serviceCode);
+    const name = block.procedureName?.trim() || serviceCode;
+    if (fulfillment === "VISIT") {
+      const visit = await findVisit(patientRefId, serviceCode, episodeId);
+      items.push({
+        slot: block.procedureCode,
+        resolvedCode: serviceCode,
+        kind: "visit",
+        title: { en: name, ru: name, az: name },
+        status: visit
+          ? visit.status === "COMPLETED"
+            ? "DONE"
+            : "ORDERED"
+          : "MISSING",
+        href: visit ? `/visits/${visit.id}` : null,
+        recordId: visit?.id ?? null,
+        scheduledAt: visit?.scheduledAt?.toISOString() ?? null,
+      });
+      continue;
+    }
     const order = await findLabOrder(patientRefId, serviceCode, {
       clinicalEpisodeId: episodeId,
     });
-    const name = block.procedureName?.trim() || serviceCode;
     items.push({
       slot: block.procedureCode,
       resolvedCode: serviceCode,
@@ -144,6 +192,7 @@ export async function getIntakeChecklist(
       status: order ? labStatus(order.status) : "MISSING",
       href: order ? `/lab-orders?order=${order.id}` : null,
       recordId: order?.id ?? null,
+      scheduledAt: null,
     });
   }
 
