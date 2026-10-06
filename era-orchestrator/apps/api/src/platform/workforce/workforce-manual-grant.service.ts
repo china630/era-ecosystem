@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { isValidSatelliteRole, SATELLITE_STAFF_DEACTIVATED } from "@era/contracts";
+import { SATELLITE_STAFF_DEACTIVATED } from "@era/contracts";
 import { Prisma, RoleBindingSource, RoleBindingStatus, WorkforceEmploymentStatus } from "@era365/database";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -12,6 +12,7 @@ import { SubscriptionAccessService } from "../../subscription/subscription-acces
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
+import { WorkforceSatelliteRoleCatalogService } from "./workforce-satellite-role-catalog.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
 
@@ -25,6 +26,7 @@ export class WorkforceManualGrantService {
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly provision: WorkforceProvisionService,
+    private readonly catalog: WorkforceSatelliteRoleCatalogService,
   ) {}
 
   async list(
@@ -106,10 +108,11 @@ export class WorkforceManualGrantService {
     },
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
-    const role = dto.satelliteRole.trim().toUpperCase();
-    if (!isValidSatelliteRole(dto.satelliteKey, role)) {
-      throw new BadRequestException(`Invalid role for ${dto.satelliteKey}`);
-    }
+    const role = await this.catalog.assertAssignable(
+      organizationId,
+      dto.satelliteKey,
+      dto.satelliteRole,
+    );
     if (!(await this.subscriptionAccess.hasModule(organizationId, dto.satelliteKey))) {
       throw new BadRequestException("Satellite not entitled");
     }

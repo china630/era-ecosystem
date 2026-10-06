@@ -345,6 +345,17 @@ exports.Prisma.SatelliteRoleTemplateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SatelliteRoleCatalogScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceRoleBindingScalarFieldEnum = {
   id: 'id',
   employmentId: 'employmentId',
@@ -1781,6 +1792,7 @@ exports.Prisma.ModelName = {
   OrgUnitCommercialLink: 'OrgUnitCommercialLink',
   WorkforcePosition: 'WorkforcePosition',
   SatelliteRoleTemplate: 'SatelliteRoleTemplate',
+  SatelliteRoleCatalog: 'SatelliteRoleCatalog',
   WorkforceRoleBinding: 'WorkforceRoleBinding',
   WorkforceManualGrant: 'WorkforceManualGrant',
   WorkforceSeatAllocation: 'WorkforceSeatAllocation',

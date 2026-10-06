@@ -83,11 +83,12 @@ describe("SatelliteEndpointRegistryService", () => {
     });
   });
 
-  it("falls back to env for hotel and fnb staff fan-out", async () => {
+  it("falls back to env for hotel, fnb, and retail staff fan-out", async () => {
     prisma.satelliteEndpoint.findUnique.mockResolvedValue(null);
     const s = svc({
       HOTEL_PMS_API_URL: "http://hotel-pms:3201",
       FNB_POS_API_URL: "http://fnb-pos:3202",
+      RETAIL_API_URL: "http://retail-pos:3204",
       SATELLITE_BRIDGE_SECRET: "bridge-secret",
     });
     await expect(s.resolveEndpoint("org-1", "industry_hotel_pms")).resolves.toEqual({
@@ -96,6 +97,10 @@ describe("SatelliteEndpointRegistryService", () => {
     });
     await expect(s.resolveEndpoint("org-1", "industry_fnb_pos")).resolves.toEqual({
       baseUrl: "http://fnb-pos:3202",
+      secret: "bridge-secret",
+    });
+    await expect(s.resolveEndpoint("org-1", "industry_retail")).resolves.toEqual({
+      baseUrl: "http://retail-pos:3204",
       secret: "bridge-secret",
     });
   });

@@ -49,6 +49,7 @@ const FANOUT_URL_ENV: Record<string, readonly string[]> = {
   industry_clinic: ["CLINIC_API_URL"],
   industry_hotel_pms: ["HOTEL_PMS_API_URL"],
   industry_fnb_pos: ["FNB_POS_API_URL"],
+  industry_retail: ["RETAIL_API_URL"],
 };
 
 /**

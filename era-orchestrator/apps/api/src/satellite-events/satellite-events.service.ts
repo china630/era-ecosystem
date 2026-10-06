@@ -134,7 +134,8 @@ export class SatelliteEventsService {
       organizationId,
       satelliteKey,
     );
-    if (!entitled) {
+    const deactivating = isSatelliteStaffDeactivated(body);
+    if (!entitled && !deactivating) {
       this.logger.warn(
         `Skip staff fan-out: org=${organizationId} has no ${satelliteKey}`,
       );

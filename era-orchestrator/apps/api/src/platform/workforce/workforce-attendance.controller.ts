@@ -11,6 +11,7 @@ import {
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -28,7 +29,8 @@ import { WorkforceAttendanceService } from "./workforce-attendance.service";
 @ApiTags("platform-workforce-attendance")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/attendance")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("floor")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceAttendanceController {
   constructor(private readonly attendance: WorkforceAttendanceService) {}
 

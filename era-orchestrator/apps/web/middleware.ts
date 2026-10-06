@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { eraPathnameRequestHeaders } from "@era/satellite-kit/auth/middleware-edge";
+import {
+  eraPathnameRequestHeaders,
+  redirectReferralToOrchestratorRegister,
+} from "@era/satellite-kit/auth/middleware-edge";
 
 export function middleware(request: NextRequest) {
+  const referralRedirect = redirectReferralToOrchestratorRegister(request);
+  if (referralRedirect) return referralRedirect;
   const reqHeaders = eraPathnameRequestHeaders(
     request.headers,
     request.nextUrl.pathname,

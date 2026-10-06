@@ -24,6 +24,7 @@ import {
 import { WorkforceAbsenceKind } from "@era365/database";
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
@@ -104,7 +105,8 @@ class SelfAdvanceDto {
 @ApiTags("platform-workforce-self")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce/me")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("cabinet")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceSelfController {
   constructor(private readonly self: WorkforceSelfService) {}
 

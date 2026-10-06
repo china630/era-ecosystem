@@ -1,4 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
+import { WorkforceHubModule } from "../platform/workforce/workforce-hub.module";
 import { AdminModule } from "../admin/admin.module";
 import { AccessControlModule } from "../access/access-control.module";
 import { AuditModule } from "../audit/audit.module";
@@ -37,6 +38,7 @@ import { ReferralsModule } from "../referrals/referrals.module";
     AdminModule,
     AuditModule,
     forwardRef(() => DrakarisModule),
+    forwardRef(() => WorkforceHubModule),
   ],
   controllers: [BillingController, BillingPublicController, BillingWebhooksController],
   providers: [

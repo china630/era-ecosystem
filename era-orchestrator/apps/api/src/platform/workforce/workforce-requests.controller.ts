@@ -11,6 +11,7 @@ import { IsOptional, IsString, MinLength } from "class-validator";
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
+import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
@@ -43,7 +44,8 @@ class AnnounceDto {
 @ApiTags("platform-workforce-requests")
 @ApiBearerAuth("bearer")
 @Controller("platform/v1/workforce")
-@UseGuards(PermissionsGuard)
+@RequireWorkforceFeature("cabinet")
+@UseGuards(PermissionsGuard, WorkforcePackageGuard)
 export class WorkforceRequestsController {
   constructor(
     private readonly self: WorkforceSelfService,

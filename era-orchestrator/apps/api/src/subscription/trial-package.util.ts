@@ -20,6 +20,7 @@ export const DEFAULT_TRIAL_MODULE_SLUGS: readonly string[] = [
   PRICING_MODULE_CASH_BANK_PRO,
   "inventory",
   "platform_workforce",
+  "platform_workforce_base",
   "audit_hub",
 ] as const;
 

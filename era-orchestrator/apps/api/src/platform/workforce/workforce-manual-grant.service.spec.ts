@@ -34,6 +34,11 @@ describe("WorkforceManualGrantService", () => {
   const satelliteEvents = { enqueue: jest.fn() };
   const subscriptionAccess = { hasModule: jest.fn().mockResolvedValue(true) };
   const provision = { reprovision: jest.fn() };
+  const catalog = {
+    assertAssignable: jest.fn(async (_org: string, _key: string, code: string) =>
+      code.trim(),
+    ),
+  };
 
   const svc = new WorkforceManualGrantService(
     prisma as never,
@@ -43,6 +48,7 @@ describe("WorkforceManualGrantService", () => {
     satelliteEvents as never,
     subscriptionAccess as never,
     provision as never,
+    catalog as never,
   );
 
   beforeEach(() => {

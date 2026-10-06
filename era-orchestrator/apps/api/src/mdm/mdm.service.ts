@@ -8,6 +8,7 @@ import {
 import {
   BloodGroup,
   IdentifierTrust,
+  KinshipKind,
   MaritalStatus,
   PersonAddressKind,
   PersonIdentifierType,
@@ -87,6 +88,13 @@ export type PersonHrAddressView = {
   postal: string | null;
 };
 
+export type PersonKinContactView = {
+  id: string;
+  kinship: KinshipKind;
+  name: string;
+  phone: string;
+};
+
 export type PersonHrProfileView = {
   bloodGroup: BloodGroup;
   maritalStatus: MaritalStatus | null;
@@ -95,12 +103,14 @@ export type PersonHrProfileView = {
   statisticalCategories: StatisticalCategory[];
   photoStorageKey: string | null;
   addresses: PersonHrAddressView[];
+  kinContacts: PersonKinContactView[];
 };
 
 const BLOOD_GROUPS = new Set(Object.values(BloodGroup));
 const MARITAL_STATUSES = new Set(Object.values(MaritalStatus));
 const STAT_CATEGORIES = new Set(Object.values(StatisticalCategory));
 const ADDRESS_KINDS = new Set(Object.values(PersonAddressKind));
+const KINSHIP_KINDS = new Set(Object.values(KinshipKind));
 
 @Injectable()
 export class MdmService {
@@ -1473,20 +1483,32 @@ export class MdmService {
       statisticalCategories: [],
       photoStorageKey: null,
       addresses: [],
+      kinContacts: [],
     };
   }
 
   private async loadHrProfileView(personId: string): Promise<PersonHrProfileView> {
-    const [row, addresses] = await Promise.all([
+    const [row, addresses, kinRows] = await Promise.all([
       this.mdm.personHrProfile.findUnique({ where: { personId } }),
       this.mdm.personAddress.findMany({
         where: { personId },
         orderBy: { kind: "asc" },
       }),
+      this.mdm.personKinContact.findMany({
+        where: { personId },
+        orderBy: { createdAt: "asc" },
+      }),
     ]);
+    const kinContacts = kinRows.map((row) => ({
+      id: row.id,
+      kinship: row.kinship,
+      name: (decryptText(row.nameCipher) ?? "").trim(),
+      phone: (decryptText(row.phoneCipher) ?? "").trim(),
+    }));
     if (!row) {
       return {
         ...this.emptyHrProfileView(),
+        kinContacts,
         addresses: addresses.map((a) => ({
           kind: a.kind,
           line: (decryptText(a.lineCipher) ?? "").trim() || null,
@@ -1526,6 +1548,7 @@ export class MdmService {
           ? (decryptText(a.postalCipher) ?? "").trim() || null
           : null,
       })),
+      kinContacts,
     };
   }
 
@@ -1592,6 +1615,7 @@ export class MdmService {
         region?: string | null;
         postal?: string | null;
       }>;
+      kinContacts?: Array<{ kinship: string; name: string; phone: string }>;
     },
   ) {
     const canonical = await this.resolveCanonicalPersonId(personId);
@@ -1729,6 +1753,32 @@ export class MdmService {
                 addr.postal != null && addr.postal.trim()
                   ? encryptText(addr.postal.trim())
                   : null,
+            },
+          });
+        }
+      }
+
+      if (body.kinContacts != null) {
+        if (!Array.isArray(body.kinContacts)) {
+          throw new BadRequestException("kinContacts must be an array");
+        }
+        await tx.personKinContact.deleteMany({ where: { personId: canonical } });
+        for (const kin of body.kinContacts) {
+          const name = kin.name?.trim() ?? "";
+          const phone = kin.phone?.trim() ?? "";
+          if (!name && !phone) continue;
+          if (!KINSHIP_KINDS.has(kin.kinship as KinshipKind)) {
+            throw new BadRequestException(`invalid kinship: ${kin.kinship}`);
+          }
+          if (!name || !phone) {
+            throw new BadRequestException("kin contact needs name and phone");
+          }
+          await tx.personKinContact.create({
+            data: {
+              personId: canonical,
+              kinship: kin.kinship as KinshipKind,
+              nameCipher: encryptText(name),
+              phoneCipher: encryptText(phone),
             },
           });
         }
