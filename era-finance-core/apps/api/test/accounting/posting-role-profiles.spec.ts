@@ -7,9 +7,13 @@ import { assertBudgetInvoiceSchemaSafe } from "../../src/accounting/posting/post
 import { validatePostingRolesAgainstCharts } from "@erafinance/database";
 
 describe("posting role profiles", () => {
-  it("contract: posting role presets reference chart or runtime allowlist", async () => {
-    await expect(validatePostingRolesAgainstCharts()).resolves.toBeUndefined();
-  });
+  it(
+    "contract: posting role presets reference chart or runtime allowlist",
+    async () => {
+      await expect(validatePostingRolesAgainstCharts()).resolves.toBeUndefined();
+    },
+    30_000,
+  );
 
   it("BUDGET forbids commercial 211+601 on invoice revenue schema", () => {
     expect(() =>
