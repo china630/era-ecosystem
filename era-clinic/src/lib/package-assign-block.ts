@@ -4,6 +4,7 @@ type BlockTranslator = (
     | "packageAssignNoProgramCode"
     | "packageAssignNoAnamnesis"
     | "packageAssignNoComplaint"
+    | "packageAssignNoDiagnosis"
     | "packageAssignNoCareTeam"
     | "packageAssignInstantiateFailed",
   values?: { code: string },
@@ -22,6 +23,8 @@ export function packageAssignBlockText(
       return t("packageAssignNoAnamnesis");
     case "NO_COMPLAINT":
       return t("packageAssignNoComplaint");
+    case "NO_DIAGNOSIS":
+      return t("packageAssignNoDiagnosis");
     case "NO_CARE_TEAM":
       return t("packageAssignNoCareTeam");
     case "INSTANTIATE_FAILED":

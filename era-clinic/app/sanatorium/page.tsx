@@ -73,6 +73,8 @@ type EpisodeListFilters = {
   origin: string;
   room: string;
   program: string;
+  sort: string;
+  sortDir: "" | "asc" | "desc";
 };
 
 type ProcedureLine = {
@@ -262,14 +264,18 @@ export default function SanatoriumPage() {
   const [paidSameDayConfirm, setPaidSameDayConfirm] = useState(false);
   const [paidSameDayWarn, setPaidSameDayWarn] = useState<string | null>(null);
 
+  const [listSort, setListSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+
   const listFilters = useMemo<EpisodeListFilters>(
     () => ({
       q,
       origin: filterOrigin,
       room: filterRoom,
       program: filterProgram,
+      sort: listSort?.key ?? "",
+      sortDir: listSort?.dir ?? "",
     }),
-    [q, filterOrigin, filterRoom, filterProgram],
+    [q, filterOrigin, filterRoom, filterProgram, listSort],
   );
 
   const listFetcher = useCallback(
@@ -292,6 +298,10 @@ export default function SanatoriumPage() {
       if (f.origin) params.set("origin", f.origin);
       if (f.room.trim()) params.set("roomNumber", f.room.trim());
       if (f.program.trim()) params.set("programCode", f.program.trim());
+      if (f.sort && f.sortDir) {
+        params.set("sort", f.sort);
+        params.set("sortDir", f.sortDir);
+      }
       const res = await fetch(`/api/sanatorium/episodes?${params}`);
       if (!res.ok) throw new Error("Failed to load episodes");
       const json = await res.json();
@@ -846,6 +856,7 @@ export default function SanatoriumPage() {
       {
         key: "patient",
         header: t("colPatient"),
+        sortable: true,
         render: (e) => (
           <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
         ),
@@ -858,16 +869,19 @@ export default function SanatoriumPage() {
       {
         key: "room",
         header: t("colRoom"),
+        sortable: true,
         render: (e) => e.roomNumber ?? "—",
       },
       {
         key: "origin",
         header: t("colOrigin"),
+        sortable: true,
         render: (e) => originLabel(e.patientOrigin),
       },
       {
         key: "program",
         header: t("colProgram"),
+        sortable: true,
         render: (e) => {
           const code = e.programInstance?.programCode ?? e.programCode ?? "—";
           const signal = e.packageSignal ?? "OK";
@@ -899,7 +913,7 @@ export default function SanatoriumPage() {
           return prog ? String(daysRemaining(prog.endsOn)) : "—";
         },
       },
-      { key: "status", header: t("colStatus"), render: (e) => e.status },
+      { key: "status", header: t("colStatus"), sortable: true, render: (e) => e.status },
       {
         key: "actions",
         header: tc("actions"),
@@ -1044,6 +1058,8 @@ export default function SanatoriumPage() {
             pagination={false}
             paginationMode="server"
             embedded
+            sort={listSort}
+            onSortChange={setListSort}
           />
         }
         footer={

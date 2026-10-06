@@ -49,6 +49,8 @@ type Props = {
   /** When true, parent renders the add button (use ref.openCreate). */
   hideAddButton?: boolean;
   onCount?: (count: number) => void;
+  /** Fired when a new diagnosis opens the day-1 package. */
+  onDay1Program?: (result: unknown) => void;
 };
 
 export type DiagnosisPanelHandle = {
@@ -75,6 +77,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
       hideTitle = false,
       hideAddButton = false,
       onCount,
+      onDay1Program,
     },
     ref,
   ) {
@@ -164,6 +167,9 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
           showApiError(data, tc("failed"));
           return;
         }
+        const created = await res.json().catch(() => ({}));
+        const day1 = created.day1Program ?? created.data?.day1Program;
+        if (day1) onDay1Program?.(day1);
       }
       setOpen(false);
       setEditingId(null);

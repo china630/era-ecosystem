@@ -66,6 +66,8 @@ const querySchema = z.object({
   modality: z.string().optional(),
   patientRefId: z.string().optional(),
   q: z.string().optional(),
+  sort: z.enum(["patient", "status", "amount", "created"]).optional(),
+  sortDir: z.enum(["asc", "desc"]).optional(),
   includeCancelled: z
     .enum(["true", "false"])
     .optional()
@@ -90,6 +92,8 @@ export async function GET(req: Request) {
       modality: url.searchParams.get("modality") ?? undefined,
       patientRefId: url.searchParams.get("patientRefId") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
+      sort: url.searchParams.get("sort") ?? undefined,
+      sortDir: url.searchParams.get("sortDir") ?? undefined,
       includeCancelled: url.searchParams.get("includeCancelled") ?? undefined,
     });
 
@@ -174,7 +178,20 @@ export async function GET(req: Request) {
             },
           },
         },
-        orderBy: [{ collectedAt: "desc" }, { createdAt: "desc" }],
+        orderBy:
+          query.sort === "patient"
+            ? [{ patientRef: { fullName: query.sortDir ?? "asc" } }]
+            : query.sort === "status"
+              ? [{ status: query.sortDir ?? "asc" }]
+              : query.sort === "amount"
+                ? [{ amountNet: query.sortDir ?? "asc" }]
+                : query.sort === "created"
+                  ? [
+                      { collectedAt: query.sortDir ?? "desc" },
+                      { resultDate: query.sortDir ?? "desc" },
+                      { createdAt: query.sortDir ?? "desc" },
+                    ]
+                  : [{ collectedAt: "desc" }, { createdAt: "desc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),

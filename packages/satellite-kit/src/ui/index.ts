@@ -160,6 +160,7 @@ export type {
   EraOpsNavSection,
   EraOpsQuickLink,
   EraDataGridColumn,
+  EraDataGridSort,
   EraDataGridProps,
   EraDataGridPaginationMode,
   EraDataGridLayout,

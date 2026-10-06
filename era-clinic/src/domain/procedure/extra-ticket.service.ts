@@ -3,8 +3,7 @@ import { enterSatelliteTenant } from "@era/satellite-kit";
 import { ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
 import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelElektrawebOutbox } from "@/lib/elektraweb-outbox-client";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { postHotelRoomCharge } from "@/lib/billing-router";
 import {
   getClinicHotelOrganizationId,
   resolveClinicCutoverOrgId,
@@ -90,27 +89,20 @@ export async function issueExtraTickets(
       ? `Over-quota ${order.procedureName}`
       : order.procedureName;
 
-    if (dualRun && hotelOrganizationId) {
-      await postHotelElektrawebOutbox({
-        hotelOrganizationId,
-        idempotencyKey: ticketId,
-        patientOrigin: order.patientOrigin === "IN_HOUSE" ? "IN_HOUSE" : "WALK_IN",
+    if (order.patientOrigin === "IN_HOUSE" && !order.reservationId) {
+      throw new ProcedureAttendanceError(
+        "In-house extra needs a hotel reservation before the folio charge",
+        "INVALID_TRANSITION",
+      );
+    }
+    if (order.reservationId && charge.amountNet > 0) {
+      await postHotelRoomCharge({
+        hotelOrganizationId: hotelOrganizationId ?? undefined,
         reservationId: order.reservationId,
-        procedureCode: order.procedureCode,
-        procedureName: order.procedureName,
         amount: charge.amountNet,
         description,
+        externalTicketId: ticketId,
       });
-    } else {
-      const billingTarget = await resolveBillingTarget(order.patientOrigin);
-      if (billingTarget === "HOTEL_FOLIO" && order.reservationId) {
-        await postHotelRoomCharge({
-          reservationId: order.reservationId,
-          amount: charge.amountNet,
-          description,
-          externalTicketId: ticketId,
-        });
-      }
     }
 
     const updated = await prisma.procedureOrder.update({

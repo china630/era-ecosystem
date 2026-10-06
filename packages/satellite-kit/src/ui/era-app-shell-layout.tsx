@@ -90,7 +90,7 @@ export function EraAppShellLayout({
     : APP_SIDEBAR_OFFSET_CLASS;
 
   return (
-    <div className={`min-h-screen overflow-x-hidden bg-[#EBEDF0] ${className}`}>
+    <div className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#EBEDF0] ${className}`}>
       {mobileNavOpen && onCloseMobileNav ? (
         <button
           type="button"
@@ -108,12 +108,12 @@ export function EraAppShellLayout({
       */}
       <div
         className={[
-          "flex h-screen min-h-0 min-w-0 flex-col transition-[padding] duration-200 ease-out",
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[padding] duration-200 ease-out",
           APP_HEADER_OFFSET_CLASS,
           mainOffset,
         ].join(" ")}
       >
-        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       </div>
     </div>
   );

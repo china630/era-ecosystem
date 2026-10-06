@@ -62,6 +62,8 @@ type ListFilters = {
   hasMdm: "" | "0" | "1";
   ageMin: string;
   ageMax: string;
+  sort: string;
+  sortDir: "" | "asc" | "desc";
 };
 
 const emptyForm = {
@@ -87,6 +89,8 @@ const emptyListFilters = (): ListFilters => ({
   hasMdm: "",
   ageMin: "",
   ageMax: "",
+  sort: "",
+  sortDir: "",
 });
 
 export default function PatientsPage() {
@@ -123,6 +127,10 @@ export default function PatientsPage() {
       if (isSuperAdmin && f.hasMdm) params.set("hasMdm", f.hasMdm);
       if (f.ageMin.trim()) params.set("ageMin", f.ageMin.trim());
       if (f.ageMax.trim()) params.set("ageMax", f.ageMax.trim());
+      if (f.sort && f.sortDir) {
+        params.set("sort", f.sort);
+        params.set("sortDir", f.sortDir);
+      }
       const res = await fetch(`/api/patients?${params}`);
       if (!res.ok) throw new Error(tc("loadingFailed"));
       return res.json();
@@ -143,11 +151,12 @@ export default function PatientsPage() {
 
   const columns = useMemo<EraDataGridColumn<Patient>[]>(
     () => [
-      { key: "fullName", header: t("name") },
-      { key: "refCode", header: t("refCode") },
+      { key: "fullName", header: t("name"), sortable: true },
+      { key: "refCode", header: t("refCode"), sortable: true },
       {
         key: "sex",
         header: t("sex"),
+        sortable: true,
         render: (p) =>
           p.sex === "MALE"
             ? t("sexShortMale")
@@ -158,6 +167,7 @@ export default function PatientsPage() {
       {
         key: "ageYears",
         header: t("birthDate"),
+        sortable: true,
         render: (p) => (p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"),
       },
       { key: "phone", header: t("phone"), render: (p) => p.phone ?? "—" },
@@ -241,7 +251,6 @@ export default function PatientsPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
-          className="!mb-0"
           title={t("title")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
@@ -254,7 +263,6 @@ export default function PatientsPage() {
       <EraListWorkspace
         filter={
           <EraListFilterBar
-            className="!mb-0"
             resetLabel={tc("filterReset")}
             onReset={() => setFilterState(emptyListFilters())}
           >
@@ -346,6 +354,14 @@ export default function PatientsPage() {
             pagination={false}
             paginationMode="server"
             embedded
+            sort={
+              filterState.sort && filterState.sortDir
+                ? { key: filterState.sort, dir: filterState.sortDir }
+                : null
+            }
+            onSortChange={(next) =>
+              setFilterState((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
+            }
           />
         }
         footer={

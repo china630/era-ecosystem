@@ -631,6 +631,10 @@ export function PatientCardBody({
               episodeId={selectedEpisodeId}
               readOnly={episodeReadOnly}
               onCountChange={setDiagnosisCount}
+              onDay1Program={(day1) => {
+                applyDay1Toast(day1);
+                setClinicalRefreshKey((n) => n + 1);
+              }}
             />
 
             <PatientCardClinicalSections

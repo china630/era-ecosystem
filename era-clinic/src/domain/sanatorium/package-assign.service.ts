@@ -501,6 +501,7 @@ export async function getPackageAssignSnapshot(
     | "NO_PROGRAM_CODE"
     | "NO_ANAMNESIS"
     | "NO_COMPLAINT"
+    | "NO_DIAGNOSIS"
     | "NO_CARE_TEAM"
     | "INSTANTIATE_FAILED"
     | null;
@@ -545,6 +546,7 @@ export async function getPackageAssignSnapshot(
         ? "INSTANTIATE_FAILED"
         : opened.reason === "NO_ANAMNESIS" ||
             opened.reason === "NO_COMPLAINT" ||
+            opened.reason === "NO_DIAGNOSIS" ||
             opened.reason === "NO_CARE_TEAM" ||
             opened.reason === "INSTANTIATE_FAILED"
           ? opened.reason

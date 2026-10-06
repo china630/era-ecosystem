@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import { localizedDepartmentName } from "@/domain/catalog/department-label";
 import {
@@ -27,6 +27,7 @@ import {
   showSuccess,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
+  type EraDataGridSort,
 } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 
@@ -103,6 +104,7 @@ export default function CatalogAdminPage() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<EraDataGridSort | null>(null);
   const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState({
     packageIncluded: "" as PackageFilter,
@@ -215,9 +217,25 @@ export default function CatalogAdminPage() {
   }, [rows, debouncedQ, filters]);
 
   const pagedRows = useMemo(() => {
+    const sorted = !sort
+      ? filteredRows
+      : [...filteredRows].sort((a, b) => {
+          const dir = sort.dir === "asc" ? 1 : -1;
+          const value = (row: CatalogRow) => {
+            if (sort.key === "code") return row.code;
+            if (sort.key === "amount") return Number(row.amount);
+            if (sort.key === "department") return row.departmentCode ?? row.department ?? "";
+            if (sort.key === "effectiveFrom") return row.effectiveFrom ?? row.syncedAt ?? "";
+            return row.displayName ?? localizedCatalogDescription(row, locale);
+          };
+          const av = value(a);
+          const bv = value(b);
+          if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+          return String(av).localeCompare(String(bv), locale, { numeric: true }) * dir;
+        });
     const start = (page - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, page, pageSize]);
+    return sorted.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize, sort, locale]);
 
   useEffect(() => {
     setPage(1);
@@ -228,12 +246,14 @@ export default function CatalogAdminPage() {
       {
         key: "description",
         header: t("description"),
+        sortable: true,
         render: (row) => row.displayName ?? localizedCatalogDescription(row, locale),
       },
-      { key: "code", header: t("code") },
+      { key: "code", header: t("code"), sortable: true },
       {
         key: "amount",
         header: t("amount"),
+        sortable: true,
         render: (row) => {
           const list = row.listAmount != null ? Number(row.listAmount) : 0;
           if (row.packageIncluded) {
@@ -250,6 +270,7 @@ export default function CatalogAdminPage() {
       {
         key: "department",
         header: t("department"),
+        sortable: true,
         render: (row) => {
           const dept = deptRows.find((item) => item.code === row.departmentCode);
           return dept ? localizedDepartmentName(dept, locale) : row.department ?? "—";
@@ -258,25 +279,53 @@ export default function CatalogAdminPage() {
       {
         key: "effectiveFrom",
         header: t("effectiveFrom"),
+        sortable: true,
         render: (row) => bakuDateTimeDisplay(row.effectiveFrom ?? row.syncedAt),
       },
       {
         key: "actions",
         header: tc("actions"),
         render: (row) => (
-          <button
-            type="button"
-            className={TABLE_ROW_ICON_BTN_CLASS}
-            aria-label={tc("edit")}
-            onClick={() => void openEdit(row)}
-          >
-            <Pencil className="h-3.5 w-3.5" aria-hidden />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("edit")}
+              onClick={() => void openEdit(row)}
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("delete")}
+              onClick={() => void removeRow(row)}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-600" aria-hidden />
+            </button>
+          </div>
         ),
       },
     ],
     [t, tc, locale, deptRows],
   );
+
+  async function removeRow(row: CatalogRow) {
+    const name = row.displayName ?? row.code;
+    if (!window.confirm(t("deleteConfirm", { name }))) return;
+    const res = await fetch(`/api/admin/catalog/${row.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409) {
+      showApiError({ error: t("deleteBlocked") }, t("deleteBlocked"));
+      return;
+    }
+    if (!res.ok) {
+      showApiError(data, tc("failed"));
+      return;
+    }
+    showSuccess(t("deleted"));
+    await load();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -527,6 +576,11 @@ export default function CatalogAdminPage() {
               rows={pagedRows}
               rowKey={(row) => row.id}
               pagination={false}
+              sort={sort}
+              onSortChange={(next) => {
+                setSort(next);
+                setPage(1);
+              }}
             />
             <ListPaginationFooter
               page={page}

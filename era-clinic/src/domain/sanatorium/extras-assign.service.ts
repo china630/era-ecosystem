@@ -14,13 +14,12 @@ import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
 import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
 import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { postHotelRoomCharge } from "@/lib/billing-router";
 import {
   extraTicketIdForOrder,
   extraTicketPrintPath,
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
-import { postHotelElektrawebOutbox } from "@/lib/elektraweb-outbox-client";
 import {
   getClinicHotelOrganizationId,
   resolveClinicCutoverOrgId,
@@ -247,8 +246,8 @@ export async function payAndScheduleExtras(
     ? await getClinicHotelOrganizationId(orgId)
     : null;
 
-  // Phase 1: receipt already required. Walk-in without reservation = FO cash already taken (receipt).
-  // In-house without dual-run uses hotel folio when reservationId present.
+  // In-house with a reservation posts MEDICAL onto the hotel folio.
+  // Walk-in without a reservation: receipt only. Zero amount does not call the hotel.
 
   // Phase 2: charge all first; on failure leave PENDING_PAY (nothing placed yet)
   const chargedMeta: Array<{ orderId: string; amount: number; ticketId: string }> = [];
@@ -259,27 +258,21 @@ export async function payAndScheduleExtras(
       const ticketId = extraTicketIdForOrder(order.id);
       const description = `${order.procedureName} · çek ${receipt}`;
 
-      if (dualRun && hotelOrganizationId) {
-        await postHotelElektrawebOutbox({
-          hotelOrganizationId,
-          idempotencyKey: `pay-${ticketId}`,
-          patientOrigin: order.patientOrigin === "IN_HOUSE" ? "IN_HOUSE" : "WALK_IN",
+      if (order.patientOrigin === "IN_HOUSE" && !order.reservationId) {
+        throw new PackageAssignError(
+          "In-house extra needs a hotel reservation before the folio charge",
+          "FOLIO_CHARGE_FAILED",
+          502,
+        );
+      }
+      if (order.reservationId && amount > 0) {
+        await postHotelRoomCharge({
+          hotelOrganizationId: hotelOrganizationId ?? undefined,
           reservationId: order.reservationId,
-          procedureCode: order.procedureCode,
-          procedureName: order.procedureName,
           amount,
           description,
+          externalTicketId: `pay-${ticketId}`,
         });
-      } else if (order.reservationId) {
-        const billingTarget = await resolveBillingTarget(order.patientOrigin);
-        if (billingTarget === "HOTEL_FOLIO") {
-          await postHotelRoomCharge({
-            reservationId: order.reservationId,
-            amount,
-            description,
-            externalTicketId: ticketId,
-          });
-        }
       }
       // Walk-in with receipt: FO already collected cash; clinic records receipt only.
       chargedMeta.push({ orderId: order.id, amount, ticketId });

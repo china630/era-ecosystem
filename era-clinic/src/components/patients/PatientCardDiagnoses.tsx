@@ -20,6 +20,7 @@ type Props = {
   episodeId?: string | null;
   readOnly?: boolean;
   onCountChange?: (count: number) => void;
+  onDay1Program?: (result: unknown) => void;
 };
 
 export function PatientCardDiagnoses({
@@ -27,6 +28,7 @@ export function PatientCardDiagnoses({
   episodeId,
   readOnly = false,
   onCountChange,
+  onDay1Program,
 }: Props) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
@@ -95,6 +97,7 @@ export function PatientCardDiagnoses({
             hideTitle
             hideAddButton
             onCount={onCountChange}
+            onDay1Program={onDay1Program}
           />
         ) : resolvedEpisodeId === undefined ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
