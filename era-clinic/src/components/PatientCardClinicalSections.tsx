@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Printer } from "lucide-react";
+import { CalendarClock, LayoutGrid, Printer, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
+  DatePicker,
+  Field,
   FieldSelect,
   LINK_ACCENT_CLASS,
+  ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -18,7 +22,7 @@ import {
 } from "@era/satellite-kit/ui";
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
-import { bakuDateTimeLabel, addBakuDays, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateKey, bakuDateTimeLabel, addBakuDays, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
@@ -55,6 +59,7 @@ type IntakeChecklistItem = {
   status: "DONE" | "ORDERED" | "MISSING";
   href: string | null;
   recordId: string | null;
+  scheduledAt?: string | null;
 };
 
 type CardSummary = {
@@ -174,9 +179,9 @@ export function PatientCardClinicalSections({
   studiesUnlocked = false,
   readOnly = false,
   refreshKey = 0,
-  onOpenDayPlan,
 }: Props) {
   const t = useTranslations("patientCard");
+  const ts = useTranslations("sanatorium");
   const tc = useTranslations("common");
   const locale = useLocale();
   const dayLocale = locale.startsWith("az") ? "az-AZ" : locale.startsWith("ru") ? "ru-RU" : "en-GB";
@@ -199,8 +204,23 @@ export function PatientCardClinicalSections({
   const [planOffset, setPlanOffset] = useState(0);
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
+  const [planDate, setPlanDate] = useState(todayBakuYmd());
+  const [planBusy, setPlanBusy] = useState(false);
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState(todayBakuYmd());
+  const [rescheduleTime, setRescheduleTime] = useState("10:00");
+  const [paidOpen, setPaidOpen] = useState(false);
+  const [paidCode, setPaidCode] = useState("");
+  const [paidTime, setPaidTime] = useState("10:00");
+  const [paidConfirm, setPaidConfirm] = useState(false);
+  const [paidWarn, setPaidWarn] = useState<string | null>(null);
+  const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
   const [day1Busy, setDay1Busy] = useState(false);
+  const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
+  const [visitDate, setVisitDate] = useState("");
+  const [visitTime, setVisitTime] = useState("09:00");
+  const [visitBusy, setVisitBusy] = useState(false);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -285,6 +305,20 @@ export function PatientCardClinicalSections({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planOpen, episodeId]);
 
+  const planChipDates = useMemo(() => {
+    const dates = new Set(planDays.map((day) => day.date));
+    dates.add(todayBakuYmd());
+    return [...dates].sort();
+  }, [planDays]);
+
+  const planVisible = useMemo(
+    () =>
+      planDays
+        .filter((day) => planDate === "all" || day.date === planDate)
+        .flatMap((day) => day.events),
+    [planDays, planDate],
+  );
+
   if (loading || !summary) {
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
@@ -292,6 +326,118 @@ export function PatientCardClinicalSections({
   function openPrint(href: string) {
     setPrintHref(href);
     setPrintOpen(true);
+  }
+
+  async function cancelPlanOrder(orderId: string) {
+    setPlanBusy(true);
+    try {
+      const res = await fetch(`/api/procedures/${orderId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "reception_episode_chart" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc("failed"));
+        return;
+      }
+      await loadPlan(true);
+    } finally {
+      setPlanBusy(false);
+    }
+  }
+
+  function planStatusLabel(status: string): string {
+    const key =
+      status === "SCHEDULED"
+        ? "statusScheduled"
+        : status === "CHECKED_IN" || status === "IN_PROGRESS"
+          ? "statusCheckedIn"
+          : status === "NO_SHOW"
+            ? "statusNoShow"
+            : status === "COMPLETED"
+              ? "statusCompleted"
+              : status === "CANCELLED"
+                ? "statusCancelled"
+                : status === "PROPOSED"
+                  ? "statusProposed"
+                  : "";
+    return key ? ts(key) : status;
+  }
+
+  function planChipLabel(ymd: string): string {
+    const [year, month, day] = ymd.split("-");
+    if (!year || !month || !day) return ymd;
+    return `${day}.${month}.${year}`;
+  }
+
+  async function submitPlanReschedule() {
+    if (!rescheduleId) return;
+    const day = rescheduleDate;
+    setPlanBusy(true);
+    try {
+      const scheduledAt = parseBakuDateTime(day, `${rescheduleTime}:00`).toISOString();
+      const res = await fetch(`/api/procedures/${rescheduleId}/reschedule`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc("failed"));
+        return;
+      }
+      setRescheduleId(null);
+      await loadPlan(true);
+    } finally {
+      setPlanBusy(false);
+    }
+  }
+
+  async function submitPlanPaid(confirmPaid: boolean) {
+    if (!episodeId || !paidCode) return;
+    const name = procedureOptions.find((row) => row.value === paidCode)?.label ?? paidCode;
+    const day = planDate === "all" ? todayBakuYmd() : planDate;
+    setPlanBusy(true);
+    setPaidWarn(null);
+    try {
+      const epRes = await fetch(`/api/sanatorium/episodes/${episodeId}`);
+      const epJson = await epRes.json().catch(() => ({}));
+      const episode = (epJson.data ?? epJson) as {
+        patientOrigin?: string;
+        reservationId?: string | null;
+      };
+      const scheduledAt = parseBakuDateTime(day, `${paidTime}:00`).toISOString();
+      const res = await fetch("/api/procedures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientRefId,
+          procedureCode: paidCode,
+          procedureName: name,
+          scheduledAt,
+          patientOrigin: episode.patientOrigin,
+          reservationId: episode.reservationId ?? null,
+          confirmPaidSameDay: confirmPaid,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409 && data.code === "SAME_DAY_FOURTH_PAID") {
+        setPaidConfirm(true);
+        setPaidWarn(typeof data.error === "string" ? data.error : ts("sameDayFourthWarn"));
+        return;
+      }
+      if (!res.ok) {
+        showApiError(data, tc("failed"));
+        return;
+      }
+      setPaidOpen(false);
+      setPaidConfirm(false);
+      setPaidCode("");
+      await loadPlan(true);
+    } finally {
+      setPlanBusy(false);
+    }
   }
 
   function labPrintHref(ev: TimelineEvent): string | null {
@@ -462,9 +608,35 @@ export function PatientCardClinicalSections({
                       )}
                       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{item.resolvedCode}</p>
                     </div>
-                    <span className={`shrink-0 text-[12px] font-medium ${statusClass}`}>
-                      {statusLabel}
-                    </span>
+                    {item.kind === "visit" && item.recordId ? (
+                      <button
+                        type="button"
+                        className={
+                          item.scheduledAt
+                            ? `shrink-0 text-[12px] font-medium ${LINK_ACCENT_CLASS}`
+                            : SECONDARY_BUTTON_CLASS
+                        }
+                        onClick={() => {
+                          setVisitSlot({
+                            id: item.recordId!,
+                            title: pickL10n(item.title, locale),
+                          });
+                          setVisitDate(
+                            item.scheduledAt ? bakuDateKey(item.scheduledAt) : todayBakuYmd(),
+                          );
+                          setVisitTime("09:00");
+                          setVisitBusy(false);
+                        }}
+                      >
+                        {item.scheduledAt
+                          ? bakuDateTimeLabel(item.scheduledAt)
+                          : t("intakeAssignTime", { defaultValue: "Assign time" })}
+                      </button>
+                    ) : (
+                      <span className={`shrink-0 text-[12px] font-medium ${statusClass}`}>
+                        {statusLabel}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -681,38 +853,114 @@ export function PatientCardClinicalSections({
           </button>
         }
       >
-        {episodeId ? (
-          <p className="mb-3 text-[13px]">
-            {onOpenDayPlan ? (
-              <button
-                type="button"
-                className={LINK_ACCENT_CLASS}
-                onClick={() => onOpenDayPlan(episodeId)}
-              >
-                {t("openDayPlan")}
-              </button>
-            ) : (
-              <Link
-                href={`/sanatorium?episode=${encodeURIComponent(episodeId)}`}
-                className={LINK_ACCENT_CLASS}
-              >
-                {t("openDayPlan")}
-              </Link>
-            )}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            onClick={() => setPlanDate("all")}
+          >
+            {t("planAll")}
+          </button>
+          {planChipDates.map((date) => (
+            <button
+              key={date}
+              type="button"
+              className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+              onClick={() => setPlanDate(date)}
+            >
+              {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+            </button>
+          ))}
+          {episodeId ? (
+            <button
+              type="button"
+              className={LINK_ACCENT_CLASS}
+              onClick={() => setPlanDate(todayBakuYmd())}
+            >
+              {t("openDayPlan")}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={!episodeId}
+            onClick={() => {
+              setPaidConfirm(false);
+              setPaidWarn(null);
+              setPaidOpen(true);
+              if (procedureOptions.length === 0) {
+                void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
+                  .then((r) => r.json())
+                  .then((d) => {
+                    const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
+                    if (!Array.isArray(rows)) return;
+                    setProcedureOptions(rows.map((row) => ({ value: row.code, label: row.name })));
+                  });
+              }
+            }}
+          >
+            {ts("addPaidSameDay")}
+          </button>
+        </div>
+        {planVisible.length === 0 ? (
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+            {planLoading ? tc("loading") : t("planEmpty")}
           </p>
-        ) : null}
-        <EpisodeScheduleCards
-          emptyLabel={planLoading ? tc("loading") : t("planEmpty")}
-          items={planDays.flatMap((d) =>
-            d.events.map((ev) => ({
-              id: ev.id,
-              title: eventTitle(ev, locale),
-              subtitle: ev.subtitle,
-              status: ev.status,
-              atLabel: ev.at ? bakuDateTimeLabel(ev.at) : undefined,
-            })),
-          )}
-        />
+        ) : (
+          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
+            {planVisible.map((ev) => {
+              const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
+              const actionable = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
+              return (
+                <li
+                  key={ev.id}
+                  className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium">{eventTitle(ev, locale)}</div>
+                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {ev.at ? bakuDateTimeLabel(ev.at) : ""}
+                      {ev.status ? ` · ${planStatusLabel(ev.status)}` : ""}
+                    </p>
+                  </div>
+                  {actionable ? (
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={ts("reschedule")}
+                        disabled={planBusy}
+                        onClick={() => {
+                          setRescheduleId(orderId);
+                          setRescheduleDate(ev.at ? bakuDateKey(ev.at) : todayBakuYmd());
+                          setRescheduleTime(ev.at ? bakuTimeLabel(ev.at) : "10:00");
+                        }}
+                      >
+                        <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
+                      </button>
+                      <Link
+                        href={`/sanatorium/resources?date=${encodeURIComponent(ev.at ? bakuDateKey(ev.at) : todayBakuYmd())}&highlight=${encodeURIComponent(orderId)}`}
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={ts("openMatrix")}
+                      >
+                        <LayoutGrid className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                      </Link>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={ts("cancelProcedure")}
+                        disabled={planBusy}
+                        onClick={() => void cancelPlanOrder(orderId)}
+                      >
+                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {planHasMore ? (
           <button
             type="button"
@@ -723,7 +971,106 @@ export function PatientCardClinicalSections({
             {t("loadMore")}
           </button>
         ) : null}
-        <p className={`mt-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("tzHint")}</p>
+      </ModalShell>
+      <ModalShell
+        open={Boolean(rescheduleId)}
+        title={ts("reschedule")}
+        onClose={() => setRescheduleId(null)}
+        footer={
+          <ModalFooter
+            onCancel={() => setRescheduleId(null)}
+            onSubmit={() => void submitPlanReschedule()}
+            busy={planBusy}
+            submitLabel={tc("save")}
+          />
+        }
+      >
+        <Field
+          label={ts("procedureTime")}
+          preset="shortText"
+          value={rescheduleTime}
+          onChange={(e) => setRescheduleTime(e.target.value)}
+        />
+      </ModalShell>
+      <ModalShell
+        open={paidOpen}
+        title={ts("addPaidSameDay")}
+        onClose={() => setPaidOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setPaidOpen(false)}
+            onSubmit={() => void submitPlanPaid(paidConfirm)}
+            busy={planBusy}
+            submitLabel={paidConfirm ? ts("confirmPaidFolio") : tc("save")}
+          />
+        }
+      >
+        <div className="space-y-3">
+          {paidWarn ? <p className="text-sm text-amber-800">{paidWarn}</p> : null}
+          <CatalogField
+            kind="SEARCHABLE"
+            label={ts("pickProcedure")}
+            value={paidCode}
+            onChange={(v) => setPaidCode(String(v ?? ""))}
+            options={procedureOptions}
+          />
+          <Field
+            label={ts("procedureTime")}
+            preset="shortText"
+            value={paidTime}
+            onChange={(e) => setPaidTime(e.target.value)}
+          />
+        </div>
+      </ModalShell>
+      <ModalShell
+        open={Boolean(visitSlot)}
+        title={t("intakeAssignTime", { defaultValue: "Assign time" })}
+        subtitle={visitSlot?.title}
+        onClose={() => {
+          if (!visitBusy) setVisitSlot(null);
+        }}
+        closeLabel={tc("close")}
+      >
+        <div className="space-y-3">
+          <DatePicker
+            label={tc("date")}
+            value={visitDate}
+            onChange={setVisitDate}
+            placeholder="dd.mm.yyyy"
+          />
+          <Field
+            label={t("intakeVisitTime", { defaultValue: "Time" })}
+            preset="shortText"
+            value={visitTime}
+            onChange={(e) => setVisitTime(e.target.value)}
+          />
+        </div>
+        <ModalFooter
+          onCancel={() => setVisitSlot(null)}
+          busy={visitBusy}
+          submitDisabled={!visitDate || !/^\d{2}:\d{2}$/.test(visitTime)}
+          submitLabel={tc("save")}
+          cancelLabel={tc("cancel")}
+          onSubmit={() => {
+            if (!visitSlot) return;
+            setVisitBusy(true);
+            void fetch(`/api/visits/${visitSlot.id}/appointment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ date: visitDate, time: visitTime }),
+            })
+              .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  showApiError(data, tc("failed"));
+                  return;
+                }
+                setVisitSlot(null);
+                await loadSummary();
+              })
+              .finally(() => setVisitBusy(false));
+          }}
+        />
       </ModalShell>
       <PrintLanguageDialog
         open={printOpen}

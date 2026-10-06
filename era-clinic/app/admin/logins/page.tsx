@@ -67,7 +67,7 @@ export default function ClinicAdminLoginsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader className="!mb-0" title={t("loginsTitle")} subtitle={t("loginsSubtitle")} />
+      <PageHeader title={t("loginsTitle")} subtitle={t("loginsSubtitle")} />
       <EraListFilterBar
         resetLabel={tc("filterReset")}
         onReset={() => {
@@ -78,7 +78,7 @@ export default function ClinicAdminLoginsPage() {
       >
         <Field
           label={tc("search")}
-          preset="shortText"
+          preset="longText"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -87,15 +87,17 @@ export default function ClinicAdminLoginsPage() {
           value={from}
           onChange={setFrom}
           placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
         />
         <DatePicker
           label={t("filterTo")}
           value={to}
           onChange={setTo}
           placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
         />
       </EraListFilterBar>
-      <div className={CARD_CONTAINER_CLASS}>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -121,14 +123,14 @@ export default function ClinicAdminLoginsPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{row.login}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.fullName}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.ipAddress ?? "—"}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.userAgent ?? "—"}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} max-w-[16rem] truncate`}>{row.userAgent ?? "—"}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

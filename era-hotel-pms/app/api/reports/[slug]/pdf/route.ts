@@ -3,7 +3,7 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getReportBySlug } from '@/lib/reports/catalog';
-import { parseReportLangParam } from '@/lib/reports/locale';
+import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
 import { reportPdfT } from '@/lib/reports/pdf-i18n';
 import { isImplementedReportSlug } from '@/lib/services/reports';
 import { renderLayoutPdf } from '@/lib/services/reports/pdf-renderers';
@@ -53,7 +53,7 @@ export async function GET(
     return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${slug}_${from}.pdf"`,
+        'Content-Disposition': `inline; filename="${reportFileName(slug, lang.locale, from, 'pdf')}"`,
       },
     });
   } catch (err) {

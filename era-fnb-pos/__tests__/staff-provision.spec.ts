@@ -69,7 +69,7 @@ describe("fnb staff-provision", () => {
     payload: {
       cpEmploymentId: CP_EMPLOYMENT_ID,
       satelliteKey: "industry_fnb_pos",
-      satelliteRole: "WAITER",
+      satelliteRole: "FB_WAITER",
       staffCode: "FINEMP1",
       fullName: "Waiter One",
       login: "emp-wait",
@@ -118,6 +118,8 @@ describe("fnb staff-provision", () => {
   });
 
   it("throws UnknownSatelliteRoleError for unknown CP role", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.role.findFirst.mockResolvedValue(null);
     await expect(
       handleStaffProvisionEvent({
         ...provisionEvent,

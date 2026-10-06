@@ -81,6 +81,7 @@ type ProcedureLine = {
   procedureCode: string;
   quotaTotal: number;
   quotaUsed: number;
+  quotaCompleted?: number;
 };
 
 type ProgramInstance = {
@@ -208,13 +209,15 @@ export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
   const tCard = useTranslations("patientCard");
   const tc = useTranslations("common");
-  const tp = useTranslations("patients");
+  const tp = useTranslations("patientRegistry");
   const locale = useLocale();
   const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [patientCardId, setPatientCardId] = useState<string | null>(null);
+  const [cardPanel, setCardPanel] = useState<string | null>(null);
+  const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
   const [chartDate, setChartDate] = useState(todayBakuYmd());
   const [complaint, setComplaint] = useState("");
   const [icdCodeId, setIcdCodeId] = useState("");
@@ -233,7 +236,6 @@ export default function SanatoriumPage() {
   const [programModalOpen, setProgramModalOpen] = useState(false);
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
   const [chartModalOpen, setChartModalOpen] = useState(false);
-  const [proceduresModalOpen, setProceduresModalOpen] = useState(false);
   const [rescheduleOrderId, setRescheduleOrderId] = useState<string | null>(null);
   const [rescheduleTime, setRescheduleTime] = useState("09:00");
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
@@ -572,13 +574,6 @@ export default function SanatoriumPage() {
     await loadDetail(episodeId);
   }
 
-  async function openProcedures(episodeId: string) {
-    setSelectedId(episodeId);
-    setProceduresModalOpen(true);
-    await loadDetail(episodeId);
-    await loadSchedule(episodeId, chartDate);
-  }
-
   async function postAction(action: string, body: unknown) {
     if (!selectedId) return;
     setBusy(true);
@@ -666,7 +661,7 @@ export default function SanatoriumPage() {
         sex: walkIn.sex,
         birthDate: walkIn.birthDate || undefined,
         nationality: walkIn.nationality.trim() || undefined,
-        programCode: walkIn.programCode.trim() || undefined,
+        programCode: undefined,
       }),
     });
     const data = await res.json();
@@ -931,7 +926,13 @@ export default function SanatoriumPage() {
               type="button"
               className={TABLE_ROW_ICON_BTN_CLASS}
               aria-label={t("proceduresBtn")}
-              onClick={() => void openProcedures(e.id)}
+              disabled={!e.patientRef?.id}
+              onClick={() => {
+                if (!e.patientRef?.id) return;
+                setCardEpisodeId(e.id);
+                setCardPanel("plan");
+                setPatientCardId(e.patientRef.id);
+              }}
             >
               <ListChecks className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
@@ -1100,92 +1101,69 @@ export default function SanatoriumPage() {
                   </span>
                 </div>
                 <div>
-                  <h3 className="mb-2 font-semibold">{t("programQuota")}</h3>
-                  <ul className="space-y-2">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h3 className="font-semibold">{t("programQuota")}</h3>
+                    {proceduresUnlocked ? (
+                      <button
+                        type="button"
+                        className={PRIMARY_BUTTON_CLASS}
+                        onClick={() => setPackageModalOpen(true)}
+                      >
+                        <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                        {t("assignSectionTitle", { defaultValue: "Procedures" })}
+                      </button>
+                    ) : null}
+                  </div>
+                  <ul className="space-y-3">
                     {program.procedureLines.map((line) => {
-                      const pct =
+                      const assignedPct =
                         line.quotaTotal > 0
                           ? Math.min(100, (line.quotaUsed / line.quotaTotal) * 100)
                           : 0;
+                      const done = line.quotaCompleted ?? 0;
+                      const donePct =
+                        line.quotaUsed > 0 ? Math.min(100, (done / line.quotaUsed) * 100) : 0;
                       return (
                         <li key={line.procedureCode}>
-                          <div className="mb-1 flex justify-between">
-                            <span>
-                              {formatNameAndCode(
-                                procedureTypeNames.get(line.procedureCode) ?? "",
-                                line.procedureCode,
-                              )}
-                            </span>
+                          <div className="mb-1 font-medium">
+                            {formatNameAndCode(
+                              procedureTypeNames.get(line.procedureCode) ?? "",
+                              line.procedureCode,
+                            )}
+                          </div>
+                          <div className="mb-0.5 flex justify-between text-[12px]">
+                            <span>{t("quotaAssigned")}</span>
                             <span>{t("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}</span>
+                          </div>
+                          <div className={`mb-1 h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
+                            <div
+                              className={`h-full ${LOCALE_TOGGLE_ACTIVE_CLASS}`}
+                              style={{ width: `${assignedPct}%` }}
+                            />
+                          </div>
+                          <div className="mb-0.5 flex justify-between text-[12px]">
+                            <span>{t("quotaCompleted")}</span>
+                            <span>{t("quotaUsed", { used: done, total: line.quotaUsed })}</span>
                           </div>
                           <div className={`h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
                             <div
-                              className={`h-full ${LOCALE_TOGGLE_ACTIVE_CLASS}`}
-                              style={{ width: `${pct}%` }}
+                              className="h-full bg-emerald-600"
+                              style={{ width: `${donePct}%` }}
                             />
                           </div>
                         </li>
                       );
                     })}
                   </ul>
+                  {pendingExtras.length > 0 ? (
+                    <p className={`mt-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {t("extrasAwaiting", {
+                        defaultValue: "Additional procedures (awaiting payment)",
+                      })}
+                      : {pendingExtras.length}
+                    </p>
+                  ) : null}
                 </div>
-                {proceduresUnlocked ? (
-                <div>
-                  <EpisodeAssignBlocks
-                    packageTitle={t("assignPackageTitle", {
-                      defaultValue: "Procedures in package",
-                    })}
-                    extrasTitle={t("extrasAwaiting", {
-                      defaultValue: "Additional procedures (awaiting payment)",
-                    })}
-                    day1Label={t("day1AutoAssign", {
-                      defaultValue: "Day-1 auto (≤3)",
-                    })}
-                    readOnly={busy}
-                    day1Busy={day1Busy}
-                    hidePackage={selected.patientOrigin === "WALK_IN"}
-                    onPackagePlus={() => setPackageModalOpen(true)}
-                    onExtrasPlus={() => setPackageModalOpen(true)}
-                    extrasPending={pendingExtras.map((p) => ({
-                      id: p.id,
-                      title: p.procedureName,
-                      amountNet: p.amountNet,
-                      status: "PENDING_PAY",
-                    }))}
-                    pendingPayLabel={t("pendingPay")}
-                    onDay1={
-                      selected.patientOrigin === "WALK_IN"
-                        ? undefined
-                        : () => {
-                            if (!selectedId) return;
-                            setDay1Busy(true);
-                            void fetch(
-                              `/api/sanatorium/episodes/${selectedId}/package-assign/day1`,
-                              { method: "POST" },
-                            )
-                              .then(async (res) => {
-                                if (!res.ok) {
-                                  const d = await res.json();
-                                  showApiError(
-                                    {
-                                      error:
-                                        packageAssignBlockText(tCard, d.code) ??
-                                        d.error ??
-                                        t("failed"),
-                                    },
-                                  );
-                                  return;
-                                }
-                                const patientRefId = episodeDetail?.patientRef?.id;
-                                if (patientRefId) await loadProposed(patientRefId);
-                                await loadDetail(selectedId);
-                              })
-                              .finally(() => setDay1Busy(false));
-                          }
-                    }
-                  />
-                </div>
-                ) : null}
               </div>
             ) : selected.patientOrigin === "WALK_IN" ? (
               proceduresUnlocked ? (
@@ -1293,110 +1271,6 @@ export default function SanatoriumPage() {
             )}
           </div>
         ) : null}
-      </ModalShell>
-
-      <ModalShell
-        open={proceduresModalOpen && Boolean(selected)}
-        title={t("proceduresBtn")}
-        subtitle={selected?.patientRef?.fullName}
-        onClose={() => setProceduresModalOpen(false)}
-        maxWidthClass="max-w-3xl"
-      >
-        <div className="space-y-3 text-[13px]">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <DatePicker
-              label={t("chartDate")}
-              value={chartDate}
-              onChange={setChartDate}
-              placeholder={tc("datePlaceholder")}
-              openCalendarLabel={tc("openCalendar")}
-            />
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setBulkCancelOpen(true)}
-            >
-              {t("bulkCancel", { defaultValue: "Bulk cancel" })}
-            </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={!selected?.patientRef}
-              onClick={() => {
-                setPaidSameDayConfirm(false);
-                setPaidSameDayWarn(null);
-                setPaidSameDayOpen(true);
-              }}
-            >
-              {t("addPaidSameDay", { defaultValue: "Add paid (same-day)" })}
-            </button>
-          </div>
-          <div className={DATA_TABLE_SHELL_CLASS}>
-            <div className={DATA_TABLE_SCROLL_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureTime")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureName")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureStatus")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {scheduleOrders.map((o) => (
-                    <tr key={o.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {bakuTimeLabel(o.scheduledAt)}
-                      </td>
-                      <td className={DATA_TABLE_TD_CLASS}>{o.procedureName}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{statusLabel(o.status)}</td>
-                      <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                        {o.status === "SCHEDULED" ? (
-                          <div className="flex flex-wrap items-center justify-end gap-1">
-                            <Link
-                              href={`/sanatorium/resources?date=${chartDate}&highlight=${o.id}`}
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              aria-label={t("openMatrix")}
-                            >
-                              <LayoutGrid className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                            </Link>
-                            <button
-                              type="button"
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              aria-label={t("reschedule")}
-                              onClick={() => {
-                                setRescheduleOrderId(o.id);
-                                setRescheduleTime(bakuTimeLabel(o.scheduledAt));
-                              }}
-                            >
-                              <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
-                            </button>
-                            <button
-                              type="button"
-                              className={TABLE_ROW_ICON_BTN_CLASS}
-                              aria-label={t("cancelProcedure")}
-                              disabled={busy}
-                              onClick={() => void cancelProcedure(o.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                            </button>
-                          </div>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-                  {scheduleOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                        {t("noProcedures")}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
       </ModalShell>
 
       <ModalShell
@@ -1663,38 +1537,6 @@ export default function SanatoriumPage() {
             />
           </FieldRow>
           <FieldRow>
-            <Field
-              label={t("walkInPhone")}
-              preset="phone"
-              value={walkIn.phone}
-              onChange={(e) => setWalkIn({ ...walkIn, phone: e.target.value })}
-            />
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t("walkInNationality")}
-              value={walkIn.nationality}
-              onChange={(v) =>
-                setWalkIn({ ...walkIn, nationality: String(v ?? "").toUpperCase() })
-              }
-              options={countryOptions(locale, walkIn.nationality)}
-              emptyLabel={t("sexUnknown")}
-            />
-          </FieldRow>
-          <FieldRow>
-            <Field
-              label={t("walkInFin")}
-              preset="fin"
-              value={walkIn.fin}
-              onChange={(e) => setWalkIn({ ...walkIn, fin: e.target.value })}
-            />
-            <Field
-              label={t("walkInPassport")}
-              preset="shortText"
-              value={walkIn.passport}
-              onChange={(e) => setWalkIn({ ...walkIn, passport: e.target.value })}
-            />
-          </FieldRow>
-          <FieldRow>
             <FieldSelect
               label={t("walkInSex")}
               preset="select"
@@ -1719,20 +1561,37 @@ export default function SanatoriumPage() {
               openCalendarLabel={tc("openCalendar")}
             />
           </FieldRow>
+          <FieldRow cols={3}>
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("walkInNationality")}
+              value={walkIn.nationality}
+              onChange={(v) =>
+                setWalkIn({ ...walkIn, nationality: String(v ?? "").toUpperCase() })
+              }
+              options={countryOptions(locale, walkIn.nationality)}
+              emptyLabel={t("sexUnknown")}
+            />
+            <Field
+              label={t("walkInFin")}
+              preset="fin"
+              value={walkIn.fin}
+              onChange={(e) => setWalkIn({ ...walkIn, fin: e.target.value })}
+            />
+            <Field
+              label={t("walkInPassport")}
+              preset="shortText"
+              value={walkIn.passport}
+              onChange={(e) => setWalkIn({ ...walkIn, passport: e.target.value })}
+            />
+          </FieldRow>
           <FieldRow>
-            <FieldSelect
-              label={t("programSelect")}
-              preset="select"
-              value={walkIn.programCode}
-              onChange={(e) => setWalkIn({ ...walkIn, programCode: e.target.value })}
-            >
-              <option value="">—</option>
-              {naftaPackageTemplates.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.code} — {p.name}
-                </option>
-              ))}
-            </FieldSelect>
+            <Field
+              label={t("walkInPhone")}
+              preset="phone"
+              value={walkIn.phone}
+              onChange={(e) => setWalkIn({ ...walkIn, phone: e.target.value })}
+            />
           </FieldRow>
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("walkInHint")}</p>
         </div>
@@ -1785,7 +1644,13 @@ export default function SanatoriumPage() {
       <PatientCardModal
         patientId={patientCardId}
         open={Boolean(patientCardId)}
-        onClose={() => setPatientCardId(null)}
+        panel={cardPanel}
+        initialEpisodeId={cardEpisodeId}
+        onClose={() => {
+          setPatientCardId(null);
+          setCardPanel(null);
+          setCardEpisodeId(null);
+        }}
         onOpenDayPlan={(episodeId) => {
           setPatientCardId(null);
           setSelectedId(episodeId);

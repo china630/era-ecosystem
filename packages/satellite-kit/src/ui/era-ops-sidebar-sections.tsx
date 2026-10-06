@@ -61,10 +61,15 @@ function NavBranch({
   item,
   pathname,
   resolveActive,
+  open,
+  onToggle,
 }: {
   item: EraOpsNavItem;
   pathname: string;
   resolveActive: (pathname: string, href: string) => boolean;
+  /** When set, sibling branches are accordion-controlled by the parent section. */
+  open?: boolean;
+  onToggle?: () => void;
 }) {
   const kids = (item.children ?? []).filter((child) => !child.hidden);
   if (kids.length === 0) {
@@ -73,29 +78,26 @@ function NavBranch({
   }
 
   const active = branchActive(item, pathname, resolveActive);
-  const [open, setOpen] = useState(active);
   const Icon = item.icon;
-  useEffect(() => {
-    setOpen(active);
-  }, [active]);
+  const expanded = open ?? false;
 
   return (
     <div className="flex flex-col gap-0.5">
       <button
         type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        aria-expanded={expanded}
+        onClick={onToggle}
         className={`${active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS} w-full text-left`}
       >
         {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
         <span className="flex-1 truncate">{item.label}</span>
-        {open ? (
+        {expanded ? (
           <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
         ) : (
           <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
         )}
       </button>
-      {open ? (
+      {expanded ? (
         <div className="ml-3 flex flex-col gap-0.5 border-l border-[#ECF0F1] pl-2">
           {kids.map((child) => {
             const childActive =
@@ -117,10 +119,14 @@ function CollapsibleSection({
   section,
   pathname,
   resolveActive,
+  open,
+  onToggle,
 }: {
   section: EraOpsNavSection;
   pathname: string;
   resolveActive: (pathname: string, href: string) => boolean;
+  open: boolean;
+  onToggle: () => void;
 }) {
   const visibleItems = section.items.filter((item) => !item.hidden);
   if (visibleItems.length === 0) return null;
@@ -136,19 +142,24 @@ function CollapsibleSection({
   const sectionActive = visibleItems.some((item) =>
     branchActive(item, pathname, resolveActive),
   );
-  const [open, setOpen] = useState(sectionActive);
-  const Icon = section.icon;
-
+  const routeBranch = visibleItems.find(
+    (item) =>
+      (item.children ?? []).some((child) => !child.hidden) &&
+      branchActive(item, pathname, resolveActive),
+  );
+  const routeBranchKey = routeBranch ? (routeBranch.id ?? routeBranch.label) : null;
+  const [openBranch, setOpenBranch] = useState<string | null>(routeBranchKey);
   useEffect(() => {
-    setOpen(sectionActive);
-  }, [sectionActive]);
+    setOpenBranch(routeBranchKey);
+  }, [pathname, routeBranchKey]);
+  const Icon = section.icon;
 
   return (
     <div className="flex flex-col gap-0">
       <button
         type="button"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         className={[
           "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition",
           sectionActive
@@ -171,18 +182,41 @@ function CollapsibleSection({
       </button>
       {open ? (
         <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-[#ECF0F1] pl-2">
-          {visibleItems.map((item) => (
-            <NavBranch
-              key={item.id ?? item.href ?? item.label}
-              item={item}
-              pathname={pathname}
-              resolveActive={resolveActive}
-            />
-          ))}
+          {visibleItems.map((item) => {
+            const branchKey = item.id ?? item.label;
+            const nested = (item.children ?? []).some((child) => !child.hidden);
+            return (
+              <NavBranch
+                key={item.id ?? item.href ?? item.label}
+                item={item}
+                pathname={pathname}
+                resolveActive={resolveActive}
+                open={nested ? openBranch === branchKey : undefined}
+                onToggle={
+                  nested
+                    ? () =>
+                        setOpenBranch((current) =>
+                          current === branchKey ? null : branchKey,
+                        )
+                    : undefined
+                }
+              />
+            );
+          })}
         </div>
       ) : null}
     </div>
   );
+}
+
+function sectionOwnsPath(
+  section: EraOpsNavSection,
+  pathname: string,
+  resolveActive: (pathname: string, href: string) => boolean,
+): boolean {
+  return section.items
+    .filter((item) => !item.hidden)
+    .some((item) => branchActive(item, pathname, resolveActive));
 }
 
 export function EraOpsSidebarSections({
@@ -202,22 +236,33 @@ export function EraOpsSidebarSections({
       if (href === "/") return p === "/";
       return p === href || p.startsWith(`${href}/`);
     });
+  const visibleSections = sections.filter((section) => !section.hidden);
+  const routeSectionId =
+    visibleSections.find((section) => sectionOwnsPath(section, pathname, activeFn))?.id ??
+    null;
+  const [openId, setOpenId] = useState<string | null>(routeSectionId);
+
+  useEffect(() => {
+    setOpenId(routeSectionId);
+  }, [pathname, routeSectionId]);
 
   return (
-    <div className="flex flex-1 flex-col gap-2 overflow-y-auto py-1">
+    <div className="flex flex-1 flex-col gap-2 py-1">
       {topItems.map((item) => (
         <NavLink key={item.id ?? item.href ?? item.label} item={item} />
       ))}
-      {sections
-        .filter((section) => !section.hidden)
-        .map((section) => (
-          <CollapsibleSection
-            key={section.id}
-            section={section}
-            pathname={pathname}
-            resolveActive={activeFn}
-          />
-        ))}
+      {visibleSections.map((section) => (
+        <CollapsibleSection
+          key={section.id}
+          section={section}
+          pathname={pathname}
+          resolveActive={activeFn}
+          open={openId === section.id}
+          onToggle={() =>
+            setOpenId((current) => (current === section.id ? null : section.id))
+          }
+        />
+      ))}
     </div>
   );
 }

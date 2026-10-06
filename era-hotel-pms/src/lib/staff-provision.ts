@@ -8,7 +8,6 @@ import { hashPassword } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
-import { resolveSystemRoleAlias } from "@/lib/hotel-roles";
 
 export class SatelliteLoginTakenError extends Error {
   readonly code = "LOGIN_TAKEN" as const;
@@ -53,15 +52,14 @@ async function resolveUserForLogin(args: {
 }
 
 /**
- * System aliases (RECEPTION→Receptionist, …) then lookup Role in org.
- * Unknown custom codes fail — do not silently map to Receptionist.
+ * Lookup the satellite role code as stored. Does not rewrite aliases.
  */
 async function resolveProvisionRole(
   organizationId: string,
   satelliteRole: string,
 ) {
   await ensureSystemHotelRoles(prisma, organizationId);
-  const code = resolveSystemRoleAlias(satelliteRole);
+  const code = satelliteRole.trim();
   const role = await prisma.role.findFirst({
     where: { organizationId, code },
   });

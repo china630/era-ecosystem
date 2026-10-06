@@ -180,23 +180,46 @@ model SatelliteAuditLog {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  organizationId String
-  login          String
-  email          String?
-  phone          String?   
-  fullName       String
-  passwordHash   String
-  roleId         String
-  role           Role      @relation(fields: [roleId], references: [id])
-  status         String    @default("ACTIVE")
-  isCrossSystem  Boolean   @default(false) @map("is_cross_system")
-  lastLoginAt    DateTime? @map("last_login_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  id                String    @id @default(cuid())
+  organizationId    String
+  login             String
+  email             String?
+  phone             String?
+  fullName          String
+  passwordHash      String
+  department        String?
+  /** Job title cached from workforce provision (`positionTitle`). */
+  positionTitle     String?
+  roleId            String
+  role              Role      @relation(fields: [roleId], references: [id])
+  status            String    @default("ACTIVE")
+  isCrossSystem     Boolean   @default(false) @map("is_cross_system")
+  globalPersonId    String?   @map("global_person_id")
+  financeEmployeeId String?   @unique @map("finance_employee_id")
+  cpEmploymentId    String?   @unique @map("cp_employment_id")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  logins            UserLogin[]
 
   @@unique([organizationId, login])
   @@unique([organizationId, phone])
   @@index([organizationId])
+}
+
+model UserLogin {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  login          String
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+  @@map("user_logins")
 }
 
 model OfflineReceiptQueue {

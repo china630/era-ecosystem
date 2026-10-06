@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it, before } from "node:test";
-import { createSatelliteStaffMiddleware } from "./middleware-edge";
+import {
+  createSatelliteStaffMiddleware,
+  redirectReferralToOrchestratorRegister,
+} from "./middleware-edge";
 import { signSatelliteSession } from "./session";
 
 const ORG_TOKEN = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -190,5 +193,31 @@ describe("createSatelliteStaffMiddleware", () => {
     );
     assert.equal(seenOrg, ORG_TOKEN);
     assert.equal(res.status, 423);
+  });
+});
+
+describe("redirectReferralToOrchestratorRegister", () => {
+  it("sends a satellite ?ref= to orchestrator /register", () => {
+    process.env.NEXT_PUBLIC_ORCH_WEB_URL = "http://orch.test:3000";
+    const res = redirectReferralToOrchestratorRegister({
+      nextUrl: {
+        pathname: "/login",
+        origin: "http://clinic.test",
+        searchParams: new URLSearchParams("ref=ab12"),
+      },
+    });
+    assert.equal(res?.headers.get("location"), "http://orch.test:3000/register?ref=ab12");
+  });
+
+  it("leaves orchestrator /register?ref= in place", () => {
+    process.env.NEXT_PUBLIC_ORCH_WEB_URL = "http://orch.test:3000";
+    const res = redirectReferralToOrchestratorRegister({
+      nextUrl: {
+        pathname: "/register",
+        origin: "http://orch.test:3000",
+        searchParams: new URLSearchParams("ref=AB12"),
+      },
+    });
+    assert.equal(res, null);
   });
 });

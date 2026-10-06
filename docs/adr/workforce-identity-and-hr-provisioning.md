@@ -37,9 +37,11 @@ Events on the shared satellite envelope (`@era/contracts`):
 
 **Publisher (Plan C):** orchestrator `WorkforceProvisionService` on CP hire, manual grant, terminate. Finance `HrStaffProvisioningService` **deprecated** (no-op).
 
-Orchestrator fans out to registered `SatelliteEndpoint` (else env `CLINIC_API_URL` / `HOTEL_PMS_API_URL` / `FNB_POS_API_URL` on the **docker network**) and updates `WorkforceAssignment` keyed by `[organizationId, satelliteKey, cpEmploymentId]`. Shared secret: `SATELLITE_BRIDGE_SECRET`. Consuming handlers (clinic, hotel, fnb) call `enterRequestTenant(event.organizationId)` and stamp `organizationId`. User passwords use kit scrypt. Clinic links imported practitioners by `cpEmploymentId` / `globalPersonId` / **unique** name match (exactly one candidate; otherwise create, do not guess). Default PIN `0000`; clinic self-service `/account/password`.
+Orchestrator fans out to registered `SatelliteEndpoint` (else env `CLINIC_API_URL` / `HOTEL_PMS_API_URL` / `FNB_POS_API_URL` / `RETAIL_API_URL` on the **docker network**) and updates `WorkforceAssignment` keyed by `[organizationId, satelliteKey, cpEmploymentId]`. Shared secret: `SATELLITE_BRIDGE_SECRET`. Consuming handlers (clinic, hotel, fnb, retail) call `enterRequestTenant(event.organizationId)` and stamp `organizationId`. User passwords use kit scrypt. Clinic links imported practitioners by `cpEmploymentId` / `globalPersonId` / **unique** name match (exactly one candidate; otherwise create, do not guess). Default PIN `0000`; clinic self-service `/account/password`. Retail maps CP `STAFF` → `CASHIER` and `MANAGER` → `OUTLET_ADMIN`.
 
-**Out of this bus (do not drop):** `industry_retail`, `industry_logistics`, `industry_construction`, `industry_crm`, `industry_auto_service`, `industry_wholesale` have **no** `/api/integration/staff-provision` handler. CP hire/grant does not create a local login there. Owners use SSO. When those verticals need floor staff logins, add handler + fan-out env URL + bridge secret (same pattern as clinic). Bank uses bank-core internal staff-provisioning, not this fan-out.
+Disconnecting an operational module (`industry_clinic`, `industry_hotel_pms`, `industry_fnb_pos`, `industry_retail`) revokes every active role binding for that key and emits `STAFF_DEACTIVATED` before the entitlement is removed. `STAFF_DEACTIVATED` still fans out when the module is no longer entitled. `finance_core` is SSO (`enable-cabinet`), not this PIN bus.
+
+**Out of this bus (do not drop):** `industry_logistics`, `industry_construction`, `industry_crm`, `industry_auto_service`, `industry_wholesale` have **no** `/api/integration/staff-provision` handler. CP hire/grant does not create a local login there. Owners use SSO. When those verticals need floor staff logins, add handler + fan-out env URL + bridge secret (same pattern as clinic). Bank uses bank-core internal staff-provisioning, not this fan-out.
 
 ### Clinic practitioner hire (CP workforce only)
 
@@ -74,6 +76,7 @@ Legacy `finance_hr` / `local_master` hire modes removed (clean v3 cut).
 - F&B provision handler: `era-fnb-pos/src/lib/staff-provision.ts`
 - Clinic provision handler: `era-clinic/src/lib/staff-provision.ts`
 - Hotel provision handler: `era-hotel-pms/src/lib/staff-provision.ts`
+- Retail provision handler: `era-retail-pos/src/lib/staff-provision.ts` (`User.cpEmploymentId`, `user_logins`)
 - Clinic password self-service: `PATCH /api/auth/password`, UI `/account/password`
 
 ## Consequences

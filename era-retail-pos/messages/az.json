@@ -37,7 +37,12 @@
   },
   "common": {
     "loading": "Yüklənir…",
-    "home": "Əsas"
+    "home": "Əsas",
+    "save": "Saxla",
+    "cancel": "Ləğv et",
+    "loadError": "Yüklənmədi",
+    "datePlaceholder": "GG.AA.İİİİ",
+    "openCalendar": "Təqvimi aç"
   },
   "pos": {
     "title": "ERA Retail POS",
@@ -135,7 +140,38 @@
     "import": "Cutover import",
     "settings": "Parametrlər",
     "executive": "Executive",
-    "access": "Giriş hüquqları"
+    "access": "Giriş və rollar",
+    "accounts": "Hesablar",
+    "users": "İstifadəçilər",
+    "logins": "Girişlər",
+    "logout": "Çıxış"
+  },
+  "users": {
+    "title": "İstifadəçilər",
+    "subtitle": "Kassa loginləri. Control plane-dən gələnlər işçi kartı ilə açılır və bağlanır.",
+    "add": "İstifadəçi",
+    "edit": "Redaktə",
+    "saved": "Saxlanıldı",
+    "password": "Şifrə",
+    "colLogin": "Login",
+    "colName": "Ad",
+    "colRole": "Rol",
+    "colStatus": "Status",
+    "statusActive": "Aktiv",
+    "statusDisabled": "Bağlı",
+    "workforceNameLocked": "Ad control plane kartından gəlir."
+  },
+  "logins": {
+    "title": "Girişlər",
+    "subtitle": "Kim və nə vaxt daxil olub.",
+    "search": "Axtarış",
+    "from": "Tarixdən",
+    "to": "Tarixə",
+    "empty": "Giriş yoxdur",
+    "colWhen": "Vaxt",
+    "colLogin": "Login",
+    "colName": "Ad",
+    "colIp": "IP"
   },
   "cutoverImport": {
     "title": "Elektraweb import",

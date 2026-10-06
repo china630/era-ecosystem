@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publishSatelliteRole } from "@era/satellite-kit";
 import { NextResponse } from "next/server";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/api-utils";
@@ -39,6 +40,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const updated = await prisma.opsRole.update({
       where: { id: role.id },
       data: { name: body.name },
+    });
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_banking",
+      code: updated.code,
+      name: updated.name,
+      active: true,
     });
 
     return jsonOk({
@@ -82,6 +91,14 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     }
 
     await prisma.opsRole.delete({ where: { id: role.id } });
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_banking",
+      code: role.code,
+      name: role.name,
+      active: false,
+    });
+
     return jsonOk({ deleted: true, code: role.code });
   } catch (err) {
     return handleRouteError(err);

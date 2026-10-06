@@ -46,3 +46,4 @@ Do not call this table «product readiness».
 | `era-retail-pos/__tests__/retail-rbac-doors.spec.ts` | AC-RET-RBAC |
 | `era-retail-pos/__tests__/retail-rbac-inventory.spec.ts` | AC-RET-RBAC |
 | `era-retail-pos/__tests__/retail-rbac-role-name-grep.spec.ts` | AC-RET-RBAC |
+| `era-retail-pos/__tests__/staff-provision.spec.ts` | RET-STAFF-01 (create, STAFF→CASHIER, unknown role, login taken, deactivate) |

@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  publishSatelliteRole,
+  publishSatelliteRoleSnapshot,
+} from "@era/satellite-kit";
+import {
   jsonOk,
   handleRouteError,
   jsonError,
@@ -28,6 +32,7 @@ const createSchema = z.object({
   code: z.string().regex(CLINIC_CUSTOM_ROLE_CODE_RE, "Invalid role code"),
   name: z.string().trim().min(1).max(120),
   cloneFrom: z.string().trim().min(1).max(32),
+  staffKind: z.enum(["DOCTOR", "NURSE", "LAB", "NONE"]).optional(),
 });
 
 export async function GET(req: Request) {
@@ -42,6 +47,16 @@ export async function GET(req: Request) {
       where: { organizationId },
       orderBy: [{ isSystem: "desc" }, { code: "asc" }],
       include: { _count: { select: { users: true } } },
+    });
+
+    void publishSatelliteRoleSnapshot({
+      organizationId,
+      satelliteKey: "industry_clinic",
+      roles: roles.map((role) => ({
+        code: role.code,
+        name: role.name,
+        active: true,
+      })),
     });
 
     return jsonOk(
@@ -116,7 +131,7 @@ export async function POST(req: Request) {
         code,
         name: body.name,
         isSystem: false,
-        staffKind: parseClinicRoleStaffKind(donor.staffKind),
+        staffKind: body.staffKind ?? parseClinicRoleStaffKind(donor.staffKind),
         cloneFromCode: donor.code,
         permissionsJson: serializeRolePermissions(permissions),
       },
@@ -134,6 +149,14 @@ export async function POST(req: Request) {
         permissionCount: permissions.length,
       },
     );
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_clinic",
+      code: created.code,
+      name: created.name,
+      active: true,
+    });
 
     return jsonOk({
       id: created.id,

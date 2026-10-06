@@ -200,7 +200,7 @@ describe("clinic staff-provision", () => {
     expect(prisma.user.create).not.toHaveBeenCalled();
   });
 
-  it("maps ADMIN alias to CLINIC_ADMIN without silent RECEPTION fallback", async () => {
+  it("looks up CLINIC_ADMIN by the code that arrived", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.role.findFirst.mockResolvedValue({
       id: "role-admin",
@@ -211,7 +211,7 @@ describe("clinic staff-provision", () => {
       ...provisionEvent,
       payload: {
         ...provisionEvent.payload,
-        satelliteRole: "ADMIN",
+        satelliteRole: "CLINIC_ADMIN",
       },
     });
     expect(prisma.role.findFirst).toHaveBeenCalledWith(

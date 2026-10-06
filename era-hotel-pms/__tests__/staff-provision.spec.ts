@@ -39,7 +39,7 @@ describe("hotel staff-provision", () => {
     payload: {
       cpEmploymentId: CP_EMPLOYMENT_ID,
       satelliteKey: "industry_hotel_pms",
-      satelliteRole: "RECEPTION",
+      satelliteRole: "Receptionist",
       staffCode: "FINEMP1",
       fullName: "Front Desk",
       login: "emp-front",

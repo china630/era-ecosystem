@@ -24,6 +24,7 @@ import {
   type DateBarPeriod,
 } from '@/lib/reports/date-bar';
 import type { ReportLayout } from '@/lib/reports/layout';
+import { reportFileName } from '@/lib/reports/locale';
 import type { PeriodPreset } from '@/lib/reports/period';
 import { ReportLayoutView } from '@/components/reports/ReportLayoutView';
 
@@ -225,7 +226,7 @@ export function ReportsWorkspace() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${slug}_${period?.from ?? 'report'}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
+      a.download = reportFileName(slug, locale, period?.from ?? 'report', kind === 'pdf' ? 'pdf' : 'xlsx');
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -277,14 +278,14 @@ export function ReportsWorkspace() {
         </div>
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto">
-        <div>
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <div className="shrink-0">
           <h1 className="text-xl font-semibold text-[#34495E]">
             {def ? tRoot(def.titleKey as 'reportsPdf.dailyManagement') : t('pickReport')}
           </h1>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-[#D5DADF] bg-white p-4">
+        <div className="shrink-0 space-y-3 rounded-xl border border-[#D5DADF] bg-white p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-wrap items-end gap-2">
               <DatePicker
@@ -344,11 +345,13 @@ export function ReportsWorkspace() {
           />
         </div>
 
-        {loading ? <p className="text-sm text-[#7F8C8D]">{t('calculating')}</p> : null}
-        {!unknownReport && !shown ? <p className="text-sm text-[#7F8C8D]">{t('pressShow')}</p> : null}
-        {unknownReport ? <p className="text-sm text-[#C0392B]">{t('unknownReport', { slug: requested ?? '' })}</p> : null}
-        {shown && !loading && layout ? <ReportLayoutView layout={layout} locale={locale} noDataLabel={tp('noData')} /> : null}
-        {shown && !loading && !layout ? <p className="text-sm text-[#7F8C8D]">{tp('noData')}</p> : null}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {loading ? <p className="text-sm text-[#7F8C8D]">{t('calculating')}</p> : null}
+          {!unknownReport && !shown ? <p className="text-sm text-[#7F8C8D]">{t('pressShow')}</p> : null}
+          {unknownReport ? <p className="text-sm text-[#C0392B]">{t('unknownReport', { slug: requested ?? '' })}</p> : null}
+          {shown && !loading && layout ? <ReportLayoutView layout={layout} locale={locale} noDataLabel={tp('noData')} /> : null}
+          {shown && !loading && !layout ? <p className="text-sm text-[#7F8C8D]">{tp('noData')}</p> : null}
+        </div>
       </section>
     </div>
   );

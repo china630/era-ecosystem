@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { redirectReferralToOrchestratorRegister } from "@era/satellite-kit/auth/middleware-edge";
 
 import {
   ACCESS_TOKEN_COOKIE_KEY,
@@ -34,6 +35,8 @@ function redirectToLogin(req: NextRequest, pathname: string, clearCookie: boolea
 }
 
 export function middleware(req: NextRequest) {
+  const referralRedirect = redirectReferralToOrchestratorRegister(req);
+  if (referralRedirect) return referralRedirect;
   const { pathname } = req.nextUrl;
 
   const requestHeaders = new Headers(req.headers);

@@ -23,7 +23,6 @@ import {
   MapPin,
   Beaker,
   ScrollText,
-  KeyRound,
   Shield,
   ClipboardList,
   Activity,
@@ -87,11 +86,11 @@ type NavTranslator = (key: string) => string;
 const GROUP_ORDER: ClinicNavGroupId[] = [
   "frontdesk",
   "clinical",
-  "reports",
   "mod:sanatorium",
   "mod:inpatient",
   "mod:wellness",
   "setup:catalogs",
+  "reports",
   "setup:rules",
   "platform",
 ];
@@ -216,6 +215,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
   {
     href: "/reports/patients-by-country",
     labelKey: "patientCountryReport",
+    icon: Globe,
+    group: "reports",
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
+  },
+  {
+    href: "/reports/walk-in-by-country",
+    labelKey: "walkInCountryReport",
     icon: Globe,
     group: "reports",
     permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
@@ -395,14 +401,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
       {
         href: "/admin/access",
         labelKey: "accessControl",
-        icon: Shield,
+        icon: Users,
         group: "platform",
         permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
       },
       {
         href: "/admin/logins",
         labelKey: "logins",
-        icon: KeyRound,
+        icon: ClipboardList,
         group: "platform",
         permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
       },

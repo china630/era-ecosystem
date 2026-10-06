@@ -108,13 +108,13 @@ Nafta answers (2026-08-19): Monthly and Daily Analysis = through closed date inc
 
 ## 5. Reports menu IA
 
-Primary home: sidebar **All reports** (`/reports`) plus **Nightly pack**, then **Tools** and **Other**, above Settings. Categories are groups inside the workspace list, not extra sidebar screens.
+Primary home: sidebar **Reports** (All reports, Nightly pack, occupancy grid, booking analytics), then **Other**, above Settings. Categories are groups inside the workspace list, not extra sidebar screens. «All reports» is active only on `/reports`.
 
 ```
 Reports                         /reports                    list + shared period + PDF/Excel
-└── Nightly pack                /reports/nightly-pack       eight forms + ZIP for the closed date
-Tools                           /reports/analytics          not catalog rows
-                                /reports/occupancy/grid
+├── Nightly pack                /reports/nightly-pack       eight forms + ZIP for the closed date
+├── Occupancy grid              /reports/occupancy/grid     not a catalog slug
+└── Booking analytics           /reports/analytics          sources, cancellations, demographics
 ```
 
 Old `/reports/{category}` and `/reports/{category}/{slug}` URLs redirect to `/reports?report=` or `?category=`.
@@ -171,6 +171,7 @@ Pack membership and order are **per hotel** (`NightAuditReportPackConfig`). Naft
 
 - `GET /api/reports/pack?businessDate=` — manifest (enabled slugs, filenames)
 - `GET /api/reports/pack/download?businessDate=&lang=` — ZIP of PDFs. Each member uses its date mode ending on that business date (month-to-date and year-to-date included). `lang` is the UI locale.
+- File names carry the language right after the name and before the date: `<slug>_<lang>_<from>.pdf|xlsx`, `nightly_pack_<lang>_<date>.zip`, members `NN_<slug>_<lang>_<date>.pdf` (`reportFileName` in `src/lib/reports/locale.ts`).
 - `GET/PUT /api/admin/report-pack` — SatAdmin config
 
 ---
@@ -294,7 +295,7 @@ Department revenues also carry **Month** and **Year** columns on the same PDF �
 
 ### 8.1 Daily Management (B-01)
 
-Flash for GM. Room analysis (occupied, available, capacity, comp, house use, day use, OOO, OOS, sold, arrivals/departures, share rooms, pax). Sample list is multi-page (~329 extracted lines). PDF filename in ZIP: `01_daily-management_YYYY-MM-DD.pdf`.
+Flash for GM. Room analysis (occupied, available, capacity, comp, house use, day use, OOO, OOS, sold, arrivals/departures, share rooms, pax). Sample list is multi-page (~329 extracted lines). PDF filename in ZIP: `01_daily-management_<lang>_YYYY-MM-DD.pdf` (`lang` = az / ru / en).
 
 ### 8.2 Trial Balance Date Period (C-08)
 

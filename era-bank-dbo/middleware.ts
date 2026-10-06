@@ -4,7 +4,10 @@ import {
   DBO_SESSION_COOKIE,
   verifyDboSessionCookie,
 } from "@/lib/dbo-session-cookie";
-import { nextWithOptionalHostBoundOrg } from "@era/satellite-kit/auth/middleware-edge";
+import {
+  nextWithOptionalHostBoundOrg,
+  redirectReferralToOrchestratorRegister,
+} from "@era/satellite-kit/auth/middleware-edge";
 
 const PUBLIC_PATHS = ["/login", "/manifest.webmanifest"];
 
@@ -13,6 +16,8 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const referralRedirect = redirectReferralToOrchestratorRegister(request);
+  if (referralRedirect) return referralRedirect;
   const { pathname } = request.nextUrl;
 
   if (

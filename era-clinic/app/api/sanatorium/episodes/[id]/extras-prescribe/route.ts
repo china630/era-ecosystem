@@ -14,6 +14,7 @@ import { readUiLocale } from "@/lib/request-locale";
 import {
   deletePendingExtra,
   listExtraUnitPrices,
+  listPaidExtras,
   listPendingExtras,
   prescribeExtras,
 } from "@/domain/sanatorium/extras-assign.service";
@@ -52,11 +53,14 @@ export async function GET(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
-    const rows = await listPendingExtras(id);
+    const [rows, paid] = await Promise.all([
+      listPendingExtras(id),
+      listPaidExtras(id),
+    ]);
     const prices = await listExtraUnitPrices();
     const locale = await readUiLocale(req);
     const catalogNames = await loadCatalogDisplayNameMap(
-      rows.map((row) => row.procedureCode),
+      [...rows, ...paid].map((row) => row.procedureCode),
       locale,
     );
     return jsonOk({
@@ -69,6 +73,12 @@ export async function GET(
         status: r.status,
       })),
       prices,
+      paid: paid.map((r) => ({
+        id: r.id,
+        procedureCode: r.procedureCode,
+        procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
+        amountNet: Number(r.amountNet),
+      })),
     });
   } catch (err) {
     if (err instanceof PackageAssignError) {

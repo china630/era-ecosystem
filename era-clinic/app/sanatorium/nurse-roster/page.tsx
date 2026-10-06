@@ -16,6 +16,7 @@ import {
   EraListFilterBar,
   Field,
   FORM_STACK_CLASS,
+  LINK_ACCENT_CLASS,
   ListPaginationFooter,
   MODAL_CHECKBOX_CLASS,
   ModalFooter,
@@ -678,15 +679,63 @@ export default function NurseRosterPage() {
                       <td className={DATA_TABLE_TD_CLASS}>{s.code}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <CatalogField
-                          kind="MULTI"
+                          kind="SEARCHABLE"
                           label=""
-                          value={owned}
+                          value=""
                           onChange={(v) => {
-                            const ids = Array.isArray(v) ? v.map(String) : [String(v)];
-                            setNurseProcedures(s.id, ids);
+                            const id = String(v ?? "");
+                            if (!id || owned.includes(id)) return;
+                            setNurseProcedures(s.id, [...owned, id]);
                           }}
-                          options={procedureOptions}
+                          options={procedureOptions.filter((o) => !owned.includes(o.value))}
+                          emptyLabel={t("addCabinet")}
                         />
+                        <ul className="mt-2 space-y-2">
+                          {owned.map((id) => {
+                            const line = lines.find((l) => l.procedureTypeId === id);
+                            const overs = dayOverrides.filter((o) => o.procedureTypeId === id);
+                            return (
+                              <li key={id} className="text-[12px]">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5">
+                                  {line?.procedureName ?? id}
+                                  <button
+                                    type="button"
+                                    className="text-[#7F8C8D]"
+                                    aria-label={t("removeCabinet")}
+                                    onClick={() =>
+                                      setNurseProcedures(
+                                        s.id,
+                                        owned.filter((x) => x !== id),
+                                      )
+                                    }
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                                {overs.length === 0 ? (
+                                  <button
+                                    type="button"
+                                    className={`mt-1 block ${LINK_ACCENT_CLASS}`}
+                                    onClick={() => openSubstitute(id)}
+                                  >
+                                    {t("substitute")}
+                                  </button>
+                                ) : (
+                                  overs.map((o) => (
+                                    <button
+                                      key={o.id}
+                                      type="button"
+                                      className={`mt-1 block text-left ${LINK_ACCENT_CLASS}`}
+                                      onClick={() => openSubstitute(id, o.dutyDate)}
+                                    >
+                                      {o.dutyDate} — {o.practitionerName}
+                                    </button>
+                                  ))
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {s.warnings.map((w, i) => (
@@ -704,15 +753,6 @@ export default function NurseRosterPage() {
                           ))}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {owned.length > 0 ? (
-                          <button
-                            type="button"
-                            className={SECONDARY_BUTTON_CLASS}
-                            onClick={() => openSubstitute(owned[0]!)}
-                          >
-                            {t("substitute")}
-                          </button>
-                        ) : null}
                         {nurseOverrides.map((o) => (
                           <p
                             key={o.id}

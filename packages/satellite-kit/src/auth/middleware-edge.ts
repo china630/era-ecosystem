@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { resolveHostBoundLoginOrganizationId } from "../tenancy/login-hostname-memory";
+import { orchWebUrl } from "../platform/orch-web-url";
 
 export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/auth/login",
@@ -202,7 +203,12 @@ export function redirectNoStore(url: URL | string): NextResponse {
  * kit must not name that type in its signature.
  */
 export type SatelliteStaffRequest = {
-  nextUrl: { pathname: string; href: string };
+  nextUrl: {
+    pathname: string;
+    href: string;
+    origin?: string;
+    searchParams?: { get(name: string): string | null };
+  };
   cookies: CookieReader;
   headers: Headers;
 };
@@ -300,6 +306,40 @@ function passthroughHeadersMatch(headers: Headers, session: EdgeSessionPayload):
  * headers, except `serviceApiPrefixes` where the handler checks a service secret.
  * Route handlers still read the session with the app `getSatelliteSession`.
  */
+/**
+ * Partner code on any satellite or Finance page is stored only on the
+ * orchestrator origin. Send `?ref=` to `/register` there.
+ * `/register` on the orchestrator host is left alone so the page can keep the code.
+ */
+export function redirectReferralToOrchestratorRegister(request: {
+  nextUrl: {
+    pathname: string;
+    origin?: string;
+    searchParams?: { get(name: string): string | null };
+  };
+}): NextResponse | null {
+  const { pathname, origin, searchParams } = request.nextUrl;
+  if (pathname.startsWith("/api") || pathname.startsWith("/_next")) return null;
+  const ref = searchParams?.get("ref")?.trim();
+  if (!ref) return null;
+  const orch = orchWebUrl();
+  let orchOrigin = orch;
+  try {
+    orchOrigin = new URL(orch).origin;
+  } catch {
+    orchOrigin = orch;
+  }
+  if (
+    origin === orchOrigin &&
+    (pathname === "/register" || pathname.startsWith("/register/"))
+  ) {
+    return null;
+  }
+  const target = new URL("/register", orch);
+  target.searchParams.set("ref", ref);
+  return NextResponse.redirect(target);
+}
+
 export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
   opts: SatelliteStaffMiddlewareOptions<R>,
 ): (request: R) => Promise<Response> {
@@ -311,6 +351,8 @@ export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
   ];
 
   return async function middleware(request: R): Promise<Response> {
+    const referralRedirect = redirectReferralToOrchestratorRegister(request);
+    if (referralRedirect) return referralRedirect;
     const { pathname } = request.nextUrl;
 
     if (opts.passthroughApiPrefixes?.some((p) => pathname.startsWith(p))) {

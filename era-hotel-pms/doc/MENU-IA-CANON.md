@@ -245,13 +245,14 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md) (ElektraWeb WA0058/59 + Nafta samples). **W1 live** — 8 P0 screens + PDF + nightly ZIP; not SHIPPED (no UAT evidence).
 
-**Sidebar:** Reports, then Tools, then Other, immediately above Settings. Categories live in the report list, not as extra menu screens.
+**Sidebar:** Reports, then Other, immediately above Settings. Categories live in the report list, not as extra menu screens. «All reports» highlights only on `/reports` itself.
 
 | Menu item | URL | Classifier |
 |-----------|-----|------------|
 | All reports | `/reports` | Shared period, grouped list, PDF + Excel. Old category and slug URLs redirect here |
 | Nightly pack | `/reports/nightly-pack` | Eight morning-pack forms for the last closed audit, plus ZIP for that date |
-| Tools | `/reports/analytics` | Own menu. Occupancy grid lives under Reports, not Tools |
+| Occupancy grid | `/reports/occupancy/grid` | Room-type grid, not a catalog slug |
+| Booking analytics | `/reports/analytics` | Sources, cancellations, demographics. Not a catalog slug |
 
 SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pack` redirects.
 
@@ -293,11 +294,10 @@ SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pa
 11. Banquets  
 12. Medical  
 13. Reports  
-14. Tools (analytics). Occupancy grid is under Reports.  
-15. Other  
-16. Settings  
-17. External links (footer / header)  
-18. Əsas — when decided  
+14. Other  
+15. Settings  
+16. External links (footer / header)  
+17. Əsas — when decided  
 
 ---
 

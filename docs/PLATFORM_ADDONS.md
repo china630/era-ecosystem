@@ -34,7 +34,7 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 | `platform_reference_data` | **ERA Data Hub Bronze** | All verticals + external API | **29 AZN**; XOR Silver/Gold | **Live** |
 | `platform_datahub_silver` | **Data Hub Silver** | VÖEN enrich | **39 AZN** | Catalog 2026-09 |
 | `platform_datahub_gold` | **Data Hub Gold** | Real-time / BI | **99 AZN** | Catalog 2026-09 |
-| `platform_workforce_base` / `_pro` | **Workforce headcount** | HRIS | **2 / 4 AZN per person** (XOR) | Hub SKU `platform_workforce` |
+| `platform_workforce_base` / `_pro` / `_premium` | **Workforce packages** | HRIS | **2 / 4 / 6 AZN per person** (XOR) | Essential / Professional / Premium. Hub alias `platform_workforce`. Payroll stays `hr_full`. [ADR](./adr/cp-workforce-packages.md) |
 
 **Bundles (commercial packaging):**
 
@@ -211,8 +211,9 @@ Add to orchestrator `pricing_modules` (Super-Admin):
 | `platform_reference_data` | ADDON | Data Hub Bronze **29** |
 | `platform_datahub_silver` | ADDON | Data Hub Silver **39** |
 | `platform_datahub_gold` | ADDON | Data Hub Gold **99** |
-| `platform_workforce_base` | ADDON | Headcount 2 AZN |
-| `platform_workforce_pro` | ADDON | Headcount 4 AZN |
+| `platform_workforce_base` | ADDON | Essential, 2 AZN / person |
+| `platform_workforce_pro` | ADDON | Professional, 4 AZN / person |
+| `platform_workforce_premium` | ADDON | Premium, 6 AZN / person |
 
 Industry slugs (`industry_clinic`, `industry_hotel_pms`, …) remain **separate** — they gate satellite app access; platform add-ons gate **shared services** inside those apps.
 

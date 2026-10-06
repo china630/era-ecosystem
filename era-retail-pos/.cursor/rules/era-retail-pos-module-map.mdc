@@ -12,7 +12,8 @@ alwaysApply: false
 | Domain | API prefix | Models |
 |--------|------------|--------|
 | Auth / SSO | `app/api/auth/` (`login`, `sso/exchange`, `me`, `session/refresh-permissions`) | `User`, `Role` |
-| Access matrix (RET-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `admin/users`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
+| Access matrix (RET-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `api/internal/v1/workforce/roles`, `admin/users`, `admin/user-logins`, `auth/logout`; pages `/settings/users`, `/admin/access`, `/settings/logins` (nav Hesablar) | `Role`, `User` (`cpEmploymentId`), `UserLogin`; catalog `src/lib/auth/permissions.ts`; role code+name pushed to CP |
+| Staff provision | `POST /api/integration/staff-provision` | CP `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` for `industry_retail` |
 | Receipts / pay | `app/api/receipts/` | `Receipt`, lines, fiscal, room charge |
 | Shifts | `app/api/shifts/` | open/close, X-report |
 | Products / stock | `products/`, `stock/`, `/api/import` (`stock-cards`) | search, check, replenishment; Nafta `#33` cutover wizard `/admin/import` |

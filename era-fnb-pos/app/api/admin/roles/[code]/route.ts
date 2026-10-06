@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publishSatelliteRole } from "@era/satellite-kit";
 import { NextResponse } from "next/server";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/session";
@@ -49,6 +50,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       { code: role.code, before, after: { name: updated.name } },
     );
 
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_fnb_pos",
+      code: updated.code,
+      name: updated.name,
+      active: true,
+    });
+
     return jsonOk({
       code: updated.code,
       name: updated.name,
@@ -95,6 +104,14 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       "ROLE_DELETE",
       { code: role.code, name: role.name },
     );
+
+    void publishSatelliteRole({
+      organizationId,
+      satelliteKey: "industry_fnb_pos",
+      code: role.code,
+      name: role.name,
+      active: false,
+    });
 
     return jsonOk({ deleted: true, code: role.code });
   } catch (err) {
