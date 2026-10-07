@@ -655,7 +655,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
             }
           />
           <FieldPanel title={tr('stay')}>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_4.75rem] items-end gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5.75rem] items-end gap-2">
               <DatePicker
                 label={tb('checkIn')}
                 fluid

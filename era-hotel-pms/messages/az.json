@@ -1076,6 +1076,8 @@
     "priceActionManual": "Manual gündəlik qiymət",
     "priceActionDiscount": "Endirim tətbiq et",
     "priceActionTotal": "Cəmi qiymət",
+    "priceActionRestore": "Paket qiymətini qaytar",
+    "stayGrandTotal": "CƏMİ",
     "priceApply": "Tətbiq et",
     "priceTariff": "Tarif",
     "priceFinal": "Yekun",

@@ -493,14 +493,16 @@ export function ReservationCardEditor({
         }
       | null
       | undefined;
-    if (compose && Array.isArray(compose.lines) && compose.lines.length > 0) {
+    if (compose && Number(compose.total) > 0) {
       setPackageCompose({
-        total: Number(compose.total ?? 0),
-        lines: compose.lines.map((l) => ({
-          code: l.code,
-          label: l.label ?? l.name ?? l.note ?? l.code,
-          amount: Number(l.amount ?? 0),
-        })),
+        total: Number(compose.total),
+        lines: Array.isArray(compose.lines)
+          ? compose.lines.map((l) => ({
+              code: l.code,
+              label: l.label ?? l.name ?? l.note ?? l.code,
+              amount: Number(l.amount ?? 0),
+            }))
+          : [],
       });
     } else {
       setPackageCompose(null);
@@ -2209,7 +2211,7 @@ export function ReservationCardEditor({
                 : undefined
             }
           />
-          <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
+          <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <ReservationCardLeftPanel
             isCreate={isCreate}
             isLocked={isLocked}

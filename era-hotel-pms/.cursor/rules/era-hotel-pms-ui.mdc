@@ -39,10 +39,10 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 - One chrome only: `ModalShell` **title = guest name** (or new-reservation), **subtitle = status · short id**. Do **not** repeat identity above money strip.
 - **Header snapshot**: Total / Deposit / Balance only; occupancy chip only for share / multi-room booking.
 - Secondary actions → **icon** `headerActions` (Attach / Lightning / History / ⋮ Menu with Print+Lock). Save / Check-in → text `footer`. No duplicate Print button.
-- Max width: `MODAL_FULL_CLASS` (~99vw / 1920px). Layout: **`lg:grid-cols-[3fr_7fr]`** (~30% left / 70% right).
+- Max width: `MODAL_FULL_CLASS` (~99vw / 1920px). Layout: **`lg:grid-cols-[2fr_3fr]`** (~40% left / 60% right).
 - FO header actions: **Room booking** (single stay card) + **Group booking** (multi-stay wizard). Screen chain (RTA / list / rack / plan) stays in the sidebar, not as header chips.
 - Left rail: Stay window (**row 1** date+time in + nights; **row 2** date+time out + one plane: red landing on CI day, red takeoff on CO day, yellow takeoff = IN_HOUSE early stay checkout) · Room (**Room type** = charge; **Given room type** = physical door list; when they differ, ask who pays — hotel covers, guest pays the given class, or a downgrade — do not call a cheaper given type a free upgrade; **Room no.** filters by Given else Room type; stable Lock/Search/HK/Assign; collapsed **Moves** under the room number, hidden when empty) · Pax & board (heads + meal; counters are the row age bands) · Rate & source (Source path + matching contract + rate) · Billing · Additional. No `roomCount` on single card.
-- Right (~70%): tabs Guests · Pricing · Folio · Notes.
+- Right (~60%): tabs Guests · Pricing · Folio · Notes.
   - Guests: compact party grid only — **no** PRIMARY/EQUAL billing chrome; icon add/search/camera; VIP / trip reason on the specials strip.
   - Pricing: daily Rate Grid + quote preview + optional packageCompose summary.
   - Folio: All/Guest/Agency/Company; when party >1, **named guest sections** (not Opera windows).

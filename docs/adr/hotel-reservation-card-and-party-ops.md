@@ -76,7 +76,7 @@ Occupancy hint: exclusive vs share vs booking with N rooms — StaysBar is a **t
 
 Collapse rare Elektraweb residue (option date/state, preferred bed/view, color) in Additional. Truncate or hide per-field hints that double vertical rhythm.
 
-**Layout chrome:** near-fullscreen (`MODAL_FULL_CLASS` ≈ 99vw); body **`lg:grid-cols-[3fr_7fr]`** (~30% left / 70% right).
+**Layout chrome:** near-fullscreen (`MODAL_FULL_CLASS` ≈ 99vw); body **`lg:grid-cols-[2fr_3fr]`** (~40% left / 60% right).
 
 **Right**
 
@@ -140,7 +140,7 @@ Share: two reservations → two episodes; unchanged.
 
 ## Commercial strip (2026-10)
 
-The left column opens with one row above the dates: source, agency, company. The contract and the free-text contract number sit on the next row. The package stays with the room type. Booker, paid-by, and folio stay in the billing block.
+The card columns are 40/60. The left column opens with one row above the dates: source, agency, company. A plus at the end of the agency or company field opens a short profile under that field only (agency: name and phone; company: name and VÖEN). The contract and the free-text contract number appear on the next row only after an agency or a company is chosen. The nights field uses the native number spinner. The package stays with the room type. Booker, paid-by, and folio stay in the billing block.
 
 Source at the desk is Walk-in, agency, or online. Walk-in is not renamed. Company is not a source: both profiles can be filled, and choosing a company does not hide the agency. A stored corporate source still opens with the company filled and the agency lookup available. One stay has one sales contract, taken from the profiles already chosen; it sets the rate and the allotment and does not clear the other profile.
 
@@ -172,7 +172,7 @@ Each guest row has one age band: adult (12 and older, same cut as Depart guest),
 
 ## Room class is not always a free upgrade
 
-The pricing tab keeps one action bar (manual nightly, discount from the tariff, or a stay total) and a scrolling night grid. Apply skips fixed nights, nights already posted to the folio, and nights before the hotel business date. A posted night is read-only; saving the card does not rewrite it. A past night with no posting stays visible and is not part of Apply. The stay total under the amount column is the sum of the grid.
+The pricing tab keeps one action bar (manual nightly, discount, stay total, or restore the package night price) and a scrolling night grid. The night the guest pays is the only price on the row. Discount is a percent of the selected package’s nightly sell (the rate-plan price only when the stay has no package composition). Restore writes that package price onto nights that are still open, clears the percent, and clears the fix; it does not touch a posted night or a night before the business date. Manual, discount, and stay-total still skip fixed nights. A posted night is read-only; saving the card does not rewrite it. A past night with no posting stays visible and is not part of Apply. The footer is the grid sum, labeled as the stay total. Package line composition is not shown on this tab. A price explanation, when the number itself is not enough, stays on the billing price note.
 
 When the given (physical) type differs from the charged type, the card does not call it a complimentary upgrade. The hotel can cover the difference (charged type stays, price note). The guest can pay the given class: the charged type becomes the given type and remaining nights (today onward, unlocked) take that class’s nightly price when a type-scoped rate exists. A cheaper given class is a downgrade: the hotel refunds the difference, or the guest asked for the cheaper class. Both move the charged type to the given class. The door must still belong to the given type. Posted past nights are not rewritten. A dated product change remains the stay-amendment wizard.
 
