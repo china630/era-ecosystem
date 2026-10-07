@@ -17,6 +17,8 @@ export type MatrixSlot = {
   patientRefId?: string;
   patientRefCode?: string;
   procedureCode?: string;
+  resourceCode?: string;
+  resourceName?: string;
   staffPractitionerId?: string;
   staffName?: string;
   manuallyAdjusted?: boolean;
@@ -31,6 +33,12 @@ export type MatrixResourceRow = {
   slots: MatrixSlot[];
 };
 
+export function cabinLabel(name: string | undefined, code: string | undefined): string {
+  const title = name?.trim() ?? "";
+  const id = code?.trim() ?? "";
+  if (title && id && title !== id) return `${title} (${id})`;
+  return title || id || "—";
+}
 export type Slot = MatrixSlot;
 export type ResourceRow = MatrixResourceRow;
 
@@ -337,9 +345,8 @@ export function ResourceDayMatrix({
                 return (
                   <div key={row.resourceId} className="contents">
                     <div className="sticky left-0 z-10 flex items-center border-b border-r border-[#D5DADF] bg-white px-2 py-1 text-[12px] font-semibold text-[#34495E]">
-                      <span className="truncate" title={`${row.name} (${row.code})`}>
-                        {row.name}{" "}
-                        <span className={`font-normal ${TEXT_MUTED_CLASS}`}>({row.code})</span>
+                      <span className="truncate" title={cabinLabel(row.name, row.code)}>
+                        {cabinLabel(row.name, row.code)}
                       </span>
                     </div>
                     {segments.map((seg) => {
@@ -389,7 +396,13 @@ export function ResourceDayMatrix({
                           className={`min-h-[3.25rem] cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
                           style={{ gridColumn: `span ${span}` }}
                           title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""} ${slot.status ?? ""}`}
-                          onClick={() => onSelect?.(slot)}
+                          onClick={() =>
+                            onSelect?.({
+                              ...slot,
+                              resourceName: row.name,
+                              resourceCode: row.code,
+                            })
+                          }
                         >
                           <div className="truncate font-semibold">{shortName(slot.patientName)}</div>
                           <div className={`truncate ${TEXT_MUTED_CLASS}`}>
