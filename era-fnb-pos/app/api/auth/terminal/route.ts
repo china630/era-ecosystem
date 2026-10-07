@@ -1,15 +1,10 @@
 import {
   authCookieName,
+  authenticateIndustryStaffLogin,
   enterSatelliteTenant,
-  findUserByCredential,
   isSatelliteUserLoginAllowed,
-  ORG_NO_RE,
-  readStaffLoginJson,
-  resolveStaffLoginTenant,
   satelliteRuntimeConfig,
-  verifySatelliteUserPassword,
 } from "@era/satellite-kit";
-import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import {
@@ -27,12 +22,6 @@ import {
   TERMINAL_MAX_MS,
   terminalCookieHeader,
 } from "@/lib/terminal-cookie";
-
-const pairSchema = z.object({
-  login: z.string().min(1),
-  password: z.string().min(1),
-  orgNo: z.string().regex(ORG_NO_RE).optional(),
-});
 
 async function liveTerminal(request: Request) {
   const claims = readTerminalCookie(terminalCookieHeader(request));
@@ -74,24 +63,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const rawBody = await readStaffLoginJson(request);
-    if (!rawBody.ok) return jsonError(rawBody.error, rawBody.status);
-    const body = pairSchema.parse(rawBody.raw);
-    const tenant = await resolveStaffLoginTenant({
-      orgNo: body.orgNo,
-      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+    const auth = await authenticateIndustryStaffLogin({
       request,
+      prisma,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
     });
-    if (!tenant.ok) return jsonError(tenant.error, tenant.status);
-    if (tenant.organizationId) {
-      enterSatelliteTenant({ organizationId: tenant.organizationId });
-    }
-    const user = await findUserByCredential(prisma, body.login, tenant.organizationId);
-    if (!(await verifySatelliteUserPassword(body.password, user)) || !user) {
-      return jsonError("Invalid credentials", 401);
-    }
-    const organizationId = user.organizationId;
-    enterSatelliteTenant({ organizationId });
+    if (!auth.ok) return jsonError(auth.error, auth.status);
+    const user = auth.user;
+    const organizationId = auth.organizationId;
     const profile = await getFnbOrgProfile(organizationId);
     const edition = resolveFnbEdition(profile.edition);
     await ensureSystemFnbRoles(prisma, organizationId, edition);

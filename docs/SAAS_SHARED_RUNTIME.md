@@ -20,7 +20,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | SHARED login requires `orgNo` → UUID resolve (fail-closed — [ADR](./adr/org-public-number-and-login-host.md)); **era-bank ops** same contract | HOT-06 **SHIPPED** / field SPA Insert |
 | Super-Admin Elektraweb / clinic cutover policy + Sync row upsert (**SHOW** Wave 6 lab) | Field two-org UAT → AC-*-TENANT Scaffold ✅ |
 | Finance: Nest `TenantContextInterceptor` + membership JWT org (not kit ALS) | AC-CP-TOPO Scaffold ✅ (field / lab signoff still open) |
-| Kit `findUserByCredential(login, org?)` | |
+| Kit `authenticateIndustryStaffLogin` enters the tenant in the same call as the credential query; bank `openStaffLogin` then enters before `OpsUser` | |
 | Hotel / clinic / auto cron via `runCronForEachTenant` + `byOrganization` JSON | |
 | SHARED cron: **orch pool members** only (`GET /v1/internal/satellite-pool/members`, kit backoff); empty / unreachable → 503 | |
 | Hotel + clinic **lab** two-org isolation CI | Field SHARED pool isolation UAT |

@@ -173,27 +173,6 @@ export async function recordUserLogin(
   }
 }
 
-/**
- * Resolve staff by login, email, or phone inside one org.
- * Without `organizationId` returns null. Never scans the pool and never uses the process bind.
- */
-export async function getUserByLogin(
-  credential: string,
-  organizationId?: string | null,
-) {
-  const id = credential.trim();
-  if (!id) return null;
-  const orgId = organizationId?.trim() || null;
-  if (!orgId) return null;
-  return prisma.user.findFirst({
-    where: {
-      organizationId: orgId,
-      OR: [{ login: id }, { email: id }, { phone: id }],
-    },
-    include: { role: true },
-  });
-}
-
 export function userPermissions(user: {
   email?: string | null;
   login: string;

@@ -1,15 +1,12 @@
 import {
-  ORG_NO_RE,
   authCookieName,
   enterSatelliteTenant,
   jsonLoginHostBinding,
-  readStaffLoginJson,
-  resolveStaffLoginTenant,
+  openStaffLogin,
   satelliteRuntimeConfig,
   signSatelliteSession,
   verifySatelliteUserPassword,
 } from "@era/satellite-kit";
-import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBankRoles } from "@/lib/auth/ensure-system-bank-roles";
@@ -19,46 +16,25 @@ import {
 } from "@/lib/auth/permissions";
 import { hasBankPermissionBypass } from "@/lib/auth/permission-check";
 
-const schema = z.object({
-  login: z.string().min(1),
-  password: z.string().min(1),
-  /** Required unless the host already names the organization. */
-  orgNo: z.string().regex(ORG_NO_RE).optional(),
-});
-
 export async function POST(request: Request) {
   try {
-    const rawBody = await readStaffLoginJson(request);
-    if (!rawBody.ok) {
-      return jsonError(rawBody.error, rawBody.status);
-    }
-    const body = schema.parse(rawBody.raw);
-    const tenant = await resolveStaffLoginTenant({
-      orgNo: body.orgNo,
-      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+    const opened = await openStaffLogin({
       request,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
     });
-    if (!tenant.ok) {
-      return jsonError(tenant.error, tenant.status);
+    if (!opened.ok) {
+      return jsonError(opened.error, opened.status);
     }
+    enterSatelliteTenant({ organizationId: opened.organizationId });
 
-    const organizationId = tenant.organizationId?.trim() || "";
-    if (!organizationId) {
-      return jsonError("orgNo is required", 400);
-    }
-
-    // Enter ALS before OpsUser lookup so the Prisma tenant extension cannot
-    // AND-merge a leftover process bind against this organization.
-    enterSatelliteTenant({ organizationId });
-
-    const username = body.login.trim();
+    const username = opened.login.trim();
     const user = await prisma.opsUser.findFirst({
-      where: { organizationId, username },
+      where: { organizationId: opened.organizationId, username },
       include: { opsRole: true },
     });
 
     if (
-      !(await verifySatelliteUserPassword(body.password, {
+      !(await verifySatelliteUserPassword(opened.password, {
         passwordHash: user?.passwordHash ?? "",
         status: user?.status ?? "CLOSED",
       })) ||

@@ -1,14 +1,9 @@
 import {
-  ORG_NO_RE,
-  burnPasswordVerifyCost,
-  readStaffLoginJson,
-  resolveStaffLoginTenant,
+  authenticateIndustryStaffLogin,
   satelliteRuntimeConfig,
 } from "@era/satellite-kit";
-import { z } from "zod";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
-import { verifyPassword } from "@/lib/auth/password";
-import { getUserByLogin } from "@/lib/services/user.service";
+import { prisma } from "@/lib/prisma";
 import { signBridgeToken } from "@/lib/integration/elektraweb-bridge/auth";
 import {
   enterBridgeTenant,
@@ -20,13 +15,6 @@ import {
 import { sessionMayUseBridge } from "@/lib/integration/elektraweb-bridge/grants";
 import { effectiveRolePermissions } from "@/lib/auth/permissions";
 
-const schema = z.object({
-  login: z.string().min(1),
-  password: z.string().min(1),
-  /** Required unless the host already names the organization. */
-  orgNo: z.string().regex(ORG_NO_RE).optional(),
-});
-
 /**
  * Extension login → bridge JWT bound to the chosen ERA hotel org + policy hotel id.
  */
@@ -36,26 +24,21 @@ export async function POST(request: Request) {
       return jsonError("Elektraweb bridge is disabled", 503);
     }
 
-    const rawBody = await readStaffLoginJson(request);
-    if (!rawBody.ok) {
-      return jsonError(rawBody.error, rawBody.status);
-    }
-    const body = schema.parse(rawBody.raw);
-    const tenant = await resolveStaffLoginTenant({
-      orgNo: body.orgNo,
-      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+    const auth = await authenticateIndustryStaffLogin({
       request,
+      prisma,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
     });
-    if (!tenant.ok) {
-      return jsonError(tenant.error, tenant.status);
+    if (!auth.ok) {
+      return jsonError(auth.error, auth.status);
     }
-    const user = await getUserByLogin(body.login, tenant.organizationId);
+    const user = await prisma.user.findUnique({
+      where: { id: auth.user.id },
+      include: { role: true },
+    });
     if (!user || user.status !== "ACTIVE") {
-      await burnPasswordVerifyCost(body.password);
       return jsonError("Invalid credentials", 401);
     }
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) return jsonError("Invalid credentials", 401);
 
     const role = user.role.code;
     const permissions = effectiveRolePermissions(

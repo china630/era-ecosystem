@@ -196,6 +196,12 @@ export {
   type SatelliteUserRecord,
 } from "./auth/login-user";
 export {
+  authenticateIndustryStaffLogin,
+  openStaffLogin,
+  type IndustryStaffLoginResult,
+  type OpenedStaffLogin,
+} from "./auth/industry-staff-login";
+export {
   ORG_NO_RE,
   UUID_RE,
   upsertLoginOrgNo,
