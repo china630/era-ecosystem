@@ -127,7 +127,7 @@ export async function createReservation(input: {
   children5_2?: number;
   children1_0?: number;
   partyBillingMode?: 'PRIMARY' | 'EQUAL';
-  contractRef?: string;
+  contractRef?: string | null;
   /**
    * When false (group hold / extra rooms), keep pax first/last empty so names-incomplete
    * gate applies and the same booker is not treated as a named claim on every stay.
@@ -146,6 +146,19 @@ export async function createReservation(input: {
   paidBy?: string | null;
   voucherNo?: string | null;
   resNo?: string | null;
+  shareNo?: string | null;
+  optionDate?: Date | string | null;
+  optionState?: string | null;
+  salesProject?: string | null;
+  specialStates?: string | null;
+  resGroup?: string | null;
+  colorCode?: string | null;
+  preferredLocation?: string | null;
+  preferredBed?: string | null;
+  creditLimitAzn?: number | null;
+  rateType?: string | null;
+  accomType?: string | null;
+  recordType?: string | null;
   useManualRate?: boolean;
   manualDailyRate?: number | null;
   discountPercent?: number | null;
@@ -391,6 +404,20 @@ export async function createReservation(input: {
         paidBy: input.paidBy ?? undefined,
         voucherNo: input.voucherNo ?? undefined,
         resNo: input.resNo ?? undefined,
+        shareNo: input.shareNo ?? undefined,
+        optionDate: input.optionDate ? new Date(input.optionDate) : undefined,
+        optionState: input.optionState ?? undefined,
+        salesProject: input.salesProject ?? undefined,
+        specialStates: input.specialStates ?? undefined,
+        resGroup: input.resGroup ?? undefined,
+        colorCode: input.colorCode ?? undefined,
+        preferredLocation: input.preferredLocation ?? undefined,
+        preferredBed: input.preferredBed ?? undefined,
+        creditLimitAzn:
+          input.creditLimitAzn != null ? toDecimal(input.creditLimitAzn) : undefined,
+        rateType: input.rateType ?? undefined,
+        accomType: input.accomType ?? undefined,
+        recordType: input.recordType ?? undefined,
         useManualRate: input.useManualRate ?? false,
         manualDailyRate:
           input.manualDailyRate != null ? toDecimal(input.manualDailyRate) : undefined,

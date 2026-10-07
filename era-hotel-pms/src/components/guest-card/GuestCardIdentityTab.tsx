@@ -76,6 +76,7 @@ export function GuestCardIdentityTab({
   draftPhone = '',
   draftEmail = '',
   onDraftChange,
+  locked = false,
 }: {
   guestId: string | null;
   documents: Array<{
@@ -101,6 +102,7 @@ export function GuestCardIdentityTab({
   draftPhone?: string;
   draftEmail?: string;
   onDraftChange?: (patch: { phone?: string; email?: string }) => void;
+  locked?: boolean;
 }) {
   const t = useTranslations('guestCard');
   const dash = '—';
@@ -117,7 +119,7 @@ export function GuestCardIdentityTab({
   }
 
   return (
-    <div className="space-y-4 text-[13px]">
+    <fieldset disabled={locked} className="min-w-0 space-y-4 border-0 p-0 text-[13px]">
       <div>
         <h3 className="mb-2 font-semibold text-[#34495E]">{t('documents')}</h3>
         <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('summary.documentAtCheckIn')}</p>
@@ -257,6 +259,6 @@ export function GuestCardIdentityTab({
           onSaved={onReload}
         />
       ) : null}
-    </div>
+    </fieldset>
   );
 }

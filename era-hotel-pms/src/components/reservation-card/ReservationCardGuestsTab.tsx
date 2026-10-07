@@ -14,7 +14,6 @@ import {
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
-  showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
@@ -23,6 +22,7 @@ import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
   ageYearsFromBirthDate,
   attachGuestToPax,
+  isIncompletePax,
   isMinorPax,
   splitFullName,
 } from '@/components/reservation-card/party-pax';
@@ -94,8 +94,8 @@ export function ReservationCardGuestsTab({
   onRepeatGuest?: () => void;
   /** Open existing guest profile (name click). */
   onOpenGuestCard?: (guestId: string) => void;
-  /** Open guest card with ID reader stub (Scan ID). */
-  onScanId?: (guestId: string | null) => void;
+  /** Open guest card with the ID reader. paxIndex is the row that should receive a new guest. */
+  onScanId?: (guestId: string | null, paxIndex?: number) => void;
   preferredBed?: string;
   preferredLocation?: string;
   voucherNo?: string;
@@ -231,7 +231,12 @@ export function ReservationCardGuestsTab({
     const { firstName, lastName } = splitFullName(g.label);
     const attached = attachGuestToPax(
       pax,
-      { id: g.id, firstName: g.firstName || firstName, lastName: g.lastName || lastName },
+      {
+        id: g.id,
+        firstName: g.firstName || firstName,
+        lastName: g.lastName || lastName,
+        birthDate: g.birthDate,
+      },
       { equalMode, reservationGuestId: guestId },
     );
     onGuestId(attached.guestId);
@@ -414,7 +419,7 @@ export function ReservationCardGuestsTab({
                   className={DROPDOWN_ITEM_CLASS}
                   onClick={() => {
                     setMenuOpenIdx(null);
-                    onScanId?.(row.guestId ?? null);
+                    onScanId?.(row.guestId ?? null, row._idx);
                   }}
                 >
                   {t('scanId')}
@@ -502,9 +507,13 @@ export function ReservationCardGuestsTab({
           <button
             type="button"
             className={GHOST_BUTTON_CLASS}
-            title={t('cameraStub')}
-            aria-label={t('camera')}
-            onClick={() => showSuccess(t('cameraStub'))}
+            title={t('scanId')}
+            aria-label={t('scanId')}
+            onClick={() => {
+              const idx = pax.findIndex((row) => isIncompletePax(row));
+              const target = idx >= 0 ? idx : 0;
+              onScanId?.(pax[target]?.guestId ?? null, target);
+            }}
           >
             <Camera className="h-4 w-4" />
           </button>

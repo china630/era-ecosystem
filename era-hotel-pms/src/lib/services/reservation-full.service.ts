@@ -369,14 +369,24 @@ export async function patchReservationFull(
     nextShareGender = null;
   }
 
-  const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
-  await assertShareInventory(existing.roomTypeId, checkIn, checkOut, {
-    id,
-    shareEligible: nextShareEligible,
-    shareGender: nextShareGender,
-    adults: data.adults ?? existing.adults,
-    roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
-  });
+  const nextRoomTypeId = data.roomTypeId ?? existing.roomTypeId;
+  const typeChanged = nextRoomTypeId !== existing.roomTypeId;
+  const windowGrows =
+    hotelDateKey(checkIn) < hotelDateKey(existing.checkInDate) ||
+    hotelDateKey(checkOut) > hotelDateKey(existing.checkOutDate);
+  // An already oversold charged type must not freeze the card. Quota is checked
+  // only when this save takes a new type or a longer stay. The new type is the
+  // one being written, not the type still stored on the row.
+  if (typeChanged || windowGrows) {
+    const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
+    await assertShareInventory(nextRoomTypeId, checkIn, checkOut, {
+      id,
+      shareEligible: nextShareEligible,
+      shareGender: nextShareGender,
+      adults: data.adults ?? existing.adults,
+      roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
+    });
+  }
 
   const shareFieldsDirty =
     shareEligible !== undefined || doorShareResolved || assignShareBedIndex !== undefined;

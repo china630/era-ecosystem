@@ -158,6 +158,18 @@ Front-office card behavior that the services and the editor must keep:
 
 Saving a guest (create and edit) requires first name, last name, gender, birth date and citizenship. Patronymic stays optional. Phone, FIN and passport are **not** required at booking: reception often does not have the copy yet. Check-in refuses the stay until every named guest (primary and companions, not departed, not an empty slot) has a document — FIN or passport for AZ, passport otherwise. An AZ guest aged 18 or older also needs a phone; under 18 the phone is waived. Age comes from the birth date (Asia/Baku), then from a typed age. A missing age is treated as an adult, so the phone rule applies. Saving the reservation still succeeds and returns `operationalGaps` for a warning toast.
 
+## Party counters follow the rows
+
+Each guest row has one age band: adult (12 and older, same cut as Depart guest), 11–6, 5–2, or 0–1. The birth date decides the band; an empty slot stores a representative age so the band survives a reload. A departed guest stays on the list and does not count. The four counters are the count of rows in each band. Adding a child adds an empty row of that band only. Search above the list fills an empty slot of the same band, or appends a row — an adult never occupies a child slot. Deleting a row removes that row’s band only. A named row is not dropped when a counter is lowered past it; the counter snaps back.
+
+## Room class is not always a free upgrade
+
+When the given (physical) type differs from the charged type, the card does not call it a complimentary upgrade. The hotel can cover the difference (charged type stays, price note). The guest can pay the given class: the charged type becomes the given type and remaining nights (today onward, unlocked) take that class’s nightly price when a type-scoped rate exists. A cheaper given class is a downgrade: the hotel refunds the difference, or the guest asked for the cheaper class. Both move the charged type to the given class. The door must still belong to the given type. Posted past nights are not rewritten. A dated product change remains the stay-amendment wizard.
+
+## Room moves
+
+A move is stored in `RoomChangePlan` only when the door actually changes. The card shows them collapsed under the room number, newest first, with a translated reason (the raw `CARD_ASSIGN` code is not shown). No moves means no block. The hotel-wide list stays at `/fo/room-changes`. The history icon opens the same stay journal (moves and notes), not the reports catalog. Folio payment and invoice links scroll to those sections on the folio page. Creating a stay writes the same extra card fields the later save writes (bed, location, color, option, contract, credit limit, accommodation and record type, rate type). A locked guest card also hides CRM, archive, family, and loyalty adds; the guest family page searches guests instead of asking for a UUID, and the accompanying and booker-history pages open the same guest or reservation card as the dialog.
+
 ## Consequences
 
 - Reservation card playbook (`era-hotel-pms-ui.mdc`) stays the **shipped** chrome until a UI wave lands D3; this ADR is the **target**.

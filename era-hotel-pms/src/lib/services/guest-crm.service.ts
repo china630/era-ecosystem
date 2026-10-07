@@ -218,19 +218,20 @@ export async function createGuestCommunication(
       });
       status = 'SENT';
       sentAt = new Date();
-      await prisma.guestContactLog.create({
-        data: {
-          guestId,
-          channel: input.channel,
-          result: 'SENT',
-          contactDate: new Date(),
-        },
-      });
     } catch (e) {
       status = 'FAILED';
       errorNote = e instanceof Error ? e.message : 'Send failed';
     }
   }
+
+  await prisma.guestContactLog.create({
+    data: {
+      guestId,
+      channel: input.channel,
+      result: status,
+      contactDate: new Date(),
+    },
+  });
 
   return prisma.guestCommunication.create({
     data: {
@@ -301,6 +302,7 @@ export async function listAccompanyingGuests(guestId: string) {
 
   return pax.map((p) => ({
     id: p.id,
+    guestId: p.guestId,
     reservationId: p.reservationId,
     roomNumber: p.reservation.room?.roomNumber ?? null,
     firstName: p.firstName,

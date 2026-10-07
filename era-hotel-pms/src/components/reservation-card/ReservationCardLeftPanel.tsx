@@ -20,6 +20,7 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import {
   bookingSourceKind,
@@ -44,6 +45,125 @@ function withSelectedRow<T extends { id: string }>(scoped: T[], all: T[], select
   if (!selectedId || scoped.some((x) => x.id === selectedId)) return scoped;
   const hit = all.find((x) => x.id === selectedId);
   return hit ? [hit, ...scoped] : scoped;
+}
+
+function nightlyForType(
+  plans: RatePlanOption[],
+  ratePlanId: string,
+  typeId: string,
+): number | null {
+  const matches = plans.filter(
+    (r) => r.roomTypeId === typeId && r.pricePerNight != null && r.pricePerNight > 0,
+  );
+  if (matches.length === 0 || !typeId) return null;
+  const current = plans.find((r) => r.id === ratePlanId);
+  const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
+  return (peer ?? matches[0]).pricePerNight ?? null;
+}
+
+function moveReasonLabel(
+  code: string | null | undefined,
+  notes: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  const raw = (code ?? '').trim();
+  const note = (notes ?? '').trim();
+  if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('roomMoveReasonCard');
+  if (raw === 'SWAP') return t('roomMoveReasonSwap');
+  if (raw === 'RELOCATE') return t('roomMoveReasonRelocate');
+  if (note) return note;
+  return t('roomMoveReasonOther');
+}
+
+function RoomMoves({
+  changes,
+}: {
+  changes?: Array<{
+    id: string;
+    effectiveAt: string;
+    fromRoom?: { roomNumber: string } | null;
+    toRoom?: { roomNumber: string } | null;
+    reasonCode?: string | null;
+    notes?: string | null;
+  }>;
+}) {
+  const t = useTranslations('reservationCard');
+  const rows = [...(changes ?? [])].sort((a, b) =>
+    String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
+  );
+  if (rows.length === 0) return null;
+  return (
+    <details className={`text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-moves">
+      <summary className="cursor-pointer font-semibold">{t('roomMoves')}</summary>
+      <ul className="m-0 mt-1 list-none p-0">
+        {rows.map((c) => (
+          <li key={c.id}>
+            {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
+            {bakuDateTimeDisplay(c.effectiveAt)}, {moveReasonLabel(c.reasonCode, c.notes, t)}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function ClassSettlement({
+  chargeLabel,
+  givenLabel,
+  chargedNightly,
+  givenNightly,
+  hotelCovers,
+  disabled,
+  onHotel,
+  onGuestPays,
+  onHotelRefund,
+  onGuestCheaper,
+}: {
+  chargeLabel: string;
+  givenLabel: string;
+  chargedNightly: number | null;
+  givenNightly: number | null;
+  hotelCovers: boolean;
+  disabled: boolean;
+  onHotel: () => void;
+  onGuestPays: () => void;
+  onHotelRefund: () => void;
+  onGuestCheaper: () => void;
+}) {
+  const t = useTranslations('reservationCard');
+  const givenLower =
+    chargedNightly != null && givenNightly != null && givenNightly < chargedNightly;
+  return (
+    <div
+      className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
+      data-testid="class-settlement"
+    >
+      <p className="m-0">
+        {t('classDiffers', { charge: chargeLabel, physical: givenLabel })}
+      </p>
+      {hotelCovers ? (
+        <p className="m-0 font-medium">{t('classHotelCovers')}</p>
+      ) : givenLower ? (
+        <div className="flex flex-wrap gap-1">
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotelRefund}>
+            {t('classHotelRefund')}
+          </button>
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestCheaper}>
+            {t('classGuestCheaper')}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotel}>
+            {t('classHotelCovers')}
+          </button>
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestPays}>
+            {t('classGuestPays')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function nightsBetween(checkIn: string, checkOut: string): number {
@@ -182,6 +302,17 @@ export type ReservationCardLeftPanelProps = {
   /** Assigned door no longer matches Given / Room type physical category. */
   doorPhysicalMismatch?: boolean;
   assignedRoomLabel?: string;
+  roomChanges?: Array<{
+    id: string;
+    effectiveAt: string;
+    fromRoom?: { roomNumber: string } | null;
+    toRoom?: { roomNumber: string } | null;
+    reasonCode?: string | null;
+    notes?: string | null;
+  }>;
+  onClassSettlement?: (
+    action: 'HOTEL' | 'GUEST_PAY' | 'HOTEL_REFUND' | 'GUEST_CHEAPER',
+  ) => void;
   contractRef: string;
   salesContractId: string;
   creditLimitAzn: string;
@@ -230,6 +361,10 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const [hotelCoversClass, setHotelCoversClass] = useState(false);
+  useEffect(() => {
+    setHotelCoversClass(false);
+  }, [props.givenRoomTypeId, props.roomTypeId]);
   const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
   const {
     isCreate,
@@ -463,18 +598,26 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           {props.givenRoomTypeId &&
           props.roomTypeId &&
           props.givenRoomTypeId !== props.roomTypeId ? (
-            <p
-              className="m-0 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
-              data-testid="complimentary-upgrade-chip"
-            >
-              {t('complimentaryUpgradeChip', {
-                charge:
-                  roomTypes.find((r) => r.id === props.roomTypeId)?.label ?? props.roomTypeId,
-                physical:
-                  roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
-                  props.givenRoomTypeId,
-              })}
-            </p>
+            <ClassSettlement
+              chargeLabel={
+                roomTypes.find((r) => r.id === props.roomTypeId)?.label ?? props.roomTypeId
+              }
+              givenLabel={
+                roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
+                props.givenRoomTypeId
+              }
+              chargedNightly={nightlyForType(ratePlans, props.ratePlanId, props.roomTypeId)}
+              givenNightly={nightlyForType(ratePlans, props.ratePlanId, props.givenRoomTypeId)}
+              hotelCovers={hotelCoversClass}
+              disabled={disabled}
+              onHotel={() => {
+                setHotelCoversClass(true);
+                props.onClassSettlement?.('HOTEL');
+              }}
+              onGuestPays={() => props.onClassSettlement?.('GUEST_PAY')}
+              onHotelRefund={() => props.onClassSettlement?.('HOTEL_REFUND')}
+              onGuestCheaper={() => props.onClassSettlement?.('GUEST_CHEAPER')}
+            />
           ) : null}
           {props.doorPhysicalMismatch ? (
             <p
@@ -640,6 +783,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </Link>
             </div>
           ) : null}
+          <RoomMoves changes={props.roomChanges} />
         </fieldset>
       </FieldPanel>
 

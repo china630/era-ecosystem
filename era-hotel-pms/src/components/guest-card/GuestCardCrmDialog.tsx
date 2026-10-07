@@ -1,20 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Field, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
-import { GuestCrmPromptListPage } from '@/components/guest-crm/GuestCrmPromptListPage';
+import { GuestCrmPromptListPage, GuestCrmReadOnly } from '@/components/guest-crm/GuestCrmPromptListPage';
 import { GuestCrmExtensionPage } from '@/components/guest-crm/GuestCrmExtensionPage';
 import { useGuestCrmList } from '@/components/guest-crm/useGuestCrmList';
+import { guestListItems } from '@/lib/guest-list-identity';
 
 function ReadList({
   guestId,
   path,
   line,
+  onOpen,
 }: {
   guestId: string;
   path: string;
   line: (row: Record<string, unknown>) => string;
+  onOpen?: (row: Record<string, unknown>) => void;
 }) {
   const t = useTranslations('guestCard');
   const { rows } = useGuestCrmList(path.replace('{id}', guestId));
@@ -22,8 +26,18 @@ function ReadList({
   return (
     <ul className="space-y-2 text-[13px]">
       {rows.map((r) => (
-        <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
-          {line(r)}
+        <li key={String(r.id)}>
+          {onOpen ? (
+            <button
+              type="button"
+              className="w-full rounded-xl border border-[#D5DADF] p-3 text-left hover:bg-[#F4F6F7]"
+              onClick={() => onOpen(r)}
+            >
+              {line(r)}
+            </button>
+          ) : (
+            <div className="rounded-xl border border-[#D5DADF] p-3">{line(r)}</div>
+          )}
         </li>
       ))}
     </ul>
@@ -58,7 +72,13 @@ function AnalyticsList({
   );
 }
 
-function ReservationList({ guestId }: { guestId: string }) {
+function ReservationList({
+  guestId,
+  onOpen,
+}: {
+  guestId: string;
+  onOpen: (reservationId: string) => void;
+}) {
   const t = useTranslations('guestCard');
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   useEffect(() => {
@@ -72,9 +92,15 @@ function ReservationList({ guestId }: { guestId: string }) {
       {rows.map((r) => {
         const room = r.room as { roomNumber?: string } | null;
         return (
-          <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
-            {String(r.status ?? '')} · {String(r.checkInDate ?? '').slice(0, 10)} — {String(r.checkOutDate ?? '').slice(0, 10)}
-            {room?.roomNumber ? ` · ${room.roomNumber}` : ''}
+          <li key={String(r.id)}>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-[#D5DADF] p-3 text-left hover:bg-[#F4F6F7]"
+              onClick={() => onOpen(String(r.id))}
+            >
+              {String(r.status ?? '')} · {String(r.checkInDate ?? '').slice(0, 10)} — {String(r.checkOutDate ?? '').slice(0, 10)}
+              {room?.roomNumber ? ` · ${room.roomNumber}` : ''}
+            </button>
           </li>
         );
       })}
@@ -82,14 +108,230 @@ function ReservationList({ guestId }: { guestId: string }) {
   );
 }
 
+function ArchivePanel({ guestId }: { guestId: string }) {
+  const t = useTranslations('guestCard');
+  const tc = useTranslations('common');
+  const readOnly = useContext(GuestCrmReadOnly);
+  const { rows, reload } = useGuestCrmList(`/api/guests/${guestId}/archive`);
+  const [title, setTitle] = useState('');
+  const [docType, setDocType] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function add() {
+    if (!title.trim() || !docType.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/guests/${guestId}/archive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), docType: docType.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json);
+        return;
+      }
+      setTitle('');
+      setDocType('');
+      showSuccess(tc('success'));
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {readOnly ? null : (
+      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <Field label={tc('name')} preset="shortText" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Field
+          label={t('crmPages.docTypePrompt')}
+          preset="shortText"
+          value={docType}
+          onChange={(e) => setDocType(e.target.value)}
+        />
+        <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy || !title.trim() || !docType.trim()} onClick={() => void add()}>
+          {t('crmPages.add')}
+        </button>
+      </div>
+      )}
+      {rows.length === 0 ? (
+        <p className="text-[13px] text-[#7F8C8D]">{t('crmPages.empty')}</p>
+      ) : (
+        <ul className="space-y-2 text-[13px]">
+          {rows.map((r) => (
+            <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
+              {String(r.title ?? r.docType ?? '')}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function FamilyPanel({
+  guestId,
+  onOpenGuest,
+}: {
+  guestId: string;
+  onOpenGuest?: (guestId: string) => void;
+}) {
+  const t = useTranslations('guestCard');
+  const tc = useTranslations('common');
+  const readOnly = useContext(GuestCrmReadOnly);
+  const { rows, reload } = useGuestCrmList(`/api/guests/${guestId}/family`);
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<Array<{ id: string; fullName: string }>>([]);
+  const [relatedGuestId, setRelatedGuestId] = useState('');
+  const [relatedLabel, setRelatedLabel] = useState('');
+  const [relationship, setRelationship] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setHits([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      void fetch(`/api/guests?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((list) => {
+          setHits(
+            guestListItems(list)
+              .filter((g) => g.id !== guestId)
+              .slice(0, 8)
+              .map((g) => ({ id: g.id, fullName: g.fullName })),
+          );
+        })
+        .catch(() => setHits([]));
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [query, guestId]);
+
+  async function add() {
+    if (!relatedGuestId || !relationship.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/guests/${guestId}/family`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ relatedGuestId, relationship: relationship.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json);
+        return;
+      }
+      setRelatedGuestId('');
+      setRelatedLabel('');
+      setQuery('');
+      setRelationship('');
+      showSuccess(tc('success'));
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {readOnly ? null : (
+      <div className="grid gap-2">
+        <Field
+          label={t('crmFields.relatedGuest')}
+          preset="longText"
+          value={relatedLabel || query}
+          onChange={(e) => {
+            setRelatedGuestId('');
+            setRelatedLabel('');
+            setQuery(e.target.value);
+          }}
+        />
+        {hits.length > 0 ? (
+          <ul className="m-0 list-none rounded-md border border-[#D5DADF] p-0">
+            {hits.map((g) => (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  className="w-full px-2 py-1.5 text-left text-[13px] hover:bg-[#F4F6F7]"
+                  onClick={() => {
+                    setRelatedGuestId(g.id);
+                    setRelatedLabel(g.fullName);
+                    setQuery('');
+                    setHits([]);
+                  }}
+                >
+                  {g.fullName}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+          <Field
+            label={t('crmFields.relationship')}
+            preset="shortText"
+            value={relationship}
+            onChange={(e) => setRelationship(e.target.value)}
+          />
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy || !relatedGuestId || !relationship.trim()}
+            onClick={() => void add()}
+          >
+            {t('crmPages.add')}
+          </button>
+        </div>
+      </div>
+      )}
+      {rows.length === 0 ? (
+        <p className="text-[13px] text-[#7F8C8D]">{t('crmPages.empty')}</p>
+      ) : (
+        <ul className="space-y-2 text-[13px]">
+          {rows.map((r) => {
+            const rel = r.relatedGuest as { fullName?: string } | undefined;
+            const relatedId = typeof r.relatedGuestId === 'string' ? r.relatedGuestId : '';
+            const label = `${rel?.fullName ?? relatedId} — ${String(r.relationship)}`;
+            return (
+              <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
+                {onOpenGuest && relatedId ? (
+                  <button
+                    type="button"
+                    className="text-left text-[#2980B9] hover:underline"
+                    onClick={() => onOpenGuest(relatedId)}
+                  >
+                    {label}
+                  </button>
+                ) : (
+                  label
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function GuestCardCrmDialog({
   panelId,
   guestId,
   onClose,
+  onOpenGuest,
+  onOpenReservation,
+  locked = false,
 }: {
   panelId: string | null;
   guestId: string | null;
   onClose: () => void;
+  onOpenGuest?: (guestId: string) => void;
+  onOpenReservation?: (reservationId: string) => void;
+  locked?: boolean;
 }) {
   const t = useTranslations('guestCard');
   if (!panelId || !guestId) return null;
@@ -124,6 +366,7 @@ export function GuestCardCrmDialog({
   };
 
   return (
+    <GuestCrmReadOnly.Provider value={locked}>
     <EraModal
       open
       title={t(titleKey[panelId] as 'crm.tasks')}
@@ -407,28 +650,7 @@ export function GuestCardCrmDialog({
           )}
         />
       ) : null}
-      {panelId === 'family' ? (
-        <GuestCrmPromptListPage
-          embedded
-          guestId={guestId}
-          titleKey="crmPages.familyTitle"
-          apiPath={(gid) => `/api/guests/${gid}/family`}
-          addFields={[
-            { name: 'relatedGuestId', label: t('crmFields.relatedGuest'), required: true, preset: 'longText' },
-            { name: 'relationship', label: t('crmFields.relationship'), required: true, preset: 'shortText' },
-          ]}
-          buildBody={(v) => ({ relatedGuestId: v.relatedGuestId.trim(), relationship: v.relationship.trim() })}
-          searchKeys={['relationship']}
-          renderItem={(r) => {
-            const rel = r.relatedGuest as { fullName?: string } | undefined;
-            return (
-              <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
-                {rel?.fullName ?? String(r.relatedGuestId)} — {String(r.relationship)}
-              </li>
-            );
-          }}
-        />
-      ) : null}
+      {panelId === 'family' ? <FamilyPanel guestId={guestId} onOpenGuest={onOpenGuest} /> : null}
       {panelId === 'interests' ? (
         <GuestCrmExtensionPage embedded guestId={guestId} titleKey="crmPages.interestsTitle" field="interests" />
       ) : null}
@@ -438,13 +660,7 @@ export function GuestCardCrmDialog({
       {panelId === 'general-crm' ? (
         <GuestCrmExtensionPage embedded guestId={guestId} titleKey="crmPages.generalCrmTitle" field="generalCrmNotes" multiline />
       ) : null}
-      {panelId === 'archive' ? (
-        <ReadList
-          guestId={guestId}
-          path="/api/guests/{id}/archive"
-          line={(r) => `${String(r.title ?? r.docType ?? '')}`}
-        />
-      ) : null}
+      {panelId === 'archive' ? <ArchivePanel guestId={guestId} /> : null}
       {panelId === 'contact-logs' ? (
         <ReadList
           guestId={guestId}
@@ -457,6 +673,11 @@ export function GuestCardCrmDialog({
           guestId={guestId}
           path="/api/guests/{id}/accompanying"
           line={(r) => `${String(r.firstName ?? '')} ${String(r.lastName ?? '')}`.trim()}
+          onOpen={(r) => {
+            const linked = r.guestId ? String(r.guestId) : '';
+            if (linked) onOpenGuest?.(linked);
+            else if (r.reservationId) onOpenReservation?.(String(r.reservationId));
+          }}
         />
       ) : null}
       {panelId === 'booker' ? (
@@ -467,6 +688,7 @@ export function GuestCardCrmDialog({
             const guest = r.guest as { fullName?: string } | undefined;
             return `${guest?.fullName ?? ''} · ${String(r.checkInDate ?? '').slice(0, 10)}`;
           }}
+          onOpen={(r) => onOpenReservation?.(String(r.id))}
         />
       ) : null}
       {panelId === 'sources' ? (
@@ -483,7 +705,10 @@ export function GuestCardCrmDialog({
           line={(r) => `${String(r.tripReason ?? '')} · ${String(r.resCount ?? '')}`}
         />
       ) : null}
-      {panelId === 'reservations' ? <ReservationList guestId={guestId} /> : null}
+      {panelId === 'reservations' ? (
+        <ReservationList guestId={guestId} onOpen={(id) => onOpenReservation?.(id)} />
+      ) : null}
     </EraModal>
+    </GuestCrmReadOnly.Provider>
   );
 }

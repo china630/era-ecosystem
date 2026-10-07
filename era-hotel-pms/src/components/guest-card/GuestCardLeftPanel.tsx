@@ -78,6 +78,7 @@ export function GuestCardLeftPanel({
   onVerified = () => {},
   onGlobalPersonIdChange = () => {},
   onReload,
+  locked = false,
 }: {
   fullName: string;
   firstName: string;
@@ -120,6 +121,7 @@ export function GuestCardLeftPanel({
   onVerified?: (key: 'phoneVerified' | 'emailVerified', value: boolean) => void;
   onGlobalPersonIdChange?: (id: string | null) => void;
   onReload?: () => void;
+  locked?: boolean;
 }) {
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
@@ -227,6 +229,8 @@ export function GuestCardLeftPanel({
 
   return (
     <aside className="min-h-0 space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
+      {locked ? <p className="m-0 text-[12px] text-[#7F8C8D]">{t('locked')}</p> : null}
+      <fieldset disabled={locked} className="min-w-0 space-y-3 border-0 p-0">
       <FieldPanel title={t('panels.identity')}>
         {allergenCount != null && allergenCount > 0 ? (
           <p className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-2 py-1.5 text-[11px] font-medium text-rose-800">
@@ -521,6 +525,7 @@ export function GuestCardLeftPanel({
           <Field label={t('details.voen')} preset="voen" value={voen} onChange={set('voen')} hint={t('details.voenHint')} />
         </div>
       </FieldPanel>
+      </fieldset>
     </aside>
   );
 }
