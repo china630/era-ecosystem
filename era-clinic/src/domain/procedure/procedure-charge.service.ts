@@ -29,7 +29,7 @@ export type ProcedureChargeContext = {
  *
  * Quota SoT is COUNT via syncEntitlementUsage — never increment. Key is packageQuotaCode
  * (pool/alias) falling back to procedureCode.
- * Pricing SoT is resolveEntitlementCharge (listAmount preferred).
+ * Pricing SoT is resolveEntitlementCharge (one catalog price).
  */
 export async function resolveProcedureCharge(
   order: {

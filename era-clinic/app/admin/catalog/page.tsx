@@ -22,7 +22,6 @@ import {
   FieldRow,
   FieldSelect,
   ListPaginationFooter,
-  MODAL_CHECKBOX_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -64,8 +63,14 @@ type PriceHistoryRow = {
 
 const KIND_VALUES = ["PROCEDURE", "DIAGNOSTIC", "LAB", "VISIT", "OTHER"] as const;
 
-type PackageFilter = "" | "paid" | "package";
 type KindFilter = "" | "PROCEDURE" | "DIAGNOSTIC" | "LAB" | "VISIT" | "OTHER";
+
+function catalogPrice(row: { amount: string | number; listAmount?: string | number | null }): number {
+  const list = row.listAmount != null && row.listAmount !== "" ? Number(row.listAmount) : 0;
+  if (Number.isFinite(list) && list > 0) return list;
+  const amount = Number(row.amount);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+}
 type MissingListFilter = "" | "1";
 
 function isStale(syncedAt: string): boolean {
@@ -91,8 +96,6 @@ export default function CatalogAdminPage() {
     descriptionRu: "",
     descriptionEn: "",
     amount: "",
-    listAmount: "",
-    packageIncluded: false,
     department: "",
     kind: "OTHER",
     effectiveFrom: "",
@@ -113,7 +116,6 @@ export default function CatalogAdminPage() {
   const [sort, setSort] = useState<EraDataGridSort | null>(null);
   const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState({
-    packageIncluded: "" as PackageFilter,
     department: search.get("department") ?? "",
     kind: "" as KindFilter,
     missingListPrice: "" as MissingListFilter,
@@ -144,13 +146,10 @@ export default function CatalogAdminPage() {
     return !max || d > max ? d : max;
   }, null);
 
-  const missingListPriceCount = useMemo(() => {
-    return rows.filter((row) => {
-      const list = row.listAmount != null ? Number(row.listAmount) : 0;
-      const amount = Number(row.amount);
-      return (row.packageIncluded || amount === 0) && !(list > 0);
-    }).length;
-  }, [rows]);
+  const missingListPriceCount = useMemo(
+    () => rows.filter((row) => catalogPrice(row) <= 0).length,
+    [rows],
+  );
 
   const departments = useMemo(
     () =>
@@ -214,8 +213,6 @@ export default function CatalogAdminPage() {
           `${row.code} ${row.displayName ?? ""} ${row.description} ${row.descriptionAz ?? ""} ${row.descriptionRu ?? ""} ${row.descriptionEn ?? ""}`.toLowerCase();
         if (!hay.includes(needle)) return false;
       }
-      if (filters.packageIncluded === "package" && !row.packageIncluded) return false;
-      if (filters.packageIncluded === "paid" && row.packageIncluded) return false;
       if (filters.department && row.departmentCode !== filters.department) return false;
       if (filters.kind && row.kind !== filters.kind) return false;
       return true;
@@ -229,7 +226,7 @@ export default function CatalogAdminPage() {
           const dir = sort.dir === "asc" ? 1 : -1;
           const value = (row: CatalogRow) => {
             if (sort.key === "code") return row.code;
-            if (sort.key === "amount") return Number(row.amount);
+            if (sort.key === "amount") return catalogPrice(row);
             if (sort.key === "department") return row.departmentCode ?? row.department ?? "";
             if (sort.key === "effectiveFrom") return row.effectiveFrom ?? row.syncedAt ?? "";
             return row.displayName ?? localizedCatalogDescription(row, locale);
@@ -260,18 +257,7 @@ export default function CatalogAdminPage() {
         key: "amount",
         header: t("amount"),
         sortable: true,
-        render: (row) => {
-          const list = row.listAmount != null ? Number(row.listAmount) : 0;
-          if (row.packageIncluded) {
-            return (
-              <span className={TEXT_MUTED_CLASS}>
-                {t("packageLabel")}
-                {list > 0 ? ` · list ${list} AZN` : ""}
-              </span>
-            );
-          }
-          return `${row.amount} AZN`;
-        },
+        render: (row) => `${catalogPrice(row)} AZN`,
       },
       {
         key: "department",
@@ -342,8 +328,6 @@ export default function CatalogAdminPage() {
       descriptionRu: "",
       descriptionEn: "",
       amount: "",
-      listAmount: "",
-      packageIncluded: false,
       department: "",
       kind: "OTHER",
       effectiveFrom: todayBakuYmd(),
@@ -358,9 +342,7 @@ export default function CatalogAdminPage() {
       descriptionAz: row.descriptionAz ?? row.description ?? "",
       descriptionRu: row.descriptionRu ?? "",
       descriptionEn: row.descriptionEn ?? "",
-      amount: String(row.amount ?? ""),
-      listAmount: row.listAmount != null ? String(row.listAmount) : "",
-      packageIncluded: row.packageIncluded,
+      amount: String(catalogPrice(row) || ""),
       department: row.departmentCode ?? "",
       kind: row.kind ?? "OTHER",
       effectiveFrom: todayBakuYmd(),
@@ -391,8 +373,6 @@ export default function CatalogAdminPage() {
         descriptionRu: draft.descriptionRu,
         descriptionEn: draft.descriptionEn,
         amount: Number(draft.amount || 0),
-        listAmount: draft.listAmount.trim() === "" ? null : Number(draft.listAmount),
-        packageIncluded: draft.packageIncluded,
         departmentCode: draft.department || null,
         kind: draft.kind,
         effectiveFrom: draft.effectiveFrom,
@@ -457,7 +437,6 @@ export default function CatalogAdminPage() {
     setQ("");
     setDepartmentFilter("");
     setFilters({
-      packageIncluded: "" as PackageFilter,
       department: "",
       kind: "" as KindFilter,
       missingListPrice: "" as MissingListFilter,
@@ -521,21 +500,6 @@ export default function CatalogAdminPage() {
           <option value="LAB">{t("filterKindLab")}</option>
           <option value="VISIT">{t("filterKindVisit")}</option>
           <option value="OTHER">{t("filterKindOther")}</option>
-        </FieldSelect>
-        <FieldSelect
-          label={t("filterPackage")}
-          preset="select"
-          value={filters.packageIncluded}
-          onChange={(e) =>
-            setFilters({
-              ...filters,
-              packageIncluded: e.target.value as PackageFilter,
-            })
-          }
-        >
-          <option value="">{t("filterPackageAll")}</option>
-          <option value="paid">{t("filterPackagePaid")}</option>
-          <option value="package">{t("filterPackageIncluded")}</option>
         </FieldSelect>
         <FieldSelect
           label={t("filterMissingListPrice")}
@@ -682,18 +646,12 @@ export default function CatalogAdminPage() {
             onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })}
           />
           </FieldRow>
-          <FieldRow cols={3}>
+          <FieldRow cols={2}>
           <Field
             label={t("amount")}
             preset="amount"
             value={draft.amount}
             onChange={(e) => setDraft({ ...draft, amount: e.target.value })}
-          />
-          <Field
-            label={t("listAmount")}
-            preset="amount"
-            value={draft.listAmount}
-            onChange={(e) => setDraft({ ...draft, listAmount: e.target.value })}
           />
           <DatePicker
             label={t("effectiveFrom")}
@@ -720,15 +678,6 @@ export default function CatalogAdminPage() {
               })}
             </div>
           ) : null}
-          <label className="flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              className={MODAL_CHECKBOX_CLASS}
-              checked={draft.packageIncluded}
-              onChange={(e) => setDraft({ ...draft, packageIncluded: e.target.checked })}
-            />
-            {t("packageLabel")}
-          </label>
           {history.length > 0 ? (
             <div className="overflow-hidden rounded border border-[#D5DADF]">
               <p className="border-b border-[#D5DADF] bg-[#F4F6F7] px-3 py-2 text-[13px] font-semibold text-[#34495E]">
@@ -739,17 +688,13 @@ export default function CatalogAdminPage() {
                   <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("effectiveFrom")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("amount")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("listAmount")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.effectiveFrom)}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.amount} AZN</td>
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        {row.listAmount != null ? `${row.listAmount} AZN` : "—"}
-                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{catalogPrice(row)} AZN</td>
                     </tr>
                   ))}
                 </tbody>

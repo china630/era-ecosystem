@@ -1,6 +1,7 @@
 /**
  * CLI-57 — paid extras: prescribe → PENDING_PAY → Pay → place + ticket ×3.
  */
+import { catalogUnitPrice } from "@/domain/catalog/catalog-price.service";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -58,11 +59,7 @@ async function loadEpisode(episodeId: string) {
   return episode;
 }
 
-/**
- * Extras are always commercial, so price them through the entitlement charge on the
- * paid lane (`listAmount` first) instead of the commercial `amount`, which is 0 for
- * package-included SKUs.
- */
+/** Extras are always paid, so they take the catalog price (quota does not apply). */
 async function listPriceForCode(procedureCode: string): Promise<number> {
   const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
     "@/domain/sanatorium/entitlement-charge.service"
@@ -197,9 +194,7 @@ export async function listExtraUnitPrices(): Promise<Record<string, number>> {
   });
   const out: Record<string, number> = {};
   for (const r of rows) {
-    // listAmount is the retail price; amount stays 0 for package-included SKUs.
-    const list = r.listAmount != null ? Number(r.listAmount) : NaN;
-    const n = Number.isFinite(list) && list > 0 ? list : Number(r.amount);
+    const n = catalogUnitPrice(r);
     if (!r.code) continue;
     if (n > 0) out[r.code] = n;
     else if (!(out[r.code] > 0)) out[r.code] = DEFAULT_OVER_QUOTA_AZN;

@@ -1464,9 +1464,11 @@ model ServiceCatalogCache {
   descriptionAz   String?            @map("description_az")
   descriptionRu   String?            @map("description_ru")
   descriptionEn   String?            @map("description_en")
+  /// Payable catalog price. Older Nafta rows stored this in listAmount and left amount at 0.
   amount          Decimal            @db.Decimal(12, 2)
-  /// Retail / walk-in / over-quota list price (kept when package `amount` is 0).
+  /// Same price as amount. Kept so rows imported before the single-price change still resolve.
   listAmount      Decimal?           @map("list_amount") @db.Decimal(12, 2)
+  /// Unused for charging. In-quota is 0 from the guest quota, not from this flag.
   packageIncluded Boolean            @default(false) @map("package_included")
   /// Legacy label kept in sync with the department card (import and filters).
   department      String?

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { catalogUnitPrice } from "@/domain/catalog/catalog-price.service";
 import {
   isOverEntitlementQuota,
   resolveEntitlementInstance,
@@ -66,11 +67,7 @@ function catalogListPrice(catalog: {
   listAmount: unknown;
   amount: unknown;
 } | null): number {
-  if (!catalog) return 0;
-  const list = catalog.listAmount != null ? Number(catalog.listAmount) : NaN;
-  if (Number.isFinite(list) && list > 0) return list;
-  const amount = Number(catalog.amount);
-  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+  return catalogUnitPrice(catalog);
 }
 
 function paidFromCatalog(

@@ -15,7 +15,7 @@
 2. `quotaFor` clamps to `maxNights`, refuses below `minNights`, interpolates between adjacent PDF columns (`Math.round`).
 3. Stay nights come from hotel check-in/out; `endsOn` follows checkout.
 4. Package/night change → `recalcProgramQuotas`; **never** cancel `CHECKED_IN`/`COMPLETED`; drop orphan `PROPOSED`. **Amended 2026-09-04** ([clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md)): when stay **shortens**, also cancel **future non-consumed** `SCHEDULED` past the new end and return unused quota (1 code/category/day sync). Do not silently delete COMPLETED; over-consumed vs new total → pay path.
-5. Charging: in-quota `amountNet=0` when a balance line exists (ignore global `packageIncluded`); over-quota = **list price** (`ServiceCatalogCache.listAmount` ?? `amount`); walk-in without instance always paid. Missing list → `priceMissing` (do not invent silent zeros as truth). See `entitlement-charge.service.ts` (W3).
+5. Charging: in-quota `amountNet=0` when a balance line exists; over-quota = the catalog price (`ServiceCatalogCache.listAmount` when set, else `amount`); walk-in without instance always paid. Missing price → `priceMissing` (do not invent silent zeros as truth). See `entitlement-charge.service.ts` (W3). The catalog checkbox `packageIncluded` does not affect the charge.
 
 ## Entitlement blocks (2026-09-07)
 
@@ -116,9 +116,9 @@ Rules:
 
 | Rule | Behavior |
 |------|----------|
-| **SoT** | `resolveEntitlementCharge` — prefers `listAmount` for paid paths. |
-| **Import** | Nafta import sets `listAmount` from row amount even when `packageIncluded` (commercial `amount` may stay 0). |
-| **Admin** | `GET /api/admin/catalog?missingListPrice=1` surfaces package/zero rows without list. |
+| **SoT** | `resolveEntitlementCharge` — one catalog price (`catalogUnitPrice`: `listAmount` if set, else `amount`). |
+| **Import** | Nafta import writes that price into both `amount` and `listAmount`. |
+| **Admin** | `GET /api/admin/catalog?missingListPrice=1` surfaces rows with no price. |
 | **Create** | Intake visits/labs set amounts from entitlement charge (no silent hardcoded zeros for fulfillment). |
 | **Bonus** | `amountNet === 0` package lines stay `bonusEligible=false` (CLI-53). |
 
@@ -131,7 +131,7 @@ Rules:
 23. **One instance per order.** `resolveProcedureCharge` resolves the instance from the order's own `clinicalEpisodeId` (reservation lookup only as legacy fallback) so sync and pricing cannot diverge across a re-opened episode.
 24. **VISIT implies a doctor.** `Visit.practitionerId` is non-null, so a `VISIT` block waits for the care team regardless of `requiresDoctor`; the axis only frees `LAB_ORDER` blocks. A `CANCELLED` lab no longer blocks auto-apply retry.
 25. **Over-quota labs respect `procedureOverQuotaPolicy`.** `BLOCK` rejects creation with `LAB_OVER_QUOTA_BLOCKED` (409); other policies charge list price and warn.
-26. **Extras use the paid lane.** `extras-assign` prices through `resolveEntitlementCharge` (`listAmount` first) instead of commercial `amount`, which is 0 for package-included SKUs; the extras modal shows `—` for an unpriced SKU instead of a made-up 25 AZN.
+26. **Extras use the paid lane.** `extras-assign` prices through `resolveEntitlementCharge` at the catalog price; the extras modal shows `—` for an unpriced SKU instead of a made-up 25 AZN.
 
 ## Related
 

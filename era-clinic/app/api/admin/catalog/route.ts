@@ -17,8 +17,6 @@ const writeSchema = z.object({
   descriptionRu: z.string().optional().nullable(),
   descriptionEn: z.string().optional().nullable(),
   amount: z.number().nonnegative(),
-  listAmount: z.number().nonnegative().nullable().optional(),
-  packageIncluded: z.boolean().optional(),
   department: z.string().optional().nullable(),
   departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
@@ -36,14 +34,9 @@ export async function GET(req: Request) {
     const where: Prisma.ServiceCatalogCacheWhereInput = {};
     if (kinds) where.kind = { in: kinds };
     if (missingListPrice) {
-      // Package-included or commercial amount 0, and no usable listAmount.
       where.AND = [
-        {
-          OR: [{ packageIncluded: true }, { amount: 0 }],
-        },
-        {
-          OR: [{ listAmount: null }, { listAmount: 0 }],
-        },
+        { amount: 0 },
+        { OR: [{ listAmount: null }, { listAmount: 0 }] },
       ];
     }
 
@@ -81,7 +74,7 @@ export async function POST(req: Request) {
     const code = body.code.trim();
     const existing = await prisma.serviceCatalogCache.findFirst({ where: { code } });
     if (existing) return jsonError("Code already exists", 409);
-    const listAmount = body.listAmount ?? null;
+    const listAmount = body.amount > 0 ? body.amount : null;
     const effectiveFrom = body.effectiveFrom
       ? bakuDayBounds(body.effectiveFrom).start
       : new Date();
@@ -96,7 +89,7 @@ export async function POST(req: Request) {
         descriptionEn: body.descriptionEn?.trim() || null,
         amount: body.amount,
         listAmount,
-        packageIncluded: body.packageIncluded ?? false,
+        packageIncluded: false,
         department: dept.department,
         departmentCode: dept.departmentCode,
         kind: body.kind ?? "OTHER",

@@ -91,7 +91,7 @@ Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 - [x] `/admin/master-data` — practitioners ops catalog (specialty, slots); hire via CP Workforce when `cp_workforce` (`GET /platform/v1/workforce/policy`); POST practitioners **403** when CP hire active
 - [x] `/admin/wards` — ward/bed create+edit+delete modals
 - [x] `/patients` — registry list + create modal (M1)
-- [x] `/admin/catalog` — service cache + Finance sync + Nafta price import (`POST /api/admin/catalog/import-nafta`, `packageIncluded` / department filters)
+- [x] `/admin/catalog` — service cache + Finance sync + Nafta price import (`POST /api/admin/catalog/import-nafta`, one price, department / kind filters)
 - [x] `/admin/diagnostic-catalog` — single form SoT (incl. visit + field designer); `/admin/program-templates` — sanatorium packages; `ClinicalTemplate` table dropped
 - [x] Visit exam print — `/print/visit-exam/[cpoeEntryId]` from CPOE history (one entry); FHIR + whole-visit print = debt in CLINICAL_AND_PROGRAM_TEMPLATES.md
 - [x] `/admin/procedure-rules` — compatibility + FIFO sequence rules (modal)
@@ -166,7 +166,7 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 - [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `ProgramTemplateBlockMember` whitelist; **template versioning** + `entitlementSnapshot` pin; `recalcProgramQuotas` night-only keeps pin; `/admin/program-templates` entitlement blocks + knots matrix (`max-w-4xl`); ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
 - [~] W1 entitlement usage: LabOrderItem/VisitServiceLine `inPackage`+`packageQuotaCode`; single COUNT SoT (`entitlement-usage.service`); charge uses `packageQuotaCode`; intake stamps balances when ProgramInstance matches; UI UAT deferred
 - [~] W2 block axes + auto-apply: `assignMode`/`fulfillment`/`quotaBasis`/`requiresDoctor` on template blocks; `applyPackageAutoBlocks` (OPEN/DAY1/CARE_TEAM/MANUAL_RETRY); `packageSignal` + confirm-no-package; intake blocks on import `#23` PKG-* (optional `npm run db:seed:intake-blocks` / `db:seed:demo` only); admin matrix PER_STAY + auto badge; UI UAT deferred
-- [~] W3 entitlement charge: `listAmount` on catalog; `resolveEntitlementCharge` for labs/visits/procedures; intake/lab create priced from entitlement; admin `?missingListPrice=1`; cashier skips zero package lines
+- [~] W3 entitlement charge: one catalog price; `resolveEntitlementCharge` for labs/visits/procedures; intake/lab create priced from entitlement; admin `?missingListPrice=1`; cashier skips zero package lines
 - [~] W1–W3 audit fixes: `noPackageConfirmedAt` reversible (`DELETE …/confirm-no-package` + auto-clear on new instance); `recalcProgramQuotas` re-syncs codes it creates; `applyPriceMissingFallback` for labs/visits (no paid line at 0); episode-less lab orders priced from catalog; `awaiting_package` written to `ProcedureChargeLog` (`forceLog`); charge instance resolved from the order's episode; VISIT blocks always wait for a doctor; `CANCELLED` lab no longer blocks retry; over-quota labs honor `procedureOverQuotaPolicy` (`LAB_OVER_QUOTA_BLOCKED`)
 - [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
 - [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints

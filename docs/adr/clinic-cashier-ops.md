@@ -7,7 +7,7 @@
 ## Decision
 
 1. **Unified bill** per completed visit aggregates VisitServiceLine + linked LabOrderItem + charged ProcedureOrder lines. **Zero-amount lines are skipped** (in-quota package fulfillment); positive lab/visit/procedure lines are included.
-2. **Entitlement pricing (W3):** `resolveEntitlementCharge` prefers `ServiceCatalogCache.listAmount` over commercial `amount`. Walk-in always paid; in-quota package → 0; over-quota / no package → list price; missing list → `priceMissing` (procedure path may fall back to `DEFAULT_OVER_QUOTA_AZN` only when a charge must post). Episode `noPackageConfirmedAt` → paid (reversible via `DELETE …/confirm-no-package`, and cleared when a `ProgramInstance` appears); `NO_PROGRAM_CODE` without confirm → `awaiting_package` (0, not charged yet, but written to `ProcedureChargeLog` via `forceLog` so the cashier sees the unbilled backlog). `applyPriceMissingFallback` extends the `DEFAULT_OVER_QUOTA_AZN` guard to labs and intake/auto-apply visits — a paid line is never persisted at 0 just because the catalog lacks `listAmount`.
+2. **Entitlement pricing (W3):** `resolveEntitlementCharge` uses one catalog price (`listAmount` when set, otherwise `amount`). Walk-in always paid; in-quota package → 0; over-quota / no package → that price; missing price → `priceMissing` (procedure path may fall back to `DEFAULT_OVER_QUOTA_AZN` only when a charge must post). `packageIncluded` does not change the amount. Episode `noPackageConfirmedAt` → paid (reversible via `DELETE …/confirm-no-package`, and cleared when a `ProgramInstance` appears); `NO_PROGRAM_CODE` without confirm → `awaiting_package` (0, not charged yet, but written to `ProcedureChargeLog` via `forceLog` so the cashier sees the unbilled backlog). `applyPriceMissingFallback` extends the `DEFAULT_OVER_QUOTA_AZN` guard to labs and intake/auto-apply visits — a paid line is never persisted at 0 just because the catalog has no price.
 3. **Channel-aware settle** (ClinicReceiptChannel):
    - LOCAL — clinic receipt + @era/fiscal mock + optional payment split (ClinicReceiptPayment)
    - HOTEL_FOLIO — postHotelRoomCharge (no local fiscal)
@@ -22,7 +22,7 @@
 - ClinicReceipt gains channel, gross/discount, void fields, patientRef
 - ClinicReceiptPayment for split tender
 - ProcedureChargeLog for sanatorium over-quota / folio audit
-- `ServiceCatalogCache.listAmount` (W3 retail list for over-quota / walk-in)
+- `ServiceCatalogCache` price (`listAmount` when set, otherwise `amount`) for over-quota / walk-in
 
 ## Non-goals
 
