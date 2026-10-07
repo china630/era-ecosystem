@@ -27,6 +27,7 @@ export type ReservationCardToolbarProps = {
   loading?: boolean;
   isLocked?: boolean;
   canCheckIn?: boolean;
+  onEarlyCheckIn?: () => void;
   onSave?: () => void;
   onClose?: () => void;
   onToggleLock?: () => void;
@@ -63,6 +64,7 @@ export function ReservationCardActions({
   attachOpen,
   onAttachToggle,
   canCheckIn,
+  onEarlyCheckIn,
   showLock = true,
   showClose = false,
   mode = 'all',
@@ -205,6 +207,16 @@ export function ReservationCardActions({
         </div>
       ) : null}
 
+      {showFooter && onEarlyCheckIn ? (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || loading || isLocked}
+          onClick={onEarlyCheckIn}
+        >
+          {t('earlyCheckIn')}
+        </button>
+      ) : null}
       {showFooter ? (
         <button
           type="button"

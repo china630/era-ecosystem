@@ -66,11 +66,25 @@ describe('guest-identity', () => {
     const { createGuestSchema } = await import('@/lib/guest-input');
     const foreign = createGuestSchema.safeParse({
       fullName: 'Ivan Petrov',
+      firstName: 'Ivan',
+      lastName: 'Petrov',
+      sex: 'M',
+      birthDate: '1985-03-04',
       nationality: 'ru',
-      passportNumber: '751234567',
     });
     expect(foreign.success).toBe(true);
     expect(foreign.success && foreign.data.nationality).toBe('RU');
+    expect(foreign.success && foreign.data.passportNumber).toBeUndefined();
+    expect(
+      createGuestSchema.safeParse({
+        fullName: 'Ali Mammadov',
+        firstName: 'Ali',
+        lastName: 'Mammadov',
+        sex: 'M',
+        birthDate: '1990-01-02',
+        nationality: 'AZ',
+      }).success,
+    ).toBe(true);
     expect(
       createGuestSchema.safeParse({ fullName: 'X', nationality: 'Russia', passportNumber: '1' }).success,
     ).toBe(false);

@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { todayBakuYmd } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -33,6 +35,7 @@ type Reservation = {
   status: ReservationStatus;
   guest: Guest;
   totalAmount: number;
+  checkInDate?: string;
 };
 
 type Room = {
@@ -83,6 +86,10 @@ export default function RoomInfoModal({
   if (!room) return null;
 
   const activeReservation = room.reservations?.[0];
+  const arrivalKey = activeReservation?.checkInDate
+    ? hotelDateKey(activeReservation.checkInDate)
+    : '';
+  const arrivalReached = !arrivalKey || arrivalKey <= todayBakuYmd();
 
   return (
     <EraModal
@@ -122,7 +129,8 @@ export default function RoomInfoModal({
             {activeReservation.status === 'CONFIRMED' && canCheckIn && (
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !arrivalReached}
+                title={arrivalReached ? undefined : t('checkInOpensOnArrival')}
                 onClick={() => onCheckIn(activeReservation.id)}
                 className={PRIMARY_BUTTON_CLASS}
               >

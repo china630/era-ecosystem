@@ -28,6 +28,8 @@ type Props = {
   placeholder?: string;
   multiline?: boolean;
   socialMode?: boolean;
+  guestId?: string;
+  embedded?: boolean;
 };
 
 export function GuestCrmExtensionPage({
@@ -36,9 +38,11 @@ export function GuestCrmExtensionPage({
   placeholder,
   multiline,
   socialMode,
+  guestId: guestIdProp,
+  embedded = false,
 }: Props) {
   const params = useParams();
-  const guestId = params.id as string;
+  const guestId = guestIdProp ?? (params.id as string);
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
   const [data, setData] = useState<ExtensionData | null>(null);
@@ -90,7 +94,7 @@ export function GuestCrmExtensionPage({
     } else if (field === 'socialMedia' && socialMode) {
       const [platform, handle] = input.split(':').map((s) => s.trim());
       if (!platform || !handle) {
-        showApiError({ error: tc('required') });
+        showApiError({ error: tc('requiredNamed', { field: t('socialPair') }) });
         return;
       }
       await save({ socialMedia: { ...data.socialMedia, [platform]: handle } });
@@ -121,9 +125,11 @@ export function GuestCrmExtensionPage({
       <PageHeader
         title={t(titleKey as 'crmPages.interestsTitle')}
         leading={
-          <Link href={`/guests?highlight=${guestId}`} className="text-[13px] text-[#2980B9] hover:underline">
-            {t('crmPages.backToGuests')}
-          </Link>
+          embedded ? undefined : (
+            <Link href={`/guests?highlight=${guestId}`} className="text-[13px] text-[#2980B9] hover:underline">
+              {t('crmPages.backToGuests')}
+            </Link>
+          )
         }
       />
 

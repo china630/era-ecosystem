@@ -501,8 +501,24 @@ export async function patchReservationFull(
     await assertNamedGuestsFreeOnStay(id);
   }
 
-  if (dailyRates?.length) {
-    for (const d of dailyRates) {
+  const datesChanged =
+    (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
+    (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
+
+  const clientDailyRates = datesChanged ? undefined : dailyRates;
+  if (datesChanged) {
+    const checkIn = data.checkInDate ?? existing.checkInDate;
+    const checkOut = data.checkOutDate ?? existing.checkOutDate;
+    await prisma.reservationDailyRate.deleteMany({
+      where: {
+        reservationId: id,
+        OR: [{ stayDate: { lt: checkIn } }, { stayDate: { gte: checkOut } }],
+      },
+    });
+  }
+
+  if (clientDailyRates?.length) {
+    for (const d of clientDailyRates) {
       const stayDate = new Date(d.stayDate);
       await prisma.reservationDailyRate.upsert({
         where: {
@@ -534,9 +550,6 @@ export async function patchReservationFull(
     }
   }
 
-  const datesChanged =
-    (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
-    (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
   const prevPaxCodes = existing.paxGuests
     .map((g) => (g.medicalPackageCode ?? '').toUpperCase())
     .join('|');
@@ -546,8 +559,11 @@ export async function patchReservationFull(
   const paxSkuChanged = Boolean(paxGuests) && prevPaxCodes !== nextPaxCodes;
   const foSkuOverride =
     paxGuests?.some((p) => Boolean(p.medicalPackageCode?.trim())) ?? false;
+  const paxMissingSku =
+    Boolean(paxGuests?.length) &&
+    paxGuests!.every((p) => !p.medicalPackageCode?.trim());
 
-  if (datesChanged || paxSkuChanged || foSkuOverride) {
+  if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku) {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
@@ -585,12 +601,30 @@ export async function patchReservationFull(
     }
   }
 
-  // Wave D: refresh composed nightly sell when SKUs or dates known (skip if FO sent manual dailyRates)
-  if (!dailyRates?.length) {
+  // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
+  // only when the stay window did not change.
+  if (datesChanged || !clientDailyRates?.length) {
     const { syncComposedDailyRates } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );
-    await syncComposedDailyRates(id);
+    const composed = await syncComposedDailyRates(id);
+    if (!composed.applied) {
+      const { recalcReservationDailyRates } = await import(
+        '@/lib/services/reservation-pricing.service'
+      );
+      await recalcReservationDailyRates(id);
+    }
+  }
+
+  const summed = await prisma.reservationDailyRate.aggregate({
+    where: { reservationId: id },
+    _sum: { amount: true },
+  });
+  if (summed._sum.amount != null) {
+    await prisma.reservation.update({
+      where: { id },
+      data: { totalAmount: summed._sum.amount },
+    });
   }
 
   return getReservationFull(id);

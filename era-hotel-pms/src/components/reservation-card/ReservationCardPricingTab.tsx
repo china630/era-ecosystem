@@ -110,27 +110,24 @@ export function ReservationCardPricingTab({
               {t('spreadNights')}
             </button>
           </>
-        ) : (
-          <>
-            <Field
-              label={t('stayDiscountPct')}
-              preset="amount"
-              type="number"
-              step="0.01"
-              value={discountPercent}
-              disabled={ratesLocked}
-              onChange={(e) => onDiscountPercent(e.target.value)}
-            />
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={ratesLocked || busy}
-              onClick={onApplyPercent}
-            >
-              {t('applyStayPct')}
-            </button>
-          </>
-        )}
+        ) : null}
+        <Field
+          label={t('stayDiscountPct')}
+          preset="amount"
+          type="number"
+          step="0.01"
+          value={discountPercent}
+          disabled={ratesLocked}
+          onChange={(e) => onDiscountPercent(e.target.value)}
+        />
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={ratesLocked || busy}
+          onClick={onApplyPercent}
+        >
+          {t('applyStayPct')}
+        </button>
         <Field
           label={t('stayTotalAmount')}
           preset="amount"

@@ -15,8 +15,10 @@ import {
   TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
+  showWarning,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { operationalGapDetails } from '@/lib/guest-stay-requirements';
 import {
   bookingSourceKind,
   contractsForSource,
@@ -593,6 +595,15 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         return;
       }
       showSuccess(t('created'));
+      if (Array.isArray(data.operationalGaps) && data.operationalGaps.length > 0) {
+        showWarning(
+          tr('checkInDocsLater', {
+            details: operationalGapDetails(data.operationalGaps, (gap) =>
+              gap === 'phone' ? tr('gapPhone') : tr('gapDocument'),
+            ),
+          }),
+        );
+      }
       const stays = Array.isArray(data.stays) ? data.stays : [];
       const firstStayId = stays[0]?.id as string | undefined;
       const groupId = (data.group?.id ?? data.groupId) as string | undefined;

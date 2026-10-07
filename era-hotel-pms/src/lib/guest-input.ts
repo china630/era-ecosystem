@@ -13,48 +13,22 @@ const guestNationalitySchema = z
 export const createGuestSchema = z
   .object({
     fullName: z.string().trim().min(1),
-    firstName: z.string().trim().optional().nullable(),
+    firstName: z.string().trim().min(1, 'First name is required'),
     middleName: z.string().trim().optional().nullable(),
-    lastName: z.string().trim().optional().nullable(),
+    lastName: z.string().trim().min(1, 'Last name is required'),
     title: z.string().trim().optional().nullable(),
-    sex: z.string().trim().optional().nullable(),
+    sex: z.string().trim().min(1, 'Gender is required'),
     email: z.string().trim().optional().nullable(),
-    birthDate: z.string().trim().optional().nullable(),
+    birthDate: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Birth date is required'),
     nationality: guestNationalitySchema.default('AZ'),
     nationalIdFin: z.string().trim().optional().nullable(),
     passportNumber: z.string().trim().optional().nullable(),
     phone: z.string().trim().optional().nullable(),
     voen: z.string().trim().optional().nullable(),
     globalPersonId: z.string().trim().optional().nullable(),
-  })
-  .superRefine((data, ctx) => {
-    const fin = data.nationalIdFin?.trim() ?? '';
-    const passport = data.passportNumber?.trim() ?? '';
-    const phone = data.phone?.trim() ?? '';
-
-    if (data.nationality === 'AZ') {
-      if (!fin && !passport && !data.globalPersonId?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'AZ guests need FIN or passport number',
-          path: ['nationalIdFin'],
-        });
-      }
-    } else if (!passport && !data.globalPersonId?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Foreign guests need passport or travel document number',
-        path: ['passportNumber'],
-      });
-    }
-
-    if (data.nationality === 'AZ' && !phone) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Phone is required for AZ guests',
-        path: ['phone'],
-      });
-    }
   });
 
 export type CreateGuestInput = z.infer<typeof createGuestSchema>;

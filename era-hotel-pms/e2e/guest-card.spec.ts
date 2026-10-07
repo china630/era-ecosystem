@@ -29,13 +29,12 @@ test.describe('Guest card D2', () => {
     await expect(dialog.getByText(/points history|xallar|баллов/i).first()).toBeVisible();
   });
 
-  test('time-share sub-tabs', async ({ page }) => {
+  test('time-share tab stays hidden', async ({ page }) => {
     await page.goto('/in-house');
     await page.locator('table tbody button').first().click();
     const dialog = page.getByRole('dialog').first();
     await expect(dialog).toBeVisible({ timeout: 15000 });
-    await dialog.getByText(/time share|timeshare|taím/i).first().click();
-    await expect(dialog.getByText(/quotation|təklif|котировка/i).first()).toBeVisible();
+    await expect(dialog.getByRole('tab', { name: /time share|timeshare|тайм/i })).toHaveCount(0);
   });
 
   test('group page opens reservation card from row', async ({ page }) => {

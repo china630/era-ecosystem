@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Camera, UserPlus, UserSearch } from 'lucide-react';
+import { Camera, Star, UserPlus, UserSearch } from 'lucide-react';
 import {
   CatalogField,
   DROPDOWN_ITEM_CLASS,
@@ -21,7 +21,9 @@ import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { guestListItems } from '@/lib/guest-list-identity';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
+  ageYearsFromBirthDate,
   attachGuestToPax,
+  isMinorPax,
   splitFullName,
 } from '@/components/reservation-card/party-pax';
 import type { PartyBillingMode, PaxRow, SelectOption } from './types';
@@ -29,7 +31,27 @@ import type { PartyBillingMode, PaxRow, SelectOption } from './types';
 export { emptyPax } from '@/components/reservation-card/party-pax';
 
 function guestHits(list: unknown): SelectOption[] {
-  return guestListItems(list).map((x) => ({ id: x.id, label: x.fullName }));
+  return guestListItems(list).map((x) => ({ ...x, label: x.fullName }));
+}
+
+function withGuestDemographics(row: PaxRow, g: SelectOption): PaxRow {
+  const named =
+    g.firstName || g.lastName
+      ? { firstName: g.firstName ?? '', lastName: g.lastName ?? '' }
+      : splitFullName(g.label);
+  const birthDate = g.birthDate || row.birthDate;
+  return {
+    ...row,
+    guestId: g.id,
+    firstName: named.firstName || row.firstName,
+    lastName: named.lastName || row.lastName,
+    sex: g.sex || row.sex,
+    nationality: g.nationality || row.nationality,
+    birthDate,
+    age: birthDate ? ageYearsFromBirthDate(birthDate) : row.age,
+    passportNo: g.passportNo || row.passportNo,
+    idCardNo: g.idCardNo || row.idCardNo,
+  };
 }
 
 type PaxGridRow = PaxRow & Record<string, unknown> & { _idx: number };
@@ -42,7 +64,7 @@ export function ReservationCardGuestsTab({
   guestOptions,
   pax,
   partyBillingMode,
-  onPartyBillingMode: _onPartyBillingMode,
+  onPartyBillingMode,
   onGuestId,
   onPax,
   onNewGuest,
@@ -96,6 +118,9 @@ export function ReservationCardGuestsTab({
   const [rowEdit, setRowEdit] = useState<number | null>(null);
   const [rowQuery, setRowQuery] = useState('');
   const [rowHits, setRowHits] = useState<SelectOption[]>([]);
+  const [starConfirm, setStarConfirm] = useState<null | { index: number; kind: 'make' | 'clear' }>(
+    null,
+  );
   const equalMode = partyBillingMode === 'EQUAL';
 
   const hasPartyMembers = pax.some(
@@ -183,10 +208,7 @@ export function ReservationCardGuestsTab({
 
   function assignGuestAt(index: number, g: SelectOption) {
     if (pax.some((row, i) => i !== index && row.guestId === g.id)) return;
-    const { firstName, lastName } = splitFullName(g.label);
-    const next = pax.map((row, i) =>
-      i === index ? { ...row, guestId: g.id, firstName, lastName } : row,
-    );
+    const next = pax.map((row, i) => (i === index ? withGuestDemographics(row, g) : row));
     onPax(next);
     const chosen = next[index];
     if (chosen && (chosen.isPrimary || (!next.some((row) => row.isPrimary) && index === 0))) {
@@ -209,11 +231,11 @@ export function ReservationCardGuestsTab({
     const { firstName, lastName } = splitFullName(g.label);
     const attached = attachGuestToPax(
       pax,
-      { id: g.id, firstName, lastName },
+      { id: g.id, firstName: g.firstName || firstName, lastName: g.lastName || lastName },
       { equalMode, reservationGuestId: guestId },
     );
     onGuestId(attached.guestId);
-    onPax(attached.pax);
+    onPax(attached.pax.map((row) => (row.guestId === g.id ? withGuestDemographics(row, g) : row)));
     setSearchOpen(false);
     setQuery('');
     setRemoteHits(null);
@@ -231,22 +253,37 @@ export function ReservationCardGuestsTab({
         header: t('partyRole'),
         className: 'whitespace-nowrap',
         render: (row) => {
-          if (equalMode) {
-            return <span className="text-[12px]">{t('equalPeerGuest')}</span>;
-          }
+          if (isMinorPax(row)) return <span className={TEXT_MUTED_CLASS}>—</span>;
+          const adults = pax.filter((p) => !isMinorPax(p));
           const isPrimary =
-            Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0);
+            !equalMode &&
+            (Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0));
+          const onlyAdult = adults.length <= 1;
           return (
-            <label className="inline-flex items-center gap-1.5 text-[12px]">
-              <input
-                type="radio"
-                name="primary-pax"
-                checked={isPrimary}
-                onChange={() => setPrimaryAt(row._idx)}
-                aria-label={t('masterGuest')}
+            <button
+              type="button"
+              className="inline-flex items-center justify-center"
+              aria-label={isPrimary ? t('primaryGuest') : t('companionGuest')}
+              title={isPrimary ? t('primaryGuest') : t('companionGuest')}
+              disabled={onlyAdult && isPrimary}
+              onClick={() => {
+                if (onlyAdult && isPrimary) return;
+                if (!isPrimary && pax.some(isMinorPax) === false) {
+                  setStarConfirm({ index: row._idx, kind: 'make' });
+                  return;
+                }
+                if (!isPrimary) {
+                  setStarConfirm({ index: row._idx, kind: 'make' });
+                  return;
+                }
+                if (pax.some(isMinorPax)) return;
+                setStarConfirm({ index: row._idx, kind: 'clear' });
+              }}
+            >
+              <Star
+                className={`h-4 w-4 ${isPrimary ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`}
               />
-              {isPrimary ? t('primaryGuest') : t('companionGuest')}
-            </label>
+            </button>
           );
         },
       },
@@ -472,6 +509,48 @@ export function ReservationCardGuestsTab({
             <Camera className="h-4 w-4" />
           </button>
         </div>
+        {starConfirm ? (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[12px] text-amber-950">
+            <span>
+              {starConfirm.kind === 'make' ? t('starMakePrimary') : t('starClearPrimary')}
+            </span>
+            <span className="flex gap-2">
+              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setStarConfirm(null)}>
+                {t('starCancel')}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  if (starConfirm.kind === 'make') {
+                    const row = pax[starConfirm.index];
+                    onPartyBillingMode('PRIMARY');
+                    onPax(
+                      pax.map((p, j) => ({
+                        ...p,
+                        isPrimary: j === starConfirm.index,
+                        ownsFolio: j === starConfirm.index || isMinorPax(p) ? j === starConfirm.index : false,
+                      })),
+                    );
+                    if (row?.guestId) onGuestId(row.guestId);
+                  } else {
+                    onPartyBillingMode('EQUAL');
+                    onPax(
+                      pax.map((row) => ({
+                        ...row,
+                        isPrimary: false,
+                        ownsFolio: !isMinorPax(row),
+                      })),
+                    );
+                  }
+                  setStarConfirm(null);
+                }}
+              >
+                {t('starConfirm')}
+              </button>
+            </span>
+          </div>
+        ) : null}
         <HotelDataGrid<PaxGridRow>
           columns={columns}
           rows={rows}

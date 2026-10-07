@@ -29,21 +29,24 @@ export function GuestCardIdReaderModal({
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
   const [raw, setRaw] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   function apply() {
     try {
       const data = JSON.parse(raw) as IdReaderPayload;
       onApply(data);
       setRaw('');
+      setError(null);
       onClose();
     } catch {
-      window.alert(t('idReaderInvalid'));
+      setError(t('idReaderInvalid'));
     }
   }
 
   return (
     <EraModal open={open} title={t('idReader')} onClose={onClose} maxWidthClass="max-w-lg">
       <p className="mb-2 text-[13px] text-[#7F8C8D]">{t('idReaderHint')}</p>
+      {error ? <p className="mb-2 text-[13px] text-red-700">{error}</p> : null}
       <textarea
         className={`${MODAL_INPUT_CLASS} min-h-[120px] font-mono text-[12px]`}
         value={raw}

@@ -10,9 +10,9 @@ Signed audit table for H-BL-26 enablement. P2/P3 buttons enabled in `guest-crm-c
 | send_emails | P2 | `/guests/{id}/emails` | **Enabled** — platform notify (H-BL-06); vendor STUB |
 | send_sms | P2 | `/guests/{id}/sms` | **Enabled** — platform notify (H-BL-06); vendor STUB |
 | contact_logs | P2 | `/guests/{id}/contact-logs` | **Enabled** |
-| membership_agreements | P2 | `/guests/{id}/membership-agreements` | **Enabled** — `GuestTimeShareAgreement` |
-| buying_habits | P2 | fb-pos deep link | **Enabled** when `ERA_FNB_POS_URL` set |
-| group_hotels_visiting | P2 | `/reports/group-reservations` | **Enabled** |
+| membership_agreements | P2 | `/guests/{id}/membership-agreements` | **Hidden on the card** — same rows as time share; route remains, no button until a module flag (ADR hotel-reservation-card-and-party-ops) |
+| buying_habits | P2 | fb-pos deep link | **Hidden on the card** — POS deep link stays in code, button removed |
+| group_hotels_visiting | P2 | `/fo/groups` | **Hidden on the card** — groups page does not filter by guest |
 | references | P3 | — | **Deferred** — external refs API |
 | external_reviews | P3 | — | **Deferred** — review aggregator |
 | mobile_chat | P3 | — | **Deferred** — chat vendor |

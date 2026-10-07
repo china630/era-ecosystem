@@ -5,6 +5,8 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
+import { PricingEngineError } from '@/lib/services/pricing-engine.service';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
 import {
   applyLoadBasedAdjustment,
@@ -37,6 +39,27 @@ async function loadChildPricingMatrix(): Promise<ChildPricingRow[]> {
 
 function dateOnly(d: Date): Date {
   return bakuCivilUtcDate(hotelDateKey(d));
+}
+
+async function closedNightKeys(reservationId: string): Promise<{ bizKey: string; posted: Set<string> }> {
+  const bizKey = hotelDateKey(await getCurrentBusinessDate());
+  const charges = await prisma.folioCharge.findMany({
+    where: { folio: { reservationId } },
+    select: { businessDate: true, revenueCode: { select: { code: true } } },
+  });
+  const posted = new Set<string>();
+  for (const charge of charges) {
+    const code = charge.revenueCode.code;
+    if (code === 'ROOM' || code === 'PKG' || code === 'RATE_ADJ') {
+      posted.add(hotelDateKey(charge.businessDate));
+    }
+  }
+  return { bizKey, posted };
+}
+
+function nightAlreadyConsumed(stayDate: Date, bizKey: string, posted: Set<string>): boolean {
+  const key = hotelDateKey(stayDate);
+  return key < bizKey || posted.has(key);
 }
 
 function eachNight(from: Date, to: Date): Date[] {
@@ -203,14 +226,22 @@ export async function recalcReservationDailyRates(
     };
   }
 
-  const quoteResult = await quoteReservationStay({
-    ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
-    roomTypeId,
-    checkInDate: res.checkInDate,
-    checkOutDate: res.checkOutDate,
-    agencyId: res.agencyId ?? undefined,
-    guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
-  });
+  let quoteResult: Awaited<ReturnType<typeof quoteReservationStay>>;
+  try {
+    quoteResult = await quoteReservationStay({
+      ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
+      roomTypeId,
+      checkInDate: res.checkInDate,
+      checkOutDate: res.checkOutDate,
+      agencyId: res.agencyId ?? undefined,
+      guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
+    });
+  } catch (err) {
+    if (err instanceof PricingEngineError) {
+      return writeOwnerNightly(res, decimalToNumber(res.ratePlan.pricePerNight), opts?.remainingFrom);
+    }
+    throw err;
+  }
 
   const policy = await getHotelPolicy();
   const childMatrix = await loadChildPricingMatrix();
@@ -357,6 +388,19 @@ export async function chargeAllRoomNights(reservationId: string) {
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
+  if (res.status !== 'IN_HOUSE') {
+    throw new Error('Room nights post after check-in, one night at a time');
+  }
+
+  if (res.ratePlan.medicalFlag) {
+    const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
+    const biz = await getCurrentBusinessDate();
+    const result = await postNightlyPackageCharges(reservationId, biz);
+    const key = hotelDateKey(biz);
+    return result.skipped
+      ? { posted: [] as string[], skipped: [key] }
+      : { posted: [key], skipped: [] as string[] };
+  }
 
   const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
   if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
@@ -377,11 +421,16 @@ export async function chargeAllRoomNights(reservationId: string) {
     }));
   }
 
-  const posted: string[] = [];
+  const postedNights: string[] = [];
   const skipped: string[] = [];
 
+  const closed = await closedNightKeys(reservationId);
   for (const row of rates) {
     const biz = dateOnly(row.stayDate);
+    if (hotelDateKey(biz) !== closed.bizKey) {
+      skipped.push(hotelDateKey(biz));
+      continue;
+    }
     const already = res.folios.some((f) =>
       f.charges.some(
         (c) =>
@@ -401,10 +450,10 @@ export async function chargeAllRoomNights(reservationId: string) {
       description: `Room charge ${biz.toISOString().slice(0, 10)}`,
       businessDate: biz,
     });
-    posted.push(biz.toISOString().slice(0, 10));
+    postedNights.push(biz.toISOString().slice(0, 10));
   }
 
-  return { posted, skipped };
+  return { posted: postedNights, skipped };
 }
 
 export async function listDailyRates(reservationId: string) {
@@ -431,27 +480,19 @@ export async function spreadManualNightly(reservationId: string, nightly: number
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
   const nights = eachNight(res.checkInDate, res.checkOutDate);
+  const closed = await closedNightKeys(reservationId);
+  const openNights = nights.filter((stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted));
+  if (openNights.length === 0) throw new Error('All nights are locked');
   await prisma.$transaction([
     prisma.reservation.update({
       where: { id: reservationId },
       data: {
         useManualRate: true,
         manualDailyRate: toDecimal(nightly),
-        discountPercent: null,
-        discountActive: false,
       },
     }),
-    ...nights.map((stayDate) => {
-      const existing = res.dailyRates.find(
-        (d) => d.stayDate.toDateString() === stayDate.toDateString(),
-      );
-      if (existing?.manualFlag) {
-        return prisma.reservationDailyRate.update({
-          where: { id: existing.id },
-          data: {},
-        });
-      }
-      return prisma.reservationDailyRate.upsert({
+    ...openNights.map((stayDate) =>
+      prisma.reservationDailyRate.upsert({
         where: { reservationId_stayDate: { reservationId, stayDate } },
         create: {
           reservationId,
@@ -466,8 +507,8 @@ export async function spreadManualNightly(reservationId: string, nightly: number
           manualFlag: true,
           fixPrice: true,
         },
-      });
-    }),
+      }),
+    ),
   ]);
   return recalcReservationDailyRates(reservationId);
 }
@@ -481,12 +522,10 @@ export async function spreadStayTotal(reservationId: string, total: number) {
   if (res.isLocked) throw new Error('Reservation is locked');
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   if (nights.length === 0) throw new Error('No nights');
-  const unlocked = nights.filter((stayDate) => {
-    const existing = res.dailyRates.find(
-      (d) => d.stayDate.toDateString() === stayDate.toDateString(),
-    );
-    return !existing?.manualFlag;
-  });
+  const closed = await closedNightKeys(reservationId);
+  const unlocked = nights.filter(
+    (stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted),
+  );
   if (unlocked.length === 0) throw new Error('All nights are locked');
   const amounts = splitStayAmounts(total, unlocked.length);
   const nightlyHint = amounts[0] ?? 0;
@@ -496,8 +535,6 @@ export async function spreadStayTotal(reservationId: string, total: number) {
       data: {
         useManualRate: true,
         manualDailyRate: toDecimal(nightlyHint),
-        discountPercent: null,
-        discountActive: false,
       },
     }),
     ...unlocked.map((stayDate, i) =>
@@ -523,19 +560,55 @@ export async function spreadStayTotal(reservationId: string, total: number) {
 }
 
 export async function applyStayPercent(reservationId: string, percent: number) {
-  const res = await prisma.reservation.findUnique({ where: { id: reservationId } });
+  const res = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { dailyRates: true },
+  });
   if (!res) throw new Error('Reservation not found');
-  if (res.useManualRate) {
-    throw new Error('Stay % and Manual Price are mutually exclusive');
-  }
   if (percent < 0 || percent > 100) throw new Error('Percent must be 0–100');
+  const closed = await closedNightKeys(reservationId);
+  const nights = eachNight(res.checkInDate, res.checkOutDate);
+  const open = nights.filter(
+    (stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted),
+  );
+  if (open.length === 0) throw new Error('All nights are locked');
+  await prisma.$transaction([
+    prisma.reservation.update({
+      where: { id: reservationId },
+      data: {
+        discountPercent: toDecimal(percent),
+        discountActive: percent > 0,
+      },
+    }),
+    ...open.map((stayDate) => {
+      const existing = res.dailyRates.find(
+        (d) => hotelDateKey(d.stayDate) === hotelDateKey(stayDate),
+      );
+      const base = existing ? decimalToNumber(existing.amount) : decimalToNumber(res.manualDailyRate ?? 0);
+      const amount = Math.round(base * (1 - percent / 100) * 100) / 100;
+      return prisma.reservationDailyRate.upsert({
+        where: { reservationId_stayDate: { reservationId, stayDate } },
+        create: {
+          reservationId,
+          stayDate,
+          amount: toDecimal(amount),
+          manualFlag: false,
+          currencyCode: 'AZN',
+          fixPrice: false,
+          discountPct: toDecimal(percent),
+        },
+        update: {
+          amount: toDecimal(amount),
+          discountPct: toDecimal(percent),
+        },
+      });
+    }),
+  ]);
+  const rows = await listDailyRates(reservationId);
+  const totalAmount = rows.reduce((s, r) => s + r.amount, 0);
   await prisma.reservation.update({
     where: { id: reservationId },
-    data: {
-      discountPercent: toDecimal(percent),
-      discountActive: percent > 0,
-      useManualRate: false,
-    },
+    data: { totalAmount: toDecimal(totalAmount) },
   });
-  return recalcReservationDailyRates(reservationId);
+  return { dailyRates: rows, totalAmount, quote: null, childAddonNightly: 0, adultNightly: 0 };
 }

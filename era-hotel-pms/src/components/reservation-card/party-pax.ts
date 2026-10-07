@@ -3,6 +3,12 @@ import { GUEST_FIN_DOC_TYPES } from '@/lib/guest-list-identity';
 import type { PaxRow } from './types';
 
 /** Party row with no display name — fillable slot (may still have guestId from TBA/hold). */
+export function isMinorPax(row: Pick<PaxRow, 'birthDate' | 'age'>): boolean {
+  const fromDob = row.birthDate ? Number(ageYearsFromBirthDate(row.birthDate)) : NaN;
+  const age = Number.isFinite(fromDob) && row.birthDate ? fromDob : Number(row.age);
+  return Number.isFinite(age) && age >= 0 && age < 18;
+}
+
 export function isIncompletePax(row: Pick<PaxRow, 'firstName' | 'lastName'>): boolean {
   return !paxHasRealName(row);
 }
@@ -261,7 +267,7 @@ function isoDate(value: string | Date | null | undefined): string {
   return value.toISOString().slice(0, 10);
 }
 
-function ageYearsFromBirthDate(birthDate: string): string {
+export function ageYearsFromBirthDate(birthDate: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return '';
   const [y, m, d] = birthDate.split('-').map(Number);
   if (!y || !m || !d) return '';
