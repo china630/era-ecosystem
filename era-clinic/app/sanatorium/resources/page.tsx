@@ -23,6 +23,7 @@ import {
 } from "@era/satellite-kit/ui";
 import {
   ResourceDayMatrix,
+  cabinLabel,
   type Slot,
   type ResourceRow,
   type TimeHorizon,
@@ -41,9 +42,17 @@ function bakuYmd(d = new Date()) {
 type AvailSlot = {
   resourceId: string;
   resourceCode?: string;
+  resourceName?: string;
   startsAt: string;
   endsAt: string;
 };
+
+function availableSlotLabel(slot: AvailSlot): string {
+  const cabin = cabinLabel(slot.resourceName, slot.resourceCode);
+  const named = cabin === "—" ? "" : cabin;
+  const when = bakuDateTimeDisplay(slot.startsAt);
+  return named ? `${named} · ${when}` : when;
+}
 
 export default function SanatoriumResourcesPage() {
   const t = useTranslations("sanatoriumResources");
@@ -312,8 +321,7 @@ export default function SanatoriumResourcesPage() {
                   className={`${SECONDARY_BUTTON_CLASS} w-full !justify-start`}
                   onClick={() => void confirmMove(s.startsAt, s.resourceId)}
                 >
-                  {(s.resourceCode ? `${s.resourceCode} · ` : "") +
-                    bakuDateTimeDisplay(s.startsAt)}
+                  {availableSlotLabel(s)}
                 </button>
               </li>
             ))}
@@ -346,6 +354,8 @@ export default function SanatoriumResourcesPage() {
                 ? ` – ${bakuTimeLabel(detailSlot.endsAt)}`
                 : ""}
             </dd>
+            <dt className={TEXT_MUTED_CLASS}>{t("detailCabin")}</dt>
+            <dd>{cabinLabel(detailSlot.resourceName, detailSlot.resourceCode)}</dd>
             <dt className={TEXT_MUTED_CLASS}>{t("staff")}</dt>
             <dd>{detailSlot.staffName ?? "—"}</dd>
             <dt className={TEXT_MUTED_CLASS}>{t("detailStatus")}</dt>

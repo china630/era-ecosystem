@@ -120,6 +120,8 @@ For STAFF allocation on a procedure slot on civil day `D`:
 3. Else if posted is absent (or unassigned) and **no** override → **do not** auto-pick another skilled nurse. Surface as unallocated / warning / block per scheduling mode — head doctor must create an override (or change the monthly post).
 4. Draft / missing roster: skilled pool for placement **without** claiming a named duty post — never as substitution for an absent posted nurse on an **APPROVED** roster.
 
+Approving the **nurse** month (or saving an already approved nurse month) reassigns **STAFF** on `SCHEDULED` orders whose start is still in the future and inside that month. The lab roster does not move those rows. Cabin and time stay. A day override wins over the monthly post. An absent posted nurse is not assigned. When the procedure is `HARD` and that nurse already occupies an overlapping slot, the later slot is left without a nurse. `CHECKED_IN`, `COMPLETED`, and past slots stay as they were.
+
 Skills: UI warns if override (or post) lacks `PractitionerSkill` for the procedure; override allowed with warning (same as monthly post).
 
 ### 6. AuthZ
@@ -147,7 +149,7 @@ Skills: UI warns if override (or post) lacks `PractitionerSkill` for the procedu
 | Piece | Status |
 |-------|--------|
 | `staffKind`, monthly roster CRUD, approve, copy previous, absences, by-procedure table | **SHIPPED** (CLI-38) |
-| Planner prefers APPROVED posted nurse | **SHIPPED** |
+| Planner prefers APPROVED posted nurse; approve reassigns future SCHEDULED staff | **SHIPPED** |
 | Dual view (by nurse table) | **SHIPPED** (CLI-38b) |
 | `StaffDutyDayOverride` + UI + planner order (override → posted → no silent pool) | **SHIPPED** (CLI-38b) |
 | Silent skilled-pool fallback when posted absent | **REMOVED** (CLI-38b) |

@@ -134,3 +134,84 @@ export function resolveDutyCandidates(input: {
     },
   ];
 }
+
+export type RosterReassignSlot = {
+  allocationId: string;
+  procedureTypeId: string;
+  startsAt: Date;
+  endsAt: Date;
+  /** HARD: one nurse cannot cover two overlapping slots. */
+  staffMode: "HARD" | "SOFT";
+  /** Asia/Baku civil day of the slot. */
+  ymd: string;
+};
+
+export type RosterReassignOccupation = {
+  practitionerId: string;
+  startsAt: Date;
+  endsAt: Date;
+  staffMode: "HARD" | "SOFT";
+};
+
+/**
+ * On roster approve: future not-started staff slots take the monthly post
+ * (or that day's override). Cabin time stays. A HARD overlap leaves the slot
+ * without a nurse. Past and already-started slots are not in `slots`; pass
+ * them as `occupations` so they still block a HARD nurse. Any overlapping
+ * staff slot blocks a HARD assignment, including a SOFT one.
+ */
+export function planRosterStaffReassignment(input: {
+  slots: RosterReassignSlot[];
+  occupations: RosterReassignOccupation[];
+  posts: Array<{ procedureTypeId: string; practitionerId: string | null }>;
+  overrides: Array<{ procedureTypeId: string; ymd: string; practitionerId: string }>;
+  absent: (practitionerId: string, ymd: string) => boolean;
+}): Array<{ allocationId: string; practitionerId: string | null }> {
+  const postByType = new Map(
+    input.posts.map((post) => [post.procedureTypeId, post.practitionerId]),
+  );
+  const overrideByKey = new Map(
+    input.overrides.map((row) => [
+      `${row.procedureTypeId}|${row.ymd}`,
+      row.practitionerId,
+    ]),
+  );
+  const busy = input.occupations.map((row) => ({
+    practitionerId: row.practitionerId,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt,
+  }));
+  const slots = [...input.slots].sort(
+    (a, b) =>
+      a.startsAt.getTime() - b.startsAt.getTime() ||
+      a.allocationId.localeCompare(b.allocationId),
+  );
+  const updates: Array<{ allocationId: string; practitionerId: string | null }> = [];
+  for (const slot of slots) {
+    const overrideId = overrideByKey.get(`${slot.procedureTypeId}|${slot.ymd}`);
+    let target =
+      overrideId ?? postByType.get(slot.procedureTypeId) ?? null;
+    if (target && input.absent(target, slot.ymd)) target = null;
+    if (
+      target &&
+      slot.staffMode === "HARD" &&
+      busy.some(
+        (row) =>
+          row.practitionerId === target &&
+          row.startsAt < slot.endsAt &&
+          row.endsAt > slot.startsAt,
+      )
+    ) {
+      target = null;
+    }
+    updates.push({ allocationId: slot.allocationId, practitionerId: target });
+    if (target) {
+      busy.push({
+        practitionerId: target,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+      });
+    }
+  }
+  return updates;
+}

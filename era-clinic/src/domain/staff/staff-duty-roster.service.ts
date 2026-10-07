@@ -2,9 +2,11 @@ import type { PractitionerStaffKind, StaffAbsenceKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuYmd } from "@/domain/appointment/practitioner-schedule.service";
+import { bakuDayBounds } from "@era/satellite-kit/time";
 import {
   isAbsentOnYmd,
   isYearMonth,
+  planRosterStaffReassignment,
   previousYearMonth,
   resolveDutyCandidates,
   StaffDutyError,
@@ -368,7 +370,177 @@ export async function saveDutyRoster(input: {
     }
   });
 
+  if (view.roster.status === "APPROVED") {
+    await reassignFutureStaffToApprovedRoster(yearMonth, staffKind);
+  }
   return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
+}
+
+/** Nurse chart only: move not-yet-started STAFF allocations onto the approved post. */
+export async function reassignFutureStaffToApprovedRoster(
+  yearMonth: string,
+  staffKind: PractitionerStaffKind,
+) {
+  if (staffKind !== "NURSE") return 0;
+  const organizationId = requestOrganizationId();
+  const roster = await prisma.staffDutyRoster.findUnique({
+    where: {
+      organizationId_yearMonth_staffKind: { organizationId, yearMonth, staffKind },
+    },
+    include: {
+      lines: { select: { procedureTypeId: true, practitionerId: true } },
+      dayOverrides: {
+        select: { procedureTypeId: true, dutyDate: true, practitionerId: true },
+      },
+    },
+  });
+  if (!roster || roster.status !== "APPROVED") return 0;
+
+  const { fromYmd, toYmd } = yearMonthYmdBounds(yearMonth);
+  const monthStart = bakuMidnight(fromYmd);
+  const monthEnd = bakuDayBounds(toYmd).end;
+  const now = new Date();
+  const from = now > monthStart ? now : monthStart;
+  if (from >= monthEnd) return 0;
+
+  const movable = await prisma.procedureAllocation.findMany({
+    where: {
+      organizationId,
+      role: "STAFF",
+      startsAt: { gte: from, lt: monthEnd },
+      procedureOrder: { status: "SCHEDULED", procedureTypeId: { not: null } },
+    },
+    select: {
+      id: true,
+      practitionerId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: {
+        select: {
+          procedureTypeId: true,
+          procedureType: {
+            select: {
+              requirements: {
+                where: { role: "STAFF" },
+                select: { staffMode: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (movable.length === 0) return 0;
+
+  const movableIds = movable.map((row) => row.id);
+  const occupations = await prisma.procedureAllocation.findMany({
+    where: {
+      organizationId,
+      role: "STAFF",
+      practitionerId: { not: null },
+      id: { notIn: movableIds },
+      startsAt: { lt: monthEnd },
+      endsAt: { gt: from },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "PENDING_PAY"] } },
+    },
+    select: {
+      practitionerId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: {
+        select: {
+          procedureType: {
+            select: {
+              requirements: {
+                where: { role: "STAFF" },
+                select: { staffMode: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const practitionerIds = [
+    ...new Set(
+      [
+        ...roster.lines.map((line) => line.practitionerId),
+        ...roster.dayOverrides.map((row) => row.practitionerId),
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const [absences, dayOffs] = await Promise.all([
+    listAbsencesOverlappingMonth(yearMonth, practitionerIds),
+    listDayOffsInMonth(yearMonth, practitionerIds),
+  ]);
+  const dayOffKey = new Set(
+    dayOffs.map((row) => `${row.practitionerId}|${bakuYmd(row.date)}`),
+  );
+
+  const updates = planRosterStaffReassignment({
+    slots: movable.flatMap((row) => {
+      const procedureTypeId = row.procedureOrder.procedureTypeId;
+      if (!procedureTypeId) return [];
+      return [
+        {
+          allocationId: row.id,
+          procedureTypeId,
+          startsAt: row.startsAt,
+          endsAt: row.endsAt,
+          staffMode:
+            row.procedureOrder.procedureType?.requirements[0]?.staffMode ?? "HARD",
+          ymd: bakuYmd(row.startsAt),
+        },
+      ];
+    }),
+    occupations: occupations.flatMap((row) => {
+      if (!row.practitionerId) return [];
+      return [
+        {
+          practitionerId: row.practitionerId,
+          startsAt: row.startsAt,
+          endsAt: row.endsAt,
+          staffMode:
+            row.procedureOrder.procedureType?.requirements[0]?.staffMode ?? "HARD",
+        },
+      ];
+    }),
+    posts: roster.lines.map((line) => ({
+      procedureTypeId: line.procedureTypeId,
+      practitionerId: line.practitionerId,
+    })),
+    overrides: roster.dayOverrides.map((row) => ({
+      procedureTypeId: row.procedureTypeId,
+      ymd: bakuYmd(row.dutyDate),
+      practitionerId: row.practitionerId,
+    })),
+    absent: (practitionerId, ymd) =>
+      dayOffKey.has(`${practitionerId}|${ymd}`) ||
+      absences.some(
+        (row) =>
+          row.practitionerId === practitionerId &&
+          ymd >= bakuYmd(row.startsOn) &&
+          ymd <= bakuYmd(row.endsOn),
+      ),
+  });
+
+  const currentById = new Map(movable.map((row) => [row.id, row.practitionerId]));
+  const changed = updates.filter(
+    (row) => (currentById.get(row.allocationId) ?? null) !== row.practitionerId,
+  );
+  if (changed.length === 0) return 0;
+  await prisma.$transaction(
+    changed.map((row) =>
+      prisma.procedureAllocation.update({
+        where: { id: row.allocationId },
+        data: { practitionerId: row.practitionerId },
+      }),
+    ),
+  );
+  return changed.length;
 }
 
 export async function approveDutyRoster(input: {
@@ -388,6 +560,7 @@ export async function approveDutyRoster(input: {
       approvedByUserId: input.approvedByUserId,
     },
   });
+  await reassignFutureStaffToApprovedRoster(yearMonth, staffKind);
   return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
 }
 
