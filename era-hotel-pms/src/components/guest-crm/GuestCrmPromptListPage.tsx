@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -19,6 +19,9 @@ import {
   type FieldWidthPreset,
 } from '@era/satellite-kit/ui';
 import { useGuestCrmList } from '@/components/guest-crm/useGuestCrmList';
+
+/** When true, CRM add forms inside a locked guest card stay read-only. */
+export const GuestCrmReadOnly = createContext(false);
 
 export type GuestCrmAddField = {
   name: string;
@@ -77,6 +80,7 @@ export function GuestCrmPromptListPage({
   const id = guestId ?? params?.id ?? '';
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
+  const readOnly = useContext(GuestCrmReadOnly);
   const { rows, reload } = useGuestCrmList(apiPath(id));
 
   const [q, setQ] = useState('');
@@ -142,9 +146,11 @@ export function GuestCrmPromptListPage({
           )
         }
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openModal}>
-            {t(addLabelKey as 'crmPages.add')}
-          </button>
+          readOnly ? undefined : (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openModal}>
+              {t(addLabelKey as 'crmPages.add')}
+            </button>
+          )
         }
       />
 

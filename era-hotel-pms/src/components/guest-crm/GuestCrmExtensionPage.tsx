@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -15,6 +15,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { GuestCrmReadOnly } from '@/components/guest-crm/GuestCrmPromptListPage';
 
 type ExtensionData = {
   interests: string[];
@@ -45,6 +46,7 @@ export function GuestCrmExtensionPage({
   const guestId = guestIdProp ?? (params.id as string);
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
+  const readOnly = useContext(GuestCrmReadOnly);
   const [data, setData] = useState<ExtensionData | null>(null);
   const [input, setInput] = useState('');
   const [q, setQ] = useState('');
@@ -168,25 +170,29 @@ export function GuestCrmExtensionPage({
           </p>
         ) : null}
 
-        {multiline ? (
-          <FieldTextarea
-            label={t('crmPages.add')}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={placeholder}
-          />
-        ) : (
-          <Field
-            label={t('crmPages.add')}
-            preset="longText"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={placeholder}
-          />
+        {readOnly ? null : (
+          <>
+            {multiline ? (
+              <FieldTextarea
+                label={t('crmPages.add')}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={placeholder}
+              />
+            ) : (
+              <Field
+                label={t('crmPages.add')}
+                preset="longText"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={placeholder}
+              />
+            )}
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void addItem()}>
+              {t('crmPages.add')}
+            </button>
+          </>
         )}
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void addItem()}>
-          {t('crmPages.add')}
-        </button>
       </div>
     </>
   );

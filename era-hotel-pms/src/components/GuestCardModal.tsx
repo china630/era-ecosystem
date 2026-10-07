@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -23,6 +24,8 @@ import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity
 import { guestIdentityGaps, type IdentityField } from '@/lib/guest-stay-requirements';
 import { pickPrimaryContact, pickPrimaryDocument } from '@/lib/guest-card-primary';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
+
+const ReservationCardModal = dynamic(() => import('@/components/ReservationCardModal'), { ssr: false });
 
 const STAT_COLORS = [
   'text-amber-600',
@@ -67,7 +70,7 @@ export default function GuestCardModal({
   onClose: () => void;
   onCreated?: (
     guestId: string,
-    meta?: { fullName: string; firstName: string; lastName: string },
+    meta?: { fullName: string; firstName: string; lastName: string; birthDate?: string },
   ) => void;
   /** Fired after successful PATCH of an existing guest. */
   onSaved?: (guestId: string) => void;
@@ -133,6 +136,8 @@ export default function GuestCardModal({
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [idReaderOpen, setIdReaderOpen] = useState(false);
+  const [stackedGuestId, setStackedGuestId] = useState<string | null>(null);
+  const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [crmPanel, setCrmPanel] = useState<string | null>(null);
   const [crmBadges, setCrmBadges] = useState<{ specialNotes: number; allergens: number }>({
     specialNotes: 0,
@@ -389,6 +394,7 @@ export default function GuestCardModal({
           fullName: full,
           firstName: firstName || String(json.firstName ?? ''),
           lastName: lastName || String(json.lastName ?? ''),
+          birthDate: detailFields.birthDate || undefined,
         });
         onClose();
       } else {
@@ -494,6 +500,25 @@ export default function GuestCardModal({
     ? `${knownDoc.includes(primaryHit.docType) ? t(`docType.${primaryHit.docType}` as 'docType.PASSPORT') : primaryHit.docType} ${primaryHit.docNumber.trim()}`
     : '';
 
+  async function toggleGuestLock() {
+    if (!guestId) {
+      setIsLocked((v) => !v);
+      return;
+    }
+    const next = !isLocked;
+    const res = await fetch(`/api/guests/${guestId}/full`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isLocked: next }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(json);
+      return;
+    }
+    setIsLocked(next);
+  }
+
   function printCard() {
     const lines = [
       displayName,
@@ -534,13 +559,18 @@ export default function GuestCardModal({
                 }
               : undefined
           }
-          onToggleLock={guestId ? () => setIsLocked((v) => !v) : undefined}
+          onToggleLock={() => void toggleGuestLock()}
           onPrint={printCard}
-          onIdReader={() => setIdReaderOpen(true)}
+          onIdReader={isLocked ? undefined : () => setIdReaderOpen(true)}
         />
       }
       footer={
-        <GuestCardActions mode="footer" busy={busy} loading={loading && !isCreate} onSave={() => void save()} />
+        <GuestCardActions
+          mode="footer"
+          busy={busy}
+          loading={loading && !isCreate}
+          onSave={isLocked ? undefined : () => void save()}
+        />
       }
     >
       {loading && !isCreate ? (
@@ -551,6 +581,7 @@ export default function GuestCardModal({
             <button
               type="button"
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${greyList ? 'bg-slate-700 text-white' : 'bg-[#F4F6F7] text-[#7F8C8D]'}`}
+              disabled={isLocked}
               onClick={() => setGreyList((v) => !v)}
             >
               {t('greyList')}
@@ -558,6 +589,7 @@ export default function GuestCardModal({
             <button
               type="button"
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${problematic ? 'bg-red-700 text-white' : 'bg-[#F4F6F7] text-[#7F8C8D]'}`}
+              disabled={isLocked}
               onClick={() => setProblematic((v) => !v)}
             >
               {t('problematic')}
@@ -624,6 +656,7 @@ export default function GuestCardModal({
               }}
               onGlobalPersonIdChange={setGlobalPersonId}
               onReload={() => (guestId ? void load() : undefined)}
+              locked={isLocked}
             />
 
             <div className="flex min-h-0 min-w-0 flex-col">
@@ -653,6 +686,7 @@ export default function GuestCardModal({
               <div className="min-h-0 flex-1 overflow-y-auto pb-2">
                 {tab === 'identity' && (
                   <GuestCardIdentityTab
+                    locked={isLocked}
                     guestId={guestId}
                     documents={documents}
                     contacts={contacts}
@@ -701,6 +735,7 @@ export default function GuestCardModal({
                     cards={loyaltyCards}
                     pointEntries={loyaltyPoints}
                     guestId={guestId}
+                    locked={isLocked}
                     onReload={() => (guestId ? void loadAux(guestId) : undefined)}
                     onReloadPoints={() =>
                       guestId
@@ -760,7 +795,30 @@ export default function GuestCardModal({
           }
         }}
       />
-      <GuestCardCrmDialog panelId={crmPanel} guestId={guestId} onClose={() => setCrmPanel(null)} />
+      <GuestCardCrmDialog
+        panelId={crmPanel}
+        guestId={guestId}
+        onClose={() => setCrmPanel(null)}
+        onOpenGuest={(id) => {
+          if (id && id !== guestId) setStackedGuestId(id);
+        }}
+        onOpenReservation={(id) => setOpenReservationId(id)}
+        locked={isLocked}
+      />
+      {stackedGuestId ? (
+        <GuestCardModal
+          open
+          guestId={stackedGuestId}
+          onClose={() => setStackedGuestId(null)}
+        />
+      ) : null}
+      {openReservationId ? (
+        <ReservationCardModal
+          open
+          reservationId={openReservationId}
+          onClose={() => setOpenReservationId(null)}
+        />
+      ) : null}
     </EraModal>
   );
 }

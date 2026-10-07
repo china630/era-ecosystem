@@ -61,7 +61,7 @@ export function GuestCardActions({
         className={ICON_BTN}
         title={t('idReader')}
         aria-label={t('idReader')}
-        disabled={busy}
+        disabled={busy || !onIdReader}
         onClick={onIdReader}
       >
         <ScanLine className="h-4 w-4" />

@@ -1,29 +1,34 @@
 'use client';
 
-import { GuestCrmPromptListPage } from '@/components/guest-crm/GuestCrmPromptListPage';
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { CARD_CONTAINER_CLASS, PageHeader } from '@era/satellite-kit/ui';
+import { FamilyPanel } from '@/components/guest-card/GuestCardCrmDialog';
+import GuestCardModal from '@/components/GuestCardModal';
 
 export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const t = useTranslations('guestCard');
+  const [openGuestId, setOpenGuestId] = useState<string | null>(null);
+
   return (
-    <GuestCrmPromptListPage
-      titleKey="crmPages.familyTitle"
-      apiPath={(gid) => `/api/guests/${gid}/family`}
-      addFields={[
-        { name: 'relatedGuestId', label: 'Related guest UUID', required: true, preset: 'longText' },
-        { name: 'relationship', label: 'Relationship', required: true, preset: 'shortText', placeholder: 'Spouse, Child…' },
-      ]}
-      buildBody={(v) => ({
-        relatedGuestId: v.relatedGuestId.trim(),
-        relationship: v.relationship.trim(),
-      })}
-      searchKeys={['relatedGuestId', 'relationship']}
-      renderItem={(r) => {
-        const rel = r.relatedGuest as { fullName?: string } | undefined;
-        return (
-          <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
-            {rel?.fullName ?? String(r.relatedGuestId)} — {String(r.relationship)}
-          </li>
-        );
-      }}
-    />
+    <>
+      <PageHeader
+        title={t('crmPages.familyTitle')}
+        leading={
+          <Link href="/guests" className="text-[13px] text-[#2980B9] hover:underline">
+            {t('crmPages.backToGuests')}
+          </Link>
+        }
+      />
+      <div className={`${CARD_CONTAINER_CLASS} p-3`}>
+        <FamilyPanel guestId={id} onOpenGuest={setOpenGuestId} />
+      </div>
+      {openGuestId ? (
+        <GuestCardModal open guestId={openGuestId} onClose={() => setOpenGuestId(null)} />
+      ) : null}
+    </>
   );
 }

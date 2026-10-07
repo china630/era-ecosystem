@@ -11,6 +11,7 @@ export function GuestCardLoyaltyTab({
   cards,
   pointEntries,
   guestId,
+  locked = false,
   onReload,
   onReloadPoints,
 }: {
@@ -24,6 +25,7 @@ export function GuestCardLoyaltyTab({
     balanceAfter?: number | null;
   }>;
   guestId: string | null;
+  locked?: boolean;
   onReload: () => void;
   onReloadPoints: () => void;
 }) {
@@ -110,7 +112,7 @@ export function GuestCardLoyaltyTab({
         emptyMessage={t('loyalty.empty')}
         pagination={false}
       />
-      {guestId ? (
+      {guestId && !locked ? (
         <button
           type="button"
           className="text-[12px] font-medium text-[#2980B9]"
@@ -132,7 +134,7 @@ export function GuestCardLoyaltyTab({
         emptyMessage={t('loyalty.pointsEmpty')}
         pagination={false}
       />
-      {guestId ? (
+      {guestId && !locked ? (
         <button
           type="button"
           className="text-[12px] font-medium text-[#2980B9]"

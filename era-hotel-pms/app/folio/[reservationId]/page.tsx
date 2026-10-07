@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -64,7 +64,9 @@ function folioBalance(f: FolioRow): number {
 
 export default function FolioPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const reservationId = params.reservationId as string;
+  const folioAction = searchParams.get('action');
   const { can } = useAuth();
   const t = useTranslations('folio');
   const tc = useTranslations('common');
@@ -183,6 +185,12 @@ export default function FolioPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const id = folioAction === 'payment' ? 'folio-payment' : folioAction === 'invoice' ? 'folio-invoice' : '';
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [folioAction, folios]);
 
   const totalBalance = folios.reduce((s, f) => s + folioBalance(f), 0);
 
@@ -455,8 +463,12 @@ export default function FolioPage() {
         ) : null}
       </section>
 
-      {folios.map((f) => (
-        <section key={f.id} className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
+      {folios.map((f, index) => (
+        <section
+          key={f.id}
+          id={index === 0 ? 'folio-invoice' : undefined}
+          className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}
+        >
           <h2 className="font-semibold text-[#34495E]">
             {t('folioLine', {
               type: f.type,
@@ -574,7 +586,7 @@ export default function FolioPage() {
       )}
 
       {can(PERMISSIONS.FOLIO_PAYMENT) && (
-        <section className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-2 p-4`}>
+        <section id="folio-payment" className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-2 p-4`}>
           <CatalogField
             kind="ENTITY_REF"
             label="Folio"

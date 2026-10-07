@@ -123,6 +123,12 @@ export async function patchGuestFull(
 
   const existing = await prisma.guest.findUnique({ where: { id } });
 
+  if (existing?.isLocked) {
+    const keys = (Object.keys(input) as Array<keyof typeof input>).filter((key) => input[key] !== undefined);
+    const unlockOnly = keys.length === 1 && keys[0] === 'isLocked' && input.isLocked === false;
+    if (!unlockOnly) throw new Error('Guest card is locked');
+  }
+
   if (firstName !== undefined) {
     const gaps = guestIdentityGaps({
       firstName: firstName ?? existing?.firstName,

@@ -15,6 +15,19 @@ import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
+function roomMoveReason(
+  row: { reasonCode?: string | null; notes?: string | null },
+  t: (key: string) => string,
+): string {
+  const raw = (row.reasonCode ?? '').trim();
+  const note = (row.notes ?? '').trim();
+  if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('reasonCard');
+  if (raw === 'SWAP') return t('reasonSwap');
+  if (raw === 'RELOCATE') return t('reasonRelocate');
+  if (note) return note;
+  return t('reasonOther');
+}
+
 type Row = {
   id: string;
   status: string;
@@ -55,12 +68,14 @@ export default function RoomChangesPage() {
 
   const filtered = useMemo(() => {
     const q = debouncedQ.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      `${r.reservation.guest.fullName} ${r.fromRoom?.roomNumber ?? ''} ${r.toRoom?.roomNumber ?? ''} ${r.status}`
-        .toLowerCase()
-        .includes(q),
-    );
+    const matched = !q
+      ? rows
+      : rows.filter((r) =>
+          `${r.reservation.guest.fullName} ${r.fromRoom?.roomNumber ?? ''} ${r.toRoom?.roomNumber ?? ''} ${r.status}`
+            .toLowerCase()
+            .includes(q),
+        );
+    return [...matched].sort((a, b) => String(b.effectiveAt).localeCompare(String(a.effectiveAt)));
   }, [rows, debouncedQ]);
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
@@ -100,7 +115,7 @@ export default function RoomChangesPage() {
             header: t('effective'),
             render: (r) => bakuDateTimeDisplay(r.effectiveAt),
           },
-          { key: 'reason', header: t('reason'), render: (r) => r.reasonCode ?? r.notes ?? '—' },
+          { key: 'reason', header: t('reason'), render: (r) => roomMoveReason(r, t) },
           { key: 'status', header: t('status') },
         ]}
         rows={filtered}

@@ -17,7 +17,7 @@ Occupancy drop when a companion **departs** mid-stay (adults/children from an ef
 
 Three FO actions:
 
-1. **Door move** (rack DnD) — same charged type or **comp** other type. Not a paid upgrade.
+1. **Door move** (rack DnD) — same charged type, or the hotel covers another type (`givenRoomTypeId`). Not a paid upgrade. On the reservation card, a different given type asks who pays: hotel covers (charged type unchanged), guest pays the given class (charged type becomes the given type for remaining nights), or a downgrade (hotel refund vs guest asked for cheaper). Never label a cheaper given type as an upgrade.
 2. **Product change from date** — wizard (preview + apply). Recalc remaining unlocked nights; Manual Price freezes remaining amounts.
 3. **Clinic remaining replan** — `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` cancels future `PROPOSED`/`SCHEDULED` procedures and updates program code. Does not cancel `COMPLETED` / `CHECKED_IN` / `NO_SHOW`.
 
