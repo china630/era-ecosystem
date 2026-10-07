@@ -1075,6 +1075,8 @@
     "priceActionManual": "Manual nightly price",
     "priceActionDiscount": "Discount",
     "priceActionTotal": "Stay total",
+    "priceActionRestore": "Restore package price",
+    "stayGrandTotal": "TOTAL",
     "priceApply": "Apply",
     "priceTariff": "Tariff",
     "priceFinal": "Final",

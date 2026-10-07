@@ -1076,6 +1076,8 @@
     "priceActionManual": "Ручная цена за ночь",
     "priceActionDiscount": "Скидка",
     "priceActionTotal": "Общая сумма",
+    "priceActionRestore": "Вернуть цену пакета",
+    "stayGrandTotal": "ИТОГО",
     "priceApply": "Применить",
     "priceTariff": "Тариф",
     "priceFinal": "Итог",

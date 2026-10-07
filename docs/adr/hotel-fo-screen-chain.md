@@ -41,7 +41,7 @@ Header quick links no longer duplicate availability / reservation list / rack / 
 Group lines carry quantity × room type, pax, and live Avl vs needed per type (same `GET /api/fo/sellable` gate as the single card). Header: **Room booking** and **Group booking** both use `+` plus label.
 
 Create modal uses `MODAL_FULL_CLASS` and `lg:grid-cols-[2fr_3fr]` like the room-stay card:
-- Left (same order as room card): **Commercial strip** (source → agency → company → one contract → contract ref) → **Stay** (dates + nights + code/name) → **Product** (default room type → package/rate → meal) → booker guest → booker/guestRep/paidBy → payment → folio mode.
+- Left (same order as room card): **Commercial strip** (source → agency → company, plus on the lookup, contract only after a profile) → **Stay** (dates + nights + code/name) → **Product** (default room type → package/rate → meal) → booker guest → booker/guestRep/paidBy → payment → folio mode.
 - Right: stay lines (scrollable) + sticky footer with totals (rooms / guests / nights) and sellable Avl.
 
 Globals vs override: rate/meal/payment/commercial apply to all stays; **room type** has a Product default and may be overridden per stay line. Qty on a line = N RoomStay of that type (same pax); one booker `guestId` is primary on every stay until names are completed (names-incomplete gate).

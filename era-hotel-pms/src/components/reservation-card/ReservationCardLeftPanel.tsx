@@ -436,7 +436,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
       {/* 1. Stay window — dates + times always visible */}
       <FieldPanel title={t('stayWindow')}>
         <div className="space-y-2">
-          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_4.5rem] items-end gap-1.5">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_5.75rem] items-end gap-1.5">
             <fieldset disabled={disabled} className="contents">
               <DatePicker
                 label={tb('checkIn')}

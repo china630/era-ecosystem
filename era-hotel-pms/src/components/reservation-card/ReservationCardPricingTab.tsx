@@ -17,24 +17,21 @@ export type PackageComposeSummary = {
   lines: Array<{ code?: string; label?: string; amount: number }>;
 };
 
-type PriceAction = 'manual' | 'discount' | 'total';
+type PriceAction = 'manual' | 'discount' | 'total' | 'restore';
 type NightKind = 'open' | 'posted' | 'past';
 
 function money(n: number): string {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
 
-function nightTariff(row: DailyRateRow, planNightly: number | null): number {
+/** Night sell of the selected package. A plan price is only the fallback when no package is composed. */
+function packageNightBase(
+  compose: PackageComposeSummary | null | undefined,
+  planNightly: number | null,
+): number | null {
+  if (compose != null && compose.total > 0) return compose.total;
   if (planNightly != null && planNightly > 0) return planNightly;
-  const pct = Number(row.discountPct ?? 0);
-  if (pct > 0 && pct < 100) return Math.round((row.amount / (1 - pct / 100)) * 100) / 100;
-  return row.amount;
-}
-
-function sameMoney(values: number[]): number | null {
-  if (values.length === 0) return null;
-  const first = money(values[0] ?? 0);
-  return values.every((value) => money(value) === first) ? Number(first) : null;
+  return null;
 }
 
 /** Rate grid: one action bar, scrolling nights, sticky stay total. */
@@ -92,27 +89,11 @@ export function ReservationCardPricingTab({
     [dailyRates],
   );
 
-  const targets = dailyRates.filter((row) => kindOf(row.stayDate) === 'open' && !row.fixPrice);
-  const targetTariffs = targets.map((row) => nightTariff(row, tariffNightly));
-  const commonTariff = sameMoney(targetTariffs);
-  const commonFinal = sameMoney(targets.map((row) => row.amount));
-  const tariffBase = commonTariff ?? tariffNightly ?? targetTariffs[0] ?? null;
+  const openNights = dailyRates.filter((row) => kindOf(row.stayDate) === 'open');
+  const targets = openNights.filter((row) => !row.fixPrice);
+  const packageBase = packageNightBase(packageCompose, tariffNightly);
 
   const percent = Number(discountPercent);
-  const previewFinal = (() => {
-    if (action === 'manual') {
-      const nightly = Number(manualDailyRate);
-      return nightly > 0 ? nightly : commonFinal;
-    }
-    if (action === 'discount') {
-      if (tariffBase == null || !(percent >= 0)) return commonFinal;
-      return Math.round(tariffBase * (1 - percent / 100) * 100) / 100;
-    }
-    const total = Number(stayTotalDraft);
-    if (!(total > 0) || targets.length === 0) return commonFinal;
-    const parts = splitStayAmounts(total, targets.length);
-    return sameMoney(parts);
-  })();
 
   function syncDiscountAmount(nextPercent: string, base: number | null) {
     const pct = Number(nextPercent);
@@ -123,8 +104,25 @@ export function ReservationCardPricingTab({
     setDiscountAmount(money((base * pct) / 100));
   }
 
+  const applyCount = action === 'restore' ? openNights.length : targets.length;
+
   function apply() {
-    if (ratesLocked || targets.length === 0) return;
+    if (ratesLocked) return;
+    if (action === 'restore') {
+      if (packageBase == null || openNights.length === 0) return;
+      const nightly = Math.round(packageBase * 100) / 100;
+      onUseManual(false);
+      onDiscountPercent('');
+      onDailyRates(
+        dailyRates.map((row) =>
+          kindOf(row.stayDate) === 'open'
+            ? { ...row, amount: nightly, discountPct: null, manualFlag: false, fixPrice: false }
+            : row,
+        ),
+      );
+      return;
+    }
+    if (targets.length === 0) return;
     if (action === 'manual') {
       const nightly = Number(manualDailyRate);
       if (!(nightly > 0)) return;
@@ -139,13 +137,12 @@ export function ReservationCardPricingTab({
       return;
     }
     if (action === 'discount') {
-      if (!(percent >= 0) || percent > 100) return;
+      if (!(percent >= 0) || percent > 100 || packageBase == null) return;
       onUseManual(false);
       onDailyRates(
         dailyRates.map((row) => {
           if (kindOf(row.stayDate) !== 'open' || row.fixPrice) return row;
-          const base = nightTariff(row, tariffNightly);
-          const amount = Math.round(base * (1 - percent / 100) * 100) / 100;
+          const amount = Math.round(packageBase * (1 - percent / 100) * 100) / 100;
           return { ...row, amount, discountPct: percent, manualFlag: false };
         }),
       );
@@ -167,9 +164,6 @@ export function ReservationCardPricingTab({
     if (parts[0] != null) onManualRate(money(parts[0]));
   }
 
-  const pairLabel = (value: number | null) =>
-    value == null ? t('priceMixed') : `${money(value)} AZN`;
-
   return (
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="reservation-pricing-tab">
       <div
@@ -186,11 +180,12 @@ export function ReservationCardPricingTab({
             { value: 'manual', label: t('priceActionManual') },
             { value: 'discount', label: t('priceActionDiscount') },
             { value: 'total', label: t('priceActionTotal') },
+            { value: 'restore', label: t('priceActionRestore') },
           ]}
           onChange={(next) => {
             const picked = (typeof next === 'string' ? next : next[0]) as PriceAction;
             setAction(picked);
-            if (picked === 'discount') syncDiscountAmount(discountPercent, tariffBase);
+            if (picked === 'discount') syncDiscountAmount(discountPercent, packageBase);
           }}
         />
         {action === 'manual' ? (
@@ -215,7 +210,7 @@ export function ReservationCardPricingTab({
               disabled={ratesLocked}
               onChange={(e) => {
                 onDiscountPercent(e.target.value);
-                syncDiscountAmount(e.target.value, tariffBase);
+                syncDiscountAmount(e.target.value, packageBase);
               }}
             />
             <Field
@@ -224,12 +219,12 @@ export function ReservationCardPricingTab({
               type="number"
               step="0.01"
               value={discountAmount}
-              disabled={ratesLocked || tariffBase == null}
+              disabled={ratesLocked || packageBase == null}
               onChange={(e) => {
                 setDiscountAmount(e.target.value);
                 const moneyOff = Number(e.target.value);
-                if (tariffBase != null && tariffBase > 0 && moneyOff >= 0) {
-                  onDiscountPercent(money((moneyOff / tariffBase) * 100));
+                if (packageBase != null && packageBase > 0 && moneyOff >= 0) {
+                  onDiscountPercent(money((moneyOff / packageBase) * 100));
                 }
               }}
             />
@@ -249,16 +244,16 @@ export function ReservationCardPricingTab({
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}
-          disabled={ratesLocked || busy || targets.length === 0}
+          disabled={
+            ratesLocked ||
+            busy ||
+            applyCount === 0 ||
+            (action === 'restore' && packageBase == null)
+          }
           onClick={apply}
         >
           {t('priceApply')}
         </button>
-        <p className="mb-1 ml-auto text-[12px] text-[#34495E]">
-          {t('priceTariff')}: <span className="font-mono">{pairLabel(action === 'manual' ? (tariffNightly ?? commonTariff) : commonTariff)}</span>
-          {' · '}
-          {t('priceFinal')}: <span className="font-mono">{pairLabel(previewFinal)}</span>
-        </p>
       </div>
 
       {dailyRates.length > 0 ? (
@@ -266,16 +261,14 @@ export function ReservationCardPricingTab({
           <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full table-fixed font-mono text-[12px]" data-testid="rate-grid-table">
             <colgroup>
-              <col className="w-[22%]" />
-              <col className="w-[18%]" />
-              <col className="w-[22%]" />
+              <col className="w-[28%]" />
+              <col className="w-[28%]" />
+              <col className="w-[24%]" />
               <col className="w-[20%]" />
-              <col className="w-[18%]" />
             </colgroup>
             <thead className="sticky top-0 bg-[#F8FAFC]">
               <tr>
                 <th className="p-2 text-left">{t('stayDate')}</th>
-                <th className="p-2 text-right">{t('priceTariff')}</th>
                 <th className="p-2 text-right">{t('amount')}</th>
                 <th className="p-2 text-right">{t('nightDiscountPct')}</th>
                 <th className="p-2 text-center">{t('nightFixed')}</th>
@@ -294,7 +287,6 @@ export function ReservationCardPricingTab({
                 return (
                   <tr key={row.stayDate} className={rowClass} data-night-kind={kind}>
                     <td className="p-2">{row.stayDate.slice(0, 10)}</td>
-                    <td className="p-2 text-right">{money(nightTariff(row, tariffNightly))}</td>
                     <td className="p-2 text-right">
                       <input
                         type="number"
@@ -309,6 +301,7 @@ export function ReservationCardPricingTab({
                             amount: Number(e.target.value),
                             manualFlag: true,
                             fixPrice: true,
+                            discountPct: null,
                           };
                           onDailyRates(next);
                         }}
@@ -344,22 +337,17 @@ export function ReservationCardPricingTab({
           </div>
           <table className="w-full table-fixed shrink-0 border-t border-[#D5DADF] font-mono" data-testid="pricing-stay-total">
             <colgroup>
-              <col className="w-[22%]" />
-              <col className="w-[18%]" />
-              <col className="w-[22%]" />
+              <col className="w-[28%]" />
+              <col className="w-[28%]" />
+              <col className="w-[24%]" />
               <col className="w-[20%]" />
-              <col className="w-[18%]" />
             </colgroup>
             <tbody>
               <tr>
-                <td />
-                <td />
-                <td className="px-2 py-1 text-right text-[15px] font-semibold text-[#34495E]">
-                  {money(stayTotal)}
+                <td className="px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]" colSpan={2}>
+                  {t('stayGrandTotal')}: {money(stayTotal)} AZN
                 </td>
-                <td className="px-2 py-1 text-[11px] text-[#7F8C8D]" colSpan={2}>
-                  AZN
-                </td>
+                <td colSpan={2} />
               </tr>
             </tbody>
           </table>
@@ -372,22 +360,6 @@ export function ReservationCardPricingTab({
       ) : (
         <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tb('quotePending')}</p>
       )}
-
-      {packageCompose && packageCompose.lines.length > 0 ? (
-        <div className={`${SUBSECTION_SURFACE_CLASS} shrink-0`} data-testid="package-compose-summary">
-          <p className="m-0 mb-1 text-[12px] font-semibold text-[#34495E]">
-            {t('packageComposeSummary')}: {packageCompose.total.toFixed(2)} AZN
-          </p>
-          <ul className="m-0 list-none space-y-0.5 p-0 text-[12px] text-[#34495E]">
-            {packageCompose.lines.map((line, index) => (
-              <li key={`${line.code ?? line.label ?? index}-${index}`} className="flex justify-between gap-2">
-                <span>{line.label ?? line.code ?? '—'}</span>
-                <span className="font-mono">{Number(line.amount).toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </div>
   );
 }
