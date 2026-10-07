@@ -51,9 +51,47 @@ type StaffRow = {
   code: string;
   fullName: string;
   specialty: string | null;
+  staffKind?: string;
   skillProcedureTypeIds: string[];
   warnings: Warning[];
 };
+
+function ReplaceArrows() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+      <path
+        d="M19 8a7 7 0 0 0-12-3L5 7"
+        fill="none"
+        stroke="#c0392b"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 3v4h4"
+        fill="none"
+        stroke="#c0392b"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 16a7 7 0 0 0 12 3l2-2"
+        fill="none"
+        stroke="#1e8449"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M19 21v-4h-4"
+        fill="none"
+        stroke="#1e8449"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 type Absence = {
   id: string;
@@ -108,6 +146,7 @@ function shiftYearMonth(yearMonth: string, delta: number) {
 
 export default function NurseRosterPage() {
   const t = useTranslations("nurseRoster");
+  const tm = useTranslations("masterData");
   const tc = useTranslations("common");
   const [yearMonth, setYearMonth] = useState(currentYearMonth);
   const [staffKind, setStaffKind] = useState<"NURSE" | "LAB">("NURSE");
@@ -145,20 +184,41 @@ export default function NurseRosterPage() {
     );
   }
 
-  const visibleLines = useMemo(() => {
+  const procedureRows = useMemo(() => {
+    const order: string[] = [];
+    const groups = new Map<string, Line[]>();
+    for (const line of lines) {
+      if (!groups.has(line.procedureTypeId)) order.push(line.procedureTypeId);
+      const list = groups.get(line.procedureTypeId) ?? [];
+      list.push(line);
+      groups.set(line.procedureTypeId, list);
+    }
     const query = procedureQuery.trim().toLowerCase();
-    if (!query) return lines;
-    return lines.filter(
-      (line) =>
-        line.procedureName.toLowerCase().includes(query) ||
-        line.procedureCode.toLowerCase().includes(query),
-    );
+    return order
+      .map((id) => {
+        const group = groups.get(id) ?? [];
+        const head = group[0];
+        return {
+          procedureTypeId: id,
+          procedureCode: head.procedureCode,
+          procedureName: head.procedureName,
+          stable: group.some((line) => line.stable),
+          assignees: group.filter((line) => line.practitionerId),
+        };
+      })
+      .filter((row) => {
+        if (!query) return true;
+        return (
+          row.procedureName.toLowerCase().includes(query) ||
+          row.procedureCode.toLowerCase().includes(query)
+        );
+      });
   }, [lines, procedureQuery]);
 
   const pagedLines = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return visibleLines.slice(start, start + pageSize);
-  }, [visibleLines, page, pageSize]);
+    return procedureRows.slice(start, start + pageSize);
+  }, [procedureRows, page, pageSize]);
 
   const staffRows = view?.staff ?? [];
   const pagedStaff = useMemo(() => {
@@ -196,34 +256,38 @@ export default function NurseRosterPage() {
     void load();
   }, [load]);
 
+  function kindLabel(kind: string | undefined) {
+    if (kind === "NURSE") return tm("staffKindNurse");
+    if (kind === "LAB") return tm("staffKindLab");
+    if (kind === "BATH") return tm("staffKindBath");
+    if (kind === "MASSAGE") return tm("staffKindMassage");
+    if (kind === "DOCTOR") return tm("staffKindDoctor");
+    return "";
+  }
+
   const staffOptions = useMemo(
-    () => [
-      { value: "", label: t("unassigned") },
-      ...(view?.staff ?? []).map((s) => ({
-        value: s.id,
-        label: s.specialty ? `${s.fullName} (${s.specialty})` : s.fullName,
-      })),
-    ],
-    [view?.staff, t],
+    () =>
+      (view?.staff ?? []).map((s) => {
+        const kind = kindLabel(s.staffKind);
+        const base = s.specialty ? `${s.fullName} (${s.specialty})` : s.fullName;
+        return { value: s.id, label: kind ? `${base} · ${kind}` : base };
+      }),
+    [view?.staff, tm],
   );
 
-  const substituteStaffOptions = useMemo(
-    () =>
-      (view?.staff ?? []).map((s) => ({
-        value: s.id,
-        label: s.specialty ? `${s.fullName} (${s.specialty})` : s.fullName,
-      })),
-    [view?.staff],
-  );
-
-  const procedureOptions = useMemo(
-    () =>
-      lines.map((l) => ({
-        value: l.procedureTypeId,
-        label: `${l.procedureName} (${l.procedureCode})`,
-      })),
-    [lines],
-  );
+  const procedureOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: Array<{ value: string; label: string }> = [];
+    for (const line of lines) {
+      if (seen.has(line.procedureTypeId)) continue;
+      seen.add(line.procedureTypeId);
+      options.push({
+        value: line.procedureTypeId,
+        label: `${line.procedureName} (${line.procedureCode})`,
+      });
+    }
+    return options;
+  }, [lines]);
 
   const kindOptions = useMemo(
     () => [
@@ -251,47 +315,114 @@ export default function NurseRosterPage() {
     [t],
   );
 
-  function setLineNurse(procedureTypeId: string, practitionerId: string) {
-    setLines((prev) =>
-      prev.map((l) =>
-        l.procedureTypeId === procedureTypeId
-          ? {
-              ...l,
-              practitionerId: practitionerId || null,
-              practitionerName:
-                view?.staff.find((s) => s.id === practitionerId)?.fullName ?? null,
-            }
-          : l,
-      ),
-    );
+  function personName(practitionerId: string) {
+    return view?.staff.find((s) => s.id === practitionerId)?.fullName ?? null;
+  }
+
+  function addAssignee(procedureTypeId: string, practitionerId: string) {
+    if (!practitionerId) return;
+    setLines((prev) => {
+      if (
+        prev.some(
+          (line) =>
+            line.procedureTypeId === procedureTypeId && line.practitionerId === practitionerId,
+        )
+      ) {
+        return prev;
+      }
+      const sample = prev.find((line) => line.procedureTypeId === procedureTypeId);
+      if (!sample) return prev;
+      const withoutEmpty = prev.filter(
+        (line) => !(line.procedureTypeId === procedureTypeId && !line.practitionerId),
+      );
+      return [
+        ...withoutEmpty,
+        {
+          ...sample,
+          id: `new-${procedureTypeId}-${practitionerId}`,
+          practitionerId,
+          practitionerName: personName(practitionerId),
+          warnings: [],
+        },
+      ];
+    });
+  }
+
+  function removeAssignee(procedureTypeId: string, practitionerId: string) {
+    setLines((prev) => {
+      const sample = prev.find((line) => line.procedureTypeId === procedureTypeId);
+      const next = prev.filter(
+        (line) =>
+          !(line.procedureTypeId === procedureTypeId && line.practitionerId === practitionerId),
+      );
+      if (!sample || next.some((line) => line.procedureTypeId === procedureTypeId)) return next;
+      return [
+        ...next,
+        {
+          ...sample,
+          id: `empty-${procedureTypeId}`,
+          practitionerId: null,
+          practitionerName: null,
+          warnings: [],
+        },
+      ];
+    });
   }
 
   function setNurseProcedures(practitionerId: string, procedureTypeIds: string[]) {
     const want = new Set(procedureTypeIds);
-    setLines((prev) =>
-      prev.map((l) => {
-        if (want.has(l.procedureTypeId)) {
-          return {
-            ...l,
-            practitionerId,
-            practitionerName:
-              view?.staff.find((s) => s.id === practitionerId)?.fullName ?? null,
-          };
+    setLines((prev) => {
+      let next = prev.filter(
+        (line) => !(line.practitionerId === practitionerId && !want.has(line.procedureTypeId)),
+      );
+      for (const procedureTypeId of want) {
+        if (
+          next.some(
+            (line) =>
+              line.procedureTypeId === procedureTypeId && line.practitionerId === practitionerId,
+          )
+        ) {
+          continue;
         }
-        if (l.practitionerId === practitionerId) {
-          return { ...l, practitionerId: null, practitionerName: null };
-        }
-        return l;
-      }),
-    );
+        const sample =
+          next.find((line) => line.procedureTypeId === procedureTypeId) ??
+          prev.find((line) => line.procedureTypeId === procedureTypeId);
+        if (!sample) continue;
+        next = next.filter(
+          (line) => !(line.procedureTypeId === procedureTypeId && !line.practitionerId),
+        );
+        next.push({
+          ...sample,
+          id: `new-${procedureTypeId}-${practitionerId}`,
+          practitionerId,
+          practitionerName: personName(practitionerId),
+          warnings: [],
+        });
+      }
+      const seen = new Set<string>();
+      for (const line of next) seen.add(line.procedureTypeId);
+      for (const line of prev) {
+        if (seen.has(line.procedureTypeId)) continue;
+        seen.add(line.procedureTypeId);
+        next.push({
+          ...line,
+          id: `empty-${line.procedureTypeId}`,
+          practitionerId: null,
+          practitionerName: null,
+          warnings: [],
+        });
+      }
+      return next;
+    });
   }
 
   function toggleStable(procedureTypeId: string) {
-    setLines((prev) =>
-      prev.map((l) =>
-        l.procedureTypeId === procedureTypeId ? { ...l, stable: !l.stable } : l,
-      ),
-    );
+    setLines((prev) => {
+      const next = !prev.find((line) => line.procedureTypeId === procedureTypeId)?.stable;
+      return prev.map((line) =>
+        line.procedureTypeId === procedureTypeId ? { ...line, stable: next } : line,
+      );
+    });
   }
 
   function openSubstitute(procedureTypeId: string, dutyDate?: string) {
@@ -575,13 +706,11 @@ export default function NurseRosterPage() {
               </thead>
               <tbody>
                 {pagedLines.map((line, idx) => {
-                  const staff = view?.staff.find((s) => s.id === line.practitionerId);
-                  const noSkill =
-                    staff && !staff.skillProcedureTypeIds.includes(line.procedureTypeId);
                   const rowNum = (page - 1) * pageSize + idx + 1;
                   const lineOverrides = dayOverrides.filter(
                     (o) => o.procedureTypeId === line.procedureTypeId,
                   );
+                  const assignedIds = new Set(line.assignees.map((a) => a.practitionerId));
                   return (
                     <tr key={line.procedureTypeId} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{rowNum}</td>
@@ -595,11 +724,48 @@ export default function NurseRosterPage() {
                         <CatalogField
                           kind="SEARCHABLE"
                           label=""
-                          value={line.practitionerId ?? ""}
-                          onChange={(v) => setLineNurse(line.procedureTypeId, String(v))}
-                          options={staffOptions}
-                          emptyLabel={null}
+                          value=""
+                          onChange={(v) => addAssignee(line.procedureTypeId, String(v ?? ""))}
+                          options={staffOptions.filter((option) => !assignedIds.has(option.value))}
+                          emptyLabel={t("addPerson")}
                         />
+                        <ul className="mt-2 flex flex-wrap gap-2">
+                          {line.assignees.map((person) => {
+                            const staff = view?.staff.find((s) => s.id === person.practitionerId);
+                            const noSkill =
+                              staff &&
+                              !staff.skillProcedureTypeIds.includes(line.procedureTypeId);
+                            return (
+                              <li key={person.practitionerId}>
+                                <span
+                                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] ${
+                                    noSkill ? "border-red-300" : "border-slate-300"
+                                  }`}
+                                >
+                                  {person.practitionerName ?? person.practitionerId}
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#7F8C8D]"
+                                    aria-label={t("removeCabinet")}
+                                    onClick={() =>
+                                      removeAssignee(line.procedureTypeId, person.practitionerId!)
+                                    }
+                                  >
+                                    ×
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+                                    aria-label={t("substitute")}
+                                    onClick={() => openSubstitute(line.procedureTypeId)}
+                                  >
+                                    <ReplaceArrows />
+                                  </button>
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <input
@@ -611,29 +777,23 @@ export default function NurseRosterPage() {
                         />
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {noSkill ? (
+                        {line.assignees.some((person) => {
+                          const staff = view?.staff.find((s) => s.id === person.practitionerId);
+                          return staff && !staff.skillProcedureTypeIds.includes(line.procedureTypeId);
+                        }) ? (
                           <p className={TEXT_DANGER_CLASS}>{t("noSkill")}</p>
                         ) : null}
-                        {line.warnings.map((w, i) => (
-                          <p key={`${w.kind}-${i}`} className={TEXT_DANGER_CLASS}>
-                            {w.kind}: {w.from}
-                            {w.to !== w.from ? `–${w.to}` : ""}
-                          </p>
-                        ))}
+                        {line.assignees.flatMap((person) =>
+                          person.warnings.map((w, i) => (
+                            <p key={`${person.id}-${w.kind}-${i}`} className={TEXT_DANGER_CLASS}>
+                              {w.kind}: {w.from}
+                              {w.to !== w.from ? `–${w.to}` : ""}
+                            </p>
+                          )),
+                        )}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        <button
-                          type="button"
-                          className={SECONDARY_BUTTON_CLASS}
-                          onClick={() => openSubstitute(line.procedureTypeId)}
-                        >
-                          {t("substitute")}
-                        </button>
-                        {lineOverrides.length === 0 ? (
-                          <p className={`mt-1 text-xs ${TEXT_MUTED_CLASS}`}>
-                            {t("noOverrides")}
-                          </p>
-                        ) : (
+                        {lineOverrides.length === 0 ? null : (
                           lineOverrides.map((o) => (
                             <p
                               key={o.id}
@@ -657,7 +817,7 @@ export default function NurseRosterPage() {
                     </tr>
                   );
                 })}
-                {procedureQuery.trim() && visibleLines.length === 0 ? (
+                {procedureQuery.trim() && procedureRows.length === 0 ? (
                   <tr>
                     <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={6}>
                       {tc("notFound")}
@@ -670,7 +830,7 @@ export default function NurseRosterPage() {
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
-            total={visibleLines.length}
+            total={procedureRows.length}
             loading={busy}
             onPageChange={setPage}
             onPageSizeChange={(n) => {
@@ -714,7 +874,14 @@ export default function NurseRosterPage() {
                   );
                   return (
                     <tr key={s.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{s.fullName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {s.fullName}
+                        {kindLabel(s.staffKind) ? (
+                          <span className={`ml-2 text-xs ${TEXT_MUTED_CLASS}`}>
+                            {kindLabel(s.staffKind)}
+                          </span>
+                        ) : null}
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>{s.code}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <CatalogField
@@ -733,7 +900,7 @@ export default function NurseRosterPage() {
                           })}
                           emptyLabel={t("addCabinet")}
                         />
-                        <ul className="mt-2 space-y-2">
+                        <ul className="mt-2 flex flex-wrap gap-2">
                           {owned.filter((id) => {
                             const line = lines.find((item) => item.procedureTypeId === id);
                             return line ? procedureMatches(line) : true;
@@ -741,12 +908,12 @@ export default function NurseRosterPage() {
                             const line = lines.find((l) => l.procedureTypeId === id);
                             const overs = dayOverrides.filter((o) => o.procedureTypeId === id);
                             return (
-                              <li key={id} className="text-[12px]">
-                                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5">
+                              <li key={id} className="text-[13px]">
+                                <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5">
                                   {line?.procedureName ?? id}
                                   <button
                                     type="button"
-                                    className="text-[#7F8C8D]"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#7F8C8D]"
                                     aria-label={t("removeCabinet")}
                                     onClick={() =>
                                       setNurseProcedures(
@@ -757,16 +924,16 @@ export default function NurseRosterPage() {
                                   >
                                     ×
                                   </button>
-                                </span>
-                                {overs.length === 0 ? (
                                   <button
                                     type="button"
-                                    className={`mt-1 block ${LINK_ACCENT_CLASS}`}
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+                                    aria-label={t("substitute")}
                                     onClick={() => openSubstitute(id)}
                                   >
-                                    {t("substitute")}
+                                    <ReplaceArrows />
                                   </button>
-                                ) : (
+                                </span>
+                                {overs.length === 0 ? null : (
                                   overs.map((o) => (
                                     <button
                                       key={o.id}
@@ -857,10 +1024,7 @@ export default function NurseRosterPage() {
             onChange={(v) =>
               setAbsenceForm((f) => ({ ...f, practitionerId: String(v) }))
             }
-            options={(view?.staff ?? []).map((s) => ({
-              value: s.id,
-              label: s.fullName,
-            }))}
+            options={staffOptions}
           />
           <CatalogField
             kind="CLOSED_SMALL"
@@ -925,7 +1089,7 @@ export default function NurseRosterPage() {
             onChange={(v) =>
               setSubForm((f) => ({ ...f, practitionerId: String(v) }))
             }
-            options={substituteStaffOptions}
+            options={staffOptions}
           />
           <Field
             label={t("note")}

@@ -4,6 +4,7 @@
 
 Accepted — 2026-08-17  
 **Amended — 2026-09-03** (dual table views; head-doctor day substitution; no silent auto-fallback)  
+**Amended — 2026-10-07** (several people per procedure; staff kinds BATH and MASSAGE on the procedure chart)  
 **CLI-38b SHIPPED — 2026-09-03** (`StaffDutyDayOverride`; dual Procedures|Nurses UI; planner order override → posted → no silent pool)
 
 Related: [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-practitioner-shifts.md](./clinic-practitioner-shifts.md) · [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · capability **CLI-38** / **CLI-38b** in [`docs/COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
@@ -18,7 +19,7 @@ Nafta posts a paper form *«Tibb bacılarının fizioterapevtik aparatarda işl�
 
 Product workshop (2026-09):
 
-- True **many-to-many** on the monthly matrix is **not** required for the process (one responsible nurse per procedure/device).
+- One procedure may list several people (one SKU, several cabins). HARD still keeps one person off two overlapping slots.
 - Operators still want a **nurse-centric table** (nurse → assigned procedures), not only procedure → nurse.
 - **Day substitutions** when the posted nurse is away are decided **only by the head doctor** — not by an automatic “any skilled free nurse” picker.
 
@@ -37,22 +38,24 @@ None of those is the monthly duty matrix or an explicit day substitution ledger.
 
 ### 1. Staff kind
 
-**`Practitioner.staffKind`** = `DOCTOR | NURSE | LAB`.
+**`Practitioner.staffKind`** = `DOCTOR | NURSE | LAB | BATH | MASSAGE`.
+
+Bath attendants and massage therapists are their own kinds. The procedure duty chart lists doctors, nurses, bath attendants, and massage therapists together. The lab chart stays lab-only. A role in `/admin/access` stores the same kind; creating the role does not invent the kind.
 
 - Hire from CP Workforce maps `satelliteRole` (`LAB_TECH` → `LAB`). SatAdmin may correct kind.
 - Appointment day matrix lists **doctors only**.
 - Duty roster page toggles **Nurses / Lab** on the same screen (`staffKind` on the roster).
 
-### 2. Monthly matrix cardinality (not M:N)
+### 2. Monthly matrix cardinality
 
 **`StaffDutyRoster` + `StaffDutyLine`** — one draft or approved matrix per org / `YYYY-MM` / staff kind.
 
 | Rule | Meaning |
 |------|---------|
-| Axis of truth | Rows = **procedure types** (devices / SVC-*); cell = **at most one** `practitionerId` |
-| Uniqueness | `@@unique([rosterId, procedureTypeId])` — one responsible per procedure per month |
-| Nurse covers many devices | Allowed: same `practitionerId` on many lines (1 nurse → N procedures) |
-| Many nurses on one device | **Forbidden** on the monthly matrix (paper 1:1; confirmed 2026-09) |
+| Axis of truth | Rows = **procedure types** (SVC-*); a procedure may list **several** people |
+| Uniqueness | `@@unique([rosterId, procedureTypeId, practitionerId])` — one row per person per procedure per month |
+| One person, many procedures | Allowed |
+| Several people, one procedure | Allowed. One SKU can have several cabins, so the month can post several people. HARD still stops one person covering two overlapping slots; the planner takes the next posted person. |
 
 `stable` copies the line into the next month’s draft. Opening a new month seeds from the previous month.
 

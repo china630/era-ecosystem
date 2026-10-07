@@ -56,6 +56,8 @@ describe("clinic-role-admin helpers", () => {
     expect(parseAssignableStaffKind("DOCTOR")).toBe("DOCTOR");
     expect(parseAssignableStaffKind("NURSE")).toBe("NURSE");
     expect(parseAssignableStaffKind("LAB")).toBe("LAB");
+    expect(parseAssignableStaffKind("BATH")).toBe("BATH");
+    expect(parseAssignableStaffKind("MASSAGE")).toBe("MASSAGE");
     expect(parseAssignableStaffKind("NONE")).toBe("NONE");
     expect(parseAssignableStaffKind("FLOOR")).toBeNull();
   });

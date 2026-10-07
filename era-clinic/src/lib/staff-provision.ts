@@ -141,11 +141,13 @@ async function resolveProvisionRole(
 
 function clinicalPractitionerKind(
   staffKind: string | null | undefined,
-): "DOCTOR" | "NURSE" | "LAB" | null {
+): "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE" | null {
   const kind = parseClinicRoleStaffKind(staffKind);
   if (kind === "NURSE") return "NURSE";
   if (kind === "LAB") return "LAB";
   if (kind === "DOCTOR") return "DOCTOR";
+  if (kind === "BATH") return "BATH";
+  if (kind === "MASSAGE") return "MASSAGE";
   // Reception and clinic admin are NONE. They get a login, not a doctor row.
   return null;
 }
@@ -175,7 +177,7 @@ async function findExistingPractitioner(input: {
   cpEmploymentId: string;
   globalPersonId: string | null;
   fullName: string;
-  staffKind: "DOCTOR" | "NURSE" | "LAB";
+  staffKind: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE";
 }) {
   const byCp = await prisma.practitioner.findFirst({
     where: { cpEmploymentId: input.cpEmploymentId },

@@ -24,7 +24,7 @@ type RouteParams = { params: Promise<{ code: string }> };
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
-  staffKind: z.enum(["DOCTOR", "NURSE", "LAB", "NONE"]).optional(),
+  staffKind: z.enum(["DOCTOR", "NURSE", "LAB", "BATH", "MASSAGE", "NONE"]).optional(),
 });
 
 export async function PATCH(req: Request, { params }: RouteParams) {

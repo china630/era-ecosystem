@@ -47,6 +47,8 @@ export function inferStaffKind(input: {
   if (role === "FLOOR") return "NURSE";
   if (role === "LAB_TECH" || role === "LAB") return "LAB";
   if (role === "DOCTOR") return "DOCTOR";
+  if (role === "BATH" || role === "BATH_ATTENDANT") return "BATH";
+  if (role === "MASSAGE" || role === "MASSEUR") return "MASSAGE";
 
   const blob = `${input.specialty ?? ""} ${input.code ?? ""}`.toLowerCase();
   if (
@@ -62,7 +64,15 @@ export function inferStaffKind(input: {
   if (blob.includes("lab") || blob.includes("лаборант") || blob.startsWith("lab")) {
     return "LAB";
   }
+  if (blob.includes("банщик") || blob.includes("bansh") || blob.includes("vanna")) return "BATH";
+  if (blob.includes("массаж") || blob.includes("masaj") || blob.includes("massage")) return "MASSAGE";
   return "DOCTOR";
+}
+
+/** People who can be posted on the procedure duty chart. Lab stays on its own roster. */
+export function rosterStaffKinds(staffKind: PractitionerStaffKind): PractitionerStaffKind[] {
+  if (staffKind === "LAB") return ["LAB"];
+  return ["DOCTOR", "NURSE", "BATH", "MASSAGE"];
 }
 
 export function staffKindFromSatelliteRole(role: string | undefined | null): PractitionerStaffKind {
@@ -97,9 +107,13 @@ export function resolveDutyCandidates(input: {
   rosterStatus: "DRAFT" | "APPROVED" | null;
   postedPractitionerId: string | null;
   posted?: DutyCandidate | null;
+  /** Several people posted on one procedure. Absent ids are dropped. */
+  postedStaff?: DutyCandidate[];
+  /** Ids inside postedStaff who are absent that day. */
+  absentIds?: string[];
   postedAbsent: boolean;
   skilled: DutyCandidate[];
-  /** Head-doctor day substitute; wins over posted when set. */
+  /** Head-doctor day substitute; wins over the posted list when set. */
   dayOverridePractitionerId?: string | null;
   dayOverride?: DutyCandidate | null;
 }): DutyCandidate[] {
@@ -108,6 +122,7 @@ export function resolveDutyCandidates(input: {
     const override =
       input.dayOverride ??
       input.skilled.find((p) => p.id === overrideId) ??
+      input.postedStaff?.find((p) => p.id === overrideId) ??
       null;
     if (override) return [override];
     return [{ id: overrideId, fullName: "", code: "" }];
@@ -117,22 +132,21 @@ export function resolveDutyCandidates(input: {
     return input.skilled;
   }
 
-  if (!input.postedPractitionerId || input.postedAbsent) {
+  const postedStaff =
+    input.postedStaff ??
+    (input.posted
+      ? [input.posted]
+      : input.postedPractitionerId
+        ? [{ id: input.postedPractitionerId, fullName: "", code: "" }]
+        : []);
+  if (postedStaff.length === 0 || (input.postedAbsent && !input.postedStaff)) {
     return [];
   }
-
-  const posted =
-    input.posted ??
-    input.skilled.find((p) => p.id === input.postedPractitionerId) ??
-    null;
-  if (posted) return [posted];
-  return [
-    {
-      id: input.postedPractitionerId,
-      fullName: "",
-      code: "",
-    },
-  ];
+  const absent = new Set(input.absentIds ?? []);
+  if (input.postedAbsent && input.postedPractitionerId && !input.postedStaff) {
+    absent.add(input.postedPractitionerId);
+  }
+  return postedStaff.filter((person) => !absent.has(person.id));
 }
 
 export type RosterReassignSlot = {
@@ -154,11 +168,11 @@ export type RosterReassignOccupation = {
 };
 
 /**
- * On roster approve: future not-started staff slots take the monthly post
- * (or that day's override). Cabin time stays. A HARD overlap leaves the slot
- * without a nurse. Past and already-started slots are not in `slots`; pass
- * them as `occupations` so they still block a HARD nurse. Any overlapping
- * staff slot blocks a HARD assignment, including a SOFT one.
+ * On roster approve: future not-started staff slots take a free person from
+ * the monthly posts for that procedure (or that day's override). Cabin time
+ * stays. HARD skips a person who already overlaps and tries the next post.
+ * Past and already-started slots are not in `slots`; pass them as
+ * `occupations` so they still block a HARD person.
  */
 export function planRosterStaffReassignment(input: {
   slots: RosterReassignSlot[];
@@ -167,9 +181,13 @@ export function planRosterStaffReassignment(input: {
   overrides: Array<{ procedureTypeId: string; ymd: string; practitionerId: string }>;
   absent: (practitionerId: string, ymd: string) => boolean;
 }): Array<{ allocationId: string; practitionerId: string | null }> {
-  const postByType = new Map(
-    input.posts.map((post) => [post.procedureTypeId, post.practitionerId]),
-  );
+  const postByType = new Map<string, string[]>();
+  for (const post of input.posts) {
+    if (!post.practitionerId) continue;
+    const list = postByType.get(post.procedureTypeId) ?? [];
+    if (!list.includes(post.practitionerId)) list.push(post.practitionerId);
+    postByType.set(post.procedureTypeId, list);
+  }
   const overrideByKey = new Map(
     input.overrides.map((row) => [
       `${row.procedureTypeId}|${row.ymd}`,
@@ -189,20 +207,25 @@ export function planRosterStaffReassignment(input: {
   const updates: Array<{ allocationId: string; practitionerId: string | null }> = [];
   for (const slot of slots) {
     const overrideId = overrideByKey.get(`${slot.procedureTypeId}|${slot.ymd}`);
-    let target =
-      overrideId ?? postByType.get(slot.procedureTypeId) ?? null;
-    if (target && input.absent(target, slot.ymd)) target = null;
-    if (
-      target &&
-      slot.staffMode === "HARD" &&
-      busy.some(
-        (row) =>
-          row.practitionerId === target &&
-          row.startsAt < slot.endsAt &&
-          row.endsAt > slot.startsAt,
-      )
-    ) {
-      target = null;
+    const candidates = overrideId
+      ? [overrideId]
+      : (postByType.get(slot.procedureTypeId) ?? []);
+    let target: string | null = null;
+    for (const candidate of candidates) {
+      if (input.absent(candidate, slot.ymd)) continue;
+      if (
+        slot.staffMode === "HARD" &&
+        busy.some(
+          (row) =>
+            row.practitionerId === candidate &&
+            row.startsAt < slot.endsAt &&
+            row.endsAt > slot.startsAt,
+        )
+      ) {
+        continue;
+      }
+      target = candidate;
+      break;
     }
     updates.push({ allocationId: slot.allocationId, practitionerId: target });
     if (target) {

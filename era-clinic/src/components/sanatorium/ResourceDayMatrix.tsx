@@ -24,6 +24,8 @@ export type MatrixSlot = {
   manuallyAdjusted?: boolean;
   /** Outpatient appointment visit (when mapped from Appointment). */
   visitId?: string | null;
+  /** Reception length in minutes. Procedure cells leave this empty. */
+  durationMinutes?: number;
 };
 
 export type MatrixResourceRow = {

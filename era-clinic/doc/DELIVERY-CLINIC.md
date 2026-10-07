@@ -32,7 +32,7 @@ PRD: [../PRD.md](../PRD.md)
 - [x] CLI-35 sidebar cleanup — Setup split into **Catalogs** / **Rules & data**; `/admin/wards` moved under Inpatient module; `/executive` merged into Home for owners (`canViewExecutive`) and route deleted; `/admin/catalog-favorites` merged into `/admin/diagnostic-catalog` favorites tab and route deleted; catalog labels disambiguated (Service prices vs Diagnostic catalog)
 - [x] CLI-36 practitioner shift rotation — `PractitionerScheduleRule`/`PractitionerScheduleException`; rule engine (WEEKLY / WEEK_PARITY / MONTH_DAY_PARITY / CYCLE) + per-day hours + exceptions; matrix blocks off-shift slots; create/reschedule guard (409 off-shift); SatAdmin **Shifts** modal on `/admin/master-data` (`GET/PUT /api/admin/practitioners/[id]/schedule`); ADR [clinic-practitioner-shifts.md](../../docs/adr/clinic-practitioner-shifts.md)
 - [x] CLI-37 UI list/filter standard — global `EraListFilterBar` instant filters (no Apply; Reset inline; `useDebouncedValue` 300ms); clinic home full-width + shared date; ops/SatAdmin tables name-first + Lucide icon row actions; DESIGN + UI_PLAYBOOK updated
-- [x] CLI-38 staff kind + monthly duty roster — `Practitioner.staffKind` (DOCTOR/NURSE/LAB); `StaffDutyRoster`/`StaffDutyLine`/`StaffAbsence`; `/sanatorium/nurse-roster` (head doctor); planner prefers approved posting; clinic-local absences (Finance HR later); ADR [clinic-staff-duty-roster.md](../../docs/adr/clinic-staff-duty-roster.md)
+- [x] CLI-38 staff kind + monthly duty roster — `Practitioner.staffKind` (DOCTOR/NURSE/LAB/BATH/MASSAGE); procedure chart lists doctors, nurses, bath attendants, and massage therapists; several people per procedure SKU; `StaffDutyRoster`/`StaffDutyLine`/`StaffAbsence`; `/sanatorium/nurse-roster` (head doctor); planner walks the posted list and skips a HARD-busy person; clinic-local absences (Finance HR later); ADR [clinic-staff-duty-roster.md](../../docs/adr/clinic-staff-duty-roster.md)
 - [x] CLI-38b duty roster dual view + day substitution — by-nurse table (same SoT as by-procedure); `StaffDutyDayOverride`; planner: override → posted → **no** silent skilled-pool substitute when posted absent; head doctor only; ADR amend 2026-09-03
 - [x] CLI-39 sanatorium ICD-10 search/picker — WHO ICD-10 2019 `IcdCode`; `GET /api/icd`; `IcdPicker` (`CatalogField` SEARCHABLE) on `/sanatorium`; selectable CATEGORY/LEAF only
 - [x] CLI-40 visit + inpatient + print + favorites — `VisitDiagnosis` / `AdmissionDiagnosis`; `/visits/[id]`; `/inpatient` diagnoses modal; print checkup diagnosis block; `/admin/icd-favorites` (pin + retire, no title CRUD)
@@ -88,7 +88,7 @@ Client: `@era/satellite-kit`.
 
 Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 
-- [x] `/admin/master-data` — practitioners ops catalog (specialty, slots); hire via CP Workforce when `cp_workforce` (`GET /platform/v1/workforce/policy`); POST practitioners **403** when CP hire active
+- [x] `/admin/master-data` — practitioners ops catalog (staff kind, skills); hire via CP Workforce when `cp_workforce` (`GET /platform/v1/workforce/policy`); POST practitioners **403** when CP hire active
 - [x] `/admin/wards` — ward/bed create+edit+delete modals
 - [x] `/patients` — registry list + create modal (M1)
 - [x] `/admin/catalog` — service cache + Finance sync + Nafta price import (`POST /api/admin/catalog/import-nafta`, one price, department / kind filters)

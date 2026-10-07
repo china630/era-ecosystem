@@ -16,7 +16,11 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const staffKind = url.searchParams.get("staffKind");
     const kind =
-      staffKind === "DOCTOR" || staffKind === "NURSE" || staffKind === "LAB"
+      staffKind === "DOCTOR" ||
+      staffKind === "NURSE" ||
+      staffKind === "LAB" ||
+      staffKind === "BATH" ||
+      staffKind === "MASSAGE"
         ? staffKind
         : undefined;
     await purgeNonClinicalPractitioners();
@@ -37,7 +41,7 @@ export async function POST(req: Request) {
     if (guard.error) return guard.error;
 
     return jsonError(
-      "Hire practitioners in ERA Workspace → Workforce (Security Admin / Employments). SatAdmin can edit specialty and slot duration only.",
+      "Hire practitioners in ERA Workspace → Workforce (Security Admin / Employments). SatAdmin can edit staff kind and skills only.",
       403,
       { code: "WORKFORCE_HIRE_VIA_CP" },
     );

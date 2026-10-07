@@ -21,6 +21,7 @@ import {
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  countryOptions,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -59,7 +60,7 @@ type Practitioner = {
   code: string;
   fullName: string;
   specialty?: string | null;
-  staffKind?: "DOCTOR" | "NURSE" | "LAB";
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE";
   globalPersonId?: string | null;
   financeEmployeeId?: string | null;
   defaultSlotMinutes?: number | null;
@@ -216,6 +217,7 @@ export default function MasterDataPage() {
   const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
   const [physioSiteOptions, setPhysioSiteOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
+  const [mdmEditorOpen, setMdmEditorOpen] = useState(true);
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
   const [identifierTypes, setIdentifierTypes] = useState<IdentifierChip[]>([]);
   const [workforcePolicy, setWorkforcePolicy] = useState<WorkforcePolicy | null>(null);
@@ -412,6 +414,8 @@ export default function MasterDataPage() {
         if (key === "staffKind") {
           if (row.staffKind === "NURSE") return t("staffKindNurse");
           if (row.staffKind === "LAB") return t("staffKindLab");
+          if (row.staffKind === "BATH") return t("staffKindBath");
+          if (row.staffKind === "MASSAGE") return t("staffKindMassage");
           return t("staffKindDoctor");
         }
         if (key === "specialty") return row.specialty ?? "";
@@ -466,6 +470,7 @@ export default function MasterDataPage() {
 
   function resetModalExtras() {
     setMdmStatus(null);
+    setMdmEditorOpen(true);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
     setSelectedSkillIds([]);
@@ -496,14 +501,13 @@ export default function MasterDataPage() {
     setForm({
       code: row.code ?? "",
       fullName: row.fullName ?? "",
-      specialty: row.specialty ?? "",
       staffKind: row.staffKind ?? "DOCTOR",
       finCode: "",
       passportNumber: "",
       issuingCountry: "",
-      defaultSlotMinutes: String(row.defaultSlotMinutes ?? "30"),
     });
     setGlobalPersonId(row.globalPersonId ?? null);
+    setMdmEditorOpen(!row.globalPersonId);
     setMdmStatus(
       row.globalPersonId
         ? t("mdmLinked", { id: maskPersonId(row.globalPersonId) })
@@ -647,23 +651,15 @@ export default function MasterDataPage() {
           Boolean(practitioners.find((x) => x.id === editingId)?.financeEmployeeId);
         payload = opsOnly
           ? {
-              specialty: form.specialty || null,
               staffKind: form.staffKind || undefined,
-              defaultSlotMinutes: form.defaultSlotMinutes
-                ? Number(form.defaultSlotMinutes)
-                : undefined,
             }
           : {
               fullName: form.fullName ?? form.name,
-              specialty: form.specialty || null,
               staffKind: form.staffKind || undefined,
               finCode: form.finCode?.trim() || undefined,
               passportNumber: form.passportNumber?.trim() || undefined,
               issuingCountry: form.issuingCountry?.trim() || undefined,
               globalPersonId: globalPersonId || undefined,
-              defaultSlotMinutes: form.defaultSlotMinutes
-                ? Number(form.defaultSlotMinutes)
-                : undefined,
             };
       } else if (tab === "rooms") {
         payload = { name: form.name };
@@ -696,14 +692,11 @@ export default function MasterDataPage() {
       payload = {
         code: form.code,
         fullName: form.fullName ?? form.name,
-        specialty: form.specialty || undefined,
+        staffKind: form.staffKind || undefined,
         finCode: form.finCode?.trim() || undefined,
         passportNumber: form.passportNumber?.trim() || undefined,
         issuingCountry: form.issuingCountry?.trim() || undefined,
         globalPersonId: globalPersonId || undefined,
-        defaultSlotMinutes: form.defaultSlotMinutes
-          ? Number(form.defaultSlotMinutes)
-          : undefined,
       };
     } else if (tab === "rooms") {
       payload = { code: form.code, name: form.name };
@@ -946,10 +939,8 @@ export default function MasterDataPage() {
                   <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
                   <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
                   <SortableTh label={t("staffKind")} columnKey="staffKind" sort={sort} onSort={onSort} />
-                  <SortableTh label={t("specialty")} columnKey="specialty" sort={sort} onSort={onSort} />
                   <SortableTh label={t("mdmBadge")} columnKey="mdm" sort={sort} onSort={onSort} />
                   <SortableTh label={t("financeLinked")} columnKey="finance" sort={sort} onSort={onSort} />
-                  <SortableTh label={t("defaultSlotMinutes")} columnKey="slot" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -963,9 +954,12 @@ export default function MasterDataPage() {
                         ? t("staffKindNurse")
                         : row.staffKind === "LAB"
                           ? t("staffKindLab")
-                          : t("staffKindDoctor")}
+                          : row.staffKind === "BATH"
+                            ? t("staffKindBath")
+                            : row.staffKind === "MASSAGE"
+                              ? t("staffKindMassage")
+                              : t("staffKindDoctor")}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.specialty ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.globalPersonId ? (
                         <span className={TEXT_SUCCESS_CLASS}>{maskPersonId(row.globalPersonId)}</span>
@@ -980,7 +974,6 @@ export default function MasterDataPage() {
                         "—"
                       )}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.defaultSlotMinutes ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
                         <button
@@ -1261,6 +1254,8 @@ export default function MasterDataPage() {
                 options={[
                   { value: "DOCTOR", label: t("staffKindDoctor") },
                   { value: "NURSE", label: t("staffKindNurse") },
+                  { value: "BATH", label: t("staffKindBath") },
+                  { value: "MASSAGE", label: t("staffKindMassage") },
                   { value: "LAB", label: t("staffKindLab") },
                 ]}
                 emptyLabel={null}
@@ -1270,14 +1265,21 @@ export default function MasterDataPage() {
                   {form.fullName} · {form.code}
                 </p>
               ) : null}
-              {!opsLocked ? (
+              {!opsLocked && globalPersonId && !mdmEditorOpen ? (
+                <div className="flex items-center justify-between gap-2 text-[13px]">
+                  <p className={TEXT_MUTED_CLASS}>
+                    {t("mdmLinked", { id: maskPersonId(globalPersonId) })}
+                  </p>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => setMdmEditorOpen(true)}
+                  >
+                    {t("mdmChange")}
+                  </button>
+                </div>
+              ) : !opsLocked ? (
                 <>
-                  <Field
-                    label={t("specialty")}
-                    preset="shortText"
-                    value={form.specialty ?? ""}
-                    onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                  />
                   <FieldRow cols={2} className="items-end">
                     <Field
                       label={t("finCode")}
@@ -1301,41 +1303,29 @@ export default function MasterDataPage() {
                       {t("identifierTypes")}: {identifierTypes.map((i) => i.type).join(", ")}
                     </p>
                   ) : null}
-                  <FieldRow cols={2}>
-                    <Field
-                      label={t("passportNumber")}
-                      preset="code"
-                      value={form.passportNumber ?? ""}
-                      onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
-                    />
-                    <Field
-                      label={t("issuingCountry")}
-                      preset="code"
-                      value={form.issuingCountry ?? ""}
-                      onChange={(e) =>
-                        setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })
-                      }
-                    />
-                  </FieldRow>
+                  <Field
+                    label={t("passportNumber")}
+                    preset="code"
+                    value={form.passportNumber ?? ""}
+                    onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
+                  />
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={t("issuingCountry")}
+                    value={form.issuingCountry ?? ""}
+                    emptyLabel="—"
+                    options={countryOptions(locale, form.issuingCountry)}
+                    onChange={(next) =>
+                      setForm({ ...form, issuingCountry: String(next ?? "").toUpperCase() })
+                    }
+                  />
                 </>
-              ) : (
-                <Field
-                  label={t("specialty")}
-                  preset="shortText"
-                  value={form.specialty ?? ""}
-                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                />
-              )}
-              <Field
-                label={t("defaultSlotMinutes")}
-                preset="count"
-                value={form.defaultSlotMinutes ?? "30"}
-                onChange={(e) => setForm({ ...form, defaultSlotMinutes: e.target.value })}
-              />
+              ) : null}
               {editingId ? (
                 <div className="space-y-2">
                   <CatalogMultiAdder
                     label={t("skills")}
+                    list
                     options={[...procedureTypes]
                       .sort((a, b) => a.name.localeCompare(b.name, locale) || a.code.localeCompare(b.code))
                       .map((pt) => ({

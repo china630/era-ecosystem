@@ -51,6 +51,7 @@ type WorkHours = {
 };
 
 type SchedulingDefaults = {
+  schedulingSlotMinutes: number;
   defaultProcedureGapMinutes: number;
   defaultAppointmentSlotMinutes: number;
   procedureCheckInMode: "QR" | "CODE" | "MANUAL";
@@ -78,6 +79,7 @@ const WORK_DEFAULTS: WorkHours = {
 };
 
 const SCHED_DEFAULTS: SchedulingDefaults = {
+  schedulingSlotMinutes: 5,
   defaultProcedureGapMinutes: 5,
   defaultAppointmentSlotMinutes: 30,
   procedureCheckInMode: "QR",
@@ -144,6 +146,8 @@ export default function ClinicAdminSettingsPage() {
         setWorkHours(hours);
         setDraftWork(hours);
         const sched: SchedulingDefaults = {
+          schedulingSlotMinutes:
+            row.schedulingSlotMinutes ?? SCHED_DEFAULTS.schedulingSlotMinutes,
           defaultProcedureGapMinutes:
             row.defaultProcedureGapMinutes ?? SCHED_DEFAULTS.defaultProcedureGapMinutes,
           defaultAppointmentSlotMinutes:
@@ -218,6 +222,8 @@ export default function ClinicAdminSettingsPage() {
         closedWeekdays: row.closedWeekdays ?? draftWork.closedWeekdays,
       });
       setSchedDefaults({
+        schedulingSlotMinutes:
+          row.schedulingSlotMinutes ?? draftSched.schedulingSlotMinutes,
         defaultProcedureGapMinutes:
           row.defaultProcedureGapMinutes ?? draftSched.defaultProcedureGapMinutes,
         defaultAppointmentSlotMinutes:
@@ -313,6 +319,10 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("closedWeekdays")}</td>
             <td className="p-3">{closedLabel || "—"}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("schedulingSlotMinutes")}</td>
+            <td className="p-3">{schedDefaults.schedulingSlotMinutes} min</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("defaultProcedureGapMinutes")}</td>
@@ -435,6 +445,20 @@ export default function ClinicAdminSettingsPage() {
               </div>
             </div>
           </fieldset>
+          <Field
+            label={t("schedulingSlotMinutes")}
+            preset="count"
+            type="number"
+            min={1}
+            max={60}
+            value={draftSched.schedulingSlotMinutes}
+            onChange={(e) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                schedulingSlotMinutes: Number(e.target.value) || prev.schedulingSlotMinutes,
+              }))
+            }
+          />
           <Field
             label={t("defaultProcedureGapMinutes")}
             preset="count"
