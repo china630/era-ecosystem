@@ -108,6 +108,7 @@ async function writeOwnerNightly(
 ) {
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   const fromKey = remainingFrom ? dateOnly(remainingFrom) : null;
+  const closed = await closedNightKeys(res.id);
   const rows: Array<{
     stayDate: Date;
     amount: number;
@@ -120,7 +121,13 @@ async function writeOwnerNightly(
     const existing = res.dailyRates.find(
       (d) => d.stayDate.toDateString() === night.toDateString(),
     );
-    if ((fromKey && dateOnly(night) < fromKey && existing) || existing?.manualFlag) {
+    if (
+      existing &&
+      (nightAlreadyConsumed(night, closed.bizKey, closed.posted) ||
+        existing.manualFlag ||
+        existing.fixPrice ||
+        (fromKey && dateOnly(night) < fromKey))
+    ) {
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount as never),
@@ -275,6 +282,7 @@ export async function recalcReservationDailyRates(
       : 0;
 
   const nights = eachNight(res.checkInDate, res.checkOutDate);
+  const closed = await closedNightKeys(reservationId);
   const nightlyByDate = new Map(quoteResult.nightlyRates.map((n) => [n.date, n.amount]));
   const adultNightly =
     res.useManualRate && res.manualDailyRate != null
@@ -314,11 +322,16 @@ export async function recalcReservationDailyRates(
       });
       continue;
     }
-    if (existing?.manualFlag) {
+    if (
+      existing &&
+      (existing.manualFlag ||
+        existing.fixPrice ||
+        nightAlreadyConsumed(night, closed.bizKey, closed.posted))
+    ) {
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount),
-        manualFlag: true,
+        manualFlag: existing.manualFlag,
         currencyCode: existing.currencyCode ?? 'AZN',
         fixPrice: existing.fixPrice,
         discountPct: existing.discountPct ? decimalToNumber(existing.discountPct) : null,
@@ -481,7 +494,13 @@ export async function spreadManualNightly(reservationId: string, nightly: number
   if (res.isLocked) throw new Error('Reservation is locked');
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   const closed = await closedNightKeys(reservationId);
-  const openNights = nights.filter((stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted));
+  const openNights = nights.filter((stayDate) => {
+    if (nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted)) return false;
+    const existing = res.dailyRates.find(
+      (row) => hotelDateKey(row.stayDate) === hotelDateKey(stayDate),
+    );
+    return !existing?.fixPrice;
+  });
   if (openNights.length === 0) throw new Error('All nights are locked');
   await prisma.$transaction([
     prisma.reservation.update({
@@ -523,9 +542,13 @@ export async function spreadStayTotal(reservationId: string, total: number) {
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   if (nights.length === 0) throw new Error('No nights');
   const closed = await closedNightKeys(reservationId);
-  const unlocked = nights.filter(
-    (stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted),
-  );
+  const unlocked = nights.filter((stayDate) => {
+    if (nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted)) return false;
+    const existing = res.dailyRates.find(
+      (row) => hotelDateKey(row.stayDate) === hotelDateKey(stayDate),
+    );
+    return !existing?.fixPrice;
+  });
   if (unlocked.length === 0) throw new Error('All nights are locked');
   const amounts = splitStayAmounts(total, unlocked.length);
   const nightlyHint = amounts[0] ?? 0;
@@ -568,9 +591,13 @@ export async function applyStayPercent(reservationId: string, percent: number) {
   if (percent < 0 || percent > 100) throw new Error('Percent must be 0–100');
   const closed = await closedNightKeys(reservationId);
   const nights = eachNight(res.checkInDate, res.checkOutDate);
-  const open = nights.filter(
-    (stayDate) => !nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted),
-  );
+  const open = nights.filter((stayDate) => {
+    if (nightAlreadyConsumed(stayDate, closed.bizKey, closed.posted)) return false;
+    const existing = res.dailyRates.find(
+      (row) => hotelDateKey(row.stayDate) === hotelDateKey(stayDate),
+    );
+    return !existing?.fixPrice;
+  });
   if (open.length === 0) throw new Error('All nights are locked');
   await prisma.$transaction([
     prisma.reservation.update({

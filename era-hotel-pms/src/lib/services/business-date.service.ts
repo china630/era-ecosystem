@@ -39,6 +39,18 @@ export async function isStrictBusinessDateGate(): Promise<boolean> {
   return settings.strictBusinessDateGate !== false;
 }
 
+/** The hotel date is set, but nobody created the day row yet. Open it. Night audit closes a day; it does not create today's row. */
+export async function ensureCurrentBusinessDayOpen(): Promise<void> {
+  const bizDate = await getCurrentBusinessDate();
+  const existing = await prisma.businessDay.findFirst({ where: { date: bizDate } });
+  if (existing) return;
+  try {
+    await prisma.businessDay.create({ data: { date: bizDate, status: 'OPEN' } });
+  } catch {
+    // Another request created the same organizationId+date row.
+  }
+}
+
 export async function assertBusinessDayOpenForPosting(): Promise<void> {
   if (!(await isStrictBusinessDateGate())) return;
 
@@ -48,10 +60,15 @@ export async function assertBusinessDayOpenForPosting(): Promise<void> {
   }
 
   const bizDate = await getCurrentBusinessDate();
-  const day = await prisma.businessDay.findFirst({ where: { date: bizDate } });
+  const ymd = bizDate.toISOString().slice(0, 10);
+  let day = await prisma.businessDay.findFirst({ where: { date: bizDate } });
+  if (!day) {
+    await ensureCurrentBusinessDayOpen();
+    day = await prisma.businessDay.findFirst({ where: { date: bizDate } });
+  }
   if (!day || day.status !== 'OPEN') {
     throw new Error(
-      `Business day ${bizDate.toISOString().slice(0, 10)} is not open for posting. Run night audit for previous day first.`,
+      `Business day ${ymd} is closed. Night audit already closed this day and did not roll the hotel date forward.`,
     );
   }
 }
