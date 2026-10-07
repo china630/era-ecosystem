@@ -108,7 +108,7 @@ Optional link to PMS `reservationId` or free-text `guestName`.
 
 ## Night audit
 
-`PosBridgeShift` OPEN blocks night audit (Stage 17). fb-pos reports via `PUT /api/pms/pos-shift-status`.
+`PosBridgeShift` OPEN blocks night audit (Stage 17). fb-pos reports via `PUT /api/pms/pos-shift-status`. A failed close ping leaves a stale OPEN copy in the hotel even when fb-pos has no open shift. Night audit asks `GET /api/internal/v1/shifts/open` on fb-pos and closes those copies before the block. Closing an already-closed fb-pos shift reports CLOSED again.
 
 ---
 

@@ -58,6 +58,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
 | Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
 | Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract; StaysBar + names-incomplete gate |
+| Desk quick profile | `POST /api/fo/quick-profile` | Incomplete agency (name+phone) or company (name+VÖEN) from the reservation card. No commission, settlement, or contract |
 | `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |
 

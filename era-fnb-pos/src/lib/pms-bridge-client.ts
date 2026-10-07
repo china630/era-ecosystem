@@ -126,11 +126,14 @@ export async function reportPosShiftStatus(payload: {
   closedAt?: string;
 }): Promise<void> {
   if (isPmsStubMode()) return;
-  await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
+  const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
     method: "PUT",
     headers: bridgeHeaders(),
     body: JSON.stringify(payload),
   });
+  if (!res.ok) {
+    throw new Error(`Hotel did not record POS shift ${payload.status} for ${payload.outletCode}`);
+  }
 }
 
 export type ActiveBanquetEvent = {

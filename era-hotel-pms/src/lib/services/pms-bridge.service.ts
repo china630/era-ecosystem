@@ -196,7 +196,52 @@ export async function validateRoomCharge(
   return { allowed: true };
 }
 
+function fnbPosBaseUrl(): string | null {
+  const raw =
+    process.env.FNB_POS_URL?.trim() ||
+    process.env.NEXT_PUBLIC_FNB_POS_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SATELLITE_FNB_POS_URL?.trim() ||
+    '';
+  return raw ? raw.replace(/\/$/, '') : null;
+}
+
+/** Live open outlets in fb-pos. Null when the satellite cannot be asked. */
+async function liveOpenOutletCodes(): Promise<Set<string> | null> {
+  const base = fnbPosBaseUrl();
+  const secret = process.env.POS_BRIDGE_SECRET?.trim();
+  if (!base || !secret) return null;
+  try {
+    const res = await fetch(`${base}/api/internal/v1/shifts/open`, {
+      headers: { 'X-Pos-Bridge-Secret': secret },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { open?: Array<{ outletCode?: string }> };
+    const codes = (body.open ?? [])
+      .map((row) => row.outletCode?.trim())
+      .filter((code): code is string => Boolean(code));
+    return new Set(codes);
+  } catch {
+    return null;
+  }
+}
+
+/** Drop hotel copies of shifts fb-pos has already closed. The close ping can fail and leave KAFE OPEN here. */
+export async function reconcileStalePosBridgeShifts(): Promise<void> {
+  const open = await prisma.posBridgeShift.findMany({ where: { status: 'OPEN' } });
+  if (open.length === 0) return;
+  const live = await liveOpenOutletCodes();
+  if (!live) return;
+  const stale = open.filter((row) => !live.has(row.outletCode));
+  if (stale.length === 0) return;
+  await prisma.posBridgeShift.updateMany({
+    where: { id: { in: stale.map((row) => row.id) } },
+    data: { status: 'CLOSED', closedAt: new Date() },
+  });
+}
+
 export async function getPosShiftStatus() {
+  await reconcileStalePosBridgeShifts();
   const open = await prisma.posBridgeShift.findMany({
     where: { status: 'OPEN' },
     orderBy: { openedAt: 'asc' },
@@ -251,6 +296,7 @@ export async function reportPosShiftStatus(input: {
 }
 
 export async function assertNoOpenPosShifts(): Promise<void> {
+  await reconcileStalePosBridgeShifts();
   const open = await prisma.posBridgeShift.findFirst({
     where: { status: 'OPEN' },
   });

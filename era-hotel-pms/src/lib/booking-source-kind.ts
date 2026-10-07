@@ -44,9 +44,9 @@ export function sourceKindLabel(
   return fallback;
 }
 
-/** Reception picks these. OTA and website are stamped by the channel, not chosen here. */
+/** Reception picks these. Website stays a channel stamp. Corporate is a company profile, not a source. */
 export function isManualFoSourceKind(kind: BookingSourceKind): boolean {
-  return kind === 'WALKIN' || kind === 'AGENCY' || kind === 'CORPORATE';
+  return kind === 'WALKIN' || kind === 'AGENCY' || kind === 'BOOKING';
 }
 
 /**
@@ -84,13 +84,13 @@ export function contractCounterpartyType(
   return 'AGENCY';
 }
 
-/** Apply one contract to stay FKs: corporate clears TA; agency contract does not clear Company CL. */
+/** Apply one contract to the profile that owns the rate. The other profile stays. */
 export function fksFromSalesContract(contract: SalesContractPick): {
   agencyId: string | null | undefined;
   companyId: string | null | undefined;
 } {
   if (contractCounterpartyType(contract) === 'CORPORATE') {
-    return { agencyId: '', companyId: contract.companyId ?? undefined };
+    return { agencyId: undefined, companyId: contract.companyId ?? undefined };
   }
   return { agencyId: contract.agencyId ?? undefined, companyId: undefined };
 }
@@ -110,33 +110,27 @@ export function persistCounterpartyIds(opts: {
   if (opts.sourceKind === 'WALKIN' && opts.agencyIsWalkIn) {
     return { agencyId: (opts.agencyId ?? '').trim() || null, companyId };
   }
-  if (opts.sourceKind === 'WALKIN' || opts.sourceKind === 'WEB' || opts.sourceKind === 'CORPORATE') {
+  if (opts.sourceKind === 'WALKIN' || opts.sourceKind === 'WEB') {
     return { agencyId: null, companyId };
   }
   return { agencyId: (opts.agencyId ?? '').trim() || null, companyId };
 }
 
 /**
- * One salesContractId per stay. Source kind selects AGENCY vs CORPORATE contracts;
- * then filter by the matching profile FK.
+ * One salesContractId per stay. The list is the active contracts of the profiles
+ * already chosen. An empty profile does not open every contract of that kind.
  */
 export function contractsForSource<T extends SalesContractPick>(
   contracts: T[],
-  opts: { sourceKind: BookingSourceKind; agencyId?: string; companyId?: string },
+  opts: { sourceKind?: BookingSourceKind; agencyId?: string; companyId?: string },
 ): T[] {
   const agencyId = (opts.agencyId ?? '').trim();
   const companyId = (opts.companyId ?? '').trim();
-  if (opts.sourceKind === 'WALKIN' || opts.sourceKind === 'WEB' || opts.sourceKind === 'OTHER') return [];
-  if (opts.sourceKind === 'CORPORATE') {
-    return contracts.filter((c) => {
-      if (contractCounterpartyType(c) !== 'CORPORATE') return false;
-      if (!companyId || !c.companyId) return true;
-      return c.companyId === companyId;
-    });
-  }
+  if (!agencyId && !companyId) return [];
   return contracts.filter((c) => {
-    if (contractCounterpartyType(c) !== 'AGENCY') return false;
-    if (!agencyId || !c.agencyId) return true;
-    return c.agencyId === agencyId;
+    const kind = contractCounterpartyType(c);
+    if (kind === 'AGENCY' && agencyId && c.agencyId === agencyId) return true;
+    if (kind === 'CORPORATE' && companyId && c.companyId === companyId) return true;
+    return false;
   });
 }

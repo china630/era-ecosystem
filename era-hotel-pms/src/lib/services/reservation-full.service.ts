@@ -4,6 +4,7 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { normalizeListPagination } from '@era/satellite-kit';
 import type { PartyBillingMode, Prisma, ReservationStatus } from '@prisma/client';
 
@@ -135,6 +136,7 @@ export async function getReservationFull(id: string) {
     attachments: reservation.attachments,
     notesMap,
     shareNeighbors,
+    pricingBusinessDate: hotelDateKey(await getCurrentBusinessDate()),
   };
 
   try {
@@ -528,8 +530,17 @@ export async function patchReservationFull(
   }
 
   if (clientDailyRates?.length) {
+    const postedCharges = await prisma.folioCharge.findMany({
+      where: {
+        folio: { reservationId: id },
+        revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
+      },
+      select: { businessDate: true },
+    });
+    const postedNights = new Set(postedCharges.map((charge) => hotelDateKey(charge.businessDate)));
     for (const d of clientDailyRates) {
       const stayDate = new Date(d.stayDate);
+      if (postedNights.has(hotelDateKey(stayDate))) continue;
       await prisma.reservationDailyRate.upsert({
         where: {
           reservationId_stayDate: { reservationId: id, stayDate },

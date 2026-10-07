@@ -800,6 +800,8 @@ model Agency {
   code                 String
   name                 String
   voen                 String?
+  /** Desk quick-create only. Commission and settlement stay on the master screen. */
+  phone                String?
   /** Local cache for Finance counterparty (resolved by agency VÖEN). */
   financeCounterpartyId String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)

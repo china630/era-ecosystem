@@ -19,15 +19,15 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { operationalGapDetails } from '@/lib/guest-stay-requirements';
+import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
+import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import {
   bookingSourceKind,
-  contractsForSource,
+  contractCounterpartyType,
   fksFromSalesContract,
-  isManualFoSourceKind,
   isOtaAgency,
   isWalkInRecordedAgency,
   persistCounterpartyIds,
-  sourceKindLabel,
 } from '@/lib/booking-source-kind';
 import { guestListItems } from '@/lib/guest-list-identity';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
@@ -60,6 +60,8 @@ type ContractOpt = {
   companyId: string | null;
   counterpartyType?: string | null;
   ratePlanId: string;
+  validFrom?: string | null;
+  validTo?: string | null;
 };
 
 type StayLine = {
@@ -155,57 +157,13 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [roomTypes, setRoomTypes] = useState<SelectOpt[]>([]);
   const [salesContracts, setSalesContracts] = useState<ContractOpt[]>([]);
   const [avlByType, setAvlByType] = useState<Record<string, number>>({});
-  const [nightsDraft, setNightsDraft] = useState('1');
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
-  const walkInAgencies = useMemo(() => agencies.filter((a) => a.isWalkIn), [agencies]);
-  const walkInLocked =
-    sourceKind === 'WEB' || (sourceKind === 'WALKIN' && walkInAgencies.length === 0);
-  const corporateLocked = sourceKind === 'CORPORATE';
-  const agencyPickerLocked = walkInLocked || corporateLocked;
-  const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
-  const showCompanyContract = corporateLocked;
   const nights = nightsBetween(checkIn, checkOut);
 
   const selectedRatePlan = ratePlans.find((rp) => rp.id === ratePlanId);
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
-
-  const agencyOptions = useMemo(() => {
-    if (sourceKind === 'AGENCY') return agencies.filter((a) => !a.isOta && !a.isWalkIn);
-    if (sourceKind === 'BOOKING') return agencies.filter((a) => a.isOta);
-    if (sourceKind === 'WALKIN') return walkInAgencies;
-    return agencies.filter((a) => !a.isWalkIn);
-  }, [agencies, walkInAgencies, sourceKind]);
-
-  const sourceOptions = useMemo(
-    () =>
-      sources.filter(
-        (s) => isManualFoSourceKind(bookingSourceKind(s.code)) || s.id === sourceId,
-      ),
-    [sources, sourceId],
-  );
-
-  const agencyFieldLabel =
-    sourceKind === 'BOOKING'
-      ? tr('otaChannel')
-      : sourceKind === 'WALKIN' && !walkInLocked
-        ? tr('walkInProfile')
-        : sourceKind === 'WALKIN' || sourceKind === 'WEB'
-          ? tr('individual')
-        : sourceKind === 'CORPORATE'
-          ? tr('company')
-          : tr('agency');
-
-  const contractsForKind = useMemo(
-    () =>
-      contractsForSource(salesContracts, {
-        sourceKind,
-        agencyId,
-        companyId,
-      }),
-    [salesContracts, sourceKind, agencyId, companyId],
-  );
 
   const filteredRatePlans = useMemo(
     () => ratePlans.filter((rp) => ratePlanFitsRoomType(rp, defaultRoomTypeId)),
@@ -251,10 +209,6 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     }
     return false;
   }, [neededByType, avlByType, checkIn, checkOut]);
-
-  useEffect(() => {
-    setNightsDraft(String(nightsBetween(checkIn, checkOut) || 1));
-  }, [checkIn, checkOut]);
 
   useEffect(() => {
     if (!open) return;
@@ -379,6 +333,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               companyId: string | null;
               counterpartyType?: string | null;
               ratePlanId: string;
+              validFrom?: string | null;
+              validTo?: string | null;
             }) => ({
               id: x.id,
               code: x.code,
@@ -386,6 +342,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               companyId: x.companyId,
               counterpartyType: x.counterpartyType,
               ratePlanId: x.ratePlanId,
+              validFrom: x.validFrom,
+              validTo: x.validTo,
               label: `${x.code} — ${x.name}`,
             }),
           ),
@@ -633,6 +591,69 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     >
       <div className="grid min-h-0 flex-1 gap-4 overflow-hidden text-[13px] lg:grid-cols-[2fr_3fr]">
         <aside className="min-h-0 space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3">
+          <CommercialPartyStrip
+            sourceId={sourceId}
+            agencyId={agencyId}
+            companyId={companyId}
+            salesContractId={salesContractId}
+            contractRef={contractRef}
+            checkIn={checkIn}
+            sources={sources.map((s) => ({ id: s.id, label: s.label, code: s.code ?? '' }))}
+            agencies={agencies.map((a) => ({
+              id: a.id,
+              label: a.label,
+              code: a.code ?? '',
+              isOta: Boolean(a.isOta),
+              isWalkIn: Boolean(a.isWalkIn),
+            }))}
+            companies={companies.map((c) => ({
+              id: c.id,
+              label: c.label,
+              code: c.code ?? '',
+              isOta: false,
+              isWalkIn: false,
+            }))}
+            contracts={salesContracts}
+            disabled={busy}
+            onSource={(id) => {
+              setSourceId(id);
+              setAgencyId('');
+              setSalesContractId('');
+              setContractRef('');
+            }}
+            onAgency={(id) => {
+              setAgencyId(id);
+              const current = salesContracts.find((c) => c.id === salesContractId);
+              if (current && contractCounterpartyType(current) === 'AGENCY') {
+                setSalesContractId('');
+                setContractRef('');
+              }
+            }}
+            onCompany={(id) => {
+              setCompanyId(id);
+              const current = salesContracts.find((c) => c.id === salesContractId);
+              if (current && contractCounterpartyType(current) === 'CORPORATE') {
+                setSalesContractId('');
+                setContractRef('');
+              }
+            }}
+            onContract={(id) => applySalesContract(id)}
+            onContractRef={setContractRef}
+            onAgencyCreated={(row) =>
+              setAgencies((prev) =>
+                prev.some((a) => a.id === row.id)
+                  ? prev
+                  : [...prev, { id: row.id, label: row.label, code: row.code, isOta: false, isWalkIn: false }],
+              )
+            }
+            onCompanyCreated={(row) =>
+              setCompanies((prev) =>
+                prev.some((c) => c.id === row.id)
+                  ? prev
+                  : [...prev, { id: row.id, label: row.label, code: row.code }],
+              )
+            }
+          />
           <FieldPanel title={tr('stay')}>
             <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_4.75rem] items-end gap-2">
               <DatePicker
@@ -653,27 +674,14 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                 openCalendarLabel={tc('openCalendar')}
                 hint={tr('hintCheckOut')}
               />
-              <Field
+              <NightsCountField
                 label={tr('nights')}
-                preset="count"
-                value={nightsDraft}
-                className="min-w-0"
-                inputClassName="w-full min-w-0 text-center"
+                value={String(nights || 1)}
                 hint={tr('hintNights')}
-                onChange={(e) => setNightsDraft(e.target.value)}
-                onBlur={() => {
-                  const n = Number(nightsDraft);
-                  if (!checkIn || !Number.isInteger(n) || n < 1) {
-                    setNightsDraft(String(nights || 1));
-                    return;
-                  }
+                disabled={!checkIn}
+                onCommit={(n) => {
+                  if (!checkIn) return;
                   setCheckOut(addDaysIso(checkIn, n));
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    (e.target as HTMLInputElement).blur();
-                  }
                 }}
               />
             </div>
@@ -735,95 +743,6 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
           </FieldPanel>
 
           <FieldPanel title={tr('commercialSales')}>
-            <FieldRow cols={2}>
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={tr('source')}
-                value={sourceId}
-                onChange={(v) => {
-                  setSourceId(catalogValue(v));
-                  setAgencyId('');
-                  setSalesContractId('');
-                  setContractRef('');
-                }}
-                options={sourceOptions.map((s) => ({
-                  value: s.id,
-                  label: sourceKindLabel(tr, bookingSourceKind(s.code), s.label),
-                }))}
-                hint={tr('hintSource')}
-              />
-              {corporateLocked ? (
-                <CatalogField
-                  kind="SEARCHABLE"
-                  label={tr('company')}
-                  value={companyId}
-                  onChange={(v) => {
-                    setCompanyId(catalogValue(v));
-                    setSalesContractId('');
-                    setContractRef('');
-                  }}
-                  options={companies.map((c) => ({ value: c.id, label: c.label }))}
-                  emptyLabel={tc('select')}
-                  hint={tr('hintCompany')}
-                />
-              ) : (
-                <CatalogField
-                  kind="SEARCHABLE"
-                  label={agencyFieldLabel}
-                  value={agencyPickerLocked ? '' : agencyId}
-                  onChange={(v) => {
-                    setAgencyId(catalogValue(v));
-                    setSalesContractId('');
-                    setContractRef('');
-                  }}
-                  options={
-                    agencyPickerLocked
-                      ? []
-                      : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
-                  }
-                  disabled={agencyPickerLocked}
-                  emptyLabel={
-                    agencyPickerLocked || sourceKind === 'WALKIN' ? tr('individual') : tc('select')
-                  }
-                  hint={tr('hintAgency')}
-                />
-              )}
-            </FieldRow>
-            {!corporateLocked ? (
-              <CatalogField
-                kind="SEARCHABLE"
-                label={tr('company')}
-                value={companyId}
-                onChange={(v) => setCompanyId(catalogValue(v))}
-                options={companies.map((c) => ({ value: c.id, label: c.label }))}
-                emptyLabel={tc('select')}
-                hint={tr('companyOptionalHint')}
-              />
-            ) : null}
-            {showAgencyContract || showCompanyContract ? (
-              <FieldRow cols={2}>
-                <CatalogField
-                  kind="ENTITY_REF"
-                  label={showCompanyContract ? tr('companyContract') : tr('agencyContract')}
-                  value={salesContractId}
-                  onChange={(v) => applySalesContract(catalogValue(v))}
-                  options={contractsForKind.map((c) => ({ value: c.id, label: c.label }))}
-                  emptyLabel="—"
-                  disabled={
-                    showCompanyContract
-                      ? !companyId && contractsForKind.length === 0
-                      : !agencyId && contractsForKind.length === 0
-                  }
-                  hint={tr('hintSalesContract')}
-                />
-                <Field
-                  label={tr('contractRef')}
-                  preset="code"
-                  value={contractRef}
-                  onChange={(e) => setContractRef(e.target.value)}
-                />
-              </FieldRow>
-            ) : null}
             <CatalogField
               kind="ENTITY_REF"
               label={t('bookerGuest')}

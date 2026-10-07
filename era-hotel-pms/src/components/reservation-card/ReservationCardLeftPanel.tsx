@@ -22,12 +22,8 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
-import {
-  bookingSourceKind,
-  contractsForSource,
-  isManualFoSourceKind,
-  sourceKindLabel,
-} from '@/lib/booking-source-kind';
+import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
+import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import { addHotelDays } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
@@ -38,13 +34,6 @@ function ratePlanFitsRoomType(rp: RatePlanOption, roomTypeId: string): boolean {
   if (!roomTypeId) return true;
   if (rp.type === 'BASE' || !rp.roomTypeId) return true;
   return rp.roomTypeId === roomTypeId;
-}
-
-/** Keep the stored row pickable when the source filter excludes it (legacy mismatched stays). */
-function withSelectedRow<T extends { id: string }>(scoped: T[], all: T[], selectedId: string): T[] {
-  if (!selectedId || scoped.some((x) => x.id === selectedId)) return scoped;
-  const hit = all.find((x) => x.id === selectedId);
-  return hit ? [hit, ...scoped] : scoped;
 }
 
 function nightlyForType(
@@ -321,6 +310,8 @@ export type ReservationCardLeftPanelProps = {
   billingRoutingSummary?: string;
   onFolioRouting?: () => void;
   onPackageRoomGap?: (mode: 'CHARGE' | 'REFUND' | 'COMP') => void;
+  onAgencyCreated?: (row: AgencyOption) => void;
+  onCompanyCreated?: (row: AgencyOption) => void;
   /** Optional until FO editor wires commercial booker fields. */
   booker?: string;
   guestRep?: string;
@@ -397,10 +388,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   } = props;
 
   const nights = nightsBetween(props.checkIn, props.checkOut);
-  const [nightsDraft, setNightsDraft] = useState(String(nights));
-  useEffect(() => {
-    setNightsDraft(String(nights));
-  }, [nights]);
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
@@ -422,60 +409,30 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const selectedRatePlan = ratePlans.find((rp) => rp.id === props.ratePlanId);
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
 
-  const selectedSource = sources.find((s) => s.id === props.sourceId);
-  const sourceKind = bookingSourceKind(selectedSource?.code);
-  const walkInAgencies = useMemo(() => agencies.filter((a) => a.isWalkIn), [agencies]);
-  const walkInLocked =
-    sourceKind === 'WEB' || (sourceKind === 'WALKIN' && walkInAgencies.length === 0);
-  const corporateLocked = sourceKind === 'CORPORATE';
-  const agencyPickerLocked = walkInLocked || corporateLocked;
-  const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
-  const showCompanyContract = corporateLocked;
-  const showOptionalCompany = !corporateLocked;
-  const agencyOptions = useMemo(() => {
-    const scoped =
-      sourceKind === 'AGENCY'
-        ? agencies.filter((a) => !a.isOta && !a.isWalkIn)
-        : sourceKind === 'BOOKING'
-          ? agencies.filter((a) => a.isOta)
-          : sourceKind === 'WALKIN'
-            ? walkInAgencies
-            : agencies.filter((a) => !a.isWalkIn);
-    return withSelectedRow(scoped, agencies, props.agencyId);
-  }, [agencies, walkInAgencies, sourceKind, props.agencyId]);
-  const knownAgencyId = agencies.some((a) => a.id === props.agencyId) ? props.agencyId : '';
-  const knownCompanyId = companies.some((c) => c.id === props.companyId) ? props.companyId : '';
-  const sourceOptions = useMemo(
-    () =>
-      sources.filter(
-        (s) => isManualFoSourceKind(bookingSourceKind(s.code)) || s.id === props.sourceId,
-      ),
-    [sources, props.sourceId],
-  );
-  const agencyFieldLabel =
-    sourceKind === 'BOOKING'
-      ? t('otaChannel')
-      : sourceKind === 'WALKIN' && !walkInLocked
-        ? t('walkInProfile')
-        : sourceKind === 'WALKIN' || sourceKind === 'WEB'
-          ? t('individual')
-        : sourceKind === 'CORPORATE'
-          ? t('company')
-          : t('agency');
-  const contractsForKind = useMemo(
-    () =>
-      contractsForSource(salesContracts, {
-        sourceKind,
-        agencyId: props.agencyId,
-        companyId: props.companyId,
-      }),
-    [salesContracts, sourceKind, props.agencyId, props.companyId],
-  );
-
   const hkBadge = (roomHkCondition || roomStatus || '').toUpperCase() || null;
 
   return (
     <aside className="min-h-0 space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
+      <CommercialPartyStrip
+        sourceId={props.sourceId}
+        agencyId={props.agencyId}
+        companyId={props.companyId}
+        salesContractId={props.salesContractId}
+        contractRef={props.contractRef}
+        checkIn={props.checkIn}
+        sources={sources}
+        agencies={agencies}
+        companies={companies}
+        contracts={salesContracts}
+        disabled={disabled}
+        onSource={(id) => onChange({ sourceId: id })}
+        onAgency={(id) => onChange({ agencyId: id })}
+        onCompany={(id) => onChange({ companyId: id })}
+        onContract={(id) => onChange({ salesContractId: id })}
+        onContractRef={(value) => onChange({ contractRef: value })}
+        onAgencyCreated={(row) => props.onAgencyCreated?.(row)}
+        onCompanyCreated={(row) => props.onCompanyCreated?.(row)}
+      />
       {/* 1. Stay window — dates + times always visible */}
       <FieldPanel title={t('stayWindow')}>
         <div className="space-y-2">
@@ -497,27 +454,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 value={props.checkInTime}
                 onChange={set('checkInTime')}
               />
-              <Field
+              <NightsCountField
                 label={t('nights')}
-                preset="count"
-                value={nightsDraft}
-                disabled={disabled}
-                className="min-w-0 w-full"
-                inputClassName="w-full min-w-0 text-center"
-                onChange={(e) => setNightsDraft(e.target.value)}
-                onBlur={() => {
-                  const n = Number(nightsDraft);
-                  if (!props.checkIn || !Number.isInteger(n) || n < 1) {
-                    setNightsDraft(String(nights));
-                    return;
-                  }
+                value={String(nights)}
+                disabled={disabled || !props.checkIn}
+                onCommit={(n) => {
+                  if (!props.checkIn) return;
                   onChange({ checkOut: addHotelDays(props.checkIn, n) });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    (e.target as HTMLInputElement).blur();
-                  }
                 }}
               />
               <DatePicker
@@ -836,85 +779,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
         </fieldset>
       </FieldPanel>
 
-      {/* 4. Rate & source — sell path only (channel, counterparty, contract, rate) */}
+      {/* Package stays with the room. Source and contract sit above the dates. */}
       <FieldPanel title={t('rateAndSource')}>
         <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
-          <FieldRow cols={2} className="min-w-0">
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('source')}
-              value={props.sourceId}
-              onChange={setCatalog('sourceId')}
-              options={sourceOptions.map((s) => ({
-                value: s.id,
-                label: sourceKindLabel(t, bookingSourceKind(s.code), s.label),
-              }))}
-              disabled={disabled}
-            />
-            {corporateLocked ? (
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t('company')}
-                value={knownCompanyId}
-                onChange={setCatalog('companyId')}
-                options={companies.map((c) => ({ value: c.id, label: c.label }))}
-                disabled={disabled}
-                emptyLabel={tc('select')}
-              />
-            ) : (
-              <CatalogField
-                kind="SEARCHABLE"
-                label={agencyFieldLabel}
-                value={agencyPickerLocked ? '' : knownAgencyId}
-                onChange={setCatalog('agencyId')}
-                options={
-                  agencyPickerLocked
-                    ? []
-                    : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
-                }
-                disabled={disabled || agencyPickerLocked}
-                emptyLabel={
-                  agencyPickerLocked || sourceKind === 'WALKIN' ? t('individual') : tc('select')
-                }
-              />
-            )}
-          </FieldRow>
-          {showOptionalCompany ? (
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t('company')}
-              value={knownCompanyId}
-              onChange={setCatalog('companyId')}
-              options={companies.map((c) => ({ value: c.id, label: c.label }))}
-              disabled={disabled}
-              emptyLabel={tc('select')}
-              hint={t('companyOptionalHint')}
-            />
-          ) : null}
-          {showAgencyContract || showCompanyContract ? (
-            <FieldRow cols={2}>
-              <CatalogField
-                kind="ENTITY_REF"
-                label={showCompanyContract ? t('companyContract') : t('agencyContract')}
-                value={props.salesContractId}
-                onChange={setCatalog('salesContractId')}
-                options={contractsForKind.map((c) => ({ value: c.id, label: c.label }))}
-                emptyLabel="—"
-                disabled={
-                  disabled ||
-                  (showCompanyContract
-                    ? !props.companyId && contractsForKind.length === 0
-                    : !props.agencyId && contractsForKind.length === 0)
-                }
-              />
-              <Field
-                label={t('contractRef')}
-                preset="code"
-                value={props.contractRef}
-                onChange={set('contractRef')}
-              />
-            </FieldRow>
-          ) : null}
           <CatalogField
             kind="ENTITY_REF"
             label={t('packageOrRate')}

@@ -10,6 +10,7 @@ import {
   getCurrentBusinessDate,
   advanceBusinessDate,
   lockBusinessDateForAudit,
+  ensureCurrentBusinessDayOpen,
 } from '@/lib/services/business-date.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
@@ -17,6 +18,7 @@ import { countUnclosedCashDesk } from '@/lib/services/cash-desk.service';
 import { resolveSettlementPolicy } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
+  await ensureCurrentBusinessDayOpen();
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   const posShiftStatus = await getPosShiftStatus();
   const currentBiz = await getCurrentBusinessDate();

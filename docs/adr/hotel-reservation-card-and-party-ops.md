@@ -138,6 +138,14 @@ Share: two reservations → two episodes; unchanged.
 5. Swap rooms.
 6. Keys / HK pickup polish.
 
+## Commercial strip (2026-10)
+
+The left column opens with one row above the dates: source, agency, company. The contract and the free-text contract number sit on the next row. The package stays with the room type. Booker, paid-by, and folio stay in the billing block.
+
+Source at the desk is Walk-in, agency, or online. Walk-in is not renamed. Company is not a source: both profiles can be filled, and choosing a company does not hide the agency. A stored corporate source still opens with the company filled and the agency lookup available. One stay has one sales contract, taken from the profiles already chosen; it sets the rate and the allotment and does not clear the other profile.
+
+If the profile is missing, the desk creates a short one: agency name and phone, or company name and VÖEN. That row is incomplete. Commission, settlement terms, and the contract are edited only in the agency and company directories.
+
 ## Reservation card desk rules (2026-10)
 
 Front-office card behavior that the services and the editor must keep:
@@ -163,6 +171,8 @@ Saving a guest (create and edit) requires first name, last name, gender, birth d
 Each guest row has one age band: adult (12 and older, same cut as Depart guest), 11–6, 5–2, or 0–1. The birth date decides the band; an empty slot stores a representative age so the band survives a reload. A departed guest stays on the list and does not count. The four counters are the count of rows in each band. Adding a child adds an empty row of that band only. Search above the list fills an empty slot of the same band, or appends a row — an adult never occupies a child slot. Deleting a row removes that row’s band only. A named row is not dropped when a counter is lowered past it; the counter snaps back.
 
 ## Room class is not always a free upgrade
+
+The pricing tab keeps one action bar (manual nightly, discount from the tariff, or a stay total) and a scrolling night grid. Apply skips fixed nights, nights already posted to the folio, and nights before the hotel business date. A posted night is read-only; saving the card does not rewrite it. A past night with no posting stays visible and is not part of Apply. The stay total under the amount column is the sum of the grid.
 
 When the given (physical) type differs from the charged type, the card does not call it a complimentary upgrade. The hotel can cover the difference (charged type stays, price note). The guest can pay the given class: the charged type becomes the given type and remaining nights (today onward, unlocked) take that class’s nightly price when a type-scoped rate exists. A cheaper given class is a downgrade: the hotel refunds the difference, or the guest asked for the cheaper class. Both move the charged type to the given class. The door must still belong to the given type. Posted past nights are not rewritten. A dated product change remains the stay-amendment wizard.
 

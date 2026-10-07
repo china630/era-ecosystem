@@ -20,7 +20,7 @@ import {
   isPreArrivalStatus,
   operationalGapDetails,
 } from '@/lib/guest-stay-requirements';
-import { addHotelDays } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
@@ -283,6 +283,8 @@ export function ReservationCardEditor({
       counterpartyType?: string | null;
       ratePlanId: string;
       code: string;
+      validFrom?: string | null;
+      validTo?: string | null;
     }>
   >([]);
   const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
@@ -308,6 +310,7 @@ export function ReservationCardEditor({
   const [discountActive, setDiscountActive] = useState(false);
   const [amendOpen, setAmendOpen] = useState(false);
   const [dailyRates, setDailyRates] = useState<DailyRateRow[]>([]);
+  const [pricingBusinessDate, setPricingBusinessDate] = useState<string | null>(null);
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
@@ -455,6 +458,9 @@ export function ReservationCardEditor({
     setDiscountPercent(json.discountPercent != null ? String(json.discountPercent) : '');
     setDiscountActive(Boolean(json.discountActive) || Number(json.discountPercent) > 0);
     setCreditLimitAzn(json.creditLimitAzn != null ? String(json.creditLimitAzn) : '');
+    setPricingBusinessDate(
+      typeof json.pricingBusinessDate === 'string' ? json.pricingBusinessDate.slice(0, 10) : null,
+    );
     setDailyRates(
       (
         (json.dailyRates as Array<{
@@ -1027,6 +1033,8 @@ export function ReservationCardEditor({
               companyId: string | null;
               counterpartyType?: string | null;
               ratePlanId: string;
+              validFrom?: string | null;
+              validTo?: string | null;
             }) => ({
               id: x.id,
               code: x.code,
@@ -1034,6 +1042,8 @@ export function ReservationCardEditor({
               companyId: x.companyId,
               counterpartyType: x.counterpartyType,
               ratePlanId: x.ratePlanId,
+              validFrom: x.validFrom,
+              validTo: x.validTo,
               label: `${x.code} — ${x.name}`,
             }),
           ),
@@ -1169,27 +1179,6 @@ export function ReservationCardEditor({
   async function loadGuests() {
     const g = await fetch('/api/guests').then((r) => r.json());
     setGuestOptions(guestListItems(g).map((x) => ({ ...x, label: x.fullName })));
-  }
-
-  async function spreadKind(kind: 'NIGHTLY' | 'STAY_TOTAL' | 'PERCENT', value: number) {
-    if (!reservationId) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservationId}/pricing/spread`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, value }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('failed'));
-        return;
-      }
-      showSuccess(tc('success'));
-      await load();
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function recalcPricing() {
@@ -2230,6 +2219,12 @@ export function ReservationCardEditor({
             companies={companies}
             sources={sources}
             salesContracts={salesContracts}
+            onAgencyCreated={(row) =>
+              setAgencies((prev) => (prev.some((a) => a.id === row.id) ? prev : [...prev, row]))
+            }
+            onCompanyCreated={(row) =>
+              setCompanies((prev) => (prev.some((c) => c.id === row.id) ? prev : [...prev, row]))
+            }
             roomTypes={roomTypes}
             mealPlans={mealPlans}
             ratePlans={ratePlans}
@@ -2281,7 +2276,7 @@ export function ReservationCardEditor({
                     rows.map((d) =>
                       d.fixPrice || d.stayDate < today
                         ? d
-                        : { ...d, amount: givenNightly, manualFlag: true },
+                        : { ...d, amount: givenNightly, manualFlag: true, fixPrice: true },
                     ),
                   );
                 }
@@ -2330,7 +2325,7 @@ export function ReservationCardEditor({
                 setUseManualRate(true);
                 setManualDailyRate(String(nightly));
                 setDailyRates((rows) =>
-                  rows.map((d) => ({ ...d, amount: nightly, manualFlag: true })),
+                  rows.map((d) => ({ ...d, amount: nightly, manualFlag: true, fixPrice: true })),
                 );
               }
               const gapLabel = mode === 'CHARGE' ? t('packageGapCharge') : t('packageGapRefund');
@@ -2365,7 +2360,13 @@ export function ReservationCardEditor({
               ))}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+            <div
+              className={
+                tab === 'pricing'
+                  ? 'flex min-h-0 flex-1 flex-col overflow-hidden pb-2'
+                  : 'min-h-0 flex-1 overflow-y-auto pb-2'
+              }
+            >
               {tab === 'guests' && (
                 <ReservationCardGuestsTab
                   isCreate={isCreate}
@@ -2413,33 +2414,30 @@ export function ReservationCardEditor({
                 <ReservationCardPricingTab
                   isCreate={isCreate}
                   quoteText={quoteText}
-                  totalAmount={Number(data?.totalAmount ?? 0)}
                   dailyRates={dailyRates}
-                  useManualRate={useManualRate}
                   manualDailyRate={manualDailyRate}
                   discountPercent={discountPercent}
                   busy={busy}
                   isLocked={isLocked}
                   packageCompose={packageCompose}
+                  tariffNightly={
+                    ratePlans.find((plan) => plan.id === ratePlanId)?.pricePerNight ?? null
+                  }
+                  businessDate={pricingBusinessDate}
+                  postedDates={folios.flatMap((folio) =>
+                    folio.charges
+                      .filter((charge) =>
+                        ['ROOM', 'PKG', 'RATE_ADJ'].includes(charge.revenueCode?.code ?? ''),
+                      )
+                      .map((charge) =>
+                        charge.businessDate ? hotelDateKey(charge.businessDate) : '',
+                      )
+                      .filter(Boolean),
+                  )}
                   onDailyRates={setDailyRates}
-                  onToggleManual={(value) => {
-                    setUseManualRate(value);
-                    if (value) {
-                      const n = Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0;
-                      if (n > 0) void spreadKind('NIGHTLY', n);
-                    }
-                  }}
                   onManualRate={setManualDailyRate}
                   onDiscountPercent={setDiscountPercent}
-                  onSpreadNightly={() =>
-                    void spreadKind(
-                      'NIGHTLY',
-                      Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0,
-                    )
-                  }
-                  onSpreadTotal={(total) => void spreadKind('STAY_TOTAL', total)}
-                  onApplyPercent={() => void spreadKind('PERCENT', Number(discountPercent) || 0)}
-                  onRecalc={() => void recalcPricing()}
+                  onUseManual={setUseManualRate}
                 />
               )}
 
