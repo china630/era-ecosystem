@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
@@ -30,11 +30,19 @@ import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
-export async function listReservations(status?: ReservationStatus, guestId?: string) {
+export async function listReservations(
+  status?: ReservationStatus,
+  guestId?: string,
+  includeParty = false,
+) {
   return prisma.reservation.findMany({
     where: {
       ...(status ? { status } : {}),
-      ...(guestId ? { guestId } : {}),
+      ...(guestId
+        ? includeParty
+          ? { OR: [{ guestId }, { paxGuests: { some: { guestId } } }] }
+          : { guestId }
+        : {}),
     },
     include: {
       room: { include: { roomType: true } },
@@ -83,6 +91,21 @@ export async function getAvailability(roomTypeId: string, from: Date, to: Date, 
   };
 }
 
+function isChildAge(age?: number | null, birthDate?: string | null): boolean {
+  if (age != null && Number.isFinite(age) && age >= 0 && age < 18) return true;
+  if (!birthDate || birthDate.length < 10) return false;
+  const y = Number(birthDate.slice(0, 4));
+  const m = Number(birthDate.slice(5, 7));
+  const d = Number(birthDate.slice(8, 10));
+  if (!y || !m || !d) return false;
+  const now = new Date();
+  let years = now.getUTCFullYear() - y;
+  if (now.getUTCMonth() + 1 < m || (now.getUTCMonth() + 1 === m && now.getUTCDate() < d)) {
+    years -= 1;
+  }
+  return years >= 0 && years < 18;
+}
+
 export async function createReservation(input: {
   roomTypeId: string;
   guestId: string;
@@ -104,9 +127,6 @@ export async function createReservation(input: {
   children5_2?: number;
   children1_0?: number;
   partyBillingMode?: 'PRIMARY' | 'EQUAL';
-  booker?: string;
-  guestRep?: string;
-  paidBy?: string;
   contractRef?: string;
   /**
    * When false (group hold / extra rooms), keep pax first/last empty so names-incomplete
@@ -117,6 +137,35 @@ export async function createReservation(input: {
   /** Default CONFIRMED; agency portal uses OPTION when auto-confirm is off. */
   status?: 'OPTION' | 'CONFIRMED';
   externalRef?: string;
+  market?: string | null;
+  segment?: string | null;
+  vipType?: string | null;
+  tripReason?: string | null;
+  booker?: string | null;
+  guestRep?: string | null;
+  paidBy?: string | null;
+  voucherNo?: string | null;
+  resNo?: string | null;
+  useManualRate?: boolean;
+  manualDailyRate?: number | null;
+  discountPercent?: number | null;
+  discountActive?: boolean;
+  notes?: Record<string, string>;
+  paxGuests?: Array<{
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    middleName?: string | null;
+    sex?: string | null;
+    nationality?: string | null;
+    birthDate?: string | null;
+    age?: number | null;
+    idCardNo?: string | null;
+    passportNo?: string | null;
+    isPrimary?: boolean;
+    ownsFolio?: boolean;
+    medicalPackageCode?: string | null;
+  }>;
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
@@ -279,6 +328,21 @@ export async function createReservation(input: {
     totalAmount = toDecimal(nightly * nights);
   }
 
+  const discountPct =
+    input.discountActive && input.discountPercent != null
+      ? Math.min(100, Math.max(0, Number(input.discountPercent)))
+      : 0;
+  const manualNightly =
+    input.useManualRate && input.manualDailyRate != null && input.manualDailyRate > 0
+      ? Math.round(input.manualDailyRate * (1 - discountPct / 100) * 100) / 100
+      : null;
+  const manualNights = manualNightly == null ? [] : Array.from({ length: countNights(input.checkInDate, input.checkOutDate) }, (_, i) =>
+    parseHotelNoon(addHotelDays(input.checkInDate, i)),
+  );
+  if (manualNightly != null) {
+    totalAmount = toDecimal(manualNightly * manualNights.length);
+  }
+
   const contractRef =
     input.contractRef ||
     (salesContractId
@@ -312,24 +376,74 @@ export async function createReservation(input: {
         children5_2: input.children5_2 ?? 0,
         children1_0: input.children1_0 ?? 0,
         partyBillingMode,
-        booker: input.booker,
-        guestRep: input.guestRep,
-        paidBy: input.paidBy,
         contractRef,
         shareEligible,
         shareGender,
         shareBedIndex,
         status: input.status ?? 'CONFIRMED',
         externalRef: input.externalRef,
+        market: input.market ?? undefined,
+        segment: input.segment ?? undefined,
+        vipType: input.vipType ?? undefined,
+        tripReason: input.tripReason ?? undefined,
+        booker: input.booker ?? undefined,
+        guestRep: input.guestRep ?? undefined,
+        paidBy: input.paidBy ?? undefined,
+        voucherNo: input.voucherNo ?? undefined,
+        resNo: input.resNo ?? undefined,
+        useManualRate: input.useManualRate ?? false,
+        manualDailyRate:
+          input.manualDailyRate != null ? toDecimal(input.manualDailyRate) : undefined,
+        discountPercent:
+          input.discountPercent != null ? toDecimal(input.discountPercent) : undefined,
+        discountActive: input.discountActive ?? false,
+        ...(manualNightly != null
+          ? {
+              dailyRates: {
+                create: manualNights.map((stayDate) => ({
+                  stayDate,
+                  amount: toDecimal(manualNightly),
+                  manualFlag: true,
+                  fixPrice: true,
+                  currencyCode: 'AZN',
+                  discountPct: discountPct > 0 ? toDecimal(discountPct) : undefined,
+                })),
+              },
+            }
+          : {}),
         paxGuests: {
-          create: {
-            guestId: input.guestId,
-            firstName: paxFirstName ?? null,
-            lastName: paxLastName ?? null,
-            isPrimary: true,
-            ownsFolio: true,
-            sortOrder: 0,
-          },
+          create:
+            input.paxGuests && input.paxGuests.length > 0
+              ? input.paxGuests.map((p, i) => {
+                  const isPrimary = p.isPrimary ?? i === 0;
+                  return {
+                    guestId: p.guestId || null,
+                    firstName: p.firstName ?? null,
+                    lastName: p.lastName ?? null,
+                    middleName: p.middleName ?? null,
+                    sex: p.sex ?? null,
+                    nationality: p.nationality ?? null,
+                    birthDate: p.birthDate ? new Date(p.birthDate) : null,
+                    age: p.age ?? null,
+                    idCardNo: p.idCardNo ?? null,
+                    passportNo: p.passportNo ?? null,
+                    isPrimary,
+                    ownsFolio:
+                      partyBillingMode === 'EQUAL' ? !isChildAge(p.age, p.birthDate) : isPrimary,
+                    medicalPackageCode: p.medicalPackageCode?.trim()
+                      ? p.medicalPackageCode.trim().toUpperCase()
+                      : null,
+                    sortOrder: i,
+                  };
+                })
+              : {
+                  guestId: input.guestId,
+                  firstName: paxFirstName ?? null,
+                  lastName: paxLastName ?? null,
+                  isPrimary: true,
+                  ownsFolio: true,
+                  sortOrder: 0,
+                },
         },
         staySlices: {
           create: {
@@ -345,6 +459,17 @@ export async function createReservation(input: {
 
     return created;
   });
+
+  if (input.notes) {
+    for (const [noteType, text] of Object.entries(input.notes)) {
+      if (!text?.trim()) continue;
+      await prisma.reservationNote.upsert({
+        where: { reservationId_noteType: { reservationId: reservation.id, noteType } },
+        create: { reservationId: reservation.id, noteType, text },
+        update: { text },
+      });
+    }
+  }
 
   {
     const { stampMedicalPackagesForReservation } = await import(
@@ -470,8 +595,10 @@ export async function listArrivals(from: Date | string, to: Date | string = from
   });
 }
 
-export async function checkInReservation(id: string) {
-  const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+export async function checkInReservation(id: string, opts?: { early?: boolean }) {
+  const { assertBusinessDayOpenForPosting, getCurrentBusinessDate } = await import(
+    '@/lib/services/business-date.service'
+  );
   await assertBusinessDayOpenForPosting();
 
   const reservation = await getReservation(id);
@@ -479,6 +606,23 @@ export async function checkInReservation(id: string) {
     throw new Error('Check-in is only allowed for CONFIRMED or OPTION reservations');
   }
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
+
+  const { collectStayOperationalGaps } = await import(
+    '@/lib/services/stay-operational-readiness.service'
+  );
+  const { StayCheckInBlockedError } = await import('@/lib/guest-stay-requirements');
+  const operationalGaps = await collectStayOperationalGaps(id);
+  if (operationalGaps.length > 0) throw new StayCheckInBlockedError(operationalGaps);
+
+  const biz = await getCurrentBusinessDate();
+  const bizKey = hotelDateKey(biz);
+  const arrivalKey = hotelDateKey(reservation.checkInDate);
+  const departKey = hotelDateKey(reservation.checkOutDate);
+  if (arrivalKey > bizKey && !opts?.early) {
+    throw new Error(
+      'Check-in opens on the arrival date. Confirm early check-in to receive the guest sooner.',
+    );
+  }
 
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
   if (room) {
@@ -533,16 +677,31 @@ export async function checkInReservation(id: string) {
     await applyHeldDepositsOnCheckIn(id);
 
     const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
-    void postEarlyCheckInFee(id).catch((e) => console.error('Early check-in fee failed', e));
+    if (opts?.early && arrivalKey > bizKey) {
+      void postEarlyCheckInFee(id).catch((e) => console.error('Early check-in fee failed', e));
+    }
 
-    if (!reservation.ratePlan.medicalFlag && revenueRoom) {
-      const nights = countNights(reservation.checkInDate, reservation.checkOutDate);
+    const nightDue = bizKey >= arrivalKey && bizKey < departKey;
+    if (nightDue && reservation.ratePlan.medicalFlag) {
+      const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
+      await postNightlyPackageCharges(id, biz).catch((e) =>
+        console.error('Arrival night package post failed', e),
+      );
+    } else if (nightDue && revenueRoom) {
+      const rates = await prisma.reservationDailyRate.findMany({
+        where: { reservationId: id },
+      });
+      const daily = rates.find((d) => hotelDateKey(d.stayDate) === bizKey);
+      const amount = daily
+        ? decimalToNumber(daily.amount)
+        : decimalToNumber(reservation.ratePlan.pricePerNight);
       await postCharge({
         reservationId: id,
         revenueCodeId: revenueRoom.id,
-        amount: decimalToNumber(reservation.ratePlan.pricePerNight),
-        qty: nights,
-        description: `Accommodation ${reservation.room?.roomNumber ?? ''}`,
+        amount,
+        qty: 1,
+        description: `Room night ${bizKey}`,
+        businessDate: biz,
       });
     }
     const result = await getReservation(id);

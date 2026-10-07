@@ -189,6 +189,7 @@ export type ReservationCardLeftPanelProps = {
   /** One-line GUEST / AGENCY / COMPANY routing summary (ADR D3). */
   billingRoutingSummary?: string;
   onFolioRouting?: () => void;
+  onPackageRoomGap?: (mode: 'CHARGE' | 'REFUND' | 'COMP') => void;
   /** Optional until FO editor wires commercial booker fields. */
   booker?: string;
   guestRep?: string;
@@ -272,10 +273,16 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
 
-  const filteredRatePlans = useMemo(
-    () => ratePlans.filter((rp) => ratePlanFitsRoomType(rp, props.roomTypeId)),
-    [ratePlans, props.roomTypeId],
-  );
+  const filteredRatePlans = useMemo(() => {
+    const list = [...ratePlans];
+    list.sort((a, b) => {
+      const af = ratePlanFitsRoomType(a, props.roomTypeId) ? 0 : 1;
+      const bf = ratePlanFitsRoomType(b, props.roomTypeId) ? 0 : 1;
+      if (af !== bf) return af - bf;
+      return (a.label || '').localeCompare(b.label || '');
+    });
+    return list;
+  }, [ratePlans, props.roomTypeId]);
 
   const selectedRatePlan = ratePlans.find((rp) => rp.id === props.ratePlanId);
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
@@ -775,6 +782,39 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             emptyLabel={null}
             disabled={disabled}
           />
+          {selectedRatePlan?.roomTypeId &&
+          props.roomTypeId &&
+          selectedRatePlan.roomTypeId !== props.roomTypeId ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[12px] text-amber-950">
+              <p className="m-0">{t('packageRoomGap')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('CHARGE')}
+                >
+                  {t('packageGapCharge')}
+                </button>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('REFUND')}
+                >
+                  {t('packageGapRefund')}
+                </button>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('COMP')}
+                >
+                  {t('packageGapComp')}
+                </button>
+              </div>
+            </div>
+          ) : null}
           <FieldRow cols={2} className="min-w-0">
             <CatalogField
               kind="SEARCHABLE"

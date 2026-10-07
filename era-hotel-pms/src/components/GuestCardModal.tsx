@@ -11,15 +11,17 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
-import { GuestCardToolbar } from '@/components/GuestCardToolbar';
 import { GuestCardLeftPanel } from '@/components/guest-card/GuestCardLeftPanel';
 import { GuestCardIdentityTab } from '@/components/guest-card/GuestCardIdentityTab';
 import { GuestCardLoyaltyTab } from '@/components/guest-card/GuestCardLoyaltyTab';
-import { GuestCardTimeShareTab } from '@/components/guest-card/GuestCardTimeShareTab';
 import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid';
+import { GuestCardActions } from '@/components/guest-card/GuestCardActions';
+import { GuestCardCrmDialog } from '@/components/guest-card/GuestCardCrmDialog';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
 import { GuestCardIdReaderModal, type IdReaderPayload } from '@/components/guest-card/GuestCardIdReaderModal';
 import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity.shared';
+import { guestIdentityGaps, type IdentityField } from '@/lib/guest-stay-requirements';
+import { pickPrimaryContact, pickPrimaryDocument } from '@/lib/guest-card-primary';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
 
 const STAT_COLORS = [
@@ -98,15 +100,25 @@ export default function GuestCardModal({
   const [emailConsent, setEmailConsent] = useState(false);
   const [callBack, setCallBack] = useState(false);
   const [detailFields, setDetailFields] = useState<Record<string, string>>({});
-  const [documents, setDocuments] = useState<Array<{ id: string; docType: string; docNumber: string }>>([]);
-  const [contacts, setContacts] = useState<Array<{ id: string; kind: string; value: string }>>([]);
+  const [documents, setDocuments] = useState<
+    Array<{
+      id: string;
+      docType: string;
+      docNumber: string;
+      serialNo?: string | null;
+      issuingAuthority?: string | null;
+      nationality?: string | null;
+      issuePlace?: string | null;
+      isPrimary?: boolean;
+    }>
+  >([]);
+  const [contacts, setContacts] = useState<
+    Array<{ id: string; kind: string; value: string; isPrimary?: boolean }>
+  >([]);
   const [addresses, setAddresses] = useState<Array<{ id: string; kind: string; line1: string }>>([]);
   const [loyaltyTier, setLoyaltyTier] = useState('');
   const [loyaltyCards, setLoyaltyCards] = useState<
     Array<{ id: string; cardNumber: string; tier: string | null; points: number | null; active: boolean }>
-  >([]);
-  const [timeShares, setTimeShares] = useState<
-    Array<{ id: string; contractNo: string; unitCode: string | null; weekNo: number | null; status: string }>
   >([]);
   const [loyaltyPoints, setLoyaltyPoints] = useState<
     Array<{
@@ -121,6 +133,7 @@ export default function GuestCardModal({
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [idReaderOpen, setIdReaderOpen] = useState(false);
+  const [crmPanel, setCrmPanel] = useState<string | null>(null);
   const [crmBadges, setCrmBadges] = useState<{ specialNotes: number; allergens: number }>({
     specialNotes: 0,
     allergens: 0,
@@ -139,12 +152,11 @@ export default function GuestCardModal({
   const isCreate = open && !guestId;
 
   const loadAux = useCallback(async (id: string) => {
-    const [docRes, conRes, addrRes, loyRes, tsRes, ptsRes] = await Promise.all([
+    const [docRes, conRes, addrRes, loyRes, ptsRes] = await Promise.all([
       fetch(`/api/guests/${id}/documents`),
       fetch(`/api/guests/${id}/contacts`),
       fetch(`/api/guests/${id}/addresses`),
       fetch(`/api/guests/${id}/loyalty`),
-      fetch(`/api/guests/${id}/time-shares`),
       fetch(`/api/guests/${id}/loyalty/points`),
     ]);
     if (docRes.ok) setDocuments(await docRes.json());
@@ -155,7 +167,6 @@ export default function GuestCardModal({
       setLoyaltyTier(String(loy.loyaltyTier ?? ''));
       setLoyaltyCards(Array.isArray(loy.cards) ? loy.cards : []);
     }
-    if (tsRes.ok) setTimeShares(await tsRes.json());
     if (ptsRes.ok) setLoyaltyPoints(await ptsRes.json());
   }, []);
 
@@ -317,7 +328,31 @@ export default function GuestCardModal({
     }
   }
 
+  function identityLabel(field: IdentityField): string {
+    if (field === 'firstName') return t('fields.firstName');
+    if (field === 'lastName') return t('fields.lastName');
+    if (field === 'sex') return t('fields.gender');
+    if (field === 'birthDate') return t('details.birthDate');
+    return t('fields.nationality');
+  }
+
+  function rejectIncompleteIdentity(): boolean {
+    const gaps = guestIdentityGaps({
+      firstName,
+      lastName,
+      sex,
+      birthDate: detailFields.birthDate,
+      nationality,
+    });
+    if (gaps.length === 0) return false;
+    showApiError({
+      error: t('identityMissing', { fields: gaps.map(identityLabel).join(', ') }),
+    });
+    return true;
+  }
+
   async function saveCreate() {
+    if (rejectIncompleteIdentity()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/guests', {
@@ -369,9 +404,14 @@ export default function GuestCardModal({
       await saveCreate();
       return;
     }
+    if (rejectIncompleteIdentity()) return;
     setBusy(true);
     try {
       const composed = guestComposedFullName({ firstName, middleName, lastName, fullName });
+      const phoneFromList = pickPrimaryContact(contacts, ['MOBILE', 'PHONE', 'WHATSAPP']);
+      const emailFromList = pickPrimaryContact(contacts, ['EMAIL']);
+      const finFromList = pickPrimaryDocument(documents, ['ID_CARD', 'FIN', 'NATIONAL_ID']);
+      const passFromList = pickPrimaryDocument(documents, ['PASSPORT']);
       const res = await fetch(`/api/guests/${guestId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -383,8 +423,8 @@ export default function GuestCardModal({
           title: title || null,
           sex: sex || null,
           nationality,
-          phone: detailFields.phone || phone || null,
-          email: detailFields.email || email || null,
+          phone: phoneFromList || detailFields.phone || phone || null,
+          email: emailFromList || detailFields.email || email || null,
           vipType: vipType || null,
           greyList,
           problematic,
@@ -397,8 +437,8 @@ export default function GuestCardModal({
           birthDate: detailFields.birthDate || null,
           birthPlace: detailFields.birthPlace || null,
           occupation: detailFields.occupation || null,
-          nationalIdFin: transientIdentity.nationalIdFin || null,
-          passportNumber: transientIdentity.passportNumber || null,
+          nationalIdFin: finFromList || transientIdentity.nationalIdFin || null,
+          passportNumber: passFromList || transientIdentity.passportNumber || null,
           visaType: detailFields.visaType || null,
           visaNumber: detailFields.visaNumber || null,
           visaExpiry: detailFields.visaExpiry || null,
@@ -443,46 +483,86 @@ export default function GuestCardModal({
     { key: 'preferences', value: stats?.preferences ?? 0 },
   ];
 
-  const rightTabs: GuestTabId[] = ['identity', 'crm', 'reservations', 'loyalty', 'timeshare'];
+  const rightTabs: GuestTabId[] = ['identity', 'crm', 'reservations', 'loyalty'];
+  const displayName =
+    guestComposedFullName({ firstName, middleName, lastName, fullName }) || fullName;
+  const primaryHit =
+    documents.find((d) => d.isPrimary && d.docNumber.trim()) ??
+    documents.find((d) => d.docNumber.trim());
+  const knownDoc = ['PASSPORT', 'ID_CARD', 'FIN', 'VISA', 'OTHER'];
+  const primaryDocument = primaryHit
+    ? `${knownDoc.includes(primaryHit.docType) ? t(`docType.${primaryHit.docType}` as 'docType.PASSPORT') : primaryHit.docType} ${primaryHit.docNumber.trim()}`
+    : '';
+
+  function printCard() {
+    const lines = [
+      displayName,
+      guestId ? guestId.slice(0, 8) : '',
+      phone,
+      email,
+      primaryDocument,
+    ].filter(Boolean);
+    const popup = window.open('', '_blank', 'noopener,width=720,height=640');
+    if (!popup) return;
+    const body = lines.map((line) => `<p>${line.replace(/</g, '')}</p>`).join('');
+    popup.document.write(`<!doctype html><title>${displayName}</title><body>${body}</body>`);
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  }
 
   return (
     <EraModal
       open={open}
-      title={t('title')}
+      title={isCreate ? t('createTitle') : displayName || t('title')}
+      subtitle={guestId ? guestId.slice(0, 8) : undefined}
       onClose={onClose}
       maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
-      bodyClassName="mt-4 min-h-0 flex-1 overflow-hidden flex flex-col"
-      footer={null}
+      bodyClassName="mt-3 min-h-0 flex-1 overflow-hidden flex flex-col"
+      headerActions={
+        <GuestCardActions
+          mode="header"
+          busy={busy}
+          loading={loading && !isCreate}
+          isLocked={isLocked}
+          guestId={guestId}
+          onCopy={
+            guestId
+              ? () => {
+                  void navigator.clipboard?.writeText(guestId);
+                  showSuccess(t('toolbar.copied'));
+                }
+              : undefined
+          }
+          onToggleLock={guestId ? () => setIsLocked((v) => !v) : undefined}
+          onPrint={printCard}
+          onIdReader={() => setIdReaderOpen(true)}
+        />
+      }
+      footer={
+        <GuestCardActions mode="footer" busy={busy} loading={loading && !isCreate} onSave={() => void save()} />
+      }
     >
-      <GuestCardToolbar
-        subtitle={isCreate ? t('createTitle') : fullName || t('title')}
-        guestId={guestId}
-        busy={busy}
-        loading={loading && !isCreate}
-        isLocked={isLocked}
-        onClose={onClose}
-        onSave={() => void save()}
-        onToggleLock={
-          guestId
-            ? () => {
-                setIsLocked((v) => !v);
-              }
-            : undefined
-        }
-        onAttach={guestId ? () => showSuccess(t('toolbar.attachHint')) : undefined}
-        onCopy={
-          guestId
-            ? () => {
-                void navigator.clipboard?.writeText(guestId);
-                showSuccess(t('toolbar.copied'));
-              }
-            : undefined
-        }
-      />
       {loading && !isCreate ? (
         <p className="py-8 text-center text-[13px] text-[#7F8C8D]">{tc('loading')}</p>
       ) : (
         <>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${greyList ? 'bg-slate-700 text-white' : 'bg-[#F4F6F7] text-[#7F8C8D]'}`}
+              onClick={() => setGreyList((v) => !v)}
+            >
+              {t('greyList')}
+            </button>
+            <button
+              type="button"
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${problematic ? 'bg-red-700 text-white' : 'bg-[#F4F6F7] text-[#7F8C8D]'}`}
+              onClick={() => setProblematic((v) => !v)}
+            >
+              {t('problematic')}
+            </button>
+          </div>
           <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {statItems.map((s, i) => (
               <div
@@ -508,13 +588,11 @@ export default function GuestCardModal({
               nationality={nationality}
               birthDate={detailFields.birthDate ?? ''}
               birthPlace={detailFields.birthPlace ?? ''}
-              phone={detailFields.phone ?? phone}
-              email={detailFields.email ?? email}
+              phone={pickPrimaryContact(contacts, ['MOBILE', 'PHONE', 'WHATSAPP']) || detailFields.phone || phone}
+              email={pickPrimaryContact(contacts, ['EMAIL']) || detailFields.email || email}
               vipType={vipType}
               loyaltyTier={loyaltyTier}
               verificationStatus={detailFields.verificationStatus ?? ''}
-              greyList={greyList}
-              problematic={problematic}
               phoneVerified={phoneVerified}
               emailVerified={emailVerified}
               voen={detailFields.voen ?? ''}
@@ -529,14 +607,13 @@ export default function GuestCardModal({
               parentMotherName={detailFields.parentMotherName ?? ''}
               marriageDate={detailFields.marriageDate ?? ''}
               bonusPercent={detailFields.bonusPercent ?? ''}
-              hotelName={detailFields.hotelName ?? ''}
+              primaryDocument={primaryDocument}
               transientIdentity={transientIdentity}
               mdmProfile={mdmProfile}
               profileLoading={profileLoading}
               guestId={guestId}
               globalPersonId={globalPersonId}
               allergenCount={crmBadges.allergens}
-              onIdReader={() => setIdReaderOpen(true)}
               onChange={handleLeftPanelChange}
               onTransientChange={(key, value) =>
                 setTransientIdentity((f) => ({ ...f, [key]: value }))
@@ -586,6 +663,18 @@ export default function GuestCardModal({
                     phoneConsent={phoneConsent}
                     emailConsent={emailConsent}
                     callBack={callBack}
+                    draftPhone={phone}
+                    draftEmail={email}
+                    onDraftChange={(patch) => {
+                      if (patch.phone != null) {
+                        setPhone(patch.phone);
+                        setDetailFields((f) => ({ ...f, phone: patch.phone! }));
+                      }
+                      if (patch.email != null) {
+                        setEmail(patch.email);
+                        setDetailFields((f) => ({ ...f, email: patch.email! }));
+                      }
+                    }}
                     onConsent={(key, value) => {
                       const m: Record<string, (v: boolean) => void> = {
                         gdprConfirmed: setGdprConfirmed,
@@ -600,8 +689,12 @@ export default function GuestCardModal({
                     onReload={() => (guestId ? void loadAux(guestId) : undefined)}
                   />
                 )}
-                {tab === 'crm' && <GuestCardActionGrid actions={crmActions} />}
-                {tab === 'reservations' && <GuestCardActionGrid actions={resActions} />}
+                {tab === 'crm' && (
+                  <GuestCardActionGrid actions={crmActions} onOpenPanel={setCrmPanel} />
+                )}
+                {tab === 'reservations' && (
+                  <GuestCardActionGrid actions={resActions} onOpenPanel={setCrmPanel} />
+                )}
                 {tab === 'loyalty' && (
                   <GuestCardLoyaltyTab
                     loyaltyTier={loyaltyTier}
@@ -616,13 +709,6 @@ export default function GuestCardModal({
                             .then((list) => setLoyaltyPoints(Array.isArray(list) ? list : []))
                         : undefined
                     }
-                  />
-                )}
-                {tab === 'timeshare' && (
-                  <GuestCardTimeShareTab
-                    rows={timeShares}
-                    guestId={guestId}
-                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
                   />
                 )}
               </div>
@@ -650,8 +736,31 @@ export default function GuestCardModal({
             birthDate: data.birthDate ?? f.birthDate,
           }));
           showSuccess(t('idReaderApplied'));
+          if (guestId && data.passportNumber) {
+            void fetch(`/api/guests/${guestId}/documents`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                docType: 'PASSPORT',
+                docNumber: data.passportNumber,
+                isPrimary: true,
+              }),
+            }).then(() => void loadAux(guestId));
+          }
+          if (guestId && data.nationalIdFin) {
+            void fetch(`/api/guests/${guestId}/documents`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                docType: 'FIN',
+                docNumber: data.nationalIdFin,
+                isPrimary: !data.passportNumber,
+              }),
+            }).then(() => void loadAux(guestId));
+          }
         }}
       />
+      <GuestCardCrmDialog panelId={crmPanel} guestId={guestId} onClose={() => setCrmPanel(null)} />
     </EraModal>
   );
 }

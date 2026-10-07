@@ -5,6 +5,11 @@ import {
   guestComposedFullName,
   updateGuestIdentity,
 } from '@/lib/guest-identity';
+import {
+  GuestIdentityRequiredError,
+  guestIdentityGaps,
+  toYmd,
+} from '@/lib/guest-stay-requirements';
 
 export async function getGuestStats(id: string) {
   const guest = await prisma.guest.findUnique({ where: { id } });
@@ -117,6 +122,18 @@ export async function patchGuestFull(
   } = input;
 
   const existing = await prisma.guest.findUnique({ where: { id } });
+
+  if (firstName !== undefined) {
+    const gaps = guestIdentityGaps({
+      firstName: firstName ?? existing?.firstName,
+      lastName: lastName !== undefined ? lastName : existing?.lastName,
+      sex: sex !== undefined ? sex : existing?.sex,
+      birthDate:
+        birthDate !== undefined ? birthDate : toYmd(existing?.birthDate),
+      nationality: nationality ?? existing?.nationality,
+    });
+    if (gaps.length > 0) throw new GuestIdentityRequiredError(gaps);
+  }
 
   const composedFullName =
     firstName !== undefined || middleName !== undefined || lastName !== undefined

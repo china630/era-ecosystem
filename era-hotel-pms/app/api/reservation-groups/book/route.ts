@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createGroupBookingWithStays } from '@/lib/services/booking-stays.service';
+import { collectStayOperationalGaps } from '@/lib/services/stay-operational-readiness.service';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -49,7 +50,9 @@ export async function POST(request: Request) {
       throw new Error('Check-out must be after check-in');
     }
     const result = await createGroupBookingWithStays(body);
-    return jsonOk(serialize(result), 201);
+    const firstStayId = result.stays[0]?.id;
+    const operationalGaps = firstStayId ? await collectStayOperationalGaps(firstStayId) : [];
+    return jsonOk(serialize({ ...result, operationalGaps }), 201);
   } catch (err) {
     return handleRouteError(err);
   }

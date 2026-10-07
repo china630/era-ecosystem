@@ -138,6 +138,26 @@ Share: two reservations → two episodes; unchanged.
 5. Swap rooms.
 6. Keys / HK pickup polish.
 
+## Reservation card desk rules (2026-10)
+
+Front-office card behavior that the services and the editor must keep:
+
+- **Create** persists the whole party (names, DOB, passport, FIN, sex, nationality, medical package code), child age bands, room, market, segment, VIP, trip reason, booker, guest representative, paid-by, voucher, external res no., notes, manual nightly rate, and discount. A typed name is not a guest until it is picked from search. The required-field message names what is missing. Create always stores `shareEligible: false`. Share is a human tick on a saved stay with exactly one adult.
+- **Primary guest** is a yellow star. Other adults are gray stars. One adult cannot drop the star. A minor (age from date of birth, under 18) has no star and cannot be primary. Making a gray star primary sets `PRIMARY` billing and that adult’s folio. Clearing the yellow star is allowed only when nobody is under 18; billing becomes `EQUAL` and each adult owns a folio. Child counters do not by themselves mark a row as a child.
+- **Medical package** on each guest is the sold rate plan (`PKG-*`) when notes and the agency profile do not name a package. Notes still win over the rate-plan code.
+- **Package vs room type.** Changing the charge room type does not clear the package. If the package is scoped to another room type, the card keeps it and offers three covers: guest pays the higher nightly (sold vs the peer medical plan for the new type), guest pays the lower, or the hotel keeps the sold price and records a price note.
+- **Night grid.** The first row is the check-in night. `manualFlag` means a desk override, not “this night is in the past”. A night is closed when it is before the open business date or already has a posted room / package / rate-adjustment charge. Future nights stay editable and can take a stay percent on top of a manual rate. A derived plan with no BAR parent falls back to `pricePerNight`. Saving with new dates rebuilds nights that fall outside the stay and writes `reservation.totalAmount` from the grid.
+- **Posting.** Check-in is inactive until the arrival date in Asia/Baku. Early check-in is a separate confirm and posts the early fee plus, only when the business date already sits inside the stay, that one night. A payment before or on arrival is a deposit (advance receipt), not N room charges. “Charge all” after the guest is in-house posts only the current business-date night. Remaining nights post on night audit.
+- **Card, packages, and tasks** are in-modal fields. They do not use a browser prompt.
+
+## Guest card — time share hidden
+
+`GuestTimeShareAgreement` and `GET/POST /api/guests/:id/time-shares` stay in the hotel database. The guest-card **Time share** tab and the CRM **Müqavilələr** button (same time-share rows) are **not shown**. Hotel pricing modules have no time-share key, and there is no options checkbox for it. Show the tab only after a dedicated module flag exists. Do not treat the hidden API as a sold product.
+
+## Guest card — identity now, documents at check-in
+
+Saving a guest (create and edit) requires first name, last name, gender, birth date and citizenship. Patronymic stays optional. Phone, FIN and passport are **not** required at booking: reception often does not have the copy yet. Check-in refuses the stay until every named guest (primary and companions, not departed, not an empty slot) has a document — FIN or passport for AZ, passport otherwise. An AZ guest aged 18 or older also needs a phone; under 18 the phone is waived. Age comes from the birth date (Asia/Baku), then from a typed age. A missing age is treated as an adult, so the phone rule applies. Saving the reservation still succeeds and returns `operationalGaps` for a warning toast.
+
 ## Consequences
 
 - Reservation card playbook (`era-hotel-pms-ui.mdc`) stays the **shipped** chrome until a UI wave lands D3; this ADR is the **target**.

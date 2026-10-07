@@ -44,7 +44,10 @@ export type ResolveMedicalSkuInput = {
   notes: ResolveNoteInput[];
   agencyName?: string | null;
   guests: ResolveGuestInput[];
-  /** Documented ignored — never used for SKU. */
+  /**
+   * Selected package / rate plan code. Used only when notes and agency
+   * did not resolve a SKU, so the sold package still lands on each guest.
+   */
   ratePlanCode?: string | null;
 };
 
@@ -385,6 +388,15 @@ export function resolveMedicalSku(
     if (agencyCode) {
       anyHit = true;
       perGuestCodes.fill(agencyCode);
+    }
+  }
+
+  // 5. Sold rate plan (PKG-*) when nothing else named a package
+  if (perGuestCodes.every((c): boolean => c == null)) {
+    const planCode = normalizeMedicalPackageCode(input.ratePlanCode ?? null);
+    if (planCode) {
+      anyHit = true;
+      perGuestCodes.fill(planCode);
     }
   }
 

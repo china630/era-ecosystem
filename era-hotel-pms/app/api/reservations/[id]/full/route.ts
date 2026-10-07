@@ -1,6 +1,7 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getReservationFull, patchReservationFull } from '@/lib/services/reservation-full.service';
+import { collectStayOperationalGaps } from '@/lib/services/stay-operational-readiness.service';
 import { reservationFullPatchSchema } from '@/lib/reservation-full-patch.schema';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
@@ -29,7 +30,9 @@ export async function PATCH(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = reservationFullPatchSchema.parse(await request.json());
-    return jsonOk(serialize(await patchReservationFull(id, body)));
+    const full = await patchReservationFull(id, body);
+    const operationalGaps = await collectStayOperationalGaps(id);
+    return jsonOk(serialize({ ...full, operationalGaps }));
   } catch (err) {
     return handleRouteError(err);
   }

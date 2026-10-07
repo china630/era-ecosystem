@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { createReservation, listReservations } from '@/lib/services/reservation.service';
+import { collectStayOperationalGaps } from '@/lib/services/stay-operational-readiness.service';
 import type { ReservationStatus } from '@prisma/client';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
@@ -23,7 +24,43 @@ const createSchema = z.object({
   paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),
   partyBillingMode: z.enum(['PRIMARY', 'EQUAL']).optional(),
   adults: z.number().int().min(0).optional(),
+  children11_6: z.number().int().min(0).optional(),
+  children5_2: z.number().int().min(0).optional(),
+  children1_0: z.number().int().min(0).optional(),
   shareEligible: z.boolean().optional(),
+  market: z.string().nullable().optional(),
+  segment: z.string().nullable().optional(),
+  vipType: z.string().nullable().optional(),
+  tripReason: z.string().nullable().optional(),
+  booker: z.string().nullable().optional(),
+  guestRep: z.string().nullable().optional(),
+  paidBy: z.string().nullable().optional(),
+  voucherNo: z.string().nullable().optional(),
+  resNo: z.string().nullable().optional(),
+  useManualRate: z.boolean().optional(),
+  manualDailyRate: z.number().nullable().optional(),
+  discountPercent: z.number().min(0).max(100).nullable().optional(),
+  discountActive: z.boolean().optional(),
+  notes: z.record(z.string(), z.string()).optional(),
+  paxGuests: z
+    .array(
+      z.object({
+        guestId: z.string().uuid().nullable().optional(),
+        firstName: z.string().nullable().optional(),
+        lastName: z.string().nullable().optional(),
+        middleName: z.string().nullable().optional(),
+        sex: z.string().nullable().optional(),
+        nationality: z.string().nullable().optional(),
+        birthDate: z.string().nullable().optional(),
+        age: z.number().nullable().optional(),
+        idCardNo: z.string().nullable().optional(),
+        passportNo: z.string().nullable().optional(),
+        isPrimary: z.boolean().optional(),
+        ownsFolio: z.boolean().optional(),
+        medicalPackageCode: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export async function GET(request: Request) {
@@ -33,7 +70,8 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const status = url.searchParams.get('status') as ReservationStatus | null;
     const guestId = url.searchParams.get('guestId') ?? undefined;
-    const reservations = await listReservations(status ?? undefined, guestId);
+    const includeParty = url.searchParams.get('includeParty') === '1';
+    const reservations = await listReservations(status ?? undefined, guestId, includeParty);
     return jsonOk(serialize(reservations));
   } catch (err) {
     return handleRouteError(err);
@@ -46,7 +84,8 @@ export async function POST(request: Request) {
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
     const reservation = await createReservation(body);
-    return jsonOk(serialize(reservation), 201);
+    const operationalGaps = await collectStayOperationalGaps(reservation.id);
+    return jsonOk(serialize({ ...reservation, operationalGaps }), 201);
   } catch (err) {
     return handleRouteError(err);
   }

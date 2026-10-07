@@ -244,6 +244,7 @@
     "filterApply": "Apply",
     "filterReset": "Reset",
     "required": "Required",
+    "requiredNamed": "{field} is required",
     "saved": "Saved",
     "accessDenied": "You do not have access to this section.",
     "from": "From",
@@ -272,6 +273,7 @@
     "balance": "Balance indicator",
     "openFolio": "Open folio",
     "checkIn": "Check in",
+    "checkInOpensOnArrival": "Check-in opens on the arrival date. Early check-in is on the reservation card.",
     "addCharge": "Add charge",
     "checkOut": "Check out",
     "noReservation": "No active reservation",
@@ -792,6 +794,26 @@
     "menu": "Menu",
     "confirmCheckIn": "Confirm check-in",
     "checkInDone": "Guest checked in",
+    "earlyCheckIn": "Early check-in",
+    "earlyCheckInConfirm": "Arrival is still in the future. Confirm early check-in? Only tonight is posted, plus the early fee. The rest of the stay posts on night audit.",
+    "earlyCheckInDone": "Early check-in recorded",
+    "missingRequired": "Fill in: {fields}",
+    "checkInBlocked": "Check-in blocked. {details}",
+    "checkInDocsLater": "Saved. Still needed at check-in: {details}",
+    "gapPhone": "phone",
+    "gapDocument": "document",
+    "pickGuestRequired": "Choose the guest from search",
+    "packageRoomGap": "This package is priced for another room type. Keep it and choose who covers the difference.",
+    "packageGapCharge": "Guest pays the difference",
+    "packageGapRefund": "Refund the difference",
+    "packageGapComp": "Hotel covers it",
+    "starMakePrimary": "Make this guest the primary guest?",
+    "starClearPrimary": "Remove the primary guest? Each adult will have their own folio.",
+    "starCancel": "Cancel",
+    "starConfirm": "Confirm",
+    "postingAfterCheckIn": "Room charges post after check-in",
+    "folioEmptyHint": "No folio lines yet. A payment taken now is a deposit, not a room charge.",
+    "folioGuestEmpty": "No charges for this guest yet",
     "invoice": "Invoice",
     "folioDate": "Date",
     "folioDesc": "Description",
@@ -851,7 +873,8 @@
       "first": "1st person",
       "second": "2nd person",
       "agency": "Agency",
-      "guest": "Guest"
+      "guest": "Guest",
+      "company": "Company"
     },
     "noteType": {
       "EXTRA_REQ": "Extra requirements",
@@ -880,12 +903,15 @@
     },
     "subModal": {
       "lastFour": "Last 4 digits",
+      "lastFourInvalid": "Enter exactly 4 digits",
       "brand": "Brand",
       "holder": "Cardholder",
       "packageCode": "Package code",
       "packageName": "Package name",
+      "packageRequired": "Package code and name are required",
       "amount": "Amount",
       "taskTitle": "Task",
+      "taskRequired": "Task title is required",
       "status": "Status",
       "routingRules": "Routing rules",
       "folios": "Folios on reservation",
@@ -905,6 +931,8 @@
     "folioBalance": "Folio balance",
     "creditRemaining": "Remaining credit",
     "cardAuth": {
+      "show": "Card authorizations",
+      "hide": "Hide authorizations",
       "title": "Card authorizations",
       "empty": "No card holds on this reservation",
       "placeHold": "Place hold",
@@ -1101,13 +1129,26 @@
       "gender": "Gender",
       "nationality": "Nationality",
       "vipType": "VIP type",
-      "fullNameAutoHint": "Built from first name, patronymic and last name"
+      "fullNameAutoHint": "Built from first name, patronymic and last name",
+      "middleNameHint": "Part of the name, not the parent's given name",
+      "parentHint": "Parent's given name, not the patronymic"
     },
     "panels": {
       "identity": "Identity",
       "classification": "Classification",
       "documentsMdm": "Documents & MDM",
+      "commercial": "Commercial",
+      "family": "Family",
       "other": "Other"
+    },
+    "identityMissing": "Fill in: {fields}",
+    "socialPair": "Platform and name",
+    "summary": {
+      "document": "Primary document",
+      "none": "No document yet",
+      "saveToAddLists": "Save the guest to add more contacts, documents and addresses.",
+      "phoneAtCheckIn": "Needed at check-in for guests aged 18+ with AZ citizenship. Children do not need a phone.",
+      "documentAtCheckIn": "Needed at check-in: FIN or passport for AZ, passport for other citizenships."
     },
     "addContact": "Add contact",
     "addAddress": "Add address",
@@ -1121,7 +1162,26 @@
       "primary": "Primary",
       "contact": "Phone / email",
       "address": "Address",
+      "expires": "Expires",
       "empty": "No rows"
+    },
+    "docType": {
+      "PASSPORT": "Passport",
+      "ID_CARD": "ID card",
+      "FIN": "FIN",
+      "VISA": "Visa",
+      "OTHER": "Other"
+    },
+    "contactKind": {
+      "MOBILE": "Mobile",
+      "PHONE": "Phone",
+      "EMAIL": "Email",
+      "WHATSAPP": "WhatsApp"
+    },
+    "addressKind": {
+      "HOME": "Home",
+      "WORK": "Work",
+      "OTHER": "Other"
     },
     "consent": {
       "gdpr": "GDPR consent",
@@ -1198,8 +1258,11 @@
       "surveys": "Surveys",
       "reviews": "Review scores",
       "whatsapp": "WhatsApp",
+      "whatsappJournal": "WhatsApp log",
       "sendEmail": "Send email",
+      "emailJournal": "Email log",
       "sendSms": "Send SMS",
+      "smsJournal": "SMS log",
       "contactLogs": "Contact logs",
       "deferredP2": "Planned in phase P2",
       "deferredP3": "Planned in phase P3",
@@ -1256,6 +1319,7 @@
       "vehicle": "Vehicle plate",
       "hotelName": "Hotel name",
       "voen": "VOEN",
+      "voenHint": "Company tax id, not a personal document",
       "accountingHint": "Accounting integration — Finance boundary for invoices."
     },
     "satellite": {
@@ -1293,7 +1357,27 @@
       "saveFailed": "Save failed",
       "add": "Add"
     },
-    "allergenWarning": "Guest has registered allergens"
+    "allergenWarning": "Guest has registered allergens",
+    "crmFields": {
+      "preference": "Preference",
+      "importance": "Importance",
+      "note": "Note",
+      "allergen": "Allergen",
+      "dateType": "Date type",
+      "eventDate": "Date",
+      "specialNote": "Special note",
+      "roomNumber": "Room number",
+      "roomType": "Room type",
+      "comment": "Comment",
+      "surveyName": "Survey name",
+      "reclaim": "Reclaim",
+      "location": "Location",
+      "description": "Description",
+      "message": "Message",
+      "subject": "Subject",
+      "relatedGuest": "Related guest id",
+      "relationship": "Relationship"
+    }
   },
   "crmPages": {
     "backToGuests": "Back to guests",

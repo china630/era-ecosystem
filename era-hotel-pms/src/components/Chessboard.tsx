@@ -15,6 +15,7 @@ import { computeRackDisplayState } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { operationalGapDetails } from '@/lib/guest-stay-requirements';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -79,6 +80,7 @@ interface Arrival {
 export default function Chessboard() {
   const { can } = useAuth();
   const t = useTranslations('chessboard');
+  const tCard = useTranslations('reservationCard');
   const tCommon = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
 
@@ -150,6 +152,16 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data?.code === 'GUEST_CHECK_IN_INCOMPLETE') {
+          showApiError({
+            error: tCard('checkInBlocked', {
+              details: operationalGapDetails(data.people, (gap) =>
+                gap === 'phone' ? tCard('gapPhone') : tCard('gapDocument'),
+              ),
+            }),
+          });
+          return;
+        }
         showApiError(data, tCommon('actionFailed'));
         return;
       }

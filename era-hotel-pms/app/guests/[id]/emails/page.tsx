@@ -1,16 +1,18 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { GuestCrmPromptListPage } from '@/components/guest-crm/GuestCrmPromptListPage';
 
 export default function Page() {
+  const t = useTranslations('guestCard');
   return (
     <GuestCrmPromptListPage
-      titleKey="crm.sendEmail"
+      titleKey="crm.emailJournal"
       apiPath={(gid) => `/api/guests/${gid}/communications?channel=EMAIL`}
       postPath={(gid) => `/api/guests/${gid}/communications`}
       addFields={[
-        { name: 'subject', label: 'Subject', preset: 'longText' },
-        { name: 'body', label: 'Email body', required: true, multiline: true },
+        { name: 'subject', label: t('crmFields.subject'), preset: 'longText' },
+        { name: 'body', label: t('crmFields.message'), required: true, multiline: true },
       ]}
       buildBody={(v) => ({
         channel: 'EMAIL',
