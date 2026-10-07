@@ -110,25 +110,18 @@ export async function findSkilledFreePractitioner(input: {
     where: {
       procedureTypeId: input.procedureTypeId,
       active: true,
-      practitioner: { active: true, staffKind: "NURSE" },
+      practitioner: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
     },
     include: { practitioner: true },
   });
   let pool = skills.map((s) => s.practitioner);
   if (pool.length === 0) {
     const nurses = await prisma.practitioner.findMany({
-      where: { active: true, staffKind: "NURSE" },
+      where: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
       orderBy: { code: "asc" },
       take: 20,
     });
-    pool =
-      nurses.length > 0
-        ? nurses
-        : await prisma.practitioner.findMany({
-            where: { active: true },
-            orderBy: { code: "asc" },
-            take: 20,
-          });
+    pool = nurses;
   }
   const candidates = preferFirst(
     applyDutyFilter(pool, duty),

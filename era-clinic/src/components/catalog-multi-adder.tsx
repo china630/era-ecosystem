@@ -21,6 +21,8 @@ export function CatalogMultiAdder({
   emptyLabel = "—",
   selectAllLabel,
   removeLabel,
+  /** Chosen rows as a scrolling list. Chips stay the default. */
+  list,
 }: {
   label: string;
   hint?: string;
@@ -30,6 +32,7 @@ export function CatalogMultiAdder({
   emptyLabel?: string;
   selectAllLabel?: string;
   removeLabel: string;
+  list?: boolean;
 }) {
   const selected = new Set(value);
   const remaining = options.filter((opt) => !selected.has(opt.value));
@@ -63,7 +66,26 @@ export function CatalogMultiAdder({
           </button>
         ) : null}
       </div>
-      {value.length > 0 ? (
+      {value.length > 0 && list ? (
+        <ul className="max-h-40 space-y-1 overflow-y-auto rounded border border-[#BDC3C7] bg-white p-1">
+          {value.map((id) => (
+            <li
+              key={id}
+              className="flex items-center justify-between gap-2 px-2 py-1 text-[13px] text-[#2C3E50]"
+            >
+              <span className="min-w-0 truncate">{labelOf(id)}</span>
+              <button
+                type="button"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center text-[#C0392B]"
+                aria-label={removeLabel}
+                onClick={() => onChange(value.filter((row) => row !== id))}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : value.length > 0 ? (
         <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
           {value.map((id) => (
             <span

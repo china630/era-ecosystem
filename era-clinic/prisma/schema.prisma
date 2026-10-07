@@ -306,6 +306,10 @@ enum PractitionerStaffKind {
   DOCTOR
   NURSE
   LAB
+  /// Naftalan bath attendant. Not a nurse.
+  BATH
+  /// Massage therapist. Not a nurse.
+  MASSAGE
 }
 
 enum StaffDutyRosterStatus {
@@ -507,6 +511,8 @@ model Appointment {
   /// Pattern B secondary location/equipment (optional).
   resourceId      String?           @map("resource_id")
   status          AppointmentStatus @default(SCHEDULED)
+  /// Length of this reception. The calendar paints occupancy from this, not from the doctor card.
+  durationMinutes Int               @default(30) @map("duration_minutes")
   reminderSentAt  DateTime?
   patientRef      PatientRef        @relation(fields: [patientRefId], references: [id])
   practitioner    Practitioner      @relation(fields: [practitionerId], references: [id])
@@ -1296,7 +1302,8 @@ model StaffDutyLine {
   note            String?
   createdAt       DateTime        @default(now()) @map("created_at")
 
-  @@unique([rosterId, procedureTypeId])
+  /// Several people may cover one procedure (one SKU, many cabins).
+  @@unique([rosterId, procedureTypeId, practitionerId])
   @@index([practitionerId])
   @@index([organizationId])
   @@map("staff_duty_line")

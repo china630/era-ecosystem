@@ -209,6 +209,23 @@ describe("approve reassigns future staff onto the posted nurse", () => {
     ]);
   });
 
+  it("fills two overlapping HARD slots from two posted people", () => {
+    const planned = planRosterStaffReassignment({
+      slots: [
+        slot("early", "2026-11-02T06:00:00.000Z", "HARD"),
+        slot("late", "2026-11-02T06:05:00.000Z", "HARD"),
+      ],
+      occupations: [],
+      posts: [
+        { procedureTypeId: "ampli", practitionerId: "n1" },
+        { procedureTypeId: "ampli", practitionerId: "n2" },
+      ],
+      overrides: [],
+      absent: () => false,
+    });
+    expect(planned.map((row) => row.practitionerId)).toEqual(["n1", "n2"]);
+  });
+
   it("does not give an absent posted nurse the slot", () => {
     const planned = planRosterStaffReassignment({
       slots: [slot("a1", "2026-11-02T06:00:00.000Z")],

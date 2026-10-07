@@ -32,7 +32,7 @@ const createSchema = z.object({
   code: z.string().regex(CLINIC_CUSTOM_ROLE_CODE_RE, "Invalid role code"),
   name: z.string().trim().min(1).max(120),
   cloneFrom: z.string().trim().min(1).max(32),
-  staffKind: z.enum(["DOCTOR", "NURSE", "LAB", "NONE"]).optional(),
+  staffKind: z.enum(["DOCTOR", "NURSE", "LAB", "BATH", "MASSAGE", "NONE"]).optional(),
 });
 
 export async function GET(req: Request) {

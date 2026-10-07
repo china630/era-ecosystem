@@ -45,7 +45,7 @@ export async function PATCH(
 
     let practitionerCode = appt.practitioner.code;
     let practitionerId = appt.practitionerId;
-    let slotMinutes = appt.practitioner.defaultSlotMinutes || 30;
+    const durationMinutes = appt.durationMinutes || 30;
     if (body.practitionerId && body.practitionerId !== appt.practitionerId) {
       const next = await prisma.practitioner.findUnique({
         where: { id: body.practitionerId },
@@ -53,19 +53,19 @@ export async function PATCH(
       if (!next || !next.active) return jsonError("Practitioner not found", 404);
       practitionerCode = next.code;
       practitionerId = next.id;
-      slotMinutes = next.defaultSlotMinutes || 30;
     }
 
     const conflict = await detectSchedulingConflict({
       practitionerCode,
       scheduledAt,
+      durationMinutes,
       excludeAppointmentId: id,
       resourceId,
     });
     if (conflict) return jsonError(conflict, 409);
 
     // CLI-36 — reject slots outside the practitioner's shift rotation.
-    const onShift = await isWithinShift(practitionerId, scheduledAt, slotMinutes);
+    const onShift = await isWithinShift(practitionerId, scheduledAt, durationMinutes);
     if (!onShift) return jsonError("Practitioner is not on shift at this time", 409);
 
     const updated = await prisma.appointment.update({

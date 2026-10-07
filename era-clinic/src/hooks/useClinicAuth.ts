@@ -10,7 +10,7 @@ export type ClinicAuthState = {
   email?: string | null;
   organizationName?: string | null;
   role?: string;
-  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "NONE";
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE" | "NONE";
   permissions: string[];
   canViewClinicAdmin: boolean;
   isPlatformSuperAdmin: boolean;
@@ -24,7 +24,7 @@ type AuthMePayload = {
   login?: string | null;
   email?: string | null;
   role?: string;
-  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "NONE" | null;
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE" | "NONE" | null;
   permissions?: string[];
   organizationName?: string | null;
   canViewClinicAdmin?: boolean;
@@ -49,6 +49,8 @@ function stateFromMe(raw: AuthMePayload): ClinicAuthState | null {
       data.staffKind === "DOCTOR" ||
       data.staffKind === "NURSE" ||
       data.staffKind === "LAB" ||
+      data.staffKind === "BATH" ||
+      data.staffKind === "MASSAGE" ||
       data.staffKind === "NONE"
         ? data.staffKind
         : "NONE",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  CatalogField,
   Field,
   FieldSelect,
   LINK_ACCENT_CLASS,
@@ -16,10 +17,13 @@ import { bakuDateKey, bakuTimeLabel, parseBakuDateTime } from "@/lib/baku-day";
 
 type Practitioner = { code: string; fullName: string };
 type PatientOption = { id: string; refCode: string; fullName: string };
+type VisitService = { code: string; name: string; durationMin: number };
 
 export type AppointmentCreatePrefill = {
   practitionerCode?: string;
   scheduledAtIso?: string;
+  defaultDurationMinutes?: number;
+  visitServices?: VisitService[];
 };
 
 type Props = {
@@ -50,11 +54,18 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
   const [patientRefId, setPatientRefId] = useState("");
   const [practitionerCode, setPractitionerCode] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("30");
+  const [serviceCode, setServiceCode] = useState("");
+  const [visits, setVisits] = useState<VisitService[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setPatientRefId("");
+    setServiceCode("");
+    setVisits(prefill?.visitServices ?? []);
+    const fallback = prefill?.defaultDurationMinutes;
+    setDurationMinutes(fallback && fallback >= 5 ? String(fallback) : "30");
     void fetch("/api/admin/practitioners")
       .then((r) => r.json())
       .then((d) => {
@@ -76,7 +87,7 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
     if (prefill?.scheduledAtIso) {
       setScheduledAt(toDatetimeLocal(prefill.scheduledAtIso));
     }
-  }, [open, prefill?.practitionerCode, prefill?.scheduledAtIso]);
+  }, [open, prefill?.practitionerCode, prefill?.scheduledAtIso, prefill?.defaultDurationMinutes, prefill?.visitServices]);
 
   async function submit() {
     if (!patientRefId) {
@@ -91,6 +102,8 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
         patientRefId,
         practitionerCode,
         scheduledAt: scheduledAt ? fromDatetimeLocal(scheduledAt) : undefined,
+        durationMinutes: Number(durationMinutes) || undefined,
+        serviceCode: serviceCode || undefined,
       }),
     });
     setBusy(false);
@@ -144,6 +157,31 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
           type="datetime-local"
           value={scheduledAt}
           onChange={(e) => setScheduledAt(e.target.value)}
+        />
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("visitService")}
+          value={serviceCode}
+          emptyLabel="—"
+          options={visits.map((visit) => ({
+            value: visit.code,
+            label: `${visit.name} (${visit.code})`,
+          }))}
+          onChange={(next) => {
+            const code = String(next ?? "");
+            setServiceCode(code);
+            const visit = visits.find((row) => row.code === code);
+            if (visit) setDurationMinutes(String(visit.durationMin));
+          }}
+        />
+        <Field
+          label={t("durationMinutes")}
+          preset="count"
+          type="number"
+          min={5}
+          max={240}
+          value={durationMinutes}
+          onChange={(e) => setDurationMinutes(e.target.value)}
         />
       </div>
       <ModalFooter onCancel={onClose} onSubmit={() => void submit()} submitLabel={busy ? "…" : tc("save")} />
