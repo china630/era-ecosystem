@@ -96,7 +96,7 @@ describe("Logistics doors (LOG-RBAC-01)", () => {
   });
 
   it("tracking is any staff session; the path token selects the trip", () => {
-    expect(HANDLER_GATE_EXCEPTIONS).toEqual([]);
+    expect(HANDLER_GATE_EXCEPTIONS).toEqual(["/api/platform/billing-status"]);
     expect(apiRoutePermissions("/api/tracking/abc")).toBe("auth");
   });
 });

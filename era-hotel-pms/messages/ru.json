@@ -697,7 +697,8 @@
     "namesIncomplete": "Имена гостей неполные — перед назначением / check-in нужны реальные имена (TBA нельзя).",
     "namesIncompleteBadge": "Имена неполные",
     "bookingName": "Название брони",
-    "bookingNamePlaceholder": "Необязательно (свадьба, корпоратив и т.п.)"
+    "bookingNamePlaceholder": "Необязательно (свадьба, корпоратив и т.п.)",
+    "singleStayHint": "Одно проживание в этой брони"
   },
   "reservationCard": {
     "stay": "Проживание",
@@ -705,6 +706,15 @@
     "commercialSales": "Коммерция и продажи",
     "classification": "Классификация",
     "roomSection": "Номер",
+    "cancelStay": "CANCELLED",
+    "noShowStay": "NO_SHOW",
+    "cancelDone": "Бронь отменена",
+    "noShowDone": "Отмечен незаезд",
+    "splitFrom": "Сменить номер с даты",
+    "splitDoor": "Дверь",
+    "splitQuotaOnly": "Только квота типа",
+    "splitStay": "Запланировать смену",
+    "splitStayDone": "Отрезки сохранены",
     "productSection": "Продукт (продажа)",
     "assignmentSection": "Заселение",
     "additionalSection": "Дополнительно",
@@ -1520,7 +1530,10 @@
     "reasonCard": "из карточки брони",
     "reasonSwap": "обмен номерами",
     "reasonRelocate": "с плана номеров",
-    "reasonOther": "переезд"
+    "reasonOther": "переезд",
+    "statusPending": "Ожидает",
+    "statusApplied": "Выполнен",
+    "statusCancelled": "Отменён"
   },
   "promotionCodes": {
     "title": "Промокоды",
@@ -1646,7 +1659,7 @@
     "code": "Код",
     "name": "Имя",
     "pickEmployee": "Сотрудник",
-    "personnelUnavailable": "Список кадров недоступен. Проверьте связь с финансами.",
+    "personnelUnavailable": "Список кадров недоступен. Проверьте связь с оркестратором.",
     "department": "Отдел",
     "tasks": "Задачи",
     "empty": "Горничных нет. Привяжите сотрудника из кадров."
@@ -1701,6 +1714,7 @@
     "add": "Добавить бронь",
     "notes": "Notes",
     "filterNotes": "With notes only",
+    "birthday": "День рождения в проживании",
     "statusLive": "Живые",
     "room": "Номер",
     "hk": "HK",
@@ -1832,6 +1846,8 @@
     "headsOnDuty": "Голов в смене",
     "pairsLeftover": "Пары без назначения — назначьте вручную",
     "acceptLaundry": "Принять (в цех)",
+    "addLaundry": "Добавить бельё",
+    "laundryPieces": "Вещи",
     "deliverLaundry": "Выдано",
     "returnScanRequired": "Нужен скан возвратной ведомости",
     "foLaundryTitle": "Прачечная стойки",
@@ -2513,6 +2529,8 @@
     "editRoom": "Редактировать номер",
     "roomTypeUpdated": "Тип номера обновлён",
     "ratePlanUpdated": "Тарифный план обновлён",
+    "ratePlanDeleted": "Тарифный план удалён",
+    "ratePlanInUse": "Тариф ещё используется: брони {reservations}, договоры {contracts}, отрезки проживания {slices}, производные тарифы {derived}",
     "revenueCodeUpdated": "Код выручки обновлён",
     "bedTypeUpdated": "Тип кровати обновлён",
     "roomViewUpdated": "Вид обновлён",
@@ -2556,7 +2574,8 @@
       "VERIFICATION_STATUS": "Статус проверки",
       "NOTE_TYPE": "Тип заметки",
       "CONCIERGE_CATEGORY": "Категория консьержа",
-      "EVENT_LINE_KIND": "Вид строки банкета"
+      "EVENT_LINE_KIND": "Вид строки банкета",
+      "WALKIN_PROFILE": "Профиль walk-in"
     }
   },
   "opsWipe": {
@@ -3049,6 +3068,7 @@
     "saved": "Политика сохранена",
     "related": "Связанные настройки",
     "linkRatePlans": "НСИ → тарифы (суммы)",
+    "linkBarCalendar": "Календарь BAR",
     "linkChildMatrix": "Детская матрица",
     "linkYieldRules": "Yield rules",
     "linkComponents": "Ценовые компоненты",
@@ -3524,7 +3544,8 @@
     "colPayment": "Оплата",
     "colBalance": "Баланс",
     "openFolio": "Открыть фолио",
-    "empty": "Нет проводок"
+    "empty": "Нет проводок",
+    "kind": "Проводка"
   },
   "settingsAccess": {
     "title": "Доступ",

@@ -31,6 +31,7 @@ import {
   TrendingUp,
   Users,
   UtensilsCrossed,
+  SprayCan,
   Wrench,
   Banknote,
 } from 'lucide-react';
@@ -374,13 +375,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         {
           id: 'hotel_housekeeping',
           title: t('sectionHousekeeping'),
-          icon: Wrench,
+          icon: SprayCan,
           items: sectionItems([
             {
               id: 'hk-ops',
               href: '/hk',
               labelKey: 'housekeeping',
-              icon: Wrench,
+              icon: SprayCan,
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
@@ -422,7 +423,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               id: 'hk-rotation',
               href: '/hk/rotation',
               labelKey: 'hkRotation',
-              icon: Wrench,
+              icon: SprayCan,
               permission: PERMISSIONS.SCREEN_HK,
             },
             {

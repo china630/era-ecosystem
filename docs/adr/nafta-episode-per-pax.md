@@ -6,7 +6,7 @@
 
 1. OPEN clinical episode uniqueness: partial unique index on `(organizationId, reservationId, patientRefId)` where `status = OPEN` — not reservation-only.
 2. `PatientRef` for in-house: `MDM-{globalPersonId}` when linked; else `HOTEL-{reservationId8}-{paxKey}` (`ReservationGuest.id`). Never one `HOTEL-{reservationId}` for the whole party.
-3. Hotel check-in emits **one** `SATELLITE_HOTEL_GUEST_CHECKED_IN` per pax with that guest’s `medicalPackageCode`, `globalPersonId`, `guestName`, and `paxKey`.
+3. Hotel check-in emits **one** `SATELLITE_HOTEL_GUEST_CHECKED_IN` per pax with that guest’s `medicalPackageCode`, `globalPersonId`, `guestName`, and `paxKey`. The same per-pax shape is used earlier: `SANATORIUM_BOOKING_CREATED` on create / pre-arrival save, and `STAY_PRODUCT_CHANGED` only once the stay is `IN_HOUSE`.
 4. Quota/charge resolve `ProgramInstance` via `episode.patientRefId` (OPEN), never `findFirst({ reservationId })` alone.
 5. **Stay-level** checkout / room-change fan-out to **all** OPEN episodes for the reservation. Stay date amend recalcs **each** instance with that episode’s `programCode`. **Person-level Depart guest** (companion leaves, stay stays `IN_HOUSE`) must fan-out to **that pax only** — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4/D6. Until that verb ships, do not emit stay `GUEST_CHECKED_OUT` for a companion departure.
 6. Share rooms (`707` / `707S`) remain **two reservations** → two episodes — out of scope for merge.

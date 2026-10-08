@@ -33,3 +33,7 @@ Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet
 Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). CP staff: `POST /api/integration/staff-provision` (`enterRequestTenant`, scrypt User hash, SHA-256 PIN roster). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
 
 **SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware (kit `createSatelliteStaffMiddleware`) `x-era-organization-id`; `getSatelliteSession` (`src/lib/session.ts`): token org, active user or PIN roster row, `requireFnbSatellite(org)`, grants from the role (one call per handler inside `try`; no process bind); ops stamps via `requestOrganizationId()`. Password logout sets `era_fnb_login_choice=password` so a paired tablet redirects to `/login`; `/pin` clears it. Not sellable SHARED pool / no TENANT Scaffold ✅.
+
+## Platform billing status
+
+`GET /api/platform/billing-status` — `app/api/platform/billing-status/route.ts` re-exports `@era/satellite-kit/billing/status-route` (banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.

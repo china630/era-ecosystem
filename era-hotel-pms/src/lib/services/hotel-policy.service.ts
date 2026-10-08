@@ -92,8 +92,8 @@ export async function getHotelPolicy(): Promise<HotelPolicy> {
 }
 
 export async function updateHotelPolicy(patch: Partial<HotelPolicy>): Promise<HotelPolicy> {
-  const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (!profile) throw new Error('Hotel profile not found');
+  const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+  const profile = await ensureHotelProfile();
 
   const next: HotelPolicy = { ...parsePolicy(profile.policyJson), ...patch };
   await prisma.hotelProfile.update({

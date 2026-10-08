@@ -46,8 +46,8 @@ export async function GET() {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.USERS_MANAGE);
 
-    const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
-    if (!profile) throw new Error('Hotel profile not found');
+    const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+    const profile = await ensureHotelProfile();
 
     const policy = tryParsePolicyJson(profile.policyJson);
     const pack = (policy as any)?.nightAuditReportPack;
@@ -89,8 +89,8 @@ export async function PUT(request: Request) {
     const enabled = body.enabled ?? slugsUnique.length > 0;
     const nextSlugs = enabled ? slugsUnique : [];
 
-    const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
-    if (!profile) throw new Error('Hotel profile not found');
+    const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+    const profile = await ensureHotelProfile();
 
     const policy = tryParsePolicyJson(profile.policyJson);
     const nextPolicy = {

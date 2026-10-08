@@ -34,6 +34,8 @@ export interface RoomPlanRoom {
 
 export interface RoomPlanReservationBar {
   id: string;
+  /** Unique when one stay paints two doors. Selection still uses id. */
+  barKey?: string;
   resNo?: string | null;
   roomId: string | null;
   checkInDate: string;

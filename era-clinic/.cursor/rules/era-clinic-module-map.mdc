@@ -152,3 +152,7 @@ Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav regist
 ## ICD-10 catalog (CLI-39…42)
 
 Global WHO ICD-10 (2019) table `IcdCode` — **no** `organizationId`. Search `GET /api/icd` (selectable CATEGORY/LEAF only; not `/api/icd10`). ADR: [clinic-icd10-catalog.md](../../../docs/adr/clinic-icd10-catalog.md). Optional sync from orchestrator `GET /platform/v1/catalog/icd10` (in-process generator, not data-hub).
+
+## Platform billing status
+
+`GET /api/platform/billing-status` — `app/api/platform/billing-status/route.ts` re-exports `@era/satellite-kit/billing/status-route` (banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.

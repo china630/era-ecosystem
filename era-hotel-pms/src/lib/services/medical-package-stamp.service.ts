@@ -1,10 +1,11 @@
 import type { ImportTx } from "@/lib/import/types";
 import {
   normalizeMedicalPackageCode,
+  overlayFoPackageCodes,
   programCodeForLifecycle,
   resolveMedicalSku,
+  summarizeMedicalSku,
   type MedicalPackageCode,
-  type ResolveMedicalSkuResult,
 } from "@/lib/services/medical-package-resolve.service";
 
 type TxLike = Pick<
@@ -12,37 +13,10 @@ type TxLike = Pick<
   "reservation" | "reservationGuest" | "reservationNote" | "agency"
 >;
 
-function resultFromFoCodes(
-  foCodes: Array<string | null | undefined>,
-  agencyName: string | null | undefined,
-): ResolveMedicalSkuResult {
-  const perGuestCodes = foCodes.map((c) => normalizeMedicalPackageCode(c ?? null));
-  const distinct = [
-    ...new Set(perGuestCodes.filter((c): c is MedicalPackageCode => c != null)),
-  ];
-  const unanimousCode =
-    distinct.length === 1 && perGuestCodes.every((c) => c === distinct[0])
-      ? distinct[0]
-      : null;
-  const stayKind: ResolveMedicalSkuResult["stayKind"] =
-    distinct.length > 0
-      ? "medical"
-      : agencyName &&
-          (/^walkin\s+leisure/i.test(agencyName) || /walk[\s-]?in\s+leisure/i.test(agencyName))
-        ? "leisure"
-        : "unresolved";
-  return {
-    perGuestCodes,
-    unanimousCode,
-    unresolved: !unanimousCode,
-    reservationCode: unanimousCode,
-    stayKind,
-  };
-}
-
 /**
  * Load notes + agency + pax, resolve SKUs, stamp ReservationGuest + Reservation.
- * When `foPerGuestCodes` is set (FO Guests tab save), those codes win over note/agency resolve.
+ * An explicit guest-column code wins for that pax. An empty column inherits the
+ * stay SKU (ERA-PKG, agency, PKG-* rate plan).
  */
 export async function stampMedicalPackagesForReservation(
   tx: TxLike,
@@ -52,6 +26,8 @@ export async function stampMedicalPackagesForReservation(
   unanimousCode: MedicalPackageCode | null;
   unresolved: boolean;
   programCode?: string;
+  /** Parallel to ReservationGuest sort order. Null = no medical SKU for that pax. */
+  perGuestCodes: (MedicalPackageCode | null)[];
   stayKind: "leisure" | "medical" | "unresolved";
 }> {
   const reservation = await tx.reservation.findUnique({
@@ -68,95 +44,75 @@ export async function stampMedicalPackagesForReservation(
     return {
       unanimousCode: null,
       unresolved: true,
+      perGuestCodes: [],
       stayKind: "unresolved",
     };
   }
 
   const agencyName = reservation.agency?.name ?? reservation.agency?.code ?? null;
-  let result: ResolveMedicalSkuResult;
+  const guests =
+    reservation.paxGuests.length > 0
+      ? reservation.paxGuests.map((g) => ({
+          firstName: g.firstName,
+          lastName: g.lastName,
+          fullName: [g.firstName, g.lastName].filter(Boolean).join(" ") || null,
+        }))
+      : [
+          {
+            fullName: reservation.guest.fullName,
+            firstName: reservation.guest.firstName,
+            lastName: reservation.guest.lastName,
+          },
+        ];
+
+  let result = resolveMedicalSku({
+    notes: reservation.notes.map((n) => ({
+      noteType: n.noteType,
+      text: n.text,
+    })),
+    agencyName,
+    guests,
+    ratePlanCode: reservation.ratePlan.code,
+    agencyPackageCode: reservation.agency?.medicalPackageCode ?? null,
+  });
 
   if (opts?.foPerGuestCodes) {
     const codes =
       reservation.paxGuests.length > 0
         ? reservation.paxGuests.map((_, i) => opts.foPerGuestCodes![i] ?? null)
         : [opts.foPerGuestCodes[0] ?? null];
-    result = resultFromFoCodes(codes, agencyName);
-  } else {
-    const guests =
-      reservation.paxGuests.length > 0
-        ? reservation.paxGuests.map((g) => ({
-            firstName: g.firstName,
-            lastName: g.lastName,
-            fullName: [g.firstName, g.lastName].filter(Boolean).join(" ") || null,
-          }))
-        : [
-            {
-              fullName: reservation.guest.fullName,
-              firstName: reservation.guest.firstName,
-              lastName: reservation.guest.lastName,
-            },
-          ];
-
-    result = resolveMedicalSku({
-      notes: reservation.notes.map((n) => ({
-        noteType: n.noteType,
-        text: n.text,
-      })),
+    result = overlayFoPackageCodes(result, codes, agencyName);
+  } else if (reservation.paxGuests.length > 0) {
+    // Import / check-in without a fresh column: keep a prior stamp only where
+    // notes, agency, and the rate plan left that pax empty.
+    result = summarizeMedicalSku(
+      result.perGuestCodes.map(
+        (code, i) =>
+          code ??
+          normalizeMedicalPackageCode(reservation.paxGuests[i]?.medicalPackageCode ?? null),
+      ),
       agencyName,
-      guests,
-      ratePlanCode: reservation.ratePlan.code,
-      agencyPackageCode: reservation.agency?.medicalPackageCode ?? null,
-    });
-
-    // Keep prior FO stamp when resolve left a pax null (mid-stay preserve)
-    if (reservation.paxGuests.length > 0) {
-      result = {
-        ...result,
-        perGuestCodes: result.perGuestCodes.map((c, i) => {
-          if (c != null) return c;
-          return normalizeMedicalPackageCode(
-            reservation.paxGuests[i]?.medicalPackageCode ?? null,
-          );
-        }),
-      };
-      const distinct = [
-        ...new Set(
-          result.perGuestCodes.filter((c): c is MedicalPackageCode => c != null),
-        ),
-      ];
-      const unanimousCode =
-        distinct.length === 1 &&
-        result.perGuestCodes.every((c) => c === distinct[0])
-          ? distinct[0]
-          : null;
-      result = {
-        ...result,
-        unanimousCode,
-        unresolved: !unanimousCode,
-        reservationCode: unanimousCode,
-        stayKind:
-          distinct.length > 0
-            ? "medical"
-            : result.stayKind === "leisure"
-              ? "leisure"
-              : "unresolved",
-      };
-    }
+    );
   }
 
-  const foAllEmpty = Boolean(
-    opts?.foPerGuestCodes &&
-      opts.foPerGuestCodes.every((c) => normalizeMedicalPackageCode(c ?? null) == null),
-  );
-  const reservationCode =
-    foAllEmpty && reservation.medicalPackageCode
-      ? normalizeMedicalPackageCode(reservation.medicalPackageCode) ?? result.reservationCode
-      : result.reservationCode;
+  if (reservation.paxGuests.length > 0) {
+    const masked = result.perGuestCodes.map((code, i) => {
+      const guest = reservation.paxGuests[i];
+      if (!guest) return code;
+      const named = Boolean(
+        guest.guestId || guest.firstName?.trim() || guest.lastName?.trim(),
+      );
+      return named ? code : null;
+    });
+    if (masked.some((code, i) => code !== result.perGuestCodes[i])) {
+      result = summarizeMedicalSku(masked, agencyName);
+    }
+  }
 
   await tx.reservation.update({
     where: { id: reservationId },
     data: {
-      medicalPackageCode: reservationCode,
+      medicalPackageCode: result.reservationCode,
       medicalPackageUnresolved: result.unresolved,
     },
   });
@@ -176,6 +132,7 @@ export async function stampMedicalPackagesForReservation(
     unanimousCode: result.unanimousCode,
     unresolved: result.unresolved,
     programCode: programCodeForLifecycle(result),
+    perGuestCodes: result.perGuestCodes,
     stayKind: result.stayKind,
   };
 }

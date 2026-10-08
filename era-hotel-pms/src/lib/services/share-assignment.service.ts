@@ -141,14 +141,29 @@ async function loadDoorOverlaps(input: {
   const statuses = input.statuses ?? SCHEDULABLE_STATUSES;
   const rows = await prisma.reservation.findMany({
     where: {
-      roomId: input.roomId,
       ...(input.excludeReservationId ? { id: { not: input.excludeReservationId } } : {}),
       status: { in: [...statuses] },
-      checkInDate: { lt: input.checkOut },
-      checkOutDate: { gt: input.checkIn },
+      OR: [
+        {
+          roomId: input.roomId,
+          checkInDate: { lt: input.checkOut },
+          checkOutDate: { gt: input.checkIn },
+        },
+        {
+          staySlices: {
+            some: {
+              roomId: input.roomId,
+              fromDate: { lt: input.checkOut },
+              toDate: { gt: input.checkIn },
+            },
+          },
+        },
+      ],
     },
     select: {
       id: true,
+      roomId: true,
+      roomTypeId: true,
       shareEligible: true,
       shareGender: true,
       adults: true,
@@ -157,11 +172,36 @@ async function loadDoorOverlaps(input: {
       shareBedIndex: true,
       guest: { select: { sex: true } },
       agency: { select: { code: true, name: true } },
+      staySlices: { select: { fromDate: true, toDate: true, roomId: true, roomTypeId: true } },
     },
   });
-  return rows.filter((r) =>
-    reservationStayOverlaps(r, { checkInDate: input.checkIn, checkOutDate: input.checkOut }),
-  );
+  const out: DoorOverlapRow[] = [];
+  for (const row of rows) {
+    const windows: Array<{ from: Date; to: Date }> = [];
+    if (row.staySlices.length === 0) {
+      if (row.roomId === input.roomId) {
+        windows.push({ from: row.checkInDate, to: row.checkOutDate });
+      }
+    } else {
+      for (const slice of row.staySlices) {
+        const onDoor =
+          slice.roomId === input.roomId ||
+          (!slice.roomId && row.roomId === input.roomId && slice.roomTypeId === row.roomTypeId);
+        if (onDoor) windows.push({ from: slice.fromDate, to: slice.toDate });
+      }
+    }
+    for (const window of windows) {
+      const clipped = {
+        ...row,
+        checkInDate: window.from,
+        checkOutDate: window.to,
+      };
+      if (reservationStayOverlaps(clipped, { checkInDate: input.checkIn, checkOutDate: input.checkOut })) {
+        out.push(clipped);
+      }
+    }
+  }
+  return out;
 }
 
 function gateRowForShare(row: DoorOverlapRow): ReturnType<typeof canGuestJoinSharePool> {
@@ -509,24 +549,56 @@ export async function loadShareSlicesForType(
   to: Date,
   excludeReservationId?: string,
 ): Promise<ShareReservationSlice[]> {
-  return prisma.reservation.findMany({
+  const rows = await prisma.reservation.findMany({
     where: {
-      roomTypeId,
       ...(excludeReservationId ? { id: { not: excludeReservationId } } : {}),
       status: { in: [...SCHEDULABLE_STATUSES] },
       checkInDate: { lt: to },
       checkOutDate: { gt: from },
+      OR: [{ roomTypeId }, { staySlices: { some: { roomTypeId } } }],
     },
     select: {
       id: true,
       roomId: true,
+      roomTypeId: true,
       shareEligible: true,
       shareGender: true,
       adults: true,
       checkInDate: true,
       checkOutDate: true,
+      staySlices: { select: { fromDate: true, toDate: true, roomTypeId: true, roomId: true } },
     },
   });
+  const out: ShareReservationSlice[] = [];
+  for (const row of rows) {
+    if (row.staySlices.length === 0) {
+      if (row.roomTypeId === roomTypeId) {
+        out.push({
+          id: row.id,
+          roomId: row.roomId,
+          shareEligible: row.shareEligible,
+          shareGender: row.shareGender,
+          adults: row.adults,
+          checkInDate: row.checkInDate,
+          checkOutDate: row.checkOutDate,
+        });
+      }
+      continue;
+    }
+    for (const slice of row.staySlices) {
+      if (slice.roomTypeId !== roomTypeId) continue;
+      out.push({
+        id: row.id,
+        roomId: slice.roomId ?? (slice.roomTypeId === row.roomTypeId ? row.roomId : null),
+        shareEligible: row.shareEligible,
+        shareGender: row.shareGender,
+        adults: row.adults,
+        checkInDate: slice.fromDate,
+        checkOutDate: slice.toDate,
+      });
+    }
+  }
+  return out;
 }
 
 export async function countDoorsUsedForRoomType(

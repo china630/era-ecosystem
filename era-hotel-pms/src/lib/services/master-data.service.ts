@@ -129,6 +129,31 @@ export async function updateRatePlan(
   });
 }
 
+export async function deleteRatePlan(id: string) {
+  const [reservations, contracts, slices, derived] = await Promise.all([
+    prisma.reservation.count({ where: { ratePlanId: id } }),
+    prisma.salesContract.count({ where: { ratePlanId: id } }),
+    prisma.reservationStaySlice.count({ where: { ratePlanId: id } }),
+    prisma.ratePlan.count({ where: { derivedFromId: id } }),
+  ]);
+  if (reservations > 0 || contracts > 0 || slices > 0 || derived > 0) {
+    const err = new Error('RATE_PLAN_IN_USE') as Error & {
+      code: string;
+      reservations: number;
+      contracts: number;
+      slices: number;
+      derived: number;
+    };
+    err.code = 'RATE_PLAN_IN_USE';
+    err.reservations = reservations;
+    err.contracts = contracts;
+    err.slices = slices;
+    err.derived = derived;
+    throw err;
+  }
+  await prisma.ratePlan.delete({ where: { id } });
+}
+
 export async function listRevenueCodes() {
   return prisma.revenueCode.findMany({
     include: { department: true, routingRule: true },

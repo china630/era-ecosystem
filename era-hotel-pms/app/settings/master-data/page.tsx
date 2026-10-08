@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -97,8 +97,14 @@ interface RevenueCode extends RetireRow {
 
 function EditButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button type="button" className="text-[#2980B9] hover:underline" onClick={onClick}>
-      {label}
+    <button
+      type="button"
+      className="inline-flex h-8 w-8 items-center justify-center rounded text-[#2980B9] hover:bg-[#EBF5FB]"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+    >
+      <Pencil className="h-4 w-4" aria-hidden />
     </button>
   );
 }
@@ -236,6 +242,31 @@ export default function MasterDataPage() {
     setRevenueCodes(rc);
     setBedTypes(bt);
     setRoomViews(rv);
+  }
+
+  async function deleteRatePlanRow(id: string) {
+    const res = await fetch(`/api/master/rate-plans/${id}`, { method: 'DELETE' });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      if (json?.code === 'RATE_PLAN_IN_USE') {
+        showApiError(
+          {
+            error: t('ratePlanInUse', {
+              reservations: String(json.reservations ?? 0),
+              contracts: String(json.contracts ?? 0),
+              slices: String(json.slices ?? 0),
+              derived: String(json.derived ?? 0),
+            }),
+          },
+          tc('error'),
+        );
+        return;
+      }
+      showApiError(json, tc('error'));
+      return;
+    }
+    showSuccess(t('ratePlanDeleted'));
+    await load();
   }
 
   useEffect(() => {
@@ -711,13 +742,24 @@ export default function MasterDataPage() {
                     <ActiveStatus active={rp.active} />
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <EditButton
-                      label={tc('edit')}
-                      onClick={() => {
-                        setEditRatePlan(rp);
-                        setRatePlanModalOpen(true);
-                      }}
-                    />
+                    <span className="inline-flex items-center gap-1">
+                      <EditButton
+                        label={tc('edit')}
+                        onClick={() => {
+                          setEditRatePlan(rp);
+                          setRatePlanModalOpen(true);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#C0392B] hover:bg-rose-50"
+                        aria-label={tc('delete')}
+                        title={tc('delete')}
+                        onClick={() => void deleteRatePlanRow(rp.id)}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                      </button>
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -778,7 +820,8 @@ export default function MasterDataPage() {
               showSuccess(editRoomType ? t('roomTypeUpdated') : t('roomTypeCreated'));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >
@@ -911,7 +954,8 @@ export default function MasterDataPage() {
               showSuccess(editRatePlan ? t('ratePlanUpdated') : t('ratePlanCreated'));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >
@@ -1074,7 +1118,8 @@ export default function MasterDataPage() {
               showSuccess(editRevenueCode ? t('revenueCodeUpdated') : t('revenueCodeCreated'));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >
@@ -1184,7 +1229,8 @@ export default function MasterDataPage() {
               showSuccess(editBedType ? t('bedTypeUpdated') : t('bedTypeCreated'));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >
@@ -1271,7 +1317,8 @@ export default function MasterDataPage() {
               showSuccess(editRoomView ? t('roomViewUpdated') : t('roomViewCreated'));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >
@@ -1370,7 +1417,8 @@ export default function MasterDataPage() {
               showSuccess(wasEdit ? t('roomUpdated', { room: roomNum }) : t('roomCreated', { room: roomNum }));
               await load();
             } else {
-              showApiError({ error: tc('error') });
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
             }
           }}
         >

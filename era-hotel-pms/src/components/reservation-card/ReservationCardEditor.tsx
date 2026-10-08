@@ -67,6 +67,7 @@ import {
 import { reservationNamesIncomplete, missingAdultNameCount, isTbaDisplayName, paxHasRealName } from '@/lib/reservation-names';
 import {
   hotelStayDayGap,
+  preArrivalVoidKind,
   resolveStayWindowPlane,
   stayActionForPlane,
   type StayActionKind,
@@ -311,6 +312,8 @@ export function ReservationCardEditor({
   const [recordType, setRecordType] = useState('');
   const [tripReason, setTripReason] = useState('');
   const [agencyId, setAgencyId] = useState('');
+  const [walkInProfileCode, setWalkInProfileCode] = useState('');
+  const [walkInProfiles, setWalkInProfiles] = useState<Array<{ code: string; label: string }>>([]);
   const [companyId, setCompanyId] = useState('');
   const [sourceId, setSourceId] = useState('');
   const [roomTypeId, setRoomTypeId] = useState('');
@@ -455,6 +458,7 @@ export function ReservationCardEditor({
     setRecordType(String(json.recordType ?? ''));
     setTripReason(String(json.tripReason ?? ''));
     setAgencyId(String(json.agencyId ?? ''));
+    setWalkInProfileCode(String(json.walkInProfileCode ?? ''));
     setCompanyId(String(json.companyId ?? ''));
     setSourceId(String(json.sourceId ?? ''));
     setPartyBillingMode(
@@ -910,6 +914,7 @@ export function ReservationCardEditor({
       setRecordType('');
       setTripReason('');
       setAgencyId('');
+      setWalkInProfileCode('');
       setCompanyId('');
       setSourceId('');
       setRoomTypeId('');
@@ -951,6 +956,22 @@ export function ReservationCardEditor({
       void load();
     }
   }, [open, isCreate, reservationId, load]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch('/api/master/lookups?kind=WALKIN_PROFILE&activeOnly=1')
+      .then((r) => r.json())
+      .then((rows) => {
+        if (!Array.isArray(rows)) return;
+        setWalkInProfiles(
+          rows.map((row: { code?: string; name?: string }) => ({
+            code: String(row.code ?? ''),
+            label: String(row.name ?? row.code ?? ''),
+          })),
+        );
+      })
+      .catch(() => undefined);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -1350,6 +1371,48 @@ export function ReservationCardEditor({
     setPendingStayAction(kind);
   }
 
+  async function voidStay(kind: 'cancel' | 'noShow') {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/cancel`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noShow: kind === 'noShow' }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      showSuccess(kind === 'noShow' ? t('noShowDone') : t('cancelDone'));
+      applyJson(json as Record<string, unknown>);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function splitStay(input: { fromDate: string; roomTypeId: string; roomId: string | null }) {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/stay-split`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      showSuccess(t('splitStayDone'));
+      applyJson(json as Record<string, unknown>);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function confirmCheckIn(early = false) {
     if (!reservationId) return;
     const lines = checkInGapLines(early);
@@ -1565,6 +1628,7 @@ export function ReservationCardEditor({
     }
     if (patch.sourceId !== undefined && patch.sourceId !== sourceId) {
       setAgencyId('');
+      setWalkInProfileCode('');
       setSalesContractId('');
       setContractRef('');
       setShareEligible(false);
@@ -1674,6 +1738,7 @@ export function ReservationCardEditor({
       checkOutTime: setCheckOutTime,
       voucherNo: setVoucherNo,
       agencyId: setAgencyId,
+      walkInProfileCode: setWalkInProfileCode,
       companyId: setCompanyId,
       sourceId: setSourceId,
       roomTypeId: setRoomTypeId,
@@ -1824,6 +1889,7 @@ export function ReservationCardEditor({
             ratePlanId,
             guestId,
             agencyId: parties.agencyId ?? undefined,
+            walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || null : null,
             companyId: parties.companyId ?? undefined,
             sourceId: sourceId || undefined,
             salesContractId: salesContractId || undefined,
@@ -1955,6 +2021,7 @@ export function ReservationCardEditor({
           voucherNo: voucherNo || null,
           adults: partyAdults,
           agencyId: parties.agencyId,
+          walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || null : null,
           companyId: parties.companyId,
           sourceId: sourceId || null,
           partyBillingMode,
@@ -2312,6 +2379,15 @@ export function ReservationCardEditor({
             }
             swapDisabled={busy || isLocked}
           />
+          <p
+            className="m-0 mt-1 min-h-[1.25rem] truncate rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] text-[#34495E]"
+            data-testid="reservation-note-strip"
+          >
+            {Object.values(notes)
+              .map((value) => value.trim())
+              .filter(Boolean)
+              .join(' / ')}
+          </p>
         </div>
       ) : null}
 
@@ -2400,6 +2476,38 @@ export function ReservationCardEditor({
             showAssignment={showAssignment}
             sellable={isCreate ? sellable : null}
             agencies={agencies}
+            walkInProfileCode={walkInProfileCode}
+            walkInProfiles={walkInProfiles}
+            voidKind={
+              can(PERMISSIONS.RESERVATIONS_CANCEL)
+                ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
+                : null
+            }
+            onVoidStay={(kind) => void voidStay(kind)}
+            staySlices={
+              Array.isArray(data?.staySlices)
+                ? (data.staySlices as Array<{
+                    id: string;
+                    fromDate: string;
+                    toDate: string;
+                    roomType?: { code?: string } | null;
+                    room?: { roomNumber?: string } | null;
+                  }>).map((slice) => ({
+                    id: slice.id,
+                    fromDate: slice.fromDate,
+                    toDate: slice.toDate,
+                    roomTypeCode: slice.roomType?.code ?? null,
+                    roomNumber: slice.room?.roomNumber ?? null,
+                  }))
+                : []
+            }
+            splitDoors={rooms}
+            splitBusy={busy}
+            onSplitStay={
+              status === 'CONFIRMED' || status === 'OPTION' || status === 'IN_HOUSE'
+                ? (input) => void splitStay(input)
+                : undefined
+            }
             companies={companies}
             sources={sources}
             salesContracts={salesContracts}

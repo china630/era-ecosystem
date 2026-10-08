@@ -103,7 +103,9 @@ function frozenOrgResponse(
 }
 
 async function agencyResponse(request: NextRequest, pathname: string): Promise<Response> {
-  const reqHeaders = stripSessionHeaders(eraPathnameRequestHeaders(request.headers, pathname));
+  const reqHeaders = stripSessionHeaders(
+    eraPathnameRequestHeaders(request.headers, pathname, request.method),
+  );
   const agencyToken = getBearerOrCookieToken(request.cookies, request.headers, AGENCY_COOKIE);
   const isApi = pathname.startsWith('/api/');
   if (!agencyToken) {
@@ -134,7 +136,9 @@ export async function middleware(request: NextRequest): Promise<Response> {
   if (pathname === '/agency/sso/callback' || pathname.startsWith('/agency/sso/callback/')) {
     return NextResponse.next({
       request: {
-        headers: stripSessionHeaders(eraPathnameRequestHeaders(request.headers, pathname)),
+        headers: stripSessionHeaders(
+          eraPathnameRequestHeaders(request.headers, pathname, request.method),
+        ),
       },
     });
   }
@@ -147,7 +151,7 @@ export async function middleware(request: NextRequest): Promise<Response> {
     )
   ) {
     return NextResponse.next({
-      request: { headers: eraPathnameRequestHeaders(request.headers, pathname) },
+      request: { headers: eraPathnameRequestHeaders(request.headers, pathname, request.method) },
     });
   }
 

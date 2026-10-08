@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it, before, beforeEach } from "node:test";
 import { readSatelliteStaffSession } from "./get-satellite-session";
 import { signSatelliteSession } from "./session";
+import {
+  SatelliteBillingBlockedError,
+  type SatelliteBillingCheck,
+  type SatelliteBillingGate,
+} from "../billing/satellite-billing-gate";
 
 const ORG_TOKEN = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ORG_HEADER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -53,6 +58,7 @@ describe("readSatelliteStaffSession", () => {
     token?: string;
     headers?: Record<string, string>;
     row?: Row | null;
+    billingGate?: SatelliteBillingGate | false;
   }) {
     return readSatelliteStaffSession<Row>({
       cookies: cookieBag(opts.token),
@@ -63,6 +69,7 @@ describe("readSatelliteStaffSession", () => {
         return opts.row ?? null;
       },
       enterTenant: (ctx) => entered.push(ctx.organizationId),
+      billingGate: opts.billingGate ?? false,
     });
   }
 
@@ -125,5 +132,84 @@ describe("readSatelliteStaffSession", () => {
     assert.equal(await run({}), null);
     assert.equal(await run({ token: "not-a-jwt" }), null);
     assert.deepEqual(entered, []);
+  });
+
+  describe("billing gate", () => {
+    function recordingGate(deny?: SatelliteBillingBlockedError) {
+      const calls: SatelliteBillingCheck[] = [];
+      const gate: SatelliteBillingGate = async (input) => {
+        calls.push(input);
+        if (deny) throw deny;
+      };
+      return { gate, calls };
+    }
+
+    it("passes the token org and the middleware method/path stamps", async () => {
+      const { gate, calls } = recordingGate();
+      const result = await run({
+        token: await token(ORG_TOKEN),
+        headers: { "x-era-method": "PATCH", "x-era-pathname": "/api/reservations/1" },
+        row: activeRow,
+        billingGate: gate,
+      });
+      assert.equal(result?.session.organizationId, ORG_TOKEN);
+      assert.deepEqual(calls, [
+        { organizationId: ORG_TOKEN, method: "PATCH", path: "/api/reservations/1" },
+      ]);
+    });
+
+    it("counts a call without the method stamp as a write", async () => {
+      const { gate, calls } = recordingGate();
+      await run({ token: await token(ORG_TOKEN), row: activeRow, billingGate: gate });
+      assert.equal(calls[0]?.method, "POST");
+    });
+
+    it("throws the gate's 402 instead of returning a session", async () => {
+      const { gate } = recordingGate(
+        new SatelliteBillingBlockedError({
+          code: "BILLING_HARD_BLOCK_READ_ONLY",
+          message: "read-only",
+          billingStatus: "HARD_BLOCK",
+        }),
+      );
+      await assert.rejects(
+        run({
+          token: await token(ORG_TOKEN),
+          headers: { "x-era-method": "POST", "x-era-pathname": "/api/folio/pay" },
+          row: activeRow,
+          billingGate: gate,
+        }),
+        (err: unknown) =>
+          err instanceof SatelliteBillingBlockedError &&
+          err.status === 402 &&
+          err.code === "BILLING_HARD_BLOCK_READ_ONLY",
+      );
+    });
+
+    it("does not reach the gate without a valid session", async () => {
+      const { gate, calls } = recordingGate();
+      assert.equal(await run({ token: await token(ORG_TOKEN), row: null, billingGate: gate }), null);
+      assert.deepEqual(calls, []);
+    });
+
+    it("skips the gate for a platform super-admin", async () => {
+      process.env.PLATFORM_SUPER_ADMIN_EMAILS = "root@era.az";
+      try {
+        const { gate, calls } = recordingGate();
+        const superToken = await signSatelliteSession({
+          sub: "user-1",
+          login: "root",
+          role: "ADMIN",
+          fullName: "Root",
+          email: "root@era.az",
+          organizationId: ORG_TOKEN,
+        });
+        const result = await run({ token: superToken, row: activeRow, billingGate: gate });
+        assert.ok(result);
+        assert.deepEqual(calls, []);
+      } finally {
+        delete process.env.PLATFORM_SUPER_ADMIN_EMAILS;
+      }
+    });
   });
 });

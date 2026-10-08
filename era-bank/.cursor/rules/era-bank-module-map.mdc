@@ -50,3 +50,7 @@ Entitlement gate: `industry_banking` + per-module `banking_*`.
 |------|-------|
 | `POST/GET /api/internal/v1/organization/bind` | Org UUID bind (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`); kit persist + boot hydrate |
 | `POST/GET /api/internal/v1/runtime-config` | Desired-state runtime config (SSO, event token, activeModules); kit persist + boot hydrate |
+
+## Platform billing status
+
+`GET /api/platform/billing-status` — `app/api/platform/billing-status/route.ts` re-exports `@era/satellite-kit/billing/status-route` (banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.

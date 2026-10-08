@@ -130,33 +130,41 @@ export default function FolioBalancesPage() {
       </EraListFilterBar>
       <HotelDataGrid<Row & Record<string, unknown>>
         columns={[
-          { key: 'roomNumber', header: t('colRoom'), render: (r) => r.roomNumber ?? '—' },
-          { key: 'guestName', header: t('colGuests') },
-          { key: 'agencyName', header: t('colAgency'), render: (r) => r.agencyName ?? '—' },
-          { key: 'companyName', header: t('colCompany'), render: (r) => r.companyName ?? '—' },
+          { key: 'roomNumber', header: t('colRoom'), sortable: true, render: (r) => r.roomNumber ?? '—' },
+          { key: 'guestName', header: t('colGuests'), sortable: true },
+          { key: 'agencyName', header: t('colAgency'), sortable: true, render: (r) => r.agencyName ?? '—' },
+          { key: 'companyName', header: t('colCompany'), sortable: true, render: (r) => r.companyName ?? '—' },
           {
             key: 'checkInDate',
             header: t('colDates'),
+            sortable: true,
+            sortValue: (r) => String(r.checkInDate),
             render: (r) =>
               `${String(r.checkInDate).slice(0, 10)} → ${String(r.checkOutDate).slice(0, 10)}`,
           },
-          { key: 'guestBalance', header: t('colGuestBal'), render: (r) => money(r.guestBalance) },
-          { key: 'agencyBalance', header: t('colAgencyBal'), render: (r) => money(r.agencyBalance) },
+          { key: 'guestBalance', header: t('colGuestBal'), sortable: true, sortValue: (r) => r.guestBalance, render: (r) => money(r.guestBalance) },
+          { key: 'agencyBalance', header: t('colAgencyBal'), sortable: true, sortValue: (r) => r.agencyBalance, render: (r) => money(r.agencyBalance) },
           {
             key: 'companyBalance',
             header: t('colCompanyBal'),
+            sortable: true,
+            sortValue: (r) => r.companyBalance,
             render: (r) => money(r.companyBalance),
           },
-          { key: 'roomCharges', header: t('colRoomChg'), render: (r) => money(r.roomCharges) },
-          { key: 'extraCharges', header: t('colExtraChg'), render: (r) => money(r.extraCharges) },
+          { key: 'roomCharges', header: t('colRoomChg'), sortable: true, sortValue: (r) => r.roomCharges, render: (r) => money(r.roomCharges) },
+          { key: 'extraCharges', header: t('colExtraChg'), sortable: true, sortValue: (r) => r.extraCharges, render: (r) => money(r.extraCharges) },
           {
             key: 'firstGuestBalance',
             header: t('colFirst'),
+            sortable: true,
+            sortValue: (r) => r.firstGuestBalance,
             render: (r) => money(r.firstGuestBalance),
           },
           {
             key: 'secondGuestBalance',
             header: t('colSecond'),
+            sortable: true,
+            sortValue: (r) => r.secondGuestBalance,
             render: (r) => money(r.secondGuestBalance),
           },
           {
@@ -175,6 +183,7 @@ export default function FolioBalancesPage() {
         ]}
         rows={rows as (Row & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
+        defaultSort={{ key: 'roomNumber', dir: 'asc' }}
         emptyMessage={t('empty')}
       />
       <ReservationCardModal

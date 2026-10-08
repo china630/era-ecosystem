@@ -137,6 +137,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [mealPlanId, setMealPlanId] = useState('');
   const [sourceId, setSourceId] = useState('');
   const [agencyId, setAgencyId] = useState('');
+  const [walkInProfileCode, setWalkInProfileCode] = useState('');
+  const [walkInProfiles, setWalkInProfiles] = useState<Array<{ code: string; label: string }>>([]);
   const [companyId, setCompanyId] = useState('');
   const [salesContractId, setSalesContractId] = useState('');
   const [contractRef, setContractRef] = useState('');
@@ -222,6 +224,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     setMealPlanId('');
     setSourceId('');
     setAgencyId('');
+    setWalkInProfileCode('');
     setCompanyId('');
     setSalesContractId('');
     setContractRef('');
@@ -242,7 +245,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       fetch('/api/companies').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/master/room-types').then((r) => (r.ok ? r.json() : [])),
       fetch('/api/admin/contracts?status=ACTIVE').then((r) => (r.ok ? r.json() : [])),
-    ]).then(([g, rp, mp, src, ag, co, rt, contracts]) => {
+      fetch('/api/master/lookups?kind=WALKIN_PROFILE&activeOnly=1').then((r) => (r.ok ? r.json() : [])),
+    ]).then(([g, rp, mp, src, ag, co, rt, contracts, walkIns]) => {
       if (Array.isArray(g) || (g && typeof g === 'object' && Array.isArray((g as { items?: unknown }).items))) {
         setGuests(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
       }
@@ -279,6 +283,14 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
           mp.map((x: { id: string; code: string; name?: string }) => ({
             id: x.id,
             label: x.name ? `${x.code} — ${x.name}` : x.code,
+          })),
+        );
+      }
+      if (Array.isArray(walkIns)) {
+        setWalkInProfiles(
+          walkIns.map((row: { code?: string; name?: string }) => ({
+            code: String(row.code ?? ''),
+            label: String(row.name ?? row.code ?? ''),
           })),
         );
       }
@@ -517,6 +529,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         mealPlanId: mealPlanId || undefined,
         sourceId: sourceId || undefined,
         agencyId: parties.agencyId ?? undefined,
+        walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || undefined : undefined,
         companyId: parties.companyId ?? undefined,
         salesContractId: salesContractId || undefined,
         contractRef: contractRef.trim() || undefined,
@@ -599,6 +612,9 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
             contractRef={contractRef}
             checkIn={checkIn}
             sources={sources.map((s) => ({ id: s.id, label: s.label, code: s.code ?? '' }))}
+            walkInProfiles={walkInProfiles}
+            walkInProfileCode={walkInProfileCode}
+            onWalkInProfile={setWalkInProfileCode}
             agencies={agencies.map((a) => ({
               id: a.id,
               label: a.label,
@@ -618,6 +634,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
             onSource={(id) => {
               setSourceId(id);
               setAgencyId('');
+              setWalkInProfileCode('');
               setSalesContractId('');
               setContractRef('');
             }}

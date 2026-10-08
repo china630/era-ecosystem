@@ -108,3 +108,15 @@
 2. UAT: [UAT-SMOKE.md](./UAT-SMOKE.md) §14–15.
 3. i18n: `apply-wave-e-res-card-i18n.mjs` · `apply-wave-f-guest-i18n.mjs` · `apply-guest-crm-i18n.mjs`.
 4. Migrate: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`).
+
+---
+
+## 10. 2026-10-08 FO ops (not a sell claim)
+
+- Reservation card: CANCELLED before arrival, NO_SHOW from the arrival date, while status is CONFIRMED or OPTION. Night audit is unchanged.
+- One stay can hold two room segments (`ReservationStaySlice.roomId`). `POST /api/reservations/:id/stay-split` pins a door or a type quota and writes a PENDING room-change plan. Room plan and rack follow the slice dates.
+- Walk-in profile is lookup kind `WALKIN_PROFILE` on `Reservation.walkInProfileCode`. Saving WALKIN clears `agencyId`.
+- Rate plans can be deleted when no reservation, contract, or stay slice references them.
+- Policies save creates a hotel profile when the row is missing.
+- Reservations grid: full note of the selected row, birthday icon inside the stay window, server sort. Apply migration `20261008230000_walkin_profile_stay_slice_room`.
+- Kit column sort on the FO and front-cash lists (groups, laundry, room changes, reservation times, agency inbox, folio journal, agency and company ledgers). In-house and folio balances open sorted by room number. Groups, room changes, agency inbox, in-house, the folio journal, and both city ledgers also filter by the columns that were previously only searchable as one box.

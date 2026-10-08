@@ -21,6 +21,8 @@ export async function GET(req: Request) {
       pageSize: params.get('pageSize') ? Number(params.get('pageSize')) : undefined,
       dateFrom: params.get('dateFrom') ?? undefined,
       dateTo: params.get('dateTo') ?? undefined,
+      sort: params.get('sort') ?? undefined,
+      dir: params.get('dir') === 'desc' ? 'desc' : params.get('dir') === 'asc' ? 'asc' : undefined,
     });
     return jsonOk(serialize(result));
   } catch (err) {

@@ -11,6 +11,9 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { formatLaundryPieces, type LaundryLineView } from '@/lib/laundry-pieces';
 
 type Item = { id: string; code: string; name: string; washPrice: number; ironPrice: number };
 type Stay = {
@@ -24,9 +27,11 @@ type Ticket = {
   id: string;
   status: string;
   guestName: string;
-  total: number;
-  folioChargeId: string | null;
+  roomNumber?: string | null;
+  createdAt?: string;
   dueAt: string | null;
+  folioChargeId: string | null;
+  lines?: LaundryLineView[];
 };
 
 export default function HkLaundryPage() {
@@ -38,6 +43,8 @@ export default function HkLaundryPage() {
   const [roomId, setRoomId] = useState('');
   const [express, setExpress] = useState(false);
   const [expressEnabled, setExpressEnabled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
   const [qty, setQty] = useState<Record<string, { wash: number; iron: number }>>({});
 
@@ -61,11 +68,8 @@ export default function HkLaundryPage() {
   const assignedStays = stays.filter((s) => s.roomId && s.room?.roomNumber);
   const stay = assignedStays.find((s) => s.roomId === roomId);
 
-  function laundryStatus(status: string) {
-    if (status === 'IN_PLANT') return t('statusInPlant');
-    if (status === 'POSTED') return t('statusPosted');
-    if (status === 'VOIDED') return t('statusVoided');
-    return status;
+  function pieces(tk: Ticket) {
+    return formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }) || '—';
   }
 
   function bump(id: string, key: 'wash' | 'iron', delta: number) {
@@ -79,7 +83,15 @@ export default function HkLaundryPage() {
     }));
   }
 
-  async function submit() {
+  function closeModal() {
+    setOpen(false);
+    setRoomId('');
+    setExpress(false);
+    setQty({});
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
     const lines = items
       .map((i) => ({
         itemId: i.id,
@@ -87,6 +99,8 @@ export default function HkLaundryPage() {
         ironQty: qty[i.id]?.iron ?? 0,
       }))
       .filter((l) => l.washQty > 0 || l.ironQty > 0);
+    if (!roomId || lines.length === 0) return;
+    setBusy(true);
     const res = await fetch('/api/housekeeping/laundry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -99,118 +113,172 @@ export default function HkLaundryPage() {
       }),
     });
     const json = await res.json();
+    setBusy(false);
     if (!res.ok) {
       showApiError(json, tc('failed'));
       return;
     }
     showSuccess(tc('saved'));
+    closeModal();
     await load();
+  }
+
+  async function deliver(tk: Ticket) {
+    const key = scanByTicket[tk.id];
+    if (!key) {
+      showApiError({ error: t('returnScanRequired') }, tc('failed'));
+      return;
+    }
+    const res = await fetch('/api/housekeeping/laundry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deliverTicketId: tk.id, returnScanKey: key, actorRole: 'HK' }),
+    });
+    if (!res.ok) showApiError(await res.json(), tc('failed'));
+    else {
+      showSuccess(tc('saved'));
+      await load();
+    }
   }
 
   return (
     <>
-      <PageHeader title={t('laundryTitle')} />
-      <div className="mb-4 grid max-w-lg gap-2">
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('roomSelect')}
-          value={roomId}
-          onChange={(v) => setRoomId(String(v))}
-          options={assignedStays.map((s) => ({
-            value: s.roomId as string,
-            label: `${s.room?.roomNumber ?? ''} · ${s.guest?.fullName ?? ''}`,
-          }))}
-        />
-        <p className="text-sm text-[#7F8C8D]">{stay?.guest?.fullName ?? t('guestName')}</p>
-        {expressEnabled ? (
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t('express')}
-            value={express ? 'yes' : 'no'}
-            onChange={(v) => setExpress(String(v) === 'yes')}
-            options={[
-              { value: 'no', label: t('regular') },
-              { value: 'yes', label: t('express') },
-            ]}
-          />
-        ) : null}
-        <p className="text-sm text-[#7F8C8D]">{t('agreedQty')}</p>
-      </div>
-      <ul className="mb-4 space-y-3 text-sm">
-        {items.map((i) => (
-          <li key={i.id} className="flex flex-wrap items-center gap-3">
-            <span className="w-48">
-              {i.name} ({i.washPrice}/{i.ironPrice})
-            </span>
-            {(['wash', 'iron'] as const).map((k) => (
-              <span key={k} className="inline-flex items-center gap-1">
-                <span className="w-12 text-[12px] text-[#7F8C8D]">{k === 'wash' ? t('laundryWash') : t('laundryIron')}</span>
-                <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(i.id, k, -1)}>
-                  −
-                </button>
-                <span className="w-6 text-center">{qty[i.id]?.[k] ?? 0}</span>
-                <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(i.id, k, 1)}>
-                  +
-                </button>
-              </span>
-            ))}
-          </li>
-        ))}
-      </ul>
-      <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!roomId} onClick={() => void submit()}>
-        {t('acceptLaundry')}
-      </button>
+      <PageHeader
+        title={t('laundryTitle')}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+            + {t('addLaundry')}
+          </button>
+        }
+      />
+      <HotelDataGrid<Ticket & Record<string, unknown>>
+        columns={[
+          { key: 'room', header: t('laundryRoom'), render: (tk) => tk.roomNumber ?? '—' },
+          { key: 'guest', header: t('laundryGuest'), render: (tk) => tk.guestName },
+          {
+            key: 'created',
+            header: t('laundryCreated'),
+            render: (tk) => (tk.createdAt ? bakuDateTimeDisplay(tk.createdAt) : '—'),
+          },
+          { key: 'pieces', header: t('laundryPieces'), render: (tk) => pieces(tk) },
+          {
+            key: 'actions',
+            header: tc('actions'),
+            render: (tk) =>
+              tk.status === 'IN_PLANT' ? (
+                <span className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="file"
+                    className="max-w-[10rem] text-xs"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () =>
+                        setScanByTicket((m) => ({ ...m, [tk.id]: String(reader.result ?? file.name) }));
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void deliver(tk)}>
+                    {t('deliverLaundry')}
+                  </button>
+                </span>
+              ) : (
+                '—'
+              ),
+          },
+        ]}
+        rows={tickets as (Ticket & Record<string, unknown>)[]}
+        rowKey={(tk) => tk.id}
+        emptyMessage={t('laundryEmpty')}
+      />
       <p className="mt-4 text-xs text-[#7F8C8D]">{t('laundryLegal')}</p>
-      <ul className="mt-6 text-sm">
-        {tickets.map((tk) => (
-          <li key={tk.id} className="mb-2 flex flex-wrap items-center gap-2">
-            <span>
-              {tk.guestName} · {laundryStatus(tk.status)}
-              {tk.dueAt ? ` · ${t('laundryDue')} ${bakuDateTimeDisplay(tk.dueAt)}` : ''}
-              {tk.folioChargeId ? ` · ${t('laundryFolio')} ${tk.folioChargeId.slice(0, 8)}` : ''}
-            </span>
-            {tk.status === 'IN_PLANT' ? (
-              <>
-                <input
-                  type="file"
-                  className="text-xs"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () =>
-                      setScanByTicket((m) => ({ ...m, [tk.id]: String(reader.result ?? file.name) }));
-                    reader.readAsDataURL(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  onClick={async () => {
-                    const key = scanByTicket[tk.id];
-                    if (!key) {
-                      showApiError({ error: t('returnScanRequired') }, tc('failed'));
-                      return;
-                    }
-                    const res = await fetch('/api/housekeeping/laundry', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ deliverTicketId: tk.id, returnScanKey: key, actorRole: 'HK' }),
-                    });
-                    if (!res.ok) showApiError(await res.json(), tc('failed'));
-                    else {
-                      showSuccess(tc('saved'));
-                      await load();
-                    }
-                  }}
-                >
-                  {t('deliverLaundry')}
-                </button>
-              </>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <EraModal
+        open={open}
+        title={t('addLaundry')}
+        onClose={closeModal}
+        maxWidthClass="max-w-3xl"
+        footer={
+          <EraModalFooter
+            formId="laundry-intake"
+            onCancel={closeModal}
+            busy={busy}
+            submitDisabled={!roomId}
+            submitLabel={t('acceptLaundry')}
+          />
+        }
+      >
+        <form id="laundry-intake" onSubmit={(e) => void submit(e)} className="space-y-3">
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('roomSelect')}
+            value={roomId}
+            onChange={(v) => setRoomId(String(v))}
+            options={assignedStays.map((s) => ({
+              value: s.roomId as string,
+              label: `${s.room?.roomNumber ?? ''} · ${s.guest?.fullName ?? ''}`,
+            }))}
+          />
+          <p className="text-sm text-[#7F8C8D]">{stay?.guest?.fullName ?? t('guestName')}</p>
+          {expressEnabled ? (
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('express')}
+              value={express ? 'yes' : 'no'}
+              onChange={(v) => setExpress(String(v) === 'yes')}
+              options={[
+                { value: 'no', label: t('regular') },
+                { value: 'yes', label: t('express') },
+              ]}
+            />
+          ) : null}
+          <p className="text-sm text-[#7F8C8D]">{t('agreedQty')}</p>
+          <div className="overflow-x-auto rounded border border-[#D5DADF]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+                  <th className="px-3 py-2">{t('laundryPieces')}</th>
+                  <th className="px-3 py-2">{t('laundryWash')}</th>
+                  <th className="px-3 py-2">{t('laundryIron')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i) => (
+                  <tr key={i.id} className="border-b border-[#ECF0F1]">
+                    <td className="px-3 py-2">
+                      {i.name}
+                      <span className="ml-2 text-[12px] text-[#7F8C8D]">
+                        {i.washPrice}/{i.ironPrice}
+                      </span>
+                    </td>
+                    {(['wash', 'iron'] as const).map((k) => (
+                      <td key={k} className="px-3 py-2">
+                        <span className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="h-6 w-6 rounded border border-[#D5DADF]"
+                            onClick={() => bump(i.id, k, -1)}
+                          >
+                            −
+                          </button>
+                          <span className="w-6 text-center">{qty[i.id]?.[k] ?? 0}</span>
+                          <button
+                            type="button"
+                            className="h-6 w-6 rounded border border-[#D5DADF]"
+                            onClick={() => bump(i.id, k, 1)}
+                          >
+                            +
+                          </button>
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </EraModal>
     </>
   );
 }
