@@ -183,7 +183,7 @@ export default function AppSidebar() {
 
   function linkClass(href: string) {
     const active = href !== '/' && pathname.startsWith(href);
-    const isHome = href === '/fo/rack' && (pathname === '/fo/rack' || pathname === '/');
+    const isHome = href === '/fo/room-plan' && (pathname === '/fo/room-plan' || pathname === '/');
     return active || isHome ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
   }
 

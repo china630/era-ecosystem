@@ -2083,7 +2083,15 @@
     "openHotelFailed": "Could not open hotel",
     "openSellerFailed": "Could not open seller organization",
     "hotelUrlMissing": "Hotel URL is not configured for this organization",
-    "financeUrlMissing": "Finance URL is not configured for this organization"
+    "financeUrlMissing": "Finance URL is not configured for this organization",
+    "changePassword": "Change password",
+    "changePasswordTitle": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat new password",
+    "passwordMismatch": "The new passwords do not match",
+    "passwordChanged": "Password changed. Sign in with the new password.",
+    "backToLogin": "Back to sign in"
   },
   "workforceMigration": {
     "title": "Workforce migration",

@@ -64,7 +64,13 @@ import {
   ReservationCardSubModals,
   useReservationSubModals,
 } from '@/components/reservation-card/ReservationCardSubModals';
-import { reservationNamesIncomplete, missingAdultNameCount, isTbaDisplayName } from '@/lib/reservation-names';
+import { reservationNamesIncomplete, missingAdultNameCount, isTbaDisplayName, paxHasRealName } from '@/lib/reservation-names';
+import {
+  hotelStayDayGap,
+  resolveStayWindowPlane,
+  stayActionForPlane,
+  type StayActionKind,
+} from '@/lib/stay-window-plane';
 import { canAssignDoor } from '@/lib/room-state';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
 import type {
@@ -411,8 +417,7 @@ export function ReservationCardEditor({
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
-  const [earlyStayCheckoutOpen, setEarlyStayCheckoutOpen] = useState(false);
-  const [earlyCheckInOpen, setEarlyCheckInOpen] = useState(false);
+  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
     applicable?: boolean;
     unusedNights?: number;
@@ -716,13 +721,19 @@ export function ReservationCardEditor({
         masterGuest ?? null,
       );
     }
-    const bandCounts = {
-      adults: Math.max(0, adultN),
-      children11_6: c11,
-      children5_2: c5,
-      children1_0: c1,
-    };
-    if (partySizeFromCounts(bandCounts) < 1) bandCounts.adults = 1;
+    const inHouse = json.status === 'IN_HOUSE';
+    if (inHouse) {
+      nextPax = nextPax.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+    }
+    const bandCounts = inHouse
+      ? countsFromPax(nextPax)
+      : {
+          adults: Math.max(0, adultN),
+          children11_6: c11,
+          children5_2: c5,
+          children1_0: c1,
+        };
+    if (!inHouse && partySizeFromCounts(bandCounts) < 1) bandCounts.adults = 1;
     const stamped = stampEmptySlotsFromCounts(nextPax, bandCounts);
     const sized = syncPaxToBandCounts(stamped, bandCounts, equalMode);
     setPax(sized);
@@ -772,7 +783,9 @@ export function ReservationCardEditor({
   }, [reservationId, tc, applyJson]);
 
   useEffect(() => {
-    if (!earlyStayCheckoutOpen || !reservationId) {
+    const checkoutAsk =
+      pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut';
+    if (!checkoutAsk || !reservationId) {
       setEarlyCheckoutPreview(null);
       return;
     }
@@ -788,7 +801,7 @@ export function ReservationCardEditor({
     return () => {
       cancelled = true;
     };
-  }, [earlyStayCheckoutOpen, reservationId]);
+  }, [pendingStayAction, reservationId]);
 
   useEffect(() => {
     if (!open || !bookingGroupId) {
@@ -1281,8 +1294,7 @@ export function ReservationCardEditor({
     if (res.ok) setIsLocked(json.isLocked);
   }
 
-  async function confirmCheckIn(early = false) {
-    if (!reservationId) return;
+  function checkInGapLines(early = false): string[] {
     const lines: string[] = [];
     if (!roomId) lines.push(t('checkInNeedRoom'));
     if (doorPendingDirty) lines.push(t('checkInNeedSaveRoom'));
@@ -1320,6 +1332,27 @@ export function ReservationCardEditor({
       const line = personDocLine(row, linked, today, t);
       if (line) lines.push(line);
     }
+    return lines;
+  }
+
+  function requestStayAction() {
+    const kind = stayActionForPlane(
+      resolveStayWindowPlane({ checkIn, checkOut, status, todayKey: todayBakuYmd() }),
+    );
+    if (!kind || !reservationId) return;
+    if (kind === 'earlyCheckIn' || kind === 'checkIn') {
+      const lines = checkInGapLines(kind === 'earlyCheckIn');
+      if (lines.length > 0) {
+        showWarning(t('checkInNeedList', { details: lines.join('; ') }));
+        return;
+      }
+    }
+    setPendingStayAction(kind);
+  }
+
+  async function confirmCheckIn(early = false) {
+    if (!reservationId) return;
+    const lines = checkInGapLines(early);
     if (lines.length > 0) {
       showWarning(t('checkInNeedList', { details: lines.join('; ') }));
       return;
@@ -1329,7 +1362,10 @@ export function ReservationCardEditor({
       const res = await fetch(`/api/reservations/${reservationId}/check-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ early }),
+        body: JSON.stringify({
+          early,
+          checkInTime: !early && checkInTime < '14:00' ? checkInTime : undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -1342,14 +1378,14 @@ export function ReservationCardEditor({
         return;
       }
       showSuccess(early ? t('earlyCheckInDone') : t('checkInDone'));
-      setEarlyCheckInOpen(false);
+      setPendingStayAction(null);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function confirmEarlyStayCheckout() {
+  async function confirmEarlyStayCheckout(onDate = false) {
     if (!reservationId) return;
     setBusy(true);
     try {
@@ -1368,8 +1404,8 @@ export function ReservationCardEditor({
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(t('earlyStayCheckoutDone'));
-      setEarlyStayCheckoutOpen(false);
+      showSuccess(onDate ? t('checkOutDone') : t('earlyStayCheckoutDone'));
+      setPendingStayAction(null);
       await load();
     } finally {
       setBusy(false);
@@ -1892,6 +1928,24 @@ export function ReservationCardEditor({
           body: JSON.stringify({ sex: guestGender }),
         }).catch(() => undefined);
       }
+      let party = pax;
+      let partyAdults = Number(adults) || 1;
+      let partyC11 = Number(children11_6) || 0;
+      let partyC5 = Number(children5_2) || 0;
+      let partyC1 = Number(children1_0) || 0;
+      if (status === 'IN_HOUSE') {
+        const kept = pax.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+        if (kept.length !== pax.length) {
+          party = kept;
+          const counts = countsFromPax(kept);
+          partyAdults = counts.adults;
+          partyC11 = counts.children11_6;
+          partyC5 = counts.children5_2;
+          partyC1 = counts.children1_0;
+          applyPaxChange(kept);
+          showWarning(t('emptyGuestDropped'));
+        }
+      }
       const res = await fetch(`/api/reservations/${reservationId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1899,7 +1953,7 @@ export function ReservationCardEditor({
           checkInDate: mergeDateTime(checkIn, checkInTime),
           checkOutDate: mergeDateTime(checkOut, checkOutTime),
           voucherNo: voucherNo || null,
-          adults: Number(adults) || 1,
+          adults: partyAdults,
           agencyId: parties.agencyId,
           companyId: parties.companyId,
           sourceId: sourceId || null,
@@ -1931,9 +1985,9 @@ export function ReservationCardEditor({
           manualDailyRate: manualDailyRate ? Number(manualDailyRate) : null,
           discountPercent: discountPercent === '' ? null : Number(discountPercent),
           discountActive: Number(discountPercent) > 0,
-          children11_6: Number(children11_6) || 0,
-          children5_2: Number(children5_2) || 0,
-          children1_0: Number(children1_0) || 0,
+          children11_6: partyC11,
+          children5_2: partyC5,
+          children1_0: partyC1,
           market: market || null,
           segment: segment || null,
           ratePlanId: ratePlanId || undefined,
@@ -1953,7 +2007,7 @@ export function ReservationCardEditor({
             fixPrice: d.fixPrice ?? false,
             discountPct: d.discountPct ?? null,
           })),
-          paxGuests: pax.map((p) => ({
+          paxGuests: party.map((p) => ({
             id: p.id,
             guestId: p.guestId || null,
             title: p.title || null,
@@ -2018,15 +2072,6 @@ export function ReservationCardEditor({
     assignedMatchesPhysical &&
     !namesIncomplete &&
     arrivalReached;
-  const canEarlyCheckIn =
-    !isCreate &&
-    status === 'CONFIRMED' &&
-    Boolean(roomId) &&
-    !doorPendingDirty &&
-    assignedMatchesPhysical &&
-    !namesIncomplete &&
-    Boolean(checkIn) &&
-    checkIn > todayBakuYmd();
   /** Physical room / times: arrival stage or room already assigned (not on create booking). */
   const showAssignment =
     !isCreate &&
@@ -2202,13 +2247,30 @@ export function ReservationCardEditor({
         .filter(Boolean)
         .join(' · ');
 
+  const stayActionKind = isCreate
+    ? null
+    : stayActionForPlane(
+        resolveStayWindowPlane({ checkIn, checkOut, status, todayKey: todayBakuYmd() }),
+      );
+  const stayActionLabel =
+    stayActionKind === 'earlyCheckIn'
+      ? t('earlyCheckIn')
+      : stayActionKind === 'checkIn'
+        ? t('confirmCheckIn')
+        : stayActionKind === 'earlyCheckOut'
+          ? t('earlyCheckOut')
+          : stayActionKind === 'checkOut'
+            ? t('confirmCheckOut')
+            : undefined;
+
   const actionProps = {
     busy,
     loading,
     isLocked,
     showLock: true,
     canCheckIn: !isCreate && status === 'CONFIRMED',
-    onEarlyCheckIn: canEarlyCheckIn ? () => setEarlyCheckInOpen(true) : undefined,
+    stayActionLabel,
+    onStayAction: stayActionKind ? requestStayAction : undefined,
     onClose,
     onToggleLock: isCreate ? undefined : () => void toggleLock(),
     onSave: () => void save(),
@@ -2253,14 +2315,28 @@ export function ReservationCardEditor({
         </div>
       ) : null}
 
-      {earlyCheckInOpen ? (
+      {pendingStayAction ? (
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
-          <span>{t('earlyCheckInConfirm')}</span>
+          <span>
+            {pendingStayAction === 'earlyCheckIn'
+              ? t('stayActionEarlyIn', {
+                  days: String(hotelStayDayGap(checkIn, todayBakuYmd())),
+                })
+              : pendingStayAction === 'earlyCheckOut'
+                ? t('stayActionEarlyOut', {
+                    days: String(hotelStayDayGap(checkOut, todayBakuYmd())),
+                  })
+                : pendingStayAction === 'checkOut'
+                  ? t('stayActionCheckOut')
+                  : checkInTime < '14:00'
+                    ? t('stayActionEarlyHour')
+                    : t('stayActionCheckIn')}
+          </span>
           <span className="flex gap-2">
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setEarlyCheckInOpen(false)}
+              onClick={() => setPendingStayAction(null)}
             >
               {tc('cancel')}
             </button>
@@ -2268,13 +2344,28 @@ export function ReservationCardEditor({
               type="button"
               className={DANGER_BUTTON_CLASS}
               disabled={busy}
-              onClick={() => void confirmCheckIn(true)}
+              onClick={() => {
+                const kind = pendingStayAction;
+                if (kind === 'earlyCheckIn') void confirmCheckIn(true);
+                else if (kind === 'checkIn') void confirmCheckIn(false);
+                else void confirmEarlyStayCheckout(kind === 'checkOut');
+              }}
             >
-              {t('earlyCheckIn')}
+              {stayActionLabel}
             </button>
           </span>
+          {earlyCheckoutPreview?.unusedNights ? (
+            <span className="basis-full">
+              {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
+            </span>
+          ) : null}
+          {guestFolioBalance > 0.01 &&
+          (pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') ? (
+            <span className={`basis-full ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</span>
+          ) : null}
         </div>
       ) : null}
+
       {namesIncomplete ? (
         <div className="mb-3 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
           {tb('namesIncomplete')}
@@ -2383,15 +2474,8 @@ export function ReservationCardEditor({
             folioBalance={guestFolioBalance}
             billingRoutingSummary={billingRoutingSummary}
             stayStatus={status}
-            canEarlyStayCheckout={
-              !isCreate && status === 'IN_HOUSE' && can(PERMISSIONS.RESERVATIONS_CHECKOUT)
-            }
             earlyStayCheckoutBusy={busy}
-            onEarlyStayCheckout={
-              !isCreate && status === 'IN_HOUSE'
-                ? () => setEarlyStayCheckoutOpen(true)
-                : undefined
-            }
+            onStayAction={isCreate ? undefined : requestStayAction}
             onFolioRouting={
               !isCreate ? () => openSubModal('folioRouting') : undefined
             }
@@ -2782,43 +2866,6 @@ export function ReservationCardEditor({
               : []
           }
         />
-      </EraModal>
-      <EraModal
-        open={earlyStayCheckoutOpen}
-        title={t('confirmEarlyStayCheckout')}
-        onClose={() => setEarlyStayCheckoutOpen(false)}
-        maxWidthClass="max-w-md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setEarlyStayCheckoutOpen(false)}
-            >
-              {tc('cancel')}
-            </button>
-            <button
-              type="button"
-              className={DANGER_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void confirmEarlyStayCheckout()}
-            >
-              {t('confirmEarlyStayCheckout')}
-            </button>
-          </div>
-        }
-      >
-        <p className="m-0 text-[13px] text-[#34495E]">{t('earlyStayCheckoutHint')}</p>
-        {earlyCheckoutPreview?.unusedNights ? (
-          <p className="mt-2 mb-0 text-[13px] text-[#34495E]">
-            {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
-          </p>
-        ) : null}
-        {guestFolioBalance > 0.01 ? (
-          <p className={`mt-2 mb-0 text-[13px] ${TEXT_DANGER_CLASS}`}>
-            {t('earlyStayCheckoutFolioHint')}
-          </p>
-        ) : null}
       </EraModal>
       <EraModal
         open={notesAlertOpen}

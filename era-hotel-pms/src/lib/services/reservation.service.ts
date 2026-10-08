@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
@@ -643,13 +643,16 @@ export async function listArrivals(from: Date | string, to: Date | string = from
   });
 }
 
-export async function checkInReservation(id: string, opts?: { early?: boolean }) {
+export async function checkInReservation(
+  id: string,
+  opts?: { early?: boolean; checkInTime?: string },
+) {
   const { assertBusinessDayOpenForPosting, getCurrentBusinessDate } = await import(
     '@/lib/services/business-date.service'
   );
   await assertBusinessDayOpenForPosting();
 
-  const reservation = await getReservation(id);
+  let reservation = await getReservation(id);
   if (!['CONFIRMED', 'OPTION'].includes(reservation.status)) {
     throw new Error('Check-in is only allowed for CONFIRMED or OPTION reservations');
   }
@@ -664,14 +667,13 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
 
   const biz = await getCurrentBusinessDate();
   const bizKey = hotelDateKey(biz);
-  const arrivalKey = hotelDateKey(reservation.checkInDate);
-  const departKey = hotelDateKey(reservation.checkOutDate);
+  let arrivalKey = hotelDateKey(reservation.checkInDate);
+  let departKey = hotelDateKey(reservation.checkOutDate);
   if (arrivalKey > bizKey && !opts?.early) {
     throw new Error(
       'Check-in opens on the arrival date. Confirm early check-in to receive the guest sooner.',
     );
   }
-
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
   if (room) {
     const physicalTypeId = reservation.givenRoomTypeId ?? reservation.roomTypeId;
@@ -705,6 +707,34 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
   }
   await assertNamedGuestsFreeOnStay(id);
 
+  const previousCheckIn = reservation.checkInDate;
+  let pulledArrival = false;
+  if (opts?.early && arrivalKey > bizKey && reservation.roomId) {
+    pulledArrival = true;
+    const clash = await prisma.reservation.findFirst({
+      where: {
+        id: { not: id },
+        roomId: reservation.roomId,
+        status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
+        checkInDate: { lt: reservation.checkInDate },
+        checkOutDate: { gt: stayCheckIn(bizKey) },
+      },
+      select: { id: true },
+    });
+    if (clash) throw new Error('Room is occupied on the extra nights');
+    await prisma.reservation.update({
+      where: { id },
+      data: { checkInDate: stayCheckIn(bizKey) },
+    });
+    const { syncComposedDailyRates } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    await syncComposedDailyRates(id);
+    reservation = await getReservation(id);
+    arrivalKey = hotelDateKey(reservation.checkInDate);
+    departKey = hotelDateKey(reservation.checkOutDate);
+  }
+
   const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
 
   return prisma.$transaction(async (tx) => {
@@ -725,8 +755,10 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
     await applyHeldDepositsOnCheckIn(id);
 
     const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
-    if (opts?.early && arrivalKey > bizKey) {
-      void postEarlyCheckInFee(id).catch((e) => console.error('Early check-in fee failed', e));
+    if (opts?.checkInTime && opts.checkInTime < '14:00') {
+      void postEarlyCheckInFee(id, opts.checkInTime).catch((e) =>
+        console.error('Early check-in fee failed', e),
+      );
     }
 
     const nightDue = bizKey >= arrivalKey && bizKey < departKey;

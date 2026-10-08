@@ -162,70 +162,51 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
 }
 
-/** One plane: arrival (red landing), departure (red takeoff), or IN_HOUSE mid-stay early checkout (yellow takeoff). */
+/** One plane under Gecələr. Same command as the footer stay button. */
 function StayDateFlightIcons({
   checkIn,
   checkOut,
   status,
-  canEarlyStayCheckout,
-  earlyStayCheckoutBusy,
-  onEarlyStayCheckout,
+  busy,
+  onStayAction,
 }: {
   checkIn: string;
   checkOut: string;
   status?: string;
-  canEarlyStayCheckout?: boolean;
-  earlyStayCheckoutBusy?: boolean;
-  onEarlyStayCheckout?: () => void;
+  busy?: boolean;
+  onStayAction?: () => void;
 }) {
   const t = useTranslations('reservationCard');
   const kind = resolveStayWindowPlane({ checkIn, checkOut, status });
   if (!kind) return <div className="h-3.5" data-testid="stay-flight-icons" />;
-  const frame = `${SECONDARY_BUTTON_CLASS} !px-2`;
-  if (kind === 'arrival') {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconArrival')} aria-label={t('flightIconArrival')} className={`${frame} !text-[#E74C3C]`}>
-          <PlaneLanding className="h-4 w-4" />
-        </span>
-      </div>
-    );
-  }
-  if (kind === 'departure') {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconDeparture')} aria-label={t('flightIconDeparture')} className={`${frame} !text-[#E74C3C]`}>
-          <PlaneTakeoff className="h-4 w-4" />
-        </span>
-      </div>
-    );
-  }
-  const earlyLabel = t('flightIconEarlyCheckout');
-  if (canEarlyStayCheckout && onEarlyStayCheckout) {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <button
-          type="button"
-          title={earlyLabel}
-          aria-label={earlyLabel}
-          disabled={earlyStayCheckoutBusy}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onEarlyStayCheckout();
-          }}
-          className={`${frame} !text-amber-500 hover:!text-amber-600 disabled:opacity-50`}
-        >
-          <PlaneTakeoff className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  }
+  const landing = kind === 'earlyArrival' || kind === 'arrival';
+  const early = kind === 'earlyArrival' || kind === 'earlyCheckout';
+  const label =
+    kind === 'earlyArrival'
+      ? t('earlyCheckIn')
+      : kind === 'arrival'
+        ? t('confirmCheckIn')
+        : kind === 'earlyCheckout'
+          ? t('earlyCheckOut')
+          : t('confirmCheckOut');
+  const tone = early ? '!text-amber-500 hover:!text-amber-600' : '!text-[#E74C3C] hover:!text-[#C0392B]';
+  const Icon = landing ? PlaneLanding : PlaneTakeoff;
   return (
-    <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-      <span title={earlyLabel} aria-label={earlyLabel} className={`${frame} !text-amber-500`}>
-        <PlaneTakeoff className="h-4 w-4" />
-      </span>
+    <div className="flex items-end justify-start" data-testid="stay-flight-icons">
+      <button
+        type="button"
+        title={label}
+        aria-label={label}
+        disabled={busy || !onStayAction}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onStayAction?.();
+        }}
+        className={`${SECONDARY_BUTTON_CLASS} !px-2 ${tone} disabled:opacity-50`}
+      >
+        <Icon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
@@ -253,9 +234,8 @@ export type ReservationCardLeftPanelProps = {
   checkInTime: string;
   checkOutTime: string;
   stayStatus?: string;
-  canEarlyStayCheckout?: boolean;
   earlyStayCheckoutBusy?: boolean;
-  onEarlyStayCheckout?: () => void;
+  onStayAction?: () => void;
   voucherNo: string;
   agencyId: string;
   companyId: string;
@@ -484,9 +464,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               checkIn={props.checkIn}
               checkOut={props.checkOut}
               status={props.stayStatus}
-              canEarlyStayCheckout={props.canEarlyStayCheckout}
-              earlyStayCheckoutBusy={props.earlyStayCheckoutBusy}
-              onEarlyStayCheckout={props.onEarlyStayCheckout}
+              busy={props.earlyStayCheckoutBusy}
+              onStayAction={props.onStayAction}
             />
           </div>
           <fieldset disabled={disabled} className="space-y-2 border-0 p-0">

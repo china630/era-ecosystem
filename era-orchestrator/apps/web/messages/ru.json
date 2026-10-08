@@ -2080,7 +2080,15 @@
     "openHotelFailed": "Не удалось открыть отель",
     "openSellerFailed": "Не удалось открыть организацию продавца",
     "hotelUrlMissing": "URL отеля для этой организации не настроен",
-    "financeUrlMissing": "URL Finance для этой организации не настроен"
+    "financeUrlMissing": "URL Finance для этой организации не настроен",
+    "changePassword": "Сменить пароль",
+    "changePasswordTitle": "Смена пароля",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Повторите новый пароль",
+    "passwordMismatch": "Новые пароли не совпадают",
+    "passwordChanged": "Пароль изменён. Войдите с новым паролем.",
+    "backToLogin": "Вернуться ко входу"
   },
   "workforceMigration": {
     "title": "Миграция кадров",

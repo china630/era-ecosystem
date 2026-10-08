@@ -2,6 +2,8 @@ import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { countsFromPax } from '@/components/reservation-card/party-pax';
+import { paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
@@ -244,8 +246,34 @@ export async function patchReservationFull(
   });
   if (!existing) throw new Error('Reservation not found');
 
-  const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, shareEligible, ...data } =
-    input;
+  const {
+    notes,
+    paxGuests: incomingPax,
+    manualDailyRate,
+    creditLimitAzn,
+    dailyRates,
+    shareEligible,
+    ...data
+  } = input;
+
+  let paxGuests = incomingPax;
+  if (existing.status === 'IN_HOUSE' && paxGuests) {
+    const kept = paxGuests.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+    if (kept.length !== paxGuests.length) {
+      paxGuests = kept;
+      const counts = countsFromPax(
+        kept.map((row) => ({
+          birthDate: row.birthDate ?? '',
+          age: row.age == null ? '' : String(row.age),
+          departedAt: null,
+        })),
+      );
+      data.adults = counts.adults;
+      data.children11_6 = counts.children11_6;
+      data.children5_2 = counts.children5_2;
+      data.children1_0 = counts.children1_0;
+    }
+  }
 
   let nextShareEligible = shareEligible ?? existing.shareEligible;
   let nextShareGender = existing.shareGender;

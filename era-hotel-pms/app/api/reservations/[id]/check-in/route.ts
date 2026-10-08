@@ -6,7 +6,9 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
-const bodySchema = z.object({ early: z.boolean().optional() }).optional();
+const bodySchema = z
+  .object({ early: z.boolean().optional(), checkInTime: z.string().optional() })
+  .optional();
 
 export async function POST(
   request: Request,
@@ -18,7 +20,10 @@ export async function POST(
     const { id } = await params;
     const raw = await request.json().catch(() => ({}));
     const body = bodySchema.parse(raw ?? {});
-    const reservation = await checkInReservation(id, { early: body?.early === true });
+    const reservation = await checkInReservation(id, {
+      early: body?.early === true,
+      checkInTime: body?.checkInTime,
+    });
     let guestQrToken: string | null = null;
     if (reservation.ratePlan?.medicalFlag && reservation.guest?.globalPersonId) {
       try {
