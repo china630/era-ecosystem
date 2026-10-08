@@ -502,7 +502,28 @@ export async function createReservation(input: {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
+    const foCodes = input.paxGuests?.map((p) => {
+      const own = p.medicalPackageCode?.trim();
+      return own ? own : null;
+    });
+    const stamped = await stampMedicalPackagesForReservation(
+      prisma,
+      reservation.id,
+      foCodes ? { foPerGuestCodes: foCodes } : undefined,
+    );
+    if (manualNightly == null) {
+      const { syncComposedDailyRates } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const composed = await syncComposedDailyRates(reservation.id);
+      if (composed.applied && composed.total != null) {
+        const nights = countNights(input.checkInDate, input.checkOutDate);
+        await prisma.reservation.update({
+          where: { id: reservation.id },
+          data: { totalAmount: toDecimal(composed.total * nights) },
+        });
+      }
+    }
     if (stamped.programCode) {
       await assertSanatoriumBookingAllowed(reservation.organizationId, reservation.checkInDate);
       void dispatchSanatoriumBookingCreated({
@@ -737,12 +758,24 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    const stamped = await stampMedicalPackagesForReservation(prisma, id);
+    const storedPax = await prisma.reservationGuest.findMany({
+      where: { reservationId: id },
+      orderBy: { sortOrder: 'asc' },
+      select: { medicalPackageCode: true },
+    });
+    const stamped = await stampMedicalPackagesForReservation(
+      prisma,
+      id,
+      storedPax.length > 0
+        ? { foPerGuestCodes: storedPax.map((g) => g.medicalPackageCode) }
+        : undefined,
+    );
     const full = await prisma.reservation.findUnique({
       where: { id },
       include: {
         guest: true,
         room: true,
+        ratePlan: { select: { code: true } },
         paxGuests: {
           orderBy: { sortOrder: 'asc' },
           include: { guest: true },
@@ -767,6 +800,10 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
                 },
               ]
             : [];
+      const { normalizeMedicalPackageCode } = await import(
+        '@/lib/services/medical-package-resolve.service'
+      );
+      const staySku = normalizeMedicalPackageCode(full?.ratePlan?.code ?? null);
       for (const pax of paxList) {
         const name =
           [pax.firstName, pax.lastName].filter(Boolean).join(' ') ||
@@ -780,7 +817,10 @@ export async function checkInReservation(id: string, opts?: { early?: boolean })
         void dispatchGuestCheckedIn({
           reservationId: id,
           roomNumber: updated.room?.roomNumber ?? undefined,
-          programCode: pax.medicalPackageCode ?? stamped.programCode,
+          programCode:
+            normalizeMedicalPackageCode(pax.medicalPackageCode) ??
+            staySku ??
+            stamped.programCode,
           globalPersonId:
             pax.guest?.globalPersonId ?? updated.guest.globalPersonId ?? undefined,
           guestName: name,

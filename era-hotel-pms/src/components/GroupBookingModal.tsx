@@ -18,7 +18,7 @@ import {
   showWarning,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { operationalGapDetails } from '@/lib/guest-stay-requirements';
+import { operationalGapDetails, operationalGapLabelKey } from '@/lib/guest-stay-requirements';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import {
@@ -557,7 +557,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         showWarning(
           tr('checkInDocsLater', {
             details: operationalGapDetails(data.operationalGaps, (gap) =>
-              gap === 'phone' ? tr('gapPhone') : tr('gapDocument'),
+              tr(operationalGapLabelKey(gap)),
             ),
           }),
         );

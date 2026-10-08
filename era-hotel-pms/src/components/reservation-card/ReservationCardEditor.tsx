@@ -19,6 +19,8 @@ import { guestListItems } from '@/lib/guest-list-identity';
 import {
   isPreArrivalStatus,
   operationalGapDetails,
+  operationalGapLabelKey,
+  operationalGaps,
 } from '@/lib/guest-stay-requirements';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
@@ -48,6 +50,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   ageYearsFromBirthDate,
   attachGuestToPax,
+  guestFitsSlot,
   countsFromPax,
   paxAgeYears,
   hydratePaxDemographicsFromGuest,
@@ -61,7 +64,7 @@ import {
   ReservationCardSubModals,
   useReservationSubModals,
 } from '@/components/reservation-card/ReservationCardSubModals';
-import { reservationNamesIncomplete } from '@/lib/reservation-names';
+import { reservationNamesIncomplete, missingAdultNameCount, isTbaDisplayName } from '@/lib/reservation-names';
 import { canAssignDoor } from '@/lib/room-state';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
 import type {
@@ -109,9 +112,7 @@ function formatOperationalGaps(
   t: (key: string, values?: Record<string, string>) => string,
 ): string {
   return t('checkInBlocked', {
-    details: operationalGapDetails(people, (gap) =>
-      gap === 'phone' ? t('gapPhone') : t('gapDocument'),
-    ),
+    details: operationalGapDetails(people, (gap) => t(operationalGapLabelKey(gap))),
   });
 }
 
@@ -122,11 +123,45 @@ function warnOperationalGaps(
   if (!Array.isArray(people) || people.length === 0) return;
   showWarning(
     t('checkInDocsLater', {
-      details: operationalGapDetails(people, (gap) =>
-        gap === 'phone' ? t('gapPhone') : t('gapDocument'),
-      ),
+      details: operationalGapDetails(people, (gap) => t(operationalGapLabelKey(gap))),
     }),
   );
+}
+
+function personDocLine(
+  row: {
+    firstName: string;
+    lastName: string;
+    nationality: string;
+    birthDate: string;
+    age: string;
+    idCardNo: string;
+    passportNo: string;
+    guestId?: string;
+    departedAt?: string | null;
+  },
+  profile: { phone?: string | null; documents?: Array<{ docType?: string | null; docNumber?: string | null }> } | null,
+  today: string,
+  t: (key: string) => string,
+): string | null {
+  if (row.departedAt) return null;
+  if (!(row.firstName.trim() || row.lastName.trim())) return null;
+  const gaps = operationalGaps(
+    {
+      name: [row.firstName, row.lastName].filter((part) => part.trim()).join(' '),
+      nationality: row.nationality || 'AZ',
+      birthDate: row.birthDate || null,
+      age: row.age.trim() ? Number(row.age) : null,
+      phone: profile?.phone ?? null,
+      documents: profile?.documents,
+      idCardNo: row.idCardNo,
+      passportNo: row.passportNo,
+    },
+    today,
+  );
+  if (gaps.length === 0) return null;
+  const name = [row.firstName, row.lastName].filter((part) => part.trim()).join(' ');
+  return `${name}: ${gaps.map((gap) => t(operationalGapLabelKey(gap))).join(', ')}`;
 }
 
 export type ReservationCardEditorProps = {
@@ -138,6 +173,24 @@ export type ReservationCardEditorProps = {
   initialTab?: TabId;
   onReservationCreated?: (id: string) => void;
 };
+
+const MEDICAL_PACKAGE_FALLBACK = ['PKG-STANDART', 'PKG-PREMIUM', 'PKG-DERMO', 'PKG-DETOKS'] as const;
+
+function medicalPackageChoices(plans: RatePlanOption[]): Array<{ value: string; label: string }> {
+  const seen = new Set<string>();
+  const options: Array<{ value: string; label: string }> = [];
+  for (const plan of plans) {
+    const code = (plan.code ?? '').trim().toUpperCase();
+    if (!code.startsWith('PKG-') || seen.has(code)) continue;
+    seen.add(code);
+    options.push({ value: code, label: plan.label });
+  }
+  for (const code of MEDICAL_PACKAGE_FALLBACK) {
+    if (seen.has(code)) continue;
+    options.push({ value: code, label: code });
+  }
+  return options;
+}
 
 function nightlyForChargedType(
   plans: RatePlanOption[],
@@ -1230,8 +1283,45 @@ export function ReservationCardEditor({
 
   async function confirmCheckIn(early = false) {
     if (!reservationId) return;
-    if (namesIncomplete) {
-      showApiError({ error: tb('namesIncomplete') }, tc('failed'));
+    const lines: string[] = [];
+    if (!roomId) lines.push(t('checkInNeedRoom'));
+    if (doorPendingDirty) lines.push(t('checkInNeedSaveRoom'));
+    if (roomId && !assignedMatchesPhysical) lines.push(t('checkInNeedDoorType'));
+    if (!early && Boolean(checkIn) && checkIn > todayBakuYmd()) lines.push(t('checkInNeedArrival'));
+    const missingNames = missingAdultNameCount({ adults: Number(adults) || 1, pax });
+    if (missingNames > 0) lines.push(t('checkInNeedAdultNames', { count: String(missingNames) }));
+    else if (isTbaDisplayName((data?.guest as { fullName?: string } | undefined)?.fullName)) {
+      lines.push(t('checkInNeedRealName'));
+    }
+    const master = data?.guest as
+      | {
+          id?: string;
+          phone?: string | null;
+          documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
+        }
+      | undefined;
+    const loaded =
+      (data?.paxGuests as
+        | Array<{
+            guestId?: string | null;
+            guest?: {
+              id?: string;
+              phone?: string | null;
+              documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
+            } | null;
+          }>
+        | undefined) ?? [];
+    const today = todayBakuYmd();
+    for (const row of pax) {
+      const linked =
+        (row.guestId && master?.id === row.guestId ? master : null) ??
+        loaded.find((item) => item.guestId === row.guestId || item.guest?.id === row.guestId)?.guest ??
+        null;
+      const line = personDocLine(row, linked, today, t);
+      if (line) lines.push(line);
+    }
+    if (lines.length > 0) {
+      showWarning(t('checkInNeedList', { details: lines.join('; ') }));
       return;
     }
     setBusy(true);
@@ -1846,6 +1936,7 @@ export function ReservationCardEditor({
           children1_0: Number(children1_0) || 0,
           market: market || null,
           segment: segment || null,
+          ratePlanId: ratePlanId || undefined,
           booker: booker || null,
           guestRep: guestRep || null,
           paidBy: paidBy || null,
@@ -2116,7 +2207,7 @@ export function ReservationCardEditor({
     loading,
     isLocked,
     showLock: true,
-    canCheckIn: !isCreate && canCheckIn,
+    canCheckIn: !isCreate && status === 'CONFIRMED',
     onEarlyCheckIn: canEarlyCheckIn ? () => setEarlyCheckInOpen(true) : undefined,
     onClose,
     onToggleLock: isCreate ? undefined : () => void toggleLock(),
@@ -2403,12 +2494,13 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(true);
                     setGuestCardOpen(true);
                   }}
-                  onNewGuest={() => {
-                    setScanPaxIndex(null);
+                  onNewGuest={(index) => {
+                    setScanPaxIndex(index);
                     setGuestCardId(null);
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
+                  packageOptions={medicalPackageChoices(ratePlans)}
                 />
               )}
 
@@ -2635,6 +2727,15 @@ export function ReservationCardEditor({
           setGuestCardId(null);
           const target = scanPaxIndex;
           setScanPaxIndex(null);
+          if (
+            target != null &&
+            pax[target] &&
+            meta?.birthDate &&
+            !guestFitsSlot(meta.birthDate, pax[target])
+          ) {
+            showWarning(t('guestAgeMismatch'));
+            return;
+          }
           if (target != null && pax[target]) {
             const filled: PaxRow = {
               ...pax[target],

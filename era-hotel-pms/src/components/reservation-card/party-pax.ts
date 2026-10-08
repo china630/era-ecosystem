@@ -174,6 +174,16 @@ export function bandForBirthDate(birthDate: string | undefined): PaxAgeBand {
   return 'adult';
 }
 
+/** A guest with no birth date can fill any slot. A known age must match the slot band. */
+export function guestFitsSlot(
+  birthDate: string | undefined | null,
+  slot: Pick<PaxRow, 'birthDate' | 'age'>,
+): boolean {
+  const dob = (birthDate ?? '').trim();
+  if (!dob) return true;
+  return bandForBirthDate(dob) === paxBand(slot);
+}
+
 /**
  * Stamp empty unnamed slots from the saved counters.
  * Named rows and rows that already have a birth date or age are left alone.

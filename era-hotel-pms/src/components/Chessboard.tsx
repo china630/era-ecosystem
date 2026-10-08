@@ -15,7 +15,7 @@ import { computeRackDisplayState } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { operationalGapDetails } from '@/lib/guest-stay-requirements';
+import { operationalGapDetails, operationalGapLabelKey } from '@/lib/guest-stay-requirements';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -156,7 +156,7 @@ export default function Chessboard() {
           showApiError({
             error: tCard('checkInBlocked', {
               details: operationalGapDetails(data.people, (gap) =>
-                gap === 'phone' ? tCard('gapPhone') : tCard('gapDocument'),
+                tCard(operationalGapLabelKey(gap)),
               ),
             }),
           });

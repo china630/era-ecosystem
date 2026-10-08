@@ -141,7 +141,10 @@ export async function getNightlyRoomChargeForDate(
       dailyRates: true,
       ratePlan: true,
       room: true,
-      paxGuests: { select: { medicalPackageCode: true }, orderBy: { sortOrder: 'asc' } },
+      paxGuests: {
+        select: { medicalPackageCode: true, firstName: true, lastName: true, guestId: true },
+        orderBy: { sortOrder: 'asc' },
+      },
     },
   });
   if (!res) throw new Error('Reservation not found');
@@ -154,10 +157,11 @@ export async function getNightlyRoomChargeForDate(
   const { ownerPackageNightlySell } = await import(
     '@/lib/services/nafta-package-compose-apply.service'
   );
+  const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
   const { MEDICAL_PACKAGE_CODES } = await import('@/lib/services/medical-package-resolve.service');
   const packageCodes = (
     res.paxGuests.length > 0
-      ? res.paxGuests.map((g) => g.medicalPackageCode)
+      ? paxCodesForCompose(res.paxGuests, res.ratePlan.code ?? res.medicalPackageCode)
       : [res.medicalPackageCode]
   )
     .map((c) => (c ?? '').trim().toUpperCase())

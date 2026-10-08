@@ -41,6 +41,7 @@ const fullInclude = {
           sex: true,
           nationality: true,
           birthDate: true,
+          phone: true,
           documents: {
             select: {
               docType: true,
@@ -287,6 +288,8 @@ export async function patchReservationFull(
 
   const checkIn = data.checkInDate ?? existing.checkInDate;
   const checkOut = data.checkOutDate ?? existing.checkOutDate;
+  const ratePlanChanged =
+    typeof data.ratePlanId === 'string' && data.ratePlanId !== existing.ratePlanId;
 
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
@@ -584,16 +587,21 @@ export async function patchReservationFull(
     Boolean(paxGuests?.length) &&
     paxGuests!.every((p) => !p.medicalPackageCode?.trim());
 
-  if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku) {
+  const foCodes = paxGuests
+    ? paxGuests.map((p) => {
+        const own = (p.medicalPackageCode ?? '').trim();
+        return own ? own : null;
+      })
+    : undefined;
+
+  if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku || ratePlanChanged) {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
     const stamped = await stampMedicalPackagesForReservation(
       prisma,
       id,
-      foSkuOverride && paxGuests
-        ? { foPerGuestCodes: paxGuests.map((p) => p.medicalPackageCode ?? null) }
-        : undefined,
+      foCodes ? { foPerGuestCodes: foCodes } : undefined,
     );
     if (stamped.stayKind !== 'leisure') {
       const { dispatchStayProductChanged } = await import(
@@ -634,6 +642,49 @@ export async function patchReservationFull(
         '@/lib/services/reservation-pricing.service'
       );
       await recalcReservationDailyRates(id);
+    }
+  }
+
+  if (ratePlanChanged || paxSkuChanged) {
+    const { previewComposedPackageSell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const breakdown = await previewComposedPackageSell(id);
+    const plan = data.ratePlanId
+      ? await prisma.ratePlan.findUnique({
+          where: { id: data.ratePlanId },
+          select: { pricePerNight: true },
+        })
+      : null;
+    const nightly =
+      breakdown?.total && breakdown.total > 0
+        ? breakdown.total
+        : plan?.pricePerNight != null
+          ? decimalToNumber(plan.pricePerNight)
+          : null;
+    if (nightly != null && nightly > 0) {
+      const postedCharges = await prisma.folioCharge.findMany({
+        where: {
+          folio: { reservationId: id },
+          revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
+        },
+        select: { businessDate: true },
+      });
+      const postedNights = new Set(postedCharges.map((charge) => hotelDateKey(charge.businessDate)));
+      const openRates = await prisma.reservationDailyRate.findMany({
+        where: { reservationId: id, fixPrice: false },
+      });
+      for (const row of openRates) {
+        if (postedNights.has(hotelDateKey(row.stayDate))) continue;
+        await prisma.reservationDailyRate.update({
+          where: { id: row.id },
+          data: {
+            amount: toDecimal(nightly),
+            manualFlag: false,
+            discountPct: null,
+          },
+        });
+      }
     }
   }
 

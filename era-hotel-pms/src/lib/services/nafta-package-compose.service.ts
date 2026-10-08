@@ -53,8 +53,33 @@ export type ComposeBreakdown = {
 };
 
 /**
- * @returns null when no resolved SKUs (do not invent sell).
+ * Named guests with an empty package follow the stay SKU.
+ * An unnamed slot does not add a package occupant.
  */
+export function paxCodesForCompose(
+  pax: Array<{
+    medicalPackageCode?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    guestId?: string | null;
+  }>,
+  stayPackageCode: string | null | undefined,
+): string[] {
+  const stay = (stayPackageCode ?? "").trim().toUpperCase();
+  const codes: string[] = [];
+  for (const guest of pax) {
+    const own = (guest.medicalPackageCode ?? "").trim().toUpperCase();
+    const named = Boolean(
+      (guest.guestId ?? "").trim() ||
+        (guest.firstName ?? "").trim() ||
+        (guest.lastName ?? "").trim(),
+    );
+    if (own) codes.push(own);
+    else if (named && stay) codes.push(stay);
+  }
+  return codes;
+}
+
 export function composeNaftaPackageNightlySell(
   paxCodes: Array<string | null | undefined>,
   catalog: PackageSellRow[] = DEFAULT_NAFTA_PACKAGE_SELL,

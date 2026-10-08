@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { toDecimal } from "@/lib/decimal";
 import {
   composeNaftaPackageNightlySellBreakdown,
+  paxCodesForCompose,
   DEFAULT_NAFTA_PACKAGE_SELL,
   DEFAULT_STANDART_COMPANION_AZN,
   halfOcc2,
@@ -173,8 +174,14 @@ export async function previewComposedPackageSell(
     select: {
       medicalPackageCode: true,
       checkInDate: true,
+      ratePlan: { select: { code: true } },
       paxGuests: {
-        select: { medicalPackageCode: true },
+        select: {
+          medicalPackageCode: true,
+          firstName: true,
+          lastName: true,
+          guestId: true,
+        },
         orderBy: { sortOrder: "asc" },
       },
     },
@@ -182,9 +189,10 @@ export async function previewComposedPackageSell(
   if (!reservation) return null;
   const companion = await resolveStandartCompanionAzn(reservation.checkInDate);
   const catalog = await loadNaftaPackageSellCatalog(reservation.checkInDate);
+  const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
-      ? reservation.paxGuests.map((g) => g.medicalPackageCode)
+      ? paxCodesForCompose(reservation.paxGuests, stayCode)
       : [reservation.medicalPackageCode];
   return composeNaftaPackageNightlySellBreakdown(codes, catalog, companion);
 }
@@ -202,8 +210,14 @@ export async function syncComposedDailyRates(
       checkInDate: true,
       checkOutDate: true,
       medicalPackageCode: true,
+      ratePlan: { select: { code: true } },
       paxGuests: {
-        select: { medicalPackageCode: true },
+        select: {
+          medicalPackageCode: true,
+          firstName: true,
+          lastName: true,
+          guestId: true,
+        },
         orderBy: { sortOrder: "asc" },
       },
     },
@@ -213,9 +227,10 @@ export async function syncComposedDailyRates(
   }
   const companion = await resolveStandartCompanionAzn(reservation.checkInDate);
   const catalog = await loadNaftaPackageSellCatalog(reservation.checkInDate);
+  const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
-      ? reservation.paxGuests.map((g) => g.medicalPackageCode)
+      ? paxCodesForCompose(reservation.paxGuests, stayCode)
       : [reservation.medicalPackageCode];
   const breakdown = composeNaftaPackageNightlySellBreakdown(
     codes,

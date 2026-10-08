@@ -213,7 +213,7 @@ export function CommercialPartyStrip({
     <div className="space-y-2" data-testid="commercial-party-strip">
       <div className="grid grid-cols-1 items-start gap-1.5 sm:grid-cols-3">
         <CatalogField
-          kind="CLOSED_SMALL"
+          kind="SEARCHABLE"
           label={t('source')}
           value={sourceId}
           onChange={(v) => onSource(Array.isArray(v) ? (v[0] ?? '') : v)}
@@ -255,10 +255,11 @@ export function CommercialPartyStrip({
             ) : null}
           </div>
           {agencyOpen && showAgencyPlus ? (
-            <div className="space-y-1.5">
+            <div className="flex items-end gap-1">
               <Field
                 label={t('quickAgencyName')}
                 preset="shortText"
+                className="min-w-0 flex-1"
                 value={agencyName}
                 disabled={disabled || busy}
                 onChange={(e) => setAgencyName(e.target.value)}
@@ -266,13 +267,14 @@ export function CommercialPartyStrip({
               <Field
                 label={t('quickAgencyPhone')}
                 preset="phone"
+                className="w-[7.5rem] shrink-0"
                 value={agencyPhone}
                 disabled={disabled || busy}
                 onChange={(e) => setAgencyPhone(e.target.value)}
               />
               <button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
                 disabled={disabled || busy}
                 onClick={() => void createAgency()}
               >
@@ -305,10 +307,11 @@ export function CommercialPartyStrip({
             />
           </div>
           {companyOpen ? (
-            <div className="space-y-1.5">
+            <div className="flex items-end gap-1">
               <Field
                 label={t('quickCompanyName')}
                 preset="shortText"
+                className="min-w-0 flex-1"
                 value={companyName}
                 disabled={disabled || busy}
                 onChange={(e) => setCompanyName(e.target.value)}
@@ -316,13 +319,14 @@ export function CommercialPartyStrip({
               <Field
                 label={t('quickCompanyVoen')}
                 preset="voen"
+                className="w-[7.5rem] shrink-0"
                 value={companyVoen}
                 disabled={disabled || busy}
                 onChange={(e) => setCompanyVoen(e.target.value)}
               />
               <button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
                 disabled={disabled || busy}
                 onClick={() => void createCompany()}
               >
