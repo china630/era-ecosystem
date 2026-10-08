@@ -178,12 +178,15 @@ async function loadDoorOverlaps(input: {
   const out: DoorOverlapRow[] = [];
   for (const row of rows) {
     const windows: Array<{ from: Date; to: Date }> = [];
-    if (row.staySlices.length === 0) {
+    const slices = Array.isArray(row.staySlices) ? row.staySlices : null;
+    if (!slices) {
+      windows.push({ from: row.checkInDate, to: row.checkOutDate });
+    } else if (slices.length === 0) {
       if (row.roomId === input.roomId) {
         windows.push({ from: row.checkInDate, to: row.checkOutDate });
       }
     } else {
-      for (const slice of row.staySlices) {
+      for (const slice of slices) {
         const onDoor =
           slice.roomId === input.roomId ||
           (!slice.roomId && row.roomId === input.roomId && slice.roomTypeId === row.roomTypeId);
@@ -571,21 +574,21 @@ export async function loadShareSlicesForType(
   });
   const out: ShareReservationSlice[] = [];
   for (const row of rows) {
-    if (row.staySlices.length === 0) {
-      if (row.roomTypeId === roomTypeId) {
-        out.push({
-          id: row.id,
-          roomId: row.roomId,
-          shareEligible: row.shareEligible,
-          shareGender: row.shareGender,
-          adults: row.adults,
-          checkInDate: row.checkInDate,
-          checkOutDate: row.checkOutDate,
-        });
-      }
+    const slices = Array.isArray(row.staySlices) ? row.staySlices : null;
+    if (!slices || slices.length === 0) {
+      if (slices && row.roomTypeId && row.roomTypeId !== roomTypeId) continue;
+      out.push({
+        id: row.id,
+        roomId: row.roomId,
+        shareEligible: row.shareEligible,
+        shareGender: row.shareGender,
+        adults: row.adults,
+        checkInDate: row.checkInDate,
+        checkOutDate: row.checkOutDate,
+      });
       continue;
     }
-    for (const slice of row.staySlices) {
+    for (const slice of slices) {
       if (slice.roomTypeId !== roomTypeId) continue;
       out.push({
         id: row.id,
