@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, Power, RotateCcw } from 'lucide-react';
 import {
   CatalogField,
   EraListFilterBar,
@@ -10,6 +10,7 @@ import {
   Field,
   FieldRow,
   FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
   MODAL_CHECKBOX_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -35,8 +36,16 @@ type CompanyRow = {
   active: boolean;
 };
 
+const ROW_ICON = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
+
 function catalogStr(v: string | string[]): string {
   return Array.isArray(v) ? (v[0] ?? '') : v;
+}
+
+function moneyOrNull(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function financeHint(row: CompanyRow, t: (key: string) => string): string {
@@ -113,6 +122,37 @@ export default function CompaniesPage() {
   );
 
   const formId = 'company-form';
+
+  async function setCompanyActive(row: CompanyRow, active: boolean) {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: row.id,
+          code: row.code,
+          name: row.name,
+          voen: row.voen ?? undefined,
+          settlementMode: row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID',
+          creditLimitAzn: moneyOrNull(row.creditLimitAzn),
+          paymentTermsDays: row.paymentTermsDays ?? null,
+          active,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('error'));
+        return;
+      }
+      showSuccess(active ? t('restored') : t('retired'));
+      await load();
+    } catch (err) {
+      showApiError({ error: err instanceof Error ? err.message : tc('error') });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function openCreate() {
     setEditRow(null);
@@ -228,15 +268,31 @@ export default function CompaniesPage() {
             key: 'actions',
             header: tc('actions'),
             render: (r) => (
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1]"
-                title={tc('edit')}
-                aria-label={tc('edit')}
-                onClick={() => openEdit(r)}
-              >
-                <Pencil className="h-4 w-4" aria-hidden />
-              </button>
+              <span className="flex flex-wrap items-center gap-1">
+                <button
+                  type="button"
+                  className={ROW_ICON}
+                  title={tc('edit')}
+                  aria-label={tc('edit')}
+                  onClick={() => openEdit(r)}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={ROW_ICON}
+                  title={r.active ? t('retire') : t('restore')}
+                  aria-label={r.active ? t('retire') : t('restore')}
+                  disabled={busy}
+                  onClick={() => void setCompanyActive(r, !r.active)}
+                >
+                  {r.active ? (
+                    <Power className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
+              </span>
             ),
           },
         ]}

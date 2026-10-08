@@ -315,7 +315,9 @@ export function ReservationCardGuestsTab({
         header: t('paxStatus'),
         className: 'whitespace-nowrap',
         render: (row) =>
-          row.departedAt ? (
+          !row.guestId && !row.firstName.trim() && !row.lastName.trim() ? (
+            <span className={TEXT_MUTED_CLASS}>—</span>
+          ) : row.departedAt ? (
             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
               {t('guestDeparted')}
             </span>

@@ -25,7 +25,10 @@ Agency is **not** an ERA `Organization` and does **not** use `OrganizationMember
 ### 2. Identity and SSO
 
 - One email/password across hotels; each hotel invites a **grant** (`organizationId` + local `agencyId` + VÖEN).
+- The hotel invite form sends email only. A new account gets a one-time temporary password in the invite response. An existing account keeps its password and only receives the grant.
+- The agent changes that password on `/agency/login` (`POST /agency-portal/set-password`: current password, new password, at least 8 characters). The hotel does not store the current password.
 - Without agency VÖEN, portal invite is refused.
+- An agency profile is retired with `active: false` from the travel-agency list. There is no delete.
 - Agency HMAC payload (distinct from owner/staff SSO):
 
   `agency|{email}|{organizationId}|{agencyId}|{expiresAt}` (+ jti / replay guard)

@@ -2080,7 +2080,15 @@
     "openHotelFailed": "Otel açıla bilmədi",
     "openSellerFailed": "Satıcı açıla bilmədi",
     "hotelUrlMissing": "Bu təşkilat üçün otel URL təyin olunmayıb",
-    "financeUrlMissing": "Bu təşkilat üçün Finance URL təyin olunmayıb"
+    "financeUrlMissing": "Bu təşkilat üçün Finance URL təyin olunmayıb",
+    "changePassword": "Şifrəni dəyiş",
+    "changePasswordTitle": "Şifrəni dəyiş",
+    "currentPassword": "Cari şifrə",
+    "newPassword": "Yeni şifrə",
+    "confirmPassword": "Yeni şifrəni təkrar edin",
+    "passwordMismatch": "Yeni şifrələr üst-üstə düşmür",
+    "passwordChanged": "Şifrə dəyişdirildi. Yeni şifrə ilə daxil olun.",
+    "backToLogin": "Girişə qayıt"
   },
   "workforceMigration": {
     "title": "Kadr miqrasiyası",

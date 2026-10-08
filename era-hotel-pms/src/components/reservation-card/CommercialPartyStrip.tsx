@@ -254,34 +254,6 @@ export function CommercialPartyStrip({
               />
             ) : null}
           </div>
-          {agencyOpen && showAgencyPlus ? (
-            <div className="flex items-end gap-1">
-              <Field
-                label={t('quickAgencyName')}
-                preset="shortText"
-                className="min-w-0 flex-1"
-                value={agencyName}
-                disabled={disabled || busy}
-                onChange={(e) => setAgencyName(e.target.value)}
-              />
-              <Field
-                label={t('quickAgencyPhone')}
-                preset="phone"
-                className="w-[7.5rem] shrink-0"
-                value={agencyPhone}
-                disabled={disabled || busy}
-                onChange={(e) => setAgencyPhone(e.target.value)}
-              />
-              <button
-                type="button"
-                className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-                disabled={disabled || busy}
-                onClick={() => void createAgency()}
-              >
-                {tc('save')}
-              </button>
-            </div>
-          ) : null}
         </div>
         <div className="min-w-0 space-y-1.5">
           <div className="flex items-end gap-1">
@@ -306,36 +278,88 @@ export function CommercialPartyStrip({
               }}
             />
           </div>
-          {companyOpen ? (
-            <div className="flex items-end gap-1">
-              <Field
-                label={t('quickCompanyName')}
-                preset="shortText"
-                className="min-w-0 flex-1"
-                value={companyName}
-                disabled={disabled || busy}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-              <Field
-                label={t('quickCompanyVoen')}
-                preset="voen"
-                className="w-[7.5rem] shrink-0"
-                value={companyVoen}
-                disabled={disabled || busy}
-                onChange={(e) => setCompanyVoen(e.target.value)}
-              />
-              <button
-                type="button"
-                className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-                disabled={disabled || busy}
-                onClick={() => void createCompany()}
-              >
-                {tc('save')}
-              </button>
-            </div>
-          ) : null}
         </div>
       </div>
+      {agencyOpen && showAgencyPlus ? (
+        <div className="flex items-end gap-1.5">
+          <Field
+            label={t('quickAgencyName')}
+            preset="shortText"
+            className="min-w-0 flex-1"
+            value={agencyName}
+            disabled={disabled || busy}
+            onChange={(e) => setAgencyName(e.target.value)}
+          />
+          <Field
+            label={t('quickAgencyPhone')}
+            preset="phone"
+            className="w-[9rem] shrink-0"
+            value={agencyPhone}
+            disabled={disabled || busy}
+            onChange={(e) => setAgencyPhone(e.target.value)}
+          />
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => {
+              setAgencyName('');
+              setAgencyPhone('');
+              setAgencyOpen(false);
+            }}
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => void createAgency()}
+          >
+            {tc('save')}
+          </button>
+        </div>
+      ) : null}
+      {companyOpen ? (
+        <div className="flex items-end gap-1.5">
+          <Field
+            label={t('quickCompanyName')}
+            preset="shortText"
+            className="min-w-0 flex-1"
+            value={companyName}
+            disabled={disabled || busy}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+          <Field
+            label={t('quickCompanyVoen')}
+            preset="voen"
+            className="w-[9rem] shrink-0"
+            value={companyVoen}
+            disabled={disabled || busy}
+            onChange={(e) => setCompanyVoen(e.target.value)}
+          />
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => {
+              setCompanyName('');
+              setCompanyVoen('');
+              setCompanyOpen(false);
+            }}
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => void createCompany()}
+          >
+            {tc('save')}
+          </button>
+        </div>
+      ) : null}
       {showContract ? (
         <FieldRow cols={2}>
           <CatalogField

@@ -27,6 +27,8 @@ export type ReservationCardToolbarProps = {
   loading?: boolean;
   isLocked?: boolean;
   canCheckIn?: boolean;
+  stayActionLabel?: string;
+  onStayAction?: () => void;
   onEarlyCheckIn?: () => void;
   onSave?: () => void;
   onClose?: () => void;
@@ -64,6 +66,8 @@ export function ReservationCardActions({
   attachOpen,
   onAttachToggle,
   canCheckIn,
+  stayActionLabel,
+  onStayAction,
   onEarlyCheckIn,
   showLock = true,
   showClose = false,
@@ -207,25 +211,24 @@ export function ReservationCardActions({
         </div>
       ) : null}
 
-      {showFooter && onEarlyCheckIn ? (
+      {showFooter && onStayAction && stayActionLabel ? (
         <button
           type="button"
-          className={SECONDARY_BUTTON_CLASS}
+          className={SUCCESS_BUTTON_CLASS}
           disabled={busy || loading || isLocked}
-          onClick={onEarlyCheckIn}
+          onClick={onStayAction}
         >
-          {t('earlyCheckIn')}
+          {stayActionLabel}
         </button>
-      ) : null}
-      {showFooter ? (
+      ) : showFooter && !onStayAction ? (
         <button
           type="button"
           className={SUCCESS_BUTTON_CLASS}
           title={!canCheckIn || !onConfirmCheckIn ? t('availableAfterSave') : undefined}
           disabled={busy || loading || isLocked || !canCheckIn || !onConfirmCheckIn}
-          onClick={onConfirmCheckIn}
+          onClick={onEarlyCheckIn ?? onConfirmCheckIn}
         >
-          {t('confirmCheckIn')}
+          {onEarlyCheckIn ? t('earlyCheckIn') : t('confirmCheckIn')}
         </button>
       ) : null}
       {showFooter && onSave ? (
