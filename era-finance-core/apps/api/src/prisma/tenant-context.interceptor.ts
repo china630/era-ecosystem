@@ -29,13 +29,22 @@ export class TenantContextInterceptor implements NestInterceptor {
     const url = (req.originalUrl ?? req.url ?? "").split("?")[0];
     const user = req.user;
 
+    /**
+     * `next.handle()` is cold: the handler runs when Nest subscribes, after this
+     * method returns. Subscribe inside `run` so ALS covers the handler and its awaits.
+     */
     const runWithContexts = (tenantStore: {
       organizationId: string | null;
       skipTenantFilter: boolean;
     }) =>
-      tenantContextStorage.run(tenantStore, () =>
-        actorContextStorage.run({ userId: user?.userId ?? null }, () => next.handle()),
-      );
+      new Observable<unknown>((subscriber) => {
+        const subscription = tenantContextStorage.run(tenantStore, () =>
+          actorContextStorage.run({ userId: user?.userId ?? null }, () =>
+            next.handle().subscribe(subscriber),
+          ),
+        );
+        return () => subscription.unsubscribe();
+      });
 
     /**
      * Public / service-token routes without a signed org get `organizationId: null`:

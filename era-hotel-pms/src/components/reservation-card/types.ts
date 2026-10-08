@@ -47,7 +47,18 @@ export type AttachmentRow = {
   createdAt?: string;
 };
 
-export type SelectOption = { id: string; label: string; adultCapacity?: number };
+export type SelectOption = {
+  id: string;
+  label: string;
+  adultCapacity?: number;
+  firstName?: string;
+  lastName?: string;
+  sex?: string;
+  nationality?: string;
+  birthDate?: string;
+  passportNo?: string;
+  idCardNo?: string;
+};
 
 export type SourceOption = SelectOption & { code: string };
 
@@ -69,6 +80,7 @@ export type RatePlanOption = SelectOption & {
   mealPlanId?: string | null;
   /** When set, plan is scoped to this room type (e.g. PKG-PREMIUM → DLX). */
   roomTypeId?: string | null;
+  pricePerNight?: number | null;
 };
 
 export type RoomOption = { id: string; roomNumber: string; status: string };

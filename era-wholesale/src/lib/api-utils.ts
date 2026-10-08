@@ -4,6 +4,7 @@ import {
   readSatelliteStaffSession,
   type SatelliteStaffSessionPayload,
 } from "@era/satellite-kit";
+import { isSatelliteBillingBlockedError } from "@era/satellite-kit/billing/gate";
 import { requireWholesaleSatellite, IndustryModuleInactiveError } from "@/lib/wholesale-module-gate";
 import { prisma } from "@/lib/prisma";
 import { assertApiRouteGrant } from "@/lib/auth/require";
@@ -22,6 +23,12 @@ export function jsonError(message: string, status: number) {
 }
 
 export function handleRouteError(err: unknown) {
+  if (isSatelliteBillingBlockedError(err)) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, billingStatus: err.billingStatus },
+      { status: err.status },
+    );
+  }
   if (err && typeof err === "object" && "issues" in err) {
     return jsonError("Validation failed", 400);
   }

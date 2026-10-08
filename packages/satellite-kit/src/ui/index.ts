@@ -58,7 +58,7 @@ export { EraToastProvider } from "./era-toast-provider";
 export { SatelliteAppProviders } from "./satellite-app-providers";
 export { parseApiError } from "../lib/parse-api-error";
 export { showApiError } from "../lib/show-api-error";
-export { showSuccess } from "../lib/show-api-success";
+export { showSuccess, showWarning } from "../lib/show-api-success";
 export { assignNoStoreRedirect } from "../auth/assign-no-store-redirect";
 export {
   LOGIN_ORG_NO_STORAGE_KEY,
@@ -124,6 +124,7 @@ export {
   type OpsNavStatus,
 } from "./use-ops-nav-profile";
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
+export { SatelliteBillingBanner } from "./satellite-billing-banner";
 export { EraDataGrid } from "./era-data-grid";
 export {
   EraSavedViewsBar,

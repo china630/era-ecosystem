@@ -8,8 +8,11 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
+import type { EraJwtPayload } from "../auth/jwt-payload.type";
+import { AdminBillingCoverageDto } from "./dto/admin-billing-coverage.dto";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
@@ -61,6 +64,15 @@ export class AdminBillingController {
     @Body() dto: AdminSubscriptionPatchDto,
   ) {
     return this.admin.patchSubscription(id, dto);
+  }
+
+  @Patch("organizations/:id/billing-coverage")
+  setBillingCoverage(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AdminBillingCoverageDto,
+    @Req() req: { user?: EraJwtPayload },
+  ) {
+    return this.admin.setBillingCoverage(id, dto.coveredUntil, req.user?.sub ?? null);
   }
 
   @Get("config/billing")

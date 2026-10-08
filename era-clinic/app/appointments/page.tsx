@@ -41,6 +41,7 @@ type DetailState = {
   status?: string;
   visitId?: string | null;
   scheduledAt?: string;
+  durationMinutes?: number;
 };
 
 export default function AppointmentsPage() {
@@ -58,6 +59,9 @@ export default function AppointmentsPage() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [prefill, setPrefill] = useState<AppointmentCreatePrefill | null>(null);
+  const [bookingDefaults, setBookingDefaults] = useState<
+    Pick<AppointmentCreatePrefill, "defaultDurationMinutes" | "visitServices">
+  >({});
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -72,6 +76,10 @@ export default function AppointmentsPage() {
       const data = await res.json();
       const payload = data.data ?? data;
       setResources(payload.resources ?? []);
+      setBookingDefaults({
+        defaultDurationMinutes: payload.defaultAppointmentSlotMinutes,
+        visitServices: payload.visitServices ?? [],
+      });
     } finally {
       setLoading(false);
     }
@@ -109,6 +117,7 @@ export default function AppointmentsPage() {
     setPrefill({
       practitionerCode: codeByPractitionerId.get(practitionerId),
       scheduledAtIso: slotTime,
+      ...bookingDefaults,
     });
     setCreateOpen(true);
   }
@@ -122,6 +131,7 @@ export default function AppointmentsPage() {
       status: slot.status,
       visitId: slot.visitId ?? null,
       scheduledAt: slot.time,
+      durationMinutes: slot.durationMinutes,
     });
   }
 
@@ -186,7 +196,7 @@ export default function AppointmentsPage() {
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             onClick={() => {
-              setPrefill(null);
+              setPrefill(bookingDefaults);
               setCreateOpen(true);
             }}
           >
@@ -330,6 +340,12 @@ export default function AppointmentsPage() {
                 {bakuDateTimeDisplay(detail.scheduledAt)}
               </p>
             )}
+            {detail.durationMinutes ? (
+              <p>
+                <span className={TEXT_MUTED_CLASS}>{t("durationMinutes")}: </span>
+                {detail.durationMinutes}
+              </p>
+            ) : null}
           </div>
         )}
       </ModalShell>

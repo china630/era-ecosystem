@@ -419,6 +419,7 @@ enum HotelLookupKind {
   NOTE_TYPE
   CONCIERGE_CATEGORY
   EVENT_LINE_KIND
+  WALKIN_PROFILE
 }
 
 model HotelLookup {
@@ -537,6 +538,7 @@ model Room {
   minibarPosts MinibarPosting[]
   roomChangesFrom RoomChangePlan[] @relation("RoomChangeFrom")
   roomChangesTo   RoomChangePlan[] @relation("RoomChangeTo")
+  staySlices      ReservationStaySlice[] @relation("StaySliceRoom")
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   @@unique([organizationId, roomNumber])
@@ -800,6 +802,8 @@ model Agency {
   code                 String
   name                 String
   voen                 String?
+  /** Desk quick-create only. Commission and settlement stay on the master screen. */
+  phone                String?
   /** Local cache for Finance counterparty (resolved by agency VÖEN). */
   financeCounterpartyId String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)
@@ -1470,6 +1474,8 @@ model Reservation {
   source        BookingSource?    @relation(fields: [sourceId], references: [id])
   agencyId      String?
   agency        Agency?           @relation(fields: [agencyId], references: [id])
+  /// HotelLookup WALKIN_PROFILE code when the sell path is walk-in.
+  walkInProfileCode String?
   companyId     String?
   company       Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
   groupId       String?
@@ -1718,11 +1724,14 @@ model ReservationStaySlice {
   toDate        DateTime     @db.Date
   roomTypeId    String
   roomType      RoomType     @relation(fields: [roomTypeId], references: [id])
+  roomId        String?
+  room          Room?        @relation("StaySliceRoom", fields: [roomId], references: [id], onDelete: SetNull)
   ratePlanId    String
   ratePlan      RatePlan     @relation(fields: [ratePlanId], references: [id])
   createdAt     DateTime     @default(now())
 
   @@index([reservationId, fromDate])
+  @@index([roomId])
   @@index([organizationId])
 }
 
@@ -1806,7 +1815,7 @@ model Housekeeper {
   organizationId String
   code      String
   name      String
-  /// Finance employee person. Display name is copied at link time; identity stays in MDM.
+  /// CP workforce employment person. Display name is copied at link time; identity stays in MDM.
   globalPersonId String?
   active    Boolean            @default(true)
   department HkDepartment      @default(ROOMS)

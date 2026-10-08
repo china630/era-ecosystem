@@ -5,6 +5,7 @@ import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
 import { PractitionerScheduleModal } from "@/components/PractitionerScheduleModal";
+import { CatalogMultiAdder, catalogNameThenCode } from "@/components/catalog-multi-adder";
 import {
   SortableTh,
   sortRows,
@@ -15,12 +16,12 @@ import { PHYSIO_ORDER_FIELD_CODES } from "@/domain/physio/physio-order-fields";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import {
   applyPhysicalResourcePool,
-  displayPhysicalResourceCodes,
   physicalResourceCodesFromRequirements,
 } from "@/domain/procedure/procedure-physical-pool";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  countryOptions,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -59,7 +60,7 @@ type Practitioner = {
   code: string;
   fullName: string;
   specialty?: string | null;
-  staffKind?: "DOCTOR" | "NURSE" | "LAB";
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE";
   globalPersonId?: string | null;
   financeEmployeeId?: string | null;
   defaultSlotMinutes?: number | null;
@@ -140,12 +141,31 @@ function maskPersonId(id: string | null | undefined): string {
   return `${id.slice(0, 4)}…${id.slice(-4)}`;
 }
 
-function displayProcedureResourceCode(row: ProcedureType): string {
+const BODY_PARTS = [
+  "HEAD",
+  "NECK",
+  "CHEST",
+  "BACK",
+  "ABDOMEN",
+  "ARM_LEFT",
+  "ARM_RIGHT",
+  "LEG_LEFT",
+  "LEG_RIGHT",
+  "FULL_BODY",
+] as const;
+
+function displayProcedureResourceNames(
+  row: ProcedureType,
+  resources: Array<{ code: string; name: string }>,
+): string {
   const fromReqs = row.requirements?.length
-    ? displayPhysicalResourceCodes(row.requirements)
-    : "—";
-  if (fromReqs !== "—") return fromReqs;
-  return row.resourceCode?.trim() || "—";
+    ? physicalResourceCodesFromRequirements(row.requirements)
+    : [];
+  const codes = fromReqs.length > 0 ? fromReqs : row.resourceCode?.trim() ? [row.resourceCode.trim()] : [];
+  if (codes.length === 0) return "—";
+  return codes
+    .map((code) => resources.find((resource) => resource.code === code)?.name?.trim() || code)
+    .join(", ");
 }
 
 function defaultProcedureRequirements(): RequirementRow[] {
@@ -192,10 +212,12 @@ export default function MasterDataPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [needsSite, setNeedsSite] = useState(true);
+  const [needsExtraFields, setNeedsExtraFields] = useState(false);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
   const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
   const [physioSiteOptions, setPhysioSiteOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
+  const [mdmEditorOpen, setMdmEditorOpen] = useState(true);
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
   const [identifierTypes, setIdentifierTypes] = useState<IdentifierChip[]>([]);
   const [workforcePolicy, setWorkforcePolicy] = useState<WorkforcePolicy | null>(null);
@@ -265,8 +287,16 @@ export default function MasterDataPage() {
             .filter((s) => s.active !== false)
             .map((s) => ({
               value: s.code,
-              label: `${s.code} — ${locale.startsWith("ru") ? s.titleRu : locale.startsWith("az") ? s.titleAz : s.titleEn}`,
+              label: catalogNameThenCode(
+                (locale.startsWith("ru")
+                  ? s.titleRu
+                  : locale.startsWith("az")
+                    ? s.titleAz
+                    : s.titleEn) || s.code,
+                s.code,
+              ),
             }))
+            .sort((a, b) => a.label.localeCompare(b.label, locale))
         : [],
     );
     const policyPayload = (wp.data ?? wp) as WorkforcePolicy;
@@ -331,16 +361,21 @@ export default function MasterDataPage() {
   const filteredResources = useMemo(
     () =>
       resources.filter((row) =>
-        matchesFilter(debouncedQ, [row.code, row.name, row.kind, row.room?.code]),
+        matchesFilter(debouncedQ, [row.code, row.name, row.kind, row.room?.code, row.room?.name]),
       ),
     [resources, debouncedQ],
   );
   const filteredProcedureTypes = useMemo(
     () =>
       procedureTypes.filter((row) =>
-        matchesFilter(debouncedQ, [row.code, row.name, row.resourceCode]),
+        matchesFilter(debouncedQ, [
+          row.code,
+          row.name,
+          row.resourceCode,
+          displayProcedureResourceNames(row, resources),
+        ]),
       ),
-    [procedureTypes, debouncedQ],
+    [procedureTypes, resources, debouncedQ],
   );
 
   useEffect(() => {
@@ -379,6 +414,8 @@ export default function MasterDataPage() {
         if (key === "staffKind") {
           if (row.staffKind === "NURSE") return t("staffKindNurse");
           if (row.staffKind === "LAB") return t("staffKindLab");
+          if (row.staffKind === "BATH") return t("staffKindBath");
+          if (row.staffKind === "MASSAGE") return t("staffKindMassage");
           return t("staffKindDoctor");
         }
         if (key === "specialty") return row.specialty ?? "";
@@ -399,7 +436,7 @@ export default function MasterDataPage() {
       sortRows(filteredResources, sort, (row, key) => {
         if (key === "code") return row.code;
         if (key === "kind") return row.kind;
-        if (key === "room") return row.room?.code ?? "";
+        if (key === "room") return row.room?.name?.trim() || row.room?.code || "";
         return row.name;
       }),
     [filteredResources, sort],
@@ -411,10 +448,10 @@ export default function MasterDataPage() {
         if (key === "duration") return row.durationMin;
         if (key === "gap") return row.resourceGapMinutes ?? 5;
         if (key === "rest") return row.patientRestMinutes ?? 15;
-        if (key === "resource") return displayProcedureResourceCode(row);
+        if (key === "resource") return displayProcedureResourceNames(row, resources);
         return row.name;
       }),
-    [filteredProcedureTypes, sort],
+    [filteredProcedureTypes, resources, sort],
   );
 
   const pagedPractitioners = useMemo(
@@ -433,6 +470,7 @@ export default function MasterDataPage() {
 
   function resetModalExtras() {
     setMdmStatus(null);
+    setMdmEditorOpen(true);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
     setSelectedSkillIds([]);
@@ -441,6 +479,7 @@ export default function MasterDataPage() {
     setFinanceProductQ("");
     setSkillCoverageMsg(null);
     setNeedsSite(true);
+    setNeedsExtraFields(false);
     setPhysioOrderFields([]);
     setAllowedSiteCodes([]);
   }
@@ -462,14 +501,13 @@ export default function MasterDataPage() {
     setForm({
       code: row.code ?? "",
       fullName: row.fullName ?? "",
-      specialty: row.specialty ?? "",
       staffKind: row.staffKind ?? "DOCTOR",
       finCode: "",
       passportNumber: "",
       issuingCountry: "",
-      defaultSlotMinutes: String(row.defaultSlotMinutes ?? "30"),
     });
     setGlobalPersonId(row.globalPersonId ?? null);
+    setMdmEditorOpen(!row.globalPersonId);
     setMdmStatus(
       row.globalPersonId
         ? t("mdmLinked", { id: maskPersonId(row.globalPersonId) })
@@ -535,6 +573,7 @@ export default function MasterDataPage() {
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
+    setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
     setMdmStatus(null);
     setGlobalPersonId(null);
@@ -612,23 +651,15 @@ export default function MasterDataPage() {
           Boolean(practitioners.find((x) => x.id === editingId)?.financeEmployeeId);
         payload = opsOnly
           ? {
-              specialty: form.specialty || null,
               staffKind: form.staffKind || undefined,
-              defaultSlotMinutes: form.defaultSlotMinutes
-                ? Number(form.defaultSlotMinutes)
-                : undefined,
             }
           : {
               fullName: form.fullName ?? form.name,
-              specialty: form.specialty || null,
               staffKind: form.staffKind || undefined,
               finCode: form.finCode?.trim() || undefined,
               passportNumber: form.passportNumber?.trim() || undefined,
               issuingCountry: form.issuingCountry?.trim() || undefined,
               globalPersonId: globalPersonId || undefined,
-              defaultSlotMinutes: form.defaultSlotMinutes
-                ? Number(form.defaultSlotMinutes)
-                : undefined,
             };
       } else if (tab === "rooms") {
         payload = { name: form.name };
@@ -661,14 +692,11 @@ export default function MasterDataPage() {
       payload = {
         code: form.code,
         fullName: form.fullName ?? form.name,
-        specialty: form.specialty || undefined,
+        staffKind: form.staffKind || undefined,
         finCode: form.finCode?.trim() || undefined,
         passportNumber: form.passportNumber?.trim() || undefined,
         issuingCountry: form.issuingCountry?.trim() || undefined,
         globalPersonId: globalPersonId || undefined,
-        defaultSlotMinutes: form.defaultSlotMinutes
-          ? Number(form.defaultSlotMinutes)
-          : undefined,
       };
     } else if (tab === "rooms") {
       payload = { code: form.code, name: form.name };
@@ -691,7 +719,7 @@ export default function MasterDataPage() {
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
         needsSite,
-        ...(physioOrderFields.length ? { physioOrderFields } : {}),
+        physioOrderFields,
         allowedSiteCodes,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
@@ -812,23 +840,15 @@ export default function MasterDataPage() {
     await loadAll();
   }
 
-  function toggleSkill(procedureTypeId: string) {
-    setSelectedSkillIds((prev) =>
-      prev.includes(procedureTypeId)
-        ? prev.filter((x) => x !== procedureTypeId)
-        : [...prev, procedureTypeId],
-    );
-  }
-
   const resourcePoolOptions = useMemo(
     () =>
       [...resources]
-        .sort((a, b) => a.code.localeCompare(b.code))
+        .sort((a, b) => a.name.localeCompare(b.name, locale) || a.code.localeCompare(b.code))
         .map((r) => ({
           value: r.code,
-          label: `${r.code} — ${r.name}`,
+          label: catalogNameThenCode(r.name, r.code),
         })),
-    [resources],
+    [resources, locale],
   );
 
   function updateRequirement(index: number, patch: Partial<RequirementRow>) {
@@ -919,10 +939,8 @@ export default function MasterDataPage() {
                   <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
                   <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
                   <SortableTh label={t("staffKind")} columnKey="staffKind" sort={sort} onSort={onSort} />
-                  <SortableTh label={t("specialty")} columnKey="specialty" sort={sort} onSort={onSort} />
                   <SortableTh label={t("mdmBadge")} columnKey="mdm" sort={sort} onSort={onSort} />
                   <SortableTh label={t("financeLinked")} columnKey="finance" sort={sort} onSort={onSort} />
-                  <SortableTh label={t("defaultSlotMinutes")} columnKey="slot" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
               </thead>
@@ -936,9 +954,12 @@ export default function MasterDataPage() {
                         ? t("staffKindNurse")
                         : row.staffKind === "LAB"
                           ? t("staffKindLab")
-                          : t("staffKindDoctor")}
+                          : row.staffKind === "BATH"
+                            ? t("staffKindBath")
+                            : row.staffKind === "MASSAGE"
+                              ? t("staffKindMassage")
+                              : t("staffKindDoctor")}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.specialty ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.globalPersonId ? (
                         <span className={TEXT_SUCCESS_CLASS}>{maskPersonId(row.globalPersonId)}</span>
@@ -953,7 +974,6 @@ export default function MasterDataPage() {
                         "—"
                       )}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.defaultSlotMinutes ?? "—"}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
                         <button
@@ -1043,7 +1063,9 @@ export default function MasterDataPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.kind}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.room?.code ?? "—"}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.room?.name?.trim() || row.room?.code || "—"}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
                         <button
@@ -1087,10 +1109,10 @@ export default function MasterDataPage() {
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.durationMin}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.resourceGapMinutes ?? 5}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.patientRestMinutes ?? 15}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{displayProcedureResourceCode(row)}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.durationMin}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.resourceGapMinutes ?? 5}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.patientRestMinutes ?? 15}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{displayProcedureResourceNames(row, resources)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
                         <button
@@ -1163,6 +1185,7 @@ export default function MasterDataPage() {
                     setForm({ ...form, code: match.code });
                     setNeedsSite(gate.needsSite);
                     setPhysioOrderFields(gate.fields);
+                    setNeedsExtraFields(gate.fields.length > 0);
                     setAllowedSiteCodes(gate.allowedSiteCodes);
                   } else {
                     setForm({ ...form, code });
@@ -1231,6 +1254,8 @@ export default function MasterDataPage() {
                 options={[
                   { value: "DOCTOR", label: t("staffKindDoctor") },
                   { value: "NURSE", label: t("staffKindNurse") },
+                  { value: "BATH", label: t("staffKindBath") },
+                  { value: "MASSAGE", label: t("staffKindMassage") },
                   { value: "LAB", label: t("staffKindLab") },
                 ]}
                 emptyLabel={null}
@@ -1240,14 +1265,21 @@ export default function MasterDataPage() {
                   {form.fullName} · {form.code}
                 </p>
               ) : null}
-              {!opsLocked ? (
+              {!opsLocked && globalPersonId && !mdmEditorOpen ? (
+                <div className="flex items-center justify-between gap-2 text-[13px]">
+                  <p className={TEXT_MUTED_CLASS}>
+                    {t("mdmLinked", { id: maskPersonId(globalPersonId) })}
+                  </p>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => setMdmEditorOpen(true)}
+                  >
+                    {t("mdmChange")}
+                  </button>
+                </div>
+              ) : !opsLocked ? (
                 <>
-                  <Field
-                    label={t("specialty")}
-                    preset="shortText"
-                    value={form.specialty ?? ""}
-                    onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                  />
                   <FieldRow cols={2} className="items-end">
                     <Field
                       label={t("finCode")}
@@ -1271,58 +1303,40 @@ export default function MasterDataPage() {
                       {t("identifierTypes")}: {identifierTypes.map((i) => i.type).join(", ")}
                     </p>
                   ) : null}
-                  <FieldRow cols={2}>
-                    <Field
-                      label={t("passportNumber")}
-                      preset="code"
-                      value={form.passportNumber ?? ""}
-                      onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
-                    />
-                    <Field
-                      label={t("issuingCountry")}
-                      preset="code"
-                      value={form.issuingCountry ?? ""}
-                      onChange={(e) =>
-                        setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })
-                      }
-                    />
-                  </FieldRow>
+                  <Field
+                    label={t("passportNumber")}
+                    preset="code"
+                    value={form.passportNumber ?? ""}
+                    onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
+                  />
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={t("issuingCountry")}
+                    value={form.issuingCountry ?? ""}
+                    emptyLabel="—"
+                    options={countryOptions(locale, form.issuingCountry)}
+                    onChange={(next) =>
+                      setForm({ ...form, issuingCountry: String(next ?? "").toUpperCase() })
+                    }
+                  />
                 </>
-              ) : (
-                <Field
-                  label={t("specialty")}
-                  preset="shortText"
-                  value={form.specialty ?? ""}
-                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                />
-              )}
-              <Field
-                label={t("defaultSlotMinutes")}
-                preset="count"
-                value={form.defaultSlotMinutes ?? "30"}
-                onChange={(e) => setForm({ ...form, defaultSlotMinutes: e.target.value })}
-              />
+              ) : null}
               {editingId ? (
                 <div className="space-y-2">
-                  <p className={MODAL_FIELD_LABEL_CLASS}>{t("skills")}</p>
-                  <div className={`${FIELD_SECTION_CLASS} max-h-40 space-y-1 overflow-y-auto p-2`}>
-                    {procedureTypes.map((pt) => (
-                      <label
-                        key={pt.id}
-                        className="flex items-center gap-2 text-[13px]"
-                      >
-                        <input
-                          type="checkbox"
-                          className={MODAL_CHECKBOX_CLASS}
-                          checked={selectedSkillIds.includes(pt.id)}
-                          onChange={() => toggleSkill(pt.id)}
-                        />
-                        <span>
-                          {pt.code} — {pt.name}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  <CatalogMultiAdder
+                    label={t("skills")}
+                    list
+                    options={[...procedureTypes]
+                      .sort((a, b) => a.name.localeCompare(b.name, locale) || a.code.localeCompare(b.code))
+                      .map((pt) => ({
+                        value: pt.id,
+                        label: catalogNameThenCode(pt.name, pt.code),
+                      }))}
+                    value={selectedSkillIds}
+                    onChange={setSelectedSkillIds}
+                    selectAllLabel={t("selectAllSkills")}
+                    removeLabel={tc("delete")}
+                  />
                   <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("saveSkills")}</p>
                 </div>
               ) : null}
@@ -1345,19 +1359,17 @@ export default function MasterDataPage() {
                 value={form.capacity ?? "1"}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
               />
-              <FieldSelect
+              <CatalogField
+                kind="SEARCHABLE"
                 label={t("room")}
-                preset="select"
                 value={form.roomId ?? ""}
-                onChange={(e) => setForm({ ...form, roomId: e.target.value })}
-              >
-                <option value="">—</option>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.code} — {r.name}
-                  </option>
-                ))}
-              </FieldSelect>
+                emptyLabel="—"
+                options={rooms.map((r) => ({
+                  value: r.id,
+                  label: catalogNameThenCode(r.name, r.code),
+                }))}
+                onChange={(next) => setForm({ ...form, roomId: String(next ?? "") })}
+              />
               <Field
                 label={t("extendedEndHour")}
                 preset="count"
@@ -1368,27 +1380,6 @@ export default function MasterDataPage() {
           )}
           {tab === "procedureTypes" && (
             <>
-              <FieldRow cols={2}>
-                <CatalogField
-                  kind="CLOSED_SMALL"
-                  label={t("bodyPart")}
-                  value={form.bodyPart ?? ""}
-                  onChange={(v) => setForm({ ...form, bodyPart: String(v) })}
-                  options={[
-                    "HEAD",
-                    "NECK",
-                    "CHEST",
-                    "BACK",
-                    "ABDOMEN",
-                    "ARM_LEFT",
-                    "ARM_RIGHT",
-                    "LEG_LEFT",
-                    "LEG_RIGHT",
-                    "FULL_BODY",
-                  ].map((bp) => ({ value: bp, label: bp }))}
-                  emptyLabel="—"
-                />
-              </FieldRow>
               <FieldRow cols={4}>
                 <Field
                   label={t("durationMin")}
@@ -1415,67 +1406,95 @@ export default function MasterDataPage() {
                   onChange={(e) => setForm({ ...form, extendedEndHour: e.target.value })}
                 />
               </FieldRow>
+              <FieldRow cols={2}>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("bodyPart")}
+                  value={form.bodyPart ?? ""}
+                  onChange={(v) => setForm({ ...form, bodyPart: String(v) })}
+                  options={BODY_PARTS.map((bp) => ({
+                    value: bp,
+                    label: t(`bodyPart_${bp}` as "bodyPart"),
+                  }))}
+                  emptyLabel="—"
+                />
+              </FieldRow>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3">
+              <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
               <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
                 <input
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
                   checked={needsSite}
-                  onChange={(e) => setNeedsSite(e.target.checked)}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setNeedsSite(on);
+                    if (!on) setAllowedSiteCodes([]);
+                  }}
                 />
                 {t("needsSite")}
               </label>
               {needsSite ? (
-                <CatalogField
-                  kind="MULTI"
+                <CatalogMultiAdder
                   label={t("allowedSiteCodes")}
-                  value={allowedSiteCodes}
-                  onChange={(next) =>
-                    setAllowedSiteCodes(
-                      Array.isArray(next) ? next.map(String) : next ? [String(next)] : [],
-                    )
-                  }
                   options={physioSiteOptions}
+                  value={allowedSiteCodes}
+                  onChange={setAllowedSiteCodes}
+                  removeLabel={tc("delete")}
                 />
               ) : null}
-              <CatalogField
-                kind="MULTI"
-                label={t("physioOrderFields")}
-                value={physioOrderFields}
-                onChange={(next) =>
-                  setPhysioOrderFields(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
-                }
-                options={PHYSIO_ORDER_FIELD_CODES.map((code) => ({
-                  value: code,
-                  label: t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
-                }))}
-              />
+              </div>
+              <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={needsExtraFields}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setNeedsExtraFields(on);
+                    if (!on) setPhysioOrderFields([]);
+                  }}
+                />
+                {t("needsExtraFields")}
+              </label>
+              {needsExtraFields ? (
+                <CatalogMultiAdder
+                  label={t("physioOrderFields")}
+                  options={PHYSIO_ORDER_FIELD_CODES.map((code) => ({
+                    value: code,
+                    label: catalogNameThenCode(
+                      t(`physioField_${code}` as "physioOrderFields", { defaultValue: code }),
+                      code,
+                    ),
+                  }))}
+                  value={physioOrderFields}
+                  onChange={setPhysioOrderFields}
+                  removeLabel={tc("delete")}
+                />
+              ) : null}
+              </div>
               {skillCoverageMsg ? (
                 <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{skillCoverageMsg}</p>
               ) : null}
               <div className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
                 <p className={MODAL_FIELD_LABEL_CLASS}>{t("requirements")}</p>
-                <CatalogField
-                  kind="MULTI"
+                <CatalogMultiAdder
                   label={t("resourceCodes")}
                   hint={t("resourceCodesHint")}
+                  options={resourcePoolOptions}
                   value={physicalResourceCodesFromRequirements(requirements)}
-                  onChange={(next) => {
-                    const codes = Array.isArray(next)
-                      ? next.map(String)
-                      : next
-                        ? [String(next)]
-                        : [];
+                  onChange={(codes) =>
                     setRequirements((prev) =>
                       applyPhysicalResourcePool(prev, codes, (code) => {
                         const linked = resources.find((r) => r.code === code);
                         if (!linked) return undefined;
                         return linked.kind === "ROOM" ? "ROOM" : "EQUIPMENT";
                       }),
-                    );
-                  }}
-                  options={resourcePoolOptions}
+                    )
+                  }
+                  removeLabel={tc("delete")}
                 />
                 {requirements.map((req, index) =>
                   req.role === "STAFF" ? (

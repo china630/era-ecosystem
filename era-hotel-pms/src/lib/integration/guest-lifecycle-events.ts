@@ -10,6 +10,7 @@ import {
   SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
 } from "@era/contracts";
 import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-gateway";
+import { normalizeMedicalPackageCode } from "@/lib/services/medical-package-resolve.service";
 
 async function publishLifecycle(event: Record<string, unknown>) {
   const organizationId = requestOrganizationId();
@@ -159,6 +160,10 @@ export async function dispatchSanatoriumBookingCreated(input: {
   guestName?: string;
   checkInDate?: string;
   checkOutDate?: string;
+  roomNumber?: string;
+  paxKey?: string;
+  sex?: string;
+  birthDate?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED,
@@ -170,6 +175,10 @@ export async function dispatchSanatoriumBookingCreated(input: {
       guestName: input.guestName,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
+      roomNumber: input.roomNumber,
+      paxKey: input.paxKey,
+      sex: input.sex,
+      birthDate: input.birthDate,
     },
   };
   await publishLifecycle(event);
@@ -201,9 +210,13 @@ export async function dispatchStayProductChanged(input: {
   roomTypeId?: string;
   ratePlanId?: string;
   globalPersonId?: string;
+  guestName?: string;
   roomNumber?: string;
   checkInDate?: string;
   checkOutDate?: string;
+  paxKey?: string;
+  sex?: string;
+  birthDate?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
@@ -217,10 +230,124 @@ export async function dispatchStayProductChanged(input: {
       roomTypeId: input.roomTypeId,
       ratePlanId: input.ratePlanId,
       globalPersonId: input.globalPersonId,
+      guestName: input.guestName,
       roomNumber: input.roomNumber,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
+      paxKey: input.paxKey,
+      sex: input.sex,
+      birthDate: input.birthDate,
     },
   };
   await publishLifecycle(event);
+}
+
+export type ClinicPackageEventKind = "booking" | "stay-product" | "none";
+
+/**
+ * `STAY_PRODUCT_CHANGED` is only for a stay that already checked in.
+ * A new or still-confirmed reservation publishes `SANATORIUM_BOOKING_CREATED`.
+ */
+export function clinicPackageEventKind(status: string): ClinicPackageEventKind {
+  if (status === "IN_HOUSE") return "stay-product";
+  if (status === "CONFIRMED" || status === "OPTION") return "booking";
+  return "none";
+}
+
+type ClinicPackagePax = {
+  id: string;
+  medicalPackageCode?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  sex?: string | null;
+  birthDate?: Date | string | null;
+  guest?: {
+    fullName?: string | null;
+    globalPersonId?: string | null;
+    sex?: string | null;
+    birthDate?: Date | string | null;
+  } | null;
+};
+
+/**
+ * One clinic event per guest who has a medical SKU.
+ * Checked-in stays use stay-product. Everyone still arriving uses booking-created.
+ */
+export async function fanOutClinicMedicalPackages(input: {
+  status: string;
+  reservationId: string;
+  roomNumber?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  previousProgramCode?: string;
+  datesChanged?: boolean;
+  pax: ClinicPackagePax[];
+}): Promise<void> {
+  const kind = clinicPackageEventKind(input.status);
+  if (kind === "none") return;
+
+  const rows = input.pax.flatMap((pax) => {
+    const programCode = normalizeMedicalPackageCode(pax.medicalPackageCode ?? null);
+    if (!programCode) return [];
+    const guestName =
+      [pax.firstName, pax.lastName].filter(Boolean).join(" ") ||
+      pax.guest?.fullName ||
+      "Guest";
+    const globalPersonId = pax.guest?.globalPersonId ?? undefined;
+    return [
+      {
+        programCode,
+        guestName,
+        globalPersonId,
+        paxKey: pax.id,
+        ...lifecycleDemographicsFromPax(pax),
+      },
+    ];
+  });
+
+  if (rows.length === 0) {
+    if (kind === "stay-product" && input.datesChanged) {
+      await dispatchStayProductChanged({
+        reservationId: input.reservationId,
+        previousProgramCode: input.previousProgramCode,
+        effectiveDate: new Date().toISOString(),
+        roomNumber: input.roomNumber,
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+      });
+    }
+    return;
+  }
+
+  for (const row of rows) {
+    if (kind === "stay-product") {
+      await dispatchStayProductChanged({
+        reservationId: input.reservationId,
+        programCode: row.programCode,
+        previousProgramCode: input.previousProgramCode,
+        effectiveDate: new Date().toISOString(),
+        globalPersonId: row.globalPersonId,
+        guestName: row.guestName,
+        roomNumber: input.roomNumber,
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+        paxKey: row.paxKey,
+        sex: row.sex,
+        birthDate: row.birthDate,
+      });
+    } else {
+      await dispatchSanatoriumBookingCreated({
+        reservationId: input.reservationId,
+        programCode: row.programCode,
+        globalPersonId: row.globalPersonId,
+        guestName: row.guestName,
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+        roomNumber: input.roomNumber,
+        paxKey: row.paxKey,
+        sex: row.sex,
+        birthDate: row.birthDate,
+      });
+    }
+  }
 }

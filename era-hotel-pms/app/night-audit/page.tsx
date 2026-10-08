@@ -58,6 +58,10 @@ interface NightAuditStatus {
     noShowCandidates: number;
   };
   unclosedCashRows?: number;
+  posShiftStatus?: {
+    hasOpenShift: boolean;
+    outlets: Array<{ outletCode: string }>;
+  };
 }
 
 interface NightAuditRunRow {
@@ -222,6 +226,18 @@ export default function OperationsPage() {
               status?.businessDate?.currentBusinessDate ??
               tc('dash')}{' '}
             ({status?.businessDay?.status ?? status?.businessDate?.businessDayStatus ?? tc('dash')})
+          </li>
+          <li>
+            {t('posShiftStatus')}{' '}
+            {status?.posShiftStatus?.hasOpenShift ? (
+              <span className="text-rose-600">
+                {t('posShiftOpen', {
+                  outlet: status.posShiftStatus.outlets.map((row) => row.outletCode).join(', '),
+                })}
+              </span>
+            ) : (
+              t('posShiftOk')
+            )}
           </li>
           <li>
             {t('cashDeskStatus')}{' '}

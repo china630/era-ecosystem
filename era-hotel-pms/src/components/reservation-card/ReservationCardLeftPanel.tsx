@@ -20,13 +20,10 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
-import {
-  bookingSourceKind,
-  contractsForSource,
-  isManualFoSourceKind,
-  sourceKindLabel,
-} from '@/lib/booking-source-kind';
+import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
+import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import { addHotelDays } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
@@ -39,11 +36,123 @@ function ratePlanFitsRoomType(rp: RatePlanOption, roomTypeId: string): boolean {
   return rp.roomTypeId === roomTypeId;
 }
 
-/** Keep the stored row pickable when the source filter excludes it (legacy mismatched stays). */
-function withSelectedRow<T extends { id: string }>(scoped: T[], all: T[], selectedId: string): T[] {
-  if (!selectedId || scoped.some((x) => x.id === selectedId)) return scoped;
-  const hit = all.find((x) => x.id === selectedId);
-  return hit ? [hit, ...scoped] : scoped;
+function nightlyForType(
+  plans: RatePlanOption[],
+  ratePlanId: string,
+  typeId: string,
+): number | null {
+  const matches = plans.filter(
+    (r) => r.roomTypeId === typeId && r.pricePerNight != null && r.pricePerNight > 0,
+  );
+  if (matches.length === 0 || !typeId) return null;
+  const current = plans.find((r) => r.id === ratePlanId);
+  const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
+  return (peer ?? matches[0]).pricePerNight ?? null;
+}
+
+function moveReasonLabel(
+  code: string | null | undefined,
+  notes: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  const raw = (code ?? '').trim();
+  const note = (notes ?? '').trim();
+  if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('roomMoveReasonCard');
+  if (raw === 'SWAP') return t('roomMoveReasonSwap');
+  if (raw === 'RELOCATE') return t('roomMoveReasonRelocate');
+  if (note) return note;
+  return t('roomMoveReasonOther');
+}
+
+function RoomMoves({
+  changes,
+}: {
+  changes?: Array<{
+    id: string;
+    effectiveAt: string;
+    fromRoom?: { roomNumber: string } | null;
+    toRoom?: { roomNumber: string } | null;
+    reasonCode?: string | null;
+    notes?: string | null;
+  }>;
+}) {
+  const t = useTranslations('reservationCard');
+  const rows = [...(changes ?? [])].sort((a, b) =>
+    String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
+  );
+  if (rows.length === 0) return null;
+  return (
+    <details className={`text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-moves">
+      <summary className="cursor-pointer font-semibold">{t('roomMoves')}</summary>
+      <ul className="m-0 mt-1 list-none p-0">
+        {rows.map((c) => (
+          <li key={c.id}>
+            {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
+            {bakuDateTimeDisplay(c.effectiveAt)}, {moveReasonLabel(c.reasonCode, c.notes, t)}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function ClassSettlement({
+  chargeLabel,
+  givenLabel,
+  chargedNightly,
+  givenNightly,
+  hotelCovers,
+  disabled,
+  onHotel,
+  onGuestPays,
+  onHotelRefund,
+  onGuestCheaper,
+}: {
+  chargeLabel: string;
+  givenLabel: string;
+  chargedNightly: number | null;
+  givenNightly: number | null;
+  hotelCovers: boolean;
+  disabled: boolean;
+  onHotel: () => void;
+  onGuestPays: () => void;
+  onHotelRefund: () => void;
+  onGuestCheaper: () => void;
+}) {
+  const t = useTranslations('reservationCard');
+  const givenLower =
+    chargedNightly != null && givenNightly != null && givenNightly < chargedNightly;
+  return (
+    <div
+      className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
+      data-testid="class-settlement"
+    >
+      <p className="m-0">
+        {t('classDiffers', { charge: chargeLabel, physical: givenLabel })}
+      </p>
+      {hotelCovers ? (
+        <p className="m-0 font-medium">{t('classHotelCovers')}</p>
+      ) : givenLower ? (
+        <div className="flex flex-wrap gap-1">
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotelRefund}>
+            {t('classHotelRefund')}
+          </button>
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestCheaper}>
+            {t('classGuestCheaper')}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotel}>
+            {t('classHotelCovers')}
+          </button>
+          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestPays}>
+            {t('classGuestPays')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function nightsBetween(checkIn: string, checkOut: string): number {
@@ -53,70 +162,51 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
 }
 
-/** One plane: arrival (red landing), departure (red takeoff), or IN_HOUSE mid-stay early checkout (yellow takeoff). */
+/** One plane under Gecələr. Same command as the footer stay button. */
 function StayDateFlightIcons({
   checkIn,
   checkOut,
   status,
-  canEarlyStayCheckout,
-  earlyStayCheckoutBusy,
-  onEarlyStayCheckout,
+  busy,
+  onStayAction,
 }: {
   checkIn: string;
   checkOut: string;
   status?: string;
-  canEarlyStayCheckout?: boolean;
-  earlyStayCheckoutBusy?: boolean;
-  onEarlyStayCheckout?: () => void;
+  busy?: boolean;
+  onStayAction?: () => void;
 }) {
   const t = useTranslations('reservationCard');
   const kind = resolveStayWindowPlane({ checkIn, checkOut, status });
   if (!kind) return <div className="h-3.5" data-testid="stay-flight-icons" />;
-  const frame = `${SECONDARY_BUTTON_CLASS} !px-2`;
-  if (kind === 'arrival') {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconArrival')} aria-label={t('flightIconArrival')} className={`${frame} !text-[#E74C3C]`}>
-          <PlaneLanding className="h-4 w-4" />
-        </span>
-      </div>
-    );
-  }
-  if (kind === 'departure') {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <span title={t('flightIconDeparture')} aria-label={t('flightIconDeparture')} className={`${frame} !text-[#E74C3C]`}>
-          <PlaneTakeoff className="h-4 w-4" />
-        </span>
-      </div>
-    );
-  }
-  const earlyLabel = t('flightIconEarlyCheckout');
-  if (canEarlyStayCheckout && onEarlyStayCheckout) {
-    return (
-      <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-        <button
-          type="button"
-          title={earlyLabel}
-          aria-label={earlyLabel}
-          disabled={earlyStayCheckoutBusy}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onEarlyStayCheckout();
-          }}
-          className={`${frame} !text-amber-500 hover:!text-amber-600 disabled:opacity-50`}
-        >
-          <PlaneTakeoff className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  }
+  const landing = kind === 'earlyArrival' || kind === 'arrival';
+  const early = kind === 'earlyArrival' || kind === 'earlyCheckout';
+  const label =
+    kind === 'earlyArrival'
+      ? t('earlyCheckIn')
+      : kind === 'arrival'
+        ? t('confirmCheckIn')
+        : kind === 'earlyCheckout'
+          ? t('earlyCheckOut')
+          : t('confirmCheckOut');
+  const tone = early ? '!text-amber-500 hover:!text-amber-600' : '!text-[#E74C3C] hover:!text-[#C0392B]';
+  const Icon = landing ? PlaneLanding : PlaneTakeoff;
   return (
-    <div className="flex items-center justify-center" data-testid="stay-flight-icons">
-      <span title={earlyLabel} aria-label={earlyLabel} className={`${frame} !text-amber-500`}>
-        <PlaneTakeoff className="h-4 w-4" />
-      </span>
+    <div className="flex items-end justify-start" data-testid="stay-flight-icons">
+      <button
+        type="button"
+        title={label}
+        aria-label={label}
+        disabled={busy || !onStayAction}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onStayAction?.();
+        }}
+        className={`${SECONDARY_BUTTON_CLASS} !px-2 ${tone} disabled:opacity-50`}
+      >
+        <Icon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
@@ -144,11 +234,31 @@ export type ReservationCardLeftPanelProps = {
   checkInTime: string;
   checkOutTime: string;
   stayStatus?: string;
-  canEarlyStayCheckout?: boolean;
   earlyStayCheckoutBusy?: boolean;
-  onEarlyStayCheckout?: () => void;
+  onStayAction?: () => void;
+  voidKind?: 'cancel' | 'noShow' | null;
+  onVoidStay?: (kind: 'cancel' | 'noShow') => void;
+  staySlices?: Array<{
+    id: string;
+    fromDate: string;
+    toDate: string;
+    roomTypeCode?: string | null;
+    roomNumber?: string | null;
+  }>;
+  onSplitStay?: (input: { fromDate: string; roomTypeId: string; roomId: string | null }) => void;
+  splitBusy?: boolean;
+  splitDoors?: Array<{
+    id: string;
+    roomNumber: string;
+    roomTypeId?: string;
+    status?: string;
+    inventoryStatus?: string;
+    reservations?: Array<{ id: string; status: string; checkInDate: string; checkOutDate: string }>;
+  }>;
   voucherNo: string;
   agencyId: string;
+  walkInProfileCode?: string;
+  walkInProfiles?: Array<{ code: string; label: string }>;
   companyId: string;
   sourceId: string;
   roomTypeId: string;
@@ -182,6 +292,17 @@ export type ReservationCardLeftPanelProps = {
   /** Assigned door no longer matches Given / Room type physical category. */
   doorPhysicalMismatch?: boolean;
   assignedRoomLabel?: string;
+  roomChanges?: Array<{
+    id: string;
+    effectiveAt: string;
+    fromRoom?: { roomNumber: string } | null;
+    toRoom?: { roomNumber: string } | null;
+    reasonCode?: string | null;
+    notes?: string | null;
+  }>;
+  onClassSettlement?: (
+    action: 'HOTEL' | 'GUEST_PAY' | 'HOTEL_REFUND' | 'GUEST_CHEAPER',
+  ) => void;
   contractRef: string;
   salesContractId: string;
   creditLimitAzn: string;
@@ -189,6 +310,9 @@ export type ReservationCardLeftPanelProps = {
   /** One-line GUEST / AGENCY / COMPANY routing summary (ADR D3). */
   billingRoutingSummary?: string;
   onFolioRouting?: () => void;
+  onPackageRoomGap?: (mode: 'CHARGE' | 'REFUND' | 'COMP') => void;
+  onAgencyCreated?: (row: AgencyOption) => void;
+  onCompanyCreated?: (row: AgencyOption) => void;
   /** Optional until FO editor wires commercial booker fields. */
   booker?: string;
   guestRep?: string;
@@ -229,6 +353,10 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const [hotelCoversClass, setHotelCoversClass] = useState(false);
+  useEffect(() => {
+    setHotelCoversClass(false);
+  }, [props.givenRoomTypeId, props.roomTypeId]);
   const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
   const {
     isCreate,
@@ -261,83 +389,61 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   } = props;
 
   const nights = nightsBetween(props.checkIn, props.checkOut);
-  const [nightsDraft, setNightsDraft] = useState(String(nights));
-  useEffect(() => {
-    setNightsDraft(String(nights));
-  }, [nights]);
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
+  const [splitFrom, setSplitFrom] = useState('');
+  const [splitTypeId, setSplitTypeId] = useState('');
+  const [splitRoomId, setSplitRoomId] = useState('');
   const { byKind, roomViews, bedTypes } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
 
-  const filteredRatePlans = useMemo(
-    () => ratePlans.filter((rp) => ratePlanFitsRoomType(rp, props.roomTypeId)),
-    [ratePlans, props.roomTypeId],
-  );
+  const filteredRatePlans = useMemo(() => {
+    const list = [...ratePlans];
+    list.sort((a, b) => {
+      const af = ratePlanFitsRoomType(a, props.roomTypeId) ? 0 : 1;
+      const bf = ratePlanFitsRoomType(b, props.roomTypeId) ? 0 : 1;
+      if (af !== bf) return af - bf;
+      return (a.label || '').localeCompare(b.label || '');
+    });
+    return list;
+  }, [ratePlans, props.roomTypeId]);
 
   const selectedRatePlan = ratePlans.find((rp) => rp.id === props.ratePlanId);
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
-
-  const selectedSource = sources.find((s) => s.id === props.sourceId);
-  const sourceKind = bookingSourceKind(selectedSource?.code);
-  const walkInAgencies = useMemo(() => agencies.filter((a) => a.isWalkIn), [agencies]);
-  const walkInLocked =
-    sourceKind === 'WEB' || (sourceKind === 'WALKIN' && walkInAgencies.length === 0);
-  const corporateLocked = sourceKind === 'CORPORATE';
-  const agencyPickerLocked = walkInLocked || corporateLocked;
-  const showAgencyContract = sourceKind === 'AGENCY' || sourceKind === 'BOOKING';
-  const showCompanyContract = corporateLocked;
-  const showOptionalCompany = !corporateLocked;
-  const agencyOptions = useMemo(() => {
-    const scoped =
-      sourceKind === 'AGENCY'
-        ? agencies.filter((a) => !a.isOta && !a.isWalkIn)
-        : sourceKind === 'BOOKING'
-          ? agencies.filter((a) => a.isOta)
-          : sourceKind === 'WALKIN'
-            ? walkInAgencies
-            : agencies.filter((a) => !a.isWalkIn);
-    return withSelectedRow(scoped, agencies, props.agencyId);
-  }, [agencies, walkInAgencies, sourceKind, props.agencyId]);
-  const knownAgencyId = agencies.some((a) => a.id === props.agencyId) ? props.agencyId : '';
-  const knownCompanyId = companies.some((c) => c.id === props.companyId) ? props.companyId : '';
-  const sourceOptions = useMemo(
-    () =>
-      sources.filter(
-        (s) => isManualFoSourceKind(bookingSourceKind(s.code)) || s.id === props.sourceId,
-      ),
-    [sources, props.sourceId],
-  );
-  const agencyFieldLabel =
-    sourceKind === 'BOOKING'
-      ? t('otaChannel')
-      : sourceKind === 'WALKIN' && !walkInLocked
-        ? t('walkInProfile')
-        : sourceKind === 'WALKIN' || sourceKind === 'WEB'
-          ? t('individual')
-        : sourceKind === 'CORPORATE'
-          ? t('company')
-          : t('agency');
-  const contractsForKind = useMemo(
-    () =>
-      contractsForSource(salesContracts, {
-        sourceKind,
-        agencyId: props.agencyId,
-        companyId: props.companyId,
-      }),
-    [salesContracts, sourceKind, props.agencyId, props.companyId],
-  );
 
   const hkBadge = (roomHkCondition || roomStatus || '').toUpperCase() || null;
 
   return (
     <aside className="min-h-0 space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
+      <CommercialPartyStrip
+        sourceId={props.sourceId}
+        agencyId={props.agencyId}
+        companyId={props.companyId}
+        salesContractId={props.salesContractId}
+        contractRef={props.contractRef}
+        checkIn={props.checkIn}
+        sources={sources}
+        agencies={agencies}
+        companies={companies}
+        contracts={salesContracts}
+        disabled={disabled}
+        onSource={(id) => onChange({ sourceId: id })}
+        onAgency={(id) => onChange({ agencyId: id })}
+        onCompany={(id) => onChange({ companyId: id })}
+        onContract={(id) => onChange({ salesContractId: id })}
+        onContractRef={(value) => onChange({ contractRef: value })}
+        onAgencyCreated={(row) => props.onAgencyCreated?.(row)}
+        onCompanyCreated={(row) => props.onCompanyCreated?.(row)}
+        walkInProfiles={props.walkInProfiles}
+        walkInProfileCode={props.walkInProfileCode}
+        onWalkInProfile={(code) => onChange({ walkInProfileCode: code })}
+      />
       {/* 1. Stay window — dates + times always visible */}
       <FieldPanel title={t('stayWindow')}>
         <div className="space-y-2">
-          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_4.5rem] items-end gap-1.5">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_5.75rem] items-end gap-1.5">
             <fieldset disabled={disabled} className="contents">
               <DatePicker
                 label={tb('checkIn')}
@@ -355,27 +461,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 value={props.checkInTime}
                 onChange={set('checkInTime')}
               />
-              <Field
+              <NightsCountField
                 label={t('nights')}
-                preset="count"
-                value={nightsDraft}
-                disabled={disabled}
-                className="min-w-0 w-full"
-                inputClassName="w-full min-w-0 text-center"
-                onChange={(e) => setNightsDraft(e.target.value)}
-                onBlur={() => {
-                  const n = Number(nightsDraft);
-                  if (!props.checkIn || !Number.isInteger(n) || n < 1) {
-                    setNightsDraft(String(nights));
-                    return;
-                  }
+                value={String(nights)}
+                disabled={disabled || !props.checkIn}
+                onCommit={(n) => {
+                  if (!props.checkIn) return;
                   onChange({ checkOut: addHotelDays(props.checkIn, n) });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    (e.target as HTMLInputElement).blur();
-                  }
                 }}
               />
               <DatePicker
@@ -399,11 +491,24 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               checkIn={props.checkIn}
               checkOut={props.checkOut}
               status={props.stayStatus}
-              canEarlyStayCheckout={props.canEarlyStayCheckout}
-              earlyStayCheckoutBusy={props.earlyStayCheckoutBusy}
-              onEarlyStayCheckout={props.onEarlyStayCheckout}
+              busy={props.earlyStayCheckoutBusy}
+              onStayAction={props.onStayAction}
             />
           </div>
+          {props.voidKind && props.onVoidStay ? (
+            <button
+              type="button"
+              className={
+                props.voidKind === 'cancel'
+                  ? 'rounded-md bg-amber-400 px-3 py-1.5 text-[12px] font-semibold text-amber-950'
+                  : 'rounded-md bg-[#E74C3C] px-3 py-1.5 text-[12px] font-semibold text-white'
+              }
+              disabled={disabled || props.earlyStayCheckoutBusy}
+              onClick={() => props.onVoidStay?.(props.voidKind!)}
+            >
+              {props.voidKind === 'cancel' ? t('cancelStay') : t('noShowStay')}
+            </button>
+          ) : null}
           <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
             <FieldRow cols={2}>
               <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
@@ -456,18 +561,26 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           {props.givenRoomTypeId &&
           props.roomTypeId &&
           props.givenRoomTypeId !== props.roomTypeId ? (
-            <p
-              className="m-0 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
-              data-testid="complimentary-upgrade-chip"
-            >
-              {t('complimentaryUpgradeChip', {
-                charge:
-                  roomTypes.find((r) => r.id === props.roomTypeId)?.label ?? props.roomTypeId,
-                physical:
-                  roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
-                  props.givenRoomTypeId,
-              })}
-            </p>
+            <ClassSettlement
+              chargeLabel={
+                roomTypes.find((r) => r.id === props.roomTypeId)?.label ?? props.roomTypeId
+              }
+              givenLabel={
+                roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
+                props.givenRoomTypeId
+              }
+              chargedNightly={nightlyForType(ratePlans, props.ratePlanId, props.roomTypeId)}
+              givenNightly={nightlyForType(ratePlans, props.ratePlanId, props.givenRoomTypeId)}
+              hotelCovers={hotelCoversClass}
+              disabled={disabled}
+              onHotel={() => {
+                setHotelCoversClass(true);
+                props.onClassSettlement?.('HOTEL');
+              }}
+              onGuestPays={() => props.onClassSettlement?.('GUEST_PAY')}
+              onHotelRefund={() => props.onClassSettlement?.('HOTEL_REFUND')}
+              onGuestCheaper={() => props.onClassSettlement?.('GUEST_CHEAPER')}
+            />
           ) : null}
           {props.doorPhysicalMismatch ? (
             <p
@@ -633,6 +746,86 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </Link>
             </div>
           ) : null}
+          {(props.staySlices?.length ?? 0) > 1 ? (
+            <ul className="m-0 space-y-1 p-0 text-[12px] text-[#34495E]">
+              {props.staySlices!.map((slice) => (
+                <li key={slice.id}>
+                  {String(slice.fromDate).slice(0, 10)} – {String(slice.toDate).slice(0, 10)}
+                  {' · '}
+                  {slice.roomTypeCode ?? '—'}
+                  {slice.roomNumber ? ` · ${slice.roomNumber}` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {props.onSplitStay && !props.isCreate ? (
+            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
+              <DatePicker
+                label={t('splitFrom')}
+                fluid
+                value={splitFrom}
+                onChange={setSplitFrom}
+                placeholder={tc('datePlaceholder')}
+                openCalendarLabel={tc('openCalendar')}
+                disabled={disabled || props.splitBusy}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={tb('roomType')}
+                value={splitTypeId}
+                onChange={(v) => {
+                  setSplitTypeId(String(v ?? ''));
+                  setSplitRoomId('');
+                }}
+                options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
+                emptyLabel={null}
+                disabled={disabled || props.splitBusy}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t('splitDoor')}
+                value={splitRoomId}
+                onChange={(v) => setSplitRoomId(String(v ?? ''))}
+                options={(props.splitDoors ?? [])
+                  .filter((door) => {
+                    if (splitTypeId && door.roomTypeId !== splitTypeId) return false;
+                    if (door.status === 'OOO' || door.status === 'OOS' || door.inventoryStatus === 'OOO' || door.inventoryStatus === 'OOS') {
+                      return false;
+                    }
+                    if (!splitFrom || !props.checkOut) return true;
+                    const from = splitFrom.slice(0, 10);
+                    const to = props.checkOut.slice(0, 10);
+                    return !(door.reservations ?? []).some((stay) => {
+                      if (stay.id === props.reservationId) return false;
+                      if (stay.status !== 'CONFIRMED' && stay.status !== 'OPTION' && stay.status !== 'IN_HOUSE') {
+                        return false;
+                      }
+                      const ci = String(stay.checkInDate).slice(0, 10);
+                      const co = String(stay.checkOutDate).slice(0, 10);
+                      return ci < to && co > from;
+                    });
+                  })
+                  .map((door) => ({ value: door.id, label: door.roomNumber }))}
+                emptyLabel={t('splitQuotaOnly')}
+                disabled={disabled || props.splitBusy || !splitTypeId}
+              />
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
+                onClick={() =>
+                  props.onSplitStay?.({
+                    fromDate: splitFrom,
+                    roomTypeId: splitTypeId,
+                    roomId: splitRoomId || null,
+                  })
+                }
+              >
+                {t('splitStay')}
+              </button>
+            </div>
+          ) : null}
+          <RoomMoves changes={props.roomChanges} />
         </fieldset>
       </FieldPanel>
 
@@ -685,85 +878,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
         </fieldset>
       </FieldPanel>
 
-      {/* 4. Rate & source — sell path only (channel, counterparty, contract, rate) */}
+      {/* Package stays with the room. Source and contract sit above the dates. */}
       <FieldPanel title={t('rateAndSource')}>
         <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
-          <FieldRow cols={2} className="min-w-0">
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('source')}
-              value={props.sourceId}
-              onChange={setCatalog('sourceId')}
-              options={sourceOptions.map((s) => ({
-                value: s.id,
-                label: sourceKindLabel(t, bookingSourceKind(s.code), s.label),
-              }))}
-              disabled={disabled}
-            />
-            {corporateLocked ? (
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t('company')}
-                value={knownCompanyId}
-                onChange={setCatalog('companyId')}
-                options={companies.map((c) => ({ value: c.id, label: c.label }))}
-                disabled={disabled}
-                emptyLabel={tc('select')}
-              />
-            ) : (
-              <CatalogField
-                kind="SEARCHABLE"
-                label={agencyFieldLabel}
-                value={agencyPickerLocked ? '' : knownAgencyId}
-                onChange={setCatalog('agencyId')}
-                options={
-                  agencyPickerLocked
-                    ? []
-                    : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
-                }
-                disabled={disabled || agencyPickerLocked}
-                emptyLabel={
-                  agencyPickerLocked || sourceKind === 'WALKIN' ? t('individual') : tc('select')
-                }
-              />
-            )}
-          </FieldRow>
-          {showOptionalCompany ? (
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t('company')}
-              value={knownCompanyId}
-              onChange={setCatalog('companyId')}
-              options={companies.map((c) => ({ value: c.id, label: c.label }))}
-              disabled={disabled}
-              emptyLabel={tc('select')}
-              hint={t('companyOptionalHint')}
-            />
-          ) : null}
-          {showAgencyContract || showCompanyContract ? (
-            <FieldRow cols={2}>
-              <CatalogField
-                kind="ENTITY_REF"
-                label={showCompanyContract ? t('companyContract') : t('agencyContract')}
-                value={props.salesContractId}
-                onChange={setCatalog('salesContractId')}
-                options={contractsForKind.map((c) => ({ value: c.id, label: c.label }))}
-                emptyLabel="—"
-                disabled={
-                  disabled ||
-                  (showCompanyContract
-                    ? !props.companyId && contractsForKind.length === 0
-                    : !props.agencyId && contractsForKind.length === 0)
-                }
-              />
-              <Field
-                label={t('contractRef')}
-                preset="code"
-                value={props.contractRef}
-                onChange={set('contractRef')}
-              />
-            </FieldRow>
-          ) : null}
           <CatalogField
             kind="ENTITY_REF"
             label={t('packageOrRate')}
@@ -775,6 +892,39 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             emptyLabel={null}
             disabled={disabled}
           />
+          {selectedRatePlan?.roomTypeId &&
+          props.roomTypeId &&
+          selectedRatePlan.roomTypeId !== props.roomTypeId ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[12px] text-amber-950">
+              <p className="m-0">{t('packageRoomGap')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('CHARGE')}
+                >
+                  {t('packageGapCharge')}
+                </button>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('REFUND')}
+                >
+                  {t('packageGapRefund')}
+                </button>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled}
+                  onClick={() => props.onPackageRoomGap?.('COMP')}
+                >
+                  {t('packageGapComp')}
+                </button>
+              </div>
+            </div>
+          ) : null}
           <FieldRow cols={2} className="min-w-0">
             <CatalogField
               kind="SEARCHABLE"

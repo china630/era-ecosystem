@@ -41,7 +41,7 @@ Header quick links no longer duplicate availability / reservation list / rack / 
 Group lines carry quantity × room type, pax, and live Avl vs needed per type (same `GET /api/fo/sellable` gate as the single card). Header: **Room booking** and **Group booking** both use `+` plus label.
 
 Create modal uses `MODAL_FULL_CLASS` and `lg:grid-cols-[2fr_3fr]` like the room-stay card:
-- Left (same order as room card): **Stay** (dates + nights + code/name) → **Product** (default room type → package/rate → meal) → **Commercial** (source → agency → sales contract → contract ref → booker guest → booker/guestRep/paidBy → payment → folio mode).
+- Left (same order as room card): **Commercial strip** (source → agency → company, plus on the lookup, contract only after a profile) → **Stay** (dates + nights + code/name) → **Product** (default room type → package/rate → meal) → booker guest → booker/guestRep/paidBy → payment → folio mode.
 - Right: stay lines (scrollable) + sticky footer with totals (rooms / guests / nights) and sellable Avl.
 
 Globals vs override: rate/meal/payment/commercial apply to all stays; **room type** has a Product default and may be overridden per stay line. Qty on a line = N RoomStay of that type (same pax); one booker `guestId` is primary on every stay until names are completed (names-incomplete gate).
@@ -68,7 +68,7 @@ On create, Product panel shows live sellable preview via GET /api/fo/sellable (s
 
 **Party:** primary guest = `reservation.guestId` + `isPrimary` pax row; further +/search rows are companions (`isPrimary=false`). Incomplete (nameless) slots are filled before appending. Adults + children counts ↔ party list length are bidirectional (counts pad/trim empty slots; list add/remove adjusts adults then child buckets). Pax rows hydrate first/last from linked Guest only when `pax.guestId` matches (empty companion slots stay blank). Same `guestId` twice in one party is rejected on save. Named guests cannot claim overlapping stays on other rooms (TBA booker holds without names do not claim). Assignable doors: AVAILABLE / CLEAN / INSPECTED only; HK badge follows the selected dropdown room.
 
-**Source ↔ Agency / OTA:** commercial Source (`WALKIN` / `AGENCY` / `BOOKING`) filters the second picker — Walk-in locks Individual; Agency shows non-OTA agencies (placeholder Select…, **no Individual**); Booking shows OTA counterparts (`isOtaAgency`). Changing source clears agency + sales contract.
+**Source ↔ Agency / company:** desk source is Walk-in, agency, or online (`WALKIN` / `AGENCY` / `BOOKING`). Walk-in locks the agency lookup to Individual unless a walk-in agency row exists. Agency shows non-OTA agencies. Online shows OTA counterparts (`isOtaAgency`). Company is a second profile on the same row, not a source, and does not lock the agency. The contract list is the active contracts of the profiles already chosen. Changing source clears the agency and the contract, not the company. A missing profile can be created from the card as name+phone (agency) or name+VÖEN (company) via `POST /api/fo/quick-profile`.
 
 **Party billing (`partyBillingMode`):** `PRIMARY` (default) — one folio owner (`ownsFolio` on primary only). `EQUAL` — each party member owns a personal OPEN GUEST folio (`ensurePartyGuestFolios` after pax save).
 

@@ -55,7 +55,7 @@ export async function purgeNonClinicalPractitioners() {
 }
 
 export async function listPractitioners(
-  staffKind?: "DOCTOR" | "NURSE" | "LAB",
+  staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE",
   opts?: { includeInactive?: boolean },
 ) {
   return prisma.practitioner.findMany({
@@ -72,7 +72,7 @@ export async function updatePractitionerOpsCatalog(
   data: {
     specialty?: string | null;
     defaultSlotMinutes?: number;
-    staffKind?: "DOCTOR" | "NURSE" | "LAB";
+    staffKind?: "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE";
   },
 ) {
   return prisma.practitioner.update({ where: { id }, data });

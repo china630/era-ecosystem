@@ -306,6 +306,10 @@ enum PractitionerStaffKind {
   DOCTOR
   NURSE
   LAB
+  /// Naftalan bath attendant. Not a nurse.
+  BATH
+  /// Massage therapist. Not a nurse.
+  MASSAGE
 }
 
 enum StaffDutyRosterStatus {
@@ -507,6 +511,8 @@ model Appointment {
   /// Pattern B secondary location/equipment (optional).
   resourceId      String?           @map("resource_id")
   status          AppointmentStatus @default(SCHEDULED)
+  /// Length of this reception. The calendar paints occupancy from this, not from the doctor card.
+  durationMinutes Int               @default(30) @map("duration_minutes")
   reminderSentAt  DateTime?
   patientRef      PatientRef        @relation(fields: [patientRefId], references: [id])
   practitioner    Practitioner      @relation(fields: [practitionerId], references: [id])
@@ -1296,7 +1302,8 @@ model StaffDutyLine {
   note            String?
   createdAt       DateTime        @default(now()) @map("created_at")
 
-  @@unique([rosterId, procedureTypeId])
+  /// Several people may cover one procedure (one SKU, many cabins).
+  @@unique([rosterId, procedureTypeId, practitionerId])
   @@index([practitionerId])
   @@index([organizationId])
   @@map("staff_duty_line")
@@ -1464,9 +1471,11 @@ model ServiceCatalogCache {
   descriptionAz   String?            @map("description_az")
   descriptionRu   String?            @map("description_ru")
   descriptionEn   String?            @map("description_en")
+  /// Payable catalog price. Older Nafta rows stored this in listAmount and left amount at 0.
   amount          Decimal            @db.Decimal(12, 2)
-  /// Retail / walk-in / over-quota list price (kept when package `amount` is 0).
+  /// Same price as amount. Kept so rows imported before the single-price change still resolve.
   listAmount      Decimal?           @map("list_amount") @db.Decimal(12, 2)
+  /// Unused for charging. In-quota is 0 from the guest quota, not from this flag.
   packageIncluded Boolean            @default(false) @map("package_included")
   /// Legacy label kept in sync with the department card (import and filters).
   department      String?

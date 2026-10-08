@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { PageHeader, EraListFilterBar,
   useDebouncedValue, Field, CARD_CONTAINER_CLASS } from '@era/satellite-kit/ui';
 import { useGuestCrmList } from '@/components/guest-crm/useGuestCrmList';
+import ReservationCardModal from '@/components/ReservationCardModal';
 
 export default function GuestBookerHistoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ export default function GuestBookerHistoryPage() {
   const tc = useTranslations('common');
   const { rows } = useGuestCrmList(`/api/guests/${id}/booker-history`);
   const [q, setQ] = useState('');
+  const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const debouncedQ = useDebouncedValue(q, 300);
 
   const filtered = useMemo(() => {
@@ -52,14 +54,28 @@ export default function GuestBookerHistoryPage() {
         <ul className={`${CARD_CONTAINER_CLASS} space-y-2 p-3 text-[13px]`}>
           {filtered.map((r) => {
             const guest = r.guest as { fullName?: string } | undefined;
+            const label = `${guest?.fullName ?? ''} · ${String(r.checkInDate).slice(0, 10)}`.trim();
             return (
               <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
-                For {guest?.fullName ?? 'guest'} — {String(r.checkInDate).slice(0, 10)}
+                <button
+                  type="button"
+                  className="text-left text-[#2980B9] hover:underline"
+                  onClick={() => setOpenReservationId(String(r.id))}
+                >
+                  {label}
+                </button>
               </li>
             );
           })}
         </ul>
       )}
+      {openReservationId ? (
+        <ReservationCardModal
+          open
+          reservationId={openReservationId}
+          onClose={() => setOpenReservationId(null)}
+        />
+      ) : null}
     </>
   );
 }

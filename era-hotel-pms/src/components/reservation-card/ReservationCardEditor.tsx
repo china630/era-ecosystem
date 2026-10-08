@@ -12,10 +12,17 @@ import {
   TEXT_DANGER_CLASS,
   showApiError,
   showSuccess,
+  showWarning,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay, bakuTimeLabel } from '@era/satellite-kit/time';
+import { bakuDateTimeDisplay, bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
 import { guestListItems } from '@/lib/guest-list-identity';
-import { addHotelDays } from '@/lib/hotel-calendar';
+import {
+  isPreArrivalStatus,
+  operationalGapDetails,
+  operationalGapLabelKey,
+  operationalGaps,
+} from '@/lib/guest-stay-requirements';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
@@ -41,18 +48,30 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
+  ageYearsFromBirthDate,
   attachGuestToPax,
+  guestFitsSlot,
+  countsFromPax,
+  paxAgeYears,
   hydratePaxDemographicsFromGuest,
   hydratePaxNames,
   partySizeFromCounts,
-  syncCountsFromPaxLength,
+  stampEmptySlotsFromCounts,
+  syncPaxToBandCounts,
   syncPaxToPartySize,
 } from '@/components/reservation-card/party-pax';
 import {
   ReservationCardSubModals,
   useReservationSubModals,
 } from '@/components/reservation-card/ReservationCardSubModals';
-import { reservationNamesIncomplete } from '@/lib/reservation-names';
+import { reservationNamesIncomplete, missingAdultNameCount, isTbaDisplayName, paxHasRealName } from '@/lib/reservation-names';
+import {
+  hotelStayDayGap,
+  preArrivalVoidKind,
+  resolveStayWindowPlane,
+  stayActionForPlane,
+  type StayActionKind,
+} from '@/lib/stay-window-plane';
 import { canAssignDoor } from '@/lib/room-state';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
 import type {
@@ -95,6 +114,63 @@ function addDaysIso(iso: string, days: number): string {
   return addHotelDays(iso, days);
 }
 
+function formatOperationalGaps(
+  people: unknown,
+  t: (key: string, values?: Record<string, string>) => string,
+): string {
+  return t('checkInBlocked', {
+    details: operationalGapDetails(people, (gap) => t(operationalGapLabelKey(gap))),
+  });
+}
+
+function warnOperationalGaps(
+  people: unknown,
+  t: (key: string, values?: Record<string, string>) => string,
+) {
+  if (!Array.isArray(people) || people.length === 0) return;
+  showWarning(
+    t('checkInDocsLater', {
+      details: operationalGapDetails(people, (gap) => t(operationalGapLabelKey(gap))),
+    }),
+  );
+}
+
+function personDocLine(
+  row: {
+    firstName: string;
+    lastName: string;
+    nationality: string;
+    birthDate: string;
+    age: string;
+    idCardNo: string;
+    passportNo: string;
+    guestId?: string;
+    departedAt?: string | null;
+  },
+  profile: { phone?: string | null; documents?: Array<{ docType?: string | null; docNumber?: string | null }> } | null,
+  today: string,
+  t: (key: string) => string,
+): string | null {
+  if (row.departedAt) return null;
+  if (!(row.firstName.trim() || row.lastName.trim())) return null;
+  const gaps = operationalGaps(
+    {
+      name: [row.firstName, row.lastName].filter((part) => part.trim()).join(' '),
+      nationality: row.nationality || 'AZ',
+      birthDate: row.birthDate || null,
+      age: row.age.trim() ? Number(row.age) : null,
+      phone: profile?.phone ?? null,
+      documents: profile?.documents,
+      idCardNo: row.idCardNo,
+      passportNo: row.passportNo,
+    },
+    today,
+  );
+  if (gaps.length === 0) return null;
+  const name = [row.firstName, row.lastName].filter((part) => part.trim()).join(' ');
+  return `${name}: ${gaps.map((gap) => t(operationalGapLabelKey(gap))).join(', ')}`;
+}
+
 export type ReservationCardEditorProps = {
   layout: 'modal' | 'page';
   open: boolean;
@@ -104,6 +180,95 @@ export type ReservationCardEditorProps = {
   initialTab?: TabId;
   onReservationCreated?: (id: string) => void;
 };
+
+const MEDICAL_PACKAGE_FALLBACK = ['PKG-STANDART', 'PKG-PREMIUM', 'PKG-DERMO', 'PKG-DETOKS'] as const;
+
+function medicalPackageChoices(plans: RatePlanOption[]): Array<{ value: string; label: string }> {
+  const seen = new Set<string>();
+  const options: Array<{ value: string; label: string }> = [];
+  for (const plan of plans) {
+    const code = (plan.code ?? '').trim().toUpperCase();
+    if (!code.startsWith('PKG-') || seen.has(code)) continue;
+    seen.add(code);
+    options.push({ value: code, label: plan.label });
+  }
+  for (const code of MEDICAL_PACKAGE_FALLBACK) {
+    if (seen.has(code)) continue;
+    options.push({ value: code, label: code });
+  }
+  return options;
+}
+
+function nightlyForChargedType(
+  plans: RatePlanOption[],
+  ratePlanId: string,
+  typeId: string,
+): number | null {
+  const matches = plans.filter(
+    (r) => r.roomTypeId === typeId && r.pricePerNight != null && r.pricePerNight > 0,
+  );
+  if (matches.length === 0 || !typeId) return null;
+  const current = plans.find((r) => r.id === ratePlanId);
+  const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
+  return (peer ?? matches[0]).pricePerNight ?? null;
+}
+
+function stayMoveReason(
+  code: string | null | undefined,
+  note: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  const raw = (code ?? '').trim();
+  const text = (note ?? '').trim();
+  if (raw === 'CARD_ASSIGN' || text === 'CARD_ASSIGN') return t('roomMoveReasonCard');
+  if (raw === 'SWAP') return t('roomMoveReasonSwap');
+  if (raw === 'RELOCATE') return t('roomMoveReasonRelocate');
+  if (text) return text;
+  return t('roomMoveReasonOther');
+}
+
+function StayJournal({
+  notes,
+  changes,
+}: {
+  notes: Record<string, string>;
+  changes: Array<{
+    id: string;
+    effectiveAt: string;
+    fromRoom?: { roomNumber: string } | null;
+    toRoom?: { roomNumber: string } | null;
+    reasonCode?: string | null;
+    notes?: string | null;
+  }>;
+}) {
+  const t = useTranslations('reservationCard');
+  const moves = [...changes].sort((a, b) => String(b.effectiveAt).localeCompare(String(a.effectiveAt)));
+  const noteLines = Object.entries(notes).filter(([, value]) => value.trim());
+  if (moves.length === 0 && noteLines.length === 0) {
+    return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
+  }
+  return (
+    <div className="space-y-3 text-[13px] text-[#34495E]">
+      {moves.length > 0 ? (
+        <ul className="m-0 list-none space-y-1 p-0">
+          {moves.map((c) => (
+            <li key={c.id}>
+              {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
+              {bakuDateTimeDisplay(c.effectiveAt)}, {stayMoveReason(c.reasonCode, c.notes, t)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {noteLines.map(([key, value]) => (
+        <p key={key} className="m-0 whitespace-pre-wrap">
+          <span className="font-semibold">{key}</span>
+          {': '}
+          {value}
+        </p>
+      ))}
+    </div>
+  );
+}
 
 export function ReservationCardEditor({
   layout,
@@ -147,6 +312,8 @@ export function ReservationCardEditor({
   const [recordType, setRecordType] = useState('');
   const [tripReason, setTripReason] = useState('');
   const [agencyId, setAgencyId] = useState('');
+  const [walkInProfileCode, setWalkInProfileCode] = useState('');
+  const [walkInProfiles, setWalkInProfiles] = useState<Array<{ code: string; label: string }>>([]);
   const [companyId, setCompanyId] = useState('');
   const [sourceId, setSourceId] = useState('');
   const [roomTypeId, setRoomTypeId] = useState('');
@@ -178,6 +345,8 @@ export function ReservationCardEditor({
       counterpartyType?: string | null;
       ratePlanId: string;
       code: string;
+      validFrom?: string | null;
+      validTo?: string | null;
     }>
   >([]);
   const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
@@ -188,6 +357,8 @@ export function ReservationCardEditor({
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [swapOpen, setSwapOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [scanPaxIndex, setScanPaxIndex] = useState<number | null>(null);
   const [allergenCount, setAllergenCount] = useState(0);
   const staysBarRef = useRef<HTMLDivElement | null>(null);
   const [mealPlanId, setMealPlanId] = useState('');
@@ -201,6 +372,7 @@ export function ReservationCardEditor({
   const [discountActive, setDiscountActive] = useState(false);
   const [amendOpen, setAmendOpen] = useState(false);
   const [dailyRates, setDailyRates] = useState<DailyRateRow[]>([]);
+  const [pricingBusinessDate, setPricingBusinessDate] = useState<string | null>(null);
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
@@ -248,7 +420,7 @@ export function ReservationCardEditor({
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
-  const [earlyStayCheckoutOpen, setEarlyStayCheckoutOpen] = useState(false);
+  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
     applicable?: boolean;
     unusedNights?: number;
@@ -286,6 +458,7 @@ export function ReservationCardEditor({
     setRecordType(String(json.recordType ?? ''));
     setTripReason(String(json.tripReason ?? ''));
     setAgencyId(String(json.agencyId ?? ''));
+    setWalkInProfileCode(String(json.walkInProfileCode ?? ''));
     setCompanyId(String(json.companyId ?? ''));
     setSourceId(String(json.sourceId ?? ''));
     setPartyBillingMode(
@@ -347,6 +520,9 @@ export function ReservationCardEditor({
     setDiscountPercent(json.discountPercent != null ? String(json.discountPercent) : '');
     setDiscountActive(Boolean(json.discountActive) || Number(json.discountPercent) > 0);
     setCreditLimitAzn(json.creditLimitAzn != null ? String(json.creditLimitAzn) : '');
+    setPricingBusinessDate(
+      typeof json.pricingBusinessDate === 'string' ? json.pricingBusinessDate.slice(0, 10) : null,
+    );
     setDailyRates(
       (
         (json.dailyRates as Array<{
@@ -379,14 +555,16 @@ export function ReservationCardEditor({
         }
       | null
       | undefined;
-    if (compose && Array.isArray(compose.lines) && compose.lines.length > 0) {
+    if (compose && Number(compose.total) > 0) {
       setPackageCompose({
-        total: Number(compose.total ?? 0),
-        lines: compose.lines.map((l) => ({
-          code: l.code,
-          label: l.label ?? l.name ?? l.note ?? l.code,
-          amount: Number(l.amount ?? 0),
-        })),
+        total: Number(compose.total),
+        lines: Array.isArray(compose.lines)
+          ? compose.lines.map((l) => ({
+              code: l.code,
+              label: l.label ?? l.name ?? l.note ?? l.code,
+              amount: Number(l.amount ?? 0),
+            }))
+          : [],
       });
     } else {
       setPackageCompose(null);
@@ -406,12 +584,6 @@ export function ReservationCardEditor({
     const c11 = Number(json.children11_6 ?? 0) || 0;
     const c5 = Number(json.children5_2 ?? 0) || 0;
     const c1 = Number(json.children1_0 ?? 0) || 0;
-    const targetSize = Math.max(1, partySizeFromCounts({
-      adults: adultN || 1,
-      children11_6: c11,
-      children5_2: c5,
-      children1_0: c1,
-    }));
 
     let nextPax: PaxRow[];
     if (guests.length === 0 && masterGuest) {
@@ -553,19 +725,33 @@ export function ReservationCardEditor({
         masterGuest ?? null,
       );
     }
-    const sized = syncPaxToPartySize(nextPax, targetSize, equalMode);
+    const inHouse = json.status === 'IN_HOUSE';
+    if (inHouse) {
+      nextPax = nextPax.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+    }
+    const bandCounts = inHouse
+      ? countsFromPax(nextPax)
+      : {
+          adults: Math.max(0, adultN),
+          children11_6: c11,
+          children5_2: c5,
+          children1_0: c1,
+        };
+    if (!inHouse && partySizeFromCounts(bandCounts) < 1) bandCounts.adults = 1;
+    const stamped = stampEmptySlotsFromCounts(nextPax, bandCounts);
+    const sized = syncPaxToBandCounts(stamped, bandCounts, equalMode);
     setPax(sized);
-    if (sized.length !== targetSize) {
-      const bumped = syncCountsFromPaxLength(sized.length, {
-        adults: adultN || 1,
-        children11_6: c11,
-        children5_2: c5,
-        children1_0: c1,
-      });
-      setAdults(String(bumped.adults));
-      setChildren11_6(String(bumped.children11_6));
-      setChildren5_2(String(bumped.children5_2));
-      setChildren1_0(String(bumped.children1_0));
+    const actualBands = countsFromPax(sized);
+    if (
+      actualBands.adults !== bandCounts.adults ||
+      actualBands.children11_6 !== bandCounts.children11_6 ||
+      actualBands.children5_2 !== bandCounts.children5_2 ||
+      actualBands.children1_0 !== bandCounts.children1_0
+    ) {
+      setAdults(String(actualBands.adults));
+      setChildren11_6(String(actualBands.children11_6));
+      setChildren5_2(String(actualBands.children5_2));
+      setChildren1_0(String(actualBands.children1_0));
     }
   }, []);
 
@@ -601,7 +787,9 @@ export function ReservationCardEditor({
   }, [reservationId, tc, applyJson]);
 
   useEffect(() => {
-    if (!earlyStayCheckoutOpen || !reservationId) {
+    const checkoutAsk =
+      pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut';
+    if (!checkoutAsk || !reservationId) {
       setEarlyCheckoutPreview(null);
       return;
     }
@@ -617,7 +805,7 @@ export function ReservationCardEditor({
     return () => {
       cancelled = true;
     };
-  }, [earlyStayCheckoutOpen, reservationId]);
+  }, [pendingStayAction, reservationId]);
 
   useEffect(() => {
     if (!open || !bookingGroupId) {
@@ -726,6 +914,7 @@ export function ReservationCardEditor({
       setRecordType('');
       setTripReason('');
       setAgencyId('');
+      setWalkInProfileCode('');
       setCompanyId('');
       setSourceId('');
       setRoomTypeId('');
@@ -767,6 +956,22 @@ export function ReservationCardEditor({
       void load();
     }
   }, [open, isCreate, reservationId, load]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch('/api/master/lookups?kind=WALKIN_PROFILE&activeOnly=1')
+      .then((r) => r.json())
+      .then((rows) => {
+        if (!Array.isArray(rows)) return;
+        setWalkInProfiles(
+          rows.map((row: { code?: string; name?: string }) => ({
+            code: String(row.code ?? ''),
+            label: String(row.name ?? row.code ?? ''),
+          })),
+        );
+      })
+      .catch(() => undefined);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -827,6 +1032,7 @@ export function ReservationCardEditor({
               medicalFlag?: boolean;
               mealPlanId?: string | null;
               roomTypeId?: string | null;
+              pricePerNight?: number | string | null;
             }) => ({
               id: x.id,
               code: x.code,
@@ -834,6 +1040,8 @@ export function ReservationCardEditor({
               medicalFlag: !!x.medicalFlag,
               mealPlanId: x.mealPlanId ?? null,
               roomTypeId: x.roomTypeId ?? null,
+              pricePerNight:
+                x.pricePerNight != null ? Number(x.pricePerNight) : null,
               label: `${x.name ? `${x.code} — ${catalogLabel(x, locale)}` : x.code}${
                 x.medicalFlag ? tc('medicalSuffix') : ''
               }`,
@@ -865,7 +1073,7 @@ export function ReservationCardEditor({
         );
       }
       if (Array.isArray(g) || (g && typeof g === 'object' && Array.isArray((g as { items?: unknown }).items))) {
-        setGuestOptions(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
+        setGuestOptions(guestListItems(g).map((x) => ({ ...x, label: x.fullName })));
       }
       if (Array.isArray(rm)) {
         setRooms(
@@ -914,6 +1122,8 @@ export function ReservationCardEditor({
               companyId: string | null;
               counterpartyType?: string | null;
               ratePlanId: string;
+              validFrom?: string | null;
+              validTo?: string | null;
             }) => ({
               id: x.id,
               code: x.code,
@@ -921,6 +1131,8 @@ export function ReservationCardEditor({
               companyId: x.companyId,
               counterpartyType: x.counterpartyType,
               ratePlanId: x.ratePlanId,
+              validFrom: x.validFrom,
+              validTo: x.validTo,
               label: `${x.code} — ${x.name}`,
             }),
           ),
@@ -994,7 +1206,7 @@ export function ReservationCardEditor({
         children1_0: Number(children1_0) || 0,
       },
       {
-        age: pax[departPaxIdx].age ? Number(pax[departPaxIdx].age) : null,
+        age: paxAgeYears(pax[departPaxIdx]),
       },
     );
     return t('departOccupancyPreview', {
@@ -1055,28 +1267,7 @@ export function ReservationCardEditor({
 
   async function loadGuests() {
     const g = await fetch('/api/guests').then((r) => r.json());
-    setGuestOptions(guestListItems(g).map((x) => ({ id: x.id, label: x.fullName })));
-  }
-
-  async function spreadKind(kind: 'NIGHTLY' | 'STAY_TOTAL' | 'PERCENT', value: number) {
-    if (!reservationId) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservationId}/pricing/spread`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, value }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('failed'));
-        return;
-      }
-      showSuccess(tc('success'));
-      await load();
-    } finally {
-      setBusy(false);
-    }
+    setGuestOptions(guestListItems(g).map((x) => ({ ...x, label: x.fullName })));
   }
 
   async function recalcPricing() {
@@ -1124,28 +1315,140 @@ export function ReservationCardEditor({
     if (res.ok) setIsLocked(json.isLocked);
   }
 
-  async function confirmCheckIn() {
+  function checkInGapLines(early = false): string[] {
+    const lines: string[] = [];
+    if (!roomId) lines.push(t('checkInNeedRoom'));
+    if (doorPendingDirty) lines.push(t('checkInNeedSaveRoom'));
+    if (roomId && !assignedMatchesPhysical) lines.push(t('checkInNeedDoorType'));
+    if (!early && Boolean(checkIn) && checkIn > todayBakuYmd()) lines.push(t('checkInNeedArrival'));
+    const missingNames = missingAdultNameCount({ adults: Number(adults) || 1, pax });
+    if (missingNames > 0) lines.push(t('checkInNeedAdultNames', { count: String(missingNames) }));
+    else if (isTbaDisplayName((data?.guest as { fullName?: string } | undefined)?.fullName)) {
+      lines.push(t('checkInNeedRealName'));
+    }
+    const master = data?.guest as
+      | {
+          id?: string;
+          phone?: string | null;
+          documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
+        }
+      | undefined;
+    const loaded =
+      (data?.paxGuests as
+        | Array<{
+            guestId?: string | null;
+            guest?: {
+              id?: string;
+              phone?: string | null;
+              documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
+            } | null;
+          }>
+        | undefined) ?? [];
+    const today = todayBakuYmd();
+    for (const row of pax) {
+      const linked =
+        (row.guestId && master?.id === row.guestId ? master : null) ??
+        loaded.find((item) => item.guestId === row.guestId || item.guest?.id === row.guestId)?.guest ??
+        null;
+      const line = personDocLine(row, linked, today, t);
+      if (line) lines.push(line);
+    }
+    return lines;
+  }
+
+  function requestStayAction() {
+    const kind = stayActionForPlane(
+      resolveStayWindowPlane({ checkIn, checkOut, status, todayKey: todayBakuYmd() }),
+    );
+    if (!kind || !reservationId) return;
+    if (kind === 'earlyCheckIn' || kind === 'checkIn') {
+      const lines = checkInGapLines(kind === 'earlyCheckIn');
+      if (lines.length > 0) {
+        showWarning(t('checkInNeedList', { details: lines.join('; ') }));
+        return;
+      }
+    }
+    setPendingStayAction(kind);
+  }
+
+  async function voidStay(kind: 'cancel' | 'noShow') {
     if (!reservationId) return;
-    if (namesIncomplete) {
-      showApiError({ error: tb('namesIncomplete') }, tc('failed'));
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/cancel`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noShow: kind === 'noShow' }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      showSuccess(kind === 'noShow' ? t('noShowDone') : t('cancelDone'));
+      applyJson(json as Record<string, unknown>);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function splitStay(input: { fromDate: string; roomTypeId: string; roomId: string | null }) {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/stay-split`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      showSuccess(t('splitStayDone'));
+      applyJson(json as Record<string, unknown>);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmCheckIn(early = false) {
+    if (!reservationId) return;
+    const lines = checkInGapLines(early);
+    if (lines.length > 0) {
+      showWarning(t('checkInNeedList', { details: lines.join('; ') }));
       return;
     }
     setBusy(true);
     try {
-      const res = await fetch(`/api/reservations/${reservationId}/check-in`, { method: 'POST' });
+      const res = await fetch(`/api/reservations/${reservationId}/check-in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          early,
+          checkInTime: !early && checkInTime < '14:00' ? checkInTime : undefined,
+        }),
+      });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        showApiError(
+          json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
+            ? { error: formatOperationalGaps(json.people, t) }
+            : json,
+          tc('failed'),
+        );
         return;
       }
-      showSuccess(t('checkInDone'));
+      showSuccess(early ? t('earlyCheckInDone') : t('checkInDone'));
+      setPendingStayAction(null);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function confirmEarlyStayCheckout() {
+  async function confirmEarlyStayCheckout(onDate = false) {
     if (!reservationId) return;
     setBusy(true);
     try {
@@ -1164,8 +1467,8 @@ export function ReservationCardEditor({
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(t('earlyStayCheckoutDone'));
-      setEarlyStayCheckoutOpen(false);
+      showSuccess(onDate ? t('checkOutDone') : t('earlyStayCheckoutDone'));
+      setPendingStayAction(null);
       await load();
     } finally {
       setBusy(false);
@@ -1325,6 +1628,7 @@ export function ReservationCardEditor({
     }
     if (patch.sourceId !== undefined && patch.sourceId !== sourceId) {
       setAgencyId('');
+      setWalkInProfileCode('');
       setSalesContractId('');
       setContractRef('');
       setShareEligible(false);
@@ -1336,10 +1640,6 @@ export function ReservationCardEditor({
         setContractRef('');
       }
       const agency = agencies.find((a) => a.id === patch.agencyId);
-      const genderOk = guestGender === 'M' || guestGender === 'F';
-      if (isCreate && agency && !agency.isOta && Number(adults) <= 1 && genderOk) {
-        setShareEligible(true);
-      }
       if (agency?.isOta) {
         setShareEligible(false);
       }
@@ -1391,10 +1691,10 @@ export function ReservationCardEditor({
         current?.roomTypeId &&
         current.type !== 'BASE' &&
         nextType &&
-        current.roomTypeId !== nextType
+        current.roomTypeId !== nextType &&
+        current.mealPlanId
       ) {
-        setRatePlanId('');
-        setMealPlanId('');
+        setMealPlanId(current.mealPlanId);
       }
       // Physical filter may fall back to Room type — drop incompatible pending door
       const physical = (givenRoomTypeId || nextType).trim();
@@ -1438,6 +1738,7 @@ export function ReservationCardEditor({
       checkOutTime: setCheckOutTime,
       voucherNo: setVoucherNo,
       agencyId: setAgencyId,
+      walkInProfileCode: setWalkInProfileCode,
       companyId: setCompanyId,
       sourceId: setSourceId,
       roomTypeId: setRoomTypeId,
@@ -1482,25 +1783,28 @@ export function ReservationCardEditor({
     }
 
     if (countsTouched) {
-      const target = partySizeFromCounts({
-        adults: nextAdults,
-        children11_6: nextC11,
-        children5_2: nextC5,
-        children1_0: nextC1,
-      });
       setPax((prev) => {
-        const sized = syncPaxToPartySize(prev, target, partyBillingMode === 'EQUAL');
-        if (sized.length !== target) {
-          const bumped = syncCountsFromPaxLength(sized.length, {
+        const sized = syncPaxToBandCounts(
+          prev,
+          {
             adults: nextAdults,
             children11_6: nextC11,
             children5_2: nextC5,
             children1_0: nextC1,
-          });
-          setAdults(String(bumped.adults));
-          setChildren11_6(String(bumped.children11_6));
-          setChildren5_2(String(bumped.children5_2));
-          setChildren1_0(String(bumped.children1_0));
+          },
+          partyBillingMode === 'EQUAL',
+        );
+        const actual = countsFromPax(sized);
+        if (
+          actual.adults !== nextAdults ||
+          actual.children11_6 !== nextC11 ||
+          actual.children5_2 !== nextC5 ||
+          actual.children1_0 !== nextC1
+        ) {
+          setAdults(String(actual.adults));
+          setChildren11_6(String(actual.children11_6));
+          setChildren5_2(String(actual.children5_2));
+          setChildren1_0(String(actual.children1_0));
         }
         return sized;
       });
@@ -1509,17 +1813,13 @@ export function ReservationCardEditor({
 
   /** Party list → adults/children counts (bidirectional with onLeftChange pax sync). */
   function applyPaxChange(rows: PaxRow[]) {
-    setPax(rows);
-    const next = syncCountsFromPaxLength(rows.length, {
-      adults: Number(adults) || 0,
-      children11_6: Number(children11_6) || 0,
-      children5_2: Number(children5_2) || 0,
-      children1_0: Number(children1_0) || 0,
-    });
-    setAdults(String(next.adults));
-    setChildren11_6(String(next.children11_6));
-    setChildren5_2(String(next.children5_2));
-    setChildren1_0(String(next.children1_0));
+    const next = syncPaxToPartySize(rows, rows.length, partyBillingMode === 'EQUAL');
+    setPax(next);
+    const counts = countsFromPax(next);
+    setAdults(String(counts.adults));
+    setChildren11_6(String(counts.children11_6));
+    setChildren5_2(String(counts.children5_2));
+    setChildren1_0(String(counts.children1_0));
   }
 
   async function save() {
@@ -1548,8 +1848,17 @@ export function ReservationCardEditor({
         return;
       }
       if (isCreate) {
-        if (!roomTypeId || !ratePlanId || !guestId || !checkIn || !checkOut) {
-          showApiError({ error: tc('failed') }, tc('failed'));
+        const missing: string[] = [];
+        if (!roomTypeId) missing.push(tb('roomType'));
+        if (!ratePlanId) missing.push(t('packageOrRate'));
+        if (!guestId) missing.push(t('pickGuestRequired'));
+        if (!checkIn) missing.push(t('checkIn'));
+        if (!checkOut) missing.push(t('checkOut'));
+        if (missing.length > 0) {
+          showApiError(
+            { error: t('missingRequired', { fields: missing.join(', ') }) },
+            tc('failed'),
+          );
           return;
         }
         if (sellable && sellable.available < 1) {
@@ -1580,6 +1889,7 @@ export function ReservationCardEditor({
             ratePlanId,
             guestId,
             agencyId: parties.agencyId ?? undefined,
+            walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || null : null,
             companyId: parties.companyId ?? undefined,
             sourceId: sourceId || undefined,
             salesContractId: salesContractId || undefined,
@@ -1589,7 +1899,64 @@ export function ReservationCardEditor({
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
             paymentMethod,
             adults: Number(adults) || 1,
-            shareEligible: shareEligible && Number(adults) === 1,
+            children11_6: Number(children11_6) || 0,
+            children5_2: Number(children5_2) || 0,
+            children1_0: Number(children1_0) || 0,
+            shareEligible: false,
+            market: market || null,
+            segment: segment || null,
+            vipType: vipType || null,
+            tripReason: tripReason || null,
+            booker: booker || null,
+            guestRep: guestRep || null,
+            paidBy: paidBy || null,
+            voucherNo: voucherNo || null,
+            resNo: resNo || null,
+            shareNo: shareNo || null,
+            optionDate: optionDate ? new Date(optionDate).toISOString() : null,
+            optionState: optionState || null,
+            salesProject: salesProject || null,
+            specialStates: specialStates || null,
+            resGroup: resGroup || null,
+            colorCode: colorCode || null,
+            preferredLocation: preferredLocation || null,
+            preferredBed: preferredBed || null,
+            contractRef: contractRef || null,
+            creditLimitAzn:
+              creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
+            rateType: rateType || null,
+            accomType: accomType || null,
+            recordType: recordType || null,
+            roomId: pendingRoomId || undefined,
+            useManualRate,
+            manualDailyRate: manualDailyRate ? Number(manualDailyRate) : null,
+            discountPercent: discountPercent === '' ? null : Number(discountPercent),
+            discountActive: Number(discountPercent) > 0,
+            notes,
+            paxGuests: pax
+              .filter(
+                (p) =>
+                  Boolean(p.guestId) ||
+                  Boolean(p.firstName.trim()) ||
+                  Boolean(p.lastName.trim()),
+              )
+              .map((p) => ({
+                guestId: p.guestId || null,
+                firstName: p.firstName || null,
+                lastName: p.lastName || null,
+                middleName: p.middleName || null,
+                sex: p.sex || null,
+                nationality: p.nationality || null,
+                birthDate: p.birthDate || null,
+                age: p.age ? Number(p.age) : null,
+                idCardNo: p.idCardNo || null,
+                passportNo: p.passportNo || null,
+                isPrimary: p.isPrimary,
+                ownsFolio: p.ownsFolio ?? false,
+                medicalPackageCode: p.medicalPackageCode?.trim()
+                  ? p.medicalPackageCode.trim().toUpperCase()
+                  : null,
+              })),
           }),
         });
         const json = await res.json();
@@ -1603,6 +1970,9 @@ export function ReservationCardEditor({
           return;
         }
         showSuccess(tb('createBooking'));
+        if (isPreArrivalStatus(String(json.status ?? 'CONFIRMED'))) {
+          warnOperationalGaps(json.operationalGaps, t);
+        }
         if (json.id) onReservationCreated?.(json.id);
         return;
       }
@@ -1624,6 +1994,24 @@ export function ReservationCardEditor({
           body: JSON.stringify({ sex: guestGender }),
         }).catch(() => undefined);
       }
+      let party = pax;
+      let partyAdults = Number(adults) || 1;
+      let partyC11 = Number(children11_6) || 0;
+      let partyC5 = Number(children5_2) || 0;
+      let partyC1 = Number(children1_0) || 0;
+      if (status === 'IN_HOUSE') {
+        const kept = pax.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+        if (kept.length !== pax.length) {
+          party = kept;
+          const counts = countsFromPax(kept);
+          partyAdults = counts.adults;
+          partyC11 = counts.children11_6;
+          partyC5 = counts.children5_2;
+          partyC1 = counts.children1_0;
+          applyPaxChange(kept);
+          showWarning(t('emptyGuestDropped'));
+        }
+      }
       const res = await fetch(`/api/reservations/${reservationId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1631,8 +2019,9 @@ export function ReservationCardEditor({
           checkInDate: mergeDateTime(checkIn, checkInTime),
           checkOutDate: mergeDateTime(checkOut, checkOutTime),
           voucherNo: voucherNo || null,
-          adults: Number(adults) || 1,
+          adults: partyAdults,
           agencyId: parties.agencyId,
+          walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || null : null,
           companyId: parties.companyId,
           sourceId: sourceId || null,
           partyBillingMode,
@@ -1663,11 +2052,12 @@ export function ReservationCardEditor({
           manualDailyRate: manualDailyRate ? Number(manualDailyRate) : null,
           discountPercent: discountPercent === '' ? null : Number(discountPercent),
           discountActive: Number(discountPercent) > 0,
-          children11_6: Number(children11_6) || 0,
-          children5_2: Number(children5_2) || 0,
-          children1_0: Number(children1_0) || 0,
+          children11_6: partyC11,
+          children5_2: partyC5,
+          children1_0: partyC1,
           market: market || null,
           segment: segment || null,
+          ratePlanId: ratePlanId || undefined,
           booker: booker || null,
           guestRep: guestRep || null,
           paidBy: paidBy || null,
@@ -1684,7 +2074,7 @@ export function ReservationCardEditor({
             fixPrice: d.fixPrice ?? false,
             discountPct: d.discountPct ?? null,
           })),
-          paxGuests: pax.map((p) => ({
+          paxGuests: party.map((p) => ({
             id: p.id,
             guestId: p.guestId || null,
             title: p.title || null,
@@ -1715,6 +2105,9 @@ export function ReservationCardEditor({
         return;
       }
       showSuccess(tc('success'));
+      if (isPreArrivalStatus(String(json.status ?? ''))) {
+        warnOperationalGaps(json.operationalGaps, t);
+      }
       applyJson(json);
     } finally {
       setBusy(false);
@@ -1738,12 +2131,14 @@ export function ReservationCardEditor({
     !assignedDoor?.roomTypeId ||
     assignedDoor.roomTypeId === physicalRoomTypeId;
   const doorPendingDirty = Boolean(pendingRoomId && pendingRoomId !== roomId);
+  const arrivalReached = Boolean(checkIn) && checkIn <= todayBakuYmd();
   const canCheckIn =
     status === 'CONFIRMED' &&
     Boolean(roomId) &&
     !doorPendingDirty &&
     assignedMatchesPhysical &&
-    !namesIncomplete;
+    !namesIncomplete &&
+    arrivalReached;
   /** Physical room / times: arrival stage or room already assigned (not on create booking). */
   const showAssignment =
     !isCreate &&
@@ -1919,19 +2314,35 @@ export function ReservationCardEditor({
         .filter(Boolean)
         .join(' · ');
 
+  const stayActionKind = isCreate
+    ? null
+    : stayActionForPlane(
+        resolveStayWindowPlane({ checkIn, checkOut, status, todayKey: todayBakuYmd() }),
+      );
+  const stayActionLabel =
+    stayActionKind === 'earlyCheckIn'
+      ? t('earlyCheckIn')
+      : stayActionKind === 'checkIn'
+        ? t('confirmCheckIn')
+        : stayActionKind === 'earlyCheckOut'
+          ? t('earlyCheckOut')
+          : stayActionKind === 'checkOut'
+            ? t('confirmCheckOut')
+            : undefined;
+
   const actionProps = {
     busy,
     loading,
     isLocked,
     showLock: true,
-    canCheckIn: !isCreate && canCheckIn,
+    canCheckIn: !isCreate && status === 'CONFIRMED',
+    stayActionLabel,
+    onStayAction: stayActionKind ? requestStayAction : undefined,
     onClose,
     onToggleLock: isCreate ? undefined : () => void toggleLock(),
     onSave: () => void save(),
     onConfirmCheckIn: isCreate ? undefined : () => void confirmCheckIn(),
-    onHistory: reservationId
-      ? () => window.open(`/reports/reservations`, '_blank', 'noopener')
-      : undefined,
+    onHistory: reservationId ? () => setHistoryOpen(true) : undefined,
     attachOpen,
     onAttachToggle: reservationId ? () => setAttachOpen((o) => !o) : undefined,
     onRecalc: isCreate ? undefined : () => void recalcPricing(),
@@ -1968,33 +2379,72 @@ export function ReservationCardEditor({
             }
             swapDisabled={busy || isLocked}
           />
+          <p
+            className="m-0 mt-1 min-h-[1.25rem] truncate rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] text-[#34495E]"
+            data-testid="reservation-note-strip"
+          >
+            {Object.values(notes)
+              .map((value) => value.trim())
+              .filter(Boolean)
+              .join(' / ')}
+          </p>
+        </div>
+      ) : null}
+
+      {pendingStayAction ? (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
+          <span>
+            {pendingStayAction === 'earlyCheckIn'
+              ? t('stayActionEarlyIn', {
+                  days: String(hotelStayDayGap(checkIn, todayBakuYmd())),
+                })
+              : pendingStayAction === 'earlyCheckOut'
+                ? t('stayActionEarlyOut', {
+                    days: String(hotelStayDayGap(checkOut, todayBakuYmd())),
+                  })
+                : pendingStayAction === 'checkOut'
+                  ? t('stayActionCheckOut')
+                  : checkInTime < '14:00'
+                    ? t('stayActionEarlyHour')
+                    : t('stayActionCheckIn')}
+          </span>
+          <span className="flex gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setPendingStayAction(null)}
+            >
+              {tc('cancel')}
+            </button>
+            <button
+              type="button"
+              className={DANGER_BUTTON_CLASS}
+              disabled={busy}
+              onClick={() => {
+                const kind = pendingStayAction;
+                if (kind === 'earlyCheckIn') void confirmCheckIn(true);
+                else if (kind === 'checkIn') void confirmCheckIn(false);
+                else void confirmEarlyStayCheckout(kind === 'checkOut');
+              }}
+            >
+              {stayActionLabel}
+            </button>
+          </span>
+          {earlyCheckoutPreview?.unusedNights ? (
+            <span className="basis-full">
+              {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
+            </span>
+          ) : null}
+          {guestFolioBalance > 0.01 &&
+          (pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') ? (
+            <span className={`basis-full ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</span>
+          ) : null}
         </div>
       ) : null}
 
       {namesIncomplete ? (
         <div className="mb-3 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
           {tb('namesIncomplete')}
-        </div>
-      ) : null}
-
-      {!isCreate && Array.isArray(data?.roomChanges) && data.roomChanges.length > 0 ? (
-        <div className="mb-3 text-[12px] text-[#34495E]">
-          <p className="m-0 mb-1 font-semibold">{t('roomHistory')}</p>
-          <ul className="m-0 list-none p-0">
-            {(data.roomChanges as Array<{
-              id: string;
-              effectiveAt: string;
-              fromRoom?: { roomNumber: string } | null;
-              toRoom?: { roomNumber: string } | null;
-              reasonCode?: string | null;
-            }>).map((c) => (
-              <li key={c.id}>
-                {(c.fromRoom?.roomNumber ?? '—')} → {c.toRoom?.roomNumber ?? '—'}{' '}
-                {bakuDateTimeDisplay(c.effectiveAt)}
-                {c.reasonCode ? ` (${c.reasonCode})` : ''}
-              </li>
-            ))}
-          </ul>
         </div>
       ) : null}
 
@@ -2019,16 +2469,54 @@ export function ReservationCardEditor({
                 : undefined
             }
           />
-          <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
+          <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <ReservationCardLeftPanel
             isCreate={isCreate}
             isLocked={isLocked}
             showAssignment={showAssignment}
             sellable={isCreate ? sellable : null}
             agencies={agencies}
+            walkInProfileCode={walkInProfileCode}
+            walkInProfiles={walkInProfiles}
+            voidKind={
+              can(PERMISSIONS.RESERVATIONS_CANCEL)
+                ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
+                : null
+            }
+            onVoidStay={(kind) => void voidStay(kind)}
+            staySlices={
+              Array.isArray(data?.staySlices)
+                ? (data.staySlices as Array<{
+                    id: string;
+                    fromDate: string;
+                    toDate: string;
+                    roomType?: { code?: string } | null;
+                    room?: { roomNumber?: string } | null;
+                  }>).map((slice) => ({
+                    id: slice.id,
+                    fromDate: slice.fromDate,
+                    toDate: slice.toDate,
+                    roomTypeCode: slice.roomType?.code ?? null,
+                    roomNumber: slice.room?.roomNumber ?? null,
+                  }))
+                : []
+            }
+            splitDoors={rooms}
+            splitBusy={busy}
+            onSplitStay={
+              status === 'CONFIRMED' || status === 'OPTION' || status === 'IN_HOUSE'
+                ? (input) => void splitStay(input)
+                : undefined
+            }
             companies={companies}
             sources={sources}
             salesContracts={salesContracts}
+            onAgencyCreated={(row) =>
+              setAgencies((prev) => (prev.some((a) => a.id === row.id) ? prev : [...prev, row]))
+            }
+            onCompanyCreated={(row) =>
+              setCompanies((prev) => (prev.some((c) => c.id === row.id) ? prev : [...prev, row]))
+            }
             roomTypes={roomTypes}
             mealPlans={mealPlans}
             ratePlans={ratePlans}
@@ -2047,22 +2535,90 @@ export function ReservationCardEditor({
             roomHkCondition={selectedRoomHkCondition}
             doorPhysicalMismatch={!assignedMatchesPhysical}
             assignedRoomLabel={assignedDoor?.roomNumber}
+            roomChanges={
+              Array.isArray(data?.roomChanges)
+                ? (data.roomChanges as Array<{
+                    id: string;
+                    effectiveAt: string;
+                    fromRoom?: { roomNumber: string } | null;
+                    toRoom?: { roomNumber: string } | null;
+                    reasonCode?: string | null;
+                    notes?: string | null;
+                  }>)
+                : []
+            }
+            onClassSettlement={(action) => {
+              const givenNightly = nightlyForChargedType(ratePlans, ratePlanId, givenRoomTypeId);
+              const note =
+                action === 'HOTEL'
+                  ? t('classHotelCoversNote')
+                  : action === 'GUEST_PAY'
+                    ? t('classGuestPaysNote')
+                    : action === 'HOTEL_REFUND'
+                      ? t('classHotelRefundNote')
+                      : t('classGuestCheaperNote');
+              if (action !== 'HOTEL' && givenRoomTypeId) {
+                setRoomTypeId(givenRoomTypeId);
+                setGivenRoomTypeId('');
+                if (givenNightly != null && givenNightly > 0) {
+                  const today = todayBakuYmd();
+                  setUseManualRate(true);
+                  setManualDailyRate(String(givenNightly));
+                  setDailyRates((rows) =>
+                    rows.map((d) =>
+                      d.fixPrice || d.stayDate < today
+                        ? d
+                        : { ...d, amount: givenNightly, manualFlag: true, fixPrice: true },
+                    ),
+                  );
+                }
+              }
+              setNotes((prev) => ({
+                ...prev,
+                PRICE_NOTE: [prev.PRICE_NOTE, note].filter(Boolean).join('\n'),
+              }));
+            }}
             reservationId={reservationId}
             folioBalance={guestFolioBalance}
             billingRoutingSummary={billingRoutingSummary}
             stayStatus={status}
-            canEarlyStayCheckout={
-              !isCreate && status === 'IN_HOUSE' && can(PERMISSIONS.RESERVATIONS_CHECKOUT)
-            }
             earlyStayCheckoutBusy={busy}
-            onEarlyStayCheckout={
-              !isCreate && status === 'IN_HOUSE'
-                ? () => setEarlyStayCheckoutOpen(true)
-                : undefined
-            }
+            onStayAction={isCreate ? undefined : requestStayAction}
             onFolioRouting={
               !isCreate ? () => openSubModal('folioRouting') : undefined
             }
+            onPackageRoomGap={(mode) => {
+              const sold = ratePlans.find((r) => r.id === ratePlanId);
+              const peer = ratePlans.find(
+                (r) =>
+                  r.id !== sold?.id &&
+                  Boolean(r.medicalFlag) &&
+                  r.roomTypeId === roomTypeId &&
+                  r.pricePerNight != null,
+              );
+              const soldPrice = Number(sold?.pricePerNight ?? 0);
+              const peerPrice = Number(peer?.pricePerNight ?? soldPrice);
+              if (mode === 'COMP') {
+                setNotes((prev) => ({
+                  ...prev,
+                  PRICE_NOTE: [prev.PRICE_NOTE, t('packageGapComp')].filter(Boolean).join('\n'),
+                }));
+                return;
+              }
+              const nightly = mode === 'CHARGE' ? Math.max(soldPrice, peerPrice) : Math.min(soldPrice, peerPrice);
+              if (nightly > 0) {
+                setUseManualRate(true);
+                setManualDailyRate(String(nightly));
+                setDailyRates((rows) =>
+                  rows.map((d) => ({ ...d, amount: nightly, manualFlag: true, fixPrice: true })),
+                );
+              }
+              const gapLabel = mode === 'CHARGE' ? t('packageGapCharge') : t('packageGapRefund');
+              setNotes((prev) => ({
+                ...prev,
+                PRICE_NOTE: [prev.PRICE_NOTE, `${gapLabel}: ${nightly} AZN`].filter(Boolean).join('\n'),
+              }));
+            }}
             onBreakShare={
               !isCreate && shareEligible
                 ? () => void breakShare()
@@ -2089,7 +2645,13 @@ export function ReservationCardEditor({
               ))}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+            <div
+              className={
+                tab === 'pricing'
+                  ? 'flex min-h-0 flex-1 flex-col overflow-hidden pb-2'
+                  : 'min-h-0 flex-1 overflow-y-auto pb-2'
+              }
+            >
               {tab === 'guests' && (
                 <ReservationCardGuestsTab
                   isCreate={isCreate}
@@ -2118,16 +2680,19 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
-                  onScanId={(id) => {
+                  onScanId={(id, index) => {
+                    setScanPaxIndex(index ?? null);
                     setGuestCardId(id);
                     setGuestCardOpenIdReader(true);
                     setGuestCardOpen(true);
                   }}
-                  onNewGuest={() => {
+                  onNewGuest={(index) => {
+                    setScanPaxIndex(index);
                     setGuestCardId(null);
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
+                  packageOptions={medicalPackageChoices(ratePlans)}
                 />
               )}
 
@@ -2135,33 +2700,30 @@ export function ReservationCardEditor({
                 <ReservationCardPricingTab
                   isCreate={isCreate}
                   quoteText={quoteText}
-                  totalAmount={Number(data?.totalAmount ?? 0)}
                   dailyRates={dailyRates}
-                  useManualRate={useManualRate}
                   manualDailyRate={manualDailyRate}
                   discountPercent={discountPercent}
                   busy={busy}
                   isLocked={isLocked}
                   packageCompose={packageCompose}
+                  tariffNightly={
+                    ratePlans.find((plan) => plan.id === ratePlanId)?.pricePerNight ?? null
+                  }
+                  businessDate={pricingBusinessDate}
+                  postedDates={folios.flatMap((folio) =>
+                    folio.charges
+                      .filter((charge) =>
+                        ['ROOM', 'PKG', 'RATE_ADJ'].includes(charge.revenueCode?.code ?? ''),
+                      )
+                      .map((charge) =>
+                        charge.businessDate ? hotelDateKey(charge.businessDate) : '',
+                      )
+                      .filter(Boolean),
+                  )}
                   onDailyRates={setDailyRates}
-                  onToggleManual={(value) => {
-                    setUseManualRate(value);
-                    if (value) {
-                      const n = Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0;
-                      if (n > 0) void spreadKind('NIGHTLY', n);
-                    }
-                  }}
                   onManualRate={setManualDailyRate}
                   onDiscountPercent={setDiscountPercent}
-                  onSpreadNightly={() =>
-                    void spreadKind(
-                      'NIGHTLY',
-                      Number(manualDailyRate) || Number(dailyRates[0]?.amount) || 0,
-                    )
-                  }
-                  onSpreadTotal={(total) => void spreadKind('STAY_TOTAL', total)}
-                  onApplyPercent={() => void spreadKind('PERCENT', Number(discountPercent) || 0)}
-                  onRecalc={() => void recalcPricing()}
+                  onUseManual={setUseManualRate}
                 />
               )}
 
@@ -2173,6 +2735,7 @@ export function ReservationCardEditor({
                     lines={folioLines}
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
+                    canPostCharges={status === 'IN_HOUSE'}
                     onFolioTab={setFolioTab}
                   />
                 ) : (
@@ -2354,9 +2917,33 @@ export function ReservationCardEditor({
           setGuestCardOpen(false);
           setGuestCardOpenIdReader(false);
           setGuestCardId(null);
+          const target = scanPaxIndex;
+          setScanPaxIndex(null);
+          if (
+            target != null &&
+            pax[target] &&
+            meta?.birthDate &&
+            !guestFitsSlot(meta.birthDate, pax[target])
+          ) {
+            showWarning(t('guestAgeMismatch'));
+            return;
+          }
+          if (target != null && pax[target]) {
+            const filled: PaxRow = {
+              ...pax[target],
+              guestId: id,
+              firstName: fn || pax[target].firstName,
+              lastName: ln || pax[target].lastName,
+              birthDate: meta?.birthDate || pax[target].birthDate,
+              age: meta?.birthDate ? ageYearsFromBirthDate(meta.birthDate) : pax[target].age,
+            };
+            if (filled.isPrimary || !guestId) setGuestId(id);
+            applyPaxChange(pax.map((row, i) => (i === target ? filled : row)));
+            return;
+          }
           const attached = attachGuestToPax(
             pax,
-            { id, firstName: fn, lastName: ln },
+            { id, firstName: fn, lastName: ln, birthDate: meta?.birthDate },
             {
               equalMode: partyBillingMode === 'EQUAL',
               reservationGuestId: guestId,
@@ -2367,41 +2954,26 @@ export function ReservationCardEditor({
         }}
       />
       <EraModal
-        open={earlyStayCheckoutOpen}
-        title={t('confirmEarlyStayCheckout')}
-        onClose={() => setEarlyStayCheckoutOpen(false)}
-        maxWidthClass="max-w-md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setEarlyStayCheckoutOpen(false)}
-            >
-              {tc('cancel')}
-            </button>
-            <button
-              type="button"
-              className={DANGER_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => void confirmEarlyStayCheckout()}
-            >
-              {t('confirmEarlyStayCheckout')}
-            </button>
-          </div>
-        }
+        open={historyOpen}
+        title={t('stayJournal')}
+        onClose={() => setHistoryOpen(false)}
+        maxWidthClass="max-w-lg"
       >
-        <p className="m-0 text-[13px] text-[#34495E]">{t('earlyStayCheckoutHint')}</p>
-        {earlyCheckoutPreview?.unusedNights ? (
-          <p className="mt-2 mb-0 text-[13px] text-[#34495E]">
-            {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
-          </p>
-        ) : null}
-        {guestFolioBalance > 0.01 ? (
-          <p className={`mt-2 mb-0 text-[13px] ${TEXT_DANGER_CLASS}`}>
-            {t('earlyStayCheckoutFolioHint')}
-          </p>
-        ) : null}
+        <StayJournal
+          notes={notes}
+          changes={
+            Array.isArray(data?.roomChanges)
+              ? (data.roomChanges as Array<{
+                  id: string;
+                  effectiveAt: string;
+                  fromRoom?: { roomNumber: string } | null;
+                  toRoom?: { roomNumber: string } | null;
+                  reasonCode?: string | null;
+                  notes?: string | null;
+                }>)
+              : []
+          }
+        />
       </EraModal>
       <EraModal
         open={notesAlertOpen}

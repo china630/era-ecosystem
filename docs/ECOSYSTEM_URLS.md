@@ -87,7 +87,7 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | `/help` | Canonical FAQ (az \| ru \| en) | — |
 | `/terms` | User agreement (az \| ru \| en) | — |
 | `/partner` | Referral / partner dashboard | `GET /v1/partner/dashboard` |
-| `/agency/login` | Agency portal login (hotel B2B extranet) | `POST /agency-portal/login`, `POST /agency-portal/properties/pick` |
+| `/agency/login` | Agency portal login and password change (hotel B2B extranet) | `POST /agency-portal/login`, `POST /agency-portal/set-password`, `POST /agency-portal/properties/pick` |
 | `/buyer/login` | Buyer portal login (trade credit cabinet) | `POST /buyer-portal/login`, `POST /buyer-portal/orgs/pick` |
 | `/` | **Marketing hub** (guest, no sidebar) / auth redirect (authed → workspace/orgs) | overlay `GET /v1/public/pricing` |
 | `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated, **not** public marketing) | SSO launch |

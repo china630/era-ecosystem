@@ -3,10 +3,17 @@ import {
   type SatelliteTenantContext,
 } from "../tenancy/satellite-tenant-context";
 import {
+  assertSatelliteBillingAllows,
+  type SatelliteBillingGate,
+} from "../billing/satellite-billing-gate";
+import {
+  ERA_METHOD_HEADER,
+  ERA_PATHNAME_HEADER,
   getBearerOrCookieToken,
   type CookieReader,
   type HeaderReader,
 } from "./middleware-helpers";
+import { isPlatformSuperAdminUser } from "./platform-super-admin";
 import {
   authCookieName,
   verifySatelliteSession,
@@ -24,12 +31,14 @@ export type SatelliteSessionUser = {
 
 export type ReadSatelliteStaffSessionInput<U extends SatelliteSessionUser> = {
   cookies: CookieReader;
-  /** Bearer token source only; the org header is never read here. */
+  /** Bearer token source, plus the kit middleware method/path stamps; the org header is never read. */
   headers: HeaderReader;
   /** Runs inside the token org tenant. Missing row → no session. */
   loadUser: (session: SatelliteStaffSessionPayload) => Promise<U | null | undefined>;
   cookieName?: string;
   enterTenant?: (ctx: SatelliteTenantContext) => void;
+  /** Billing SOFT/HARD gate. Default asks the orchestrator; `false` skips (tests). */
+  billingGate?: SatelliteBillingGate | false;
 };
 
 export type SatelliteStaffSession<U extends SatelliteSessionUser> = {
@@ -42,6 +51,10 @@ export type SatelliteStaffSession<U extends SatelliteSessionUser> = {
  * take the org from the signed token, enter that tenant, and load the staff
  * row. No org claim, no row, an inactive row, or a row in another org → null.
  * Neither the request header nor the process bind is used.
+ *
+ * Then the billing gate: a call the orchestrator denies (SOFT_BLOCK export,
+ * HARD_BLOCK write) throws `SatelliteBillingBlockedError` (402). Platform
+ * super-admins skip it. Without the middleware method stamp the call counts as a write.
  */
 export async function readSatelliteStaffSession<U extends SatelliteSessionUser>(
   input: ReadSatelliteStaffSessionInput<U>,
@@ -68,5 +81,14 @@ export async function readSatelliteStaffSession<U extends SatelliteSessionUser>(
   const user = await input.loadUser(session);
   if (!user || !user.active) return null;
   if (user.organizationId?.trim() !== organizationId) return null;
+
+  const gate = input.billingGate ?? assertSatelliteBillingAllows;
+  if (gate && !isPlatformSuperAdminUser({ email: session.email, login: session.login })) {
+    await gate({
+      organizationId,
+      method: input.headers.get(ERA_METHOD_HEADER)?.trim() || "POST",
+      path: input.headers.get(ERA_PATHNAME_HEADER)?.trim() || "",
+    });
+  }
   return { session, user };
 }

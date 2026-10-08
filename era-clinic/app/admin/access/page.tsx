@@ -40,6 +40,8 @@ const STAFF_KIND_OPTIONS = [
   { value: "DOCTOR", label: "DOCTOR" },
   { value: "NURSE", label: "NURSE" },
   { value: "LAB", label: "LAB" },
+  { value: "BATH", label: "BATH" },
+  { value: "MASSAGE", label: "MASSAGE" },
   { value: "NONE", label: "NONE" },
 ];
 

@@ -27,11 +27,11 @@ describe('bookingSourceKind', () => {
     expect(bookingSourceKind('BOOKING_COM')).toBe('BOOKING');
   });
 
-  it('reception picks only WALKIN / AGENCY / CORPORATE', () => {
+  it('reception picks Walk-in, agency, and online', () => {
     expect(isManualFoSourceKind('WALKIN')).toBe(true);
     expect(isManualFoSourceKind('AGENCY')).toBe(true);
-    expect(isManualFoSourceKind('CORPORATE')).toBe(true);
-    expect(isManualFoSourceKind('BOOKING')).toBe(false);
+    expect(isManualFoSourceKind('BOOKING')).toBe(true);
+    expect(isManualFoSourceKind('CORPORATE')).toBe(false);
     expect(isManualFoSourceKind('WEB')).toBe(false);
   });
 });
@@ -61,20 +61,22 @@ describe('contractsForSource', () => {
     counterpartyType: 'CORPORATE' as const,
   };
 
-  it('hides B2B contracts on walk-in', () => {
+  it('hides contracts until a profile is chosen', () => {
     expect(contractsForSource([agency, corp], { sourceKind: 'WALKIN' })).toEqual([]);
+    expect(contractsForSource([agency, corp], { sourceKind: 'AGENCY' })).toEqual([]);
   });
 
-  it('lists only agency contracts for AGENCY source', () => {
+  it('lists the chosen agency contract and the chosen company contract together', () => {
     expect(contractsForSource([agency, corp], { sourceKind: 'AGENCY', agencyId: 'ag-1' })).toEqual([
       agency,
     ]);
-  });
-
-  it('lists only corporate contracts for CORPORATE source', () => {
     expect(
-      contractsForSource([agency, corp], { sourceKind: 'CORPORATE', companyId: 'co-1' }),
-    ).toEqual([corp]);
+      contractsForSource([agency, corp], {
+        sourceKind: 'AGENCY',
+        agencyId: 'ag-1',
+        companyId: 'co-1',
+      }),
+    ).toEqual([agency, corp]);
   });
 
   it('infers CORPORATE from companyId when type missing', () => {
@@ -82,27 +84,27 @@ describe('contractsForSource', () => {
     expect(contractCounterpartyType(legacy)).toBe('CORPORATE');
   });
 
-  it('corporate contract clears agency FK', () => {
-    expect(fksFromSalesContract(corp)).toEqual({ agencyId: '', companyId: 'co-1' });
+  it('a company contract does not clear the agency', () => {
+    expect(fksFromSalesContract(corp)).toEqual({ agencyId: undefined, companyId: 'co-1' });
     expect(fksFromSalesContract(agency)).toEqual({ agencyId: 'ag-1', companyId: undefined });
   });
 
-  it('walk-in and corporate persist no travel-agent id', () => {
+  it('walk-in drops a travel agent, a company source keeps both profiles', () => {
     expect(
       persistCounterpartyIds({ sourceKind: 'WALKIN', agencyId: 'ag-1', companyId: 'co-1' }),
     ).toEqual({ agencyId: null, companyId: 'co-1' });
     expect(
       persistCounterpartyIds({ sourceKind: 'CORPORATE', agencyId: 'ag-1', companyId: 'co-1' }),
-    ).toEqual({ agencyId: null, companyId: 'co-1' });
+    ).toEqual({ agencyId: 'ag-1', companyId: 'co-1' });
     expect(
       persistCounterpartyIds({ sourceKind: 'AGENCY', agencyId: 'ag-1', companyId: 'co-1' }),
     ).toEqual({ agencyId: 'ag-1', companyId: 'co-1' });
   });
 
-  it('keeps a walk-in-recorded agency row on WALKIN (medical package rules)', () => {
+  it('clears a walk-in-recorded agency on WALKIN (profile is a lookup, not an agency)', () => {
     expect(
       persistCounterpartyIds({ sourceKind: 'WALKIN', agencyId: 'ag-w', agencyIsWalkIn: true }),
-    ).toEqual({ agencyId: 'ag-w', companyId: null });
+    ).toEqual({ agencyId: null, companyId: null });
     expect(
       persistCounterpartyIds({ sourceKind: 'WEB', agencyId: 'ag-w', agencyIsWalkIn: true }),
     ).toEqual({ agencyId: null, companyId: null });

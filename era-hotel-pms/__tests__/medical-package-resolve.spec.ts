@@ -1,5 +1,6 @@
 import {
   normalizeMedicalPackageCode,
+  overlayFoPackageCodes,
   programCodeForLifecycle,
   resolveAgencyPackageCode,
   resolveMedicalSku,
@@ -179,14 +180,25 @@ describe("medical-package-resolve", () => {
     expect(resolveAgencyPackageCode("Walkin medical")).toBeNull();
   });
 
-  it("never uses Rate Code even when present", () => {
+  it("sold package rate plan fills guests when notes and agency are silent", () => {
     const r = resolveMedicalSku({
       notes: [],
+      agencyName: null,
+      guests: [{ fullName: "Guest" }, { fullName: "Guest 2" }],
+      ratePlanCode: "PKG-STANDART",
+    });
+    expect(r.perGuestCodes).toEqual(["PKG-STANDART", "PKG-STANDART"]);
+    expect(r.unanimousCode).toBe("PKG-STANDART");
+  });
+
+  it("notes still win over the sold rate plan", () => {
+    const r = resolveMedicalSku({
+      notes: [{ noteType: "EXTRA_REQ", text: "ERA-PKG PREMIUM" }],
       agencyName: null,
       guests: [{ fullName: "Guest" }],
       ratePlanCode: "PKG-STANDART",
     });
-    expect(r.unanimousCode).toBeNull();
+    expect(r.unanimousCode).toBe("PKG-PREMIUM");
   });
 
   it("unstructured Dermo paket in Extra Req", () => {
@@ -196,5 +208,28 @@ describe("medical-package-resolve", () => {
       guests: [{ fullName: "Guest" }],
     });
     expect(r.unanimousCode).toBe("PKG-DERMO");
+  });
+
+  it("empty guest column inherits the sold package", () => {
+    const resolved = resolveMedicalSku({
+      notes: [],
+      agencyName: null,
+      guests: [{ fullName: "A" }, { fullName: "B" }],
+      ratePlanCode: "PKG-PREMIUM",
+    });
+    const overlaid = overlayFoPackageCodes(resolved, [null, null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-PREMIUM", "PKG-PREMIUM"]);
+  });
+
+  it("an explicit guest package replaces only that guest", () => {
+    const resolved = resolveMedicalSku({
+      notes: [],
+      agencyName: null,
+      guests: [{ fullName: "A" }, { fullName: "B" }],
+      ratePlanCode: "PKG-STANDART",
+    });
+    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMO", null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMO", "PKG-STANDART"]);
+    expect(overlaid.unanimousCode).toBeNull();
   });
 });

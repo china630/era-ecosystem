@@ -6,9 +6,8 @@ import {
   SetMetadata,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { SecurityMode } from "@erafinance/database";
-import { PrismaService } from "../prisma/prisma.service";
-import { runWithTenantContextAsync } from "../prisma/tenant-context";
+import { Prisma, SecurityMode } from "@erafinance/database";
+import { TenantPrismaRawService } from "../prisma/tenant-prisma-raw.service";
 
 export const ALLOW_IN_DISPUTE_MODE = "allowInDisputeMode";
 
@@ -23,7 +22,7 @@ function isFrozenWrite(method: string): boolean {
 @Injectable()
 export class DisputeFreezeGuard implements CanActivate {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly raw: TenantPrismaRawService,
     private readonly reflector: Reflector,
   ) {}
 
@@ -49,14 +48,12 @@ export class DisputeFreezeGuard implements CanActivate {
     if (!orgId) {
       return true;
     }
-    const state = await runWithTenantContextAsync(
-      { organizationId: orgId, skipTenantFilter: false },
-      () =>
-        this.prisma.organizationSecurityState.findUnique({
-          where: { organizationId: orgId },
-        }),
+    // Guards run before TenantContextInterceptor: the tenant Prisma extension has no context yet.
+    const rows = await this.raw.$queryRaw<Array<{ mode: string }>>(
+      orgId,
+      Prisma.sql`SELECT mode::text AS mode FROM organization_security_states WHERE organization_id = ${orgId}::uuid LIMIT 1`,
     );
-    const mode = state?.mode ?? SecurityMode.NORMAL;
+    const mode = (rows[0]?.mode as SecurityMode | undefined) ?? SecurityMode.NORMAL;
 
     if (mode === SecurityMode.HARD_BLOCK_PLATFORM) {
       const m = (req.method ?? "GET").toUpperCase();

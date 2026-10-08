@@ -11,9 +11,16 @@ export type ActionItem = {
   disabledReasonKey?: string;
   badgeCount?: number;
   buttonId?: string;
+  panelId?: string;
 };
 
-export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
+export function GuestCardActionGrid({
+  actions,
+  onOpenPanel,
+}: {
+  actions: ActionItem[];
+  onOpenPanel?: (panelId: string) => void;
+}) {
   const t = useTranslations('guestCard');
 
   return (
@@ -34,9 +41,23 @@ export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
             </span>
           ) : null;
 
+        if (a.panelId && !a.disabled && onOpenPanel) {
+          return (
+            <button
+              key={a.buttonId ?? a.labelKey}
+              type="button"
+              className="relative rounded-xl bg-[#2980B9] px-3 py-3 text-center text-[13px] font-medium text-white hover:bg-[#2471A3]"
+              onClick={() => onOpenPanel(a.panelId!)}
+            >
+              {label}
+              {badge}
+            </button>
+          );
+        }
+
         if (a.href && !a.disabled) {
           const className =
-            'relative rounded-lg bg-[#2980B9] px-3 py-3 text-center text-[13px] font-medium text-white hover:bg-[#2471A3]';
+            'relative rounded-xl bg-[#2980B9] px-3 py-3 text-center text-[13px] font-medium text-white hover:bg-[#2471A3]';
           if (a.external) {
             return (
               <a
@@ -63,7 +84,7 @@ export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
         return (
           <span
             key={a.buttonId ?? a.labelKey}
-            className="relative rounded-lg bg-[#2980B9]/40 px-3 py-3 text-center text-[13px] text-white/90"
+            className="relative rounded-xl bg-[#2980B9]/40 px-3 py-3 text-center text-[13px] text-white/90"
             title={title}
           >
             {label}

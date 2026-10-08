@@ -106,6 +106,7 @@ export async function createGroupBookingWithStays(input: {
   code?: string;
   name: string;
   agencyId?: string;
+  walkInProfileCode?: string | null;
   companyId?: string;
   folioMode?: BookingFolioMode;
   checkInDate: Date;
@@ -153,6 +154,7 @@ export async function createGroupBookingWithStays(input: {
         ratePlanId,
         mealPlanId: input.mealPlanId,
         agencyId: input.agencyId,
+        walkInProfileCode: input.walkInProfileCode ?? null,
         salesContractId: input.salesContractId,
         sourceId: input.sourceId,
         companyId: input.companyId,

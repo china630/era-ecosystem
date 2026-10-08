@@ -1,58 +1,29 @@
 import {
-  ORG_NO_RE,
-  burnPasswordVerifyCost,
-  enterSatelliteTenant,
+  authenticateIndustryStaffLogin,
   jsonLoginHostBinding,
-  readStaffLoginJson,
-  resolveStaffLoginTenant,
   satelliteRuntimeConfig,
   signSatelliteSession,
 } from "@era/satellite-kit";
-import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { verifyPassword } from "@/lib/auth/password";
 import { remapPermissionList } from "@/lib/auth/hotel-permission-rename";
-import { getUserByLogin, recordUserLogin, userPermissions } from "@/lib/services/user.service";
+import { recordUserLogin, userPermissions } from "@/lib/services/user.service";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemHotelRoles } from "@/lib/auth/ensure-system-hotel-roles";
-
-const schema = z.object({
-  login: z.string().min(1),
-  password: z.string().min(1),
-  /** Required unless the host already names the organization. */
-  orgNo: z.string().regex(ORG_NO_RE).optional(),
-});
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "era_session";
 
 export async function POST(request: Request) {
   try {
-    const rawBody = await readStaffLoginJson(request);
-    if (!rawBody.ok) {
-      return Response.json({ error: rawBody.error }, { status: rawBody.status });
-    }
-    const body = schema.parse(rawBody.raw);
-    const tenant = await resolveStaffLoginTenant({
-      orgNo: body.orgNo,
-      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
+    const auth = await authenticateIndustryStaffLogin({
       request,
+      prisma,
+      isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
     });
-    if (!tenant.ok) {
-      return Response.json({ error: tenant.error }, { status: tenant.status });
+    if (!auth.ok) {
+      return Response.json({ error: auth.error }, { status: auth.status });
     }
-    const user = await getUserByLogin(body.login, tenant.organizationId);
-    if (!user || user.status !== "ACTIVE") {
-      await burnPasswordVerifyCost(body.password);
-      return Response.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-
-    const organizationId = user.organizationId;
-    enterSatelliteTenant({ organizationId });
+    const user = auth.user;
+    const organizationId = auth.organizationId;
 
     await ensureSystemHotelRoles(prisma, organizationId);
 

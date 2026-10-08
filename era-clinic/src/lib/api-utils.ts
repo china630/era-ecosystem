@@ -7,6 +7,7 @@ import {
   sessionHasRole,
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
+import { isSatelliteBillingBlockedError } from "@era/satellite-kit/billing/gate";
 import {
   hasClinicAdminAccess,
   hasClinicPermissionBypass,
@@ -33,6 +34,12 @@ export function jsonError(
 }
 
 export function handleRouteError(err: unknown) {
+  if (isSatelliteBillingBlockedError(err)) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, billingStatus: err.billingStatus },
+      { status: err.status },
+    );
+  }
   if (err && typeof err === "object" && "issues" in err) {
     return jsonError("Validation failed", 400);
   }

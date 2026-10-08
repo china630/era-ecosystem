@@ -191,6 +191,7 @@ describe("staff route grep gate (gap closeout)", () => {
     "/booking/",
     "/sanatorium/episodes/from-stay",
     "/platform/billing-snapshot",
+    "/platform/billing-status",
     "/executive/summary",
     "/capacity/summary",
     "/events/dispatch",

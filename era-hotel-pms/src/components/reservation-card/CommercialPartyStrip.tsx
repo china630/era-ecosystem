@@ -1,0 +1,433 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import {
+  CatalogField,
+  Field,
+  FieldRow,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
+import {
+  bookingSourceKind,
+  contractsForSource,
+  isManualFoSourceKind,
+  sourceKindLabel,
+  type SalesContractPick,
+} from '@/lib/booking-source-kind';
+import type { AgencyOption, SourceOption } from './types';
+
+type ContractOption = SalesContractPick & {
+  label: string;
+  code: string;
+  validFrom?: string | null;
+  validTo?: string | null;
+};
+
+/** Source, agency, and company above the stay dates. One contract under that row. */
+export function CommercialPartyStrip({
+  sourceId,
+  agencyId,
+  companyId,
+  salesContractId,
+  contractRef,
+  checkIn,
+  sources,
+  agencies,
+  companies,
+  contracts,
+  disabled,
+  onSource,
+  onAgency,
+  onCompany,
+  onContract,
+  onContractRef,
+  onAgencyCreated,
+  onCompanyCreated,
+  walkInProfiles = [],
+  walkInProfileCode = '',
+  onWalkInProfile,
+}: {
+  sourceId: string;
+  agencyId: string;
+  companyId: string;
+  salesContractId: string;
+  contractRef: string;
+  checkIn?: string;
+  sources: SourceOption[];
+  agencies: AgencyOption[];
+  companies: AgencyOption[];
+  contracts: ContractOption[];
+  disabled?: boolean;
+  onSource: (id: string) => void;
+  onAgency: (id: string) => void;
+  onCompany: (id: string) => void;
+  onContract: (id: string) => void;
+  onContractRef: (value: string) => void;
+  onAgencyCreated: (row: AgencyOption) => void;
+  onCompanyCreated: (row: AgencyOption) => void;
+  walkInProfiles?: Array<{ code: string; label: string }>;
+  walkInProfileCode?: string;
+  onWalkInProfile?: (code: string) => void;
+}) {
+  const t = useTranslations('reservationCard');
+  const tc = useTranslations('common');
+  const [agencyOpen, setAgencyOpen] = useState(false);
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [agencyName, setAgencyName] = useState('');
+  const [agencyPhone, setAgencyPhone] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [companyVoen, setCompanyVoen] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const selectedSource = sources.find((s) => s.id === sourceId);
+  const sourceKind = bookingSourceKind(selectedSource?.code);
+  const agencyPickerLocked = sourceKind === 'WEB';
+  const agencyOptions = useMemo(() => {
+    const scoped =
+      sourceKind === 'AGENCY'
+        ? agencies.filter((a) => !a.isOta && !a.isWalkIn)
+        : sourceKind === 'BOOKING'
+          ? agencies.filter((a) => a.isOta)
+          : agencies.filter((a) => !a.isWalkIn);
+    if (!agencyId || scoped.some((a) => a.id === agencyId)) return scoped;
+    const hit = agencies.find((a) => a.id === agencyId);
+    return hit ? [hit, ...scoped] : scoped;
+  }, [agencies, sourceKind, agencyId]);
+  const sourceOptions = useMemo(
+    () =>
+      sources.filter(
+        (s) => isManualFoSourceKind(bookingSourceKind(s.code)) || s.id === sourceId,
+      ),
+    [sources, sourceId],
+  );
+  const agencyFieldLabel =
+    sourceKind === 'BOOKING'
+      ? t('otaChannel')
+      : sourceKind === 'WALKIN'
+        ? t('walkInProfile')
+        : t('agency');
+  const canQuickAddAgency =
+    sourceKind === 'AGENCY' || sourceKind === 'CORPORATE' || sourceKind === 'OTHER';
+  const visibleContracts = useMemo(() => {
+    const matched = contractsForSource(contracts, { sourceKind, agencyId, companyId });
+    const day = (checkIn ?? '').slice(0, 10);
+    if (!day) return matched;
+    return matched.filter((c) => {
+      if (c.id === salesContractId) return true;
+      if (!c.validFrom) return true;
+      const from = String(c.validFrom).slice(0, 10);
+      const to = c.validTo ? String(c.validTo).slice(0, 10) : '';
+      if (from > day) return false;
+      if (to && to < day) return false;
+      return true;
+    });
+  }, [contracts, sourceKind, agencyId, companyId, checkIn, salesContractId]);
+  const knownAgencyId = agencies.some((a) => a.id === agencyId) ? agencyId : '';
+  const knownCompanyId = companies.some((c) => c.id === companyId) ? companyId : '';
+
+  async function createAgency() {
+    if (!agencyName.trim() || agencyPhone.trim().length < 5) {
+      showApiError({ error: t('quickAgencyRequired') }, tc('failed'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch('/api/fo/quick-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'AGENCY',
+          name: agencyName.trim(),
+          phone: agencyPhone.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      const row: AgencyOption = {
+        id: String(json.id),
+        code: String(json.code ?? ''),
+        label: String(json.name ?? agencyName.trim()),
+        isOta: false,
+        isWalkIn: false,
+      };
+      onAgencyCreated(row);
+      onAgency(row.id);
+      setAgencyName('');
+      setAgencyPhone('');
+      setAgencyOpen(false);
+      showSuccess(t('quickProfileSaved'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createCompany() {
+    if (!companyName.trim() || !/^\d{10}$/.test(companyVoen.trim())) {
+      showApiError({ error: t('quickCompanyRequired') }, tc('failed'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch('/api/fo/quick-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'COMPANY',
+          name: companyName.trim(),
+          voen: companyVoen.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      const row: AgencyOption = {
+        id: String(json.id),
+        code: String(json.code ?? ''),
+        label: String(json.name ?? companyName.trim()),
+        isOta: false,
+        isWalkIn: false,
+      };
+      onCompanyCreated(row);
+      onCompany(row.id);
+      setCompanyName('');
+      setCompanyVoen('');
+      setCompanyOpen(false);
+      showSuccess(t('quickProfileSaved'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const showContract = Boolean(
+    knownAgencyId || knownCompanyId || salesContractId || contractRef.trim(),
+  );
+  const showAgencyPlus = canQuickAddAgency && !agencyPickerLocked;
+
+  return (
+    <div className="space-y-2" data-testid="commercial-party-strip">
+      <div className="grid grid-cols-1 items-start gap-1.5 sm:grid-cols-3">
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t('source')}
+          value={sourceId}
+          onChange={(v) => onSource(Array.isArray(v) ? (v[0] ?? '') : v)}
+          options={sourceOptions.map((s) => ({
+            value: s.id,
+            label: sourceKindLabel(t, bookingSourceKind(s.code), s.label),
+          }))}
+          disabled={disabled}
+        />
+        <div className="min-w-0 space-y-1.5">
+          <div className="flex items-end gap-1">
+            <div className="min-w-0 flex-1">
+              <CatalogField
+                kind="SEARCHABLE"
+                label={agencyFieldLabel}
+                value={
+                  sourceKind === 'WALKIN'
+                    ? walkInProfileCode
+                    : agencyPickerLocked
+                      ? ''
+                      : knownAgencyId
+                }
+                onChange={(v) => {
+                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                  if (sourceKind === 'WALKIN') onWalkInProfile?.(next);
+                  else onAgency(next);
+                }}
+                options={
+                  sourceKind === 'WALKIN'
+                    ? [
+                        ...walkInProfiles.map((p) => ({ value: p.code, label: p.label })),
+                        ...(walkInProfileCode &&
+                        !walkInProfiles.some((p) => p.code === walkInProfileCode)
+                          ? [{ value: walkInProfileCode, label: walkInProfileCode }]
+                          : []),
+                      ]
+                    : agencyPickerLocked
+                      ? []
+                      : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
+                }
+                disabled={disabled || agencyPickerLocked}
+                emptyLabel={agencyPickerLocked ? t('individual') : tc('select')}
+              />
+            </div>
+            {showAgencyPlus ? (
+              <LookupPlus
+                label={t('quickAddAgency')}
+                pressed={agencyOpen}
+                disabled={disabled || busy}
+                onClick={() => {
+                  setAgencyOpen((v) => !v);
+                  setCompanyOpen(false);
+                }}
+              />
+            ) : null}
+          </div>
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <div className="flex items-end gap-1">
+            <div className="min-w-0 flex-1">
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t('company')}
+                value={knownCompanyId}
+                onChange={(v) => onCompany(Array.isArray(v) ? (v[0] ?? '') : v)}
+                options={companies.map((c) => ({ value: c.id, label: c.label }))}
+                disabled={disabled}
+                emptyLabel={tc('select')}
+              />
+            </div>
+            <LookupPlus
+              label={t('quickAddCompany')}
+              pressed={companyOpen}
+              disabled={disabled || busy}
+              onClick={() => {
+                setCompanyOpen((v) => !v);
+                setAgencyOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+      {agencyOpen && showAgencyPlus ? (
+        <div className="flex items-end gap-1.5">
+          <Field
+            label={t('quickAgencyName')}
+            preset="shortText"
+            className="min-w-0 flex-1"
+            value={agencyName}
+            disabled={disabled || busy}
+            onChange={(e) => setAgencyName(e.target.value)}
+          />
+          <Field
+            label={t('quickAgencyPhone')}
+            preset="phone"
+            className="w-[9rem] shrink-0"
+            value={agencyPhone}
+            disabled={disabled || busy}
+            onChange={(e) => setAgencyPhone(e.target.value)}
+          />
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => {
+              setAgencyName('');
+              setAgencyPhone('');
+              setAgencyOpen(false);
+            }}
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => void createAgency()}
+          >
+            {tc('save')}
+          </button>
+        </div>
+      ) : null}
+      {companyOpen ? (
+        <div className="flex items-end gap-1.5">
+          <Field
+            label={t('quickCompanyName')}
+            preset="shortText"
+            className="min-w-0 flex-1"
+            value={companyName}
+            disabled={disabled || busy}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+          <Field
+            label={t('quickCompanyVoen')}
+            preset="voen"
+            className="w-[9rem] shrink-0"
+            value={companyVoen}
+            disabled={disabled || busy}
+            onChange={(e) => setCompanyVoen(e.target.value)}
+          />
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => {
+              setCompanyName('');
+              setCompanyVoen('');
+              setCompanyOpen(false);
+            }}
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            type="button"
+            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+            disabled={disabled || busy}
+            onClick={() => void createCompany()}
+          >
+            {tc('save')}
+          </button>
+        </div>
+      ) : null}
+      {showContract ? (
+        <FieldRow cols={2}>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('stayContract')}
+            value={salesContractId}
+            onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
+            options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
+            emptyLabel="—"
+            disabled={disabled || visibleContracts.length === 0}
+          />
+          <Field
+            label={t('contractRef')}
+            preset="code"
+            value={contractRef}
+            disabled={disabled}
+            onChange={(e) => onContractRef(e.target.value)}
+          />
+        </FieldRow>
+      ) : null}
+    </div>
+  );
+}
+
+function LookupPlus({
+  label,
+  pressed,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  pressed: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`mb-px inline-flex h-[30px] w-7 shrink-0 items-center justify-center rounded border text-[16px] leading-none disabled:opacity-40 ${
+        pressed
+          ? 'border-[#2C3E50] bg-[#2C3E50] text-white'
+          : 'border-[#D5DADF] bg-white text-[#34495E] hover:bg-[#F4F6F7]'
+      }`}
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      +
+    </button>
+  );
+}

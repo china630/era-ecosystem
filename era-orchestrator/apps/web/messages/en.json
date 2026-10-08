@@ -364,6 +364,21 @@
       "next": "Next",
       "page": "Page {page} / {total}"
     },
+    "orgBillingCoverage": {
+      "title": "Billing status and coverage",
+      "status": "Billing status",
+      "statusACTIVE": "Active",
+      "statusSOFT_BLOCK": "Soft block (exports disabled)",
+      "statusHARD_BLOCK": "Hard block (read-only)",
+      "coveredUntil": "Covered until (no payment)",
+      "notCovered": "Not set: regular monthly billing",
+      "hint": "Covers the organization up to and including this Asia/Baku day: sets the access end date, lifts SOFT/HARD block, and the monthly run issues no invoice and no block for covered months. Issued invoices are not marked paid. The subscription block switch is separate.",
+      "dateLabel": "Last covered day",
+      "save": "Cover and lift block",
+      "clear": "Remove coverage",
+      "dateRequired": "Pick the last covered day.",
+      "saveFailed": "Coverage save failed ({status})"
+    },
     "orgHub": {
       "title": "Organization hub",
       "backOrgs": "← Organizations",
@@ -2083,7 +2098,15 @@
     "openHotelFailed": "Could not open hotel",
     "openSellerFailed": "Could not open seller organization",
     "hotelUrlMissing": "Hotel URL is not configured for this organization",
-    "financeUrlMissing": "Finance URL is not configured for this organization"
+    "financeUrlMissing": "Finance URL is not configured for this organization",
+    "changePassword": "Change password",
+    "changePasswordTitle": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat new password",
+    "passwordMismatch": "The new passwords do not match",
+    "passwordChanged": "Password changed. Sign in with the new password.",
+    "backToLogin": "Back to sign in"
   },
   "workforceMigration": {
     "title": "Workforce migration",

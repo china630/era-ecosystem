@@ -10,8 +10,14 @@ const ORG_TOKEN = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ORG_FORGED = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const COOKIE = "era_test_session";
 
-function request(pathname: string, token?: string, headers: Record<string, string> = {}) {
+function request(
+  pathname: string,
+  token?: string,
+  headers: Record<string, string> = {},
+  method = "GET",
+) {
   return {
+    method,
     nextUrl: { pathname, href: `http://clinic.test${pathname}` },
     cookies: {
       get(name: string) {
@@ -116,9 +122,12 @@ describe("createSatelliteStaffMiddleware", () => {
 
   it("rejects passthrough when the sent org header differs from the token", async () => {
     const res = await middleware(
-      request("/api/import/x", await token(ORG_TOKEN), {
-        "x-era-organization-id": ORG_FORGED,
-      }),
+      request(
+        "/api/import/x",
+        await token(ORG_TOKEN),
+        { "x-era-organization-id": ORG_FORGED },
+        "POST",
+      ),
     );
     assert.equal(res.status, 401);
   });
@@ -126,16 +135,49 @@ describe("createSatelliteStaffMiddleware", () => {
   it("passes passthrough with a matching or absent org header", async () => {
     const t = await token(ORG_TOKEN);
     const same = await middleware(
-      request("/api/import/x", t, { "x-era-organization-id": ORG_TOKEN }),
+      request("/api/import/x", t, { "x-era-organization-id": ORG_TOKEN }, "POST"),
     );
-    const none = await middleware(request("/api/import/x", t));
+    const none = await middleware(request("/api/import/x", t, {}, "POST"));
     assert.equal(same.status, 200);
     assert.equal(none.status, 200);
   });
 
+  it("stamps GET on a passthrough prefix like any staff API call", async () => {
+    const res = await middleware(
+      request("/api/import", await token(ORG_TOKEN), { "x-era-organization-id": ORG_FORGED }),
+    );
+    assert.equal(res.status, 200);
+    assert.equal(forwarded(res, "x-era-method"), "GET");
+    assert.equal(forwarded(res, "x-era-pathname"), "/api/import");
+    assert.equal(forwarded(res, "x-era-organization-id"), ORG_TOKEN);
+  });
+
+  it("stamps the real method over a client copy on staff API and pages", async () => {
+    const t = await token(ORG_TOKEN);
+    const api = await middleware(
+      request("/api/folio/pay", t, { "x-era-method": "GET" }, "POST"),
+    );
+    assert.equal(forwarded(api, "x-era-method"), "POST");
+    assert.equal(forwarded(api, "x-era-pathname"), "/api/folio/pay");
+    const page = await middleware(request("/visits", t));
+    assert.equal(forwarded(page, "x-era-method"), "GET");
+  });
+
+  it("rejects passthrough when the sent method header differs from the verb", async () => {
+    const t = await token(ORG_TOKEN);
+    const forged = await middleware(
+      request("/api/import/x", t, { "x-era-method": "GET" }, "POST"),
+    );
+    assert.equal(forged.status, 401);
+    const honest = await middleware(
+      request("/api/import/x", t, { "x-era-method": "POST" }, "POST"),
+    );
+    assert.equal(honest.status, 200);
+  });
+
   it("rejects passthrough when a sent user header differs from the token", async () => {
     const res = await middleware(
-      request("/api/import/x", await token(ORG_TOKEN), { "x-user-id": "someone-else" }),
+      request("/api/import/x", await token(ORG_TOKEN), { "x-user-id": "someone-else" }, "POST"),
     );
     assert.equal(res.status, 401);
   });

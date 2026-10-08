@@ -1,4 +1,6 @@
 import { todayBakuYmd } from '@era/satellite-kit/time';
+import { hotelDateKey, stayCheckOut } from '@/lib/hotel-calendar';
+import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
@@ -48,6 +50,29 @@ export async function checkoutReservation(
     refundMethod: opts?.unusedNightsRefundMethod ?? 'CASH',
     reason: opts?.unusedNightsReason,
   }).catch((e) => console.error('Early checkout unused-nights failed', e));
+
+  const todayKey = todayBakuYmd();
+  if (hotelDateKey(existing.checkOutDate) > todayKey) {
+    await prisma.reservation.update({
+      where: { id },
+      data: { checkOutDate: stayCheckOut(todayKey) },
+    });
+    await prisma.reservationDailyRate.deleteMany({
+      where: { reservationId: id, stayDate: { gte: stayCheckOut(todayKey) } },
+    });
+    const summed = await prisma.reservationDailyRate.aggregate({
+      where: { reservationId: id },
+      _sum: { amount: true },
+    });
+    await prisma.reservation.update({
+      where: { id },
+      data: {
+        totalAmount: toDecimal(
+          summed._sum.amount == null ? 0 : decimalToNumber(summed._sum.amount),
+        ),
+      },
+    });
+  }
 
   if (opts?.discountAmount && opts.discountAmount > 0) {
     const { postDiscount } = await import('@/lib/services/folio.service');

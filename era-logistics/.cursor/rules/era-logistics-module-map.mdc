@@ -29,3 +29,7 @@ alwaysApply: false
 | Access matrix (LOG-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `api/internal/v1/workforce/roles`, `admin/users`, `auth/me`, `auth/session/refresh-permissions`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
 
 **RBAC Variant A (LOG-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. `/api/driver/trips` is `api:driver.trips` on both ops packages; `/api/tracking/[token]` is session-only (any staff session, then the path token). A missing `x-era-pathname` denies. `POST /api/auth/logout` clears the staff cookie. ADR logistics-domain-permissions-and-rbac.
+
+## Platform billing status
+
+`GET /api/platform/billing-status` — `app/api/platform/billing-status/route.ts` re-exports `@era/satellite-kit/billing/status-route` (banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.

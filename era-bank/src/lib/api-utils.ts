@@ -4,6 +4,7 @@ import {
   readSatelliteStaffSession,
   type SatelliteStaffSessionPayload,
 } from "@era/satellite-kit";
+import { isSatelliteBillingBlockedError } from "@era/satellite-kit/billing/gate";
 import { prisma } from "@/lib/prisma";
 import { permissionsForSession } from "@/lib/auth/bank-permission.service";
 import {
@@ -24,6 +25,12 @@ export function jsonError(message: string, status: number) {
 }
 
 export function handleRouteError(err: unknown) {
+  if (isSatelliteBillingBlockedError(err)) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, billingStatus: err.billingStatus },
+      { status: err.status },
+    );
+  }
   if (err instanceof BankingEntitlementError) {
     return jsonError(err.message, 403);
   }

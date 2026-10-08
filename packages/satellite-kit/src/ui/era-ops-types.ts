@@ -121,6 +121,8 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   rowClassName?: (row: T) => string | undefined;
   /** Click on the row body. Buttons inside a cell should stopPropagation. */
   onRowClick?: (row: T) => void;
+  /** Second click opens a detail surface; the first click stays on onRowClick. */
+  onRowDoubleClick?: (row: T) => void;
   /** Server mode: current page (1-based). */
   page?: number;
   /** Server mode: page size. */
@@ -133,6 +135,8 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   onPageSizeChange?: (pageSize: number) => void;
   /** Active sort. Required echo when onSortChange is set (server lists). */
   sort?: EraDataGridSort | null;
+  /** First paint for a client list. Header clicks replace it. */
+  defaultSort?: EraDataGridSort | null;
   /**
    * Header click. Server lists must refetch with this sort.
    * Omit on client lists to sort the full `rows` array inside the grid.

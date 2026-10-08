@@ -1,3 +1,4 @@
+import { catalogUnitPrice } from "@/domain/catalog/catalog-price.service";
 import { prisma } from "@/lib/prisma";
 
 export type CatalogPriceInput = {
@@ -10,12 +11,10 @@ export type CatalogPriceInput = {
 
 function sameMoney(a: { amount: unknown; listAmount: unknown } | null, amount: number, listAmount: number | null) {
   if (!a) return false;
-  const prevList = a.listAmount == null ? null : Number(a.listAmount);
-  const nextList = listAmount == null ? null : Number(listAmount);
-  return Number(a.amount) === amount && prevList === nextList;
+  return catalogUnitPrice(a) === catalogUnitPrice({ amount, listAmount });
 }
 
-/** Append a price row when commercial amount or retail list changes. */
+/** Append a price row when the payable catalog price changes. */
 export async function recordCatalogPriceIfChanged(input: CatalogPriceInput) {
   const catalog = await prisma.serviceCatalogCache.findUnique({
     where: {

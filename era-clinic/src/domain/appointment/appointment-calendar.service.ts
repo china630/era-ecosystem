@@ -10,7 +10,6 @@ import {
 } from "@/domain/appointment/practitioner-schedule.service";
 
 const BAKU_OFFSET = "+04:00";
-const MIN_GRID_MINUTES = 5;
 
 function bakuYmd(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -48,6 +47,7 @@ export type PractitionerCalendarSlot = {
   procedureCode?: string;
   visitId?: string | null;
   practitionerCode?: string;
+  durationMinutes?: number;
 };
 
 export type PractitionerCalendarRow = {
@@ -65,12 +65,24 @@ export type PractitionerCalendarRow = {
 export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
   date: string;
   slotMinutes: number;
+  defaultAppointmentSlotMinutes: number;
+  visitServices: Array<{ code: string; name: string; durationMin: number }>;
   resources: PractitionerCalendarRow[];
 }> {
   const dateYmd = bakuYmd(dayInput);
   const settings = await getSchedulingSettings();
-  const tenantDefaultAppointmentSlotMinutes =
-    settings.defaultAppointmentSlotMinutes ?? 30;
+  const gridMinutes = Math.max(5, settings.schedulingSlotMinutes || 5);
+  const defaultAppointmentSlotMinutes = settings.defaultAppointmentSlotMinutes ?? 30;
+  const visitServices = await prisma.procedureType.findMany({
+    where: { code: { startsWith: "VISIT-" } },
+    select: { code: true, name: true, durationMin: true },
+    orderBy: { name: "asc" },
+  });
+  const visits = visitServices.map((row) => ({
+    code: row.code,
+    name: row.name,
+    durationMin: row.durationMin > 0 ? row.durationMin : defaultAppointmentSlotMinutes,
+  }));
   const {
     dayStartHour,
     dayEndHour,
@@ -83,14 +95,18 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
   if (isClosedWeekday(noonBaku, closedWeekdays)) {
     return {
       date: dateYmd,
-      slotMinutes: tenantDefaultAppointmentSlotMinutes,
+      slotMinutes: gridMinutes,
+      defaultAppointmentSlotMinutes,
+      visitServices: visits,
       resources: [],
     };
   }
   if (!(await isElectiveSchedulingAllowed(noonBaku))) {
     return {
       date: dateYmd,
-      slotMinutes: tenantDefaultAppointmentSlotMinutes,
+      slotMinutes: gridMinutes,
+      defaultAppointmentSlotMinutes,
+      visitServices: visits,
       resources: [],
     };
   }
@@ -105,29 +121,8 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
       id: true,
       code: true,
       fullName: true,
-      defaultSlotMinutes: true,
     },
   });
-
-  function gcd(a: number, b: number): number {
-    let x = Math.abs(a);
-    let y = Math.abs(b);
-    while (y !== 0) {
-      const t = y;
-      y = x % y;
-      x = t;
-    }
-    return x;
-  }
-
-  // Use GCD of doctors' reception slot lengths so all defaultSlotMinutes align
-  // into a single grid without fractional coverage.
-  const gcdAcrossPractitioners = practitioners.length
-    ? practitioners
-        .map((p) => p.defaultSlotMinutes ?? tenantDefaultAppointmentSlotMinutes)
-        .reduce((acc, v) => gcd(acc, v), tenantDefaultAppointmentSlotMinutes)
-    : tenantDefaultAppointmentSlotMinutes;
-  const gridMinutes = Math.max(MIN_GRID_MINUTES, gcdAcrossPractitioners);
 
   const gridSlots: Array<{ start: Date; end: Date; lunch: boolean; startMin: number }> = [];
   for (let h = dayStartHour; h < dayEndHour; h++) {
@@ -148,7 +143,7 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
     include: {
       patientRef: { select: { id: true, refCode: true, fullName: true } },
       visit: { select: { id: true, status: true } },
-      practitioner: { select: { code: true, defaultSlotMinutes: true } },
+      practitioner: { select: { code: true } },
     },
   });
 
@@ -166,7 +161,6 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
   );
 
   const resources: PractitionerCalendarRow[] = practitioners.map((p) => {
-    const slotMinutes = p.defaultSlotMinutes || gridMinutes;
     const appts = byPractitioner.get(p.id) ?? [];
     const intervals = shiftIntervals.get(p.id) ?? null;
     const slots: PractitionerCalendarSlot[] = gridSlots.map(({ start, end, lunch, startMin }) => {
@@ -191,9 +185,7 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
       }
       const hit = appts.find((a) => {
         const aStart = a.scheduledAt;
-        const aEnd = new Date(
-          aStart.getTime() + (a.practitioner.defaultSlotMinutes || slotMinutes) * 60_000,
-        );
+        const aEnd = new Date(aStart.getTime() + (a.durationMinutes || gridMinutes) * 60_000);
         return aStart < end && aEnd > start;
       });
       if (!hit) {
@@ -204,8 +196,7 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
         };
       }
       const aEnd = new Date(
-        hit.scheduledAt.getTime() +
-          (hit.practitioner.defaultSlotMinutes || slotMinutes) * 60_000,
+        hit.scheduledAt.getTime() + (hit.durationMinutes || gridMinutes) * 60_000,
       );
       return {
         time: start.toISOString(),
@@ -219,6 +210,7 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
         procedureCode: "APPT",
         status: hit.status,
         visitId: hit.visit?.id ?? null,
+        durationMinutes: hit.durationMinutes,
         practitionerCode: p.code,
       };
     });
@@ -227,10 +219,16 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
       resourceId: p.id,
       code: p.code,
       name: p.fullName,
-      slotMinutes,
+      slotMinutes: gridMinutes,
       slots,
     };
   });
 
-  return { date: dateYmd, slotMinutes: gridMinutes, resources };
+  return {
+    date: dateYmd,
+    slotMinutes: gridMinutes,
+    defaultAppointmentSlotMinutes,
+    visitServices: visits,
+    resources,
+  };
 }

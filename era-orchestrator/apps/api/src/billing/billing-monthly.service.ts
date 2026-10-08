@@ -87,7 +87,15 @@ export class BillingMonthlyService {
     const orgs = await this.prisma.organization.findMany({
       where: {
         id: { notIn: Array.from(transitionedFromDemoOrgIds) },
-        subscription: { isNot: null },
+        // Platform coverage through the billed month: no invoice, no SOFT_BLOCK.
+        subscription: {
+          is: {
+            OR: [
+              { billingCoveredUntil: null },
+              { billingCoveredUntil: { lt: periodEnd } },
+            ],
+          },
+        },
       },
       include: { subscription: true },
     });

@@ -24,6 +24,8 @@ export const DEFAULT_BARE_PUBLIC_PAGE_PREFIXES = [
 ];
 
 export const ERA_PATHNAME_HEADER = "x-era-pathname";
+/** HTTP method stamped by the kit middleware; read by the billing gate in `readSatelliteStaffSession`. */
+export const ERA_METHOD_HEADER = "x-era-method";
 
 export function isBarePublicWebPath(
   pathname: string,
@@ -35,12 +37,16 @@ export function isBarePublicWebPath(
   );
 }
 
+/** Client copies of the method header never survive: set from `method`, else dropped. */
 export function eraPathnameRequestHeaders(
   source: Headers,
   pathname: string,
+  method?: string,
 ): Headers {
   const next = new Headers(source);
   next.set(ERA_PATHNAME_HEADER, pathname);
+  if (method) next.set(ERA_METHOD_HEADER, method.toUpperCase());
+  else next.delete(ERA_METHOD_HEADER);
   return next;
 }
 

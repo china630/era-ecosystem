@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { IndustryModuleInactiveError } from '@era/satellite-kit';
+import { isSatelliteBillingBlockedError } from '@era/satellite-kit/billing/gate';
 import { GuestMdmRequiredError } from '@/lib/guest-identity';
+import {
+  GuestIdentityRequiredError,
+  StayCheckInBlockedError,
+} from '@/lib/guest-stay-requirements';
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
 
@@ -14,6 +19,12 @@ export function jsonError(message: string, status = 400) {
 }
 
 export function handleRouteError(err: unknown) {
+  if (isSatelliteBillingBlockedError(err)) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, billingStatus: err.billingStatus },
+      { status: err.status },
+    );
+  }
   if (err instanceof ZodError) {
     return jsonError(err.errors.map((e) => e.message).join('; '), 400);
   }
@@ -25,6 +36,18 @@ export function handleRouteError(err: unknown) {
   }
   if (err instanceof GuestMdmRequiredError) {
     return jsonError(err.message, 400);
+  }
+  if (err instanceof GuestIdentityRequiredError) {
+    return NextResponse.json(
+      { error: err.message, code: 'GUEST_IDENTITY_REQUIRED', fields: err.fields },
+      { status: 400 },
+    );
+  }
+  if (err instanceof StayCheckInBlockedError) {
+    return NextResponse.json(
+      { error: err.message, code: 'GUEST_CHECK_IN_INCOMPLETE', people: err.people },
+      { status: 400 },
+    );
   }
   if (err instanceof LaundryOpenError) {
     return NextResponse.json(

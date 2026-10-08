@@ -3,6 +3,12 @@ import { GUEST_FIN_DOC_TYPES } from '@/lib/guest-list-identity';
 import type { PaxRow } from './types';
 
 /** Party row with no display name — fillable slot (may still have guestId from TBA/hold). */
+export function isMinorPax(row: Pick<PaxRow, 'birthDate' | 'age'>): boolean {
+  const fromDob = row.birthDate ? Number(ageYearsFromBirthDate(row.birthDate)) : NaN;
+  const age = Number.isFinite(fromDob) && row.birthDate ? fromDob : Number(row.age);
+  return Number.isFinite(age) && age >= 0 && age < 18;
+}
+
 export function isIncompletePax(row: Pick<PaxRow, 'firstName' | 'lastName'>): boolean {
   return !paxHasRealName(row);
 }
@@ -91,66 +97,164 @@ export function syncPaxToPartySize(
   }));
 }
 
-/** When party list grows/shrinks, adjust adults first, then child age buckets. */
-export function syncCountsFromPaxLength(
-  paxLength: number,
-  counts: {
-    adults: number;
-    children11_6: number;
-    children5_2: number;
-    children1_0: number;
-  },
-): {
+export type PaxAgeBand = 'adult' | 'c11' | 'c5' | 'c1';
+
+export type PartyCounts = {
   adults: number;
   children11_6: number;
   children5_2: number;
   children1_0: number;
-} {
-  let adults = Math.max(0, counts.adults || 0);
-  let children11_6 = Math.max(0, counts.children11_6 || 0);
-  let children5_2 = Math.max(0, counts.children5_2 || 0);
-  let children1_0 = Math.max(0, counts.children1_0 || 0);
-  const current = adults + children11_6 + children5_2 + children1_0;
-  const target = Math.max(0, paxLength);
+};
 
-  if (target === current) {
-    return { adults, children11_6, children5_2, children1_0 };
-  }
+/** Empty-slot age so the band survives a reload. Adults stay blank. */
+const SLOT_AGE: Record<PaxAgeBand, string> = {
+  adult: '',
+  c11: '8',
+  c5: '4',
+  c1: '0',
+};
 
-  if (target > current) {
-    adults += target - current;
-    return { adults, children11_6, children5_2, children1_0 };
-  }
-
-  let need = current - target;
-  while (need > 0 && adults > 1) {
-    adults -= 1;
-    need -= 1;
-  }
-  while (need > 0 && children1_0 > 0) {
-    children1_0 -= 1;
-    need -= 1;
-  }
-  while (need > 0 && children5_2 > 0) {
-    children5_2 -= 1;
-    need -= 1;
-  }
-  while (need > 0 && children11_6 > 0) {
-    children11_6 -= 1;
-    need -= 1;
-  }
-  while (need > 0 && adults > 0) {
-    adults -= 1;
-    need -= 1;
-  }
-
-  return { adults, children11_6, children5_2, children1_0 };
+export function paxAgeYears(row: Pick<PaxRow, 'birthDate' | 'age'>): number | null {
+  const fromDob = row.birthDate ? Number(ageYearsFromBirthDate(row.birthDate)) : NaN;
+  if (row.birthDate && Number.isFinite(fromDob)) return fromDob;
+  const typed = Number(row.age);
+  if (row.age !== '' && row.age != null && Number.isFinite(typed)) return typed;
+  return null;
 }
 
-/** Fill first incomplete slot, else append companion / create primary. */
+/** Hotel bands, same cut as depart-guest: 12 and older are adults. */
+export function bandFromAge(age: number): PaxAgeBand {
+  if (age >= 12) return 'adult';
+  if (age >= 6) return 'c11';
+  if (age >= 2) return 'c5';
+  return 'c1';
+}
+
+function isLivePax(row: { departedAt?: string | null }): boolean {
+  return !row.departedAt;
+}
+
+/** Birth date wins. A blank age is an adult slot. */
+export function paxBand(row: Pick<PaxRow, 'birthDate' | 'age'>): PaxAgeBand {
+  const years = paxAgeYears(row);
+  if (years == null) return 'adult';
+  return bandFromAge(years);
+}
+
+function countOf(counts: PartyCounts, band: PaxAgeBand): number {
+  if (band === 'adult') return counts.adults;
+  if (band === 'c11') return counts.children11_6;
+  if (band === 'c5') return counts.children5_2;
+  return counts.children1_0;
+}
+
+export function countsFromPax(
+  pax: Array<Pick<PaxRow, 'birthDate' | 'age' | 'departedAt'>>,
+): PartyCounts {
+  const counts: PartyCounts = {
+    adults: 0,
+    children11_6: 0,
+    children5_2: 0,
+    children1_0: 0,
+  };
+  for (const row of pax) {
+    if (!isLivePax(row)) continue;
+    const band = paxBand(row);
+    if (band === 'adult') counts.adults += 1;
+    else if (band === 'c11') counts.children11_6 += 1;
+    else if (band === 'c5') counts.children5_2 += 1;
+    else counts.children1_0 += 1;
+  }
+  return counts;
+}
+
+export function bandForBirthDate(birthDate: string | undefined): PaxAgeBand {
+  const years = birthDate ? Number(ageYearsFromBirthDate(birthDate)) : NaN;
+  if (birthDate && Number.isFinite(years)) return bandFromAge(years);
+  return 'adult';
+}
+
+/** A guest with no birth date can fill any slot. A known age must match the slot band. */
+export function guestFitsSlot(
+  birthDate: string | undefined | null,
+  slot: Pick<PaxRow, 'birthDate' | 'age'>,
+): boolean {
+  const dob = (birthDate ?? '').trim();
+  if (!dob) return true;
+  return bandForBirthDate(dob) === paxBand(slot);
+}
+
+/**
+ * Stamp empty unnamed slots from the saved counters.
+ * Named rows and rows that already have a birth date or age are left alone.
+ */
+export function stampEmptySlotsFromCounts(pax: PaxRow[], counts: PartyCounts): PaxRow[] {
+  const claimed: Record<PaxAgeBand, number> = { adult: 0, c11: 0, c5: 0, c1: 0 };
+  for (const row of pax) {
+    if (!isLivePax(row)) continue;
+    if (paxAgeYears(row) == null && isIncompletePax(row)) continue;
+    claimed[paxBand(row)] += 1;
+  }
+  const leftover: PaxAgeBand[] = [];
+  (['adult', 'c11', 'c5', 'c1'] as const).forEach((band) => {
+    const need = Math.max(0, countOf(counts, band) - claimed[band]);
+    for (let i = 0; i < need; i++) leftover.push(band);
+  });
+  let cursor = 0;
+  return pax.map((row) => {
+    if (paxAgeYears(row) != null || !isIncompletePax(row)) return row;
+    const band = leftover[cursor++] ?? 'adult';
+    return { ...row, age: SLOT_AGE[band] };
+  });
+}
+
+/** Add or drop empty slots per band. Named rows are never removed. */
+export function syncPaxToBandCounts(
+  pax: PaxRow[],
+  counts: PartyCounts,
+  equalMode: boolean,
+): PaxRow[] {
+  const target: PartyCounts = {
+    adults: Math.max(0, counts.adults || 0),
+    children11_6: Math.max(0, counts.children11_6 || 0),
+    children5_2: Math.max(0, counts.children5_2 || 0),
+    children1_0: Math.max(0, counts.children1_0 || 0),
+  };
+  let next = [...pax];
+  for (const band of ['adult', 'c11', 'c5', 'c1'] as const) {
+    const want = countOf(target, band);
+    let have = next.filter((row) => isLivePax(row) && paxBand(row) === band).length;
+    while (have < want) {
+      const isFirst = next.length === 0;
+      next.push(
+        emptyPax({
+          age: SLOT_AGE[band],
+          isPrimary: isFirst && !equalMode,
+          ownsFolio: equalMode || isFirst,
+        }),
+      );
+      have += 1;
+    }
+    while (have > want) {
+      let idx = -1;
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (isLivePax(next[i]) && paxBand(next[i]) === band && isIncompletePax(next[i])) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx < 0) break;
+      next.splice(idx, 1);
+      have -= 1;
+    }
+  }
+  return syncPaxToPartySize(next, next.length, equalMode);
+}
+
+/** Fill an empty slot of the same age band, else append. An adult never occupies a child slot. */
 export function attachGuestToPax(
   pax: PaxRow[],
-  guest: { id: string; firstName: string; lastName: string },
+  guest: { id: string; firstName: string; lastName: string; birthDate?: string },
   opts: { equalMode: boolean; reservationGuestId: string },
 ): { pax: PaxRow[]; guestId: string; grew: boolean } {
   const already = pax.some((p) => p.guestId === guest.id);
@@ -158,7 +262,8 @@ export function attachGuestToPax(
     return { pax, guestId: opts.reservationGuestId, grew: false };
   }
 
-  const fillIdx = pax.findIndex(isIncompletePax);
+  const band = bandForBirthDate(guest.birthDate);
+  const fillIdx = pax.findIndex((row) => isIncompletePax(row) && paxBand(row) === band);
   if (fillIdx >= 0) {
     const fillingPrimary =
       Boolean(pax[fillIdx]?.isPrimary) ||
@@ -174,6 +279,8 @@ export function attachGuestToPax(
         guestId: guest.id,
         firstName: guest.firstName || row.firstName,
         lastName: guest.lastName || row.lastName,
+        birthDate: guest.birthDate || row.birthDate,
+        age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : row.age,
         isPrimary: fillingPrimary && !opts.equalMode ? true : row.isPrimary && !opts.equalMode,
         ownsFolio: opts.equalMode || (fillingPrimary && !opts.equalMode) || Boolean(row.ownsFolio),
       };
@@ -199,6 +306,8 @@ export function attachGuestToPax(
           guestId: guest.id,
           firstName: guest.firstName,
           lastName: guest.lastName,
+          birthDate: guest.birthDate ?? '',
+          age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : SLOT_AGE[band],
           isPrimary: !opts.equalMode,
           ownsFolio: true,
         }),
@@ -215,6 +324,8 @@ export function attachGuestToPax(
         guestId: guest.id,
         firstName: guest.firstName,
         lastName: guest.lastName,
+        birthDate: guest.birthDate ?? '',
+        age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : SLOT_AGE[band],
         isPrimary: false,
         ownsFolio: opts.equalMode,
       }),
@@ -261,7 +372,7 @@ function isoDate(value: string | Date | null | undefined): string {
   return value.toISOString().slice(0, 10);
 }
 
-function ageYearsFromBirthDate(birthDate: string): string {
+export function ageYearsFromBirthDate(birthDate: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return '';
   const [y, m, d] = birthDate.split('-').map(Number);
   if (!y || !m || !d) return '';

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       where: reservationId ? { reservationId } : undefined,
       take: 80,
       orderBy: { createdAt: 'desc' },
-      include: { lines: true },
+      include: { lines: { include: { item: { select: { id: true, name: true, code: true } } } } },
     });
     const roomIds = [...new Set(tickets.map((tk) => tk.roomId))];
     const rooms = roomIds.length

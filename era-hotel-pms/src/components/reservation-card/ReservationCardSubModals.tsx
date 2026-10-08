@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import {
   CatalogField,
+  Field,
   FieldSelect,
   PRIMARY_BUTTON_CLASS,
   showApiError,
@@ -56,6 +57,13 @@ export function ReservationCardSubModals({
   const [newType, setNewType] = useState<'GUEST' | 'COMPANY' | 'AGENCY'>('GUEST');
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [lastFour, setLastFour] = useState('');
+  const [holderName, setHolderName] = useState('');
+  const [cardBrand, setCardBrand] = useState('VISA');
+  const [packageCode, setPackageCode] = useState('');
+  const [packageName, setPackageName] = useState('');
+  const [packageAmount, setPackageAmount] = useState('');
+  const [taskTitle, setTaskTitle] = useState('');
   const formId = 'folio-routing-form';
 
   const load = useCallback(async () => {
@@ -102,31 +110,64 @@ export function ReservationCardSubModals({
   async function addRow() {
     if (!reservationId || !open) return;
     if (open === 'creditCard') {
-      const lastFour = window.prompt(t('subModal.lastFour'), '4242');
-      if (!lastFour || lastFour.length !== 4) return;
-      await fetch(`/api/reservations/${reservationId}/payment-cards`, {
+      if (!/^\d{4}$/.test(lastFour.trim())) {
+        showApiError({ error: t('subModal.lastFourInvalid') }, tc('failed'));
+        return;
+      }
+      const res = await fetch(`/api/reservations/${reservationId}/payment-cards`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lastFour, cardBrand: 'VISA' }),
+        body: JSON.stringify({
+          lastFour: lastFour.trim(),
+          cardBrand: cardBrand || 'VISA',
+          holderName: holderName.trim() || undefined,
+        }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      setLastFour('');
+      setHolderName('');
     } else if (open === 'packages') {
-      const packageCode = window.prompt(t('subModal.packageCode'));
-      const packageName = window.prompt(t('subModal.packageName'));
-      const amount = window.prompt(t('subModal.amount'), '0');
-      if (!packageCode || !packageName) return;
-      await fetch(`/api/reservations/${reservationId}/packages`, {
+      if (!packageCode.trim() || !packageName.trim()) {
+        showApiError({ error: t('subModal.packageRequired') }, tc('failed'));
+        return;
+      }
+      const res = await fetch(`/api/reservations/${reservationId}/packages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageCode, packageName, amount: Number(amount) || 0 }),
+        body: JSON.stringify({
+          packageCode: packageCode.trim(),
+          packageName: packageName.trim(),
+          amount: Number(packageAmount) || 0,
+        }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      setPackageCode('');
+      setPackageName('');
+      setPackageAmount('');
     } else if (open === 'tasks') {
-      const title = window.prompt(t('subModal.taskTitle'));
-      if (!title) return;
-      await fetch(`/api/reservations/${reservationId}/tasks`, {
+      if (!taskTitle.trim()) {
+        showApiError({ error: t('subModal.taskRequired') }, tc('failed'));
+        return;
+      }
+      const res = await fetch(`/api/reservations/${reservationId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title: taskTitle.trim() }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      setTaskTitle('');
     }
     showSuccess(tc('success'));
     await load();
@@ -298,10 +339,32 @@ export function ReservationCardSubModals({
             }
             rowKey={(r) => String(r.id)}
             emptyMessage={tc('empty')}
+            pagination={false}
           />
-          <button type="button" className={`${PRIMARY_BUTTON_CLASS} mt-3`} onClick={() => void addRow()}>
-            {tc('add')}
-          </button>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {open === 'creditCard' ? (
+              <>
+                <Field label={t('subModal.brand')} preset="shortText" value={cardBrand} onChange={(e) => setCardBrand(e.target.value)} />
+                <Field label={t('subModal.lastFour')} preset="code" value={lastFour} onChange={(e) => setLastFour(e.target.value)} />
+                <Field label={t('subModal.holder')} preset="shortText" value={holderName} onChange={(e) => setHolderName(e.target.value)} />
+              </>
+            ) : null}
+            {open === 'packages' ? (
+              <>
+                <Field label={t('subModal.packageCode')} preset="code" value={packageCode} onChange={(e) => setPackageCode(e.target.value)} />
+                <Field label={t('subModal.packageName')} preset="shortText" value={packageName} onChange={(e) => setPackageName(e.target.value)} />
+                <Field label={t('amount')} preset="amount" type="number" value={packageAmount} onChange={(e) => setPackageAmount(e.target.value)} />
+              </>
+            ) : null}
+            {open === 'tasks' ? (
+              <Field label={t('subModal.taskTitle')} preset="shortText" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} />
+            ) : null}
+            <div className="flex items-end">
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void addRow()}>
+                {tc('add')}
+              </button>
+            </div>
+          </div>
         </>
       )}
     </EraModal>

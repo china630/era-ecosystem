@@ -6,6 +6,7 @@ export const reservationFullPatchSchema = z.object({
   ratePlanId: z.string().uuid().optional(),
   mealPlanId: z.string().uuid().nullable().optional(),
   agencyId: z.string().uuid().nullable().optional(),
+  walkInProfileCode: z.string().max(40).nullable().optional(),
   companyId: z.string().uuid().nullable().optional(),
   salesContractId: z.string().uuid().nullable().optional(),
   sourceId: z.string().uuid().nullable().optional(),
@@ -74,6 +75,8 @@ export const reservationFullPatchSchema = z.object({
         guestState: z.string().nullable().optional(),
         isPrimary: z.boolean().optional(),
         ownsFolio: z.boolean().optional(),
+        /** FO Guests tab medical SKU (PKG-* or empty). */
+        medicalPackageCode: z.string().nullable().optional(),
       }),
     )
     .optional(),

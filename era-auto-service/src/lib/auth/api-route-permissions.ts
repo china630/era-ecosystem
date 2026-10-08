@@ -21,6 +21,8 @@ export const AUTH_ONLY_API_ROUTES: readonly string[] = [
 
 /** Staff routes that check their own credential instead of `getSatelliteSession()`. */
 export const HANDLER_GATE_EXCEPTIONS: readonly string[] = [
+  /** Kit billing banner: verifies the session token itself, read-only status. */
+  "/api/platform/billing-status",
   /** `PLATFORM_CRON_SECRET` via `runCronForEachTenant`; not a staff grant. */
   "/api/cron/service-due",
 ];

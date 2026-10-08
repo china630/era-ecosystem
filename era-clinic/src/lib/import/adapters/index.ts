@@ -239,10 +239,12 @@ async function upsertByRef(
   return "created";
 }
 
-function toStaffKind(role: string): "DOCTOR" | "NURSE" | "LAB" {
+function toStaffKind(role: string): "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE" {
   const r = role.toUpperCase();
   if (r === "NURSE") return "NURSE";
   if (r === "LAB") return "LAB";
+  if (r === "BATH" || r === "BATH_ATTENDANT") return "BATH";
+  if (r === "MASSAGE" || r === "MASSEUR") return "MASSAGE";
   return "DOCTOR";
 }
 

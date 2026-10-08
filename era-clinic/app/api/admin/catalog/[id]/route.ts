@@ -14,8 +14,6 @@ const patchSchema = z.object({
   descriptionRu: z.string().optional().nullable(),
   descriptionEn: z.string().optional().nullable(),
   amount: z.number().nonnegative().optional(),
-  listAmount: z.number().nonnegative().nullable().optional(),
-  packageIncluded: z.boolean().optional(),
   department: z.string().optional().nullable(),
   departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
@@ -51,8 +49,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
     const body = patchSchema.parse(await req.json());
     const amount = body.amount ?? Number(existing.amount);
     const listAmount =
-      body.listAmount !== undefined
-        ? body.listAmount
+      body.amount != null
+        ? amount > 0
+          ? amount
+          : null
         : existing.listAmount == null
           ? null
           : Number(existing.listAmount);
@@ -73,9 +73,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
         ...(body.descriptionAz !== undefined ? { descriptionAz: body.descriptionAz?.trim() || null } : {}),
         ...(body.descriptionRu !== undefined ? { descriptionRu: body.descriptionRu?.trim() || null } : {}),
         ...(body.descriptionEn !== undefined ? { descriptionEn: body.descriptionEn?.trim() || null } : {}),
-        ...(body.amount != null ? { amount: body.amount } : {}),
-        ...(body.listAmount !== undefined ? { listAmount: body.listAmount } : {}),
-        ...(body.packageIncluded != null ? { packageIncluded: body.packageIncluded } : {}),
+        ...(body.amount != null
+          ? { amount: body.amount, listAmount, packageIncluded: false }
+          : {}),
         ...(dept
           ? { department: dept.department, departmentCode: dept.departmentCode }
           : {}),

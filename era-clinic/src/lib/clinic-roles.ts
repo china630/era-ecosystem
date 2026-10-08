@@ -24,7 +24,7 @@ export const SYSTEM_CLINIC_ROLES: ClinicRoleCode[] = [
 export const CONFIGURABLE_CLINIC_ROLES = SYSTEM_CLINIC_ROLES;
 
 /** Practitioner persona on Role.staffKind (not used for screen/API gates). */
-export type ClinicRoleStaffKind = "DOCTOR" | "NURSE" | "LAB" | "NONE";
+export type ClinicRoleStaffKind = "DOCTOR" | "NURSE" | "LAB" | "BATH" | "MASSAGE" | "NONE";
 
 export const SYSTEM_ROLE_STAFF_KIND: Record<ClinicRoleCode, ClinicRoleStaffKind> =
   {
@@ -73,7 +73,14 @@ export function resolveSystemRoleAlias(raw: string): string {
 export function parseClinicRoleStaffKind(
   value: string | null | undefined,
 ): ClinicRoleStaffKind {
-  if (value === "DOCTOR" || value === "NURSE" || value === "LAB" || value === "NONE") {
+  if (
+    value === "DOCTOR" ||
+    value === "NURSE" ||
+    value === "LAB" ||
+    value === "BATH" ||
+    value === "MASSAGE" ||
+    value === "NONE"
+  ) {
     return value;
   }
   return "NONE";

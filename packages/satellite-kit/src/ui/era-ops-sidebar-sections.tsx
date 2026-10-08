@@ -1,20 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
+import {
+  bestMatchingNavHref,
+  collectSectionHrefs,
+  isBestNavHref,
+  navHrefMatches,
+  sectionContainsPath,
+  type NavSearch,
+} from "./nav-href-match";
 
-function branchActive(
+function branchContains(
   item: EraOpsNavItem,
   pathname: string,
-  resolveActive: (pathname: string, href: string) => boolean,
+  search: NavSearch,
 ): boolean {
-  if (item.active) return true;
-  if (item.href && resolveActive(pathname, item.href)) return true;
-  return item.children?.some((child) => branchActive(child, pathname, resolveActive)) ?? false;
+  if (item.href && navHrefMatches(pathname, search, item.href)) return true;
+  return item.children?.some((child) => branchContains(child, pathname, search)) ?? false;
 }
 
 function NavLink({ item }: { item: EraOpsNavItem }) {
@@ -59,25 +66,23 @@ function NavLink({ item }: { item: EraOpsNavItem }) {
 
 function NavBranch({
   item,
-  pathname,
-  resolveActive,
+  bestHref,
   open,
   onToggle,
 }: {
   item: EraOpsNavItem;
-  pathname: string;
-  resolveActive: (pathname: string, href: string) => boolean;
+  bestHref: string | null;
   /** When set, sibling branches are accordion-controlled by the parent section. */
   open?: boolean;
   onToggle?: () => void;
 }) {
   const kids = (item.children ?? []).filter((child) => !child.hidden);
   if (kids.length === 0) {
-    const active = item.active ?? (item.href ? resolveActive(pathname, item.href) : false);
+    const active = item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
     return <NavLink item={{ ...item, active }} />;
   }
 
-  const active = branchActive(item, pathname, resolveActive);
+  const active = item.href ? isBestNavHref(item.href, bestHref) : false;
   const Icon = item.icon;
   const expanded = open ?? false;
 
@@ -100,8 +105,9 @@ function NavBranch({
       {expanded ? (
         <div className="ml-3 flex flex-col gap-0.5 border-l border-[#ECF0F1] pl-2">
           {kids.map((child) => {
-            const childActive =
-              child.active ?? (child.href ? resolveActive(pathname, child.href) : false);
+            const childActive = child.href
+              ? isBestNavHref(child.href, bestHref)
+              : Boolean(child.active);
             return (
               <NavLink
                 key={child.id ?? child.href ?? child.label}
@@ -118,13 +124,15 @@ function NavBranch({
 function CollapsibleSection({
   section,
   pathname,
-  resolveActive,
+  search,
+  bestHref,
   open,
   onToggle,
 }: {
   section: EraOpsNavSection;
   pathname: string;
-  resolveActive: (pathname: string, href: string) => boolean;
+  search: NavSearch;
+  bestHref: string | null;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -133,19 +141,14 @@ function CollapsibleSection({
 
   if (section.flat && visibleItems.length === 1) {
     const item = visibleItems[0]!;
-    const active =
-      item.active ??
-      (item.href ? resolveActive(pathname, item.href) : false);
+    const active = item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
     return <NavLink item={{ ...item, active }} />;
   }
 
-  const sectionActive = visibleItems.some((item) =>
-    branchActive(item, pathname, resolveActive),
-  );
   const routeBranch = visibleItems.find(
     (item) =>
       (item.children ?? []).some((child) => !child.hidden) &&
-      branchActive(item, pathname, resolveActive),
+      branchContains(item, pathname, search),
   );
   const routeBranchKey = routeBranch ? (routeBranch.id ?? routeBranch.label) : null;
   const [openBranch, setOpenBranch] = useState<string | null>(routeBranchKey);
@@ -160,18 +163,10 @@ function CollapsibleSection({
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className={[
-          "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition",
-          sectionActive
-            ? "border-[#2980B9]/30 bg-[#EBF5FB] text-[#34495E] shadow-sm"
-            : "border-transparent text-[#7F8C8D] hover:border-[#D5DADF] hover:bg-[#F8F9FA]",
-        ].join(" ")}
+        className="flex w-full items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-left text-[#7F8C8D] transition hover:border-[#D5DADF] hover:bg-[#F8F9FA]"
       >
         {Icon ? (
-          <Icon
-            className={`h-4 w-4 shrink-0 ${sectionActive ? "text-[#2980B9]" : "text-[#7F8C8D]"}`}
-            aria-hidden
-          />
+          <Icon className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
         ) : null}
         <span className="flex-1 truncate text-[13px] font-semibold">{section.title}</span>
         {open ? (
@@ -189,8 +184,7 @@ function CollapsibleSection({
               <NavBranch
                 key={item.id ?? item.href ?? item.label}
                 item={item}
-                pathname={pathname}
-                resolveActive={resolveActive}
+                bestHref={bestHref}
                 open={nested ? openBranch === branchKey : undefined}
                 onToggle={
                   nested
@@ -212,33 +206,31 @@ function CollapsibleSection({
 function sectionOwnsPath(
   section: EraOpsNavSection,
   pathname: string,
-  resolveActive: (pathname: string, href: string) => boolean,
+  search: NavSearch,
 ): boolean {
-  return section.items
-    .filter((item) => !item.hidden)
-    .some((item) => branchActive(item, pathname, resolveActive));
+  return sectionContainsPath(section, pathname, search);
 }
 
 export function EraOpsSidebarSections({
   sections,
   topItems = [],
-  resolveActive,
 }: {
   sections: EraOpsNavSection[];
   /** Standalone links above collapsible sections (e.g. Finance-style Home / Əsas). */
   topItems?: EraOpsNavItem[];
+  /** Ignored. Highlight is the single longest matching href, so a parent cannot stay lit. */
   resolveActive?: (pathname: string, href: string) => boolean;
 }) {
   const pathname = usePathname() ?? "";
-  const activeFn =
-    resolveActive ??
-    ((p: string, href: string) => {
-      if (href === "/") return p === "/";
-      return p === href || p.startsWith(`${href}/`);
-    });
+  const search = useSearchParams();
   const visibleSections = sections.filter((section) => !section.hidden);
+  const hrefs = useMemo(
+    () => collectSectionHrefs(visibleSections, topItems),
+    [visibleSections, topItems],
+  );
+  const bestHref = bestMatchingNavHref(pathname, search, hrefs);
   const routeSectionId =
-    visibleSections.find((section) => sectionOwnsPath(section, pathname, activeFn))?.id ??
+    visibleSections.find((section) => sectionOwnsPath(section, pathname, search))?.id ??
     null;
   const [openId, setOpenId] = useState<string | null>(routeSectionId);
 
@@ -249,14 +241,21 @@ export function EraOpsSidebarSections({
   return (
     <div className="flex flex-1 flex-col gap-2 py-1">
       {topItems.map((item) => (
-        <NavLink key={item.id ?? item.href ?? item.label} item={item} />
+        <NavLink
+          key={item.id ?? item.href ?? item.label}
+          item={{
+            ...item,
+            active: item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active),
+          }}
+        />
       ))}
       {visibleSections.map((section) => (
         <CollapsibleSection
           key={section.id}
           section={section}
           pathname={pathname}
-          resolveActive={activeFn}
+          search={search}
+          bestHref={bestHref}
           open={openId === section.id}
           onToggle={() =>
             setOpenId((current) => (current === section.id ? null : section.id))

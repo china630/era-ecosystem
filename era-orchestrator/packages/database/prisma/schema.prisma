@@ -221,6 +221,8 @@ model OrganizationSubscription {
   createdAt               DateTime   @default(now()) @map("created_at")
   updatedAt               DateTime   @updatedAt @map("updated_at")
   isBlocked               Boolean    @default(false) @map("is_blocked")
+  /// Platform-granted coverage: monthly billing skips this org (no invoice, no SOFT_BLOCK) while in the future.
+  billingCoveredUntil     DateTime?  @map("billing_covered_until") @db.Timestamptz(6)
   customConfig            Json?      @map("custom_config")
   organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

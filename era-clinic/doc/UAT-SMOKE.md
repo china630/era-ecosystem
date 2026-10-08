@@ -79,10 +79,10 @@
 
 Prerequisite: `shirinov.chingiz@gmail.com` / bootstrap password, `CLINIC_ADMIN`. Droplet / compose: `CLINIC_RUN_SEED` / `RUN_SEED` stays **false** (ADR clinic-catalog-template-overlay). Do **not** run full `npm run db:seed` after cutover. Local empty DB: `npm run db:seed` (ICD + satellite templates only) then Sync/bind so copy-if-empty fills the org; kitchen-sink demo = `npm run db:seed:demo` only.
 
-1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
+1. **`/admin/master-data`** — practitioner card: name, staff kind, skills as a scrolling list. FIN or passport+country (country is a list) only when the person is not linked; a linked card shows “linked” and Change. No specialty field and no personal slot. No plaintext FIN/passport on the practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
 3. **`/patients`** — identity registry (full base, `episodeStatus=ALL`): filter bar sex (no Other) / blood / age min·max inclusive ≥/≤ / MDM filter·column **only platform Super-Admin**; grid shows clinic-native **`P-######`**, sex **K/Q**, thin **Open course** badge (no room/package/check-in columns); one server paginator. **MDM soft fill on list load:** only rows on the current page with `globalPersonId` **and** a hole (sex UNKNOWN / no DOB / missing Ad or Soyad) get one `ops-profile/batch`; reception-filled fields are never overwritten (fill-not-clear). **Register patient**: Ad / Ata adı / Soyad (`firstName` / `middleName` / `lastName`); save composes `fullName`; nationality empty default; sex M/F/unknown only; **FIN or passport+country required** (phone alone rejected). Re-save without middle name → MDM fill-not-clear. **Open card** modal — identity + episode selector; contraindications title **inside** amber box; complaints `+ Şikayət` / ICD `+ Diaqnoz` outside cards; results print **per row only** (no header checkup print); intake checklist has **no** block print; **Klinik tarixçə** — type (All / Appointments / Visits / Exams / Labs) + period default 30d; compact cards + print. Course room/program ops live on **`/sanatorium`**. **`/patients/[id]`** via shared `PatientCardBody`.
-4. **`/appointments`** — practitioner day matrix; click free cell → **New appointment** modal (prefilled); occupied → check-in / cancel; DnD reschedule.
+4. **`/appointments`** — practitioner day matrix uses the clinic grid step; click free cell → **New appointment** with duration (from the visit service, otherwise the clinic default); occupied → check-in / cancel; DnD reschedule keeps that duration. Grid step and default reception length are on `/admin/settings`.
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
 7. **Home `/`** (owner) — executive KPI block on top; filter by date and practitioner.
@@ -114,7 +114,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 9. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
 10. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 11. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
-12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; toggle **Procedures | Nurses**; assign nurses to procedure rows (**`SVC-*` names, no leftover `WO-TR-*`**) or assign procedures to a nurse (multi-select); mark stable; add vacation overlapping the month → warning on the row; **Approve**. Set a **day substitute** (Substitute for date…) when the posted nurse is away. Confirm a proposed program: STAFF allocation = day override if set, else posted nurse if present; if posted absent and **no** override → staff unallocated (no silent skilled-pool substitute). Master-data practitioners show Doctor / Nurse / Lab. Tables have pagination footers. ADR `clinic-staff-duty-roster.md`.
+12. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; toggle **Procedures | Nurses**; assign one or more people to a procedure (doctors, nurses, bath attendants, massage therapists) or assign procedures to a person; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Approve moves not-yet-started `SCHEDULED` staff in that month onto a free posted person for that procedure (time and cabin stay; a day substitute replaces the list that day; a HARD clash tries the next posted person and leaves the slot empty only when nobody is free; past and checked-in stay; the lab roster does not move these rows). Day substitute is the arrow icon on the chip. Master-data practitioners show Doctor / Nurse / Bath attendant / Massage therapist / Lab. Tables have pagination footers. ADR `clinic-staff-duty-roster.md`.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -170,7 +170,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 1. Orchestrator → **`/workspace/workforce/security`** → confirm Therapist → clinic **DOCTOR** in role matrix (or seed via `scripts/nafta-onboard-departments.mjs`).
 2. **`/workspace/workforce/employments`** → hire MDM person → Med Block → Therapist → **Clinic** checkbox → submit.
-3. Clinic **`/admin/master-data`** — **Add practitioner** hidden; banner points to CP Workforce; edit specialty/slots only.
+3. Clinic **`/admin/master-data`** — **Add practitioner** hidden; banner points to CP Workforce; edit staff kind and skills only.
 4. Local login as provisioned ops user → `/appointments` accessible per role.
 5. (Optional) Security Admin manual grant **CLINIC_ADMIN** → admin routes; revoke → admin blocked, doctor OK.
 
@@ -372,13 +372,13 @@ Doctor card (no curl):
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.
-5. In-quota procedure/lab/visit charge = 0 AZN; over-quota = **listAmount** (retail); walk-in without package paid; guest with `noPackageConfirmedAt` paid; missing list → `priceMissing` (admin `?missingListPrice=1`).
+5. In-quota procedure/lab/visit charge = 0 AZN; over-quota = the catalog price; walk-in without package paid; guest with `noPackageConfirmedAt` paid; missing price → `priceMissing` (admin `?missingListPrice=1`).
 6. **W2 block axes:** set assignMode / quotaBasis / requiresDoctor on a block; **İcra is not shown** (LAB→lab order, EXAM→visit, treatment→procedure). Membership list follows block kind (labs from diagnostic catalog, not SVC physio). AUTO badge appears; PER_STAY shows one stay-qty cell.
 7. Open episode with AUTO_ON_OPEN lab block → LabOrder created; requiresDoctor visit without care team → `PENDING_DOCTOR`; add care doctor → auto retry.
 8. `/sanatorium` list shows packageSignal badge when not OK; Confirm no package stamps `noPackageConfirmedAt`; **Undo no-package** clears it, and assigning a package clears it automatically (guest stops being billed at list price).
 9. `POST /api/sanatorium/episodes/[id]/package-apply` retries auto blocks (api:procedures.confirm).
 10. Complete a procedure on a hotel episode **without** a package code: amount stays 0 (`awaiting_package`) **and** a `ProcedureChargeLog` row appears — delivered work must not vanish from the cashier backlog.
-11. Order a lab for a code without `listAmount` on a paid path (walk-in / confirmed no-package): line posts `DEFAULT_OVER_QUOTA_AZN`, never 0, and the code still appears in `?missingListPrice=1`.
+11. Order a lab for a code with no catalog price on a paid path (walk-in / confirmed no-package): line posts `DEFAULT_OVER_QUOTA_AZN`, never 0, and the code still appears in `?missingListPrice=1`.
 12. Switch package on an open episode: codes added by the switch show `quotaUsed` matching already-created in-package fulfillments (not 0).
 13. Cancel an intake lab, then `package-apply` → the lab is re-created (a cancelled order must not block retry).
 14. With `procedureOverQuotaPolicy = BLOCK`, ordering an over-quota package lab returns 409 `LAB_OVER_QUOTA_BLOCKED`.

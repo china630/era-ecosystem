@@ -2,11 +2,14 @@ import type { PractitionerStaffKind, StaffAbsenceKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuYmd } from "@/domain/appointment/practitioner-schedule.service";
+import { bakuDayBounds } from "@era/satellite-kit/time";
 import {
   isAbsentOnYmd,
   isYearMonth,
+  planRosterStaffReassignment,
   previousYearMonth,
   resolveDutyCandidates,
+  rosterStaffKinds,
   StaffDutyError,
   yearMonthOfYmd,
   yearMonthYmdBounds,
@@ -39,7 +42,7 @@ async function listProcedureTypesOrdered() {
 
 async function listStaff(staffKind: PractitionerStaffKind) {
   return prisma.practitioner.findMany({
-    where: { active: true, staffKind },
+    where: { active: true, staffKind: { in: rosterStaffKinds(staffKind) } },
     orderBy: { fullName: "asc" },
     select: {
       id: true,
@@ -141,22 +144,44 @@ async function seedLinesFromPrevious(
     },
     include: { lines: true },
   });
-  const prevByType = new Map<string, PrevDutyLine>(
-    (prev?.lines ?? []).map((l: PrevDutyLine) => [l.procedureTypeId, l]),
-  );
-  await prisma.staffDutyLine.createMany({
-    data: types.map((pt, idx) => {
-      const copied = prevByType.get(pt.id);
-      return {
+  const prevLines = (prev?.lines ?? []) as PrevDutyLine[];
+  const data: Array<{
+    rosterId: string;
+    procedureTypeId: string;
+    practitionerId: string | null;
+    stable: boolean;
+    sortOrder: number;
+    note: string | null;
+  }> = [];
+  let sortOrder = 0;
+  for (const pt of types) {
+    const copies = prevLines.filter(
+      (line) => line.procedureTypeId === pt.id && line.practitionerId,
+    );
+    if (copies.length === 0) {
+      const blank = prevLines.find((line) => line.procedureTypeId === pt.id);
+      data.push({
         rosterId,
         procedureTypeId: pt.id,
-        practitionerId: copied?.practitionerId ?? null,
-        stable: copied?.stable ?? false,
-        sortOrder: idx,
-        note: copied?.note ?? null,
-      };
-    }),
-  });
+        practitionerId: null,
+        stable: blank?.stable ?? false,
+        sortOrder: sortOrder++,
+        note: blank?.note ?? null,
+      });
+      continue;
+    }
+    for (const copied of copies) {
+      data.push({
+        rosterId,
+        procedureTypeId: pt.id,
+        practitionerId: copied.practitionerId,
+        stable: copied.stable,
+        sortOrder: sortOrder++,
+        note: copied.note,
+      });
+    }
+  }
+  await prisma.staffDutyLine.createMany({ data });
   return prev?.yearMonth ?? null;
 }
 
@@ -294,6 +319,7 @@ async function loadRosterView(
       code: s.code,
       fullName: s.fullName,
       specialty: s.specialty,
+      staffKind: s.staffKind,
       skillProcedureTypeIds: s.skills.map((sk) => sk.procedureTypeId),
       warnings: absenceWarningsForPractitioner(s.id, absences, dayOffs),
     })),
@@ -337,28 +363,48 @@ export async function saveDutyRoster(input: {
     }
   }
 
+  const byProcedure = new Map<string, DutyLineWrite[]>();
+  for (const line of input.lines) {
+    const group = byProcedure.get(line.procedureTypeId) ?? [];
+    group.push(line);
+    byProcedure.set(line.procedureTypeId, group);
+  }
+
   await prisma.$transaction(async (tx) => {
-    for (const line of input.lines) {
-      await tx.staffDutyLine.upsert({
-        where: {
-          rosterId_procedureTypeId: {
-            rosterId: view.roster.id,
-            procedureTypeId: line.procedureTypeId,
-          },
-        },
-        create: {
-          rosterId: view.roster.id,
-          procedureTypeId: line.procedureTypeId,
-          practitionerId: line.practitionerId ?? null,
-          stable: line.stable ?? false,
-          note: line.note ?? null,
-        },
-        update: {
-          practitionerId: line.practitionerId ?? null,
-          stable: line.stable ?? false,
-          note: line.note ?? null,
-        },
+    for (const [procedureTypeId, group] of byProcedure) {
+      const people = [
+        ...new Set(
+          group
+            .map((line) => line.practitionerId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const stable = group.some((line) => line.stable);
+      const note = group.find((line) => line.note)?.note ?? null;
+      await tx.staffDutyLine.deleteMany({
+        where: { rosterId: view.roster.id, procedureTypeId },
       });
+      if (people.length === 0) {
+        await tx.staffDutyLine.create({
+          data: {
+            rosterId: view.roster.id,
+            procedureTypeId,
+            practitionerId: null,
+            stable,
+            note,
+          },
+        });
+      } else {
+        await tx.staffDutyLine.createMany({
+          data: people.map((practitionerId) => ({
+            rosterId: view.roster.id,
+            procedureTypeId,
+            practitionerId,
+            stable,
+            note,
+          })),
+        });
+      }
     }
     if (input.note !== undefined) {
       await tx.staffDutyRoster.update({
@@ -368,7 +414,177 @@ export async function saveDutyRoster(input: {
     }
   });
 
+  if (view.roster.status === "APPROVED") {
+    await reassignFutureStaffToApprovedRoster(yearMonth, staffKind);
+  }
   return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
+}
+
+/** Nurse chart only: move not-yet-started STAFF allocations onto the approved post. */
+export async function reassignFutureStaffToApprovedRoster(
+  yearMonth: string,
+  staffKind: PractitionerStaffKind,
+) {
+  if (staffKind !== "NURSE") return 0;
+  const organizationId = requestOrganizationId();
+  const roster = await prisma.staffDutyRoster.findUnique({
+    where: {
+      organizationId_yearMonth_staffKind: { organizationId, yearMonth, staffKind },
+    },
+    include: {
+      lines: { select: { procedureTypeId: true, practitionerId: true } },
+      dayOverrides: {
+        select: { procedureTypeId: true, dutyDate: true, practitionerId: true },
+      },
+    },
+  });
+  if (!roster || roster.status !== "APPROVED") return 0;
+
+  const { fromYmd, toYmd } = yearMonthYmdBounds(yearMonth);
+  const monthStart = bakuMidnight(fromYmd);
+  const monthEnd = bakuDayBounds(toYmd).end;
+  const now = new Date();
+  const from = now > monthStart ? now : monthStart;
+  if (from >= monthEnd) return 0;
+
+  const movable = await prisma.procedureAllocation.findMany({
+    where: {
+      organizationId,
+      role: "STAFF",
+      startsAt: { gte: from, lt: monthEnd },
+      procedureOrder: { status: "SCHEDULED", procedureTypeId: { not: null } },
+    },
+    select: {
+      id: true,
+      practitionerId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: {
+        select: {
+          procedureTypeId: true,
+          procedureType: {
+            select: {
+              requirements: {
+                where: { role: "STAFF" },
+                select: { staffMode: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (movable.length === 0) return 0;
+
+  const movableIds = movable.map((row) => row.id);
+  const occupations = await prisma.procedureAllocation.findMany({
+    where: {
+      organizationId,
+      role: "STAFF",
+      practitionerId: { not: null },
+      id: { notIn: movableIds },
+      startsAt: { lt: monthEnd },
+      endsAt: { gt: from },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "PENDING_PAY"] } },
+    },
+    select: {
+      practitionerId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: {
+        select: {
+          procedureType: {
+            select: {
+              requirements: {
+                where: { role: "STAFF" },
+                select: { staffMode: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const practitionerIds = [
+    ...new Set(
+      [
+        ...roster.lines.map((line) => line.practitionerId),
+        ...roster.dayOverrides.map((row) => row.practitionerId),
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const [absences, dayOffs] = await Promise.all([
+    listAbsencesOverlappingMonth(yearMonth, practitionerIds),
+    listDayOffsInMonth(yearMonth, practitionerIds),
+  ]);
+  const dayOffKey = new Set(
+    dayOffs.map((row) => `${row.practitionerId}|${bakuYmd(row.date)}`),
+  );
+
+  const updates = planRosterStaffReassignment({
+    slots: movable.flatMap((row) => {
+      const procedureTypeId = row.procedureOrder.procedureTypeId;
+      if (!procedureTypeId) return [];
+      return [
+        {
+          allocationId: row.id,
+          procedureTypeId,
+          startsAt: row.startsAt,
+          endsAt: row.endsAt,
+          staffMode:
+            row.procedureOrder.procedureType?.requirements[0]?.staffMode ?? "HARD",
+          ymd: bakuYmd(row.startsAt),
+        },
+      ];
+    }),
+    occupations: occupations.flatMap((row) => {
+      if (!row.practitionerId) return [];
+      return [
+        {
+          practitionerId: row.practitionerId,
+          startsAt: row.startsAt,
+          endsAt: row.endsAt,
+          staffMode:
+            row.procedureOrder.procedureType?.requirements[0]?.staffMode ?? "HARD",
+        },
+      ];
+    }),
+    posts: roster.lines.map((line) => ({
+      procedureTypeId: line.procedureTypeId,
+      practitionerId: line.practitionerId,
+    })),
+    overrides: roster.dayOverrides.map((row) => ({
+      procedureTypeId: row.procedureTypeId,
+      ymd: bakuYmd(row.dutyDate),
+      practitionerId: row.practitionerId,
+    })),
+    absent: (practitionerId, ymd) =>
+      dayOffKey.has(`${practitionerId}|${ymd}`) ||
+      absences.some(
+        (row) =>
+          row.practitionerId === practitionerId &&
+          ymd >= bakuYmd(row.startsOn) &&
+          ymd <= bakuYmd(row.endsOn),
+      ),
+  });
+
+  const currentById = new Map(movable.map((row) => [row.id, row.practitionerId]));
+  const changed = updates.filter(
+    (row) => (currentById.get(row.allocationId) ?? null) !== row.practitionerId,
+  );
+  if (changed.length === 0) return 0;
+  await prisma.$transaction(
+    changed.map((row) =>
+      prisma.procedureAllocation.update({
+        where: { id: row.allocationId },
+        data: { practitionerId: row.practitionerId },
+      }),
+    ),
+  );
+  return changed.length;
 }
 
 export async function approveDutyRoster(input: {
@@ -388,6 +604,7 @@ export async function approveDutyRoster(input: {
       approvedByUserId: input.approvedByUserId,
     },
   });
+  await reassignFutureStaffToApprovedRoster(yearMonth, staffKind);
   return loadRosterView(view.roster.id, yearMonth, staffKind, input.locale);
 }
 
@@ -608,6 +825,8 @@ export async function resolvePostedStaffForSlot(input: {
 }): Promise<{
   rosterStatus: "DRAFT" | "APPROVED" | null;
   posted: DutyCandidate | null;
+  postedList: DutyCandidate[];
+  absentIds: string[];
   postedAbsent: boolean;
   dayOverride: DutyCandidate | null;
 }> {
@@ -642,20 +861,29 @@ export async function resolvePostedStaffForSlot(input: {
     },
   });
   if (!roster) {
-    return { rosterStatus: null, posted: null, postedAbsent: false, dayOverride: null };
+    return {
+      rosterStatus: null,
+      posted: null,
+      postedList: [],
+      absentIds: [],
+      postedAbsent: false,
+      dayOverride: null,
+    };
   }
-  const line = roster.lines[0];
-  const posted =
-    line?.practitioner && line.practitioner.active
-      ? {
-          id: line.practitioner.id,
-          code: line.practitioner.code,
-          fullName: line.practitioner.fullName,
-        }
-      : null;
-  const postedAbsent = posted
-    ? await isPractitionerAbsentOn(posted.id, input.at)
-    : false;
+  const postedList: DutyCandidate[] = [];
+  const absentIds: string[] = [];
+  for (const line of roster.lines) {
+    if (!line.practitioner?.active) continue;
+    const person = {
+      id: line.practitioner.id,
+      code: line.practitioner.code,
+      fullName: line.practitioner.fullName,
+    };
+    postedList.push(person);
+    if (await isPractitionerAbsentOn(person.id, input.at)) absentIds.push(person.id);
+  }
+  const posted = postedList[0] ?? null;
+  const postedAbsent = postedList.length > 0 && absentIds.length === postedList.length;
   const ov = roster.dayOverrides[0];
   const dayOverride =
     ov?.practitioner && ov.practitioner.active
@@ -665,7 +893,14 @@ export async function resolvePostedStaffForSlot(input: {
           fullName: ov.practitioner.fullName,
         }
       : null;
-  return { rosterStatus: roster.status, posted, postedAbsent, dayOverride };
+  return {
+    rosterStatus: roster.status,
+    posted,
+    postedList,
+    absentIds,
+    postedAbsent,
+    dayOverride,
+  };
 }
 
 export function applyDutyFilter(
@@ -676,6 +911,8 @@ export function applyDutyFilter(
     rosterStatus: duty.rosterStatus,
     postedPractitionerId: duty.posted?.id ?? null,
     posted: duty.posted,
+    postedStaff: duty.postedList,
+    absentIds: duty.absentIds,
     postedAbsent: duty.postedAbsent,
     skilled,
     dayOverridePractitionerId: duty.dayOverride?.id ?? null,

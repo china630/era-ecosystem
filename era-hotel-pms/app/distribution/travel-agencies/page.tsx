@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Pencil, Plus, UserPlus } from 'lucide-react';
+import { Pencil, Plus, Power, RotateCcw, UserPlus } from 'lucide-react';
 import {
   CatalogField,
   EraListFilterBar,
@@ -10,6 +10,7 @@ import {
   Field,
   FieldRow,
   FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
   MODAL_CHECKBOX_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -38,8 +39,16 @@ type AgencyRow = {
   medicalPackageCode?: string | null;
 };
 
+const ROW_ICON = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
+
 function catalogStr(v: string | string[]): string {
   return Array.isArray(v) ? (v[0] ?? '') : v;
+}
+
+function moneyOrNull(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function financeHint(row: AgencyRow, t: (key: string) => string): string {
@@ -69,6 +78,7 @@ export default function TravelAgenciesPage() {
 
   const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
 
   const statusOptions = useMemo(
     () => [
@@ -130,6 +140,42 @@ export default function TravelAgenciesPage() {
     setPaymentTermsDays('');
     setMedicalPackageCode('');
     setModalOpen(true);
+  }
+
+  async function setAgencyActive(row: AgencyRow, active: boolean) {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/travel-agencies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: row.id,
+          code: row.code,
+          name: row.name,
+          voen: row.voen ?? undefined,
+          commissionPercent:
+            row.commissionPercent != null && row.commissionPercent !== ''
+              ? Number(row.commissionPercent)
+              : undefined,
+          settlementMode: row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID',
+          creditLimitAzn: moneyOrNull(row.creditLimitAzn),
+          paymentTermsDays: row.paymentTermsDays ?? null,
+          active,
+          medicalPackageCode: row.medicalPackageCode ?? null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('error'));
+        return;
+      }
+      showSuccess(active ? t('restored') : t('retired'));
+      await load();
+    } catch (err) {
+      showApiError({ error: err instanceof Error ? err.message : tc('error') });
+    } finally {
+      setBusy(false);
+    }
   }
 
   function openEdit(row: AgencyRow) {
@@ -253,7 +299,7 @@ export default function TravelAgenciesPage() {
               <span className="flex flex-wrap items-center gap-1">
                 <button
                   type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1]"
+                  className={ROW_ICON}
                   title={tc('edit')}
                   aria-label={tc('edit')}
                   onClick={() => openEdit(r)}
@@ -262,13 +308,28 @@ export default function TravelAgenciesPage() {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-[#BDC3C7] text-[#2C3E50] hover:bg-[#ECF0F1] disabled:opacity-50"
+                  className={ROW_ICON}
+                  title={r.active ? t('retire') : t('restore')}
+                  aria-label={r.active ? t('retire') : t('restore')}
+                  disabled={busy}
+                  onClick={() => void setAgencyActive(r, !r.active)}
+                >
+                  {r.active ? (
+                    <Power className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={ROW_ICON}
                   title={t('invitePortal')}
                   aria-label={t('invitePortal')}
                   disabled={busy}
                   onClick={() => {
                     setInviteAgency(r);
                     setInviteEmail('');
+                    setIssuedPassword(null);
                   }}
                 >
                   <UserPlus className="h-4 w-4" aria-hidden />
@@ -284,13 +345,27 @@ export default function TravelAgenciesPage() {
       <EraModal
         open={Boolean(inviteAgency)}
         title={t('invitePortal')}
-        onClose={() => setInviteAgency(null)}
+        onClose={() => {
+          setInviteAgency(null);
+          setIssuedPassword(null);
+        }}
         footer={
           <EraModalFooter
-            formId="agency-portal-invite-form"
-            onCancel={() => setInviteAgency(null)}
+            formId={issuedPassword ? undefined : 'agency-portal-invite-form'}
+            onCancel={() => {
+              setInviteAgency(null);
+              setIssuedPassword(null);
+            }}
+            onSubmit={
+              issuedPassword
+                ? () => {
+                    setInviteAgency(null);
+                    setIssuedPassword(null);
+                  }
+                : undefined
+            }
             busy={busy}
-            submitLabel={t('invitePortal')}
+            submitLabel={issuedPassword ? tc('close') : t('invitePortal')}
           />
         }
       >
@@ -316,11 +391,14 @@ export default function TravelAgenciesPage() {
                 showApiError(data, tc('error'));
                 return;
               }
-              const temp = data.temporaryPassword
-                ? ` temp password: ${data.temporaryPassword}`
-                : '';
-              showSuccess(t('inviteOk') + temp);
-              setInviteAgency(null);
+              if (data.temporaryPassword) {
+                setIssuedPassword(String(data.temporaryPassword));
+                showSuccess(t('inviteOk'));
+              } else {
+                showSuccess(t('inviteOk'));
+                setInviteAgency(null);
+                setIssuedPassword(null);
+              }
             } catch (err) {
               showApiError({ error: err instanceof Error ? err.message : tc('error') });
             } finally {
@@ -328,14 +406,21 @@ export default function TravelAgenciesPage() {
             }
           }}
         >
-          <Field
-            label="Email"
-            preset="longText"
-            type="email"
-            value={inviteEmail}
-            onChange={(ev) => setInviteEmail(ev.target.value)}
-            required
-          />
+          {issuedPassword ? (
+            <p className="text-[13px] text-[#34495E]">
+              {t('invitePasswordOnce')}
+              <span className="mt-2 block select-all font-mono text-[15px]">{issuedPassword}</span>
+            </p>
+          ) : (
+            <Field
+              label={t('inviteEmail')}
+              preset="longText"
+              type="email"
+              value={inviteEmail}
+              onChange={(ev) => setInviteEmail(ev.target.value)}
+              required
+            />
+          )}
         </form>
       </EraModal>
 

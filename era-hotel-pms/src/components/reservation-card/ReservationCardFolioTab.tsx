@@ -47,6 +47,7 @@ export function ReservationCardFolioTab({
   lines,
   pax = [],
   displayCurrency = 'AZN',
+  canPostCharges = false,
   onFolioTab,
 }: {
   reservationId: string;
@@ -54,6 +55,8 @@ export function ReservationCardFolioTab({
   lines: FolioLine[];
   pax?: PaxRow[];
   displayCurrency?: string;
+  /** Room-night postings open after check-in. Payments stay available as a deposit. */
+  canPostCharges?: boolean;
   onFolioTab: (tab: FolioSubTab) => void;
 }) {
   const t = useTranslations('reservationCard');
@@ -137,9 +140,15 @@ export function ReservationCardFolioTab({
 
   const cashBar = (
     <div className="flex flex-wrap gap-2">
-      <Link href={`/folio/${reservationId}`} className={PRIMARY_BUTTON_CLASS}>
-        {t('posting')}
-      </Link>
+      {canPostCharges ? (
+        <Link href={`/folio/${reservationId}`} className={PRIMARY_BUTTON_CLASS}>
+          {t('posting')}
+        </Link>
+      ) : (
+        <button type="button" className={PRIMARY_BUTTON_CLASS} disabled title={t('postingAfterCheckIn')}>
+          {t('posting')}
+        </button>
+      )}
       <Link href={`/folio/${reservationId}?action=payment`} className={DANGER_BUTTON_CLASS}>
         {t('getPayment')}
       </Link>

@@ -39,6 +39,8 @@ export function parseAssignableStaffKind(
     value === "DOCTOR" ||
     value === "NURSE" ||
     value === "LAB" ||
+    value === "BATH" ||
+    value === "MASSAGE" ||
     value === "NONE"
   ) {
     return value;

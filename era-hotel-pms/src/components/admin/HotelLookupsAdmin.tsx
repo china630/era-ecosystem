@@ -39,6 +39,7 @@ const KINDS = [
   'NOTE_TYPE',
   'CONCIERGE_CATEGORY',
   'EVENT_LINE_KIND',
+  'WALKIN_PROFILE',
 ] as const;
 
 type Kind = (typeof KINDS)[number];

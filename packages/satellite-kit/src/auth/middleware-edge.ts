@@ -38,6 +38,8 @@ export const DEFAULT_BARE_PUBLIC_PAGE_PREFIXES = [
 ];
 
 export const ERA_PATHNAME_HEADER = "x-era-pathname";
+/** Same value as `middleware-helpers` (this file must stay import-free for Edge). */
+export const ERA_METHOD_HEADER = "x-era-method";
 
 /** Prefix for UTF-8 session values in request headers (Fetch Headers = ByteString / latin1). */
 export const SESSION_HEADER_UTF8_PREFIX = "utf8:";
@@ -100,12 +102,16 @@ export function getBearerOrCookieToken(
   return undefined;
 }
 
+/** Client copies of the method header never survive: set from `method`, else dropped. */
 export function eraPathnameRequestHeaders(
   source: Headers,
   pathname: string,
+  method?: string,
 ): Headers {
   const next = new Headers(source);
   next.set(ERA_PATHNAME_HEADER, pathname);
+  if (method) next.set(ERA_METHOD_HEADER, method.toUpperCase());
+  else next.delete(ERA_METHOD_HEADER);
   return next;
 }
 
@@ -203,6 +209,8 @@ export function redirectNoStore(url: URL | string): NextResponse {
  * kit must not name that type in its signature.
  */
 export type SatelliteStaffRequest = {
+  /** Stamped as `x-era-method` for the billing gate. */
+  method?: string;
   nextUrl: {
     pathname: string;
     href: string;
@@ -230,7 +238,8 @@ export type SatelliteStaffMiddlewareOptions<R extends SatelliteStaffRequest> = {
   publicApiPrefixes?: string[];
   /**
    * Verify the staff token, then pass the original request through. Cloning
-   * headers drops Cookie and truncates multipart bodies on POST.
+   * headers drops Cookie and truncates multipart bodies on POST. GET/HEAD on
+   * these prefixes take the normal stamped flow.
    */
   passthroughApiPrefixes?: string[];
   /**
@@ -340,6 +349,11 @@ export function redirectReferralToOrchestratorRegister(request: {
   return NextResponse.redirect(target);
 }
 
+function isBodylessMethod(method: string | undefined): boolean {
+  const m = (method ?? "").toUpperCase();
+  return m === "GET" || m === "HEAD";
+}
+
 export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
   opts: SatelliteStaffMiddlewareOptions<R>,
 ): (request: R) => Promise<Response> {
@@ -355,7 +369,11 @@ export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
     if (referralRedirect) return referralRedirect;
     const { pathname } = request.nextUrl;
 
-    if (opts.passthroughApiPrefixes?.some((p) => pathname.startsWith(p))) {
+    // Bodyless reads take the stamped flow so the billing gate sees GET, not a write.
+    if (
+      !isBodylessMethod(request.method) &&
+      opts.passthroughApiPrefixes?.some((p) => pathname.startsWith(p))
+    ) {
       const token = getBearerOrCookieToken(request.cookies, request.headers, cookieName);
       if (!token) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -369,10 +387,15 @@ export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
       if (!passthroughHeadersMatch(request.headers, session)) {
         return NextResponse.json({ error: "Invalid session" }, { status: 401 });
       }
+      // No header clone here: a client method copy must equal the real verb.
+      const sentMethod = request.headers.get(ERA_METHOD_HEADER)?.trim().toUpperCase();
+      if (sentMethod && sentMethod !== (request.method ?? "").toUpperCase()) {
+        return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      }
       return NextResponse.next();
     }
 
-    const pathHeaders = eraPathnameRequestHeaders(request.headers, pathname);
+    const pathHeaders = eraPathnameRequestHeaders(request.headers, pathname, request.method);
     const reqHeaders = stripSessionHeaders(pathHeaders);
 
     if (pathname.startsWith("/api")) {

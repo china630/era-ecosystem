@@ -1,3 +1,7 @@
+import {
+  resolveOrchestratorBaseUrl,
+  resolveSatelliteEventServiceToken,
+} from '@era/satellite-kit';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
@@ -9,20 +13,26 @@ export async function GET() {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const orgId = requestOrganizationId();
-    const financeBase = process.env.NEXT_PUBLIC_FINANCE_WEB_URL?.replace(/\/$/, '').trim();
-    const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-    if (!orgId || orgId === 'demo-org' || !financeBase || !token) {
+    const token = resolveSatelliteEventServiceToken();
+    const base = resolveOrchestratorBaseUrl().replace(/\/$/, '');
+    if (!orgId || orgId === 'demo-org' || !token || !base) {
       return jsonOk({ items: [], unavailable: true });
     }
-    const url = `${financeBase}/api/internal/v1/workforce/employees/picker?organizationId=${encodeURIComponent(orgId)}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'x-organization-id': orgId,
-      },
-      cache: 'no-store',
-    });
+    const url = `${base}/internal/v1/workforce/organizations/${encodeURIComponent(orgId)}/picker`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-service-token': token,
+          'x-organization-id': orgId,
+        },
+        cache: 'no-store',
+      });
+    } catch {
+      return jsonOk({ items: [], unavailable: true });
+    }
     if (!res.ok) return jsonOk({ items: [], unavailable: true });
     const body = (await res.json()) as {
       items?: Array<{ id: string; globalPersonId: string; name: string }>;

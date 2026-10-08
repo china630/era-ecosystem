@@ -31,6 +31,7 @@ import {
   TrendingUp,
   Users,
   UtensilsCrossed,
+  SprayCan,
   Wrench,
   Banknote,
 } from 'lucide-react';
@@ -137,8 +138,10 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     const path = qIndex >= 0 ? bare.slice(0, qIndex) : bare;
     const query = qIndex >= 0 ? bare.slice(qIndex + 1) : '';
     if (path === '/') return pathname === '/';
-    // `/reports` is the workspace; sibling pages must not keep that item lit.
-    const pathOk = path === '/reports' ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+    // Parent items that have their own siblings under the same prefix.
+    // `/night-audit` must not stay lit on `/night-audit/logs`.
+    const exactOnly = path === '/reports' || path === '/night-audit';
+    const pathOk = exactOnly ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
     if (!pathOk) return false;
     if (!query) {
       if (path === '/settings/integration') {
@@ -372,13 +375,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         {
           id: 'hotel_housekeeping',
           title: t('sectionHousekeeping'),
-          icon: Wrench,
+          icon: SprayCan,
           items: sectionItems([
             {
               id: 'hk-ops',
               href: '/hk',
               labelKey: 'housekeeping',
-              icon: Wrench,
+              icon: SprayCan,
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
@@ -420,7 +423,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               id: 'hk-rotation',
               href: '/hk/rotation',
               labelKey: 'hkRotation',
-              icon: Wrench,
+              icon: SprayCan,
               permission: PERMISSIONS.SCREEN_HK,
             },
             {

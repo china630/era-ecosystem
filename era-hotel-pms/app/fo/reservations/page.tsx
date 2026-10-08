@@ -18,7 +18,9 @@ import {
   usePaginatedList,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
-import { MessageSquare, Plus } from 'lucide-react';
+import { Cake, MessageSquare, Plus } from 'lucide-react';
+import { todayBakuYmd } from '@era/satellite-kit/time';
+import { birthdayIconVisible, birthdayNightInStay } from '@/lib/stay-birthday';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -29,7 +31,8 @@ type Row = {
   status: string;
   checkInDate: string;
   checkOutDate: string;
-  guest: { fullName: string };
+  guest: { fullName: string; birthDate?: string | null };
+  noteText?: string | null;
   room: { roomNumber: string; status: string } | null;
   roomType: { code: string };
   agency: { code: string } | null;
@@ -55,6 +58,8 @@ type ListFilters = {
   guestId: string;
   dateFrom: string;
   dateTo: string;
+  sort: string;
+  dir: 'asc' | 'desc' | '';
 };
 
 export default function ReservationsListPage() {
@@ -67,6 +72,9 @@ export default function ReservationsListPage() {
   const guestIdFilter = searchParams.get('guestId') ?? '';
 
   const [cardId, setCardId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | ''>('');
   const [createOpen, setCreateOpen] = useState(false);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState(() =>
@@ -94,8 +102,10 @@ export default function ReservationsListPage() {
       guestId: guestIdFilter,
       dateFrom,
       dateTo,
+      sort: sortKey,
+      dir: sortDir,
     }),
-    [q, statusFilter, noteQ, notesOnly, guestIdFilter, dateFrom, dateTo],
+    [q, statusFilter, noteQ, notesOnly, guestIdFilter, dateFrom, dateTo, sortKey, sortDir],
   );
 
   const fetcher = useCallback(
@@ -119,6 +129,10 @@ export default function ReservationsListPage() {
       if (f.notesOnly) params.set('hasNotes', '1');
       if (f.dateFrom) params.set('dateFrom', f.dateFrom);
       if (f.dateTo) params.set('dateTo', f.dateTo);
+      if (f.sort && f.dir) {
+        params.set('sort', f.sort);
+        params.set('dir', f.dir);
+      }
       const res = await fetch(`/api/reports/reservations-grid?${params}`);
       const data = await res.json();
       if (!res.ok) {
@@ -232,55 +246,90 @@ export default function ReservationsListPage() {
           </EraListFilterBar>
         }
         table={
+          <div className="flex min-h-0 flex-1 flex-col">
+          <p className="mb-1 min-h-[1.5rem] truncate rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2 py-1 text-[12px] text-[#34495E]">
+            {rows.find((row) => row.id === selectedId)?.noteText ?? ''}
+          </p>
           <HotelDataGrid<Row & Record<string, unknown>>
             columns={[
               {
                 key: 'room',
                 header: t('room'),
+                sortable: true,
                 render: (r) => r.room?.roomNumber ?? '—',
               },
               {
                 key: 'hk',
                 header: t('hk'),
+                sortable: true,
                 render: (r) => (r.room ? r.room.status.slice(0, 1) : '—'),
               },
               {
                 key: 'agency',
                 header: t('agency'),
+                sortable: true,
                 render: (r) => r.agency?.code ?? '—',
               },
-              { key: 'guest', header: t('guest'), render: (r) => r.guest.fullName },
+              {
+                key: 'guest',
+                header: t('guest'),
+                sortable: true,
+                render: (r) => {
+                  const night = birthdayNightInStay(
+                    r.guest.birthDate,
+                    r.checkInDate,
+                    r.checkOutDate,
+                  );
+                  const showCake = night != null && birthdayIconVisible(night, todayBakuYmd());
+                  return (
+                    <span className="inline-flex items-center gap-1">
+                      {showCake ? (
+                        <Cake className="h-4 w-4 shrink-0 text-amber-500" aria-label={t('birthday')} />
+                      ) : null}
+                      {r.guest.fullName}
+                    </span>
+                  );
+                },
+              },
               {
                 key: 'arrival',
                 header: t('arrival'),
+                sortable: true,
                 render: (r) => String(r.checkInDate).slice(0, 10),
               },
               {
                 key: 'departure',
                 header: t('departure'),
+                sortable: true,
                 render: (r) => String(r.checkOutDate).slice(0, 10),
               },
-              { key: 'type', header: t('roomType'), render: (r) => r.roomType.code },
+              { key: 'type', header: t('roomType'), sortable: true, render: (r) => r.roomType.code },
               {
                 key: 'adult',
                 header: t('adult'),
+                sortable: true,
                 render: (r) => String(r.adults ?? 1),
               },
               {
                 key: 'state',
                 header: t('state'),
+                sortable: true,
                 render: (r) => tRes(r.status as 'CONFIRMED'),
               },
               {
                 key: 'notes',
                 header: t('notes'),
+                sortable: true,
                 render: (r) =>
                   r.hasNotes ? (
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-amber-700"
                       title={r.notePreview ?? ''}
-                      onClick={() => setCardId(r.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedId(r.id);
+                      }}
                     >
                       <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
                       <span className="max-w-[8rem] truncate text-[12px]">
@@ -294,6 +343,7 @@ export default function ReservationsListPage() {
               {
                 key: 'id',
                 header: t('resId'),
+                sortable: true,
                 render: (r) => (
                   <button
                     type="button"
@@ -307,7 +357,14 @@ export default function ReservationsListPage() {
             ]}
             rows={rows as (Row & Record<string, unknown>)[]}
             rowKey={(r) => r.id}
-            onRowClick={(r) => setCardId(r.id)}
+            sort={sortKey && sortDir ? { key: sortKey, dir: sortDir } : null}
+            onSortChange={(next) => {
+              setSortKey(next.key);
+              setSortDir(next.dir);
+              setPage(1);
+            }}
+            onRowClick={(r) => setSelectedId(r.id)}
+            onRowDoubleClick={(r) => setCardId(r.id)}
             emptyMessage={loading ? tc('loading') : tc('empty')}
             pagination={false}
             paginationMode="server"
@@ -316,11 +373,13 @@ export default function ReservationsListPage() {
               [
                 ROW_BG[r.status] ?? '',
                 r.hasNotes ? 'ring-1 ring-inset ring-amber-300/80' : '',
+                r.id === selectedId ? 'ring-2 ring-inset ring-[#2980B9]' : '',
               ]
                 .filter(Boolean)
                 .join(' ') || undefined
             }
           />
+          </div>
         }
         footer={
           <ListPaginationFooter

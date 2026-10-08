@@ -170,6 +170,16 @@ export {
   type SatelliteStaffSessionPayload,
 } from "./auth/get-satellite-session";
 export {
+  assertSatelliteBillingAllows,
+  isSatelliteBillingBlockedError,
+  resolveSatelliteBillingStatus,
+  satelliteBillingEnforcementDisabled,
+  SatelliteBillingBlockedError,
+  type SatelliteBillingCheck,
+  type SatelliteBillingGate,
+  type SatelliteBillingStatus,
+} from "./billing/satellite-billing-gate";
+export {
   ssoExchangeBodySchema,
   type SsoExchangeBody,
 } from "./auth/sso-exchange-schema";
@@ -195,6 +205,12 @@ export {
   verifySatelliteUserPassword,
   type SatelliteUserRecord,
 } from "./auth/login-user";
+export {
+  authenticateIndustryStaffLogin,
+  openStaffLogin,
+  type IndustryStaffLoginResult,
+  type OpenedStaffLogin,
+} from "./auth/industry-staff-login";
 export {
   ORG_NO_RE,
   UUID_RE,

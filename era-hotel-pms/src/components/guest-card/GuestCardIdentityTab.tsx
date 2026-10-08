@@ -1,7 +1,12 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { Field } from '@era/satellite-kit/ui';
+import {
+  GuestCardCollectionModal,
+  type CollectionKind,
+} from '@/components/guest-card/GuestCardCollectionModal';
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -25,7 +30,7 @@ function MiniTable({
   colSpan: number;
 }) {
   return (
-    <div className="overflow-x-auto rounded border border-[#D5DADF]">
+    <div className="overflow-x-auto rounded-xl border border-[#D5DADF]">
       <table className={`${DATA_TABLE_CLASS} text-[12px]`}>
         <thead>
           <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -68,6 +73,10 @@ export function GuestCardIdentityTab({
   callBack,
   onConsent,
   onReload,
+  draftPhone = '',
+  draftEmail = '',
+  onDraftChange,
+  locked = false,
 }: {
   guestId: string | null;
   documents: Array<{
@@ -90,14 +99,30 @@ export function GuestCardIdentityTab({
   callBack: boolean;
   onConsent: (key: string, value: boolean) => void;
   onReload: () => void;
+  draftPhone?: string;
+  draftEmail?: string;
+  onDraftChange?: (patch: { phone?: string; email?: string }) => void;
+  locked?: boolean;
 }) {
   const t = useTranslations('guestCard');
   const dash = '—';
+  const [addKind, setAddKind] = useState<CollectionKind | null>(null);
+
+  function kindLabel(group: 'docType' | 'contactKind' | 'addressKind', code: string) {
+    const known: Record<string, string[]> = {
+      docType: ['PASSPORT', 'ID_CARD', 'FIN', 'VISA', 'OTHER'],
+      contactKind: ['MOBILE', 'PHONE', 'EMAIL', 'WHATSAPP'],
+      addressKind: ['HOME', 'WORK', 'OTHER'],
+    };
+    if (!known[group]?.includes(code)) return code || dash;
+    return t(`${group}.${code}` as 'docType.PASSPORT');
+  }
 
   return (
-    <div className="space-y-4 text-[13px]">
+    <fieldset disabled={locked} className="min-w-0 space-y-4 border-0 p-0 text-[13px]">
       <div>
         <h3 className="mb-2 font-semibold text-[#34495E]">{t('documents')}</h3>
+        <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('summary.documentAtCheckIn')}</p>
         <MiniTable
           headers={[
             t('grid.type'),
@@ -114,7 +139,7 @@ export function GuestCardIdentityTab({
         >
           {documents.map((r) => (
             <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-              <td className={DATA_TABLE_TD_CLASS}>{r.docType || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.docType ? kindLabel('docType', r.docType) : dash}</td>
               <td className={DATA_TABLE_TD_CLASS}>{r.docNumber || dash}</td>
               <td className={DATA_TABLE_TD_CLASS}>{r.serialNo || dash}</td>
               <td className={DATA_TABLE_TD_CLASS}>{r.issuingAuthority || dash}</td>
@@ -128,22 +153,30 @@ export function GuestCardIdentityTab({
           <button
             type="button"
             className="mt-2 text-[12px] font-medium text-[#2980B9]"
-            onClick={async () => {
-              const docType = window.prompt(t('grid.type'), 'PASSPORT');
-              const docNumber = window.prompt(t('grid.number'));
-              if (!docType || !docNumber) return;
-              await fetch(`/api/guests/${guestId}/documents`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ docType, docNumber }),
-              });
-              onReload();
-            }}
+            onClick={() => setAddKind('document')}
           >
             + {t('addDocument')}
           </button>
         ) : null}
       </div>
+      {!guestId ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label={t('details.phone')}
+            preset="phone"
+            value={draftPhone}
+            onChange={(e) => onDraftChange?.({ phone: e.target.value })}
+            hint={t('summary.phoneAtCheckIn')}
+          />
+          <Field
+            label={t('details.email')}
+            preset="longText"
+            value={draftEmail}
+            onChange={(e) => onDraftChange?.({ email: e.target.value })}
+          />
+          <p className="sm:col-span-2 text-[12px] text-[#7F8C8D]">{t('summary.saveToAddLists')}</p>
+        </div>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <h3 className="mb-2 font-semibold text-[#34495E]">{t('contacts')}</h3>
@@ -155,7 +188,7 @@ export function GuestCardIdentityTab({
           >
             {contacts.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS}>{r.kind || dash}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{r.kind ? kindLabel('contactKind', r.kind) : dash}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.value || dash}</td>
               </tr>
             ))}
@@ -164,17 +197,7 @@ export function GuestCardIdentityTab({
             <button
               type="button"
               className="mt-2 text-[12px] text-[#2980B9]"
-              onClick={async () => {
-                const kind = window.prompt(t('grid.type'), 'MOBILE');
-                const value = window.prompt(t('grid.contact'));
-                if (!kind || !value) return;
-                await fetch(`/api/guests/${guestId}/contacts`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ kind, value }),
-                });
-                onReload();
-              }}
+              onClick={() => setAddKind('contact')}
             >
               + {t('addContact')}
             </button>
@@ -190,7 +213,7 @@ export function GuestCardIdentityTab({
           >
             {addresses.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS}>{r.kind || dash}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{r.kind ? kindLabel('addressKind', r.kind) : dash}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.line1 || dash}</td>
               </tr>
             ))}
@@ -199,17 +222,7 @@ export function GuestCardIdentityTab({
             <button
               type="button"
               className="mt-2 text-[12px] text-[#2980B9]"
-              onClick={async () => {
-                const kind = window.prompt(t('grid.type'), 'HOME');
-                const line1 = window.prompt(t('grid.address'));
-                if (!kind || !line1) return;
-                await fetch(`/api/guests/${guestId}/addresses`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ kind, line1 }),
-                });
-                onReload();
-              }}
+              onClick={() => setAddKind('address')}
             >
               + {t('addAddress')}
             </button>
@@ -237,6 +250,15 @@ export function GuestCardIdentityTab({
           </label>
         ))}
       </div>
-    </div>
+      {guestId && addKind ? (
+        <GuestCardCollectionModal
+          open
+          kind={addKind}
+          guestId={guestId}
+          onClose={() => setAddKind(null)}
+          onSaved={onReload}
+        />
+      ) : null}
+    </fieldset>
   );
 }

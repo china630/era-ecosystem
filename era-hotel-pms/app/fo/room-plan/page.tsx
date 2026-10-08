@@ -54,7 +54,7 @@ interface RoomPlanData {
   };
   rooms: RoomPlanRoom[];
   reservations: ReservationBar[];
-  unassigned: ReservationBar[];
+  unassigned: Array<ReservationBar & { chipKey?: string; segmentNote?: string }>;
 }
 
 type GroupMode = 'flat' | 'type' | 'floor';
@@ -344,7 +344,7 @@ export default function RoomPlanPage() {
         <span className="text-amber-800">{t('unassigned')}</span>
         {filteredUnassigned.map((u) => (
           <button
-            key={u.id}
+            key={u.chipKey ?? u.id}
             type="button"
             onClick={() => {
               setSelectedId(u.id);
@@ -357,6 +357,7 @@ export default function RoomPlanPage() {
             }`}
           >
             {u.guest.fullName}
+            {u.segmentNote ? ` · ${u.segmentNote}` : ''}
           </button>
         ))}
       </div>

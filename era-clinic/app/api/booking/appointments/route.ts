@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createBookingAppointment } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { resolveAppointmentDurationMinutes } from "@/lib/scheduling.service";
 
 const schema = z.object({
   customerRef: z.string().min(1).max(64),
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
         patientRefId: patient.id,
         practitionerId: practitioner.id,
         scheduledAt: new Date(body.scheduledAt),
+        durationMinutes: await resolveAppointmentDurationMinutes({}),
         status: "SCHEDULED",
       },
       include: { patientRef: true, practitioner: true },

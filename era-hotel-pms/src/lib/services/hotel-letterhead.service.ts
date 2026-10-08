@@ -80,8 +80,8 @@ export async function saveHotelLogo(input: { buffer: Buffer; mimeType: string })
     throw new ApiError('Logo content does not match its type', 400);
   }
 
-  const profile = await prisma.hotelProfile.findFirst({ select: { id: true, logoPath: true } });
-  if (!profile) throw new ApiError('Hotel profile not found', 404);
+  const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+  const profile = await ensureHotelProfile();
 
   const organizationId = requestOrganizationId().replace(/[^a-zA-Z0-9_-]/g, '_');
   const relative = path.posix.join('hotel-logos', `${organizationId}.${ext}`);
@@ -95,8 +95,8 @@ export async function saveHotelLogo(input: { buffer: Buffer; mimeType: string })
 }
 
 export async function deleteHotelLogo() {
-  const profile = await prisma.hotelProfile.findFirst({ select: { id: true, logoPath: true } });
-  if (!profile) throw new ApiError('Hotel profile not found', 404);
+  const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+  const profile = await ensureHotelProfile();
   if (profile.logoPath) {
     await fs.rm(logoAbsolutePath(profile.logoPath), { force: true }).catch(() => undefined);
   }

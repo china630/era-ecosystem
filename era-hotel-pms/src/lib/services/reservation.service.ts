@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
-import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
+import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
@@ -30,11 +30,19 @@ import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
-export async function listReservations(status?: ReservationStatus, guestId?: string) {
+export async function listReservations(
+  status?: ReservationStatus,
+  guestId?: string,
+  includeParty = false,
+) {
   return prisma.reservation.findMany({
     where: {
       ...(status ? { status } : {}),
-      ...(guestId ? { guestId } : {}),
+      ...(guestId
+        ? includeParty
+          ? { OR: [{ guestId }, { paxGuests: { some: { guestId } } }] }
+          : { guestId }
+        : {}),
     },
     include: {
       room: { include: { roomType: true } },
@@ -83,6 +91,21 @@ export async function getAvailability(roomTypeId: string, from: Date, to: Date, 
   };
 }
 
+function isChildAge(age?: number | null, birthDate?: string | null): boolean {
+  if (age != null && Number.isFinite(age) && age >= 0 && age < 18) return true;
+  if (!birthDate || birthDate.length < 10) return false;
+  const y = Number(birthDate.slice(0, 4));
+  const m = Number(birthDate.slice(5, 7));
+  const d = Number(birthDate.slice(8, 10));
+  if (!y || !m || !d) return false;
+  const now = new Date();
+  let years = now.getUTCFullYear() - y;
+  if (now.getUTCMonth() + 1 < m || (now.getUTCMonth() + 1 === m && now.getUTCDate() < d)) {
+    years -= 1;
+  }
+  return years >= 0 && years < 18;
+}
+
 export async function createReservation(input: {
   roomTypeId: string;
   guestId: string;
@@ -92,6 +115,7 @@ export async function createReservation(input: {
   givenRoomTypeId?: string;
   sourceId?: string;
   agencyId?: string;
+  walkInProfileCode?: string | null;
   companyId?: string;
   salesContractId?: string;
   /** Booking envelope (ReservationGroup) — multi-stay under one group. */
@@ -104,10 +128,7 @@ export async function createReservation(input: {
   children5_2?: number;
   children1_0?: number;
   partyBillingMode?: 'PRIMARY' | 'EQUAL';
-  booker?: string;
-  guestRep?: string;
-  paidBy?: string;
-  contractRef?: string;
+  contractRef?: string | null;
   /**
    * When false (group hold / extra rooms), keep pax first/last empty so names-incomplete
    * gate applies and the same booker is not treated as a named claim on every stay.
@@ -117,6 +138,48 @@ export async function createReservation(input: {
   /** Default CONFIRMED; agency portal uses OPTION when auto-confirm is off. */
   status?: 'OPTION' | 'CONFIRMED';
   externalRef?: string;
+  market?: string | null;
+  segment?: string | null;
+  vipType?: string | null;
+  tripReason?: string | null;
+  booker?: string | null;
+  guestRep?: string | null;
+  paidBy?: string | null;
+  voucherNo?: string | null;
+  resNo?: string | null;
+  shareNo?: string | null;
+  optionDate?: Date | string | null;
+  optionState?: string | null;
+  salesProject?: string | null;
+  specialStates?: string | null;
+  resGroup?: string | null;
+  colorCode?: string | null;
+  preferredLocation?: string | null;
+  preferredBed?: string | null;
+  creditLimitAzn?: number | null;
+  rateType?: string | null;
+  accomType?: string | null;
+  recordType?: string | null;
+  useManualRate?: boolean;
+  manualDailyRate?: number | null;
+  discountPercent?: number | null;
+  discountActive?: boolean;
+  notes?: Record<string, string>;
+  paxGuests?: Array<{
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    middleName?: string | null;
+    sex?: string | null;
+    nationality?: string | null;
+    birthDate?: string | null;
+    age?: number | null;
+    idCardNo?: string | null;
+    passportNo?: string | null;
+    isPrimary?: boolean;
+    ownsFolio?: boolean;
+    medicalPackageCode?: string | null;
+  }>;
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
@@ -279,6 +342,21 @@ export async function createReservation(input: {
     totalAmount = toDecimal(nightly * nights);
   }
 
+  const discountPct =
+    input.discountActive && input.discountPercent != null
+      ? Math.min(100, Math.max(0, Number(input.discountPercent)))
+      : 0;
+  const manualNightly =
+    input.useManualRate && input.manualDailyRate != null && input.manualDailyRate > 0
+      ? Math.round(input.manualDailyRate * (1 - discountPct / 100) * 100) / 100
+      : null;
+  const manualNights = manualNightly == null ? [] : Array.from({ length: countNights(input.checkInDate, input.checkOutDate) }, (_, i) =>
+    parseHotelNoon(addHotelDays(input.checkInDate, i)),
+  );
+  if (manualNightly != null) {
+    totalAmount = toDecimal(manualNightly * manualNights.length);
+  }
+
   const contractRef =
     input.contractRef ||
     (salesContractId
@@ -298,6 +376,7 @@ export async function createReservation(input: {
         roomId: input.roomId,
         sourceId: input.sourceId,
         agencyId,
+        walkInProfileCode: input.walkInProfileCode ?? null,
         companyId,
         salesContractId,
         groupId: input.groupId,
@@ -312,24 +391,88 @@ export async function createReservation(input: {
         children5_2: input.children5_2 ?? 0,
         children1_0: input.children1_0 ?? 0,
         partyBillingMode,
-        booker: input.booker,
-        guestRep: input.guestRep,
-        paidBy: input.paidBy,
         contractRef,
         shareEligible,
         shareGender,
         shareBedIndex,
         status: input.status ?? 'CONFIRMED',
         externalRef: input.externalRef,
+        market: input.market ?? undefined,
+        segment: input.segment ?? undefined,
+        vipType: input.vipType ?? undefined,
+        tripReason: input.tripReason ?? undefined,
+        booker: input.booker ?? undefined,
+        guestRep: input.guestRep ?? undefined,
+        paidBy: input.paidBy ?? undefined,
+        voucherNo: input.voucherNo ?? undefined,
+        resNo: input.resNo ?? undefined,
+        shareNo: input.shareNo ?? undefined,
+        optionDate: input.optionDate ? new Date(input.optionDate) : undefined,
+        optionState: input.optionState ?? undefined,
+        salesProject: input.salesProject ?? undefined,
+        specialStates: input.specialStates ?? undefined,
+        resGroup: input.resGroup ?? undefined,
+        colorCode: input.colorCode ?? undefined,
+        preferredLocation: input.preferredLocation ?? undefined,
+        preferredBed: input.preferredBed ?? undefined,
+        creditLimitAzn:
+          input.creditLimitAzn != null ? toDecimal(input.creditLimitAzn) : undefined,
+        rateType: input.rateType ?? undefined,
+        accomType: input.accomType ?? undefined,
+        recordType: input.recordType ?? undefined,
+        useManualRate: input.useManualRate ?? false,
+        manualDailyRate:
+          input.manualDailyRate != null ? toDecimal(input.manualDailyRate) : undefined,
+        discountPercent:
+          input.discountPercent != null ? toDecimal(input.discountPercent) : undefined,
+        discountActive: input.discountActive ?? false,
+        ...(manualNightly != null
+          ? {
+              dailyRates: {
+                create: manualNights.map((stayDate) => ({
+                  stayDate,
+                  amount: toDecimal(manualNightly),
+                  manualFlag: true,
+                  fixPrice: true,
+                  currencyCode: 'AZN',
+                  discountPct: discountPct > 0 ? toDecimal(discountPct) : undefined,
+                })),
+              },
+            }
+          : {}),
         paxGuests: {
-          create: {
-            guestId: input.guestId,
-            firstName: paxFirstName ?? null,
-            lastName: paxLastName ?? null,
-            isPrimary: true,
-            ownsFolio: true,
-            sortOrder: 0,
-          },
+          create:
+            input.paxGuests && input.paxGuests.length > 0
+              ? input.paxGuests.map((p, i) => {
+                  const isPrimary = p.isPrimary ?? i === 0;
+                  return {
+                    guestId: p.guestId || null,
+                    firstName: p.firstName ?? null,
+                    lastName: p.lastName ?? null,
+                    middleName: p.middleName ?? null,
+                    sex: p.sex ?? null,
+                    nationality: p.nationality ?? null,
+                    birthDate: p.birthDate ? new Date(p.birthDate) : null,
+                    age: p.age ?? null,
+                    idCardNo: p.idCardNo ?? null,
+                    passportNo: p.passportNo ?? null,
+                    isPrimary,
+                    ownsFolio:
+                      partyBillingMode === 'EQUAL' ? !isChildAge(p.age, p.birthDate) : isPrimary,
+                    medicalPackageCode: p.medicalPackageCode?.trim()
+                      ? p.medicalPackageCode.trim().toUpperCase()
+                      : null,
+                    sortOrder: i,
+                  };
+                })
+              : {
+                  guestId: input.guestId,
+                  firstName: paxFirstName ?? null,
+                  lastName: paxLastName ?? null,
+                  isPrimary: true,
+                  ownsFolio: true,
+                  sortOrder: 0,
+                },
         },
         staySlices: {
           create: {
@@ -346,21 +489,64 @@ export async function createReservation(input: {
     return created;
   });
 
+  if (input.notes) {
+    for (const [noteType, text] of Object.entries(input.notes)) {
+      if (!text?.trim()) continue;
+      await prisma.reservationNote.upsert({
+        where: { reservationId_noteType: { reservationId: reservation.id, noteType } },
+        create: { reservationId: reservation.id, noteType, text },
+        update: { text },
+      });
+    }
+  }
+
   {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
-    if (stamped.programCode) {
+    const foCodes = input.paxGuests?.map((p) => {
+      const own = p.medicalPackageCode?.trim();
+      return own ? own : null;
+    });
+    const stamped = await stampMedicalPackagesForReservation(
+      prisma,
+      reservation.id,
+      foCodes ? { foPerGuestCodes: foCodes } : undefined,
+    );
+    if (manualNightly == null) {
+      const { syncComposedDailyRates } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const composed = await syncComposedDailyRates(reservation.id);
+      if (composed.applied && composed.total != null) {
+        const nights = countNights(input.checkInDate, input.checkOutDate);
+        await prisma.reservation.update({
+          where: { id: reservation.id },
+          data: { totalAmount: toDecimal(composed.total * nights) },
+        });
+      }
+    }
+    if (stamped.stayKind !== 'leisure' && stamped.perGuestCodes.some((code) => code != null)) {
       await assertSanatoriumBookingAllowed(reservation.organizationId, reservation.checkInDate);
-      void dispatchSanatoriumBookingCreated({
+      const party = await prisma.reservationGuest.findMany({
+        where: { reservationId: reservation.id },
+        orderBy: { sortOrder: 'asc' },
+        include: { guest: true },
+      });
+      const room = reservation.roomId
+        ? await prisma.room.findUnique({
+            where: { id: reservation.roomId },
+            select: { roomNumber: true },
+          })
+        : null;
+      void fanOutClinicMedicalPackages({
+        status: reservation.status,
         reservationId: reservation.id,
-        programCode: stamped.programCode,
-        globalPersonId: reservation.guest.globalPersonId ?? undefined,
-        guestName: reservation.guest.fullName,
+        roomNumber: room?.roomNumber,
         checkInDate: reservation.checkInDate.toISOString(),
         checkOutDate: reservation.checkOutDate.toISOString(),
-      }).catch(() => null);
+        pax: party,
+      }).catch((e) => console.error('sanatorium booking created failed', e));
     }
   }
 
@@ -470,16 +656,37 @@ export async function listArrivals(from: Date | string, to: Date | string = from
   });
 }
 
-export async function checkInReservation(id: string) {
-  const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+export async function checkInReservation(
+  id: string,
+  opts?: { early?: boolean; checkInTime?: string },
+) {
+  const { assertBusinessDayOpenForPosting, getCurrentBusinessDate } = await import(
+    '@/lib/services/business-date.service'
+  );
   await assertBusinessDayOpenForPosting();
 
-  const reservation = await getReservation(id);
+  let reservation = await getReservation(id);
   if (!['CONFIRMED', 'OPTION'].includes(reservation.status)) {
     throw new Error('Check-in is only allowed for CONFIRMED or OPTION reservations');
   }
   if (!reservation.roomId) throw new Error('Assign a room before check-in');
 
+  const { collectStayOperationalGaps } = await import(
+    '@/lib/services/stay-operational-readiness.service'
+  );
+  const { StayCheckInBlockedError } = await import('@/lib/guest-stay-requirements');
+  const operationalGaps = await collectStayOperationalGaps(id);
+  if (operationalGaps.length > 0) throw new StayCheckInBlockedError(operationalGaps);
+
+  const biz = await getCurrentBusinessDate();
+  const bizKey = hotelDateKey(biz);
+  let arrivalKey = hotelDateKey(reservation.checkInDate);
+  let departKey = hotelDateKey(reservation.checkOutDate);
+  if (arrivalKey > bizKey && !opts?.early) {
+    throw new Error(
+      'Check-in opens on the arrival date. Confirm early check-in to receive the guest sooner.',
+    );
+  }
   const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
   if (room) {
     const physicalTypeId = reservation.givenRoomTypeId ?? reservation.roomTypeId;
@@ -513,6 +720,34 @@ export async function checkInReservation(id: string) {
   }
   await assertNamedGuestsFreeOnStay(id);
 
+  const previousCheckIn = reservation.checkInDate;
+  let pulledArrival = false;
+  if (opts?.early && arrivalKey > bizKey && reservation.roomId) {
+    pulledArrival = true;
+    const clash = await prisma.reservation.findFirst({
+      where: {
+        id: { not: id },
+        roomId: reservation.roomId,
+        status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
+        checkInDate: { lt: reservation.checkInDate },
+        checkOutDate: { gt: stayCheckIn(bizKey) },
+      },
+      select: { id: true },
+    });
+    if (clash) throw new Error('Room is occupied on the extra nights');
+    await prisma.reservation.update({
+      where: { id },
+      data: { checkInDate: stayCheckIn(bizKey) },
+    });
+    const { syncComposedDailyRates } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    await syncComposedDailyRates(id);
+    reservation = await getReservation(id);
+    arrivalKey = hotelDateKey(reservation.checkInDate);
+    departKey = hotelDateKey(reservation.checkOutDate);
+  }
+
   const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
 
   return prisma.$transaction(async (tx) => {
@@ -533,16 +768,33 @@ export async function checkInReservation(id: string) {
     await applyHeldDepositsOnCheckIn(id);
 
     const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
-    void postEarlyCheckInFee(id).catch((e) => console.error('Early check-in fee failed', e));
+    if (opts?.checkInTime && opts.checkInTime < '14:00') {
+      void postEarlyCheckInFee(id, opts.checkInTime).catch((e) =>
+        console.error('Early check-in fee failed', e),
+      );
+    }
 
-    if (!reservation.ratePlan.medicalFlag && revenueRoom) {
-      const nights = countNights(reservation.checkInDate, reservation.checkOutDate);
+    const nightDue = bizKey >= arrivalKey && bizKey < departKey;
+    if (nightDue && reservation.ratePlan.medicalFlag) {
+      const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
+      await postNightlyPackageCharges(id, biz).catch((e) =>
+        console.error('Arrival night package post failed', e),
+      );
+    } else if (nightDue && revenueRoom) {
+      const rates = await prisma.reservationDailyRate.findMany({
+        where: { reservationId: id },
+      });
+      const daily = rates.find((d) => hotelDateKey(d.stayDate) === bizKey);
+      const amount = daily
+        ? decimalToNumber(daily.amount)
+        : decimalToNumber(reservation.ratePlan.pricePerNight);
       await postCharge({
         reservationId: id,
         revenueCodeId: revenueRoom.id,
-        amount: decimalToNumber(reservation.ratePlan.pricePerNight),
-        qty: nights,
-        description: `Accommodation ${reservation.room?.roomNumber ?? ''}`,
+        amount,
+        qty: 1,
+        description: `Room night ${bizKey}`,
+        businessDate: biz,
       });
     }
     const result = await getReservation(id);
@@ -551,12 +803,24 @@ export async function checkInReservation(id: string) {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    const stamped = await stampMedicalPackagesForReservation(prisma, id);
+    const storedPax = await prisma.reservationGuest.findMany({
+      where: { reservationId: id },
+      orderBy: { sortOrder: 'asc' },
+      select: { medicalPackageCode: true },
+    });
+    const stamped = await stampMedicalPackagesForReservation(
+      prisma,
+      id,
+      storedPax.length > 0
+        ? { foPerGuestCodes: storedPax.map((g) => g.medicalPackageCode) }
+        : undefined,
+    );
     const full = await prisma.reservation.findUnique({
       where: { id },
       include: {
         guest: true,
         room: true,
+        ratePlan: { select: { code: true } },
         paxGuests: {
           orderBy: { sortOrder: 'asc' },
           include: { guest: true },
@@ -581,6 +845,10 @@ export async function checkInReservation(id: string) {
                 },
               ]
             : [];
+      const { normalizeMedicalPackageCode } = await import(
+        '@/lib/services/medical-package-resolve.service'
+      );
+      const staySku = normalizeMedicalPackageCode(full?.ratePlan?.code ?? null);
       for (const pax of paxList) {
         const name =
           [pax.firstName, pax.lastName].filter(Boolean).join(' ') ||
@@ -594,7 +862,10 @@ export async function checkInReservation(id: string) {
         void dispatchGuestCheckedIn({
           reservationId: id,
           roomNumber: updated.room?.roomNumber ?? undefined,
-          programCode: pax.medicalPackageCode ?? stamped.programCode,
+          programCode:
+            normalizeMedicalPackageCode(pax.medicalPackageCode) ??
+            staySku ??
+            stamped.programCode,
           globalPersonId:
             pax.guest?.globalPersonId ?? updated.guest.globalPersonId ?? undefined,
           guestName: name,

@@ -20,7 +20,8 @@
 | **Модули / сателлиты / add-ons** | Post-paid: использование в месяце **M** → платформенный счёт **1-го числа M+1** |
 | **Metered квоты** | Tier задаёт included + spend ceiling; overlimit → unit price → `accumulatedBalance` **в текущем периоде** |
 | **Deactivation** | `pendingDeactivation` до конца календарного месяца |
-| **Blocks** | `SOFT_BLOCK` / `HARD_BLOCK` через orchestrator entitlements |
+| **Blocks** | `SOFT_BLOCK` / `HARD_BLOCK` через orchestrator entitlements; enforced by Finance and all 10 industry satellites via `@era/satellite-kit` — [ADR billing-enforcement-satellites](adr/billing-enforcement-satellites.md) |
+| **Covered until** | Super-admin `billing_covered_until`: lifts the block, monthly run skips covered months (no invoice, no `SOFT_BLOCK`) |
 
 ---
 

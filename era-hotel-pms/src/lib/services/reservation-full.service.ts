@@ -2,8 +2,11 @@ import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { countsFromPax } from '@/components/reservation-card/party-pax';
+import { paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { normalizeListPagination } from '@era/satellite-kit';
 import type { PartyBillingMode, Prisma, ReservationStatus } from '@prisma/client';
 
@@ -40,6 +43,7 @@ const fullInclude = {
           sex: true,
           nationality: true,
           birthDate: true,
+          phone: true,
           documents: {
             select: {
               docType: true,
@@ -55,7 +59,13 @@ const fullInclude = {
   },
   notes: true,
   dailyRates: { orderBy: { stayDate: 'asc' as const } },
-  staySlices: { orderBy: { fromDate: 'asc' as const } },
+  staySlices: {
+    orderBy: { fromDate: 'asc' as const },
+    include: {
+      roomType: { select: { code: true } },
+      room: { select: { roomNumber: true } },
+    },
+  },
   roomChanges: {
     orderBy: { effectiveAt: 'asc' as const },
     include: { fromRoom: true, toRoom: true },
@@ -135,6 +145,7 @@ export async function getReservationFull(id: string) {
     attachments: reservation.attachments,
     notesMap,
     shareNeighbors,
+    pricingBusinessDate: hotelDateKey(await getCurrentBusinessDate()),
   };
 
   try {
@@ -156,6 +167,7 @@ export async function patchReservationFull(
     ratePlanId?: string;
     mealPlanId?: string | null;
     agencyId?: string | null;
+    walkInProfileCode?: string | null;
     companyId?: string | null;
     salesContractId?: string | null;
     sourceId?: string | null;
@@ -241,8 +253,34 @@ export async function patchReservationFull(
   });
   if (!existing) throw new Error('Reservation not found');
 
-  const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, shareEligible, ...data } =
-    input;
+  const {
+    notes,
+    paxGuests: incomingPax,
+    manualDailyRate,
+    creditLimitAzn,
+    dailyRates,
+    shareEligible,
+    ...data
+  } = input;
+
+  let paxGuests = incomingPax;
+  if (existing.status === 'IN_HOUSE' && paxGuests) {
+    const kept = paxGuests.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+    if (kept.length !== paxGuests.length) {
+      paxGuests = kept;
+      const counts = countsFromPax(
+        kept.map((row) => ({
+          birthDate: row.birthDate ?? '',
+          age: row.age == null ? '' : String(row.age),
+          departedAt: null,
+        })),
+      );
+      data.adults = counts.adults;
+      data.children11_6 = counts.children11_6;
+      data.children5_2 = counts.children5_2;
+      data.children1_0 = counts.children1_0;
+    }
+  }
 
   let nextShareEligible = shareEligible ?? existing.shareEligible;
   let nextShareGender = existing.shareGender;
@@ -285,6 +323,8 @@ export async function patchReservationFull(
 
   const checkIn = data.checkInDate ?? existing.checkInDate;
   const checkOut = data.checkOutDate ?? existing.checkOutDate;
+  const ratePlanChanged =
+    typeof data.ratePlanId === 'string' && data.ratePlanId !== existing.ratePlanId;
 
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
@@ -369,14 +409,24 @@ export async function patchReservationFull(
     nextShareGender = null;
   }
 
-  const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
-  await assertShareInventory(existing.roomTypeId, checkIn, checkOut, {
-    id,
-    shareEligible: nextShareEligible,
-    shareGender: nextShareGender,
-    adults: data.adults ?? existing.adults,
-    roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
-  });
+  const nextRoomTypeId = data.roomTypeId ?? existing.roomTypeId;
+  const typeChanged = nextRoomTypeId !== existing.roomTypeId;
+  const windowGrows =
+    hotelDateKey(checkIn) < hotelDateKey(existing.checkInDate) ||
+    hotelDateKey(checkOut) > hotelDateKey(existing.checkOutDate);
+  // An already oversold charged type must not freeze the card. Quota is checked
+  // only when this save takes a new type or a longer stay. The new type is the
+  // one being written, not the type still stored on the row.
+  if (typeChanged || windowGrows) {
+    const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
+    await assertShareInventory(nextRoomTypeId, checkIn, checkOut, {
+      id,
+      shareEligible: nextShareEligible,
+      shareGender: nextShareGender,
+      adults: data.adults ?? existing.adults,
+      roomId: data.roomId !== undefined ? data.roomId : existing.roomId,
+    });
+  }
 
   const shareFieldsDirty =
     shareEligible !== undefined || doorShareResolved || assignShareBedIndex !== undefined;
@@ -501,9 +551,34 @@ export async function patchReservationFull(
     await assertNamedGuestsFreeOnStay(id);
   }
 
-  if (dailyRates?.length) {
-    for (const d of dailyRates) {
+  const datesChanged =
+    (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
+    (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
+
+  const clientDailyRates = datesChanged ? undefined : dailyRates;
+  if (datesChanged) {
+    const checkIn = data.checkInDate ?? existing.checkInDate;
+    const checkOut = data.checkOutDate ?? existing.checkOutDate;
+    await prisma.reservationDailyRate.deleteMany({
+      where: {
+        reservationId: id,
+        OR: [{ stayDate: { lt: checkIn } }, { stayDate: { gte: checkOut } }],
+      },
+    });
+  }
+
+  if (clientDailyRates?.length) {
+    const postedCharges = await prisma.folioCharge.findMany({
+      where: {
+        folio: { reservationId: id },
+        revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
+      },
+      select: { businessDate: true },
+    });
+    const postedNights = new Set(postedCharges.map((charge) => hotelDateKey(charge.businessDate)));
+    for (const d of clientDailyRates) {
       const stayDate = new Date(d.stayDate);
+      if (postedNights.has(hotelDateKey(stayDate))) continue;
       await prisma.reservationDailyRate.upsert({
         where: {
           reservationId_stayDate: { reservationId: id, stayDate },
@@ -534,9 +609,6 @@ export async function patchReservationFull(
     }
   }
 
-  const datesChanged =
-    (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
-    (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
   const prevPaxCodes = existing.paxGuests
     .map((g) => (g.medicalPackageCode ?? '').toUpperCase())
     .join('|');
@@ -546,51 +618,124 @@ export async function patchReservationFull(
   const paxSkuChanged = Boolean(paxGuests) && prevPaxCodes !== nextPaxCodes;
   const foSkuOverride =
     paxGuests?.some((p) => Boolean(p.medicalPackageCode?.trim())) ?? false;
+  const paxMissingSku =
+    Boolean(paxGuests?.length) &&
+    paxGuests!.every((p) => !p.medicalPackageCode?.trim());
 
-  if (datesChanged || paxSkuChanged || foSkuOverride) {
+  const foCodes = paxGuests
+    ? paxGuests.map((p) => {
+        const own = (p.medicalPackageCode ?? '').trim();
+        return own ? own : null;
+      })
+    : undefined;
+
+  if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku || ratePlanChanged) {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
     const stamped = await stampMedicalPackagesForReservation(
       prisma,
       id,
-      foSkuOverride && paxGuests
-        ? { foPerGuestCodes: paxGuests.map((p) => p.medicalPackageCode ?? null) }
-        : undefined,
+      foCodes ? { foPerGuestCodes: foCodes } : undefined,
     );
     if (stamped.stayKind !== 'leisure') {
-      const { dispatchStayProductChanged } = await import(
+      const { fanOutClinicMedicalPackages } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
       const updated = await prisma.reservation.findUnique({
         where: { id },
-        include: { guest: true, room: true, paxGuests: { orderBy: { sortOrder: 'asc' } } },
+        include: {
+          guest: true,
+          room: true,
+          paxGuests: { orderBy: { sortOrder: 'asc' }, include: { guest: true } },
+        },
       });
       if (updated) {
         const previousProgram =
           existing.medicalPackageCode ??
           existing.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
           undefined;
-        void dispatchStayProductChanged({
+        void fanOutClinicMedicalPackages({
+          status: existing.status,
           reservationId: id,
-          programCode: stamped.programCode ?? updated.medicalPackageCode ?? undefined,
-          previousProgramCode: previousProgram ?? undefined,
-          effectiveDate: new Date().toISOString(),
-          globalPersonId: updated.guest.globalPersonId ?? undefined,
           roomNumber: updated.room?.roomNumber ?? undefined,
           checkInDate: updated.checkInDate.toISOString(),
           checkOutDate: updated.checkOutDate.toISOString(),
-        }).catch((e) => console.error('stay-product amend failed', e));
+          previousProgramCode: previousProgram ?? undefined,
+          datesChanged: Boolean(datesChanged),
+          pax: updated.paxGuests,
+        }).catch((e) => console.error('clinic package fan-out failed', e));
       }
     }
   }
 
-  // Wave D: refresh composed nightly sell when SKUs or dates known (skip if FO sent manual dailyRates)
-  if (!dailyRates?.length) {
+  // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
+  // only when the stay window did not change.
+  if (datesChanged || !clientDailyRates?.length) {
     const { syncComposedDailyRates } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );
-    await syncComposedDailyRates(id);
+    const composed = await syncComposedDailyRates(id);
+    if (!composed.applied) {
+      const { recalcReservationDailyRates } = await import(
+        '@/lib/services/reservation-pricing.service'
+      );
+      await recalcReservationDailyRates(id);
+    }
+  }
+
+  if (ratePlanChanged || paxSkuChanged) {
+    const { previewComposedPackageSell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const breakdown = await previewComposedPackageSell(id);
+    const plan = data.ratePlanId
+      ? await prisma.ratePlan.findUnique({
+          where: { id: data.ratePlanId },
+          select: { pricePerNight: true },
+        })
+      : null;
+    const nightly =
+      breakdown?.total && breakdown.total > 0
+        ? breakdown.total
+        : plan?.pricePerNight != null
+          ? decimalToNumber(plan.pricePerNight)
+          : null;
+    if (nightly != null && nightly > 0) {
+      const postedCharges = await prisma.folioCharge.findMany({
+        where: {
+          folio: { reservationId: id },
+          revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
+        },
+        select: { businessDate: true },
+      });
+      const postedNights = new Set(postedCharges.map((charge) => hotelDateKey(charge.businessDate)));
+      const openRates = await prisma.reservationDailyRate.findMany({
+        where: { reservationId: id, fixPrice: false },
+      });
+      for (const row of openRates) {
+        if (postedNights.has(hotelDateKey(row.stayDate))) continue;
+        await prisma.reservationDailyRate.update({
+          where: { id: row.id },
+          data: {
+            amount: toDecimal(nightly),
+            manualFlag: false,
+            discountPct: null,
+          },
+        });
+      }
+    }
+  }
+
+  const summed = await prisma.reservationDailyRate.aggregate({
+    where: { reservationId: id },
+    _sum: { amount: true },
+  });
+  if (summed._sum.amount != null) {
+    await prisma.reservation.update({
+      where: { id },
+      data: { totalAmount: summed._sum.amount },
+    });
   }
 
   return getReservationFull(id);
@@ -608,6 +753,8 @@ export type ListReservationsForGridQuery = {
   pageSize?: number;
   dateFrom?: string;
   dateTo?: string;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 };
 
 const LIVE_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
@@ -686,9 +833,58 @@ export async function listReservationsForGrid(
   const today = todayBakuYmd();
   const ranked = await prisma.reservation.findMany({
     where,
-    select: { id: true, checkInDate: true },
+    select: {
+      id: true,
+      checkInDate: true,
+      checkOutDate: true,
+      status: true,
+      adults: true,
+      guest: { select: { fullName: true } },
+      room: { select: { roomNumber: true, status: true } },
+      roomType: { select: { code: true } },
+      agency: { select: { code: true } },
+      notes: { select: { text: true } },
+    },
   });
+  const sortKey = opts.sort?.trim() ?? '';
+  const sortDir = opts.dir === 'desc' ? -1 : 1;
+  const textOf = (row: (typeof ranked)[number]) => {
+    switch (sortKey) {
+      case 'room':
+        return row.room?.roomNumber ?? '';
+      case 'hk':
+        return row.room?.status ?? '';
+      case 'guest':
+        return row.guest.fullName ?? '';
+      case 'arrival':
+        return hotelDateKey(row.checkInDate);
+      case 'departure':
+        return hotelDateKey(row.checkOutDate);
+      case 'type':
+        return row.roomType.code ?? '';
+      case 'adult':
+        return String(row.adults).padStart(4, '0');
+      case 'state':
+        return row.status;
+      case 'agency':
+        return row.agency?.code ?? '';
+      case 'notes':
+        return row.notes
+          .map((note) => note.text.trim())
+          .filter(Boolean)
+          .join(' / ');
+      case 'id':
+        return row.id;
+      default:
+        return '';
+    }
+  };
   ranked.sort((a, b) => {
+    if (sortKey) {
+      const cmp = textOf(a).localeCompare(textOf(b), undefined, { numeric: true });
+      if (cmp !== 0) return cmp * sortDir;
+      return a.id < b.id ? -1 : 1;
+    }
     const aKey = hotelDateKey(a.checkInDate);
     const bKey = hotelDateKey(b.checkInDate);
     const aFuture = aKey >= today ? 0 : 1;
@@ -722,6 +918,7 @@ export async function listReservationsForGrid(
       ...r,
       hasNotes: filled.length > 0,
       notePreview: preview,
+      noteText: filled.map((n) => n.text.trim()).join(' / '),
       noteTypes: filled.map((n) => n.noteType),
     };
   });

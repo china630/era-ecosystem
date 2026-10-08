@@ -364,6 +364,21 @@
       "next": "Sonra",
       "page": "Səh. {page} / {total}"
     },
+    "orgBillingCoverage": {
+      "title": "Billinq statusu və örtük",
+      "status": "Billinq statusu",
+      "statusACTIVE": "Aktiv",
+      "statusSOFT_BLOCK": "Yumşaq blok (ixrac bağlıdır)",
+      "statusHARD_BLOCK": "Sərt blok (yalnız oxu)",
+      "coveredUntil": "Ödənişsiz örtük tarixi",
+      "notCovered": "Təyin edilməyib: adi aylıq billinq",
+      "hint": "Təşkilatı Asia/Baku üzrə bu gün daxil olmaqla örtür: girişin bitmə tarixini qoyur, SOFT/HARD bloku götürür, aylıq hesablama örtülmüş aylar üçün hesab yazmır və blok qoymur. Yazılmış hesablar ödənilmiş kimi qeyd edilmir. Abunə bloku ayrıca açardır.",
+      "dateLabel": "Son örtülən gün",
+      "save": "Ört və bloku götür",
+      "clear": "Örtüyü sil",
+      "dateRequired": "Son örtülən günü seçin.",
+      "saveFailed": "Örtük saxlanmadı ({status})"
+    },
     "orgHub": {
       "title": "Təşkilat hub",
       "backOrgs": "← Təşkilatlar",
@@ -2080,7 +2095,15 @@
     "openHotelFailed": "Otel açıla bilmədi",
     "openSellerFailed": "Satıcı açıla bilmədi",
     "hotelUrlMissing": "Bu təşkilat üçün otel URL təyin olunmayıb",
-    "financeUrlMissing": "Bu təşkilat üçün Finance URL təyin olunmayıb"
+    "financeUrlMissing": "Bu təşkilat üçün Finance URL təyin olunmayıb",
+    "changePassword": "Şifrəni dəyiş",
+    "changePasswordTitle": "Şifrəni dəyiş",
+    "currentPassword": "Cari şifrə",
+    "newPassword": "Yeni şifrə",
+    "confirmPassword": "Yeni şifrəni təkrar edin",
+    "passwordMismatch": "Yeni şifrələr üst-üstə düşmür",
+    "passwordChanged": "Şifrə dəyişdirildi. Yeni şifrə ilə daxil olun.",
+    "backToLogin": "Girişə qayıt"
   },
   "workforceMigration": {
     "title": "Kadr miqrasiyası",

@@ -44,7 +44,10 @@ export type ResolveMedicalSkuInput = {
   notes: ResolveNoteInput[];
   agencyName?: string | null;
   guests: ResolveGuestInput[];
-  /** Documented ignored — never used for SKU. */
+  /**
+   * Selected package / rate plan code. Used only when notes and agency
+   * did not resolve a SKU, so the sold package still lands on each guest.
+   */
   ratePlanCode?: string | null;
 };
 
@@ -388,26 +391,63 @@ export function resolveMedicalSku(
     }
   }
 
+  // 5. Sold rate plan (PKG-*) when nothing else named a package
+  if (perGuestCodes.every((c): boolean => c == null)) {
+    const planCode = normalizeMedicalPackageCode(input.ratePlanCode ?? null);
+    if (planCode) {
+      anyHit = true;
+      perGuestCodes.fill(planCode);
+    }
+  }
+
+  return summarizeMedicalSku(perGuestCodes, input.agencyName);
+}
+
+/** Collapse per-guest SKUs into the stay-level stamp. */
+export function summarizeMedicalSku(
+  perGuestCodes: (MedicalPackageCode | null)[],
+  agencyName?: string | null,
+): ResolveMedicalSkuResult {
   const distinct = [...new Set(perGuestCodes.filter((c): c is MedicalPackageCode => c != null))];
   const unanimousCode =
     distinct.length === 1 && perGuestCodes.every((c) => c === distinct[0])
       ? distinct[0]
       : null;
-  const unresolved = !unanimousCode;
-  const reservationCode = unanimousCode;
-  const stayKind: ResolveMedicalSkuResult["stayKind"] = distinct.length > 0
-    ? "medical"
-    : isLeisureAgency(input.agencyName)
-      ? "leisure"
-      : "unresolved";
-
+  const stayKind: ResolveMedicalSkuResult["stayKind"] =
+    distinct.length > 0
+      ? "medical"
+      : isLeisureAgency(agencyName)
+        ? "leisure"
+        : "unresolved";
   return {
     perGuestCodes,
     unanimousCode,
-    unresolved,
-    reservationCode,
+    unresolved: !unanimousCode,
+    reservationCode: unanimousCode,
     stayKind,
   };
+}
+
+/**
+ * Guest column wins when set. An empty column ("stay package") keeps the
+ * resolved stay SKU (ERA-PKG, agency, or PKG-* rate plan).
+ */
+export function overlayFoPackageCodes(
+  resolved: ResolveMedicalSkuResult,
+  foCodes: Array<string | null | undefined>,
+  agencyName?: string | null,
+): ResolveMedicalSkuResult {
+  const length = Math.max(resolved.perGuestCodes.length, foCodes.length);
+  const perGuestCodes: (MedicalPackageCode | null)[] = [];
+  for (let i = 0; i < length; i++) {
+    const explicit = normalizeMedicalPackageCode(foCodes[i] ?? null);
+    perGuestCodes.push(explicit ?? resolved.perGuestCodes[i] ?? null);
+  }
+  const summarized = summarizeMedicalSku(perGuestCodes, agencyName);
+  if (summarized.stayKind === "unresolved" && resolved.stayKind === "leisure") {
+    return { ...summarized, stayKind: "leisure" };
+  }
+  return summarized;
 }
 
 /** Check-in / booking payload: unanimous resolved code or omit. */

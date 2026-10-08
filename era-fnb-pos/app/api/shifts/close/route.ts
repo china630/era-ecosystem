@@ -40,6 +40,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Open shift not found" }, { status: 404 });
     }
     if (shift.status === "CLOSED") {
+      await reportPosShiftStatus({
+        outletCode: shift.outlet.code,
+        status: "CLOSED",
+        shiftId: shift.id,
+        closedAt: shift.closedAt?.toISOString(),
+      });
       return NextResponse.json(shift);
     }
 

@@ -73,7 +73,7 @@ Empty rack/plan cells = free **doors**, not sellable type inventory. Create form
 
 | Spec item | Implementation | Wave |
 |-----------|----------------|------|
-| Guest card split + toolbar copy/print | `guest-card/*`, `GuestCardToolbar` | D2 |
+| Guest card split + icon header (copy/print/lock) | `guest-card/*`, `GuestCardActions` | D2 |
 | Identity grids + 6 consents | `GuestCardIdentityTab` | D2 |
 | Details tab editable fields | `GuestCardDetailsTab` + guest PATCH | D2 |
 | Loyalty / time-share grids | `GuestLoyaltyCard`, `GuestTimeShareAgreement` | D2 |

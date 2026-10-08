@@ -271,7 +271,7 @@ function TimelineCells({
         const topOffset = shareLane * ROW_H_BASE + BAR_GUTTER;
         return (
           <div
-            key={bar.id}
+            key={bar.barKey ?? bar.id}
             className="absolute z-[2] flex items-center"
             style={{
               left: `${leftPct}%`,
@@ -284,15 +284,15 @@ function TimelineCells({
               bar={bar}
               shape={cell.shape}
               selected={selectedId === bar.id}
-              draggable={Boolean(onResizeEnd || onMoveReservation)}
+              draggable={!bar.barKey && Boolean(onResizeEnd || onMoveReservation)}
               roomBars={roomBars}
               onSelect={() => onSelect(bar.id)}
               onDragStart={(e) => {
-                if (!onMoveReservation && !onResizeEnd) return;
+                if (bar.barKey || (!onMoveReservation && !onResizeEnd)) return;
                 e.dataTransfer.setData('reservationId', bar.id);
               }}
               onDragEnd={(e) => {
-                if (!onResizeEnd) return;
+                if (bar.barKey || !onResizeEnd) return;
                 const row = e.currentTarget.parentElement?.parentElement;
                 if (!row) return;
                 const rect = row.getBoundingClientRect();

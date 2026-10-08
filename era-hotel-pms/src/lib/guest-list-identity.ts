@@ -100,8 +100,20 @@ export function formatGuestGenderLabel(
   return labels.other;
 }
 
+export type GuestHitFields = {
+  id: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  sex?: string;
+  nationality?: string;
+  birthDate?: string;
+  passportNo?: string;
+  idCardNo?: string;
+};
+
 /** GET /api/guests returns `{ items, total }`. Older callers still sent a bare array. */
-export function guestListItems(payload: unknown): Array<{ id: string; fullName: string }> {
+export function guestListItems(payload: unknown): GuestHitFields[] {
   const rows: unknown[] = Array.isArray(payload)
     ? payload
     : payload &&
@@ -111,9 +123,23 @@ export function guestListItems(payload: unknown): Array<{ id: string; fullName: 
       : [];
   return rows.flatMap((row) => {
     if (!row || typeof row !== 'object') return [];
-    const id = (row as { id?: unknown }).id;
+    const rec = row as Record<string, unknown>;
+    const id = rec.id;
     if (typeof id !== 'string' || !id) return [];
-    const fullName = (row as { fullName?: unknown }).fullName;
-    return [{ id, fullName: typeof fullName === 'string' ? fullName : '' }];
+    const fullName = typeof rec.fullName === 'string' ? rec.fullName : '';
+    const str = (key: string) => (typeof rec[key] === 'string' ? (rec[key] as string) : '');
+    return [
+      {
+        id,
+        fullName,
+        firstName: str('firstName') || undefined,
+        lastName: str('lastName') || undefined,
+        sex: str('sex') || undefined,
+        nationality: str('nationality') || undefined,
+        birthDate: str('birthDate').slice(0, 10) || undefined,
+        passportNo: str('passportNumber') || undefined,
+        idCardNo: str('nationalIdFin') || undefined,
+      },
+    ];
   });
 }

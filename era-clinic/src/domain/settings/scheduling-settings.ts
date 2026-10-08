@@ -8,7 +8,7 @@ import { getDefaultTenant } from "@/domain/settings/settings.service";
 export type SchedulingSettings = {
   programSchedulingMode: ProgramSchedulingMode;
   schedulingSlotMinutes: number;
-  /// Default appointment slot length for new practitioners (outpatient doctor matrix).
+  /// Fallback length of a new reception when no visit service is chosen.
   defaultAppointmentSlotMinutes: number;
   procedureOverQuotaPolicy: ProcedureOverQuotaPolicy;
   dayStartHour: number;

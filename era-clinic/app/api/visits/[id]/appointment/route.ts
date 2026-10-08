@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
+import { resolveAppointmentDurationMinutes } from "@/lib/scheduling.service";
 import { parseBakuDateTime } from "@era/satellite-kit/time";
 
 const bodySchema = z.object({
@@ -56,6 +57,7 @@ export async function POST(
         patientRefId: visit.patientRefId,
         practitionerId: visit.practitionerId,
         scheduledAt,
+        durationMinutes: await resolveAppointmentDurationMinutes({}),
         status: "SCHEDULED",
       },
     });

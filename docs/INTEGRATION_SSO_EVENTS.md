@@ -153,6 +153,18 @@ Hot + FB: гибрид — local login для ops; SSO для владельца
 
 **Satellite grants in the staff token (Variant A).** Hotel, F&B, clinic, bank, retail, CRM, wholesale, auto, construction and logistics sign `permissions[]` (catalog keys `screen:` / `api:` / `admin:`) into the staff JWT on local login and on `POST /api/auth/sso/exchange`, taken from the local `Role.permissionsJson` row. `POST /api/auth/session/refresh-permissions` re-signs after an `/admin/access` save. A missing claim means no grants (fail-closed); only platform super-admin and OrgOwner (`BUSINESS_OWNER`) bypass. The SSO payload itself is unchanged: the satellite maps the ticket to a local role and reads the grants from its own DB. ADRs `docs/adr/*-domain-permissions-and-rbac.md`.
 
+### Billing SOFT/HARD block (Finance + industry satellites)
+
+| Contract | Detail |
+|---|---|
+| `POST /internal/v1/entitlements/validate` | Body `{ organizationId, method, path, userId? }` → `{ allowed, billingStatus, code?, message?, httpStatus? }`. Bearer: `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`, `CONTROL_PLANE_SERVICE_TOKEN` or `SATELLITE_EVENT_SERVICE_TOKEN` |
+| Satellite gate | `readSatelliteStaffSession` → `assertSatelliteBillingAllows`; denied → `SatelliteBillingBlockedError` → HTTP 402 `{ error, code, billingStatus }` (`BILLING_SOFT_BLOCK_EXPORTS`, `BILLING_HARD_BLOCK_READ_ONLY`); orchestrator down + no cache + write → 503 `BILLING_STATUS_UNAVAILABLE` |
+| Request stamps | Kit middleware sets `x-era-pathname` and `x-era-method` from the real request |
+| Banner | `GET /api/platform/billing-status` (kit route, re-exported per satellite) → `{ billingStatus, readOnly, exportsBlocked }` |
+| Super-admin coverage | `PATCH /v1/admin/organizations/:id/billing-coverage { coveredUntil: "YYYY-MM-DD" \| null }` → `billingCoveredUntil` + `expiresAt`, status `ACTIVE` |
+
+ADR: [billing-enforcement-satellites.md](adr/billing-enforcement-satellites.md).
+
 ## Events (Epic B — Phase A complete)
 
 1. Satellite domain action → typed event in `@era/contracts`
@@ -270,6 +282,8 @@ Internal ERA apps consume **era-data-hub** via service token (`DATA_HUB_SERVICE_
 | `GET /platform/v1/workforce/policy?satelliteKey=` | Bearer `SATELLITE_EVENT_SERVICE_TOKEN` + `X-Organization-Id` | `{ hireMode: "cp_workforce" \| "disabled", workforceModuleActive, hrModuleActive, satelliteEntitled }` |
 
 Client: `@era/satellite-kit` `fetchWorkforcePolicy`. Clinic SatAdmin: `GET /api/admin/workforce-policy` (session BFF).
+
+**Satellite staff picker (housekeeping link):** hotel `GET /api/housekeeping/personnel` calls orchestrator `GET /internal/v1/workforce/organizations/:organizationId/picker` with `SATELLITE_EVENT_SERVICE_TOKEN`. Returns active CP employments `{ items: [{ id, globalPersonId, name }] }` (MDM display name, no rates). Finance `Employee` is the payroll mirror only and is not the picker source.
 
 ADR: [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-provisioning.md). · [fx-rates-ecosystem.md](./adr/fx-rates-ecosystem.md) · [production-calendar-ecosystem.md](./adr/production-calendar-ecosystem.md) · Consumer guide: [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 

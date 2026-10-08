@@ -39,10 +39,10 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 - One chrome only: `ModalShell` **title = guest name** (or new-reservation), **subtitle = status · short id**. Do **not** repeat identity above money strip.
 - **Header snapshot**: Total / Deposit / Balance only; occupancy chip only for share / multi-room booking.
 - Secondary actions → **icon** `headerActions` (Attach / Lightning / History / ⋮ Menu with Print+Lock). Save / Check-in → text `footer`. No duplicate Print button.
-- Max width: `MODAL_FULL_CLASS` (~99vw / 1920px). Layout: **`lg:grid-cols-[3fr_7fr]`** (~30% left / 70% right).
+- Max width: `MODAL_FULL_CLASS` (~99vw / 1920px). Layout: **`lg:grid-cols-[2fr_3fr]`** (~40% left / 60% right).
 - FO header actions: **Room booking** (single stay card) + **Group booking** (multi-stay wizard). Screen chain (RTA / list / rack / plan) stays in the sidebar, not as header chips.
-- Left rail: Stay window (**row 1** date+time in + nights; **row 2** date+time out + one plane: red landing on CI day, red takeoff on CO day, yellow takeoff = IN_HOUSE early stay checkout) · Room (**Room type** = charge; **Given room type** = physical door list; **Room no.** filters by Given else Room type; stable Lock/Search/HK/Assign) · Pax & board (heads + meal) · Rate & source (Source path + matching contract + rate) · Billing · Additional. No `roomCount` on single card.
-- Right (~70%): tabs Guests · Pricing · Folio · Notes.
+- Left rail: Stay window (**row 1** date+time in + nights; **row 2** date+time out + one plane: red landing on CI day, red takeoff on CO day, yellow takeoff = IN_HOUSE early stay checkout) · Room (**Room type** = charge; **Given room type** = physical door list; when they differ, ask who pays — hotel covers, guest pays the given class, or a downgrade — do not call a cheaper given type a free upgrade; **Room no.** filters by Given else Room type; stable Lock/Search/HK/Assign; collapsed **Moves** under the room number, hidden when empty) · Pax & board (heads + meal; counters are the row age bands) · Rate & source (Source path + matching contract + rate) · Billing · Additional. No `roomCount` on single card.
+- Right (~60%): tabs Guests · Pricing · Folio · Notes.
   - Guests: compact party grid only — **no** PRIMARY/EQUAL billing chrome; icon add/search/camera; VIP / trip reason on the specials strip.
   - Pricing: daily Rate Grid + quote preview + optional packageCompose summary.
   - Folio: All/Guest/Agency/Company; when party >1, **named guest sections** (not Opera windows).
@@ -58,10 +58,11 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
 
 - **One source** for create and edit: `GuestCardModal` (`guestId` null = create). Same 50/50 + stats strip (zeros until saved) + left panels + right tabs.
 - Same `MODAL_FULL_CLASS` + **50/50** grid. Stats strip above the split.
-- Left: static `FieldPanel` groups — Identity · Classification · Documents & MDM · Other. Scalars live left; MDM lookup/merge in Documents panel.
-- Right tabs: Identity/Contact (docs/contacts/addresses/consents) · CRM · Reservations · Loyalty · Time share. No separate Details tab.
+- Left: static `FieldPanel` groups — Identity (no phone/email, no composed full-name field) · Documents & MDM (read-only primary phone/email/document, visa, registration, MDM) · Commercial · Family · Other. Grey list and problematic are header chips. MDM lookup/merge stays in Documents. VÖEN is in Other, not next to a passport.
+- Right tabs: Identity/Contact (the editor for contacts, documents, addresses, consents) · CRM · Reservations · Loyalty. **Time share is hidden** until a module flag exists (ADR hotel-reservation-card-and-party-ops). No separate Details tab.
+- Chrome matches the reservation card: modal title = composed name, subtitle = short id, icon header (scanner, copy, menu → print + lock), Save in the footer. No inner text toolbar. Add document/contact/address/loyalty via `ModalShell`, never `window.prompt`. CRM tiles that belong to this guest open an in-card dialog.
 - Dates via `DatePicker`; fields via kit `Field` / `FieldRow`.
-- **Full name** is read-only: composed from first name + patronymic + last name on every change (`guestComposedFullName`). Legacy guests with only `fullName` get parts split on load. Create (`POST /api/guests`) persists the parts, title, sex, email and birth date, and passes them to the MDM link. Citizenship is ISO 3166-1 alpha-2 (legacy `OTHER` still accepted); non-`AZ` needs a passport.
+- **Full name** is not a form field. The modal title is composed from first name + patronymic + last name on every change (`guestComposedFullName`). Legacy guests with only `fullName` get parts split on load. Create (`POST /api/guests`) persists the parts, title, sex, email and birth date, and passes them to the MDM link. Citizenship is ISO 3166-1 alpha-2 (legacy `OTHER` still accepted). Saving the card requires first name, last name, gender, birth date and citizenship (red asterisk). Phone and a travel document are not required until check-in; a guest under 18 does not need a phone.
 
 ## FO screen chain
 
