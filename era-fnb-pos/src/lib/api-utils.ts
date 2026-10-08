@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { IndustryModuleInactiveError } from "@era/satellite-kit";
+import { isSatelliteBillingBlockedError } from "@era/satellite-kit/billing/gate";
 import {
   FnbHotelModeError,
   FnbQuotaError,
@@ -19,6 +20,12 @@ export function jsonError(message: string, status = 400) {
 }
 
 export function handleRouteError(err: unknown) {
+  if (isSatelliteBillingBlockedError(err)) {
+    return NextResponse.json(
+      { error: err.message, code: err.code, billingStatus: err.billingStatus },
+      { status: err.status },
+    );
+  }
   if (err instanceof ZodError) {
     return jsonError(err.errors.map((e) => e.message).join("; "), 400);
   }

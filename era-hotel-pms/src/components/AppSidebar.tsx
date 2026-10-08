@@ -20,7 +20,7 @@ import {
   Settings,
   Users,
   UtensilsCrossed,
-  Wrench,
+  SprayCan,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from '@era/satellite-kit/ui';
@@ -134,7 +134,7 @@ export default function AppSidebar() {
     {
       href: '/hk',
       labelKey: 'housekeeping',
-      icon: Wrench,
+      icon: SprayCan,
       show: can(PERMISSIONS.SCREEN_HK),
     },
     {

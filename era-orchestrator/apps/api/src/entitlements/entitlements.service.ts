@@ -49,7 +49,7 @@ export class EntitlementsService {
       if (["GET", "HEAD", "OPTIONS"].includes(method)) {
         return { allowed: true, billingStatus: "HARD_BLOCK" };
       }
-      if (this.isEarlyAccessPath(path)) {
+      if (this.isEarlyAccessPath(path) || this.isSessionMaintenancePath(path)) {
         return { allowed: true, billingStatus: "HARD_BLOCK" };
       }
       if (this.isBillingPaymentPath(path, method)) {
@@ -100,6 +100,11 @@ export class EntitlementsService {
     return path.startsWith("/api/early-access/");
   }
 
+  /** Login, logout, permission refresh, password change: never part of read-only lock. */
+  private isSessionMaintenancePath(path: string): boolean {
+    return path.startsWith("/api/auth/");
+  }
+
   private isBillingPaymentPath(path: string, method: string): boolean {
     if (method !== "POST") return false;
     if (path === "/api/billing/checkout") return true;
@@ -116,6 +121,7 @@ export class EntitlementsService {
       p.includes("/pdf") ||
       p.includes("/xlsx") ||
       p.includes("/xml") ||
+      p.includes("/download") ||
       p.includes("/tax-export")
     );
   }

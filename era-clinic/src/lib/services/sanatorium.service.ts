@@ -160,7 +160,7 @@ export async function openEpisodeFromStay(input: {
       data.hotelStayId = hotelStayId;
     }
     if (gpid) data.globalPersonId = gpid;
-    if (input.programCode && !existing.programCode) {
+    if (input.programCode && existing.programCode !== input.programCode) {
       data.programCode = input.programCode;
     }
     if (Object.keys(data).length > 0) {

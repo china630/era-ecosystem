@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CatalogField,
   EraListFilterBar,
   useDebouncedValue,
   Field,
@@ -32,6 +33,7 @@ export default function InHousePage() {
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  const [room, setRoom] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
@@ -68,13 +70,24 @@ export default function InHousePage() {
     void load();
   }, [load]);
 
+  const roomOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (row.roomNumber) seen.add(row.roomNumber);
+    }
+    return [...seen]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      .map((number) => ({ value: number, label: number }));
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const q = debouncedQ.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      `${r.guestName} ${r.roomNumber ?? ''} ${r.status}`.toLowerCase().includes(q),
-    );
-  }, [rows, debouncedQ]);
+    return rows.filter((r) => {
+      if (room && r.roomNumber !== room) return false;
+      if (!q) return true;
+      return `${r.guestName} ${r.roomNumber ?? ''} ${r.status}`.toLowerCase().includes(q);
+    });
+  }, [rows, debouncedQ, room]);
 
   if (!can(PERMISSIONS.FOLIO_READ) && !can(PERMISSIONS.RESERVATIONS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
@@ -93,7 +106,10 @@ export default function InHousePage() {
       </div>
       <EraListFilterBar
         resetLabel={tc('filterReset')}
-        onReset={() => setQ('')}
+        onReset={() => {
+          setQ('');
+          setRoom('');
+        }}
       >
         <Field
           label={tc('search')}
@@ -101,13 +117,29 @@ export default function InHousePage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t('room')}
+          value={room}
+          onChange={(v) => setRoom(String(Array.isArray(v) ? (v[0] ?? '') : v))}
+          options={roomOptions}
+          emptyLabel={tc('all')}
+        />
       </EraListFilterBar>
       <HotelDataGrid<InHouseGuest & Record<string, unknown>>
         columns={[
-          { key: 'room', header: t('room'), render: (r) => r.roomNumber ?? '—' },
+          {
+            key: 'room',
+            header: t('room'),
+            sortable: true,
+            sortValue: (r) => r.roomNumber ?? '',
+            render: (r) => r.roomNumber ?? '—',
+          },
           {
             key: 'guest',
             header: t('guest'),
+            sortable: true,
+            sortValue: (r) => r.guestName,
             render: (r) => (
               <button
                 type="button"
@@ -118,7 +150,7 @@ export default function InHousePage() {
               </button>
             ),
           },
-          { key: 'status', header: tc('status'), render: (r) => r.status },
+          { key: 'status', header: tc('status'), sortable: true, render: (r) => r.status },
           {
             key: 'folio',
             header: t('folio'),
@@ -138,6 +170,7 @@ export default function InHousePage() {
         ]}
         rows={filtered as (InHouseGuest & Record<string, unknown>)[]}
         rowKey={(r) => r.reservationId}
+        defaultSort={{ key: 'room', dir: 'asc' }}
         emptyMessage={t('empty')}
       />
       <GuestCardModal

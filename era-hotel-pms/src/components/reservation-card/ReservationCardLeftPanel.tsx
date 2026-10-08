@@ -236,8 +236,29 @@ export type ReservationCardLeftPanelProps = {
   stayStatus?: string;
   earlyStayCheckoutBusy?: boolean;
   onStayAction?: () => void;
+  voidKind?: 'cancel' | 'noShow' | null;
+  onVoidStay?: (kind: 'cancel' | 'noShow') => void;
+  staySlices?: Array<{
+    id: string;
+    fromDate: string;
+    toDate: string;
+    roomTypeCode?: string | null;
+    roomNumber?: string | null;
+  }>;
+  onSplitStay?: (input: { fromDate: string; roomTypeId: string; roomId: string | null }) => void;
+  splitBusy?: boolean;
+  splitDoors?: Array<{
+    id: string;
+    roomNumber: string;
+    roomTypeId?: string;
+    status?: string;
+    inventoryStatus?: string;
+    reservations?: Array<{ id: string; status: string; checkInDate: string; checkOutDate: string }>;
+  }>;
   voucherNo: string;
   agencyId: string;
+  walkInProfileCode?: string;
+  walkInProfiles?: Array<{ code: string; label: string }>;
   companyId: string;
   sourceId: string;
   roomTypeId: string;
@@ -371,6 +392,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
+  const [splitFrom, setSplitFrom] = useState('');
+  const [splitTypeId, setSplitTypeId] = useState('');
+  const [splitRoomId, setSplitRoomId] = useState('');
   const { byKind, roomViews, bedTypes } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
@@ -412,6 +436,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
         onContractRef={(value) => onChange({ contractRef: value })}
         onAgencyCreated={(row) => props.onAgencyCreated?.(row)}
         onCompanyCreated={(row) => props.onCompanyCreated?.(row)}
+        walkInProfiles={props.walkInProfiles}
+        walkInProfileCode={props.walkInProfileCode}
+        onWalkInProfile={(code) => onChange({ walkInProfileCode: code })}
       />
       {/* 1. Stay window — dates + times always visible */}
       <FieldPanel title={t('stayWindow')}>
@@ -468,6 +495,20 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               onStayAction={props.onStayAction}
             />
           </div>
+          {props.voidKind && props.onVoidStay ? (
+            <button
+              type="button"
+              className={
+                props.voidKind === 'cancel'
+                  ? 'rounded-md bg-amber-400 px-3 py-1.5 text-[12px] font-semibold text-amber-950'
+                  : 'rounded-md bg-[#E74C3C] px-3 py-1.5 text-[12px] font-semibold text-white'
+              }
+              disabled={disabled || props.earlyStayCheckoutBusy}
+              onClick={() => props.onVoidStay?.(props.voidKind!)}
+            >
+              {props.voidKind === 'cancel' ? t('cancelStay') : t('noShowStay')}
+            </button>
+          ) : null}
           <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
             <FieldRow cols={2}>
               <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
@@ -703,6 +744,85 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               >
                 {hkBadge ?? 'HK'}
               </Link>
+            </div>
+          ) : null}
+          {(props.staySlices?.length ?? 0) > 1 ? (
+            <ul className="m-0 space-y-1 p-0 text-[12px] text-[#34495E]">
+              {props.staySlices!.map((slice) => (
+                <li key={slice.id}>
+                  {String(slice.fromDate).slice(0, 10)} – {String(slice.toDate).slice(0, 10)}
+                  {' · '}
+                  {slice.roomTypeCode ?? '—'}
+                  {slice.roomNumber ? ` · ${slice.roomNumber}` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {props.onSplitStay && !props.isCreate ? (
+            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
+              <DatePicker
+                label={t('splitFrom')}
+                fluid
+                value={splitFrom}
+                onChange={setSplitFrom}
+                placeholder={tc('datePlaceholder')}
+                openCalendarLabel={tc('openCalendar')}
+                disabled={disabled || props.splitBusy}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={tb('roomType')}
+                value={splitTypeId}
+                onChange={(v) => {
+                  setSplitTypeId(String(v ?? ''));
+                  setSplitRoomId('');
+                }}
+                options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
+                emptyLabel={null}
+                disabled={disabled || props.splitBusy}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t('splitDoor')}
+                value={splitRoomId}
+                onChange={(v) => setSplitRoomId(String(v ?? ''))}
+                options={(props.splitDoors ?? [])
+                  .filter((door) => {
+                    if (splitTypeId && door.roomTypeId !== splitTypeId) return false;
+                    if (door.status === 'OOO' || door.status === 'OOS' || door.inventoryStatus === 'OOO' || door.inventoryStatus === 'OOS') {
+                      return false;
+                    }
+                    if (!splitFrom || !props.checkOut) return true;
+                    const from = splitFrom.slice(0, 10);
+                    const to = props.checkOut.slice(0, 10);
+                    return !(door.reservations ?? []).some((stay) => {
+                      if (stay.id === props.reservationId) return false;
+                      if (stay.status !== 'CONFIRMED' && stay.status !== 'OPTION' && stay.status !== 'IN_HOUSE') {
+                        return false;
+                      }
+                      const ci = String(stay.checkInDate).slice(0, 10);
+                      const co = String(stay.checkOutDate).slice(0, 10);
+                      return ci < to && co > from;
+                    });
+                  })
+                  .map((door) => ({ value: door.id, label: door.roomNumber }))}
+                emptyLabel={t('splitQuotaOnly')}
+                disabled={disabled || props.splitBusy || !splitTypeId}
+              />
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
+                onClick={() =>
+                  props.onSplitStay?.({
+                    fromDate: splitFrom,
+                    roomTypeId: splitTypeId,
+                    roomId: splitRoomId || null,
+                  })
+                }
+              >
+                {t('splitStay')}
+              </button>
             </div>
           ) : null}
           <RoomMoves changes={props.roomChanges} />

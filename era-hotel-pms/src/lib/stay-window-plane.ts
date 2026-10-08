@@ -39,6 +39,20 @@ export function resolveStayWindowPlane(input: {
   return null;
 }
 
+/** Cancel before arrival; no-show from the arrival date while the guest is still not in house. */
+export function preArrivalVoidKind(input: {
+  checkIn: string;
+  status?: string | null;
+  todayKey?: string;
+}): 'cancel' | 'noShow' | null {
+  const status = input.status ?? '';
+  if (status !== 'CONFIRMED' && status !== 'OPTION') return null;
+  const ci = dayKey(input.checkIn);
+  if (!ci) return null;
+  const today = input.todayKey ?? hotelDateKey();
+  return today < ci ? 'cancel' : 'noShow';
+}
+
 export function stayActionForPlane(kind: StayWindowPlaneKind | null): StayActionKind | null {
   if (kind === 'earlyArrival') return 'earlyCheckIn';
   if (kind === 'arrival') return 'checkIn';

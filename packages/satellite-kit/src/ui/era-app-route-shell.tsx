@@ -9,6 +9,7 @@ import { EraOpsContent } from "./era-ops-content";
 import { EraOpsSidebarSections } from "./era-ops-sidebar-sections";
 import { EraOpsSidebarNav } from "./era-ops-sidebar";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
+import { SatelliteBillingBanner } from "./satellite-billing-banner";
 
 export type EraAppRouteShellProps = {
   children: ReactNode;
@@ -27,6 +28,8 @@ export type EraAppRouteShellProps = {
   locale?: EraAppHeaderProps["locale"];
   tierBar?: EraAppHeaderProps["tierBar"];
   sidebarFooter?: ReactNode;
+  /** Org billing SOFT/HARD banner (kit route `/api/platform/billing-status`). Default on. */
+  billingBanner?: boolean;
 };
 
 function defaultActive(pathname: string, href: string): boolean {
@@ -53,6 +56,7 @@ export function EraAppRouteShell({
   locale,
   tierBar,
   sidebarFooter,
+  billingBanner = true,
 }: EraAppRouteShellProps) {
   const pathname = usePathname() ?? "";
   const barePrefixes = [...DEFAULT_BARE_PUBLIC_PAGE_PREFIXES, ...barePublicPrefixes];
@@ -145,6 +149,7 @@ export function EraAppRouteShell({
       }
     >
       <EraOpsContent padded={contentPadded} className={contentClassName}>
+        {billingBanner ? <SatelliteBillingBanner /> : null}
         {children}
       </EraOpsContent>
     </EraAppShellLayout>

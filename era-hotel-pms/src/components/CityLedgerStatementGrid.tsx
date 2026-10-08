@@ -56,42 +56,56 @@ export function CityLedgerStatementGrid({
         {
           key: 'businessDate',
           header: labels.date,
+          sortable: true,
+          sortValue: (r) => r.businessDate ?? r.at,
           render: (r) => r.businessDate ?? bakuDateDisplay(r.at),
         },
         {
           key: 'kind',
           header: labels.kind,
+          sortable: true,
+          sortValue: (r) => kindLabel(r.kind, labels),
           render: (r) => kindLabel(r.kind, labels),
         },
         {
           key: 'reservationId',
           header: labels.stay,
+          sortable: true,
+          sortValue: (r) => r.reservationRef ?? r.reservationId,
           render: (r) => r.reservationRef ?? r.reservationId.slice(0, 8),
         },
         {
           key: 'guestName',
           header: labels.guest,
+          sortable: true,
           render: (r) => r.guestName ?? '—',
         },
         {
           key: 'roomLabel',
           header: labels.room,
+          sortable: true,
           render: (r) => r.roomLabel ?? '—',
         },
         {
           key: 'description',
           header: labels.description,
+          sortable: true,
+          sortValue: (r) => r.description,
           render: (r) =>
             r.code ? `${r.code}${r.qty != null && r.qty !== 1 ? ` ×${r.qty}` : ''} · ${r.description}` : r.description,
         },
         {
           key: 'amount',
           header: labels.amount,
+          sortable: true,
+          sortValue: (r) => r.amount,
           render: (r) => `${r.amount.toFixed(2)} ${labels.azn}`,
         },
         {
           key: 'runningBalance',
           header: labels.running,
+          sortable: true,
+          sortValue: (r) => r.runningBalance,
           render: (r) => `${r.runningBalance.toFixed(2)} ${labels.azn}`,
         },
       ]}

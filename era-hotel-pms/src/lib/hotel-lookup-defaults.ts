@@ -59,4 +59,15 @@ export const HOTEL_LOOKUP_DEFAULTS: HotelLookupDefault[] = [
   ]),
   ...mapCodes('CONCIERGE_CATEGORY', ['EXCURSION', 'TICKET', 'RESTAURANT_EXT']),
   ...mapCodes('EVENT_LINE_KIND', ['MENU', 'EQUIPMENT', 'STAFF', 'ROOM_RENTAL', 'OTHER']),
+  ...mapCodes(
+    'WALKIN_PROFILE',
+    ['FERDI', 'FACEBOOK', 'INSTAGRAM', 'TELEGRAM', 'DIGER'],
+    {
+      FERDI: 'Fərdi',
+      FACEBOOK: 'Facebook',
+      INSTAGRAM: 'Instagram',
+      TELEGRAM: 'Telegram',
+      DIGER: 'Digər',
+    },
+  ),
 ];

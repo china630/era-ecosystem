@@ -96,9 +96,8 @@ export function fksFromSalesContract(contract: SalesContractPick): {
 }
 
 /**
- * Walk-in, website and Corporate sell paths do not persist a travel-agent FK —
- * except a walk-in-recorded Agency row (`WALKIN MEDICAL`, `Premium paket Walkin`),
- * which drives medical package rules and agency reports.
+ * Walk-in and website do not persist a travel-agent FK.
+ * The walk-in profile is a hotel lookup stored on the stay.
  */
 export function persistCounterpartyIds(opts: {
   sourceKind: BookingSourceKind;
@@ -107,9 +106,6 @@ export function persistCounterpartyIds(opts: {
   agencyIsWalkIn?: boolean;
 }): { agencyId: string | null; companyId: string | null } {
   const companyId = (opts.companyId ?? '').trim() || null;
-  if (opts.sourceKind === 'WALKIN' && opts.agencyIsWalkIn) {
-    return { agencyId: (opts.agencyId ?? '').trim() || null, companyId };
-  }
   if (opts.sourceKind === 'WALKIN' || opts.sourceKind === 'WEB') {
     return { agencyId: null, companyId };
   }

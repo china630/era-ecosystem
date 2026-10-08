@@ -19,6 +19,7 @@ import {
   formatSharePoolBadge,
   canQuickBookRoom,
   pickRackStayForDate,
+  reservationsTouchingDate,
   deriveSharePoolForDate,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
@@ -503,6 +504,7 @@ export default function RoomRackView({
         <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filtered.map((room) => {
+            const touching = reservationsTouchingDate(room.reservations, rangeLo, rangeHi);
             const active = pickRackStayForDate(room.reservations, rangeLo, rangeHi);
             const sharePool = deriveSharePoolForDate(room, rangeLo, rangeHi);
             const guestGender = active
@@ -551,7 +553,22 @@ export default function RoomRackView({
                     ) : null}
                   </div>
                   <div className="text-[12px] text-[#7F8C8D]">{room.roomType.code}</div>
-                  {active ? (
+                  {touching.length > 1 ? (
+                    <div className="mt-2 space-y-1">
+                      {touching.map((stay) => (
+                        <div key={`${stay.id}-${stay.checkInDate}`}>
+                          <div className="truncate text-[12px] font-medium text-[#34495E]">
+                            {stay.guest.fullName}
+                          </div>
+                          {stay.checkInDate && stay.checkOutDate ? (
+                            <div className="text-[11px] text-[#7F8C8D]">
+                              {formatStayRange(stay.checkInDate, stay.checkOutDate)}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : active ? (
                     <div className="mt-2 space-y-1">
                       <div
                         className="truncate text-[12px] font-medium text-[#34495E]"

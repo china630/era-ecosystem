@@ -156,18 +156,20 @@ export async function applyStayAmendment(input: {
     }
   }
 
-  void dispatchStayProductChanged({
-    reservationId: input.reservationId,
-    programCode: newPlan?.medicalFlag ? newPlan.code : undefined,
-    previousProgramCode: res.ratePlan.medicalFlag ? res.ratePlan.code : undefined,
-    effectiveDate: isoDate(effective),
-    roomTypeId: input.roomTypeId,
-    ratePlanId: input.ratePlanId,
-    globalPersonId: res.guest.globalPersonId ?? undefined,
-    roomNumber: res.room?.roomNumber,
-    checkInDate: res.checkInDate.toISOString(),
-    checkOutDate: res.checkOutDate.toISOString(),
-  }).catch((e) => console.error('Stay product event failed', e));
+  if (res.status === 'IN_HOUSE') {
+    void dispatchStayProductChanged({
+      reservationId: input.reservationId,
+      programCode: newPlan?.medicalFlag ? newPlan.code : undefined,
+      previousProgramCode: res.ratePlan.medicalFlag ? res.ratePlan.code : undefined,
+      effectiveDate: isoDate(effective),
+      roomTypeId: input.roomTypeId,
+      ratePlanId: input.ratePlanId,
+      globalPersonId: res.guest.globalPersonId ?? undefined,
+      roomNumber: res.room?.roomNumber,
+      checkInDate: res.checkInDate.toISOString(),
+      checkOutDate: res.checkOutDate.toISOString(),
+    }).catch((e) => console.error('Stay product event failed', e));
+  }
 
   return { ok: true, preview };
 }

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
-import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
+import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
@@ -115,6 +115,7 @@ export async function createReservation(input: {
   givenRoomTypeId?: string;
   sourceId?: string;
   agencyId?: string;
+  walkInProfileCode?: string | null;
   companyId?: string;
   salesContractId?: string;
   /** Booking envelope (ReservationGroup) — multi-stay under one group. */
@@ -375,6 +376,7 @@ export async function createReservation(input: {
         roomId: input.roomId,
         sourceId: input.sourceId,
         agencyId,
+        walkInProfileCode: input.walkInProfileCode ?? null,
         companyId,
         salesContractId,
         groupId: input.groupId,
@@ -524,16 +526,27 @@ export async function createReservation(input: {
         });
       }
     }
-    if (stamped.programCode) {
+    if (stamped.stayKind !== 'leisure' && stamped.perGuestCodes.some((code) => code != null)) {
       await assertSanatoriumBookingAllowed(reservation.organizationId, reservation.checkInDate);
-      void dispatchSanatoriumBookingCreated({
+      const party = await prisma.reservationGuest.findMany({
+        where: { reservationId: reservation.id },
+        orderBy: { sortOrder: 'asc' },
+        include: { guest: true },
+      });
+      const room = reservation.roomId
+        ? await prisma.room.findUnique({
+            where: { id: reservation.roomId },
+            select: { roomNumber: true },
+          })
+        : null;
+      void fanOutClinicMedicalPackages({
+        status: reservation.status,
         reservationId: reservation.id,
-        programCode: stamped.programCode,
-        globalPersonId: reservation.guest.globalPersonId ?? undefined,
-        guestName: reservation.guest.fullName,
+        roomNumber: room?.roomNumber,
         checkInDate: reservation.checkInDate.toISOString(),
         checkOutDate: reservation.checkOutDate.toISOString(),
-      }).catch(() => null);
+        pax: party,
+      }).catch((e) => console.error('sanatorium booking created failed', e));
     }
   }
 

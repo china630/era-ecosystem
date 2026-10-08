@@ -436,6 +436,43 @@ export class WorkforceEmploymentsService {
     }
     return out;
   }
+
+  /**
+   * S2S picker for satellite ops (hotel housekeeping). Active CP employments
+   * with an MDM display name. Not the finance payroll mirror.
+   */
+  async listPicker(organizationId: string): Promise<{
+    items: Array<{ id: string; globalPersonId: string; name: string }>;
+  }> {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const rows = await this.prisma.workforceEmployment.findMany({
+      where: { organizationId, status: WorkforceEmploymentStatus.ACTIVE },
+      select: { id: true, globalPersonId: true },
+      orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
+      take: 500,
+    });
+    const persons = await this.resolvePersonProfiles(
+      organizationId,
+      rows.map((row) => row.globalPersonId),
+    );
+    const seen = new Set<string>();
+    const items: Array<{ id: string; globalPersonId: string; name: string }> = [];
+    for (const row of rows) {
+      if (seen.has(row.globalPersonId)) continue;
+      const profile = persons[row.globalPersonId];
+      const name =
+        profile?.displayName?.trim() ||
+        [profile?.firstName, profile?.middleName, profile?.lastName]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join(" ")
+          .trim();
+      if (!name) continue;
+      seen.add(row.globalPersonId);
+      items.push({ id: row.id, globalPersonId: row.globalPersonId, name });
+    }
+    items.sort((a, b) => a.name.localeCompare(b.name));
+    return { items };
+  }
 }
 
 function omitStaffPin<T extends { satelliteStaffPin?: string | null }>(row: T) {

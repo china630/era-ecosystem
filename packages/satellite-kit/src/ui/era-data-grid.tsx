@@ -50,12 +50,14 @@ export function EraDataGrid<T extends Record<string, unknown>>({
   embedded = false,
   rowClassName,
   onRowClick,
+  onRowDoubleClick,
   page: controlledPage,
   pageSize: controlledPageSize,
   total: controlledTotal,
   onPageChange,
   onPageSizeChange,
   sort = null,
+  defaultSort = null,
   onSortChange,
 }: EraDataGridProps<T>) {
   const isServer = paginationMode === "server";
@@ -90,7 +92,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
     if (page > totalPages) setPage(totalPages);
   }, [isServer, page, totalPages]);
 
-  const [localSort, setLocalSort] = useState<EraDataGridSort | null>(null);
+  const [localSort, setLocalSort] = useState<EraDataGridSort | null>(defaultSort);
   const activeSort = onSortChange ? sort : localSort;
 
   const sortedRows = useMemo(() => {
@@ -202,6 +204,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
               <tr
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onDoubleClick={onRowDoubleClick ? () => onRowDoubleClick(row) : undefined}
                 className={[
                   // Drop default bg-white when a status tint is provided (Tailwind conflict).
                   tint

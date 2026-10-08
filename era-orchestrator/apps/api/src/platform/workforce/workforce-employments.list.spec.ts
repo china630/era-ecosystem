@@ -113,4 +113,47 @@ describe("WorkforceEmploymentsService.list include", () => {
     expect(out.total).toBe(1);
     expect(out.items[0].id).toBe("e2");
   });
+
+  it("picker returns active employments with a display name and skips blanks", async () => {
+    prisma.workforceEmployment.findMany.mockResolvedValue([
+      { id: "e1", globalPersonId: "p1" },
+      { id: "e2", globalPersonId: "p1" },
+      { id: "e3", globalPersonId: "p-blank" },
+    ]);
+    mdm.batchGetPersonOpsProfile.mockResolvedValue({
+      p1: {
+        globalPersonId: "p1",
+        displayName: "Leyla Mammadova",
+        firstName: "Leyla",
+        middleName: null,
+        lastName: "Mammadova",
+        primaryIdentifierMasked: null,
+        accessDenied: false,
+        sex: null,
+        birthDate: null,
+      },
+      "p-blank": {
+        globalPersonId: "p-blank",
+        displayName: "  ",
+        firstName: null,
+        middleName: null,
+        lastName: null,
+        primaryIdentifierMasked: null,
+        accessDenied: false,
+        sex: null,
+        birthDate: null,
+      },
+    });
+
+    const out = await svc.listPicker("org-1");
+    expect(prisma.workforceEmployment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org-1", status: "ACTIVE" },
+        take: 500,
+      }),
+    );
+    expect(out.items).toEqual([
+      { id: "e1", globalPersonId: "p1", name: "Leyla Mammadova" },
+    ]);
+  });
 });

@@ -23,6 +23,7 @@ jest.mock('@/lib/integration/guest-lifecycle-events', () => ({
   dispatchGuestCheckedOut: jest.fn(),
   dispatchRoomChanged: jest.fn(),
   dispatchSanatoriumBookingCreated: jest.fn(),
+  fanOutClinicMedicalPackages: jest.fn(),
 }));
 
 jest.mock('@/lib/integration/clinic-capacity-client', () => ({

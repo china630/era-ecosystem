@@ -21,7 +21,8 @@ export type HotelLookupKindCode =
   | 'VERIFICATION_STATUS'
   | 'NOTE_TYPE'
   | 'CONCIERGE_CATEGORY'
-  | 'EVENT_LINE_KIND';
+  | 'EVENT_LINE_KIND'
+  | 'WALKIN_PROFILE';
 
 type LookupRow = LocalizedCatalogRow & { code: string; name: string; active?: boolean };
 

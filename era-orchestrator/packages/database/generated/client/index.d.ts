@@ -13271,6 +13271,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isBlocked: boolean | null
+    billingCoveredUntil: Date | null
   }
 
   export type OrganizationSubscriptionMaxAggregateOutputType = {
@@ -13284,6 +13285,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isBlocked: boolean | null
+    billingCoveredUntil: Date | null
   }
 
   export type OrganizationSubscriptionCountAggregateOutputType = {
@@ -13300,6 +13302,7 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     isBlocked: number
+    billingCoveredUntil: number
     customConfig: number
     _all: number
   }
@@ -13316,6 +13319,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isBlocked?: true
+    billingCoveredUntil?: true
   }
 
   export type OrganizationSubscriptionMaxAggregateInputType = {
@@ -13329,6 +13333,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isBlocked?: true
+    billingCoveredUntil?: true
   }
 
   export type OrganizationSubscriptionCountAggregateInputType = {
@@ -13345,6 +13350,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isBlocked?: true
+    billingCoveredUntil?: true
     customConfig?: true
     _all?: true
   }
@@ -13435,6 +13441,7 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     isBlocked: boolean
+    billingCoveredUntil: Date | null
     customConfig: JsonValue | null
     _count: OrganizationSubscriptionCountAggregateOutputType | null
     _min: OrganizationSubscriptionMinAggregateOutputType | null
@@ -13469,6 +13476,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
+    billingCoveredUntil?: boolean
     customConfig?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
@@ -13487,6 +13495,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
+    billingCoveredUntil?: boolean
     customConfig?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
@@ -13505,6 +13514,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
+    billingCoveredUntil?: boolean
     customConfig?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
@@ -13523,10 +13533,11 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
+    billingCoveredUntil?: boolean
     customConfig?: boolean
   }
 
-  export type OrganizationSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "currentTier" | "isTrial" | "trialExpiresAt" | "activatedPremiumModules" | "billingPeriodKey" | "expiresAt" | "activeModules" | "quotaOverrides" | "createdAt" | "updatedAt" | "isBlocked" | "customConfig", ExtArgs["result"]["organizationSubscription"]>
+  export type OrganizationSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "currentTier" | "isTrial" | "trialExpiresAt" | "activatedPremiumModules" | "billingPeriodKey" | "expiresAt" | "activeModules" | "quotaOverrides" | "createdAt" | "updatedAt" | "isBlocked" | "billingCoveredUntil" | "customConfig", ExtArgs["result"]["organizationSubscription"]>
   export type OrganizationSubscriptionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
@@ -13556,6 +13567,10 @@ export namespace Prisma {
       createdAt: Date
       updatedAt: Date
       isBlocked: boolean
+      /**
+       * Platform-granted coverage: monthly billing skips this org (no invoice, no SOFT_BLOCK) while in the future.
+       */
+      billingCoveredUntil: Date | null
       customConfig: Prisma.JsonValue | null
     }, ExtArgs["result"]["organizationSubscription"]>
     composites: {}
@@ -13994,6 +14009,7 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly updatedAt: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly isBlocked: FieldRef<"OrganizationSubscription", 'Boolean'>
+    readonly billingCoveredUntil: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly customConfig: FieldRef<"OrganizationSubscription", 'Json'>
   }
     
@@ -125361,6 +125377,7 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     isBlocked: 'isBlocked',
+    billingCoveredUntil: 'billingCoveredUntil',
     customConfig: 'customConfig'
   };
 
@@ -127906,6 +127923,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
+    billingCoveredUntil?: DateTimeNullableFilter<"OrganizationSubscription"> | Date | string | null
     customConfig?: JsonNullableFilter<"OrganizationSubscription">
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
@@ -127924,6 +127942,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
+    billingCoveredUntil?: SortOrderInput | SortOrder
     customConfig?: SortOrderInput | SortOrder
     organization?: OrganizationOrderByWithRelationInput
   }
@@ -127945,6 +127964,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
+    billingCoveredUntil?: DateTimeNullableFilter<"OrganizationSubscription"> | Date | string | null
     customConfig?: JsonNullableFilter<"OrganizationSubscription">
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "id" | "organizationId">
@@ -127963,6 +127983,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
+    billingCoveredUntil?: SortOrderInput | SortOrder
     customConfig?: SortOrderInput | SortOrder
     _count?: OrganizationSubscriptionCountOrderByAggregateInput
     _max?: OrganizationSubscriptionMaxOrderByAggregateInput
@@ -127986,6 +128007,7 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolWithAggregatesFilter<"OrganizationSubscription"> | boolean
+    billingCoveredUntil?: DateTimeNullableWithAggregatesFilter<"OrganizationSubscription"> | Date | string | null
     customConfig?: JsonNullableWithAggregatesFilter<"OrganizationSubscription">
   }
 
@@ -136122,6 +136144,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
+    billingCoveredUntil?: Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
     organization: OrganizationCreateNestedOneWithoutSubscriptionInput
   }
@@ -136140,6 +136163,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
+    billingCoveredUntil?: Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -136156,6 +136180,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
     organization?: OrganizationUpdateOneRequiredWithoutSubscriptionNestedInput
   }
@@ -136174,6 +136199,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -136191,6 +136217,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
+    billingCoveredUntil?: Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -136207,6 +136234,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -136224,6 +136252,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -145332,6 +145361,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
+    billingCoveredUntil?: SortOrder
     customConfig?: SortOrder
   }
 
@@ -145346,6 +145376,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
+    billingCoveredUntil?: SortOrder
   }
 
   export type OrganizationSubscriptionMinOrderByAggregateInput = {
@@ -145359,6 +145390,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
+    billingCoveredUntil?: SortOrder
   }
 
   export type EnumTariffTierWithAggregatesFilter<$PrismaModel = never> = {
@@ -179048,6 +179080,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
+    billingCoveredUntil?: Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -179064,6 +179097,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
+    billingCoveredUntil?: Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -181251,6 +181285,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 
@@ -181267,6 +181302,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    billingCoveredUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     customConfig?: NullableJsonNullValueInput | InputJsonValue
   }
 

@@ -1,5 +1,6 @@
 import {
   normalizeMedicalPackageCode,
+  overlayFoPackageCodes,
   programCodeForLifecycle,
   resolveAgencyPackageCode,
   resolveMedicalSku,
@@ -207,5 +208,28 @@ describe("medical-package-resolve", () => {
       guests: [{ fullName: "Guest" }],
     });
     expect(r.unanimousCode).toBe("PKG-DERMO");
+  });
+
+  it("empty guest column inherits the sold package", () => {
+    const resolved = resolveMedicalSku({
+      notes: [],
+      agencyName: null,
+      guests: [{ fullName: "A" }, { fullName: "B" }],
+      ratePlanCode: "PKG-PREMIUM",
+    });
+    const overlaid = overlayFoPackageCodes(resolved, [null, null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-PREMIUM", "PKG-PREMIUM"]);
+  });
+
+  it("an explicit guest package replaces only that guest", () => {
+    const resolved = resolveMedicalSku({
+      notes: [],
+      agencyName: null,
+      guests: [{ fullName: "A" }, { fullName: "B" }],
+      ratePlanCode: "PKG-STANDART",
+    });
+    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMO", null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMO", "PKG-STANDART"]);
+    expect(overlaid.unanimousCode).toBeNull();
   });
 });

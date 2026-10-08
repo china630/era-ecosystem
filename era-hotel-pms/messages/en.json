@@ -696,7 +696,8 @@
     "namesIncomplete": "Guest names incomplete — fill real names before assign / check-in (TBA not allowed).",
     "namesIncompleteBadge": "Names incomplete",
     "bookingName": "Booking name",
-    "bookingNamePlaceholder": "Optional label (e.g. wedding, company block)"
+    "bookingNamePlaceholder": "Optional label (e.g. wedding, company block)",
+    "singleStayHint": "One room on this booking"
   },
   "reservationCard": {
     "stay": "Stay",
@@ -704,6 +705,15 @@
     "commercialSales": "Commercial & sales",
     "classification": "Classification",
     "roomSection": "Room",
+    "cancelStay": "CANCELLED",
+    "noShowStay": "NO_SHOW",
+    "cancelDone": "Reservation cancelled",
+    "noShowDone": "Marked as no-show",
+    "splitFrom": "Change room from",
+    "splitDoor": "Door",
+    "splitQuotaOnly": "Type quota only",
+    "splitStay": "Plan room change",
+    "splitStayDone": "Stay split saved",
     "productSection": "Product (sold)",
     "assignmentSection": "Assignment",
     "additionalSection": "Additional",
@@ -1519,7 +1529,10 @@
     "reasonCard": "from the reservation card",
     "reasonSwap": "room swap",
     "reasonRelocate": "from the room plan",
-    "reasonOther": "room move"
+    "reasonOther": "room move",
+    "statusPending": "Pending",
+    "statusApplied": "Applied",
+    "statusCancelled": "Cancelled"
   },
   "promotionCodes": {
     "title": "Promotion codes",
@@ -1645,7 +1658,7 @@
     "code": "Code",
     "name": "Name",
     "pickEmployee": "Employee",
-    "personnelUnavailable": "HR list is unavailable. Check the finance link, then try again.",
+    "personnelUnavailable": "HR list is unavailable. Check the orchestrator link, then try again.",
     "department": "Department",
     "tasks": "Tasks",
     "empty": "No attendants yet. Link an employee from HR."
@@ -1700,6 +1713,7 @@
     "add": "Add reservation",
     "notes": "Notes",
     "filterNotes": "With notes only",
+    "birthday": "Birthday during the stay",
     "statusLive": "Live",
     "room": "Room",
     "hk": "HK",
@@ -1831,6 +1845,8 @@
     "headsOnDuty": "Heads on duty",
     "pairsLeftover": "Unassigned floor pairs — assign by hand",
     "acceptLaundry": "Accept (in plant)",
+    "addLaundry": "Add laundry",
+    "laundryPieces": "Clothes",
     "deliverLaundry": "Delivered",
     "returnScanRequired": "Return form scan is required",
     "foLaundryTitle": "Front office laundry",
@@ -2522,6 +2538,8 @@
     "editRoom": "Edit room",
     "roomTypeUpdated": "Room type updated",
     "ratePlanUpdated": "Rate plan updated",
+    "ratePlanDeleted": "Rate plan deleted",
+    "ratePlanInUse": "This rate plan is still used: reservations {reservations}, contracts {contracts}, stay segments {slices}, derived plans {derived}",
     "revenueCodeUpdated": "Revenue code updated",
     "bedTypeUpdated": "Bed type updated",
     "roomViewUpdated": "Room view updated",
@@ -2565,7 +2583,8 @@
       "VERIFICATION_STATUS": "Verification status",
       "NOTE_TYPE": "Note type",
       "CONCIERGE_CATEGORY": "Concierge category",
-      "EVENT_LINE_KIND": "Banquet line kind"
+      "EVENT_LINE_KIND": "Banquet line kind",
+      "WALKIN_PROFILE": "Walk-in profile"
     }
   },
   "opsWipe": {
@@ -3063,6 +3082,7 @@
     "saved": "Pricing policy saved",
     "related": "Related settings",
     "linkRatePlans": "Master data → Rate plans (amounts)",
+    "linkBarCalendar": "BAR calendar",
     "linkChildMatrix": "Child pricing matrix",
     "linkYieldRules": "Yield rules",
     "linkComponents": "Pricing components",
@@ -3538,7 +3558,8 @@
     "colPayment": "Payment",
     "colBalance": "Balance",
     "openFolio": "Open folio",
-    "empty": "No postings"
+    "empty": "No postings",
+    "kind": "Posting"
   },
   "settingsAccess": {
     "title": "Access",

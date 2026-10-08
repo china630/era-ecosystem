@@ -170,6 +170,16 @@ export {
   type SatelliteStaffSessionPayload,
 } from "./auth/get-satellite-session";
 export {
+  assertSatelliteBillingAllows,
+  isSatelliteBillingBlockedError,
+  resolveSatelliteBillingStatus,
+  satelliteBillingEnforcementDisabled,
+  SatelliteBillingBlockedError,
+  type SatelliteBillingCheck,
+  type SatelliteBillingGate,
+  type SatelliteBillingStatus,
+} from "./billing/satellite-billing-gate";
+export {
   ssoExchangeBodySchema,
   type SsoExchangeBody,
 } from "./auth/sso-exchange-schema";

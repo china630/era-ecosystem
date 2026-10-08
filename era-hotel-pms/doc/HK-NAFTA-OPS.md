@@ -302,7 +302,7 @@ Do not write return on the intake copy. In the system: `intakeDocument` and `ret
 
 **Posting event = first successful Delivered**, not intake, not the evening paper pack.
 
-1. HK accepts on `/hk/laundry` (intake form). Ticket **IN_PLANT**. **No folio line.** Same ticket is visible read-only on `/fo/laundry`.
+1. HK accepts on `/hk/laundry` from the guest list (room, guest, intake time, wash/iron text). **+ Add laundry** opens the piece grid (wash and iron columns, +/-). Lines are stored on the ticket. Ticket **IN_PLANT**. **No folio line.** The same ticket, including the piece text, is on `/fo/laundry`.
 2. Plant processes. Checkout of that stay is **blocked** while any ticket is not posted or voided (guest may forget clothes). Modal: post now / wait / void per hotel rules — **no** “check out anyway”.
 3. HK returns clothes, attaches **return** form, presses **Delivered** → one `postCharge` `LAUNDRY`. Ticket **POSTED**. Button disappears for everyone.
 4. If HK has already left: FO on `/fo/laundry` may Delivered **that same ticket** only, with the return-form file required. FO **must not invent** a ticket that was never accepted in HK.
@@ -336,7 +336,7 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
 | `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS and can close a door. |
 
-`/hk/maids` links a finance employee (`globalPersonId`). The hotel keeps department and ƏG. It is not the roster.
+`/hk/maids` links a control-plane workforce employment (`globalPersonId`). The hotel keeps department and ƏG. It is not the roster.
 
 ### 10.1 Shift and pair edits
 

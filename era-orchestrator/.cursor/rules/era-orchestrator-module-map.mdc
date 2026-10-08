@@ -104,6 +104,8 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `GET /v1/admin/organizations` | `admin-organizations.controller.ts` — list/search |
 | `GET /v1/admin/organizations/:id/subscription-tree` | `admin-billing.controller.ts` |
 | `PATCH /v1/admin/organizations/:id/subscription/trial` | `admin-billing.controller.ts` — date / perpetual / ± months |
+| `PATCH /v1/admin/organizations/:id/billing-coverage` | `admin-billing.controller.ts` — "covered until" (`billingCoveredUntil` + `expiresAt`, status ACTIVE; null clears). ADR billing-enforcement-satellites |
+| `POST /internal/v1/entitlements/validate` | `entitlements.controller.ts` — SOFT/HARD matrix for Finance + kit satellite gate (service tokens as snapshot) |
 | `PATCH /v1/admin/organizations/:id/deployment-topology` | `admin-billing.controller.ts` — SHARED/DEDICATED/ONPREM; optional applyLicenseDefault |
 | `PATCH /v1/admin/config/trial-allowlist` | `admin-billing.controller.ts` |
 | `POST /v1/admin/organizations/:id/connect-preset/sanatorium` | `admin-billing.controller.ts` |
@@ -207,6 +209,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `POST …/timesheets/:id/autofill` | Chunked autofill + audit `TIMESHEET_AUTOFILL` |
 | `GET /internal/v1/workforce/owners/:ownerUserId/assignments` | `workforce-registry.controller.ts` — S2S assignment list |
 | `GET /internal/v1/workforce/organizations/:organizationId/assignments` | `workforce-registry.controller.ts` — S2S org assignments |
+| `GET /internal/v1/workforce/organizations/:organizationId/picker` | `workforce-employment-picker.controller.ts` — S2S active employments for a satellite staff picker (name only; hotel `/api/housekeeping/personnel`) |
 | `GET /v1/admin/mdm/persons` | `admin-mdm.controller.ts` — paginated directory (FIN/DOB/name/phone filters) |
 | `POST /v1/admin/mdm/persons/lookup-by-fin\|resolve\|merge` | super-admin write; UI `/super-admin/mdm/persons` |
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | `mdm.controller.ts` — workforce batch display (+ `hrProfile` when grant allows) |

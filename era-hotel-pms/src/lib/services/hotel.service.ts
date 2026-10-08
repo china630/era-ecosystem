@@ -19,6 +19,22 @@ export async function getHotelProfile() {
   return prisma.hotelProfile.findFirst();
 }
 
+/** Policies, letterhead, and the report pack all hang off this row. Create it when missing. */
+export async function ensureHotelProfile() {
+  const existing = await prisma.hotelProfile.findFirst();
+  if (existing) return existing;
+  const organizationId = requestOrganizationId();
+  const roomCapacity = await prisma.room.count({ where: { deleted: false, disabled: false } });
+  return prisma.hotelProfile.create({
+    data: {
+      name: process.env.HOTEL_PROPERTY_NAME?.trim() || 'Hotel',
+      propertyCode: process.env.HOTEL_PROPERTY_CODE?.trim() || 'ERA-HOTEL-001',
+      organizationId,
+      roomCapacity,
+    },
+  });
+}
+
 export async function upsertHotelProfile(input: HotelProfileInput) {
   const organizationId = requestOrganizationId();
   const existing = await prisma.hotelProfile.findFirst();

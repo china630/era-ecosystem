@@ -23,6 +23,7 @@ const schema = z.object({
   code: z.string().min(1).max(32).optional(),
   name: z.string().trim().min(1).max(120),
   agencyId: z.string().uuid().optional(),
+  walkInProfileCode: z.string().max(40).optional(),
   companyId: z.string().uuid().optional(),
   folioMode: z.enum(['INDIVIDUAL', 'MASTER', 'SPLIT']).optional(),
   checkInDate: z.coerce.date(),

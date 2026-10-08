@@ -57,7 +57,7 @@ export class InternalWorkforceEmployeesController {
 
   @Get("picker")
   @ApiOperation({
-    summary: "S2S: active employees for a satellite staff picker (display name via MDM, no rates)",
+    summary: "S2S: active finance Employee rows (payroll mirror). Satellite staff pickers use CP employments.",
   })
   async picker(@Query("organizationId") organizationId: string) {
     const org = organizationId?.trim();

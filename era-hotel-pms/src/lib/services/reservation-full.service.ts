@@ -59,7 +59,13 @@ const fullInclude = {
   },
   notes: true,
   dailyRates: { orderBy: { stayDate: 'asc' as const } },
-  staySlices: { orderBy: { fromDate: 'asc' as const } },
+  staySlices: {
+    orderBy: { fromDate: 'asc' as const },
+    include: {
+      roomType: { select: { code: true } },
+      room: { select: { roomNumber: true } },
+    },
+  },
   roomChanges: {
     orderBy: { effectiveAt: 'asc' as const },
     include: { fromRoom: true, toRoom: true },
@@ -161,6 +167,7 @@ export async function patchReservationFull(
     ratePlanId?: string;
     mealPlanId?: string | null;
     agencyId?: string | null;
+    walkInProfileCode?: string | null;
     companyId?: string | null;
     salesContractId?: string | null;
     sourceId?: string | null;
@@ -632,28 +639,32 @@ export async function patchReservationFull(
       foCodes ? { foPerGuestCodes: foCodes } : undefined,
     );
     if (stamped.stayKind !== 'leisure') {
-      const { dispatchStayProductChanged } = await import(
+      const { fanOutClinicMedicalPackages } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
       const updated = await prisma.reservation.findUnique({
         where: { id },
-        include: { guest: true, room: true, paxGuests: { orderBy: { sortOrder: 'asc' } } },
+        include: {
+          guest: true,
+          room: true,
+          paxGuests: { orderBy: { sortOrder: 'asc' }, include: { guest: true } },
+        },
       });
       if (updated) {
         const previousProgram =
           existing.medicalPackageCode ??
           existing.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
           undefined;
-        void dispatchStayProductChanged({
+        void fanOutClinicMedicalPackages({
+          status: existing.status,
           reservationId: id,
-          programCode: stamped.programCode ?? updated.medicalPackageCode ?? undefined,
-          previousProgramCode: previousProgram ?? undefined,
-          effectiveDate: new Date().toISOString(),
-          globalPersonId: updated.guest.globalPersonId ?? undefined,
           roomNumber: updated.room?.roomNumber ?? undefined,
           checkInDate: updated.checkInDate.toISOString(),
           checkOutDate: updated.checkOutDate.toISOString(),
-        }).catch((e) => console.error('stay-product amend failed', e));
+          previousProgramCode: previousProgram ?? undefined,
+          datesChanged: Boolean(datesChanged),
+          pax: updated.paxGuests,
+        }).catch((e) => console.error('clinic package fan-out failed', e));
       }
     }
   }
@@ -742,6 +753,8 @@ export type ListReservationsForGridQuery = {
   pageSize?: number;
   dateFrom?: string;
   dateTo?: string;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 };
 
 const LIVE_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
@@ -820,9 +833,58 @@ export async function listReservationsForGrid(
   const today = todayBakuYmd();
   const ranked = await prisma.reservation.findMany({
     where,
-    select: { id: true, checkInDate: true },
+    select: {
+      id: true,
+      checkInDate: true,
+      checkOutDate: true,
+      status: true,
+      adults: true,
+      guest: { select: { fullName: true } },
+      room: { select: { roomNumber: true, status: true } },
+      roomType: { select: { code: true } },
+      agency: { select: { code: true } },
+      notes: { select: { text: true } },
+    },
   });
+  const sortKey = opts.sort?.trim() ?? '';
+  const sortDir = opts.dir === 'desc' ? -1 : 1;
+  const textOf = (row: (typeof ranked)[number]) => {
+    switch (sortKey) {
+      case 'room':
+        return row.room?.roomNumber ?? '';
+      case 'hk':
+        return row.room?.status ?? '';
+      case 'guest':
+        return row.guest.fullName ?? '';
+      case 'arrival':
+        return hotelDateKey(row.checkInDate);
+      case 'departure':
+        return hotelDateKey(row.checkOutDate);
+      case 'type':
+        return row.roomType.code ?? '';
+      case 'adult':
+        return String(row.adults).padStart(4, '0');
+      case 'state':
+        return row.status;
+      case 'agency':
+        return row.agency?.code ?? '';
+      case 'notes':
+        return row.notes
+          .map((note) => note.text.trim())
+          .filter(Boolean)
+          .join(' / ');
+      case 'id':
+        return row.id;
+      default:
+        return '';
+    }
+  };
   ranked.sort((a, b) => {
+    if (sortKey) {
+      const cmp = textOf(a).localeCompare(textOf(b), undefined, { numeric: true });
+      if (cmp !== 0) return cmp * sortDir;
+      return a.id < b.id ? -1 : 1;
+    }
     const aKey = hotelDateKey(a.checkInDate);
     const bKey = hotelDateKey(b.checkInDate);
     const aFuture = aKey >= today ? 0 : 1;
@@ -856,6 +918,7 @@ export async function listReservationsForGrid(
       ...r,
       hasNotes: filled.length > 0,
       notePreview: preview,
+      noteText: filled.map((n) => n.text.trim()).join(' / '),
       noteTypes: filled.map((n) => n.noteType),
     };
   });

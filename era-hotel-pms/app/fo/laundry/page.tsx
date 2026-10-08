@@ -15,6 +15,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateKey, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { formatLaundryPieces, type LaundryLineView } from '@/lib/laundry-pieces';
 
 type Ticket = {
   id: string;
@@ -27,6 +28,7 @@ type Ticket = {
   folioChargeId: string | null;
   total?: number | string | null;
   express?: boolean;
+  lines?: LaundryLineView[];
 };
 
 const STATUS_ALL = 'ALL';
@@ -151,11 +153,28 @@ export default function FoLaundryPage() {
       </EraListFilterBar>
       <HotelDataGrid<Ticket & Record<string, unknown>>
         columns={[
-          { key: 'room', header: t('laundryRoom'), render: (tk) => tk.roomNumber ?? '—' },
-          { key: 'guest', header: t('laundryGuest'), render: (tk) => tk.guestName },
+          {
+            key: 'room',
+            header: t('laundryRoom'),
+            sortable: true,
+            sortValue: (tk) => tk.roomNumber ?? '',
+            render: (tk) => tk.roomNumber ?? '—',
+          },
+          { key: 'guest', header: t('laundryGuest'), sortable: true, sortValue: (tk) => tk.guestName, render: (tk) => tk.guestName },
+          {
+            key: 'pieces',
+            header: t('laundryPieces'),
+            sortable: true,
+            sortValue: (tk) =>
+              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }),
+            render: (tk) =>
+              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }) || '—',
+          },
           {
             key: 'status',
             header: tc('status'),
+            sortable: true,
+            sortValue: (tk) => tk.status,
             render: (tk) =>
               tk.status === 'IN_PLANT'
                 ? t('statusInPlant')
@@ -168,16 +187,22 @@ export default function FoLaundryPage() {
           {
             key: 'due',
             header: t('laundryDue'),
+            sortable: true,
+            sortValue: (tk) => tk.dueAt ?? '',
             render: (tk) => (tk.dueAt ? bakuDateTimeDisplay(tk.dueAt) : '—'),
           },
           {
             key: 'created',
             header: t('laundryCreated'),
+            sortable: true,
+            sortValue: (tk) => tk.createdAt ?? '',
             render: (tk) => (tk.createdAt ? bakuDateTimeDisplay(tk.createdAt) : '—'),
           },
           {
             key: 'folio',
             header: t('laundryFolio'),
+            sortable: true,
+            sortValue: (tk) => tk.folioChargeId ?? '',
             render: (tk) => (tk.folioChargeId ? tk.folioChargeId.slice(0, 8) : '—'),
           },
           {

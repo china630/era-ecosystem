@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { EraOpsNavItem, EraOpsSidebarProps } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
+import { bestMatchingNavHref, collectNavHrefs, isBestNavHref } from "./nav-href-match";
 
 export function EraOpsSidebarNav({ items }: { items: EraOpsNavItem[] }) {
+  const pathname = usePathname() ?? "";
+  const search = useSearchParams();
+  const bestHref = bestMatchingNavHref(pathname, search, collectNavHrefs(items));
+  const linkActive = (item: EraOpsNavItem) =>
+    item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
   return (
     <nav className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto p-3">
       {items
         .filter((item) => !item.hidden)
         .map((item) => {
           const Icon = item.icon;
-          const className = item.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
+          const className = linkActive(item) ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
           const content = (
             <>
               {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
@@ -53,7 +60,7 @@ export function EraOpsSidebarNav({ items }: { items: EraOpsNavItem[] }) {
                 </div>
                 {kids.map((child) => {
                   const ChildIcon = child.icon;
-                  const childClass = child.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
+                  const childClass = linkActive(child) ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
                   return (
                     <Link
                       key={child.id ?? child.href}

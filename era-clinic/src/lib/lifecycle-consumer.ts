@@ -8,7 +8,7 @@ import type {
   SatelliteHotelStayProductChangedEvent,
 } from "@era/contracts";
 import { shouldAutoInstantiateProgramOnCheckin } from "@/domain/settings/scheduling-settings";
-import { openEpisodeFromStay } from "@/lib/services/sanatorium.service";
+import { openEpisodeFromStay, resolveHotelPatientRefCode, resolveHotelStayId } from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant } from "@/lib/request-organization";
@@ -229,16 +229,35 @@ export async function handleStayProductChanged(
   enterRequestTenant(event.organizationId);
   const p = event.payload;
   const effective = p.effectiveDate ? new Date(p.effectiveDate) : new Date();
+  const gpid = p.globalPersonId ?? event.globalPersonId;
+  const personScoped = Boolean(p.paxKey || gpid);
+  const hotelStayId = resolveHotelStayId({
+    reservationId: p.reservationId,
+    globalPersonId: gpid,
+    paxKey: p.paxKey,
+  });
+  const refCode = resolveHotelPatientRefCode({
+    reservationId: p.reservationId,
+    globalPersonId: gpid,
+    paxKey: p.paxKey,
+  });
 
-  // Optional person-scoped amend; else all OPEN episodes on the reservation (Wave E)
+  // Pax-scoped when the hotel names the guest. A date-only amend (no pax) still
+  // touches every OPEN episode on the stay.
   const episodeWhere = {
     reservationId: p.reservationId,
     status: "OPEN" as const,
-    ...(p.globalPersonId
+    ...(personScoped
       ? {
           OR: [
-            { globalPersonId: p.globalPersonId },
-            { patientRef: { globalPersonId: p.globalPersonId } },
+            { hotelStayId },
+            ...(gpid
+              ? [
+                  { globalPersonId: gpid },
+                  { patientRef: { globalPersonId: gpid } },
+                ]
+              : []),
+            { patientRef: { refCode } },
           ],
         }
       : {}),
@@ -255,10 +274,28 @@ export async function handleStayProductChanged(
 
   if (!p.programCode && !p.checkInDate && !p.checkOutDate) return;
 
-  const episodes = await prisma.clinicalEpisode.findMany({
+  let episodes = await prisma.clinicalEpisode.findMany({
     where: episodeWhere,
     include: { programInstance: true },
   });
+  if (episodes.length === 0 && p.programCode && personScoped) {
+    await openEpisodeFromStay({
+      reservationId: p.reservationId,
+      guestName: p.guestName ?? "Guest",
+      passportNumber: p.reservationId,
+      organizationId: event.organizationId,
+      globalPersonId: gpid,
+      programCode: p.programCode,
+      roomNumber: p.roomNumber,
+      paxKey: p.paxKey,
+      sex: p.sex,
+      birthDate: p.birthDate,
+    });
+    episodes = await prisma.clinicalEpisode.findMany({
+      where: episodeWhere,
+      include: { programInstance: true },
+    });
+  }
   if (episodes.length === 0) return;
 
   const { nightsBetween } = await import("@/lib/program-quota");

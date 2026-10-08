@@ -697,7 +697,8 @@
     "namesIncomplete": "Qonaq adları natamamdır — təyin / check-in üçün real adlar lazımdır (TBA olmaz).",
     "namesIncompleteBadge": "Adlar natamam",
     "bookingName": "Bron adı",
-    "bookingNamePlaceholder": "İstəyə bağlı ad (toy, korporativ blok və s.)"
+    "bookingNamePlaceholder": "İstəyə bağlı ad (toy, korporativ blok və s.)",
+    "singleStayHint": "Bu bron üzrə bir qalma"
   },
   "reservationCard": {
     "stay": "Qalma",
@@ -705,6 +706,15 @@
     "commercialSales": "Kommersiya və satış",
     "classification": "Təsnifat",
     "roomSection": "Otaq",
+    "cancelStay": "CANCELLED",
+    "noShowStay": "NO_SHOW",
+    "cancelDone": "Bron ləğv edildi",
+    "noShowDone": "Gəlməmə qeyd olundu",
+    "splitFrom": "Otağı tarixdən dəyiş",
+    "splitDoor": "Qapı",
+    "splitQuotaOnly": "Yalnız tip kvotası",
+    "splitStay": "Dəyişikliyi planla",
+    "splitStayDone": "Hissələr saxlanıldı",
     "productSection": "Məhsul (satış)",
     "assignmentSection": "Yerləşdirmə",
     "additionalSection": "Əlavə",
@@ -1520,7 +1530,10 @@
     "reasonCard": "bron kartından",
     "reasonSwap": "otaq dəyişməsi",
     "reasonRelocate": "otaq planından",
-    "reasonOther": "köçürmə"
+    "reasonOther": "köçürmə",
+    "statusPending": "Gözləyir",
+    "statusApplied": "İcra olunub",
+    "statusCancelled": "Ləğv edilib"
   },
   "promotionCodes": {
     "title": "Promo kodları",
@@ -1646,7 +1659,7 @@
     "code": "Kod",
     "name": "Ad",
     "pickEmployee": "İşçi",
-    "personnelUnavailable": "Kadr siyahısı əlçatan deyil. Maliyyə əlaqəsini yoxlayın.",
+    "personnelUnavailable": "Kadr siyahısı əlçatan deyil. Orkestrator əlaqəsini yoxlayın.",
     "department": "Şöbə",
     "tasks": "Tapşırıqlar",
     "empty": "Xidmətçi yoxdur. Kadrdan işçi bağlayın."
@@ -1701,6 +1714,7 @@
     "add": "Rezervasiya əlavə et",
     "notes": "Notes",
     "filterNotes": "With notes only",
+    "birthday": "Qalma ərzində ad günü",
     "statusLive": "Aktiv",
     "room": "Otaq",
     "hk": "HK",
@@ -1832,6 +1846,8 @@
     "headsOnDuty": "Növbədə baş",
     "pairsLeftover": "Təyin olunmayan cütlər — əl ilə",
     "acceptLaundry": "Qəbul (sexdə)",
+    "addLaundry": "Çamaşır əlavə",
+    "laundryPieces": "Paltar",
     "deliverLaundry": "Təhvil",
     "returnScanRequired": "Qaytarma blankının skanı vacibdir",
     "foLaundryTitle": "Qəbul — camaşırxana",
@@ -2513,6 +2529,8 @@
     "editRoom": "Otağı redaktə et",
     "roomTypeUpdated": "Otaq tipi yeniləndi",
     "ratePlanUpdated": "Tarif planı yeniləndi",
+    "ratePlanDeleted": "Tarif planı silindi",
+    "ratePlanInUse": "Tarif hələ istifadə olunur: bronlar {reservations}, müqavilələr {contracts}, qalma hissələri {slices}, törəmə tariflər {derived}",
     "revenueCodeUpdated": "Gəlir kodu yeniləndi",
     "bedTypeUpdated": "Çarpayı tipi yeniləndi",
     "roomViewUpdated": "Mənzərə yeniləndi",
@@ -2556,7 +2574,8 @@
       "VERIFICATION_STATUS": "Yoxlama statusu",
       "NOTE_TYPE": "Qeyd tipi",
       "CONCIERGE_CATEGORY": "Konsyerj kateqoriyası",
-      "EVENT_LINE_KIND": "Banket sətir növü"
+      "EVENT_LINE_KIND": "Banket sətir növü",
+      "WALKIN_PROFILE": "Walk-in profili"
     }
   },
   "opsWipe": {
@@ -3049,6 +3068,7 @@
     "saved": "Siyasət saxlanıldı",
     "related": "Əlaqəli ayarlar",
     "linkRatePlans": "Master data → tariflər",
+    "linkBarCalendar": "BAR təqvimi",
     "linkChildMatrix": "Uşaq matrisi",
     "linkYieldRules": "Yield qaydaları",
     "linkComponents": "Qiymət komponentləri",
@@ -3524,7 +3544,8 @@
     "colPayment": "Ödəniş",
     "colBalance": "Qalıq",
     "openFolio": "Folionu aç",
-    "empty": "Qeyd yoxdur"
+    "empty": "Qeyd yoxdur",
+    "kind": "Əməliyyat"
   },
   "settingsAccess": {
     "title": "Giriş",

@@ -46,6 +46,9 @@ export function CommercialPartyStrip({
   onContractRef,
   onAgencyCreated,
   onCompanyCreated,
+  walkInProfiles = [],
+  walkInProfileCode = '',
+  onWalkInProfile,
 }: {
   sourceId: string;
   agencyId: string;
@@ -65,6 +68,9 @@ export function CommercialPartyStrip({
   onContractRef: (value: string) => void;
   onAgencyCreated: (row: AgencyOption) => void;
   onCompanyCreated: (row: AgencyOption) => void;
+  walkInProfiles?: Array<{ code: string; label: string }>;
+  walkInProfileCode?: string;
+  onWalkInProfile?: (code: string) => void;
 }) {
   const t = useTranslations('reservationCard');
   const tc = useTranslations('common');
@@ -78,22 +84,18 @@ export function CommercialPartyStrip({
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
-  const walkInAgencies = useMemo(() => agencies.filter((a) => a.isWalkIn), [agencies]);
-  const agencyPickerLocked =
-    sourceKind === 'WEB' || (sourceKind === 'WALKIN' && walkInAgencies.length === 0);
+  const agencyPickerLocked = sourceKind === 'WEB';
   const agencyOptions = useMemo(() => {
     const scoped =
       sourceKind === 'AGENCY'
         ? agencies.filter((a) => !a.isOta && !a.isWalkIn)
         : sourceKind === 'BOOKING'
           ? agencies.filter((a) => a.isOta)
-          : sourceKind === 'WALKIN'
-            ? walkInAgencies
-            : agencies.filter((a) => !a.isWalkIn);
+          : agencies.filter((a) => !a.isWalkIn);
     if (!agencyId || scoped.some((a) => a.id === agencyId)) return scoped;
     const hit = agencies.find((a) => a.id === agencyId);
     return hit ? [hit, ...scoped] : scoped;
-  }, [agencies, walkInAgencies, sourceKind, agencyId]);
+  }, [agencies, sourceKind, agencyId]);
   const sourceOptions = useMemo(
     () =>
       sources.filter(
@@ -104,7 +106,7 @@ export function CommercialPartyStrip({
   const agencyFieldLabel =
     sourceKind === 'BOOKING'
       ? t('otaChannel')
-      : sourceKind === 'WALKIN' && !agencyPickerLocked
+      : sourceKind === 'WALKIN'
         ? t('walkInProfile')
         : t('agency');
   const canQuickAddAgency =
@@ -229,17 +231,33 @@ export function CommercialPartyStrip({
               <CatalogField
                 kind="SEARCHABLE"
                 label={agencyFieldLabel}
-                value={agencyPickerLocked ? '' : knownAgencyId}
-                onChange={(v) => onAgency(Array.isArray(v) ? (v[0] ?? '') : v)}
+                value={
+                  sourceKind === 'WALKIN'
+                    ? walkInProfileCode
+                    : agencyPickerLocked
+                      ? ''
+                      : knownAgencyId
+                }
+                onChange={(v) => {
+                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                  if (sourceKind === 'WALKIN') onWalkInProfile?.(next);
+                  else onAgency(next);
+                }}
                 options={
-                  agencyPickerLocked
-                    ? []
-                    : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
+                  sourceKind === 'WALKIN'
+                    ? [
+                        ...walkInProfiles.map((p) => ({ value: p.code, label: p.label })),
+                        ...(walkInProfileCode &&
+                        !walkInProfiles.some((p) => p.code === walkInProfileCode)
+                          ? [{ value: walkInProfileCode, label: walkInProfileCode }]
+                          : []),
+                      ]
+                    : agencyPickerLocked
+                      ? []
+                      : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
                 }
                 disabled={disabled || agencyPickerLocked}
-                emptyLabel={
-                  agencyPickerLocked || sourceKind === 'WALKIN' ? t('individual') : tc('select')
-                }
+                emptyLabel={agencyPickerLocked ? t('individual') : tc('select')}
               />
             </div>
             {showAgencyPlus ? (

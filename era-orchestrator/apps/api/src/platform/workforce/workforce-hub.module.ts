@@ -18,6 +18,8 @@ import { WorkforceAuditService } from "./workforce-audit.service";
 
 import { WorkforceEmploymentsController } from "./workforce-employments.controller";
 
+import { WorkforceEmploymentPickerController } from "./workforce-employment-picker.controller";
+
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
@@ -146,6 +148,8 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
   controllers: [
 
     WorkforceEmploymentsController,
+
+    WorkforceEmploymentPickerController,
 
     WorkforceAbsencesController,
 

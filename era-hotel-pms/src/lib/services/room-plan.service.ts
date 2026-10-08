@@ -51,6 +51,15 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
       source: { select: { name: true, code: true } },
       mealPlan: { select: { code: true } },
       notes: { select: { noteType: true, text: true } },
+      staySlices: {
+        select: {
+          id: true,
+          fromDate: true,
+          toDate: true,
+          roomId: true,
+          roomType: { select: { code: true } },
+        },
+      },
       folios: {
         select: {
           type: true,
@@ -140,12 +149,22 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   }
 
   for (const r of reservations) {
-    if (!r.roomId) continue;
-    const ciKey = hotelDateKey(r.checkInDate);
-    const coKey = hotelDateKey(r.checkOutDate);
-    for (const dk of dateKeys) {
-      if (dk >= ciKey && dk < coKey) {
-        occupiedByDay.get(dk)?.add(r.roomId);
+    const pinned = (r.staySlices ?? []).filter((slice) => slice.roomId);
+    const spans =
+      pinned.length > 0
+        ? pinned.map((slice) => ({
+            roomId: slice.roomId as string,
+            from: hotelDateKey(slice.fromDate),
+            to: hotelDateKey(slice.toDate),
+          }))
+        : r.roomId
+          ? [{ roomId: r.roomId, from: hotelDateKey(r.checkInDate), to: hotelDateKey(r.checkOutDate) }]
+          : [];
+    for (const span of spans) {
+      for (const dk of dateKeys) {
+        if (dk >= span.from && dk < span.to) {
+          occupiedByDay.get(dk)?.add(span.roomId);
+        }
       }
     }
   }
@@ -207,10 +226,27 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     days,
     to: to.toISOString(),
     rooms: rooms.map((room) => {
-      const roomRes = reservations.filter((r) => r.roomId === room.id);
-      const shareStays = roomRes.filter(
-        (r) => r.shareEligible && r.shareGender && r.adults === 1,
-      );
+      const shareStays = reservations.flatMap((stay) => {
+        if (!stay.shareEligible || !stay.shareGender || stay.adults !== 1) return [];
+        const pinned = (stay.staySlices ?? []).filter((slice) => slice.roomId);
+        const spans =
+          pinned.length > 0
+            ? pinned.map((slice) => ({
+                roomId: slice.roomId as string,
+                from: slice.fromDate,
+                to: slice.toDate,
+              }))
+            : stay.roomId
+              ? [{ roomId: stay.roomId, from: stay.checkInDate, to: stay.checkOutDate }]
+              : [];
+        return spans
+          .filter((span) => span.roomId === room.id)
+          .map((span) => ({
+            shareGender: stay.shareGender,
+            checkInDate: span.from,
+            checkOutDate: span.to,
+          }));
+      });
       const maxBed = room.maxBed ?? room.roomType.adultCapacity ?? 2;
       let sharePool: { gender: string; occupied: number; capacity: number } | null = null;
       const mixedClosedPair = dateKeys.some((day) => {
@@ -259,8 +295,37 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
         sharePool,
       };
     }),
-    reservations: reservations.map(mapBar),
-    unassigned,
+    reservations: reservations.flatMap((row) => {
+      const base = mapBar(row);
+      const pinned = (row.staySlices ?? []).filter((slice) => slice.roomId);
+      if (pinned.length === 0) return [base];
+      return pinned.map((slice) => ({
+        ...base,
+        barKey: `${row.id}:${slice.id}`,
+        roomId: slice.roomId,
+        checkInDate: slice.fromDate.toISOString(),
+        checkOutDate: slice.toDate.toISOString(),
+      }));
+    }),
+    unassigned: [
+      ...unassigned,
+      ...reservations.flatMap((row) => {
+        const slices = row.staySlices ?? [];
+        if (!slices.some((slice) => slice.roomId)) return [];
+        return slices
+          .filter((slice) => !slice.roomId)
+          .map((slice) => ({
+            id: row.id,
+            chipKey: `${row.id}:${slice.id}`,
+            segmentNote: `${hotelDateKey(slice.fromDate)}–${hotelDateKey(slice.toDate)} ${slice.roomType?.code ?? ''}`.trim(),
+            guest: row.guest,
+            checkInDate: slice.fromDate,
+            checkOutDate: slice.toDate,
+            status: row.status,
+            roomType: slice.roomType,
+          }));
+      }),
+    ],
     availabilityByDay,
     groups,
   };

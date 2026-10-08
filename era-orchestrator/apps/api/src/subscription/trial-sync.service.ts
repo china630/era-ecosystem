@@ -220,13 +220,18 @@ export class TrialSyncService {
       where: { organizationId },
       include: {
         organization: {
-          select: { id: true, name: true, deploymentTopology: true },
+          select: {
+            id: true,
+            name: true,
+            deploymentTopology: true,
+            billingStatus: true,
+          },
         },
       },
     });
     if (!sub) throw new NotFoundException("Subscription not found");
 
-    const [satellites, modules] = await Promise.all([
+    const [satellites, modules, tenantBilling] = await Promise.all([
       this.prisma.organizationSatelliteEntitlement.findMany({
         where: { organizationId },
         include: { satellite: { select: { name: true } } },
@@ -235,6 +240,10 @@ export class TrialSyncService {
       this.prisma.organizationModule.findMany({
         where: { organizationId },
         orderBy: { moduleKey: "asc" },
+      }),
+      this.prisma.tenantBilling.findUnique({
+        where: { organizationId },
+        select: { billingStatus: true },
       }),
     ]);
 
@@ -245,6 +254,11 @@ export class TrialSyncService {
         isTrial: sub.isTrial,
         trialExpiresAt: sub.trialExpiresAt?.toISOString() ?? null,
         expiresAt: sub.expiresAt?.toISOString() ?? null,
+        /** Same precedence as EntitlementsService: tenant_billing first. */
+        billingStatus: tenantBilling?.billingStatus ?? sub.organization.billingStatus,
+        billingCoveredUntil: sub.billingCoveredUntil?.toISOString() ?? null,
+        isBlocked: sub.isBlocked,
+        currentTier: sub.currentTier,
         deploymentTopology: sub.organization.deploymentTopology,
         activeModules: sub.activeModules,
         quotaOverrides: sub.quotaOverrides ?? null,

@@ -112,22 +112,46 @@ export default function ReservationTimesPage() {
       </EraListFilterBar>
       <HotelDataGrid<Row & Record<string, unknown>>
         columns={[
-          { key: 'guest', header: t('guest'), render: (r) => r.guest.fullName },
+          {
+            key: 'guest',
+            header: t('guest'),
+            sortable: true,
+            sortValue: (r) => r.guest.fullName,
+            render: (r) => r.guest.fullName,
+          },
           {
             key: 'agency',
             header: t('agency'),
+            sortable: true,
+            sortValue: (r) => r.agency?.name ?? r.agency?.code ?? '',
             render: (r) => r.agency?.name ?? r.agency?.code ?? '—',
           },
-          { key: 'plannedIn', header: t('plannedIn'), render: (r) => r.checkInDate.slice(0, 10) },
-          { key: 'plannedOut', header: t('plannedOut'), render: (r) => r.checkOutDate.slice(0, 10) },
+          {
+            key: 'plannedIn',
+            header: t('plannedIn'),
+            sortable: true,
+            sortValue: (r) => r.checkInDate,
+            render: (r) => r.checkInDate.slice(0, 10),
+          },
+          {
+            key: 'plannedOut',
+            header: t('plannedOut'),
+            sortable: true,
+            sortValue: (r) => r.checkOutDate,
+            render: (r) => r.checkOutDate.slice(0, 10),
+          },
           {
             key: 'actualIn',
             header: t('actualIn'),
+            sortable: true,
+            sortValue: (r) => r.stay?.actualCheckIn ?? '',
             render: (r) => (r.stay?.actualCheckIn ? bakuDateTimeDisplay(r.stay.actualCheckIn) : '—'),
           },
           {
             key: 'actualOut',
             header: t('actualOut'),
+            sortable: true,
+            sortValue: (r) => r.stay?.actualCheckOut ?? '',
             render: (r) => (r.stay?.actualCheckOut ? bakuDateTimeDisplay(r.stay.actualCheckOut) : '—'),
           },
         ]}

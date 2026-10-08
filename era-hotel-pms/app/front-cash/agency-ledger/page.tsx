@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   DatePicker,
   EraListFilterBar,
   CatalogField,
+  Field,
   PageHeader,
+  useDebouncedValue,
   PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
@@ -77,6 +79,9 @@ export default function AgencyLedgerPage() {
   const tc = useTranslations('common');
   const [agencies, setAgencies] = useState<Party[]>([]);
   const [agencyId, setAgencyId] = useState('');
+  const [q, setQ] = useState('');
+  const [settlement, setSettlement] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
   const [from, setFrom] = useState(todayIso);
   const [to, setTo] = useState(todayIso);
   const [ledger, setLedger] = useState<Ledger | null>(null);
@@ -179,6 +184,15 @@ export default function AgencyLedgerPage() {
     }
   }
 
+  const visibleSummary = useMemo(() => {
+    const needle = debouncedQ.trim().toLowerCase();
+    return summary.filter((row) => {
+      if (settlement && row.settlementMode !== settlement) return false;
+      if (!needle) return true;
+      return `${row.code} ${row.name}`.toLowerCase().includes(needle);
+    });
+  }, [summary, debouncedQ, settlement]);
+
   if (!can(PERMISSIONS.REPORTS_READ)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
@@ -194,8 +208,22 @@ export default function AgencyLedgerPage() {
           setTo(d);
           setAgencyId('');
           setLedger(null);
+          setQ('');
+          setSettlement('');
         }}
       >
+        <Field label={tc('search')} preset="longText" value={q} onChange={(e) => setQ(e.target.value)} />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('settlementMode')}
+          value={settlement}
+          onChange={(v) => setSettlement(String(Array.isArray(v) ? (v[0] ?? '') : v))}
+          options={[
+            { value: 'POSTPAID', label: t('settlement_POSTPAID') },
+            { value: 'PREPAID', label: t('settlement_PREPAID') },
+          ]}
+          emptyLabel={tc('all')}
+        />
         <DatePicker
           label={tc('from')}
           value={from}
@@ -227,6 +255,7 @@ export default function AgencyLedgerPage() {
           {
             key: 'code',
             header: t('colCode'),
+            sortable: true,
             render: (r) => (
               <button
                 type="button"
@@ -237,34 +266,44 @@ export default function AgencyLedgerPage() {
               </button>
             ),
           },
-          { key: 'name', header: t('colName') },
+          { key: 'name', header: t('colName'), sortable: true },
           {
             key: 'settlementMode',
             header: t('settlementMode'),
+            sortable: true,
+            sortValue: (r) => t(`settlement_${r.settlementMode}` as 'settlement_POSTPAID'),
             render: (r) => t(`settlement_${r.settlementMode}` as 'settlement_POSTPAID'),
           },
           {
             key: 'commissionPercent',
             header: t('commissionPct'),
+            sortable: true,
+            sortValue: (r) => r.commissionPercent ?? -1,
             render: (r) => (r.commissionPercent == null ? '—' : String(r.commissionPercent)),
           },
           {
             key: 'cityLedger',
             header: t('cityLedger'),
+            sortable: true,
+            sortValue: (r) => r.cityLedger,
             render: (r) => `${r.cityLedger.toFixed(2)} ${tc('azn')}`,
           },
           {
             key: 'cashPaid',
             header: t('cashPaid'),
+            sortable: true,
+            sortValue: (r) => r.cashPaid,
             render: (r) => `${r.cashPaid.toFixed(2)} ${tc('azn')}`,
           },
           {
             key: 'netAmount',
             header: t('netAmount'),
+            sortable: true,
+            sortValue: (r) => r.netAmount,
             render: (r) => `${r.netAmount.toFixed(2)} ${tc('azn')}`,
           },
         ]}
-        rows={summary as (SummaryRow & Record<string, unknown>)[]}
+        rows={visibleSummary as (SummaryRow & Record<string, unknown>)[]}
         rowKey={(r) => r.partyId}
         emptyMessage={t('noAgencies')}
       />
@@ -312,8 +351,8 @@ export default function AgencyLedgerPage() {
           )}
           <HotelDataGrid<Record<string, unknown>>
             columns={[
-              { key: 'label', header: t('metric') },
-              { key: 'value', header: tc('amount') },
+              { key: 'label', header: t('metric'), sortable: true },
+              { key: 'value', header: tc('amount'), sortable: true },
             ]}
             rows={[
               { label: t('opening'), value: `${ledger.opening.toFixed(2)} ${tc('azn')}` },

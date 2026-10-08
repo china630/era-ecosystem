@@ -101,10 +101,10 @@ describe('contractsForSource', () => {
     ).toEqual({ agencyId: 'ag-1', companyId: 'co-1' });
   });
 
-  it('keeps a walk-in-recorded agency row on WALKIN (medical package rules)', () => {
+  it('clears a walk-in-recorded agency on WALKIN (profile is a lookup, not an agency)', () => {
     expect(
       persistCounterpartyIds({ sourceKind: 'WALKIN', agencyId: 'ag-w', agencyIsWalkIn: true }),
-    ).toEqual({ agencyId: 'ag-w', companyId: null });
+    ).toEqual({ agencyId: null, companyId: null });
     expect(
       persistCounterpartyIds({ sourceKind: 'WEB', agencyId: 'ag-w', agencyIsWalkIn: true }),
     ).toEqual({ agencyId: null, companyId: null });

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { bakuDateDisplay, bakuDateKey } from "@era/satellite-kit/time";
+import { useTranslations } from "next-intl";
+import { bakuDateDisplay, bakuDateKey, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   GHOST_BUTTON_CLASS,
@@ -15,6 +16,7 @@ import { orchFetch } from "../../../../../lib/orch-api";
 
 type Topology = "SHARED" | "DEDICATED" | "ONPREM";
 type Tier = "TIER_0" | "TIER_1" | "TIER_2" | "TIER_3";
+type BillingStatus = "ACTIVE" | "SOFT_BLOCK" | "HARD_BLOCK";
 
 type TrialTree = {
   organizationId: string;
@@ -23,6 +25,10 @@ type TrialTree = {
     isTrial: boolean;
     trialExpiresAt: string | null;
     expiresAt: string | null;
+    billingStatus: BillingStatus;
+    billingCoveredUntil: string | null;
+    isBlocked: boolean;
+    currentTier: Tier;
     deploymentTopology: Topology;
     activeModules: string[];
     quotaOverrides: unknown;
@@ -58,7 +64,9 @@ export default function OrgSubscriptionAdminPage() {
   const params = useParams();
   const orgId = String(params.orgId ?? "");
   const { token } = useAuth();
+  const tc = useTranslations("superAdmin.orgBillingCoverage");
   const [tree, setTree] = useState<TrialTree | null>(null);
+  const [coverageDate, setCoverageDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +101,9 @@ export default function OrgSubscriptionAdminPage() {
       setNeverExpires(perpetual);
       setDateValue(toDateInput(next.org.trialExpiresAt ?? next.org.expiresAt));
       setIsTrial(next.org.isTrial);
+      setIsBlocked(Boolean(next.org.isBlocked));
+      if (next.org.currentTier) setTier(next.org.currentTier);
+      setCoverageDate(toDateInput(next.org.billingCoveredUntil));
       setApplyDefault(false);
       setQuotaJson(
         next.org.quotaOverrides
@@ -150,6 +161,30 @@ export default function OrgSubscriptionAdminPage() {
       });
       if (!res.ok) {
         setError(`Subscription patch failed (${res.status})`);
+        return;
+      }
+      await reload();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveCoverage(coveredUntil: string | null) {
+    if (!token) return;
+    if (coveredUntil !== null && !coveredUntil) {
+      setError(tc("dateRequired"));
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await orchFetch(`/v1/admin/organizations/${orgId}/billing-coverage`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({ coveredUntil }),
+      });
+      if (!res.ok) {
+        setError(tc("saveFailed", { status: res.status }));
         return;
       }
       await reload();
@@ -405,6 +440,66 @@ export default function OrgSubscriptionAdminPage() {
               </button>
             </div>
           </div>
+
+          <section
+            className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}
+            data-testid="billing-coverage"
+          >
+            <h2 className="text-sm font-semibold">{tc("title")}</h2>
+            <p className="text-sm text-[#34495E]">
+              {tc("status")}:{" "}
+              <strong
+                className={
+                  tree.org.billingStatus === "ACTIVE"
+                    ? "text-emerald-700"
+                    : tree.org.billingStatus === "SOFT_BLOCK"
+                      ? "text-amber-700"
+                      : "text-red-700"
+                }
+              >
+                {tc(`status${tree.org.billingStatus}`)}
+              </strong>
+            </p>
+            <p className="text-sm text-[#34495E]">
+              {tc("coveredUntil")}:{" "}
+              <strong>
+                {tree.org.billingCoveredUntil
+                  ? bakuDateDisplay(tree.org.billingCoveredUntil)
+                  : tc("notCovered")}
+              </strong>
+            </p>
+            <p className="text-xs text-[#95A5A6]">{tc("hint")}</p>
+            <label className="block text-xs font-medium text-[#7F8C8D]">
+              {tc("dateLabel")}
+            </label>
+            <input
+              type="date"
+              className={`${MODAL_INPUT_CLASS} max-w-xs`}
+              min={todayBakuYmd()}
+              value={coverageDate}
+              onChange={(e) => setCoverageDate(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={saving}
+                onClick={() => void saveCoverage(coverageDate)}
+              >
+                {tc("save")}
+              </button>
+              {tree.org.billingCoveredUntil ? (
+                <button
+                  type="button"
+                  className={GHOST_BUTTON_CLASS}
+                  disabled={saving}
+                  onClick={() => void saveCoverage(null)}
+                >
+                  {tc("clear")}
+                </button>
+              ) : null}
+            </div>
+          </section>
 
           <section className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
             <h2 className="text-sm font-semibold">Block / tier</h2>
