@@ -1,6 +1,7 @@
 import {
   attachGuestToPax,
   countsFromPax,
+  guestFitsSlot,
   syncPaxToBandCounts,
 } from '@/components/reservation-card/party-pax';
 
@@ -93,5 +94,13 @@ describe('party age bands', () => {
     );
     expect(shrunk.some((row) => row.firstName === 'Kid')).toBe(true);
     expect(countsFromPax(shrunk).children11_6).toBe(1);
+  });
+
+  it('refuses an adult birth date on a child slot and accepts a missing birth date', () => {
+    const child = party().find((row) => row.age === '8');
+    expect(child).toBeTruthy();
+    expect(guestFitsSlot('1981-07-07', child!)).toBe(false);
+    expect(guestFitsSlot('2018-05-01', child!)).toBe(true);
+    expect(guestFitsSlot('', child!)).toBe(true);
   });
 });

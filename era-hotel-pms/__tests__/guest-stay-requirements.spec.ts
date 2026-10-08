@@ -57,6 +57,12 @@ describe('guest stay requirements', () => {
     ).toEqual(['phone', 'document']);
     expect(
       operationalGaps(
+        { name: 'Ali', nationality: 'AZ', birthDate: '', phone: '', documents: [] },
+        TODAY,
+      ),
+    ).toEqual(['birthDate', 'phone', 'document']);
+    expect(
+      operationalGaps(
         {
           name: 'Child',
           nationality: 'AZ',

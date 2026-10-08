@@ -4,7 +4,7 @@ import { GUEST_FIN_DOC_TYPES, GUEST_PASSPORT_DOC_TYPES } from '@/lib/guest-list-
 export type IdentityField = 'firstName' | 'lastName' | 'sex' | 'birthDate' | 'nationality';
 
 /** Missing at check-in. Phone is waived for guests under 18. */
-export type OperationalGap = 'phone' | 'document';
+export type OperationalGap = 'phone' | 'document' | 'birthDate';
 
 export type StayOperationalGap = {
   name: string;
@@ -125,6 +125,7 @@ export function operationalGaps(person: StayPersonInput, todayYmd: string): Oper
     );
 
   const gaps: OperationalGap[] = [];
+  if (!toYmd(person.birthDate)) gaps.push('birthDate');
   if (nationality === 'AZ' && !minor && !hasPhone) gaps.push('phone');
   if (nationality === 'AZ') {
     if (!hasFin && !hasPassport) gaps.push('document');
@@ -230,7 +231,11 @@ export function gapsForStay(stay: StayForOperationalGaps, todayYmd: string): Sta
   return found;
 }
 
-/** "Ali Mammadov: phone, document; …" — labels come from the caller. */
+export function operationalGapLabelKey(gap: string): 'gapPhone' | 'gapBirthDate' | 'gapDocument' {
+  if (gap === 'phone') return 'gapPhone';
+  if (gap === 'birthDate') return 'gapBirthDate';
+  return 'gapDocument';
+}
 export function operationalGapDetails(
   people: unknown,
   label: (gap: string) => string,

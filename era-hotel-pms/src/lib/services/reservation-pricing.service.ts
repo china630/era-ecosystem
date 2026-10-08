@@ -3,6 +3,7 @@ import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
+import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
@@ -77,11 +78,20 @@ const PACKAGE_CODE_SET = new Set<string>(MEDICAL_PACKAGE_CODES);
 
 function stayPackageCodes(input: {
   medicalPackageCode: string | null;
-  paxGuests: Array<{ medicalPackageCode: string | null }>;
+  ratePlan?: { code: string | null } | null;
+  paxGuests: Array<{
+    medicalPackageCode: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    guestId?: string | null;
+  }>;
 }): string[] {
   const raw =
     input.paxGuests.length > 0
-      ? input.paxGuests.map((g) => g.medicalPackageCode)
+      ? paxCodesForCompose(
+          input.paxGuests,
+          input.ratePlan?.code ?? input.medicalPackageCode,
+        )
       : [input.medicalPackageCode];
   return raw
     .map((c) => (c ?? '').trim().toUpperCase())

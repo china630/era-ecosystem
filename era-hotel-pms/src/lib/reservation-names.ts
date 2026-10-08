@@ -18,7 +18,14 @@ export function paxHasRealName(row: {
   return Boolean((row.firstName ?? '').trim() || (row.lastName ?? '').trim());
 }
 
-/** Incomplete when primary guest looks like TBA, or named pax < adults. */
+export function missingAdultNameCount(input: {
+  adults: number;
+  pax: Array<{ firstName?: string | null; lastName?: string | null }>;
+}): number {
+  const named = input.pax.filter(paxHasRealName).length;
+  const adults = Math.max(1, input.adults || 1);
+  return Math.max(0, adults - named);
+}
 export function reservationNamesIncomplete(input: {
   guestFullName?: string | null;
   adults: number;

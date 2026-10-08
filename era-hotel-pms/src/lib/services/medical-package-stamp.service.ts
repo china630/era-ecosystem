@@ -75,11 +75,7 @@ export async function stampMedicalPackagesForReservation(
   const agencyName = reservation.agency?.name ?? reservation.agency?.code ?? null;
   let result: ResolveMedicalSkuResult;
 
-  const foProvided =
-    opts?.foPerGuestCodes &&
-    opts.foPerGuestCodes.some((c) => normalizeMedicalPackageCode(c ?? null) != null);
-
-  if (foProvided && opts?.foPerGuestCodes) {
+  if (opts?.foPerGuestCodes) {
     const codes =
       reservation.paxGuests.length > 0
         ? reservation.paxGuests.map((_, i) => opts.foPerGuestCodes![i] ?? null)
@@ -148,10 +144,19 @@ export async function stampMedicalPackagesForReservation(
     }
   }
 
+  const foAllEmpty = Boolean(
+    opts?.foPerGuestCodes &&
+      opts.foPerGuestCodes.every((c) => normalizeMedicalPackageCode(c ?? null) == null),
+  );
+  const reservationCode =
+    foAllEmpty && reservation.medicalPackageCode
+      ? normalizeMedicalPackageCode(reservation.medicalPackageCode) ?? result.reservationCode
+      : result.reservationCode;
+
   await tx.reservation.update({
     where: { id: reservationId },
     data: {
-      medicalPackageCode: result.reservationCode,
+      medicalPackageCode: reservationCode,
       medicalPackageUnresolved: result.unresolved,
     },
   });

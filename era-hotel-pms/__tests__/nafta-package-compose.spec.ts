@@ -2,6 +2,7 @@ import {
   composeNaftaPackageNightlySell,
   composeNaftaPackageNightlySellBreakdown,
   halfOcc2,
+  paxCodesForCompose,
 } from "@/lib/services/nafta-package-compose.service";
 
 describe("composeNaftaPackageNightlySell", () => {
@@ -85,5 +86,18 @@ describe("composeNaftaPackageNightlySell", () => {
       code: "PKG-STANDART",
       amount: 96,
     });
+  });
+
+  it("an empty guest package follows the stay SKU and an unnamed slot does not", () => {
+    expect(
+      paxCodesForCompose(
+        [
+          { firstName: "Kamal", lastName: "M", medicalPackageCode: "PKG-PREMIUM" },
+          { firstName: "Aylin", lastName: "I", medicalPackageCode: "" },
+          { medicalPackageCode: "" },
+        ],
+        "PKG-STANDART",
+      ),
+    ).toEqual(["PKG-PREMIUM", "PKG-STANDART"]);
   });
 });

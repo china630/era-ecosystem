@@ -83,7 +83,7 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
     });
 
     it('flags when named pax < adults', async () => {
-      const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
+      const { reservationNamesIncomplete, missingAdultNameCount } = await import('@/lib/reservation-names');
       expect(
         reservationNamesIncomplete({
           guestFullName: 'Ali Mammadov',
@@ -91,6 +91,12 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
           pax: [{ firstName: 'Ali', lastName: 'Mammadov', isPrimary: true }],
         }),
       ).toBe(true);
+      expect(
+        missingAdultNameCount({
+          adults: 2,
+          pax: [{ firstName: 'Ali', lastName: 'Mammadov' }],
+        }),
+      ).toBe(1);
     });
 
     it('passes when adults covered by named pax', async () => {
