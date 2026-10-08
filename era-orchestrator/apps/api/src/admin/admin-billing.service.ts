@@ -3,7 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { inferSatelliteKeyFromModuleKey, Prisma, TariffTier } from "@era365/database";
+import {
+  BillingStatus,
+  inferSatelliteKeyFromModuleKey,
+  Prisma,
+  TariffTier,
+} from "@era365/database";
+import { bakuEndOfDayUtc } from "@era/satellite-kit/time";
 import type { TierQuotas } from "../constants/quotas";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
@@ -206,6 +212,112 @@ export class AdminBillingService {
         activeModules: dto.activeModules ?? [],
       },
     });
+  }
+
+  /**
+   * "Covered until, no payment required": sets `expiresAt` + `billingCoveredUntil`
+   * to the end of that Baku day and lifts SOFT/HARD block on `organizations` and
+   * `tenant_billing`. Monthly billing skips the org while the billed month is covered.
+   * Issued invoices stay as they are. `isBlocked` is a separate switch.
+   */
+  async setBillingCoverage(
+    organizationId: string,
+    coveredUntilYmd: string | null,
+    actorUserId: string | null,
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, billingStatus: true, subscription: { select: { id: true } } },
+    });
+    if (!org) {
+      throw new NotFoundException("Organization not found");
+    }
+
+    if (coveredUntilYmd === null) {
+      if (!org.subscription) {
+        throw new BadRequestException("Organization has no subscription");
+      }
+      await this.prisma.$transaction(async (tx) => {
+        await tx.organizationSubscription.update({
+          where: { organizationId },
+          data: { billingCoveredUntil: null },
+        });
+        await tx.platformAuditLog.create({
+          data: {
+            organizationId,
+            addonSlug: "billing",
+            action: "BILLING_COVERAGE_CLEARED",
+            payload: { actorUserId } as Prisma.InputJsonValue,
+          },
+        });
+      });
+      return this.billingCoverageSnapshot(organizationId);
+    }
+
+    const [y, m, d] = coveredUntilYmd.split("-").map(Number);
+    const coveredUntil = bakuEndOfDayUtc(y, m, d);
+    if (Number.isNaN(coveredUntil.getTime())) {
+      throw new BadRequestException("Invalid coveredUntil");
+    }
+    if (coveredUntil.getTime() <= Date.now()) {
+      throw new BadRequestException("coveredUntil must be today or later (Asia/Baku)");
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      if (org.subscription) {
+        await tx.organizationSubscription.update({
+          where: { organizationId },
+          data: { expiresAt: coveredUntil, billingCoveredUntil: coveredUntil },
+        });
+      } else {
+        await tx.organizationSubscription.create({
+          data: {
+            organizationId,
+            currentTier: TariffTier.TIER_1,
+            isTrial: false,
+            expiresAt: coveredUntil,
+            billingCoveredUntil: coveredUntil,
+          },
+        });
+      }
+      await tx.organization.update({
+        where: { id: organizationId },
+        data: { billingStatus: BillingStatus.ACTIVE },
+      });
+      await tx.tenantBilling.updateMany({
+        where: { organizationId },
+        data: { billingStatus: BillingStatus.ACTIVE },
+      });
+      await tx.platformAuditLog.create({
+        data: {
+          organizationId,
+          addonSlug: "billing",
+          action: "BILLING_COVERAGE_SET",
+          payload: {
+            actorUserId,
+            coveredUntil: coveredUntil.toISOString(),
+            previousBillingStatus: org.billingStatus,
+          } as Prisma.InputJsonValue,
+        },
+      });
+    });
+    return this.billingCoverageSnapshot(organizationId);
+  }
+
+  private async billingCoverageSnapshot(organizationId: string) {
+    const row = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        billingStatus: true,
+        subscription: { select: { expiresAt: true, billingCoveredUntil: true } },
+      },
+    });
+    return {
+      organizationId,
+      billingStatus: row?.billingStatus ?? BillingStatus.ACTIVE,
+      expiresAt: row?.subscription?.expiresAt?.toISOString() ?? null,
+      billingCoveredUntil: row?.subscription?.billingCoveredUntil?.toISOString() ?? null,
+    };
   }
 
   async getBillingConfig() {

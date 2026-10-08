@@ -147,6 +147,7 @@ exports.Prisma.OrganizationSubscriptionScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   isBlocked: 'isBlocked',
+  billingCoveredUntil: 'billingCoveredUntil',
   customConfig: 'customConfig'
 };
 
