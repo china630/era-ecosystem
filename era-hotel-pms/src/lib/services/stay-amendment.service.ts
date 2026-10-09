@@ -1,8 +1,11 @@
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
+import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
+import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
 import { postCharge } from '@/lib/services/folio.service';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
@@ -42,19 +45,58 @@ export async function previewStayAmendment(input: {
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
 
-  const quote = await quoteReservationStay({
-    ratePlanId: input.ratePlanId,
-    roomTypeId: input.roomTypeId,
-    checkInDate: res.checkInDate,
-    checkOutDate: res.checkOutDate,
-    agencyId: res.agencyId ?? undefined,
-    guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
-  });
+  const plan =
+    input.ratePlanId === res.ratePlanId
+      ? res.ratePlan
+      : await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
+  if (!plan) throw new Error('Rate plan not found');
+
+  const ownNights = async () => {
+    const legacy = await quoteBookingRate({
+      ratePlanId: plan.id,
+      checkInDate: res.checkInDate,
+      checkOutDate: res.checkOutDate,
+      agencyId: res.agencyId ?? undefined,
+    });
+    if (legacy.adjustedNightly <= 0) {
+      throw new NightlyPriceMissingError(res.id, plan.code);
+    }
+    return Array.from({ length: legacy.nights }, (_, i) => ({
+      date: addHotelDays(res.checkInDate, i),
+      amount: legacy.adjustedNightly,
+    }));
+  };
+
+  let nightlyRates: Array<{ date: string; amount: number }>;
+  if (!usesBarCalendar(plan)) {
+    nightlyRates = await ownNights();
+  } else {
+    try {
+      const quote = await quoteReservationStay({
+        ratePlanId: plan.id,
+        roomTypeId: input.roomTypeId,
+        checkInDate: res.checkInDate,
+        checkOutDate: res.checkOutDate,
+        agencyId: res.agencyId ?? undefined,
+        guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
+      });
+      nightlyRates = quote.nightlyRates;
+    } catch (err) {
+      if (
+        err instanceof PricingEngineError &&
+        (err.code === 'BASE_PLAN_NOT_FOUND' || err.code === 'INVALID_DERIVATION')
+      ) {
+        nightlyRates = await ownNights();
+      } else {
+        throw err;
+      }
+    }
+  }
 
   const stayPct = res.discountPercent != null ? decimalToNumber(res.discountPercent) : 0;
   const nights: Array<{ date: string; old: number; next: number; locked: boolean }> = [];
   const lockedNights: string[] = [];
-  for (const n of quote.nightlyRates) {
+  for (const n of nightlyRates) {
     const d = new Date(`${n.date}T00:00:00`);
     if (dateOnly(d) < effective) continue;
     const existing = res.dailyRates.find((r) => isoDate(r.stayDate) === n.date);

@@ -332,7 +332,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 ## 23. Nafta P2 — H-BL backlog (2026-06-14)
 
 1. **BAR pricing:** run `npx tsx prisma/scripts/seed-bar-from-legacy.ts` → `/admin/bar-calendar` shows rates → booking recalc matches BAR cell total.
-2. **Night audit:** NA posts room charge from daily rate / BAR (not flat `pricePerNight`); `/operations` shows business date vs wall clock (**both Asia/Baku** — wall clock is not UTC host day; after 00:00–04:00 Baku the civil day rolls with Baku, not UTC).
+2. **Night audit:** NA posts the stay daily rate for that date. A plan that is not a BAR derivation (no BASE parent and no adjustment) uses its own `pricePerNight` and does not call the BAR engine. A stay with no nightly price is named in the run and does not stop the audit. A BASE plan, or a derivation with a parent and an adjustment, still uses the BAR calendar. `/operations` shows business date vs wall clock (**both Asia/Baku** — wall clock is not UTC host day; after 00:00–04:00 Baku the civil day rolls with Baku, not UTC).
 3. **Credit limit:** set `HotelProfile.defaultCreditLimitAzn=500` → fb-pos room-charge over limit returns `CREDIT_LIMIT`.
 4. **Meal gate:** BB guest zero-post ticket → 201; RO guest zero-post → 403 `MEAL_NOT_INCLUDED`.
 5. **Deposits:** `POST /api/reservations/{id}/deposits` HELD → check-in applies payment to folio.

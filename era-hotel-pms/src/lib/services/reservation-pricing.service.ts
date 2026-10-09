@@ -5,6 +5,7 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
+import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
@@ -243,10 +244,22 @@ export async function recalcReservationDailyRates(
     };
   }
 
+  const planId = slice?.ratePlanId ?? res.ratePlanId;
+  const plan =
+    planId === res.ratePlan.id
+      ? res.ratePlan
+      : await prisma.ratePlan.findUnique({ where: { id: planId } });
+  if (!plan) throw new Error('Rate plan not found');
+  if (!usesBarCalendar(plan)) {
+    const nightly = decimalToNumber(plan.pricePerNight);
+    if (nightly <= 0) throw new NightlyPriceMissingError(res.id, plan.code);
+    return writeOwnerNightly(res, nightly, opts?.remainingFrom);
+  }
+
   let quoteResult: Awaited<ReturnType<typeof quoteReservationStay>>;
   try {
     quoteResult = await quoteReservationStay({
-      ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
+      ratePlanId: plan.id,
       roomTypeId,
       checkInDate: res.checkInDate,
       checkOutDate: res.checkOutDate,
@@ -255,7 +268,14 @@ export async function recalcReservationDailyRates(
     });
   } catch (err) {
     if (err instanceof PricingEngineError) {
-      return writeOwnerNightly(res, decimalToNumber(res.ratePlan.pricePerNight), opts?.remainingFrom);
+      const nightly = decimalToNumber(plan.pricePerNight);
+      if (
+        nightly <= 0 &&
+        (err.code === 'BASE_PLAN_NOT_FOUND' || err.code === 'INVALID_DERIVATION')
+      ) {
+        throw new NightlyPriceMissingError(res.id, plan.code);
+      }
+      return writeOwnerNightly(res, nightly, opts?.remainingFrom);
     }
     throw err;
   }

@@ -164,7 +164,9 @@ Current adapter creates `DERIVED` without `derivedFromId`. **Target behavior:**
 
 \* Column names **TBD** after Nafta file audit — map in adapter `headerAliases`.
 
-**Do not set** meaningful `pricePerNight` on DERIVED rows (store `0`).
+**Do not set** meaningful `pricePerNight` on DERIVED rows that will receive a BAR parent (store `0`).
+
+**Runtime until that parent exists:** a `DERIVED` plan with no `derivedFromId` is a flat tariff, not a BAR derivation. Night audit posts the stay daily rate for that date, otherwise `pricePerNight`. It does not call `quoteStay`. A zero own price skips that stay, names the reservation and rate code, and the audit continues.
 
 ---
 

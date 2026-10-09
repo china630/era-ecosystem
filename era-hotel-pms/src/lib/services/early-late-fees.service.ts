@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { usesBarCalendar } from '@/lib/pricing/own-nightly-price';
+import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import {
@@ -48,15 +50,24 @@ export async function previewEarlyLateFees(reservationId: string, input?: {
   const policy = await getHotelPolicy();
   const roomTypeId = res.room?.roomTypeId ?? res.roomTypeId ?? res.ratePlan.roomTypeId;
   let nightlyRate = decimalToNumber(res.ratePlan.pricePerNight);
-  if (roomTypeId) {
-    const quote = await quoteReservationStay({
-      ratePlanId: res.ratePlanId,
-      roomTypeId,
-      checkInDate: res.checkInDate,
-      checkOutDate: res.checkOutDate,
-      agencyId: res.agencyId ?? undefined,
-    });
-    nightlyRate = quote.adultNightly;
+  if (roomTypeId && usesBarCalendar(res.ratePlan)) {
+    try {
+      const quote = await quoteReservationStay({
+        ratePlanId: res.ratePlanId,
+        roomTypeId,
+        checkInDate: res.checkInDate,
+        checkOutDate: res.checkOutDate,
+        agencyId: res.agencyId ?? undefined,
+      });
+      nightlyRate = quote.adultNightly;
+    } catch (err) {
+      if (
+        !(err instanceof PricingEngineError) ||
+        (err.code !== 'BASE_PLAN_NOT_FOUND' && err.code !== 'INVALID_DERIVATION')
+      ) {
+        throw err;
+      }
+    }
   }
 
   const checkInTime = input?.checkInTime ?? policy.standardCheckInTime;
