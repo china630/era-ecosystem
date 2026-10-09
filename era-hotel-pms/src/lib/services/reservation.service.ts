@@ -1,11 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
+import { BusinessDateLagError } from '@/lib/business-date-lag';
 import { requestOrganizationId } from '@/lib/request-organization';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
 import {
   applyContractRuleToNightly,
@@ -230,6 +233,26 @@ export async function createReservation(input: {
   if (!ratePlan) throw new Error('Rate plan not found');
   assertActiveForNewUse(`Rate plan ${ratePlan.code}`, ratePlan.active);
 
+  const chargedType = await prisma.roomType.findUnique({
+    where: { id: input.roomTypeId },
+    select: { adultCapacity: true },
+  });
+  if (!chargedType) throw new Error('Room type not found');
+  let adultCap = chargedType.adultCapacity;
+  if (input.roomId) {
+    const doorCap = await prisma.room.findUnique({
+      where: { id: input.roomId },
+      select: { maxBed: true },
+    });
+    if (doorCap?.maxBed != null && doorCap.maxBed > 0) {
+      adultCap = Math.min(adultCap, doorCap.maxBed);
+    }
+  }
+  const adultCount = input.adults ?? 1;
+  if (adultCount > adultCap) {
+    throw new Error(`Adults (${adultCount}) exceed sellable capacity (${adultCap})`);
+  }
+
   const guestMaster = await prisma.guest.findUnique({ where: { id: input.guestId } });
   if (!guestMaster) throw new Error('Guest not found');
 
@@ -325,21 +348,23 @@ export async function createReservation(input: {
   }
 
   let totalAmount = toDecimal(0);
-  try {
-    const quote = await quoteReservationStay({
-      ratePlanId,
-      roomTypeId: input.roomTypeId,
-      checkInDate: input.checkInDate,
-      checkOutDate: input.checkOutDate,
-      agencyId,
-    });
-    totalAmount = toDecimal(quote.totalAmount);
-  } catch {
-    const nights = countNights(input.checkInDate, input.checkOutDate);
-    const baseNightly = decimalToNumber(ratePlan.pricePerNight);
-    const rule = await findApplicableContractRule(ratePlanId, input.checkInDate, agencyId);
-    const { nightly } = applyContractRuleToNightly(baseNightly, rule);
-    totalAmount = toDecimal(nightly * nights);
+  if (!ratePlan.medicalFlag) {
+    try {
+      const quote = await quoteReservationStay({
+        ratePlanId,
+        roomTypeId: input.roomTypeId,
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+        agencyId,
+      });
+      totalAmount = toDecimal(quote.totalAmount);
+    } catch {
+      const nights = countNights(input.checkInDate, input.checkOutDate);
+      const baseNightly = decimalToNumber(ratePlan.pricePerNight);
+      const rule = await findApplicableContractRule(ratePlanId, input.checkInDate, agencyId);
+      const { nightly } = applyContractRuleToNightly(baseNightly, rule);
+      totalAmount = toDecimal(nightly * nights);
+    }
   }
 
   const discountPct =
@@ -355,6 +380,41 @@ export async function createReservation(input: {
   );
   if (manualNightly != null) {
     totalAmount = toDecimal(manualNightly * manualNights.length);
+  } else if (ratePlan.medicalFlag) {
+    const { ownerPackageNightlySell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
+    const { MEDICAL_PACKAGE_CODES } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
+    const named =
+      input.paxGuests?.filter(
+        (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim() || p.medicalPackageCode?.trim(),
+      ) ?? [];
+    const raw =
+      named.length > 0
+        ? paxCodesForCompose(named, ratePlan.code)
+        : [ratePlan.code];
+    const codes = raw
+      .map((c) => (c ?? '').trim().toUpperCase())
+      .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+    let sum = 0;
+    const stayNights = Array.from(
+      { length: countNights(input.checkInDate, input.checkOutDate) },
+      (_, i) => parseHotelNoon(addHotelDays(input.checkInDate, i)),
+    );
+    for (const stayDate of stayNights) {
+      const amount = await ownerPackageNightlySell(stayDate, codes, {
+        roomTypeId: input.roomTypeId,
+        mealPlanId: input.mealPlanId ?? ratePlan.mealPlanId,
+      });
+      if (amount == null) {
+        throw new Error('Package sell price is not set for this stay date');
+      }
+      sum += amount;
+    }
+    totalAmount = toDecimal(sum);
   }
 
   const contractRef =
@@ -513,17 +573,13 @@ export async function createReservation(input: {
       reservation.id,
       foCodes ? { foPerGuestCodes: foCodes } : undefined,
     );
-    if (manualNightly == null) {
+    if (manualNightly == null && ratePlan.medicalFlag) {
       const { syncComposedDailyRates } = await import(
         '@/lib/services/nafta-package-compose-apply.service'
       );
       const composed = await syncComposedDailyRates(reservation.id);
-      if (composed.applied && composed.total != null) {
-        const nights = countNights(input.checkInDate, input.checkOutDate);
-        await prisma.reservation.update({
-          where: { id: reservation.id },
-          data: { totalAmount: toDecimal(composed.total * nights) },
-        });
+      if (composed.missing || !composed.applied) {
+        throw new Error('Package sell price is not set for this stay date');
       }
     }
     if (stamped.stayKind !== 'leisure' && stamped.perGuestCodes.some((code) => code != null)) {
@@ -683,6 +739,10 @@ export async function checkInReservation(
   let arrivalKey = hotelDateKey(reservation.checkInDate);
   let departKey = hotelDateKey(reservation.checkOutDate);
   if (arrivalKey > bizKey && !opts?.early) {
+    const wallToday = todayBakuYmd();
+    if (arrivalKey <= wallToday) {
+      throw new BusinessDateLagError(bizKey, arrivalKey);
+    }
     throw new Error(
       'Check-in opens on the arrival date. Confirm early check-in to receive the guest sooner.',
     );
@@ -720,6 +780,54 @@ export async function checkInReservation(
   }
   await assertNamedGuestsFreeOnStay(id);
 
+  if (reservation.ratePlan.medicalFlag && !reservation.useManualRate) {
+    const { ownerPackageNightlySell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
+    const { MEDICAL_PACKAGE_CODES } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
+    const party = await prisma.reservationGuest.findMany({
+      where: { reservationId: id },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        medicalPackageCode: true,
+        firstName: true,
+        lastName: true,
+        guestId: true,
+      },
+    });
+    const raw =
+      party.length > 0
+        ? paxCodesForCompose(party, reservation.ratePlan.code ?? reservation.medicalPackageCode)
+        : [reservation.medicalPackageCode];
+    const codes = raw
+      .map((c) => (c ?? '').trim().toUpperCase())
+      .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+    const stored = await prisma.reservationDailyRate.findMany({ where: { reservationId: id } });
+    const nightCount = countNights(reservation.checkInDate, reservation.checkOutDate);
+    for (let i = 0; i < nightCount; i++) {
+      const stayDate = parseHotelNoon(addHotelDays(reservation.checkInDate, i));
+      const row = stored.find((d) => hotelDateKey(d.stayDate) === hotelDateKey(stayDate));
+      if (row) continue;
+      const amount = await ownerPackageNightlySell(stayDate, codes, {
+        roomTypeId: reservation.roomTypeId,
+        mealPlanId: reservation.mealPlanId,
+      });
+      if (amount == null) {
+        throw new Error('Package sell price is not set for an open night');
+      }
+    }
+  }
+
+  const doorCap = room?.maxBed;
+  const typeCap = reservation.roomType?.adultCapacity ?? 2;
+  const sellCap = doorCap != null && doorCap > 0 ? Math.min(typeCap, doorCap) : typeCap;
+  if (reservation.adults > sellCap) {
+    throw new Error(`Adults (${reservation.adults}) exceed sellable capacity (${sellCap})`);
+  }
+
   const previousCheckIn = reservation.checkInDate;
   let pulledArrival = false;
   if (opts?.early && arrivalKey > bizKey && reservation.roomId) {
@@ -742,13 +850,16 @@ export async function checkInReservation(
     const { syncComposedDailyRates } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );
-    await syncComposedDailyRates(id);
+    const composed = await syncComposedDailyRates(id);
+    if (composed.missing) {
+      throw new Error('Package sell price is not set for this stay date');
+    }
     reservation = await getReservation(id);
     arrivalKey = hotelDateKey(reservation.checkInDate);
     departKey = hotelDateKey(reservation.checkOutDate);
   }
 
-  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
+  const revenueRoom = await findRevenueCodeByToken('ROOM');
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
@@ -788,14 +899,16 @@ export async function checkInReservation(
       const amount = daily
         ? decimalToNumber(daily.amount)
         : decimalToNumber(reservation.ratePlan.pricePerNight);
-      await postCharge({
-        reservationId: id,
-        revenueCodeId: revenueRoom.id,
-        amount,
-        qty: 1,
-        description: `Room night ${bizKey}`,
-        businessDate: biz,
-      });
+      if (daily || amount > 0) {
+        await postCharge({
+          reservationId: id,
+          revenueCodeId: revenueRoom.id,
+          amount,
+          qty: 1,
+          description: `Room night ${bizKey}`,
+          businessDate: biz,
+        });
+      }
     }
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');

@@ -381,6 +381,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
             folioId: folio.id,
             amount: spec.payAmount,
             paymentMethod: spec.payment ?? PaymentMethod.CARD,
+            businessDate: todayDate,
           },
         });
       }

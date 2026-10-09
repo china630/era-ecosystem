@@ -26,7 +26,10 @@ function roomMoveReason(
   const note = (row.notes ?? '').trim();
   if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('reasonCard');
   if (raw === 'SWAP') return t('reasonSwap');
-  if (raw === 'RELOCATE') return t('reasonRelocate');
+  if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('reasonRelocate');
+  if (raw === 'GUEST_REFUSED') return t('reasonGuestRefused');
+  if (raw === 'DID_NOT_OCCUPY') return t('reasonDidNotOccupy');
+  if (raw === 'HOTEL') return t('reasonHotel');
   if (note) return note;
   return t('reasonOther');
 }
@@ -78,7 +81,10 @@ export default function RoomChangesPage() {
     const note = (row.notes ?? '').trim();
     if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return 'CARD';
     if (raw === 'SWAP') return 'SWAP';
-    if (raw === 'RELOCATE') return 'RELOCATE';
+    if (raw === 'RELOCATE' || raw === 'RACK_DND') return 'RELOCATE';
+    if (raw === 'GUEST_REFUSED') return 'GUEST_REFUSED';
+    if (raw === 'DID_NOT_OCCUPY') return 'DID_NOT_OCCUPY';
+    if (raw === 'HOTEL') return 'HOTEL';
     return 'OTHER';
   }
 
@@ -142,6 +148,9 @@ export default function RoomChangesPage() {
             { value: 'CARD', label: t('reasonCard') },
             { value: 'SWAP', label: t('reasonSwap') },
             { value: 'RELOCATE', label: t('reasonRelocate') },
+            { value: 'GUEST_REFUSED', label: t('reasonGuestRefused') },
+            { value: 'DID_NOT_OCCUPY', label: t('reasonDidNotOccupy') },
+            { value: 'HOTEL', label: t('reasonHotel') },
             { value: 'OTHER', label: t('reasonOther') },
           ]}
           emptyLabel={tc('all')}

@@ -232,7 +232,9 @@ function TimelineCells({
       onDrop={(e) => {
         e.preventDefault();
         const resId = e.dataTransfer.getData('reservationId');
-        if (resId && onMoveReservation) onMoveReservation(resId, room.id);
+        if (!resId || !onMoveReservation) return;
+        if (roomBars.some((bar) => bar.id === resId)) return;
+        onMoveReservation(resId, room.id);
       }}
     >
       <div

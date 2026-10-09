@@ -53,6 +53,7 @@
     "hkRoster": "HK roster",
     "hkRotation": "Floor rotation",
     "hkLaundry": "Guest laundry",
+    "hkConsumption": "HK consumption",
     "hkForecast": "HK forecast",
     "hkPolicy": "HK linen / deep",
     "hkDiscrepancy": "Skip / Sleep",
@@ -120,6 +121,7 @@
     "roomTypeAvailability": "Room type availability",
     "roomBooking": "Room booking",
     "groupBooking": "Group booking",
+    "acceptPayment": "Accept payment",
     "sectionSettings": "Settings",
     "endOfDay": "End of day",
     "eodReports": "EOD reports",
@@ -409,6 +411,12 @@
     "occupied": "Occupied",
     "vacant": "Vacant",
     "hkStatus": "HK status",
+    "hkOpt": {
+      "DIRTY": "Dirty",
+      "PICKUP": "Pickup",
+      "CLEAN": "Clean",
+      "INSPECTED": "Inspected"
+    },
     "cleanOnly": "Clean only",
     "dirtyOnly": "Dirty only",
     "inspectedOnly": "Inspected only",
@@ -458,6 +466,8 @@
     "guest": "Guest",
     "folio": "Folio",
     "openFolio": "Open folio",
+    "arrival": "Arrival",
+    "departure": "Departure",
     "empty": "No in-house guests."
   },
   "guestsPage": {
@@ -509,6 +519,9 @@
   "paymentMethod": {
     "CASH": "Cash",
     "CARD": "Card",
+    "BANK_TRANSFER": "Bank transfer",
+    "LOYALTY_POINTS": "Loyalty points",
+    "DEPOSIT": "Deposit",
     "COMPANY_ACCOUNT": "Company account"
   },
   "folio": {
@@ -552,7 +565,7 @@
     "loyaltyRedeemable": "Loyalty redeemable: up to {amount} AZN",
     "method": "Method",
     "discountAzn": "Discount AZN",
-    "applyHeldDeposits": "Apply HELD deposits",
+    "applyHeldDeposits": "Apply deposits",
     "addTenderLine": "Add tender line",
     "completeSettlement": "Complete settlement",
     "settlementCompleted": "Settlement completed",
@@ -571,7 +584,31 @@
     "checkoutClConfirmWarn": "Balance will transfer to City Ledger / AR. Confirm contract gate before proceeding.",
     "bankReference": "Bank / wire reference",
     "bankReferencePlaceholder": "Payment order / bank ref",
-    "packageComposeSell": "Package nightly sell"
+    "packageComposeSell": "Package nightly sell",
+    "acceptPaymentTitle": "Accept payment",
+    "acceptPayment": "Accept payment",
+    "acceptDeposit": "Accept deposit",
+    "depositBecauseZero": "Nothing is posted on this folio yet. This amount is held as a deposit.",
+    "depositRecordedShort": "Deposit recorded",
+    "pickStay": "Room or guest",
+    "pickGuest": "Guest",
+    "payer": "Payer",
+    "partyAgency": "Agency folio",
+    "partyCompany": "Company folio",
+    "noOpenFolio": "No open folio for this stay.",
+    "revenueCode": "Service",
+    "chargeDescription": "Description",
+    "pay": "Pay",
+    "payLineTitle": "Pay this charge",
+    "voidTitle": "Void charge",
+    "voidConfirm": "Void this charge?",
+    "closeFolioTitle": "Close folio",
+    "closeFolioConfirm": "Close this folio? The balance must stay zero.",
+    "invoiceTitle": "Issue invoice",
+    "invoiceEmpty": "No charges to invoice.",
+    "openStayFolio": "Open folio",
+    "ledgerPayment": "Payment",
+    "actions": "Actions"
   },
   "operations": {
     "title": "Operations",
@@ -598,7 +635,8 @@
     "cashDeskOpenBlock": "{count} row(s) still open",
     "cashDeskOk": "OK",
     "posShiftStatus": "POS shifts:",
-    "posShiftOpen": "Hotel still has an open copy for {outlet}. Close that shift in F&B, then run night audit again.",
+    "posShiftOpen": "F&B still has an open shift for {outlet}. Close it there, then run night audit again.",
+    "posShiftUnreachable": "Hotel could not ask F&B, so the open copy for {outlet} was left in place. Night audit stays blocked until F&B answers.",
     "posShiftOk": "OK",
     "openCashDesk": "Front cash summary",
     "closeCashDeskBeforeNa": "Close the front cash rows for this business date before night audit.",
@@ -610,6 +648,7 @@
     "runNightAudit": "Run night audit",
     "processRetry": "Process outbound retry",
     "nightAuditResult": "Night audit: {status}",
+    "financeWarning": "Night audit closed the hotel day. Finance did not post: {message}",
     "retryQueue": "Retry queue: sent {count}",
     "recentRuns": "Recent runs",
     "tourismRegistry": "Tourism registry (AZ-02)",
@@ -618,6 +657,7 @@
     "noShowCandidates": "No-show candidates (PMS-07)",
     "due": "due",
     "markNoShow": "Mark no-show",
+    "openReservation": "Open reservation",
     "noShowMarked": "No-show: {name}",
     "polishPreviewTitle": "NA polish preview (trial)",
     "polishPreviewHint": "Read-only trial signals before night audit — not a live NA run.",
@@ -630,7 +670,9 @@
   },
   "frontCashPending": {
     "title": "Pending settlement",
-    "subtitle": "Walk-in charges from F&B and clinic awaiting Front Cash payment.",
+    "subtitle": "Walk-in charges from F&B, clinic, and retail awaiting Front Cash payment.",
+    "colSku": "SKU",
+    "colQty": "Qty",
     "empty": "No pending charges.",
     "colSource": "Source",
     "colRef": "Reference",
@@ -697,7 +739,8 @@
     "namesIncompleteBadge": "Names incomplete",
     "bookingName": "Booking name",
     "bookingNamePlaceholder": "Optional label (e.g. wedding, company block)",
-    "singleStayHint": "One room on this booking"
+    "singleStayHint": "One room on this booking",
+    "familyGroupBadge": "{count} rooms"
   },
   "reservationCard": {
     "stay": "Stay",
@@ -705,8 +748,8 @@
     "commercialSales": "Commercial & sales",
     "classification": "Classification",
     "roomSection": "Room",
-    "cancelStay": "CANCELLED",
-    "noShowStay": "NO_SHOW",
+    "cancelStay": "CANCEL",
+    "noShowStay": "NO SHOW",
     "cancelDone": "Reservation cancelled",
     "noShowDone": "Marked as no-show",
     "splitFrom": "Change room from",
@@ -832,6 +875,7 @@
     "checkInNeedSaveRoom": "selected room is not saved",
     "checkInNeedDoorType": "room number does not match the given room type",
     "checkInNeedArrival": "arrival date has not come",
+    "checkInBusinessDateLag": "Night audit is still on {businessDate}. Close that day before check-in on {arrivalDate}.",
     "checkInNeedAdultNames": "name ({count} more)",
     "checkInNeedRealName": "a real name",
     "pickGuestRequired": "Choose the guest from search",
@@ -1096,6 +1140,15 @@
     "departGuestDone": "Guest departed",
     "moveGuestDone": "Guest moved",
     "swapRoomsDone": "Rooms swapped",
+    "moveReasonTitle": "Room move",
+    "moveReasonHint": "The previous room becomes dirty after an in-house move. “Did not occupy” leaves it clean only when the guest has not stayed a night and the folio has no charges.",
+    "moveReasonLabel": "Reason",
+    "moveReasonConfirm": "Move",
+    "moveReason": {
+      "GUEST_REFUSED": "Guest refused the room",
+      "DID_NOT_OCCUPY": "Did not occupy",
+      "HOTEL": "Hotel move"
+    },
     "confirmEarlyStayCheckout": "Early checkout",
     "earlyStayCheckoutHint": "The stay ends today. Posted nights stay; unused nights are released.",
     "earlyStayCheckoutUnused": "Unused nights: {nights}",
@@ -1529,6 +1582,9 @@
     "reasonCard": "from the reservation card",
     "reasonSwap": "room swap",
     "reasonRelocate": "from the room plan",
+    "reasonGuestRefused": "guest refused the room",
+    "reasonDidNotOccupy": "did not occupy",
+    "reasonHotel": "hotel move",
     "reasonOther": "room move",
     "statusPending": "Pending",
     "statusApplied": "Applied",
@@ -1689,6 +1745,7 @@
     "qty": "Qty",
     "post": "Post to folio",
     "emptyCatalog": "No products yet. Use Add for water, drinks, and snacks.",
+    "financeSku": "Finance SKU",
     "floorFilter": "Floor",
     "floorAll": "All floors",
     "recent": "Recent posts",
@@ -2527,6 +2584,7 @@
     "location": "Location",
     "maxBed": "Max beds",
     "adultCapacity": "Adult capacity",
+    "standardAdults": "Standard bedding",
     "filterPlaceholder": "Filter by code or name…",
     "filterRoomPlaceholder": "Filter by room number…",
     "allRoomTypes": "All room types",
@@ -2584,7 +2642,8 @@
       "NOTE_TYPE": "Note type",
       "CONCIERGE_CATEGORY": "Concierge category",
       "EVENT_LINE_KIND": "Banquet line kind",
-      "WALKIN_PROFILE": "Walk-in profile"
+      "WALKIN_PROFILE": "Walk-in profile",
+      "NATIONALITY": "Citizenship"
     }
   },
   "opsWipe": {
@@ -2772,6 +2831,20 @@
     "glMappingSaved": "GL mapping saved",
     "noGlMappings": "No revenue codes — add codes in Master data first.",
     "platformSubscriptionReadonlyBadge": "Read-only"
+  },
+  "hkConsumption": {
+    "title": "Housekeeping consumption",
+    "hint": "Business day {date}. Guest price is zero. Night audit sends the sku and quantity to Finance. Saving the same sku replaces the quantity. An empty day is fine. The linen schedule does not create a line. A closed day, including an earlier one, reverses onto this open day.",
+    "sku": "Finance SKU",
+    "qty": "Quantity",
+    "saved": "Consumption saved",
+    "deleted": "Consumption removed",
+    "saveFailed": "Could not save consumption",
+    "empty": "No consumption for this business day.",
+    "date": "Date",
+    "closedTitle": "Closed days",
+    "reverse": "Reverse on the open day",
+    "reversed": "Reversed"
   },
   "stock": {
     "title": "Minibar catalog",
@@ -3091,7 +3164,7 @@
   },
   "packagePrices": {
     "title": "Package sell & floor",
-    "subtitle": "Manual package sell prices with cost floor — independent of BAR.",
+    "subtitle": "Package sell grid: rate × room type × meal × adults × season. An empty cell is not sold.",
     "policyLink": "Pricing policy",
     "package": "Package rate plan",
     "addVersion": "Add price version",
@@ -3101,7 +3174,11 @@
     "effectiveFrom": "Effective from",
     "effectiveTo": "Effective to",
     "note": "Note",
-    "versionCreated": "Package price version created"
+    "versionCreated": "Package price version created",
+    "meal": "Meal plan",
+    "seasonDate": "Season date",
+    "roomType": "Room type",
+    "notSold": "—"
   },
   "unitEconomics": {
     "title": "Unit economics",

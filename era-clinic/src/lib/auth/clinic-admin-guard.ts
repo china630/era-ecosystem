@@ -3,7 +3,7 @@ import {
   jsonError,
   requireClinicPermission,
 } from "@/lib/api-utils";
-import { adminApiRoutePermission } from "@/lib/auth/clinic-permissions";
+import { adminApiRoutePermissions } from "@/lib/auth/clinic-permissions";
 import type { NextResponse } from "next/server";
 import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 
@@ -16,11 +16,14 @@ export async function assertClinicAdminRoute(
 ): Promise<GuardOk | GuardFail> {
   const session = await getSatelliteSession();
   if (!session) return { error: jsonError("Unauthorized", 401) };
-  const permission = adminApiRoutePermission(new URL(req.url).pathname);
-  if (!permission) return { error: jsonError("Forbidden", 403) };
-  const denied = await requireClinicPermission(session, permission);
-  if (denied) return { error: denied };
-  return { session };
+  const permissions = adminApiRoutePermissions(new URL(req.url).pathname);
+  if (!permissions || permissions.length === 0) return { error: jsonError("Forbidden", 403) };
+  let denied: NextResponse | null = null;
+  for (const permission of permissions) {
+    denied = await requireClinicPermission(session, permission);
+    if (!denied) return { session };
+  }
+  return { error: denied ?? jsonError("Forbidden", 403) };
 }
 
 /** Alias of assertClinicAdminRoute — Request required (no binary CLINIC_ADMIN bypass). */

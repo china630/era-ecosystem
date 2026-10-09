@@ -57,7 +57,7 @@ Legacy cutover (temporary redirects OK): `/` → `/fo/rack`, `/availability` →
 | Agency city ledger | `/front-cash/agency-ledger` | Travel-agent CL; AGENCY folios; commission %; Finance snapshot |
 | Company city ledger | `/front-cash/company-ledger` | Corporate CL; COMPANY folios; prepaid/postpaid; no commission |
 | Shift journal | `/front-cash/transactions` | FO cash journal (payments \| deposits tabs) + Z in modal + close shift (ops, not fiscal KKM Z) |
-| Folio (not a list item) | `/folio/[reservationId]` | Stay folio: charges, deposit, settle, refund, checkout/CL — open from FO card / in-house |
+| Folio (not a screen) | reservation card, Folio tab | Stay ledger. Payment, charge, invoice, checkout, void, and refund are modals on that tab. Header “Accept payment” opens the same payment modal. `/folio/[id]` redirects to the card. |
 
 Café/clinic tickets awaiting reception payment live on **`/front-cash/pending`** (not a separate sanatorium menu, not F&B floor).
 
@@ -94,7 +94,8 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 |-----------|-----|-------------|
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
-| Minibar | `/hk/minibar` | Minibar control |
+| Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
+| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. A closed day, including an earlier one, reverses onto the open day |
 | Minibar catalog | `/settings/stock` | Local hotel product catalog (minibar). Screen permission stays Settings |
 | Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
 | Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |

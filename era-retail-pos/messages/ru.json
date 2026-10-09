@@ -55,6 +55,8 @@
     "openShift": "Открыть смену",
     "addReceipt": "Добавить чек",
     "pay": "Оплатить",
+    "paid": "Оплачено",
+    "paidHotelCashier": "Оплачено — касса отеля",
     "return": "Возврат",
     "xReport": "X-отчёт",
     "closeShift": "Закрыть смену",

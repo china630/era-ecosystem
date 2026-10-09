@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 
 export async function listPromotionCodes() {
@@ -210,13 +211,15 @@ export async function postMinibar(input: {
 
   if (stay?.id) {
     const { postCharge } = await import('@/lib/services/folio.service');
-    const fb = await prisma.revenueCode.findFirst({ where: { code: 'MINIBAR' } });
-    const code = fb ?? (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
+    const fb = await findRevenueCodeByToken('MINIBAR');
+    const code = fb ?? (await findRevenueCodeByToken('ROOM'));
     if (code) {
       await postCharge({
         reservationId: stay.id,
         revenueCodeId: code.id,
         amount: decimalToNumber(item.price) * input.qty,
+        qty: input.qty,
+        sku: item.financeSku,
         description: `Minibar ${item.code}`,
       });
     }

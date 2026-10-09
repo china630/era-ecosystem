@@ -480,7 +480,7 @@ POS_BRIDGE_SECRET=dev-pos-bridge-secret
 NEXT_PUBLIC_FNB_POS_URL=http://localhost:3200
 FNB_POS_WEBHOOK_URL=http://localhost:3200/api/webhooks/pms/reservation-lifecycle
 
-# Event bus через orchestrator (опционально)
+# Event bus через orchestrator (дефолт отеля)
 ERA_EVENT_GATEWAY_MODE=orchestrator
 ORCHESTRATOR_EVENT_URL=http://127.0.0.1:4000
 SATELLITE_EVENT_SERVICE_TOKEN=dev-satellite-event-token
@@ -600,7 +600,7 @@ cd ../era-hotel-pms && npm install
 | Шаг | Действие |
 |-----|----------|
 | 1 | `ERA_SATELLITE_ORGANIZATION_ID` — UUID tenant в finance |
-| 2 | Hotel: `ERA_EVENT_GATEWAY_MODE=orchestrator` |
+| 2 | Hotel: `ERA_EVENT_GATEWAY_MODE=orchestrator` (дефолт в `.env.example` и `docker-compose.yml`). Пока `ElektrawebBridgePolicy.inboundEnabled`, документ дня в очередь не уходит |
 | 3 | Общий `SATELLITE_EVENT_SERVICE_TOKEN` (hotel → orchestrator) |
 | 4 | `SATELLITE_EVENT_REDIS_URL=redis://…/0` на orchestrator и finance worker |
 | 5 | Checkout в hotel → job в BullMQ `era-satellite-events` → worker в finance |
@@ -649,7 +649,7 @@ curl http://localhost:4100/api/health
 
 ### Hotel → Event bus (ручной smoke)
 
-1. Установите `ERA_EVENT_GATEWAY_MODE=orchestrator` и `ERA_SATELLITE_ORGANIZATION_ID`.
+1. Шлюз отеля по умолчанию `ERA_EVENT_GATEWAY_MODE=orchestrator`. Задайте `ERA_SATELLITE_ORGANIZATION_ID`. Документ дня не публикуется, пока у организации `ElektrawebBridgePolicy.inboundEnabled`.
 2. Выполните checkout бронирования в hotel PMS.
 3. Проверьте логи: `docker compose logs -f orchestrator finance-core` — enqueue + worker log.
 

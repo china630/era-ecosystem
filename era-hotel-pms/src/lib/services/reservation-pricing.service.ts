@@ -5,10 +5,12 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
+import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
 import {
   applyLoadBasedAdjustment,
   computeChildNightlyAddon,
@@ -46,12 +48,11 @@ async function closedNightKeys(reservationId: string): Promise<{ bizKey: string;
   const bizKey = hotelDateKey(await getCurrentBusinessDate());
   const charges = await prisma.folioCharge.findMany({
     where: { folio: { reservationId } },
-    select: { businessDate: true, revenueCode: { select: { code: true } } },
+    select: { businessDate: true, revenueCode: { select: { code: true, name: true } } },
   });
   const posted = new Set<string>();
   for (const charge of charges) {
-    const code = charge.revenueCode.code;
-    if (code === 'ROOM' || code === 'PKG' || code === 'RATE_ADJ') {
+    if (matchesAnyRevenueToken(charge.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ'])) {
       posted.add(hotelDateKey(charge.businessDate));
     }
   }
@@ -113,7 +114,7 @@ async function writeOwnerNightly(
       discountPct: { toString(): string } | null;
     }>;
   },
-  nightly: number,
+  nightly: number | ((night: Date) => Promise<number>),
   remainingFrom?: Date,
 ) {
   const nights = eachNight(res.checkInDate, res.checkOutDate);
@@ -148,9 +149,10 @@ async function writeOwnerNightly(
       });
       continue;
     }
+    const amount = typeof nightly === 'function' ? await nightly(night) : nightly;
     rows.push({
       stayDate: night,
-      amount: nightly,
+      amount,
       manualFlag: false,
       currencyCode: 'AZN',
       fixPrice: false,
@@ -184,7 +186,7 @@ async function writeOwnerNightly(
     totalAmount: rows.reduce((s, r) => s + r.amount, 0),
     quote: null,
     childAddonNightly: 0,
-    adultNightly: nightly,
+    adultNightly: typeof nightly === 'number' ? nightly : (rows[0]?.amount ?? 0),
   };
 }
 
@@ -207,16 +209,22 @@ export async function recalcReservationDailyRates(
 
   const packageCodes = stayPackageCodes(res);
   if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
-    let nightly: number | null;
-    if (packageCodes.length > 0) {
-      nightly = await ownerPackageNightlySell(res.checkInDate, packageCodes);
-      if (nightly == null) {
-        throw new Error('Package sell price is not set for this stay date');
-      }
-    } else {
-      nightly = decimalToNumber(res.ratePlan.pricePerNight);
+    if (packageCodes.length === 0) {
+      throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
     }
-    return writeOwnerNightly(res, nightly, opts?.remainingFrom);
+    const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
+    const quoteNight = async (night: Date) => {
+      const nightSlice = await resolveStaySliceForDate(res.id, night);
+      const typeId = nightSlice?.roomTypeId ?? res.roomTypeId;
+      if (!typeId) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+      const amount = await ownerPackageNightlySell(night, packageCodes, {
+        roomTypeId: typeId,
+        mealPlanId: res.mealPlanId,
+      });
+      if (amount == null) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+      return amount;
+    };
+    return writeOwnerNightly(res, quoteNight, opts?.remainingFrom);
   }
 
   const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
@@ -243,10 +251,22 @@ export async function recalcReservationDailyRates(
     };
   }
 
+  const planId = slice?.ratePlanId ?? res.ratePlanId;
+  const plan =
+    planId === res.ratePlan.id
+      ? res.ratePlan
+      : await prisma.ratePlan.findUnique({ where: { id: planId } });
+  if (!plan) throw new Error('Rate plan not found');
+  if (!usesBarCalendar(plan)) {
+    const nightly = decimalToNumber(plan.pricePerNight);
+    if (nightly <= 0) throw new NightlyPriceMissingError(res.id, plan.code);
+    return writeOwnerNightly(res, nightly, opts?.remainingFrom);
+  }
+
   let quoteResult: Awaited<ReturnType<typeof quoteReservationStay>>;
   try {
     quoteResult = await quoteReservationStay({
-      ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
+      ratePlanId: plan.id,
       roomTypeId,
       checkInDate: res.checkInDate,
       checkOutDate: res.checkOutDate,
@@ -254,8 +274,18 @@ export async function recalcReservationDailyRates(
       guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
     });
   } catch (err) {
+    if (err instanceof PricingEngineError && err.code === 'RATE_NOT_LOADED') {
+      throw new NightlyPriceMissingError(res.id, plan.code);
+    }
     if (err instanceof PricingEngineError) {
-      return writeOwnerNightly(res, decimalToNumber(res.ratePlan.pricePerNight), opts?.remainingFrom);
+      const nightly = decimalToNumber(plan.pricePerNight);
+      if (
+        nightly <= 0 &&
+        (err.code === 'BASE_PLAN_NOT_FOUND' || err.code === 'INVALID_DERIVATION')
+      ) {
+        throw new NightlyPriceMissingError(res.id, plan.code);
+      }
+      return writeOwnerNightly(res, nightly, opts?.remainingFrom);
     }
     throw err;
   }
@@ -425,7 +455,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       : { posted: [key], skipped: [] as string[] };
   }
 
-  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
+  const revenueRoom = await findRevenueCodeByToken('ROOM');
   if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
 
   let rates = res.dailyRates;

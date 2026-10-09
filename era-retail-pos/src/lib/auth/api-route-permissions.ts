@@ -11,6 +11,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/internal/**",
   "/api/events/dispatch",
   "/api/integration/staff-provision",
+  "/api/integration/settlement-confirmed",
 ];
 
 /** Any signed-in session; no grant. */

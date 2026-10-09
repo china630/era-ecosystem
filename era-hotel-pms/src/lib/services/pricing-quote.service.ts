@@ -1,7 +1,10 @@
 import { decimalToNumber } from '@/lib/decimal';
+import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
 import { quoteStay, PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
 import { prisma } from '@/lib/prisma';
+
+export { NightlyPriceMissingError } from '@/lib/pricing/own-nightly-price';
 
 const LEGACY_FALLBACK =
   process.env.ERA_PRICING_LEGACY_FALLBACK === 'true' ||
@@ -154,6 +157,9 @@ export async function getNightlyRoomChargeForDate(
   );
   if (daily) return decimalToNumber(daily.amount);
 
+  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
+  const slice = await resolveStaySliceForDate(reservationId, businessDate);
+
   const { ownerPackageNightlySell } = await import(
     '@/lib/services/nafta-package-compose-apply.service'
   );
@@ -166,31 +172,59 @@ export async function getNightlyRoomChargeForDate(
   )
     .map((c) => (c ?? '').trim().toUpperCase())
     .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
-  if (packageCodes.length > 0) {
-    const nightly = await ownerPackageNightlySell(res.checkInDate, packageCodes);
-    if (nightly != null) return nightly;
-  }
-  if (res.ratePlan.medicalFlag || packageCodes.length > 0) {
-    return decimalToNumber(res.ratePlan.pricePerNight);
-  }
-
-  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
-  const slice = await resolveStaySliceForDate(reservationId, businessDate);
-  const roomTypeId = slice?.roomTypeId ?? res.roomTypeId ?? res.ratePlan.roomTypeId;
-  if (!roomTypeId) {
-    return decimalToNumber(res.ratePlan.pricePerNight);
+  if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
+    const roomTypeId = slice?.roomTypeId ?? res.roomTypeId;
+    const nightly = roomTypeId
+      ? await ownerPackageNightlySell(businessDate, packageCodes, {
+          roomTypeId,
+          mealPlanId: res.mealPlanId,
+        })
+      : null;
+    if (nightly == null) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+    return nightly;
   }
 
-  const quote = await quoteReservationStay({
-    ratePlanId: slice?.ratePlanId ?? res.ratePlanId,
-    roomTypeId,
-    checkInDate: res.checkInDate,
-    checkOutDate: res.checkOutDate,
-    agencyId: res.agencyId ?? undefined,
-    guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
-  });
+  const planId = slice?.ratePlanId ?? res.ratePlanId;
+  const plan =
+    planId === res.ratePlan.id
+      ? res.ratePlan
+      : await prisma.ratePlan.findUnique({ where: { id: planId } });
+  if (!plan) throw new Error('Rate plan not found');
 
-  const key = businessDate.toISOString().slice(0, 10);
-  const night = quote.nightlyRates.find((n) => n.date === key);
-  return night?.amount ?? quote.adultNightly;
+  const ownPrice = () => {
+    const amount = decimalToNumber(plan.pricePerNight);
+    if (amount > 0) return amount;
+    throw new NightlyPriceMissingError(res.id, plan.code);
+  };
+
+  const roomTypeId = slice?.roomTypeId ?? res.roomTypeId ?? plan.roomTypeId;
+  if (!roomTypeId || !usesBarCalendar(plan)) {
+    return ownPrice();
+  }
+
+  try {
+    const quote = await quoteReservationStay({
+      ratePlanId: plan.id,
+      roomTypeId,
+      checkInDate: res.checkInDate,
+      checkOutDate: res.checkOutDate,
+      agencyId: res.agencyId ?? undefined,
+      guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
+    });
+
+    const key = businessDate.toISOString().slice(0, 10);
+    const night = quote.nightlyRates.find((n) => n.date === key);
+    return night?.amount ?? quote.adultNightly;
+  } catch (err) {
+    if (err instanceof PricingEngineError && err.code === 'RATE_NOT_LOADED') {
+      throw new NightlyPriceMissingError(res.id, plan.code);
+    }
+    if (
+      err instanceof PricingEngineError &&
+      (err.code === 'BASE_PLAN_NOT_FOUND' || err.code === 'INVALID_DERIVATION')
+    ) {
+      return ownPrice();
+    }
+    throw err;
+  }
 }

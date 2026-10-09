@@ -36,6 +36,7 @@ type MenuItem = {
   priceAzn: string | number;
   active: boolean;
   recipeSku?: string | null;
+  financeSku?: string | null;
   imageUrl?: string | null;
   categoryId?: string;
 };
@@ -62,6 +63,7 @@ type ItemForm = {
   name: string;
   priceAzn: string;
   recipeSku: string;
+  financeSku: string;
   imageUrl: string;
   active: boolean;
   priceReason: string;
@@ -73,6 +75,7 @@ const emptyItemForm = (categoryId = ""): ItemForm => ({
   name: "",
   priceAzn: "",
   recipeSku: "",
+  financeSku: "",
   imageUrl: "",
   active: true,
   priceReason: "",
@@ -92,6 +95,7 @@ export default function MenuAdminPanel() {
   const [itemModal, setItemModal] = useState<"create" | "edit" | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [itemForm, setItemForm] = useState<ItemForm>(emptyItemForm());
+  const [financeSkuOptions, setFinanceSkuOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTitle, setHistoryTitle] = useState("");
   const [priceHistory, setPriceHistory] = useState<PriceRow[]>([]);
@@ -117,6 +121,23 @@ export default function MenuAdminPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (itemModal == null) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/admin/finance-products?limit=50");
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json().catch(() => null);
+      const payload = (parsed?.data ?? parsed) as {
+        items?: Array<{ value: string; label: string }>;
+      } | null;
+      if (!cancelled) setFinanceSkuOptions(payload?.items ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [itemModal]);
 
   useEffect(() => {
     setSelectedCategoryId((prev) =>
@@ -221,6 +242,7 @@ export default function MenuAdminPanel() {
       name: item.name,
       priceAzn: String(item.priceAzn),
       recipeSku: item.recipeSku ?? "",
+      financeSku: item.financeSku ?? "",
       imageUrl: item.imageUrl ?? "",
       active: item.active,
       priceReason: "",
@@ -250,6 +272,7 @@ export default function MenuAdminPanel() {
       name,
       priceAzn: price,
       recipeSku: itemForm.recipeSku.trim() || null,
+      financeSku: itemForm.financeSku.trim() || null,
       imageUrl: itemForm.imageUrl.trim() || null,
       active: itemForm.active,
       ...(itemModal === "create"
@@ -557,6 +580,35 @@ export default function MenuAdminPanel() {
               setItemForm((f) => ({
                 ...f,
                 categoryId: Array.isArray(next) ? next[0] ?? "" : next,
+              }))
+            }
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("financeSku")}
+            value={itemForm.financeSku}
+            serverSearch
+            onQueryChange={(q) => {
+              void fetch(`/api/admin/finance-products?limit=50&q=${encodeURIComponent(q)}`)
+                .then((r) => (r.ok ? r.json() : null))
+                .then((parsed) => {
+                  const payload = (parsed?.data ?? parsed) as {
+                    items?: Array<{ value: string; label: string }>;
+                  } | null;
+                  setFinanceSkuOptions(payload?.items ?? []);
+                })
+                .catch(() => setFinanceSkuOptions([]));
+            }}
+            options={
+              itemForm.financeSku &&
+              !financeSkuOptions.some((option) => option.value === itemForm.financeSku)
+                ? [{ value: itemForm.financeSku, label: itemForm.financeSku }, ...financeSkuOptions]
+                : financeSkuOptions
+            }
+            onChange={(next) =>
+              setItemForm((f) => ({
+                ...f,
+                financeSku: Array.isArray(next) ? next[0] ?? "" : next,
               }))
             }
           />

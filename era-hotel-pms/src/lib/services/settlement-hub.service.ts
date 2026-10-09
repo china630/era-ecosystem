@@ -13,6 +13,9 @@ export type CreatePendingInput = {
   sourceRef: string;
   idempotencyKey: string;
   amount: number;
+  sku?: string | null;
+  qty?: number;
+  revenueCode?: string | null;
   currency?: string;
   description: string;
   payerLabel?: string;
@@ -41,6 +44,14 @@ function hubCallbackBaseUrl(sourceSystem: SettlementSourceSystem): string | null
       process.env.CLINIC_URL?.trim() ||
       process.env.NEXT_PUBLIC_CLINIC_WEB_URL?.trim() ||
       process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL?.trim() ||
+      null
+    );
+  }
+  if (sourceSystem === 'RETAIL') {
+    return (
+      process.env.RETAIL_POS_URL?.trim() ||
+      process.env.NEXT_PUBLIC_RETAIL_POS_URL?.trim() ||
+      process.env.NEXT_PUBLIC_SATELLITE_RETAIL_POS_URL?.trim() ||
       null
     );
   }
@@ -74,6 +85,12 @@ export async function createPendingCharge(input: CreatePendingInput) {
       sourceRef: input.sourceRef,
       idempotencyKey: input.idempotencyKey,
       amount: toDecimal(input.amount),
+      sku: input.sku?.trim() || null,
+      qty:
+        input.qty != null && Number.isFinite(input.qty) && input.qty !== 0
+          ? Math.trunc(input.qty)
+          : 1,
+      revenueCode: input.revenueCode?.trim() || null,
       currency: input.currency ?? 'AZN',
       description: input.description,
       payerLabel: input.payerLabel,
@@ -119,6 +136,7 @@ async function notifySourceSettlementConfirmed(
     id: string;
     sourceSystem: SettlementSourceSystem;
     sourceRef: string;
+    sourceOrgId: string;
   },
   paymentMethod: string,
   fiscalReceiptId: string | null,
@@ -144,6 +162,7 @@ async function notifySourceSettlementConfirmed(
       sourceRef: charge.sourceRef,
       paymentMethod,
       fiscalReceiptId,
+      organizationId: charge.sourceOrgId,
     }),
     signal: AbortSignal.timeout(15000),
   });
@@ -174,7 +193,7 @@ export async function payPendingCharge(input: PayPendingInput) {
   let fiscalReceiptId: string | null = null;
   let fiscalQrPayload: string | null = null;
   const liveFiscal = process.env.ERA_FISCAL_LIVE === 'true';
-  if (['CASH', 'CARD'].includes(input.paymentMethod)) {
+  if (expected > 0 && ['CASH', 'CARD'].includes(input.paymentMethod)) {
     const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
     const { requestOrganizationId } = await import('@/lib/request-organization');
     const orgId = requestOrganizationId();

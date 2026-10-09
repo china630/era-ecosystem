@@ -6,12 +6,12 @@
 
 `composeNaftaPackageNightlySell` / `composeNaftaPackageNightlySellBreakdown`:
 
-- **Main** = guest with highest occupancy-1 sell of their SKU.
-- **Companion Standart** = +`STANDART_COMPANION` pricing component (default **96 AZN**), not half of 239.
-- **Other companion** = half of that SKU’s occupancy-2 (Dermo 321→160, Detoks 319→160).
-- **Same SKU all pax** → occupancy 1/2/3 sell versions (Standart caps at occ-3).
-- **3 mixed adults** = main + each other as companion (not occupancy-3 of the main SKU).
-- Unresolved / EW Rate Code only → do not invent sell.
+- **Same package** = the grid cell for the charged room type, meal, adult count, and that night's date.
+- **Standart in the mix** = Standart cell of this room type for the Standart headcount; other packages at their standard-room cell (Premium uses its own flat cell).
+- **No Standart, one package has two or more guests** = that package's cell of this room type; the others at base.
+- **Dermo and Detoks, one each** = Dermo at this room type; Detoks at its standard-room single.
+- The +96 companion and half-of-double are not the sell rule.
+- Unresolved / EW Rate Code only, or a missing cell → do not invent sell.
 - Night audit posts when `medicalPackageCode` (reservation or any pax) resolved — not only `ratePlan.medicalFlag`.
 - `syncComposedDailyRates` writes `ReservationDailyRate`; FO folio shows breakdown (`packageCompose`).
 

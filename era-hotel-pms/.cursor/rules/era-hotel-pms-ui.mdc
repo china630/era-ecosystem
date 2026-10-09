@@ -47,12 +47,12 @@ Follow **`docs/UI_PLAYBOOK_SATELLITES.md`** and existing hotel patterns (`GuestC
   - Pricing: daily Rate Grid + quote preview + optional packageCompose summary.
   - Folio: All/Guest/Agency/Company; when party >1, **named guest sections** (not Opera windows).
   - Notes: NOTE_TYPE feed + FO/HK/Billing filters + add-type picker; open-card alert for CIN/EXTRA_REQ/allergens.
-- StaysBar: **compact GRP strip** for 1 room; full family navigator only when sibling stays > 1.
-- Create = edit same chrome; door assign / share block gated CONFIRMED+; **times always visible**.
+- StaysBar: hidden for 1 room. Chips only when sibling stays > 1, and only to switch. No add-stay and no swap on the strip.
+- Create = edit same chrome. **Room no.** is on the create card; Saxla writes it. Share block stays gated CONFIRMED+. **Times always visible**. Early/late fee line shows only when a fee is due.
 - Tabs: kit `TAB_STRIP_CLASS` / `TAB_ITEM_*`; folio subtabs: `CHIP_*`.
 - Stay dates: kit `DatePicker` + `common.datePlaceholder` (never native `type="date"` alone).
 - Folio grid: `HotelDataGrid`. No raw hex buttons — `SUCCESS_BUTTON_CLASS` / `DANGER_BUTTON_CLASS` / `SECONDARY_BUTTON_CLASS` / `GHOST_BUTTON_CLASS` for icon headers.
-- Front-cash **open folio** (balances, journal, cash transactions) opens `ReservationCardModal` on the Folio tab (`initialTab="folio"`), not the `/folio/[id]` page.
+- Front-cash **open folio** (balances, journal, cash transactions) opens `ReservationCardModal` on the Folio tab (`initialTab="folio"`). `/folio/[id]` only redirects there. Payment, charge, invoice, checkout, void, refund, and close-folio are modals on that tab. The header “Accept payment” button opens the same payment modal without a stay already selected.
 
 ## Guest card (same FO chrome)
 
@@ -74,5 +74,5 @@ Priority: **Room type availability** `/availability` → reservation list → ra
 
 ## Room plan
 
-- Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits). **Bar click / unassigned chip → reservation card** (not +1/+2 intercept modal). Drag-resize still extends checkout.
+- Room plan (`/room-plan`): `EraListFilterBar` Tarix (`DatePicker` → API `from`) + Otaq/Qonaq client filters; grouping/period stay as `FilterMenuButton`; fullscreen overlay like clinic resource matrix (Esc exits). **Bar click / unassigned chip → reservation card** (not +1/+2 intercept modal). Drag-resize still extends checkout. Dragging a bar onto another door asks the same short move reason as the rack before the door changes.
 - Room plan bars (`room-plan/shapes.ts`): half-day (noon) model — box spans mid check-in column → mid check-out column. Right edge = blunt `arrow` (fixed `CHEVRON_PX`, not % of bar width) whenever checkout is in-window; `flat` only when clipped past the window. Left edge = matching EW butt notch for any in-window multi-night start; clipped start stays flat. Geometry is precomputed in `computePlacedBars`; `barSvgPath(flags, widthPx)` builds pixel user-space. Exclusive doors = single lane; share doors = N lanes via `share-lanes.ts` (never paint overlapping stays on the same `top`). Fill = day-state (`plan-bar-theme.ts`); **occupancy** = left badge (♂ blue / ♀ pink for **open** share pool; exclusive and **closed pair** have no badge). Stroke follows day-state. No HK squares on the plan — OOO/OOS/repair rooms omitted. Party companion names on the bar (primary omitted from `partyNames`); open-pool roommate names concatenated; closed pair = own name only. Guest folio debt badge on the arrow nose. Date header = large day + weekday (EW).

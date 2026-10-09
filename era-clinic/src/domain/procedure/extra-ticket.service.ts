@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { enterSatelliteTenant } from "@era/satellite-kit";
 import { ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
-import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
+import {
+  postProcedureFolioCharge,
+  resolveProcedureCharge,
+} from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelRoomCharge } from "@/lib/billing-router";
 import {
   getClinicHotelOrganizationId,
   resolveClinicCutoverOrgId,
@@ -96,12 +98,14 @@ export async function issueExtraTickets(
       );
     }
     if (order.reservationId && charge.amountNet > 0) {
-      await postHotelRoomCharge({
+      await postProcedureFolioCharge({
         hotelOrganizationId: hotelOrganizationId ?? undefined,
         reservationId: order.reservationId,
         amount: charge.amountNet,
         description,
         externalTicketId: ticketId,
+        procedureCode: order.procedureCode,
+        qty: order.quantity,
       });
     }
 

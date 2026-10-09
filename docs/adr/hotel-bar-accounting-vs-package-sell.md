@@ -48,18 +48,20 @@ RO (room only, shared per room)
 - Soft or hard guard: warn/block when `sellPrice < costFloor` (policy TBD).
 - Clinic program quotas still keyed by package code (existing SAN-PKG bridge).
 
-### 3b. Composed nightly sell from per-pax medical SKUs (Wave D / Nafta)
+### 3b. Package grid and mixed occupancy (2026-10)
 
-When guests on one reservation have different `medicalPackageCode` values, **one nightly sell** is composed (not two BAR rates):
+Package sell is the grid cell, not BAR and not `RatePlan.pricePerNight`.
 
-| Rule | Amount |
+| Case | Amount |
 |------|--------|
-| Main | Highest occupancy-1 sell of that guest’s SKU |
-| Companion Standart | +96 AZN (`STANDART_COMPANION` versioned component) |
-| Other companion | Half of that SKU’s occupancy-2 (reception qapik → 160 for Dermo/Detoks) |
-| Identical SKUs | Occupancy N sell from `RatePlanSellVersion` |
+| Every guest on the same package | That package’s cell for the charged room type, meal, adult count, and night date |
+| Standart is in the mix | Standart cell of **this** room type for the Standart headcount; each other package at its standard-room cell (Premium uses its own flat 1/2 cell) |
+| No Standart, one package has two or more guests | That package’s cell of this room type; the others at their standard-room (or flat) cell |
+| Dermo and Detoks, one each | Dermo cell of this room type; Detoks stays on its standard-room single |
 
-SoT for the stay night = composed amount in `ReservationDailyRate` (and night-audit package split scaled to it). FO folio surfaces `packageCompose` breakdown. See [nafta-compose-sell-and-doctor-bonus.md](./nafta-compose-sell-and-doctor-bonus.md).
+A missing cell leaves the night without a price. Night audit posts `ReservationDailyRate` when it exists, otherwise the grid. It does not call BAR `quoteStay` for a package night. A missing cell skips that stay (`NightlyPriceMissingError`) and the audit run continues. Existing stored nights are not rewritten when the grid changes.
+
+The earlier +96 Standart companion and half-of-double companion are not the sell rule.
 
 ### 4. Cash integrity
 

@@ -33,19 +33,38 @@ export async function POST(request: Request) {
       return jsonError("Unauthorized", 401);
     }
     const body = bodySchema.parse(await request.json());
+    const organizationId = body.organizationId?.trim() ?? "";
+    if (!organizationId) return jsonError("organizationId required", 400);
+    enterRequestTenant(organizationId);
+
+    if (body.sourceRef.startsWith("clinic-rx-")) {
+      return jsonOk({ ok: true, prescription: true });
+    }
+
     const visit = await prisma.visit.findUnique({
       where: { id: body.sourceRef },
       include: { patientRef: true, serviceLines: true, receipts: true },
     });
     if (!visit) return jsonError("Visit not found", 404);
 
-    if (body.organizationId && body.organizationId !== visit.organizationId) {
-      return jsonError("organizationId mismatch", 409);
-    }
-    enterRequestTenant(body.organizationId ?? visit.organizationId);
-
     if (visit.settledAt) {
       return jsonOk({ ok: true, alreadySettled: true });
+    }
+
+    const storedPendingIds = visit.settlementPendingId?.trim() ?? "";
+    if (storedPendingIds.startsWith("[")) {
+      const parsed = JSON.parse(storedPendingIds) as unknown;
+      const ids = Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === "string")
+        : [];
+      const left = ids.filter((id) => id !== body.pendingId);
+      if (left.length > 0) {
+        await prisma.visit.update({
+          where: { id: visit.id },
+          data: { settlementPendingId: JSON.stringify(left) },
+        });
+        return jsonOk({ ok: true, waiting: left.length });
+      }
     }
 
     await prisma.visit.update({

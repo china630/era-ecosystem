@@ -21,6 +21,8 @@ import {
   isSatelliteRetailSaleCompleted,
   isSatelliteRetailShiftClosed,
   isSatelliteWholesaleOrderConfirmed,
+  isSatelliteFbSaleCompleted,
+  isSatelliteFbShiftClosed,
   isSatelliteFbStockConsumptionCompleted,
   isSatelliteStaffClockBatch,
   isSatelliteWorkforceAbsenceApproved,
@@ -58,7 +60,15 @@ import {
   isSatelliteBankGlDailySummary,
   satelliteBankGlDailySummarySchema,
 } from "@era/contracts";
-import { LedgerType, Prisma, type PostingRole } from "@erafinance/database";
+import {
+  HotelDayDocumentStatus,
+  LedgerType,
+  Prisma,
+  StockMovementReason,
+  StockMovementType,
+  type PostingRole,
+} from "@erafinance/database";
+import { departmentFinanceEventsSilenced } from "@era/satellite-kit";
 import {
   AccountingService,
   type PostTransactionLine,
@@ -74,6 +84,17 @@ import { WorkforceOrgSyncService } from "./workforce-org-sync.service";
 import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.service";
 import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.service";
 import { blindIndex, normalizeVoen } from "../security/pii-crypto.util";
+
+function dayDocumentTender(method: string): string {
+  const key = method.trim().toUpperCase();
+  if (key === "CARD") return "card";
+  if (key === "DEPOSIT") return "deposit";
+  if (key === "COMPANY_ACCOUNT" || key === "CITY_LEDGER" || key === "CITY") return "city";
+  if (key === "BANK_TRANSFER" || key === "BANK") return "bank";
+  if (key === "LOYALTY_POINTS" || key === "LOYALTY") return "loyalty";
+  if (key === "CASH") return "cash";
+  throw new Error(`Unknown day-document tender ${method}`);
+}
 
 export type SatelliteDispatchResult = {
   transactionId?: string;
@@ -246,7 +267,16 @@ export class SatelliteEventDispatchService {
     if (isSatelliteHotelStayProductChanged(data)) {
       return { meta: { skipped: true, reason: "clinic_lifecycle" } };
     }
+    if (isSatelliteFbSaleCompleted(data) || isSatelliteFbShiftClosed(data)) {
+      if (await this.departmentRevenueSilenced(organizationId)) {
+        return { meta: { skipped: true, reason: "day document" } };
+      }
+    }
     throw new Error("Unhandled satellite event type");
+  }
+
+  private async departmentRevenueSilenced(organizationId: string): Promise<boolean> {
+    return departmentFinanceEventsSilenced(organizationId);
   }
 
   private async satelliteGlAccount(
@@ -477,6 +507,7 @@ export class SatelliteEventDispatchService {
         invoiceNumber: event.payload.invoiceNumber,
         total,
         paymentTermsDays: terms,
+        revenuePosted: false,
       },
     };
   }
@@ -516,6 +547,7 @@ export class SatelliteEventDispatchService {
         periodCharges: event.payload.periodCharges,
         periodPayments: event.payload.periodPayments,
         counterpartyId,
+        revenuePosted: false,
         reconciliationNote: `Hotel agency ${event.payload.agencyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
       },
     };
@@ -525,102 +557,480 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteHotelReservationCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
-    const cpId = await this.resolveCounterpartyId(organizationId);
-    const transactionId = await this.prisma.$transaction(async (tx) =>
-      this.postBalancedJournal(tx, organizationId, {
-        amount: event.payload.amountNet,
-        reference: `hotel:${event.payload.reservationId}`,
-        description: `Hotel reservation completed (${event.correlationId})`,
-        counterpartyId: cpId,
-      }),
+    this.logger.log(
+      `Hotel reservation ${event.payload.reservationId} skipped revenue posting (${organizationId})`,
     );
     return {
-      transactionId,
-      meta: { reservationId: event.payload.reservationId },
+      meta: {
+        reservationId: event.payload.reservationId,
+        skipped: true,
+        reason: "revenue is the day document",
+      },
     };
+  }
+
+  async listRejectedHotelDayDocuments(organizationId: string) {
+    return this.prisma.hotelDayDocument.findMany({
+      where: { organizationId, status: HotelDayDocumentStatus.REJECTED },
+      orderBy: { businessDate: "desc" },
+      select: {
+        id: true,
+        businessDate: true,
+        reference: true,
+        errorMessage: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  postHotelNightAuditEvent(
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    return this.handleHotelNightAudit(organizationId, event);
+  }
+
+  async acceptHotelDayDocument(organizationId: string, id: string): Promise<SatelliteDispatchResult> {
+    const row = await this.prisma.hotelDayDocument.findFirst({
+      where: { id, organizationId, status: HotelDayDocumentStatus.REJECTED },
+    });
+    if (!row) throw new Error("Rejected day document was not found");
+    const event = satelliteHotelNightAuditClosedSchema.parse(row.payloadJson);
+    return this.handleHotelNightAudit(organizationId, event);
   }
 
   private async handleHotelNightAudit(
     organizationId: string,
     event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
-    const revenueLines = event.payload.revenueLines.filter((l) => l.amount > 0);
-    const totalRevenue = revenueLines.reduce((sum, line) => sum + line.amount, 0);
-    const totalPayments = event.payload.paymentLines.reduce((sum, line) => sum + line.amount, 0);
-    if (totalRevenue <= 0) {
+    const reference = `hotel-na:${event.payload.businessDate}`;
+    const claim = await this.claimHotelDayDocument(organizationId, reference, event);
+    if (claim === "posted") {
+      const existing = await this.prisma.transaction.findFirst({
+        where: { organizationId, reference },
+        select: { id: true },
+      });
+      return {
+        transactionId: existing?.id,
+        meta: { businessDate: event.payload.businessDate, idempotent: true },
+      };
+    }
+    if (claim === "wait") {
+      const settled = await this.waitHotelDayDocument(organizationId, reference);
+      if (settled) return settled;
       return {
         meta: {
           businessDate: event.payload.businessDate,
-          skipped: true,
-          reason: "zero revenue",
+          rejected: true,
+          error: "Finance is still posting the day document",
         },
       };
     }
 
-    const [revenueDefault, cashDefault, receivableDefault] = await Promise.all([
-      this.satelliteGlAccount(organizationId, "SATELLITE_GL_REVENUE", "SALES_REVENUE"),
-      this.satelliteGlAccount(organizationId, "SATELLITE_GL_CASH", "MAIN_BANK"),
-      this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE"),
-    ]);
+    try {
+      const posted = await this.prisma.$transaction(async (tx) => {
+        const already = await tx.transaction.findFirst({
+          where: { organizationId, reference },
+          select: { id: true },
+        });
+        if (already) return { transactionId: already.id, stockMoves: 0, saleTotal: 0 };
+        const built = await this.buildHotelDayDocument(tx, organizationId, event);
+        if (built.lines.length === 0 && built.stockMoves === 0) return null;
+        const debit = built.lines.reduce((sum, line) => sum + Number(line.debit), 0);
+        const credit = built.lines.reduce((sum, line) => sum + Number(line.credit), 0);
+        if (built.lines.length > 0 && Math.abs(debit - credit) > 0.01) {
+          throw new Error("Night audit journal is not balanced");
+        }
+        if (built.lines.length === 0) return { stockMoves: built.stockMoves };
+        const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+          organizationId,
+          date: new Date(`${event.payload.businessDate}T12:00:00.000Z`),
+          reference,
+          description: `Hotel night audit ${event.payload.businessDate} (${event.correlationId})`,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: await this.defaultOpsBookId(organizationId),
+          lines: built.lines,
+        });
+        return { transactionId, stockMoves: built.stockMoves, saleTotal: built.saleTotal };
+      });
+      await this.prisma.hotelDayDocument.update({
+        where: { organizationId_reference: { organizationId, reference } },
+        data: {
+          status: HotelDayDocumentStatus.POSTED,
+          errorMessage: null,
+          transactionId: posted && "transactionId" in posted ? posted.transactionId : null,
+        },
+      });
+      if (!posted) {
+        return {
+          meta: {
+            businessDate: event.payload.businessDate,
+            nightAuditId: event.payload.nightAuditId,
+            skipped: true,
+            reason: "empty day",
+          },
+        };
+      }
+      return {
+        transactionId: "transactionId" in posted ? posted.transactionId : undefined,
+        meta: {
+          businessDate: event.payload.businessDate,
+          nightAuditId: event.payload.nightAuditId,
+          stockMoves: posted.stockMoves,
+          saleTotal: "saleTotal" in posted ? posted.saleTotal : 0,
+        },
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Day document rejected";
+      await this.prisma.hotelDayDocument.update({
+        where: { organizationId_reference: { organizationId, reference } },
+        data: { status: HotelDayDocumentStatus.REJECTED, errorMessage: message },
+      });
+      return {
+        meta: {
+          businessDate: event.payload.businessDate,
+          nightAuditId: event.payload.nightAuditId,
+          rejected: true,
+          error: message,
+        },
+      };
+    }
+  }
+
+  private async claimHotelDayDocument(
+    organizationId: string,
+    reference: string,
+    event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
+  ): Promise<"run" | "posted" | "wait"> {
+    const existing = await this.prisma.transaction.findFirst({
+      where: { organizationId, reference },
+      select: { id: true },
+    });
+    if (existing) {
+      await this.prisma.hotelDayDocument.upsert({
+        where: { organizationId_reference: { organizationId, reference } },
+        create: {
+          organizationId,
+          businessDate: event.payload.businessDate,
+          reference,
+          status: HotelDayDocumentStatus.POSTED,
+          payloadJson: event as Prisma.InputJsonValue,
+          transactionId: existing.id,
+        },
+        update: { status: HotelDayDocumentStatus.POSTED, errorMessage: null, transactionId: existing.id },
+      });
+      return "posted";
+    }
+    const row = await this.prisma.hotelDayDocument.findUnique({
+      where: { organizationId_reference: { organizationId, reference } },
+    });
+    if (row?.status === HotelDayDocumentStatus.POSTED) return "posted";
+    if (row?.status === HotelDayDocumentStatus.POSTING) return "wait";
+    if (!row) {
+      try {
+        await this.prisma.hotelDayDocument.create({
+          data: {
+            organizationId,
+            businessDate: event.payload.businessDate,
+            reference,
+            status: HotelDayDocumentStatus.POSTING,
+            payloadJson: event as Prisma.InputJsonValue,
+          },
+        });
+        return "run";
+      } catch {
+        return "wait";
+      }
+    }
+    const taken = await this.prisma.hotelDayDocument.updateMany({
+      where: { id: row.id, status: HotelDayDocumentStatus.REJECTED },
+      data: {
+        status: HotelDayDocumentStatus.POSTING,
+        errorMessage: null,
+        payloadJson: event as Prisma.InputJsonValue,
+      },
+    });
+    return taken.count === 1 ? "run" : "wait";
+  }
+
+  private async waitHotelDayDocument(
+    organizationId: string,
+    reference: string,
+  ): Promise<SatelliteDispatchResult | null> {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const row = await this.prisma.hotelDayDocument.findUnique({
+        where: { organizationId_reference: { organizationId, reference } },
+      });
+      if (!row || row.status === HotelDayDocumentStatus.POSTING) continue;
+      if (row.status === HotelDayDocumentStatus.POSTED) {
+        return {
+          transactionId: row.transactionId ?? undefined,
+          meta: { businessDate: row.businessDate, idempotent: true },
+        };
+      }
+      return {
+        meta: {
+          businessDate: row.businessDate,
+          rejected: true,
+          error: row.errorMessage ?? "Day document rejected",
+        },
+      };
+    }
+    return null;
+  }
+
+  private async buildHotelDayDocument(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
+  ): Promise<{ lines: PostTransactionLine[]; stockMoves: number; saleTotal: number }> {
+    const money = (value: number) => Math.round(value * 100) / 100;
+    const saleLines = event.payload.saleLines ?? [];
+    const revenueLines = event.payload.revenueLines;
+    for (const line of saleLines) {
+      if (line.qty === 0 && line.amount === 0) continue;
+      const product = await tx.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          sku: { equals: line.sku, mode: "insensitive" },
+        },
+        select: { id: true },
+      });
+      if (!product) throw new Error(`SKU not in the hotel catalog: ${line.sku}`);
+    }
+    const saleTotal = money(
+      saleLines.reduce((sum, line) => sum + line.amount, 0) +
+        revenueLines.reduce((sum, line) => sum + line.amount, 0),
+    );
+
+    const [cash, card, deposit, city, bank, loyalty, receivable, advance, cogs] =
+      await Promise.all([
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CASH_AZN", "CASH_AZN", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CARD", "BANK_SETTLEMENT", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_DEPOSIT", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CITY_LEDGER", "TRADE_RECEIVABLE_SERVICES", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_BANK", "MAIN_BANK", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_LOYALTY", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_ADVANCE", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COGS", "COGS", tx),
+      ]);
+
+    const creditByAccount = new Map<string, number>();
+    const addRevenue = (accountCode: string, amount: number, label: string) => {
+      if (amount === 0) return;
+      const account = accountCode.trim();
+      if (!account) throw new Error(`Revenue account missing for ${label}`);
+      creditByAccount.set(account, money((creditByAccount.get(account) ?? 0) + amount));
+    };
+    for (const line of saleLines) {
+      if (line.amount === 0) continue;
+      const product = await tx.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          sku: { equals: line.sku, mode: "insensitive" },
+        },
+        select: { revenueAccountCode: true },
+      });
+      addRevenue(product?.revenueAccountCode ?? "", line.amount, `sku ${line.sku}`);
+    }
+    for (const line of revenueLines) {
+      addRevenue(line.glAccountCode, line.amount, `revenue code ${line.revenueCode}`);
+    }
+
+    const tenderAccount: Record<string, string> = {
+      cash,
+      card,
+      deposit,
+      city,
+      bank,
+      loyalty,
+    };
+    const tenderByBucket = new Map<string, number>();
+    for (const line of event.payload.paymentLines) {
+      const bucket = dayDocumentTender(line.method);
+      tenderByBucket.set(bucket, money((tenderByBucket.get(bucket) ?? 0) + line.amount));
+    }
+    const tenderTotal = money([...tenderByBucket.values()].reduce((sum, amount) => sum + amount, 0));
+    const gap = money(saleTotal - tenderTotal);
+    const ar = gap > 0 ? gap : 0;
+    const advanceAmount = gap < 0 ? -gap : 0;
 
     const lines: PostTransactionLine[] = [];
-    for (const line of revenueLines) {
-      lines.push({
-        accountCode: line.glAccountCode || revenueDefault,
-        debit: 0,
-        credit: line.amount,
-      });
-    }
-    const arAmount = Math.max(0, totalRevenue - totalPayments);
-    if (totalPayments > 0) {
-      lines.push({
-        accountCode: cashDefault,
-        debit: totalPayments,
-        credit: 0,
-      });
-    }
-    if (arAmount > 0) {
-      lines.push({
-        accountCode: receivableDefault,
-        debit: arAmount,
-        credit: 0,
-      });
-    }
-
-    const transactionId = await this.prisma.$transaction(async (tx) => {
-      const debit = lines.reduce((s, l) => s + Number(l.debit), 0);
-      const credit = lines.reduce((s, l) => s + Number(l.credit), 0);
-      if (Math.abs(debit - credit) > 0.01) {
-        throw new Error("Night audit journal is not balanced");
-      }
-      const { transactionId: txId } = await this.accounting.postJournalInTransaction(tx, {
-        organizationId,
-        date: new Date(`${event.payload.businessDate}T12:00:00.000Z`),
-        reference: `hotel-na:${event.payload.businessDate}`,
-        description: `Hotel night audit ${event.payload.businessDate} (${event.correlationId})`,
-        ledgerType: LedgerType.NAS,
-        accountingBookId: await this.defaultOpsBookId(organizationId),
-        lines,
-      });
-      return txId;
-    });
-
-    return {
-      transactionId,
-      meta: {
-        businessDate: event.payload.businessDate,
-        nightAuditId: event.payload.nightAuditId,
-        revenueLineCount: revenueLines.length,
-        totalRevenue,
-        totalPayments,
-      },
+    const push = (accountCode: string, debit: number, credit: number) => {
+      const debitAmount = money(debit);
+      const creditAmount = money(credit);
+      if (debitAmount === 0 && creditAmount === 0) return;
+      lines.push({ accountCode, debit: debitAmount, credit: creditAmount });
     };
+    for (const [accountCode, signedCredit] of creditByAccount) {
+      if (signedCredit > 0) push(accountCode, 0, signedCredit);
+      else if (signedCredit < 0) push(accountCode, -signedCredit, 0);
+    }
+    for (const [bucket, signed] of tenderByBucket) {
+      const accountCode = tenderAccount[bucket];
+      if (!accountCode) throw new Error(`Unknown day-document tender ${bucket}`);
+      if (signed > 0) push(accountCode, signed, 0);
+      else if (signed < 0) push(accountCode, 0, -signed);
+    }
+    if (ar > 0) push(receivable, ar, 0);
+    if (advanceAmount > 0) push(advance, 0, advanceAmount);
+
+    const stockMoves = await this.explodeDayDocumentRecipes(tx, organizationId, {
+      businessDate: event.payload.businessDate,
+      saleLines,
+      cogsAccount: cogs,
+      lines,
+    });
+    return { lines, stockMoves, saleTotal };
+  }
+
+  private async explodeDayDocumentRecipes(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    input: {
+      businessDate: string;
+      saleLines: Array<{ sku: string; qty: number; amount: number }>;
+      cogsAccount: string;
+      lines: PostTransactionLine[];
+    },
+  ): Promise<number> {
+    const active = input.saleLines.filter((line) => line.qty !== 0);
+    if (active.length === 0) return 0;
+    const notePrefix = `hotel-na:${input.businessDate}`;
+    const already = await tx.stockMovement.findFirst({
+      where: { organizationId, note: { startsWith: notePrefix } },
+      select: { id: true },
+    });
+    if (already) return 0;
+
+    const warehouseId = await this.inventory.resolveDefaultWarehouseId(organizationId);
+    const planned: Array<{ productId: string; signed: Prisma.Decimal; sku: string }> = [];
+    for (const line of active) {
+      const product = await tx.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          sku: { equals: line.sku, mode: "insensitive" },
+        },
+        select: { id: true, isService: true },
+      });
+      if (!product) continue;
+      const recipe = await tx.productRecipe.findFirst({
+        where: { organizationId, finishedProductId: product.id, deletedAt: null },
+        include: {
+          lines: {
+            where: { deletedAt: null },
+            include: { component: { select: { id: true, isService: true } } },
+          },
+        },
+      });
+      if (recipe) {
+        for (const componentLine of recipe.lines) {
+          if (componentLine.component.isService) continue;
+          const perUnit =
+            Number(componentLine.quantityPerUnit) * (1 + Number(componentLine.wasteFactor));
+          const componentQty = line.qty * perUnit;
+          if (Math.abs(componentQty) < 0.0000001) continue;
+          planned.push({
+            productId: componentLine.component.id,
+            signed: new Prisma.Decimal(componentQty),
+            sku: line.sku,
+          });
+        }
+        continue;
+      }
+      if (!product.isService) {
+        planned.push({
+          productId: product.id,
+          signed: new Prisma.Decimal(line.qty),
+          sku: line.sku,
+        });
+      }
+    }
+    if (planned.length === 0) return 0;
+    if (!warehouseId) {
+      throw new Error("Hotel warehouse is required to write off the day document");
+    }
+    const warehouse = await tx.warehouse.findFirst({
+      where: { id: warehouseId, organizationId },
+      select: { inventoryAccountCode: true },
+    });
+    const inventoryAccount =
+      warehouse?.inventoryAccountCode?.trim() ||
+      (await this.satelliteGlAccount(organizationId, "SATELLITE_GL_INVENTORY", "INVENTORY_GOODS", tx));
+
+    let moves = 0;
+    for (const move of planned) {
+      const signed = move.signed;
+      const existing = await tx.stockItem.findUnique({
+        where: {
+          organizationId_warehouseId_productId: {
+            organizationId,
+            warehouseId,
+            productId: move.productId,
+          },
+        },
+      });
+      const onHand = existing?.quantity ?? new Prisma.Decimal(0);
+      const averageCost = existing?.averageCost ?? new Prisma.Decimal(0);
+      const nextQty = onHand.minus(signed);
+      await tx.stockItem.upsert({
+        where: {
+          organizationId_warehouseId_productId: {
+            organizationId,
+            warehouseId,
+            productId: move.productId,
+          },
+        },
+        create: {
+          organizationId,
+          warehouseId,
+          productId: move.productId,
+          quantity: nextQty,
+          averageCost,
+        },
+        update: { quantity: nextQty },
+      });
+      await tx.stockMovement.create({
+        data: {
+          organizationId,
+          warehouseId,
+          productId: move.productId,
+          type: signed.gt(0) ? StockMovementType.OUT : StockMovementType.IN,
+          reason: StockMovementReason.SALE,
+          quantity: signed.abs(),
+          price: averageCost,
+          note: `${notePrefix}:${move.sku}`,
+          documentDate: new Date(`${input.businessDate}T12:00:00.000Z`),
+        },
+      });
+      const cost = signed.abs().mul(averageCost);
+      if (cost.gt(0)) {
+        const amount = cost.toNumber();
+        if (signed.gt(0)) {
+          input.lines.push({ accountCode: input.cogsAccount, debit: amount, credit: 0 });
+          input.lines.push({ accountCode: inventoryAccount, debit: 0, credit: amount });
+        } else {
+          input.lines.push({ accountCode: inventoryAccount, debit: amount, credit: 0 });
+          input.lines.push({ accountCode: input.cogsAccount, debit: 0, credit: amount });
+        }
+      }
+      moves += 1;
+    }
+    return moves;
   }
 
   private async handleRetailSale(
     organizationId: string,
     event: ReturnType<typeof satelliteRetailSaleCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return { meta: { skipped: true, reason: "day document", receiptId: event.payload.receiptId } };
+    }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const transactionId = await this.prisma.$transaction(async (tx) =>
       this.postBalancedJournal(tx, organizationId, {
@@ -769,6 +1179,9 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicVisitCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return { meta: { skipped: true, reason: "day document", visitId: event.payload.visitId } };
+    }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const amount = event.payload.amountNet;
     const transactionId = await this.prisma.$transaction(async (tx) =>
@@ -796,6 +1209,9 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicLabOrderCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return { meta: { skipped: true, reason: "day document", labOrderId: event.payload.labOrderId } };
+    }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const amount = event.payload.amountNet;
     const transactionId = await this.prisma.$transaction(async (tx) =>
@@ -896,6 +1312,15 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicProcedureCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return {
+        meta: {
+          skipped: true,
+          reason: "day document",
+          procedureCode: event.payload.procedureCode,
+        },
+      };
+    }
     const ttk = await this.writeOffClinicProcedureConsumables(
       organizationId,
       event,
@@ -1054,6 +1479,15 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicWardDayChargeSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return {
+        meta: {
+          skipped: true,
+          reason: "day document",
+          admissionId: event.payload.admissionId,
+        },
+      };
+    }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const amount = event.payload.amountNet;
     const transactionId = await this.prisma.$transaction(async (tx) =>
@@ -1109,6 +1543,9 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteFbStockConsumptionCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    if (await this.departmentRevenueSilenced(organizationId)) {
+      return { meta: { skipped: true, reason: "day document", ticketId: event.payload.ticketId } };
+    }
     const cpId = await this.resolveCounterpartyId(organizationId);
     const cogsAmount = event.payload.lines.reduce(
       (sum, line) => sum + line.qty,

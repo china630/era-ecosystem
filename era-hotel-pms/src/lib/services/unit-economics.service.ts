@@ -16,7 +16,6 @@ export async function getUnitEconomicsSnapshot() {
       id: true,
       code: true,
       name: true,
-      pricePerNight: true,
     },
   });
 
@@ -24,14 +23,14 @@ export async function getUnitEconomicsSnapshot() {
   for (const pkg of packages) {
     const v1 = await currentSellVersion(pkg.id, 1);
     const v2 = await currentSellVersion(pkg.id, 2);
-    const sell1 = v1 ? decimalToNumber(v1.sellPrice) : decimalToNumber(pkg.pricePerNight);
+    const sell1 = v1 ? decimalToNumber(v1.sellPrice) : null;
     const floor1 = v1?.costFloor != null ? decimalToNumber(v1.costFloor) : null;
     packageRows.push({
       code: pkg.code,
       name: pkg.name,
       sell1,
       floor1,
-      belowFloor: floor1 != null && sell1 < floor1,
+      belowFloor: sell1 != null && floor1 != null && sell1 < floor1,
       sell2: v2 ? decimalToNumber(v2.sellPrice) : null,
       floor2: v2?.costFloor != null ? decimalToNumber(v2.costFloor) : null,
     });

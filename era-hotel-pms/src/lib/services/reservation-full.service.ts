@@ -172,6 +172,7 @@ export async function patchReservationFull(
     salesContractId?: string | null;
     sourceId?: string | null;
     roomId?: string | null;
+    moveReasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL';
     guestId?: string;
     checkInDate?: Date;
     checkOutDate?: Date;
@@ -260,6 +261,7 @@ export async function patchReservationFull(
     creditLimitAzn,
     dailyRates,
     shareEligible,
+    moveReasonCode,
     ...data
   } = input;
 
@@ -470,14 +472,23 @@ export async function patchReservationFull(
     data.roomId !== existing.roomId
   ) {
     const { recordRoomMove } = await import('@/lib/services/room-occupancy-log.service');
+    const reasonCode = moveReasonCode ?? 'CARD_ASSIGN';
     await recordRoomMove({
       reservationId: id,
       fromRoomId: existing.roomId,
       toRoomId: data.roomId,
-      notes: 'CARD_ASSIGN',
-      reasonCode: 'CARD_ASSIGN',
+      notes: reasonCode,
+      reasonCode,
       kind: 'OCCURRED',
       status: 'APPLIED',
+    });
+    const { settleVacatedDoorAfterMove } = await import('@/lib/services/room-move-door.service');
+    await settleVacatedDoorAfterMove({
+      reservationId: id,
+      fromRoomId: existing.roomId,
+      toRoomId: data.roomId,
+      status: existing.status,
+      reasonCode,
     });
   }
 
@@ -685,46 +696,10 @@ export async function patchReservationFull(
   }
 
   if (ratePlanChanged || paxSkuChanged) {
-    const { previewComposedPackageSell } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
+    const { recalcReservationDailyRates } = await import(
+      '@/lib/services/reservation-pricing.service'
     );
-    const breakdown = await previewComposedPackageSell(id);
-    const plan = data.ratePlanId
-      ? await prisma.ratePlan.findUnique({
-          where: { id: data.ratePlanId },
-          select: { pricePerNight: true },
-        })
-      : null;
-    const nightly =
-      breakdown?.total && breakdown.total > 0
-        ? breakdown.total
-        : plan?.pricePerNight != null
-          ? decimalToNumber(plan.pricePerNight)
-          : null;
-    if (nightly != null && nightly > 0) {
-      const postedCharges = await prisma.folioCharge.findMany({
-        where: {
-          folio: { reservationId: id },
-          revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
-        },
-        select: { businessDate: true },
-      });
-      const postedNights = new Set(postedCharges.map((charge) => hotelDateKey(charge.businessDate)));
-      const openRates = await prisma.reservationDailyRate.findMany({
-        where: { reservationId: id, fixPrice: false },
-      });
-      for (const row of openRates) {
-        if (postedNights.has(hotelDateKey(row.stayDate))) continue;
-        await prisma.reservationDailyRate.update({
-          where: { id: row.id },
-          data: {
-            amount: toDecimal(nightly),
-            manualFlag: false,
-            discountPct: null,
-          },
-        });
-      }
-    }
+    await recalcReservationDailyRates(id);
   }
 
   const summed = await prisma.reservationDailyRate.aggregate({

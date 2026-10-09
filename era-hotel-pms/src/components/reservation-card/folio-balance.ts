@@ -1,8 +1,8 @@
 export function computeGuestFolioBalance(
   folios: Array<{
     type: string;
-    charges: Array<{ amount: number }>;
-    payments?: Array<{ amount: number }>;
+    charges: Array<{ amount: number | string }>;
+    payments?: Array<{ amount: number | string }>;
   }>,
 ): number {
   const guest = folios.find((f) => f.type === 'GUEST') ?? folios[0];

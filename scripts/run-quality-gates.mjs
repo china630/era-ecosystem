@@ -23,6 +23,7 @@ run("acceptance consistency", "node", [
   ...(strict ? ["--strict"] : []),
 ]);
 run("satellite raw SQL ban", "node", ["scripts/check-satellite-raw-sql.mjs"]);
+run("bridge tenant bind", "node", ["scripts/check-bridge-tenant-bind.mjs"]);
 run("satellite session standard", "node", ["scripts/check-satellite-session-standard.mjs"]);
 run("integration audit strict", "npm", ["run", "audit:integration:strict"]);
 run("design tokens", "npm", ["run", "lint:design-tokens"]);

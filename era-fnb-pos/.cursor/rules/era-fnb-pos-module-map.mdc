@@ -9,7 +9,7 @@
 | `/orders` | tickets, pay, offline replay | Cashier / manager |
 | `/kds` | kds fire | `fnb_kitchen_kds` |
 | `/admin/access` | `/api/admin/roles`, `…/permissions`, refresh-permissions, `GET /api/internal/v1/workforce/roles` | `admin:access_manage` + `screen:admin.access` — Variant A matrix; role code+name pushed to CP catalog |
-| `/admin/menu` | menu CRUD, `/api/menu/[id]/prices`, `/api/menu/export`, `/api/menu/suggest` | `api:menu.manage` / `screen:admin.menu` |
+| `/admin/menu` | menu CRUD, `/api/menu/[id]/prices`, `/api/menu/export`, `/api/menu/suggest`, `GET /api/admin/finance-products` | `api:menu.manage` / `screen:admin.menu`. Dish card stores a Finance sellable sku separate from `recipeSku` |
 | `/admin/tables` | tables | `api:tables.manage` / `screen:admin.tables` |
 | `/pin` | `POST /api/auth/terminal`, `POST /api/auth/pin` `{ staffId, pin }` | Paired tablet only. Five failures lock that person for 15 minutes. Çıxış and idle of a PIN session return to this name list |
 
@@ -30,7 +30,7 @@ Org bind: runtime-config `onSharedOrgSnapshot` → `FnbOrgProfile` + kafe outlet
 | `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
 | `/admin/settings` | `GET/PATCH /api/settings/business-day`, `GET/PATCH /api/settings/presets` | Café nav «Parametrlər». Business day start (Asia/Baku, default 05:00), also shown beside Z. Edition (read-only) and halls (presets, `CatalogField` MULTI, clamped to edition; 403 `FNB_PRESET_NOT_IN_EDITION`) |
 
-Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). CP staff: `POST /api/integration/staff-provision` (`enterRequestTenant`, scrypt User hash, SHA-256 PIN roster). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
+Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`); each dish line sends its finance sku and portion qty. Hotel night audit polls `GET /api/internal/v1/shifts/open` with `X-Pos-Bridge-Secret` and `x-era-organization-id` (no staff session, no container-org fallback). Shift open and close send the same organization header to the hotel. CP staff: `POST /api/integration/staff-provision` (`enterRequestTenant`, scrypt User hash, SHA-256 PIN roster). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close. Org bind: `GET/POST /api/internal/v1/organization/bind` (ADR satellite-organization-bind).
 
 **SaaS Wave 3 request tenant:** staff login/SSO JWT `organizationId`; middleware (kit `createSatelliteStaffMiddleware`) `x-era-organization-id`; `getSatelliteSession` (`src/lib/session.ts`): token org, active user or PIN roster row, `requireFnbSatellite(org)`, grants from the role (one call per handler inside `try`; no process bind); ops stamps via `requestOrganizationId()`. Password logout sets `era_fnb_login_choice=password` so a paired tablet redirects to `/login`; `/pin` clears it. Not sellable SHARED pool / no TENANT Scaffold ✅.
 

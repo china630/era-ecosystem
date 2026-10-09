@@ -20,6 +20,8 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash and iron steppers; one agreed count per service |
 | `/fo/laundry` | same API + Delivered | FO fallback grid + filters; Delivered on existing ticket; no invent |
+| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line |
+| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open business day: Finance sku + qty, guest price 0. A closed-day line reverses onto the next open day. Night audit adds a day-document line. Linen schedule does not create it |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Only Skip/Sleep rows the maid already sent |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
@@ -109,7 +111,7 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 | (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
 | Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
-| Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO `/folio/[id]` `packageCompose` | Wave D; not SHIPPED |
+| Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO reservation card pricing tab `packageCompose` | Wave D; not SHIPPED |
 | Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); clinic opens one episode per pax | Wave E; share rooms stay two reservations |
 | (clinic cutover glue) | `GET /api/internal/v1/guests/by-identity` | Clinic `#21` — name + birthDate + optional phone → `Guest.globalPersonId` |
 | (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice` | Hotel curated JSON org slice + host agent upsert path (AC-CP-TOPO Scaffold ✅ still open) |
@@ -123,13 +125,13 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 |-------|-----|------|
 | `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; modal line items + pay/void |
 | `/front-cash/folio-balances` | `GET /api/front-cash/folio-balances?tab=` | Reservation with folio balances (HOT-CASH-07) |
-| `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations on `/folio/[id]` |
+| `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations are modals on the reservation card Folio tab |
 | `/front-cash/desk` | `GET/POST /api/front-cash/desk` | Day position by department × tender; close time. No open-shift button |
 | `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal tabs + Z modal (HOT-CASH-06) |
 | `/front-cash/agency-ledger` | agency ledger + statement lines + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL (HOT-CL-03); Finance re-push (HOT-CL-04) |
 | `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
 | `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
-| `/folio/[reservationId]` | `POST /api/folios/settle`, deposits, void charge, BANK_TRANSFER | Guest folio settle (HOT-CASH-01) |
+| `/folio/[reservationId]` | redirect → room plan `?folioStay=` | Opens the reservation card on the Folio tab. Settle, deposit, void, and payment run in modals (HOT-CASH-01) |
 | `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
 | `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
@@ -137,7 +139,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
 | `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
-| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic create pending (`POS_BRIDGE_SECRET`) |
+| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (`POS_BRIDGE_SECRET`) |
 
 Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/adr/unified-settlement-hub.md`.
 
@@ -165,7 +167,7 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Finance AR terms/aging/match | HOT-CL-05 | H-BL-48 |
 | Early unused-nights refund | HOT-CO-04 | H-BL-49 |
 
-**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: `/folio/[reservationId]`, chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
+**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: reservation card Folio tab modals (`/folio/[id]` redirects there), chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
 
 **UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money. Unused-nights refund: §33.
 

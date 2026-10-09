@@ -2,11 +2,15 @@
  * Canonical HotelLookup seed rows (guest card / reservation pick-lists).
  * Shared by prisma/seed-reference and runtime ensureHotelLookupsSeeded.
  */
+import { ISO_COUNTRIES } from './iso-countries';
 export type HotelLookupDefault = {
   kind: string;
   code: string;
   name: string;
   sortOrder: number;
+  nameEn?: string;
+  nameAz?: string;
+  nameRu?: string;
 };
 
 function mapCodes(
@@ -70,4 +74,13 @@ export const HOTEL_LOOKUP_DEFAULTS: HotelLookupDefault[] = [
       DIGER: 'Digər',
     },
   ),
+  ...ISO_COUNTRIES.map((country, index) => ({
+    kind: 'NATIONALITY',
+    code: country.code,
+    name: country.nameEn,
+    nameEn: country.nameEn,
+    nameAz: country.nameAz,
+    nameRu: country.nameRu,
+    sortOrder: (index + 1) * 10,
+  })),
 ];

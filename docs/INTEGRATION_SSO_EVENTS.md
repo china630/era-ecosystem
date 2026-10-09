@@ -168,7 +168,7 @@ ADR: [billing-enforcement-satellites.md](adr/billing-enforcement-satellites.md).
 ## Events (Epic B — Phase A complete)
 
 1. Satellite domain action → typed event in `@era/contracts`
-2. `POST http://orchestrator:4100/api/v1/satellite-events` (when `ERA_EVENT_GATEWAY_MODE=orchestrator`)
+2. `POST http://orchestrator:4100/api/v1/satellite-events` (hotel default `ERA_EVENT_GATEWAY_MODE=orchestrator`)
 3. Orchestrator validates with `isSatelliteEvent()` and enqueues BullMQ `era-satellite-events`
 4. Finance `SatelliteEventWorker` routes by `type` via `SatelliteEventDispatchService`
 
@@ -194,22 +194,22 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 
 | Type | Satellite | Finance worker | Result |
 |------|-----------|----------------|--------|
-| `SATELLITE_HOTEL_RESERVATION_COMPLETED` | era-hotel-pms | `handleHotelReservation` | GL + draft invoice |
-| `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | era-hotel-pms | `handleHotelNightAudit` | Multi-line NAS journal from `revenueLines` + GL map |
+| `SATELLITE_HOTEL_RESERVATION_COMPLETED` | era-hotel-pms | `handleHotelReservation` | No revenue journal. Revenue is the day document |
+| `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | era-hotel-pms | `handleHotelNightAudit` | One NAS day document `hotel-na:{date}`: sku sale lines (folio, paid front cash, housekeeping at price 0), no-sku `revenueLines`, tender split. A recipe writes off components. A good with no recipe is written off itself. A missing catalog sku is rejected and stored. The hotel day still closes. The accountant posts the same document from Finance `/inventory/day-documents` |
 
-**Hotel revenue split (room vs add-on):** PMS folio charges carry a `RevenueCode` (`ROOM`, `FOOD`, `MEDICAL`, …). The dynamic pricing engine (`quoteStay` in `era-hotel-pms`) emits quotes with separate **Room Revenue** and **Add-on Revenue** lines so each posts to the correct code. Night audit aggregates charges by `revenueCodeId`, enriches each line with `glAccountCode` (e.g. ROOM→601, FOOD→602), and sends `revenueLines[]` on `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` — enabling Finance/Orchestrator to route food revenue to the F&B org/satellite without merging it into accommodation revenue. See ADR [hotel-dynamic-rate-plans.md](./adr/hotel-dynamic-rate-plans.md).
+**Hotel revenue split (room vs add-on):** PMS folio charges carry a `RevenueCode` (`ROOM`, `FOOD`, `MEDICAL`, …). The dynamic pricing engine (`quoteStay` in `era-hotel-pms`) emits quotes with separate **Room Revenue** and **Add-on Revenue** lines so each posts to the correct code. Night audit sends `saleLines` (sku, quantity, amount) for folio lines, paid front-cash lines, and housekeeping consumption that have a Finance sku. Housekeeping amount is 0. `revenueLines` are only the lines without a sku. Revenue for a sku comes from `Product.revenueAccountCode` on the hotel organization. A good with no recipe is written off itself. The document does not post a second revenue journal for checkout. See ADR [hotel-dynamic-rate-plans.md](./adr/hotel-dynamic-rate-plans.md).
 
-**Elektraweb live bridge (Nafta dual-run):** temporary browser extension mirrors guests/reservations/open folio into `era-hotel-pms` while FO SoT remains Elektraweb. Ingest must emit the same hotel→clinic lifecycle events as native check-in (`SATELLITE_HOTEL_GUEST_CHECKED_IN` / `OUT`, `ROOM_CHANGED`, `SANATORIUM_BOOKING_CREATED`, `STAY_PRODUCT_CHANGED`) — not Prisma-only upsert. **FOCP / reservation list rows do not carry guest sex or birth date** — those come from Guest Card ingest (`QA_HOTEL_GUEST_RECORD` / `guest-card-simple`); check-in payload may include optional `sex` + `birthDate` (YYYY-MM-DD) for clinic fill-not-clear. During dual-run do **not** emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` from ERA for mirrored stays. Extra SPA tickets stay in Elektraweb until hotel hour X (charge at **issue ticket**, not `COMPLETED`; walk-in extras → house folio `TIBB AMBULATOR FOLIO`, not Cash Office). **SaaS Wave 1:** property ids and dual-run flags are per org (Super-Admin `ElektrawebBridgePolicy` / `ClinicCutoverPolicy` + Sync); ingest/outbox org from JWT/body — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md). Docs: [inbound ADR](./adr/hotel-elektraweb-live-bridge.md) · [reverse extras](./adr/hotel-elektraweb-reverse-folio-post.md) · [ops guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md).
+**Elektraweb live bridge (Nafta dual-run):** temporary browser extension mirrors guests/reservations/open folio into `era-hotel-pms` while FO SoT remains Elektraweb. Ingest must emit the same hotel→clinic lifecycle events as native check-in (`SATELLITE_HOTEL_GUEST_CHECKED_IN` / `OUT`, `ROOM_CHANGED`, `SANATORIUM_BOOKING_CREATED`, `STAY_PRODUCT_CHANGED`) — not Prisma-only upsert. **FOCP / reservation list rows do not carry guest sex or birth date** — those come from Guest Card ingest (`QA_HOTEL_GUEST_RECORD` / `guest-card-simple`); check-in payload may include optional `sex` + `birthDate` (YYYY-MM-DD) for clinic fill-not-clear. During dual-run do **not** emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` from ERA for mirrored stays. The hotel enforces that: while `ElektrawebBridgePolicy.inboundEnabled` is true, the orchestrator branch logs the night-audit event `SKIPPED` and does not publish it. Extra SPA tickets stay in Elektraweb until hotel hour X (charge at **issue ticket**, not `COMPLETED`; walk-in extras → house folio `TIBB AMBULATOR FOLIO`, not Cash Office). **SaaS Wave 1:** property ids and dual-run flags are per org (Super-Admin `ElektrawebBridgePolicy` / `ClinicCutoverPolicy` + Sync); ingest/outbox org from JWT/body — [saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md). Docs: [inbound ADR](./adr/hotel-elektraweb-live-bridge.md) · [reverse extras](./adr/hotel-elektraweb-reverse-folio-post.md) · [ops guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md).
 
-**Person-level FO ops (not stay checkout):** `SATELLITE_HOTEL_GUEST_DEPARTED` (required `payload.paxKey`) closes **one** clinic episode; `SATELLITE_HOTEL_GUEST_MOVED` retargets stay/room for that pax only. Do **not** emit stay `GUEST_CHECKED_OUT` for companion departure while other pax remain in-house — [hotel-reservation-card-and-party-ops.md](./adr/hotel-reservation-card-and-party-ops.md) D4/D6. Orchestrator clinic fan-out (`isClinicLifecycleEvent`) **must** include DEPARTED and MOVED alongside check-in/out / room / stay-product.
+**Person-level FO ops (not stay checkout):** `SATELLITE_HOTEL_GUEST_DEPARTED` (required `payload.paxKey`) closes **one** clinic episode; `SATELLITE_HOTEL_GUEST_MOVED` retargets stay/room for that pax only. Do **not** emit stay `GUEST_CHECKED_OUT` for companion departure while other pax remain in-house — [hotel-reservation-card-and-party-ops.md](./adr/hotel-reservation-card-and-party-ops.md) D4/D6. Orchestrator clinic fan-out (`isClinicLifecycleEvent`) **must** include DEPARTED and MOVED alongside check-in/out / room / stay-product. Clinic `POST /api/integration/hotel-lifecycle` calls `enterRequestTenant(event.organizationId)` before any Prisma write (including `ProcessedEvent`). A bridge route that queries first fails closed inside the request: the process organization is not a fallback. Gate: `npm run check:bridge-tenant-bind`.
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | era-hotel-pms | `handleHotelInvoiceIssued` | Draft sales invoice in Finance |
 | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger snapshot persisted (`AgencyCityLedgerSnapshot`); read on Finance counterparty |
 | `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` | era-hotel-pms | skip (clinic lifecycle) | Fan-out to clinic remaining replan; payload: `globalPersonId`, `roomNumber`, stay dates, `newProgramCode`; Finance no-op |
-| `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice |
+| `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice for a standalone cashier. A Nafta department is skipped; the hotel day document posts it |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
-| `SATELLITE_FB_SALE_COMPLETED` | era-fnb-pos | `handleFbSale` | GL journal (LOCAL_CASHIER only; not room-charge/hub) |
-| `SATELLITE_FB_SHIFT_CLOSED` | era-fnb-pos | `handleFbShiftClosed` | Cash recon log (meta only) |
-| `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` | era-fnb-pos | `handleFbStockConsumption` | WIP/COGS journal |
+| `SATELLITE_FB_SALE_COMPLETED` | era-fnb-pos | skip for a Nafta department | Standalone local cashier still emits the event. A department (`revenueRouting=PARENT` or Front Cash) does not |
+| `SATELLITE_FB_SHIFT_CLOSED` | era-fnb-pos | skip for a Nafta department | Standalone shift close still emits. A Nafta department does not |
+| `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` | era-fnb-pos | `handleFbStockConsumption` | WIP/COGS journal for a standalone cashier. A Nafta department is skipped; the day document writes off the recipe |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | era-logistics | `handleLogisticsTrip` | GL posting |
 | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | era-construction | `handleConstructionAct` | GL + draft invoice |
 | `SATELLITE_CRM_LEAD_CONVERTED` | era-crm | `handleCrmLead` | GL + draft invoice |
@@ -217,10 +217,10 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 
 **Shipped v3.0 (2026-07-02):** `SATELLITE_CRM_LEAD_CONVERTED` payload includes `partyKind`, `taxId`, `companyName`, contact fields, `activitySector`, `prospectType`; Finance `handleCrmLead` calls `findOrCreateByVoen` / `findOrCreateIndividualForCrm`. ADR [crm-lead-party-model-and-prospect-import.md](./adr/crm-lead-party-model-and-prospect-import.md).
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
-| `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
-| `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | era-clinic (auto-complete at `endsAt`, not at check-in) | procedure / folio dispatch | Tariff → folio/Accounting; **TTK lines → Finance inventory** (ADR [clinic-procedure-consumable-ttk.md](./adr/clinic-procedure-consumable-ttk.md)). `correlationId` = procedure order id. Empty `lines` = no stock. Retail HTTP write-off **retired**. |
-| `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice (inpatient day) |
-| `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
+| `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice for a standalone clinic. A Nafta department is skipped |
+| `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | era-clinic (auto-complete at `endsAt`, not at check-in) | procedure / folio dispatch | Standalone: tariff and TTK lines to Finance. A Nafta department is skipped; stock moves with the hotel day document. Retail HTTP write-off does not publish an event |
+| `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice for a standalone clinic. A Nafta department is skipped |
+| `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice for a standalone clinic. A Nafta department is skipped |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |
 
 **Hotel outbound only** (custom ERP webhooks on `HotelProfile.integrationSettingsJson`; not in `isSatelliteEvent`): `SATELLITE_HOTEL_FOLIO_CHARGE_POSTED`, `SATELLITE_HOTEL_FOLIO_PAYMENT_RECEIVED`, `SATELLITE_HOTEL_FOLIO_CHARGE_VOIDED`, `SATELLITE_HOTEL_MASTER_DATA_SYNC`, `SATELLITE_HOTEL_PAYMENT_FISCALIZED`. See [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md).
@@ -237,7 +237,7 @@ When org `settlementPolicy.settlementHub=HOTEL_FRONT_CASH` (see [unified-settlem
 |-----------|----------|------|
 | fb-pos / clinic → hotel | `POST /api/settlement/pending` | `POS_BRIDGE_SECRET` / `x-pos-bridge-secret` |
 | clinic → hotel (dual-run extras) | `POST /api/integrations/elektraweb-bridge/outbox` | same POS secret; widget drains with bridge JWT |
-| hotel → fb-pos / clinic | `POST /api/integration/settlement-confirmed` | same secret |
+| hotel → fb-pos / clinic | `POST /api/integration/settlement-confirmed` | same secret; clinic body includes `organizationId` (`sourceOrgId`) and binds it before Prisma |
 | Front Cash UI | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | session + `api:folio.payment` / `api:folio.void` |
 
 Policy snapshot: orchestrator `GET /v1/subscription/me` → `settlementPolicy` (`deferWalkInToHub`, `pendingSettlementNaPolicy`). Client: `@era/satellite-kit` `resolveSettlementPolicy`, `shouldDeferWalkInToHub`.

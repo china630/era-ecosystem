@@ -12,6 +12,8 @@ export type RoomChargePayload = {
   description: string;
   outletCode: string;
   externalTicketId?: string;
+  productSku?: string;
+  qty?: number;
 };
 
 export type InHouseGuest = {
@@ -21,13 +23,16 @@ export type InHouseGuest = {
   allowRoomCharge: boolean;
 };
 
-function bridgeHeaders(): HeadersInit {
-  const secret = process.env.POS_BRIDGE_SECRET;
+function bridgeHeaders(organizationId?: string): Record<string, string> {
+  const secret = process.env.POS_BRIDGE_SECRET?.trim();
   if (!secret) throw new Error("POS_BRIDGE_SECRET is not configured");
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Pos-Bridge-Secret": secret,
   };
+  const org = organizationId?.trim();
+  if (org) headers["x-era-organization-id"] = org;
+  return headers;
 }
 
 function pmsBaseUrl(): string | null {
@@ -57,15 +62,27 @@ export async function postRoomCharge(
     };
   }
 
+  const { resolveOperatingMode, resolveSettlementPolicy } = await import("@era/satellite-kit");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const orgId = requestOrganizationId();
+  const [mode, policy] = await Promise.all([
+    resolveOperatingMode(orgId),
+    resolveSettlementPolicy(orgId),
+  ]);
+  const hotelOrg = policy.hubOrganizationId?.trim() || mode.parentOrgId?.trim() || "";
+  if (!hotelOrg) throw new Error("hotelOrganizationId required for hotel room charge");
   const headers: Record<string, string> = {
-    ...(bridgeHeaders() as Record<string, string>),
+    ...bridgeHeaders(hotelOrg || undefined),
   };
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
 
   const res = await fetch(`${pmsBaseUrl()}/api/pos/room-charge`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      organizationId: hotelOrg,
+    }),
   });
   const body = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, body };
@@ -126,9 +143,12 @@ export async function reportPosShiftStatus(payload: {
   closedAt?: string;
 }): Promise<void> {
   if (isPmsStubMode()) return;
+  // Lazy: the kit barrel pulls jose, and a static import breaks CJS Jest on /api/health.
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const organizationId = requestOrganizationId();
   const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
     method: "PUT",
-    headers: bridgeHeaders(),
+    headers: bridgeHeaders(organizationId),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {

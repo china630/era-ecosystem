@@ -25,6 +25,8 @@ import {
 } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { normalizeShareGender } from '@/lib/share-gender';
+import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -50,6 +52,8 @@ export type RoomRackRoom = {
   id: string;
   roomNumber: string;
   status: RoomStatus;
+  hkCondition?: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED';
+  inventoryStatus?: 'IN_SERVICE' | 'OOS' | 'OOO';
   floor: number;
   roomType: { code: string; name: string; adultCapacity?: number };
   reservations: Array<{
@@ -59,6 +63,7 @@ export type RoomRackRoom = {
     checkInDate?: string;
     checkOutDate?: string;
     payStatus?: RackPayStatus;
+    folioBalance?: number;
     procedureCount?: number;
     procedurePending?: number;
     agencyId?: string | null;
@@ -147,7 +152,8 @@ export type RoomRackViewProps = {
   selectedId: string | null;
   onSelect: (room: RoomRackRoom) => void;
   onQuickBook?: (room: RoomRackRoom) => void;
-  onRelocate?: (reservationId: string, toRoomId: string) => Promise<void>;
+  onRelocate?: (reservationId: string, toRoomId: string, reasonCode: RoomMoveReason) => Promise<void>;
+  onHkStatus?: (roomId: string, hk: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED') => void;
   loading?: boolean;
   filterDateFrom: string;
   filterDateTo: string;
@@ -163,6 +169,7 @@ export default function RoomRackView({
   onSelect,
   onQuickBook,
   onRelocate,
+  onHkStatus,
   loading,
   filterDateFrom,
   filterDateTo,
@@ -175,6 +182,9 @@ export default function RoomRackView({
   const tPay = useTranslations('rackPayStatus');
   const [dragResId, setDragResId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ reservationId: string; toRoomId: string } | null>(
+    null,
+  );
 
   const [search, setSearch] = useState('');
   const [floorFilter, setFloorFilter] = useState<string>('all');
@@ -533,14 +543,44 @@ export default function RoomRackView({
                   const resId = e.dataTransfer.getData('reservationId') || dragResId;
                   setDropTargetId(null);
                   setDragResId(null);
-                  if (resId && onRelocate) void onRelocate(resId, room.id);
+                  if (!resId || !onRelocate) return;
+                  if (room.reservations.some((stay) => stay.id === resId)) return;
+                  setPendingMove({ reservationId: resId, toRoomId: room.id });
                 }}
               >
-                <button type="button" className="w-full text-left" onClick={() => onSelect(room)}>
-                  <div className={`text-[11px] font-semibold uppercase ${textCls}`}>
+                {onHkStatus && room.inventoryStatus !== 'OOO' && room.inventoryStatus !== 'OOS' ? (
+                  <select
+                    className={`${FORM_INPUT_CLASS} mx-auto mb-1 block h-7 min-h-0 max-w-full px-1 py-0.5 text-center text-[10px] font-semibold uppercase`}
+                    aria-label={t('hkStatus')}
+                    value={
+                      room.hkCondition === 'DIRTY' ||
+                      room.hkCondition === 'PICKUP' ||
+                      room.hkCondition === 'CLEAN' ||
+                      room.hkCondition === 'INSPECTED'
+                        ? room.hkCondition
+                        : room.status === 'DIRTY' || room.status === 'INSPECTED'
+                          ? room.status
+                          : 'CLEAN'
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const next = e.target.value as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED';
+                      onHkStatus(room.id, next);
+                    }}
+                  >
+                    {(['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'] as const).map((hk) => (
+                      <option key={hk} value={hk}>
+                        {t(`hkOpt.${hk}`)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className={`text-center text-[11px] font-semibold uppercase ${textCls}`}>
                     {tRoom(room.status)}
                   </div>
-                  <div className={`flex flex-wrap items-center gap-1.5 text-xl font-bold ${textCls}`}>
+                )}
+                <button type="button" className="w-full text-center" onClick={() => onSelect(room)}>
+                  <div className={`flex flex-wrap items-center justify-center gap-1.5 text-xl font-bold ${textCls}`}>
                     <span>{room.roomNumber}</span>
                     {sharePool ? (
                       <GenderChip
@@ -552,7 +592,7 @@ export default function RoomRackView({
                       <GenderChip gender={guestGender} />
                     ) : null}
                   </div>
-                  <div className="text-[12px] text-[#7F8C8D]">{room.roomType.code}</div>
+                  <div className="text-center text-[12px] text-[#7F8C8D]">{room.roomType.code}</div>
                   {touching.length > 1 ? (
                     <div className="mt-2 space-y-1">
                       {touching.map((stay) => (
@@ -591,12 +631,25 @@ export default function RoomRackView({
                           {formatStayRange(active.checkInDate, active.checkOutDate)}
                         </div>
                       ) : null}
-                      <div className="flex flex-wrap items-center gap-1">
+                      <div className="flex w-full items-center justify-between gap-1">
                         {active.payStatus ? (
                           <span
                             className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${PAY_BADGE[active.payStatus]}`}
                           >
                             {tPay(active.payStatus)}
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        {active.folioBalance != null && Math.abs(active.folioBalance) > 0.01 ? (
+                          <span
+                            className={`font-mono text-[11px] font-semibold ${
+                              active.folioBalance > 0 ? 'text-[#E67E22]' : 'text-emerald-700'
+                            }`}
+                          >
+                            {active.folioBalance > 0
+                              ? `+${active.folioBalance.toFixed(2)}`
+                              : `−${Math.abs(active.folioBalance).toFixed(2)}`}
                           </span>
                         ) : null}
                         {(active.procedureCount ?? 0) > 0 ? (
@@ -629,6 +682,15 @@ export default function RoomRackView({
         </div>
         </div>
       </div>
+      <RoomMoveReasonModal
+        open={Boolean(pendingMove)}
+        onClose={() => setPendingMove(null)}
+        onConfirm={(reason) => {
+          const move = pendingMove;
+          setPendingMove(null);
+          if (move && onRelocate) void onRelocate(move.reservationId, move.toRoomId, reason);
+        }}
+      />
     </div>
   );
 }

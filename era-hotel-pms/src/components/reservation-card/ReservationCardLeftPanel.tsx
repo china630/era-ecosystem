@@ -29,23 +29,67 @@ import { addHotelDays } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
 
-/** BAR (BASE) or unscoped plans apply to any room type; derived packages may be type-scoped. */
-function ratePlanFitsRoomType(rp: RatePlanOption, roomTypeId: string): boolean {
+function cellCoversDate(
+  cell: { effectiveFrom: string; effectiveTo: string | null },
+  checkIn: string,
+): boolean {
+  if (!checkIn) return true;
+  const from = cell.effectiveFrom.slice(0, 10);
+  const to = cell.effectiveTo ? cell.effectiveTo.slice(0, 10) : null;
+  return from <= checkIn && (to == null || to >= checkIn);
+}
+
+/** Medical plans list only room types that have an open grid cell. BAR stays unscoped. */
+function ratePlanFitsRoomType(
+  rp: RatePlanOption,
+  roomTypeId: string,
+  checkIn: string,
+  mealPlanId: string,
+): boolean {
+  if (rp.medicalFlag) {
+    const open = (rp.sellCells ?? []).filter((c) => cellCoversDate(c, checkIn));
+    if (open.length === 0) return false;
+    if (!roomTypeId) return true;
+    return open.some(
+      (c) =>
+        c.roomTypeId === roomTypeId &&
+        (!mealPlanId || !c.mealPlanId || c.mealPlanId === mealPlanId),
+    );
+  }
   if (!roomTypeId) return true;
   if (rp.type === 'BASE' || !rp.roomTypeId) return true;
   return rp.roomTypeId === roomTypeId;
+}
+
+function gridPriceLabel(rp: RatePlanOption, roomTypeId: string, adults: string, checkIn: string): string {
+  const occ = Math.max(1, Number(adults) || 1);
+  const cell = (rp.sellCells ?? []).find(
+    (c) =>
+      c.roomTypeId === roomTypeId &&
+      c.occupancy === occ &&
+      cellCoversDate(c, checkIn),
+  );
+  return cell ? ` · ${cell.sellPrice}` : '';
 }
 
 function nightlyForType(
   plans: RatePlanOption[],
   ratePlanId: string,
   typeId: string,
+  adults: string,
+  checkIn: string,
 ): number | null {
+  if (!typeId) return null;
+  const current = plans.find((r) => r.id === ratePlanId);
+  const occ = Math.max(1, Number(adults) || 1);
+  const cell = (current?.sellCells ?? []).find(
+    (c) => c.roomTypeId === typeId && c.occupancy === occ && cellCoversDate(c, checkIn),
+  );
+  if (cell) return cell.sellPrice;
   const matches = plans.filter(
     (r) => r.roomTypeId === typeId && r.pricePerNight != null && r.pricePerNight > 0,
   );
-  if (matches.length === 0 || !typeId) return null;
-  const current = plans.find((r) => r.id === ratePlanId);
+  if (matches.length === 0) return null;
   const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
   return (peer ?? matches[0]).pricePerNight ?? null;
 }
@@ -59,7 +103,10 @@ function moveReasonLabel(
   const note = (notes ?? '').trim();
   if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('roomMoveReasonCard');
   if (raw === 'SWAP') return t('roomMoveReasonSwap');
-  if (raw === 'RELOCATE') return t('roomMoveReasonRelocate');
+  if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('roomMoveReasonRelocate');
+  if (raw === 'GUEST_REFUSED') return t('moveReason.GUEST_REFUSED');
+  if (raw === 'DID_NOT_OCCUPY') return t('moveReason.DID_NOT_OCCUPY');
+  if (raw === 'HOTEL') return t('moveReason.HOTEL');
   if (note) return note;
   return t('roomMoveReasonOther');
 }
@@ -227,6 +274,8 @@ export type ReservationCardLeftPanelProps = {
   isLocked: boolean;
   /** Show physical door assign / share / early-late (CONFIRMED+ or room already assigned). */
   showAssignment?: boolean;
+  /** Room number list on create, before the stay is saved. */
+  showRoomSelect?: boolean;
   /** Create-only sellable preview (same gate as POST /api/reservations). */
   sellable?: { available: number; booked: number; quota: number; stopSell: boolean } | null;
   checkIn: string;
@@ -236,8 +285,6 @@ export type ReservationCardLeftPanelProps = {
   stayStatus?: string;
   earlyStayCheckoutBusy?: boolean;
   onStayAction?: () => void;
-  voidKind?: 'cancel' | 'noShow' | null;
-  onVoidStay?: (kind: 'cancel' | 'noShow') => void;
   staySlices?: Array<{
     id: string;
     fromDate: string;
@@ -362,6 +409,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     isCreate,
     isLocked,
     showAssignment = false,
+    showRoomSelect = false,
     sellable = null,
     booker = '',
     guestRep = '',
@@ -377,9 +425,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     ratePlans,
     rooms,
     onChange,
-    onAssignRoom,
-    assignBusy,
-    assignTitle,
     onFocusRoomSelect,
     onToggleLock,
     roomHkCondition,
@@ -392,23 +437,58 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
+  const [splitOpen, setSplitOpen] = useState(false);
   const [splitFrom, setSplitFrom] = useState('');
   const [splitTypeId, setSplitTypeId] = useState('');
   const [splitRoomId, setSplitRoomId] = useState('');
+  useEffect(() => {
+    setSplitOpen(false);
+    setSplitFrom('');
+    setSplitTypeId('');
+    setSplitRoomId('');
+  }, [props.reservationId]);
   const { byKind, roomViews, bedTypes } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
 
   const filteredRatePlans = useMemo(() => {
-    const list = [...ratePlans];
-    list.sort((a, b) => {
-      const af = ratePlanFitsRoomType(a, props.roomTypeId) ? 0 : 1;
-      const bf = ratePlanFitsRoomType(b, props.roomTypeId) ? 0 : 1;
-      if (af !== bf) return af - bf;
-      return (a.label || '').localeCompare(b.label || '');
-    });
+    const list = ratePlans.filter(
+      (rp) =>
+        rp.id === props.ratePlanId ||
+        ratePlanFitsRoomType(rp, props.roomTypeId, props.checkIn, props.mealPlanId),
+    );
+    list.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
     return list;
-  }, [ratePlans, props.roomTypeId]);
+  }, [ratePlans, props.roomTypeId, props.ratePlanId, props.checkIn, props.mealPlanId]);
+
+  const chargedRoomTypes = useMemo(() => {
+    const plan = ratePlans.find((rp) => rp.id === props.ratePlanId);
+    if (!plan?.medicalFlag) return roomTypes;
+    const openIds = new Set(
+      (plan.sellCells ?? [])
+        .filter(
+          (c) =>
+            cellCoversDate(c, props.checkIn) &&
+            (!props.mealPlanId || !c.mealPlanId || c.mealPlanId === props.mealPlanId),
+        )
+        .map((c) => c.roomTypeId),
+    );
+    if (openIds.size === 0) return roomTypes.filter((rt) => rt.id === props.roomTypeId);
+    return roomTypes.filter((rt) => rt.id === props.roomTypeId || openIds.has(rt.id));
+  }, [ratePlans, roomTypes, props.ratePlanId, props.roomTypeId, props.checkIn, props.mealPlanId]);
+
+  const openMealPlans = useMemo(() => {
+    const plan = ratePlans.find((rp) => rp.id === props.ratePlanId);
+    if (!plan?.medicalFlag) return mealPlans;
+    const ids = new Set(
+      (plan.sellCells ?? [])
+        .filter((c) => !props.roomTypeId || c.roomTypeId === props.roomTypeId)
+        .map((c) => c.mealPlanId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    if (ids.size === 0) return mealPlans;
+    return mealPlans.filter((m) => m.id === props.mealPlanId || ids.has(m.id));
+  }, [ratePlans, mealPlans, props.ratePlanId, props.roomTypeId, props.mealPlanId]);
 
   const selectedRatePlan = ratePlans.find((rp) => rp.id === props.ratePlanId);
   const mealLockedByPackage = Boolean(selectedRatePlan?.medicalFlag && selectedRatePlan.mealPlanId);
@@ -494,21 +574,14 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               busy={props.earlyStayCheckoutBusy}
               onStayAction={props.onStayAction}
             />
+            {props.reservationId ? (
+              <ReservationCardEarlyLatePanel
+                reservationId={props.reservationId}
+                checkInTime={props.checkInTime}
+                checkOutTime={props.checkOutTime}
+              />
+            ) : null}
           </div>
-          {props.voidKind && props.onVoidStay ? (
-            <button
-              type="button"
-              className={
-                props.voidKind === 'cancel'
-                  ? 'rounded-md bg-amber-400 px-3 py-1.5 text-[12px] font-semibold text-amber-950'
-                  : 'rounded-md bg-[#E74C3C] px-3 py-1.5 text-[12px] font-semibold text-white'
-              }
-              disabled={disabled || props.earlyStayCheckoutBusy}
-              onClick={() => props.onVoidStay?.(props.voidKind!)}
-            >
-              {props.voidKind === 'cancel' ? t('cancelStay') : t('noShowStay')}
-            </button>
-          ) : null}
           <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
             <FieldRow cols={2}>
               <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
@@ -519,13 +592,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 onChange={set('voucherNo')}
               />
             </FieldRow>
-            {props.reservationId ? (
-              <ReservationCardEarlyLatePanel
-                reservationId={props.reservationId}
-                checkInTime={props.checkInTime}
-                checkOutTime={props.checkOutTime}
-              />
-            ) : null}
           </fieldset>
         </div>
       </FieldPanel>
@@ -540,7 +606,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               className="min-w-0"
               value={props.roomTypeId}
               onChange={setCatalog('roomTypeId')}
-              options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
+              options={chargedRoomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
               required
               emptyLabel={null}
               hint={t('roomTypeChargeHint')}
@@ -569,8 +635,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 roomTypes.find((r) => r.id === props.givenRoomTypeId)?.label ??
                 props.givenRoomTypeId
               }
-              chargedNightly={nightlyForType(ratePlans, props.ratePlanId, props.roomTypeId)}
-              givenNightly={nightlyForType(ratePlans, props.ratePlanId, props.givenRoomTypeId)}
+              chargedNightly={nightlyForType(ratePlans, props.ratePlanId, props.roomTypeId, props.adults, props.checkIn)}
+              givenNightly={nightlyForType(ratePlans, props.ratePlanId, props.givenRoomTypeId, props.adults, props.checkIn)}
               hotelCovers={hotelCoversClass}
               disabled={disabled}
               onHotel={() => {
@@ -618,9 +684,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </div>
             </div>
           ) : null}
-          {showAssignment ? (
-            <>
-              <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          {showAssignment || showRoomSelect ? (
+            <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <CatalogField
                   kind="ENTITY_REF"
                   label={t('roomNo')}
@@ -632,6 +697,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                   hint={t('roomNoPhysicalHint')}
                   disabled={disabled}
                 />
+                {showAssignment ? (
                 <div
                   className="flex shrink-0 flex-wrap items-end gap-1 pb-0.5"
                   data-testid="room-door-actions"
@@ -674,17 +740,12 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                       —
                     </span>
                   )}
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    title={assignTitle ?? t('assignRoom')}
-                    disabled={assignBusy || !props.roomId || !onAssignRoom}
-                    onClick={onAssignRoom}
-                  >
-                    {t('assignRoom')}
-                  </button>
                 </div>
-              </div>
+                ) : null}
+            </div>
+          ) : null}
+          {showAssignment ? (
+            <>
               <FieldRow cols={2} className="items-end">
                 <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
                   <input
@@ -728,7 +789,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 </button>
               ) : null}
             </>
-          ) : props.roomId ? (
+          ) : props.roomId && !showRoomSelect ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                 {t('roomNo')}:{' '}
@@ -759,16 +820,45 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             </ul>
           ) : null}
           {props.onSplitStay && !props.isCreate ? (
-            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
-              <DatePicker
-                label={t('splitFrom')}
-                fluid
-                value={splitFrom}
-                onChange={setSplitFrom}
-                placeholder={tc('datePlaceholder')}
-                openCalendarLabel={tc('openCalendar')}
+            <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
+              <input
+                type="checkbox"
+                className={MODAL_CHECKBOX_CLASS}
+                checked={splitOpen}
                 disabled={disabled || props.splitBusy}
+                onChange={(e) => setSplitOpen(e.target.checked)}
               />
+              {t('splitFrom')}
+            </label>
+          ) : null}
+          {splitOpen && props.onSplitStay && !props.isCreate ? (
+            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
+              <div className="grid grid-cols-2 items-end gap-2">
+                <DatePicker
+                  label={tc('date')}
+                  fluid
+                  value={splitFrom}
+                  onChange={setSplitFrom}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                  disabled={disabled || props.splitBusy}
+                />
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
+                  onClick={() =>
+                    props.onSplitStay?.({
+                      fromDate: splitFrom,
+                      roomTypeId: splitTypeId,
+                      roomId: splitRoomId || null,
+                    })
+                  }
+                >
+                  {t('splitStay')}
+                </button>
+              </div>
+              <FieldRow cols={2}>
               <CatalogField
                 kind="ENTITY_REF"
                 label={tb('roomType')}
@@ -809,20 +899,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 emptyLabel={t('splitQuotaOnly')}
                 disabled={disabled || props.splitBusy || !splitTypeId}
               />
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
-                onClick={() =>
-                  props.onSplitStay?.({
-                    fromDate: splitFrom,
-                    roomTypeId: splitTypeId,
-                    roomId: splitRoomId || null,
-                  })
-                }
-              >
-                {t('splitStay')}
-              </button>
+              </FieldRow>
             </div>
           ) : null}
           <RoomMoves changes={props.roomChanges} />
@@ -872,7 +949,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             className="min-w-0"
             value={props.mealPlanId}
             onChange={setCatalog('mealPlanId')}
-            options={mealPlans.map((m) => ({ value: m.id, label: m.label }))}
+            options={openMealPlans.map((m) => ({ value: m.id, label: m.label }))}
             disabled={disabled || mealLockedByPackage}
           />
         </fieldset>
@@ -887,7 +964,10 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             className="min-w-0"
             value={props.ratePlanId}
             onChange={setCatalog('ratePlanId')}
-            options={filteredRatePlans.map((rp) => ({ value: rp.id, label: rp.label }))}
+            options={filteredRatePlans.map((rp) => ({
+              value: rp.id,
+              label: `${rp.label}${gridPriceLabel(rp, props.roomTypeId, props.adults, props.checkIn)}`,
+            }))}
             required
             emptyLabel={null}
             disabled={disabled}

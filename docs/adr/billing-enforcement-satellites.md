@@ -27,7 +27,7 @@ Before this change only Finance enforced the status (`ControlPlaneEntitlementGua
 | `SOFT_BLOCK` | Paths containing `/export`, `/pdf`, `/xlsx`, `/xml`, `/download`, `/tax-export` (e.g. hotel `/api/reports/pack/download`) | `BILLING_SOFT_BLOCK_EXPORTS` |
 | `HARD_BLOCK` | Every non-GET/HEAD/OPTIONS call, except `/api/early-access/*`, `/api/auth/*` (session maintenance) and ERA invoice payment (`/api/billing/checkout`, billing webhooks) | `BILLING_HARD_BLOCK_READ_ONLY` |
 
-A super-admin `User` (resolved from DB by `userId`) bypasses. The route accepts the same service tokens as the subscription snapshot (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`, `CONTROL_PLANE_SERVICE_TOKEN`, `SATELLITE_EVENT_SERVICE_TOKEN`). New export markers are added once in `isExportPath`, never in a satellite.
+A super-admin `User` (resolved from DB by `userId`) bypasses. The route is `@Public()` (user JWT guard skipped) and accepts the same service tokens as the subscription snapshot (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`, `CONTROL_PLANE_SERVICE_TOKEN`, `SATELLITE_EVENT_SERVICE_TOKEN`). Without `@Public()` the JWT guard rejects that bearer and satellites treat the 401 as an unreachable control plane. New export markers are added once in `isExportPath`, never in a satellite.
 
 Hotel cash, check-in, visits, and postings are writes: under `HARD_BLOCK` they get 402; lists and cards stay readable.
 

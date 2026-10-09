@@ -161,7 +161,7 @@ Canon: [ADR §7](../../docs/adr/hotel-elektraweb-import.md). Code: `src/lib/inte
 | Numeric revenue id only | `EW-{id}` |
 | Name only | `EW-{slug}` |
 
-An existing row with the same name (case-insensitive) or any candidate code is reused first, so renaming a code in **Revenue codes** (master data) does not create a duplicate on re-import. Folio dry run only looks up codes and never creates them.
+An existing row with the same name (case-insensitive) or any candidate code is reused first, so renaming a code in **Revenue codes** (master data) does not create a duplicate on re-import. Folio dry run only looks up codes and never creates them. Live posting (`findRevenueCodeByToken`) matches the token on `code` first, then on `name`, so a row kept as `code` 10 and `name` ROOM still takes the room charge.
 
 ### 4.3 Channel ≠ rate plan
 

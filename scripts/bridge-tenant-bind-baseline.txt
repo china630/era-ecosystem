@@ -1,0 +1,6 @@
+# Bridge/internal routes that still query Prisma before enterRequestTenant.
+# Shrink this list when a route is fixed. A path not listed here fails the gate.
+era-fnb-pos/app/api/integration/settlement-confirmed/route.ts
+era-hotel-pms/app/api/integration/gl-status/route.ts
+era-hotel-pms/app/api/integration/mock-licensing/route.ts
+era-hotel-pms/app/api/internal/v1/city-ledger/payment-applied/route.ts

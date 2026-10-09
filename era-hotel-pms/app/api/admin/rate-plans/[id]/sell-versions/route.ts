@@ -12,6 +12,8 @@ const postSchema = z.object({
   sellPrice: z.number().positive(),
   costFloor: z.number().min(0).nullable().optional(),
   occupancy: z.number().int().min(1).max(10).optional(),
+  roomTypeId: z.string().uuid(),
+  mealPlanId: z.string().uuid(),
   effectiveFrom: z.string().min(8),
   note: z.string().max(500).nullable().optional(),
 });
@@ -43,6 +45,8 @@ export async function POST(
       sellPrice: body.sellPrice,
       costFloor: body.costFloor,
       occupancy: body.occupancy,
+      roomTypeId: body.roomTypeId,
+      mealPlanId: body.mealPlanId,
       effectiveFrom: new Date(body.effectiveFrom),
       note: body.note,
       createdById: session?.sub,

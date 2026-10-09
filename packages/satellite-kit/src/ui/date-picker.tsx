@@ -16,10 +16,13 @@ export function isoDateToDisplay(iso: string): string {
   return `${m[3]}.${m[2]}.${m[1]}`;
 }
 
-/** Parse `DD.MM.YYYY` or `YYYY-MM-DD` → ISO `YYYY-MM-DD`, or null if invalid. */
+/** Parse `DD.MM.YYYY`, `DDMMYYYY`, or `YYYY-MM-DD` → ISO `YYYY-MM-DD`, or null if invalid. */
 export function parseDisplayDate(raw: string): string | null {
-  const s = raw.trim();
+  let s = raw.trim();
   if (!s) return "";
+  if (/^\d{8}$/.test(s)) {
+    s = `${s.slice(0, 2)}.${s.slice(2, 4)}.${s.slice(4)}`;
+  }
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (iso) {
     const d = new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00Z`);
@@ -104,7 +107,14 @@ export function DatePicker({
   }
 
   function onTextChange(e: ChangeEvent<HTMLInputElement>) {
-    setText(e.target.value);
+    const raw = e.target.value;
+    if (/^\d{8}$/.test(raw)) {
+      const shown = `${raw.slice(0, 2)}.${raw.slice(2, 4)}.${raw.slice(4)}`;
+      setText(shown);
+      commitText(shown);
+      return;
+    }
+    setText(raw);
     setLocalError(null);
   }
 

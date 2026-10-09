@@ -47,6 +47,8 @@ interface Reservation {
   totalAmount: number;
   checkInDate?: string;
   checkOutDate?: string;
+  payStatus?: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
+  folioBalance?: number;
   shareEligible?: boolean;
   shareGender?: string | null;
   shareBedIndex?: number | null;
@@ -57,6 +59,8 @@ interface Room {
   id: string;
   roomNumber: string;
   status: RoomStatus;
+  hkCondition?: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED';
+  inventoryStatus?: 'IN_SERVICE' | 'OOS' | 'OOO';
   floor: number;
   roomType: { code: string; name: string; adultCapacity?: number };
   maxBed?: number | null;
@@ -152,6 +156,15 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data?.code === 'BUSINESS_DATE_LAG') {
+          showApiError({
+            error: tCard('checkInBusinessDateLag', {
+              businessDate: String(data.businessDate ?? ''),
+              arrivalDate: String(data.arrivalDate ?? ''),
+            }),
+          });
+          return;
+        }
         if (data?.code === 'GUEST_CHECK_IN_INCOMPLETE') {
           showApiError({
             error: tCard('checkInBlocked', {
@@ -185,14 +198,18 @@ export default function Chessboard() {
     await runAction(`/api/reservations/${reservationId}/assign`, 'POST', { roomId });
   }
 
-  async function relocateToRoom(reservationId: string, toRoomId: string) {
+  async function relocateToRoom(
+    reservationId: string,
+    toRoomId: string,
+    reasonCode: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL',
+  ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode: 'RACK_DND' }),
+        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -287,7 +304,34 @@ export default function Chessboard() {
         }
         onRelocate={
           can(PERMISSIONS.RESERVATIONS_WRITE)
-            ? (reservationId, toRoomId) => relocateToRoom(reservationId, toRoomId)
+            ? (reservationId, toRoomId, reasonCode) =>
+                relocateToRoom(reservationId, toRoomId, reasonCode)
+            : undefined
+        }
+        onHkStatus={
+          can(PERMISSIONS.ROOMS_STATUS)
+            ? (roomId, hk) => {
+                void (async () => {
+                  setBusy(true);
+                  try {
+                    const res = await fetch(`/api/rooms/${roomId}/status`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ hkCondition: hk }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      showApiError(data, tCommon('updateFailed'));
+                      return;
+                    }
+                    await load();
+                  } catch (e) {
+                    showApiError({ error: e instanceof Error ? e.message : tCommon('updateError') });
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }
             : undefined
         }
         loading={loading}

@@ -24,6 +24,7 @@ const updateSchema = z.object({
   titleRu: z.string().min(1).optional(),
   titleAz: z.string().min(1).optional(),
   serviceCode: z.string().min(1).optional(),
+  financeSku: z.string().nullable().optional(),
   fields: z.array(fieldDefSchema).nullable().optional(),
   includes: z.array(z.string()).nullable().optional(),
   sortOrder: z.number().int().optional(),

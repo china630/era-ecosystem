@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enterSatelliteTenant } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
 function bridgeSecret(): string {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
   if (!organizationId) {
     return NextResponse.json({ error: "organizationId required" }, { status: 400 });
   }
+  enterSatelliteTenant({ organizationId });
   const roles = await prisma.opsRole.findMany({
     where: { organizationId },
     select: { code: true, name: true },

@@ -19,6 +19,7 @@ import {
   handleStayProductChanged,
 } from "@/lib/lifecycle-consumer";
 import { prisma } from "@/lib/prisma";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 export async function POST(request: Request) {
   const secret = request.headers.get("x-clinic-bridge-secret");
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
+  const organizationId =
+    body && typeof body === "object" && "organizationId" in body
+      ? String((body as { organizationId: unknown }).organizationId ?? "").trim()
+      : "";
+  if (!organizationId) {
+    return NextResponse.json({ error: "organizationId required" }, { status: 400 });
+  }
+  enterRequestTenant(organizationId);
+
   const correlationId =
     body && typeof body === "object" && "correlationId" in body
       ? String((body as { correlationId: unknown }).correlationId)
@@ -80,11 +90,24 @@ export async function POST(request: Request) {
       await handleStayProductChanged(body);
       return NextResponse.json({ ok: true });
     }
+    if (correlationId) {
+      await prisma.processedEvent
+        .delete({
+          where: {
+            organizationId_correlationId: { organizationId, correlationId },
+          },
+        })
+        .catch(() => null);
+    }
     return NextResponse.json({ error: "Unknown event type" }, { status: 400 });
   } catch (err) {
     if (correlationId) {
       await prisma.processedEvent
-        .delete({ where: { correlationId } as never })
+        .delete({
+          where: {
+            organizationId_correlationId: { organizationId, correlationId },
+          },
+        })
         .catch(() => null);
     }
     const msg = err instanceof Error ? err.message : "handler failed";

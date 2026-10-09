@@ -6,7 +6,8 @@
 
 FROM node:22-alpine AS builder
 
-RUN apk add --no-cache python3 make g++ openssl
+RUN apk add --no-cache python3 make g++ openssl \
+  || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache python3 make g++ openssl)
 
 WORKDIR /workspace
 
@@ -56,7 +57,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache openssl wget \
+RUN (apk add --no-cache openssl wget || (sed -i 's|https://|http://|g' /etc/apk/repositories && apk add --no-cache openssl wget)) \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nestjs
 

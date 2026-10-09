@@ -109,6 +109,21 @@ export async function swapReservationRooms(
     kind: 'OCCURRED',
     status: 'APPLIED',
   });
+  const { settleVacatedDoorAfterMove } = await import('@/lib/services/room-move-door.service');
+  await settleVacatedDoorAfterMove({
+    reservationId: a.id,
+    fromRoomId: fromA,
+    toRoomId: fromB,
+    status: a.status,
+    reasonCode: 'SWAP',
+  });
+  await settleVacatedDoorAfterMove({
+    reservationId: b.id,
+    fromRoomId: fromB,
+    toRoomId: fromA,
+    status: b.status,
+    reasonCode: 'SWAP',
+  });
 
   void dispatchRoomChanged({
     reservationId: a.id,

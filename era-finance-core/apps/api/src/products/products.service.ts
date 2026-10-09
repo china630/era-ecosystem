@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { AccountType, LedgerType } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
@@ -57,27 +57,40 @@ export class ProductsService {
     return row;
   }
 
+  private async assertRevenueAccount(
+    orgId: string,
+    isService: boolean,
+    revenueAccountCode: string | null,
+  ) {
+    if (!revenueAccountCode) {
+      if (isService) {
+        throw new BadRequestException("revenueAccountCode is required for a service");
+      }
+      return;
+    }
+    const account = await this.prisma.account.findFirst({
+      where: {
+        organizationId: orgId,
+        code: revenueAccountCode,
+        ledgerType: LedgerType.NAS,
+        type: AccountType.REVENUE,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!account) {
+      throw new BadRequestException(
+        `Revenue account ${revenueAccountCode} was not found on the NAS chart`,
+      );
+    }
+  }
+
   async create(orgId: string, dto: CreateProductDto) {
     const isService = dto.isService ?? false;
-    let sku = (dto.sku ?? "").trim();
-    if (!isService) {
-      if (!sku) throw new BadRequestException("sku is required for goods");
-    } else if (!sku) {
-      for (let attempt = 0; attempt < 12; attempt++) {
-        const candidate = `SVC-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
-        const clash = await this.prisma.product.findFirst({
-          where: { organizationId: orgId, sku: candidate },
-          select: { id: true },
-        });
-        if (!clash) {
-          sku = candidate;
-          break;
-        }
-      }
-      if (!sku) {
-        throw new BadRequestException("Could not allocate internal SKU for service");
-      }
-    }
+    const sku = (dto.sku ?? "").trim();
+    if (!sku) throw new BadRequestException("sku is required");
+    const revenueAccountCode = dto.revenueAccountCode?.trim() || null;
+    await this.assertRevenueAccount(orgId, isService, revenueAccountCode);
 
     const unitOfMeasureCode = dto.unitOfMeasureCode?.trim() || null;
     if (unitOfMeasureCode) {
@@ -97,6 +110,7 @@ export class ProductsService {
         vatRate: dto.vatRate,
         isService,
         unitOfMeasureCode,
+        revenueAccountCode,
       },
     });
   }
@@ -106,14 +120,21 @@ export class ProductsService {
       where: { id, organizationId: orgId },
     });
     if (!existing) throw new NotFoundException("Product not found");
+    const isService = dto.isService ?? existing.isService;
+    const revenueAccountCode =
+      dto.revenueAccountCode !== undefined
+        ? dto.revenueAccountCode.trim() || null
+        : existing.revenueAccountCode;
+    await this.assertRevenueAccount(orgId, isService, revenueAccountCode);
     return this.prisma.product.update({
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.sku !== undefined && { sku: dto.sku }),
+        ...(dto.sku !== undefined && { sku: dto.sku.trim() }),
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.vatRate !== undefined && { vatRate: dto.vatRate }),
         ...(dto.isService !== undefined && { isService: dto.isService }),
+        ...(dto.revenueAccountCode !== undefined && { revenueAccountCode }),
         ...(dto.unitOfMeasureCode !== undefined
           ? { unitOfMeasureCode: dto.unitOfMeasureCode?.trim() || null }
           : {}),

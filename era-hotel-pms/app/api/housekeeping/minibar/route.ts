@@ -40,6 +40,7 @@ const itemSchema = z.object({
   code: z.string(),
   name: z.string(),
   price: z.number().positive(),
+  financeSku: z.string().min(1).nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -50,7 +51,12 @@ export async function POST(request: Request) {
     if (body.code && body.name) {
       const parsed = itemSchema.parse(body);
       const item = await prisma.minibarItem.create({
-        data: { code: parsed.code, name: parsed.name, price: toDecimal(parsed.price) },
+        data: {
+          code: parsed.code,
+          name: parsed.name,
+          price: toDecimal(parsed.price),
+          financeSku: parsed.financeSku?.trim() || null,
+        },
       });
       return jsonOk(serialize(item));
     }

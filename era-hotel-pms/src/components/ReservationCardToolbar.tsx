@@ -29,6 +29,8 @@ export type ReservationCardToolbarProps = {
   canCheckIn?: boolean;
   stayActionLabel?: string;
   onStayAction?: () => void;
+  voidKind?: 'cancel' | 'noShow' | null;
+  onVoidStay?: (kind: 'cancel' | 'noShow') => void;
   onEarlyCheckIn?: () => void;
   onSave?: () => void;
   onClose?: () => void;
@@ -68,6 +70,8 @@ export function ReservationCardActions({
   canCheckIn,
   stayActionLabel,
   onStayAction,
+  voidKind,
+  onVoidStay,
   onEarlyCheckIn,
   showLock = true,
   showClose = false,
@@ -211,6 +215,20 @@ export function ReservationCardActions({
         </div>
       ) : null}
 
+      {showFooter && voidKind && onVoidStay ? (
+        <button
+          type="button"
+          className={
+            voidKind === 'cancel'
+              ? 'rounded-md bg-amber-400 px-3 py-1.5 text-[12px] font-semibold text-amber-950 disabled:cursor-not-allowed disabled:opacity-40'
+              : 'rounded-md bg-[#E74C3C] px-3 py-1.5 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40'
+          }
+          disabled={busy || loading || isLocked}
+          onClick={() => onVoidStay(voidKind)}
+        >
+          {voidKind === 'cancel' ? t('cancelStay') : t('noShowStay')}
+        </button>
+      ) : null}
       {showFooter && onStayAction && stayActionLabel ? (
         <button
           type="button"
@@ -305,7 +323,7 @@ export function ReservationCardBottomBar({
         <button
           key={s.label}
           type="button"
-          className={CHIP_CLASS}
+          className={`${CHIP_CLASS} disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:bg-white`}
           disabled={!stubsEnabled || !s.onClick}
           onClick={s.onClick}
           title={s.label}

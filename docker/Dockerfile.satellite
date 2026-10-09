@@ -29,11 +29,12 @@ COPY --from=pkg-build /workspace/packages ./packages
 # Overlay current workspace packages so `compose build clinic` picks up kit
 # changes without a separate packages-image rebuild.
 COPY packages ./packages
-WORKDIR /workspace/packages/satellite-kit
+# .dockerignore drops dist. Rebuild file: deps so satellite-kit sees current exports.
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 RUN npm config set strict-ssl false \
-  && npm install \
-  && npm run build
+  && for pkg in era-contracts era-fiscal i18n-common era-storage satellite-kit; do \
+       cd /workspace/packages/$pkg && npm install && npm run build || exit 1; \
+     done
 WORKDIR /workspace
 COPY --from=app-deps /workspace/${SATELLITE_DIR}/node_modules ./${SATELLITE_DIR}/node_modules
 COPY ${SATELLITE_DIR} ./${SATELLITE_DIR}

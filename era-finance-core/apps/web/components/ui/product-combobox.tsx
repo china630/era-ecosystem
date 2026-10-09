@@ -34,6 +34,8 @@ type ProductComboboxProps = {
   value: string;
   onChange: (id: string, item: ProductRow | null) => void;
   isService: boolean;
+  /** Search goods and services. Quick-create stays off: a service needs an explicit SKU and revenue account. */
+  includeServices?: boolean;
   selectedLabel?: string;
   className?: string;
   listClassName?: string;
@@ -47,6 +49,7 @@ export function ProductCombobox({
   value,
   onChange,
   isService,
+  includeServices = false,
   selectedLabel = "",
   className = "",
   listClassName = "",
@@ -87,7 +90,7 @@ export function ProductCombobox({
   const fetchProducts = useCallback(
     async (search: string) => {
       const q = new URLSearchParams();
-      q.set("isService", isService ? "true" : "false");
+      if (!includeServices) q.set("isService", isService ? "true" : "false");
       q.set("limit", "20");
       const trimmed = search.trim();
       if (trimmed) q.set("search", trimmed);
@@ -96,13 +99,10 @@ export function ProductCombobox({
       const list = (await res.json()) as ProductRow[];
       return Array.isArray(list) ? list : [];
     },
-    [isService],
+    [includeServices, isService],
   );
 
-  const getOptionLabel = useCallback(
-    (p: ProductRow) => (p.isService ? p.name : `${p.name} (${p.sku})`),
-    [],
-  );
+  const getOptionLabel = useCallback((p: ProductRow) => `${p.name} (${p.sku})`, []);
 
   async function submitQuickCreate() {
     const name = qcName.trim();

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -80,6 +81,7 @@ export async function postCharge(input: {
   revenueCodeId: string;
   amount: number;
   qty?: number;
+  sku?: string | null;
   description: string;
   businessDate?: Date;
   departmentId?: string;
@@ -148,6 +150,7 @@ export async function postCharge(input: {
       departmentId: input.departmentId,
       amount: toDecimal(input.amount),
       qty: input.qty ?? 1,
+      sku: input.sku?.trim() || null,
       description: input.description,
       businessDate: input.businessDate ?? new Date(),
       externalRef: input.externalRef,
@@ -274,6 +277,7 @@ export async function postPayment(input: {
       refundReason: input.refundReason,
       registerRef: input.registerRef,
       bankReference: input.bankReference,
+      businessDate: await getCurrentBusinessDate(),
       fiscalReceiptId,
       fiscalQrPayload,
     },
@@ -421,6 +425,32 @@ export async function voidCharge(chargeId: string) {
   });
   if (!charge) throw new Error('Charge not found');
   if (charge.folio.status !== 'OPEN') throw new Error('Cannot void charge on closed folio');
+
+  const { hotelDateKey } = await import('@/lib/hotel-calendar');
+  const { bakuCivilUtcDate } = await import('@era/satellite-kit/time');
+  const postedDay = await prisma.businessDay.findFirst({
+    where: { date: bakuCivilUtcDate(hotelDateKey(charge.businessDate)) },
+  });
+  if (postedDay?.status === 'CLOSED') {
+    const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+    await assertBusinessDayOpenForPosting();
+    const openDate = await getCurrentBusinessDate();
+    await prisma.folioCharge.create({
+      data: {
+        folioId: charge.folioId,
+        revenueCodeId: charge.revenueCodeId,
+        departmentId: charge.departmentId,
+        amount: charge.amount,
+        qty: -charge.qty,
+        sku: charge.sku,
+        description: `Void ${charge.description}`,
+        businessDate: openDate,
+        externalRef: `void-${charge.id}`,
+      },
+    });
+    await recalcReservationTotal(charge.folio.reservationId);
+    return { reservationId: charge.folio.reservationId };
+  }
 
   const voidPayload = {
     chargeId: charge.id,

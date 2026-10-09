@@ -92,7 +92,7 @@ test.describe('Reservation card FO parity', () => {
     const empty = dialog.getByTestId('folio-empty-state');
     if (await empty.count()) {
       await expect(empty).toBeVisible();
-      await expect(empty.locator(`a[href*="/folio/"]`).first()).toBeVisible();
+      await expect(empty.getByRole('button', { name: /ödəniş|payment|оплат/i }).first()).toBeVisible();
     }
 
     await dialog.getByText(/guests|qonaqlar|гости/i).first().click();

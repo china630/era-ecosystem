@@ -212,6 +212,7 @@ model Organization {
   earlyAccessEvents               EarlyAccessEvent[]
   earlyAccessSignups              EarlyAccessSignup[]
   satelliteEventsProcessed        SatelliteEventProcessed[]
+  hotelDayDocuments               HotelDayDocument[]
   auditSamples                    AuditSample[]
   auditEngagements                AuditEngagement[]
   auditEngagementInvitesTargets   AuditEngagementInvite[]          @relation("OrgAuditEngagementInvites")
@@ -1943,6 +1944,33 @@ model EarlyAccessThresholdAlert {
 }
 
 /// Idempotent satellite event processing (orchestrator → finance worker).
+enum HotelDayDocumentStatus {
+  POSTING
+  POSTED
+  REJECTED
+
+  @@map("hotel_day_document_status")
+}
+
+/// Hotel night-audit document. REJECTED stays for the accountant; the hotel day is already closed.
+model HotelDayDocument {
+  id             String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  businessDate   String                 @map("business_date") @db.VarChar(10)
+  reference      String                 @db.VarChar(40)
+  status         HotelDayDocumentStatus
+  errorMessage   String?                @map("error_message") @db.Text
+  payloadJson    Json                   @map("payload_json")
+  transactionId  String?                @map("transaction_id") @db.Uuid
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, reference], map: "hotel_day_documents_org_ref_uidx")
+  @@index([organizationId, status])
+  @@map("hotel_day_documents")
+}
+
 model SatelliteEventProcessed {
   id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String       @map("organization_id") @db.Uuid
@@ -3444,6 +3472,8 @@ model Product {
   createdAt                DateTime                  @default(now()) @map("created_at")
   updatedAt                DateTime                  @updatedAt @map("updated_at")
   isService                Boolean                   @default(false) @map("is_service")
+  /// NAS revenue account code for a sellable service or goods SKU. Empty for a pure ingredient.
+  revenueAccountCode       String?                   @map("revenue_account_code")
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   inventoryAuditLines      InventoryAuditLine[]
   invoiceItems             InvoiceItem[]

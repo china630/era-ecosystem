@@ -2,7 +2,7 @@ import { SATELLITE_CLINIC_PROCEDURE_COMPLETED } from "@era/contracts";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { resolveBillingTarget } from "@/lib/billing-router";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import {
   ProcedureAttendanceError,
@@ -13,6 +13,7 @@ import {
   AWAITING_PACKAGE_REASON,
   resolveProcedureCharge,
   logProcedureCharge,
+  postProcedureFolioCharge,
 } from "@/domain/procedure/procedure-charge.service";
 import { resolveProcedureConsumableLines } from "@/domain/master-data/master-data.service";
 import { isClinicElektrawebDualRun } from "@/domain/procedure/extra-ticket";
@@ -116,7 +117,6 @@ export async function completeProcedureOrder(
   const shouldChargeFolio =
     billingTarget === "HOTEL_FOLIO" &&
     !!order.reservationId &&
-    amountNet > 0 &&
     (!charge.overQuota || settings.procedureOverQuotaPolicy === "CHARGE_FOLIO");
 
   const ticketId = `clinic-proc-${order.id}`;
@@ -126,13 +126,15 @@ export async function completeProcedureOrder(
     !(await isClinicElektrawebDualRun()) &&
     !order.extraTicketIssuedAt
   ) {
-    await postHotelRoomCharge({
+    await postProcedureFolioCharge({
       reservationId: order.reservationId,
       amount: amountNet,
       description: charge.overQuota
         ? `Over-quota procedure ${order.procedureCode}`
         : `Procedure ${order.procedureCode}`,
       externalTicketId: ticketId,
+      procedureCode: order.procedureCode,
+      qty: order.quantity,
     });
   }
 

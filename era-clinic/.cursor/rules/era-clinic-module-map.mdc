@@ -58,7 +58,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/reports/diagnoses` | `GET /api/reports/diagnoses` — ICD usage by episode / visit / admission (date + chapter + source). Nav group Hesabatlar |
 | `/reports/patients-by-country` | `GET /api/reports/patients-by-country?month=YYYY-MM&origin=IN_HOUSE\|WALK_IN` — guests, nights inside that month, paid extras. Walk-in page is `/reports/walk-in-by-country` (no nights). Same screen permission as the diagnosis report |
 | `/reports/procedures` | `GET /api/reports/procedures` — doctor lines / bonus / by procedure / nurse work. Non-doctor callers may omit `doctorId` (all) or filter. `GET /api/reports/procedures/doctors`. Doctor-bonus: `bonusEligible` extras only; IN_HOUSE / WALK_IN buckets + % (CLI-53) |
-| `/cashier` | Queue / history / over-quota tabs; shift open+close (X/Z); settle modal by channel (`LOCAL` / `HOTEL_FOLIO` / `SETTLEMENT_HUB`); `GET /api/cashier/queue`, `…/shifts/current`, `…/shifts/[id]/close|report`, `…/bills/[visitId]` (+ settle), `…/receipts` (+ void/reprint), `…/over-quota` (+ settle); `GET /api/fiscal/devices` (KKM/POS pick); hub banner informational |
+| `/cashier` | Queue / history / over-quota tabs; shift open+close (X/Z); settle modal by channel (`LOCAL` / `HOTEL_FOLIO` / `SETTLEMENT_HUB`, hotel lines carry finance sku and qty); `GET /api/cashier/queue`, `…/shifts/current`, `…/shifts/[id]/close|report`, `…/bills/[visitId]` (+ settle), `…/receipts` (+ void/reprint), `…/over-quota` (+ settle); `GET /api/fiscal/devices` (KKM/POS pick); hub banner informational |
 | `/reception/extra-tickets` | Sanatorium extras. `GET/POST /api/procedures/issue-ticket` (**Pay** → one system receipt `yyyymmdd-xxx` per click, hotel folio room charge `MEDICAL` on the stay when `reservationId` is set — not the Elektraweb SPA product map — then place → ticket ×3 for `PENDING_PAY`); UI: `LIST_PAGE_SHELL` + `EraListFilterBar` (search + origin `CatalogField`) + `DATA_TABLE` + row **Banknote** pay. No typed receipt field. `POST /api/procedures/extra-reverse`; print `/print/extra-ticket/[ticketId]?organizationId=` (org from the link binds the tenant; must match the session org). Hotel void inbound `POST /api/internal/v1/extras/hotel-void`. In-house without a reservation is refused. Not SHIPPED / not cashier SoT. CLI-57 |
 | Executive (`GET /api/executive/summary?date=&practitionerId=`) | client `ExecutiveDashboard`; OrgOwner (`canViewExecutive`); rendered on Home `/` (no standalone `/executive` route) |
 
@@ -107,9 +107,9 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | Auth |
 |-------|------|
-| `/api/integration/hotel-lifecycle` | bridge secret — check-in/out, **guest departed/moved**, room change, stay product changed |
+| `/api/integration/hotel-lifecycle` | bridge secret — `enterRequestTenant(event.organizationId)` before Prisma; check-in/out, **guest departed/moved**, room change, stay product changed |
 | `/api/integration/staff-provision` | bridge secret — `enterRequestTenant`; scrypt User hash; Practitioner unique name link |
-| `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback |
+| `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback; `organizationId` required, `enterRequestTenant` before Prisma |
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
 | `/api/procedures/confirm` | session **DOCTOR** (+ admin) — confirm `PROPOSED` → `placeConfirmedProcedures` FIFO |
 | `/api/procedures/bulk-cancel` | session **RECEPTION** (+ admin) — bulk cancel + optional replace code |
@@ -121,7 +121,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/procedures/[id]/complete` | session NURSE — stuck `CHECKED_IN` fallback only (happy path = auto by `endsAt`) |
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
 | `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED`; Wave 4 `byOrganization` |
-| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products`; complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
+| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products` (`isService=false` components, `isService=true` sellable sku on `ProcedureType` and `DiagnosticService`); complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
 | `/api/cron/episode-walkin-close` | Bearer `PLATFORM_CRON_SECRET` — idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55; refuses live procedures/labs); path→module `clinic_inpatient` |
 | `GET/POST/PATCH/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |

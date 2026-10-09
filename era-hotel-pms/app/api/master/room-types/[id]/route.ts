@@ -12,6 +12,7 @@ const schema = z.object({
   ...localizedNameFields,
   baseQuota: z.number().int().positive().optional(),
   adultCapacity: z.number().int().optional(),
+  standardAdults: z.number().int().min(1).max(10).optional(),
   childCapacity: z.number().int().optional(),
   active: z.boolean().optional(),
 });

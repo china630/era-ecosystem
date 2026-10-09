@@ -34,17 +34,22 @@ import { ReservationCardHeaderSnapshot } from '@/components/reservation-card/Res
 import { ReservationCardLeftPanel } from '@/components/reservation-card/ReservationCardLeftPanel';
 import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal';
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
-import { SwapRoomsModal } from '@/components/reservation-card/SwapRoomsModal';
+import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import { ReservationCardGuestsTab } from '@/components/reservation-card/ReservationCardGuestsTab';
 import { ReservationCardPricingTab } from '@/components/reservation-card/ReservationCardPricingTab';
 import { StayAmendmentModal } from '@/components/reservation-card/StayAmendmentModal';
-import { ReservationCardFolioTab } from '@/components/reservation-card/ReservationCardFolioTab';
+import {
+  ReservationCardFolioTab,
+  type FolioAccount,
+} from '@/components/reservation-card/ReservationCardFolioTab';
 import { ReservationCardNotesTab } from '@/components/reservation-card/ReservationCardNotesTab';
 import { ReservationCardAttachPanel } from '@/components/reservation-card/ReservationCardAttachPanel';
 import {
   ReservationCardStaysBar,
   type BookingStaySummary,
 } from '@/components/reservation-card/ReservationCardStaysBar';
+import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -55,7 +60,6 @@ import {
   paxAgeYears,
   hydratePaxDemographicsFromGuest,
   hydratePaxNames,
-  partySizeFromCounts,
   stampEmptySlotsFromCounts,
   syncPaxToBandCounts,
   syncPaxToPartySize,
@@ -203,12 +207,24 @@ function nightlyForChargedType(
   plans: RatePlanOption[],
   ratePlanId: string,
   typeId: string,
+  adults: string,
+  checkIn: string,
 ): number | null {
+  if (!typeId) return null;
+  const current = plans.find((r) => r.id === ratePlanId);
+  const occ = Math.max(1, Number(adults) || 1);
+  const cell = (current?.sellCells ?? []).find((c) => {
+    if (c.roomTypeId !== typeId || c.occupancy !== occ) return false;
+    if (!checkIn) return true;
+    const from = c.effectiveFrom.slice(0, 10);
+    const to = c.effectiveTo ? c.effectiveTo.slice(0, 10) : null;
+    return from <= checkIn && (to == null || to >= checkIn);
+  });
+  if (cell) return cell.sellPrice;
   const matches = plans.filter(
     (r) => r.roomTypeId === typeId && r.pricePerNight != null && r.pricePerNight > 0,
   );
-  if (matches.length === 0 || !typeId) return null;
-  const current = plans.find((r) => r.id === ratePlanId);
+  if (matches.length === 0) return null;
   const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
   return (peer ?? matches[0]).pricePerNight ?? null;
 }
@@ -222,7 +238,10 @@ function stayMoveReason(
   const text = (note ?? '').trim();
   if (raw === 'CARD_ASSIGN' || text === 'CARD_ASSIGN') return t('roomMoveReasonCard');
   if (raw === 'SWAP') return t('roomMoveReasonSwap');
-  if (raw === 'RELOCATE') return t('roomMoveReasonRelocate');
+  if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('roomMoveReasonRelocate');
+  if (raw === 'GUEST_REFUSED') return t('moveReason.GUEST_REFUSED');
+  if (raw === 'DID_NOT_OCCUPY') return t('moveReason.DID_NOT_OCCUPY');
+  if (raw === 'HOTEL') return t('moveReason.HOTEL');
   if (text) return text;
   return t('roomMoveReasonOther');
 }
@@ -301,7 +320,7 @@ export function ReservationCardEditor({
   const [checkInTime, setCheckInTime] = useState('14:00');
   const [checkOutTime, setCheckOutTime] = useState('12:00');
   const [voucherNo, setVoucherNo] = useState('');
-  const [adults, setAdults] = useState('1');
+  const [adults, setAdults] = useState('0');
   const [market, setMarket] = useState('');
   const [segment, setSegment] = useState('');
   const [booker, setBooker] = useState('');
@@ -356,7 +375,7 @@ export function ReservationCardEditor({
   const [depositHeldTotal, setDepositHeldTotal] = useState(0);
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
-  const [swapOpen, setSwapOpen] = useState(false);
+  const [movePromptOpen, setMovePromptOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scanPaxIndex, setScanPaxIndex] = useState<number | null>(null);
   const [allergenCount, setAllergenCount] = useState(0);
@@ -436,7 +455,6 @@ export function ReservationCardEditor({
   const [bookingGroupId, setBookingGroupId] = useState<string | null>(null);
   const [bookingCode, setBookingCode] = useState<string | null>(null);
   const [bookingName, setBookingName] = useState<string | null>(null);
-  const [bookingFolioMode, setBookingFolioMode] = useState<string | null>(null);
   const [siblingStays, setSiblingStays] = useState<BookingStaySummary[]>([]);
   const { openSubModal, subModalProps } = useReservationSubModals(reservationId);
 
@@ -506,7 +524,6 @@ export function ReservationCardEditor({
       | undefined;
     setBookingCode(grp?.code ?? null);
     setBookingName(grp?.name ?? null);
-    setBookingFolioMode(grp?.folioMode ?? null);
     const rm = json.room as { status?: string; hkCondition?: string } | null | undefined;
     setRoomStatus(rm?.status ?? '');
     setRoomHkCondition(rm?.hkCondition ?? '');
@@ -737,7 +754,6 @@ export function ReservationCardEditor({
           children5_2: c5,
           children1_0: c1,
         };
-    if (!inHouse && partySizeFromCounts(bandCounts) < 1) bandCounts.adults = 1;
     const stamped = stampEmptySlotsFromCounts(nextPax, bandCounts);
     const sized = syncPaxToBandCounts(stamped, bandCounts, equalMode);
     setPax(sized);
@@ -755,16 +771,22 @@ export function ReservationCardEditor({
     }
   }, []);
 
+  const loadSeq = useRef(0);
   const load = useCallback(async () => {
     if (!reservationId) return;
+    const seq = ++loadSeq.current;
+    const requestedId = reservationId;
     setLoading(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/full`);
       const json = await res.json();
+      if (seq !== loadSeq.current) return;
       if (!res.ok) throw new Error(json.error ?? tc('loadError'));
+      if (requestedId !== reservationId) return;
       applyJson(json);
       try {
         const depRes = await fetch(`/api/reservations/${reservationId}/deposits`);
+        if (seq !== loadSeq.current) return;
         if (depRes.ok) {
           const deps = (await depRes.json()) as Array<{ amount?: number; status?: string }>;
           const held = Array.isArray(deps)
@@ -780,9 +802,10 @@ export function ReservationCardEditor({
         setDepositHeldTotal(0);
       }
     } catch (e) {
+      if (seq !== loadSeq.current) return;
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [reservationId, tc, applyJson]);
 
@@ -821,9 +844,6 @@ export function ReservationCardEditor({
         setSiblingStays(Array.isArray(list) ? list : []);
         if (g.code || g.data?.code) setBookingCode(g.code ?? g.data?.code);
         setBookingName(g.name ?? g.data?.name ?? null);
-        if (g.folioMode || g.data?.folioMode) {
-          setBookingFolioMode(g.folioMode ?? g.data?.folioMode);
-        }
       })
       .catch(() => {
         if (!cancelled) setSiblingStays([]);
@@ -864,43 +884,22 @@ export function ReservationCardEditor({
     }
   }
 
-  async function addSiblingStay() {
-    if (!reservationId || isCreate) {
-      showApiError({ error: tb('availableAfterSave') }, tc('failed'));
-      return;
-    }
-    setBusy(true);
-    try {
-      // Ensures Booking group when stay is still standalone, then clones a sibling RoomStay.
-      const res = await fetch(`/api/reservations/${reservationId}/add-room`, { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('failed'));
-        return;
-      }
-      showSuccess(tb('addStay'));
-      await load();
-      if (json.id) onReservationCreated?.(json.id);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   useEffect(() => {
     if (!open) return;
     if (isCreate) {
+      loadSeq.current += 1;
       setLoading(false);
       setData(null);
       setTab('guests');
       setQuoteText(null);
       setSellable(null);
-      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=1, CARD)
+      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=0, CARD)
       setCheckIn('');
       setCheckOut('');
       setCheckInTime('14:00');
       setCheckOutTime('12:00');
       setVoucherNo('');
-      setAdults('1');
+      setAdults('0');
       setChildren11_6('0');
       setChildren5_2('0');
       setChildren1_0('0');
@@ -948,7 +947,6 @@ export function ReservationCardEditor({
       setBookingGroupId(null);
       setBookingCode(null);
       setBookingName(null);
-      setBookingFolioMode(null);
       setSiblingStays([]);
       setIsLocked(false);
       setPartyBillingMode('PRIMARY');
@@ -1033,6 +1031,14 @@ export function ReservationCardEditor({
               mealPlanId?: string | null;
               roomTypeId?: string | null;
               pricePerNight?: number | string | null;
+              sellVersions?: Array<{
+                roomTypeId: string | null;
+                mealPlanId: string | null;
+                occupancy: number;
+                sellPrice: number | string;
+                effectiveFrom: string;
+                effectiveTo: string | null;
+              }>;
             }) => ({
               id: x.id,
               code: x.code,
@@ -1042,6 +1048,16 @@ export function ReservationCardEditor({
               roomTypeId: x.roomTypeId ?? null,
               pricePerNight:
                 x.pricePerNight != null ? Number(x.pricePerNight) : null,
+              sellCells: (x.sellVersions ?? [])
+                .filter((v) => v.roomTypeId)
+                .map((v) => ({
+                  roomTypeId: v.roomTypeId as string,
+                  mealPlanId: v.mealPlanId,
+                  occupancy: v.occupancy,
+                  sellPrice: Number(v.sellPrice),
+                  effectiveFrom: String(v.effectiveFrom),
+                  effectiveTo: v.effectiveTo ? String(v.effectiveTo) : null,
+                })),
               label: `${x.name ? `${x.code} — ${catalogLabel(x, locale)}` : x.code}${
                 x.medicalFlag ? tc('medicalSuffix') : ''
               }`,
@@ -1432,6 +1448,18 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json?.code === 'BUSINESS_DATE_LAG') {
+          showApiError(
+            {
+              error: t('checkInBusinessDateLag', {
+                businessDate: String(json.businessDate ?? ''),
+                arrivalDate: String(json.arrivalDate ?? ''),
+              }),
+            },
+            tc('failed'),
+          );
+          return;
+        }
         showApiError(
           json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
             ? { error: formatOperationalGaps(json.people, t) }
@@ -1469,32 +1497,6 @@ export function ReservationCardEditor({
       }
       showSuccess(onDate ? t('checkOutDone') : t('earlyStayCheckoutDone'));
       setPendingStayAction(null);
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function assignRoom() {
-    if (!reservationId || !pendingRoomId) return;
-    if (namesIncomplete) {
-      showApiError({ error: tb('namesIncomplete') }, tc('failed'));
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservationId}/assign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: pendingRoomId }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('failed'));
-        return;
-      }
-      showSuccess(tc('success'));
-      setRoomId(pendingRoomId);
       await load();
     } finally {
       setBusy(false);
@@ -1822,7 +1824,13 @@ export function ReservationCardEditor({
     setChildren1_0(String(counts.children1_0));
   }
 
-  async function save() {
+  async function save(moveReasonCode?: RoomMoveReason) {
+    const doorChanged =
+      !isCreate && Boolean(roomId) && Boolean(pendingRoomId) && pendingRoomId !== roomId;
+    if (doorChanged && !moveReasonCode) {
+      setMovePromptOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       const sourceKind = bookingSourceKind(sources.find((s) => s.id === sourceId)?.code);
@@ -1847,6 +1855,25 @@ export function ReservationCardEditor({
         showApiError({ error: tb('namesIncomplete') }, tc('failed'));
         return;
       }
+      const selectedType = roomTypes.find((r) => r.id === roomTypeId);
+      const typeCap = selectedType?.adultCapacity ?? 2;
+      const doorId = pendingRoomId || roomId;
+      const door = rooms.find((r) => r.id === doorId);
+      const doorCap = door?.maxBed;
+      const capacity = doorCap != null && doorCap > 0 ? Math.min(typeCap, doorCap) : typeCap;
+      const adultCount = Math.max(0, Number(adults) || 0);
+      if (roomTypeId && adultCount > capacity) {
+        showApiError(
+          {
+            error: t('adultsExceedCapacity', {
+              adults: adultCount,
+              capacity,
+            }),
+          },
+          tc('failed'),
+        );
+        return;
+      }
       if (isCreate) {
         const missing: string[] = [];
         if (!roomTypeId) missing.push(tb('roomType'));
@@ -1863,21 +1890,6 @@ export function ReservationCardEditor({
         }
         if (sellable && sellable.available < 1) {
           showApiError({ error: t('noSellableInventory') }, tc('failed'));
-          return;
-        }
-        const selectedType = roomTypes.find((r) => r.id === roomTypeId);
-        const capacity = selectedType?.adultCapacity ?? 2;
-        const adultCount = Math.max(1, Number(adults) || 1);
-        if (adultCount > capacity) {
-          showApiError(
-            {
-              error: t('adultsExceedCapacity', {
-                adults: adultCount,
-                capacity,
-              }),
-            },
-            tc('failed'),
-          );
           return;
         }
         const res = await fetch('/api/reservations', {
@@ -1898,7 +1910,7 @@ export function ReservationCardEditor({
             checkInDate: mergeDateTime(checkIn, checkInTime),
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
             paymentMethod,
-            adults: Number(adults) || 1,
+            adults: Math.max(0, Number(adults) || 0),
             children11_6: Number(children11_6) || 0,
             children5_2: Number(children5_2) || 0,
             children1_0: Number(children1_0) || 0,
@@ -1995,7 +2007,7 @@ export function ReservationCardEditor({
         }).catch(() => undefined);
       }
       let party = pax;
-      let partyAdults = Number(adults) || 1;
+      let partyAdults = Math.max(0, Number(adults) || 0);
       let partyC11 = Number(children11_6) || 0;
       let partyC5 = Number(children5_2) || 0;
       let partyC1 = Number(children1_0) || 0;
@@ -2029,6 +2041,7 @@ export function ReservationCardEditor({
           ...(namesBlocked
             ? {}
             : { roomId: pendingRoomId || null }),
+          ...(doorChanged && moveReasonCode ? { moveReasonCode } : {}),
           mealPlanId: mealPlanId || null,
           roomCount: Number(roomCount) || 1,
           rateType: rateType || null,
@@ -2182,7 +2195,7 @@ export function ReservationCardEditor({
       return canJoinOccupiedDoor({
         candidate: {
           shareEligible,
-          adults: Number(adults) || 1,
+          adults: Math.max(0, Number(adults) || 0),
           gender: guestGender || null,
         },
         overlapping: overlapping.map((res) => ({
@@ -2242,32 +2255,9 @@ export function ReservationCardEditor({
     return 'exclusive' as const;
   }, [shareEligible, bookingGroupId, siblingStays.length]);
 
-  const folios = (data?.folios as Array<{
-    type: string;
-    charges: Array<{
-      id: string;
-      amount: number;
-      description?: string;
-      businessDate?: string;
-      paxNo?: number | null;
-      invoiceRef?: string | null;
-      revenueCode?: { code: string };
-    }>;
-    payments?: Array<{ amount: number }>;
-  }>) ?? [];
+  const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
 
   const guestFolioBalance = computeGuestFolioBalance(folios);
-
-  const fiscalInvoices = (data?.fiscalDocuments as Array<{ invoiceNumber?: string | null }>) ?? [];
-
-  const folioLines = folios.flatMap((f) =>
-    f.charges.map((c) => ({
-      folioType: f.type,
-      stayDate: c.businessDate?.slice?.(0, 10),
-      invoiceRef: c.invoiceRef ?? fiscalInvoices[0]?.invoiceNumber ?? null,
-      ...c,
-    })),
-  );
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -2340,6 +2330,11 @@ export function ReservationCardEditor({
     onStayAction: stayActionKind ? requestStayAction : undefined,
     onClose,
     onToggleLock: isCreate ? undefined : () => void toggleLock(),
+    voidKind:
+      can(PERMISSIONS.RESERVATIONS_CANCEL)
+        ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
+        : null,
+    onVoidStay: (kind: 'cancel' | 'noShow') => void voidStay(kind),
     onSave: () => void save(),
     onConfirmCheckIn: isCreate ? undefined : () => void confirmCheckIn(),
     onHistory: reservationId ? () => setHistoryOpen(true) : undefined,
@@ -2366,28 +2361,16 @@ export function ReservationCardEditor({
           <ReservationCardStaysBar
             bookingCode={bookingCode}
             bookingName={bookingName}
-            folioMode={bookingFolioMode}
             stays={siblingStays}
             activeStayId={reservationId}
             onSelectStay={(id) => onReservationCreated?.(id)}
-            onAddStay={() => void addSiblingStay()}
-            addDisabled={busy || isLocked}
             onSaveBookingName={bookingGroupId ? (name) => void saveBookingName(name) : undefined}
             nameDisabled={busy || isLocked}
-            onSwapRooms={
-              siblingStays.length > 1 ? () => setSwapOpen(true) : undefined
-            }
-            swapDisabled={busy || isLocked}
           />
-          <p
-            className="m-0 mt-1 min-h-[1.25rem] truncate rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] text-[#34495E]"
-            data-testid="reservation-note-strip"
-          >
-            {Object.values(notes)
-              .map((value) => value.trim())
-              .filter(Boolean)
-              .join(' / ')}
-          </p>
+          <ReservationNoteLine
+            className="my-1 rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] leading-5 text-[#34495E]"
+            notes={Object.entries(notes).map(([noteType, text]) => ({ noteType, text }))}
+          />
         </div>
       ) : null}
 
@@ -2474,16 +2457,11 @@ export function ReservationCardEditor({
             isCreate={isCreate}
             isLocked={isLocked}
             showAssignment={showAssignment}
+            showRoomSelect
             sellable={isCreate ? sellable : null}
             agencies={agencies}
             walkInProfileCode={walkInProfileCode}
             walkInProfiles={walkInProfiles}
-            voidKind={
-              can(PERMISSIONS.RESERVATIONS_CANCEL)
-                ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
-                : null
-            }
-            onVoidStay={(kind) => void voidStay(kind)}
             staySlices={
               Array.isArray(data?.staySlices)
                 ? (data.staySlices as Array<{
@@ -2522,11 +2500,6 @@ export function ReservationCardEditor({
             ratePlans={ratePlans}
             rooms={assignableRooms}
             onChange={onLeftChange}
-            onAssignRoom={
-              showAssignment && !namesIncomplete ? () => void assignRoom() : undefined
-            }
-            assignBusy={busy}
-            assignTitle={namesIncomplete ? tb('namesIncomplete') : undefined}
             onFocusRoomSelect={() =>
               document.getElementById('res-card-room-select')?.focus()
             }
@@ -2548,7 +2521,13 @@ export function ReservationCardEditor({
                 : []
             }
             onClassSettlement={(action) => {
-              const givenNightly = nightlyForChargedType(ratePlans, ratePlanId, givenRoomTypeId);
+              const givenNightly = nightlyForChargedType(
+                ratePlans,
+                ratePlanId,
+                givenRoomTypeId,
+                adults,
+                checkIn,
+              );
               const note =
                 action === 'HOTEL'
                   ? t('classHotelCoversNote')
@@ -2588,16 +2567,11 @@ export function ReservationCardEditor({
               !isCreate ? () => openSubModal('folioRouting') : undefined
             }
             onPackageRoomGap={(mode) => {
-              const sold = ratePlans.find((r) => r.id === ratePlanId);
-              const peer = ratePlans.find(
-                (r) =>
-                  r.id !== sold?.id &&
-                  Boolean(r.medicalFlag) &&
-                  r.roomTypeId === roomTypeId &&
-                  r.pricePerNight != null,
-              );
-              const soldPrice = Number(sold?.pricePerNight ?? 0);
-              const peerPrice = Number(peer?.pricePerNight ?? soldPrice);
+              const soldPrice =
+                nightlyForChargedType(ratePlans, ratePlanId, roomTypeId, adults, checkIn) ?? 0;
+              const peerPrice =
+                nightlyForChargedType(ratePlans, ratePlanId, givenRoomTypeId, adults, checkIn) ??
+                soldPrice;
               if (mode === 'COMP') {
                 setNotes((prev) => ({
                   ...prev,
@@ -2607,10 +2581,15 @@ export function ReservationCardEditor({
               }
               const nightly = mode === 'CHARGE' ? Math.max(soldPrice, peerPrice) : Math.min(soldPrice, peerPrice);
               if (nightly > 0) {
+                const today = todayBakuYmd();
                 setUseManualRate(true);
                 setManualDailyRate(String(nightly));
                 setDailyRates((rows) =>
-                  rows.map((d) => ({ ...d, amount: nightly, manualFlag: true, fixPrice: true })),
+                  rows.map((d) =>
+                    d.fixPrice || d.stayDate < today
+                      ? d
+                      : { ...d, amount: nightly, manualFlag: true, fixPrice: true },
+                  ),
                 );
               }
               const gapLabel = mode === 'CHARGE' ? t('packageGapCharge') : t('packageGapRefund');
@@ -2706,9 +2685,13 @@ export function ReservationCardEditor({
                   busy={busy}
                   isLocked={isLocked}
                   packageCompose={packageCompose}
-                  tariffNightly={
-                    ratePlans.find((plan) => plan.id === ratePlanId)?.pricePerNight ?? null
-                  }
+                  tariffNightly={(() => {
+                    const plan = ratePlans.find((item) => item.id === ratePlanId);
+                    if (plan?.medicalFlag) {
+                      return nightlyForChargedType(ratePlans, ratePlanId, roomTypeId, adults, checkIn);
+                    }
+                    return plan?.pricePerNight ?? null;
+                  })()}
                   businessDate={pricingBusinessDate}
                   postedDates={folios.flatMap((folio) =>
                     folio.charges
@@ -2732,11 +2715,21 @@ export function ReservationCardEditor({
                   <ReservationCardFolioTab
                     reservationId={reservationId}
                     folioTab={folioTab}
-                    lines={folioLines}
+                    accounts={folios}
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
                     canPostCharges={status === 'IN_HOUSE'}
+                    canCheckOut={status === 'IN_HOUSE'}
+                    fiscalDocuments={
+                      (data?.fiscalDocuments as Array<{
+                        id: string;
+                        invoiceNumber?: string | null;
+                        fiscalStatus: string;
+                        rejectionReason?: string | null;
+                      }>) ?? []
+                    }
                     onFolioTab={setFolioTab}
+                    onChanged={() => void load()}
                   />
                 ) : (
                   <p className="text-[13px] text-[#7F8C8D]">{tb('folioTabHint')}</p>
@@ -2853,35 +2846,13 @@ export function ReservationCardEditor({
             .finally(() => setBusy(false));
         }}
       />
-      <SwapRoomsModal
-        open={swapOpen}
-        siblings={siblingStays
-          .filter((s) => s.id !== reservationId)
-          .map((s) => ({
-            id: s.id,
-            label: `${s.room?.roomNumber ? `№${s.room.roomNumber}` : s.roomType.code} · ${s.guest.fullName}`,
-          }))}
+      <RoomMoveReasonModal
+        open={movePromptOpen}
         busy={busy}
-        onClose={() => setSwapOpen(false)}
-        onConfirm={(otherId) => {
-          if (!reservationId) return;
-          setBusy(true);
-          void fetch(`/api/reservations/${reservationId}/swap-room`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ otherReservationId: otherId }),
-          })
-            .then(async (res) => {
-              const json = await res.json();
-              if (!res.ok) {
-                showApiError(json, tc('failed'));
-                return;
-              }
-              showSuccess(t('swapRoomsDone'));
-              setSwapOpen(false);
-              await load();
-            })
-            .finally(() => setBusy(false));
+        onClose={() => setMovePromptOpen(false)}
+        onConfirm={(reason) => {
+          setMovePromptOpen(false);
+          void save(reason);
         }}
       />
       <StayAmendmentModal

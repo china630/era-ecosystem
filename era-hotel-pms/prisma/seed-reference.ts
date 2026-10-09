@@ -105,6 +105,9 @@ async function main() {
           kind,
           code: row.code,
           name: row.name,
+          nameEn: row.nameEn ?? null,
+          nameAz: row.nameAz ?? null,
+          nameRu: row.nameRu ?? null,
           sortOrder: row.sortOrder,
         },
       });

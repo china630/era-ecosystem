@@ -226,7 +226,7 @@ export default function ProductsPage() {
                 {filteredRows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.isService ? "—" : r.sku}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.sku}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.price)}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatProductVatCell(r.vatRate, t)}</td>
                     <td className={DATA_TABLE_ACTIONS_TD_CLASS}>

@@ -73,6 +73,7 @@ export async function POST(request: Request) {
               priceAzn: item.priceAzn,
               active: item.active,
               recipeSku: item.recipeSku,
+              financeSku: item.financeSku,
               imageUrl: item.imageUrl,
             },
           });
