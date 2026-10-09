@@ -1,4 +1,5 @@
 import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
+import { isNightAuditPosting } from '@/lib/night-audit-posting';
 import { prisma } from '@/lib/prisma';
 
 function dateOnly(d: Date): Date {
@@ -55,7 +56,7 @@ export async function assertBusinessDayOpenForPosting(): Promise<void> {
   if (!(await isStrictBusinessDateGate())) return;
 
   const profile = await getHotelProfile();
-  if (profile?.businessDateLocked) {
+  if (profile?.businessDateLocked && !isNightAuditPosting()) {
     throw new Error('Business date is locked during night audit');
   }
 
@@ -107,6 +108,15 @@ export async function lockBusinessDateForAudit(): Promise<void> {
   await prisma.hotelProfile.update({
     where: { id: profile.id },
     data: { businessDateLocked: true },
+  });
+}
+
+export async function unlockBusinessDateAfterAudit(): Promise<void> {
+  const profile = await getHotelProfile();
+  if (!profile?.businessDateLocked) return;
+  await prisma.hotelProfile.update({
+    where: { id: profile.id },
+    data: { businessDateLocked: false },
   });
 }
 

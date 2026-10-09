@@ -7,10 +7,12 @@ import { postCharge } from '@/lib/services/folio.service';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
 import { assertNoOpenPosShifts, getPosShiftStatus } from '@/lib/services/pms-bridge.service';
+import { withNightAuditPosting } from '@/lib/night-audit-posting';
 import {
   getCurrentBusinessDate,
   advanceBusinessDate,
   lockBusinessDateForAudit,
+  unlockBusinessDateAfterAudit,
   ensureCurrentBusinessDayOpen,
 } from '@/lib/services/business-date.service';
 import {
@@ -91,7 +93,15 @@ export async function runNightAudit() {
   }
   await assertNoOpenPosShifts();
   await lockBusinessDateForAudit();
+  try {
+    return await withNightAuditPosting(() => executeLockedNightAudit());
+  } catch (e) {
+    await unlockBusinessDateAfterAudit();
+    throw e;
+  }
+}
 
+async function executeLockedNightAudit() {
   const date = await getCurrentBusinessDate();
   let businessDay = await prisma.businessDay.findFirst({ where: { date } });
   if (!businessDay) {
@@ -341,13 +351,6 @@ export async function runNightAudit() {
         stepsJson: JSON.stringify(steps),
       },
     });
-    const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
-    if (profile) {
-      await prisma.hotelProfile.update({
-        where: { id: profile.id },
-        data: { businessDateLocked: false },
-      });
-    }
     throw e;
   }
 }
