@@ -8,7 +8,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 const createSchema = z.object({
   amount: z.number().positive(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),
+  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'BANK_TRANSFER', 'LOYALTY_POINTS']),
   registerRef: z.string().optional(),
   externalRef: z.string().optional(),
 });

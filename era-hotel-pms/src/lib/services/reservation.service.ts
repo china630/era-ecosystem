@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
+import { BusinessDateLagError } from '@/lib/business-date-lag';
 import { requestOrganizationId } from '@/lib/request-organization';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
@@ -683,6 +685,10 @@ export async function checkInReservation(
   let arrivalKey = hotelDateKey(reservation.checkInDate);
   let departKey = hotelDateKey(reservation.checkOutDate);
   if (arrivalKey > bizKey && !opts?.early) {
+    const wallToday = todayBakuYmd();
+    if (arrivalKey <= wallToday) {
+      throw new BusinessDateLagError(bizKey, arrivalKey);
+    }
     throw new Error(
       'Check-in opens on the arrival date. Confirm early check-in to receive the guest sooner.',
     );

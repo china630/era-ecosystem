@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { jsonError, jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import {
   getPosShiftStatus,
@@ -7,6 +7,7 @@ import {
 } from '@/lib/services/pms-bridge.service';
 import { assertPosBridgeOrPermission } from '@/lib/pos-bridge-auth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { enterRequestTenant } from '@/lib/request-organization';
 
 const putSchema = z.object({
   outletCode: z.string().min(1),
@@ -29,6 +30,11 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     await assertPosBridgeOrPermission(request, PERMISSIONS.NIGHT_AUDIT_RUN);
+    const organizationId = request.headers.get('x-era-organization-id')?.trim() ?? '';
+    if (!organizationId || organizationId === 'demo-org') {
+      return jsonError('organizationId required', 400);
+    }
+    enterRequestTenant(organizationId);
     const body = putSchema.parse(await request.json());
     await reportPosShiftStatus({
       outletCode: body.outletCode,

@@ -9,6 +9,7 @@ import {
 } from '@/lib/guest-stay-requirements';
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
+import { BusinessDateLagError } from '@/lib/business-date-lag';
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -52,6 +53,17 @@ export function handleRouteError(err: unknown) {
   if (err instanceof LaundryOpenError) {
     return NextResponse.json(
       { error: err.message, code: err.code, tickets: err.tickets },
+      { status: 409 },
+    );
+  }
+  if (err instanceof BusinessDateLagError) {
+    return NextResponse.json(
+      {
+        error: err.message,
+        code: err.code,
+        businessDate: err.businessDate,
+        arrivalDate: err.arrivalDate,
+      },
       { status: 409 },
     );
   }

@@ -53,6 +53,7 @@ import {
 import { HotelHeaderTierBar } from '@/components/HotelHeaderTierBar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import GroupBookingModal from '@/components/GroupBookingModal';
+import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { normalizeHotelPermission } from '@/lib/auth/hotel-permission-rename';
 
@@ -106,6 +107,8 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
   const openReservation = searchParams.get('openReservation') === '1';
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [folioCardId, setFolioCardId] = useState<string | null>(null);
   const t = useTranslations('nav');
   const tMeta = useTranslations('meta');
   const tHeader = useTranslations('header');
@@ -124,6 +127,20 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     if (openRoom) setBookingModalOpen(true);
     if (openGroup) setGroupModalOpen(true);
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('openReservation');
+    params.delete('newBooking');
+    params.delete('groupBooking');
+    params.delete('folioStay');
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  useEffect(() => {
+    const folioStay = searchParams.get('folioStay');
+    if (!folioStay) return;
+    setFolioCardId(folioStay);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('folioStay');
     params.delete('openReservation');
     params.delete('newBooking');
     params.delete('groupBooking');
@@ -943,6 +960,18 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           </button>
         </>
       ) : null}
+      {can(PERMISSIONS.FOLIO_PAYMENT) ? (
+        <button
+          type="button"
+          className={headerQuickLinkClass(paymentOpen)}
+          title={t('acceptPayment')}
+          aria-label={t('acceptPayment')}
+          onClick={() => setPaymentOpen(true)}
+        >
+          <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{t('acceptPayment')}</span>
+        </button>
+      ) : null}
     </div>
   );
 
@@ -1017,6 +1046,19 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           />
         </>
       ) : null}
+      {can(PERMISSIONS.FOLIO_PAYMENT) ? (
+        <FolioPaymentModal
+          open={paymentOpen}
+          onClose={() => setPaymentOpen(false)}
+          onOpenStay={(id) => setFolioCardId(id)}
+        />
+      ) : null}
+      <ReservationCardModal
+        open={Boolean(folioCardId)}
+        reservationId={folioCardId}
+        initialTab="folio"
+        onClose={() => setFolioCardId(null)}
+      />
     </>
   );
 }
