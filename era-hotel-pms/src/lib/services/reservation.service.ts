@@ -795,14 +795,16 @@ export async function checkInReservation(
       const amount = daily
         ? decimalToNumber(daily.amount)
         : decimalToNumber(reservation.ratePlan.pricePerNight);
-      await postCharge({
-        reservationId: id,
-        revenueCodeId: revenueRoom.id,
-        amount,
-        qty: 1,
-        description: `Room night ${bizKey}`,
-        businessDate: biz,
-      });
+      if (daily || amount > 0) {
+        await postCharge({
+          reservationId: id,
+          revenueCodeId: revenueRoom.id,
+          amount,
+          qty: 1,
+          description: `Room night ${bizKey}`,
+          businessDate: biz,
+        });
+      }
     }
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');

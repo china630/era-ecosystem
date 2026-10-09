@@ -151,6 +151,8 @@ export async function upsertElektraRateCode(
   }
   const existing = await db.ratePlan.findFirst({ where: { code: row.code }, select: { id: true } });
   if (dryRun) return existing ? 'updated' : 'created';
+  // Flat Elektra tariff: own pricePerNight, no BAR parent. Night audit must not
+  // treat a missing derivedFromId as a derivation (see usesBarCalendar).
   await db.ratePlan.upsert({
     where: { code: row.code } as never,
     create: {

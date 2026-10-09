@@ -13,7 +13,10 @@ import {
   lockBusinessDateForAudit,
   ensureCurrentBusinessDayOpen,
 } from '@/lib/services/business-date.service';
-import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
+import {
+  getNightlyRoomChargeForDate,
+  NightlyPriceMissingError,
+} from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
 import { countUnclosedCashDesk } from '@/lib/services/cash-desk.service';
 import { resolveSettlementPolicy } from '@era/satellite-kit';
@@ -200,7 +203,13 @@ export async function runNightAudit() {
 
     const inHouse = await prisma.reservation.findMany({
       where: { status: 'IN_HOUSE' },
-      include: { ratePlan: true, room: true, folios: { include: { charges: true } }, dailyRates: true },
+      include: {
+        ratePlan: true,
+        room: true,
+        guest: { select: { fullName: true } },
+        folios: { include: { charges: true } },
+        dailyRates: true,
+      },
     });
 
     for (const res of inHouse) {
@@ -226,9 +235,28 @@ export async function runNightAudit() {
         const daily = res.dailyRates.find(
           (d) => d.stayDate.toISOString().slice(0, 10) === date.toISOString().slice(0, 10),
         );
-        const amount = daily
-          ? decimalToNumber(daily.amount)
-          : await getNightlyRoomChargeForDate(res.id, date);
+        let amount: number;
+        try {
+          amount = daily
+            ? decimalToNumber(daily.amount)
+            : await getNightlyRoomChargeForDate(res.id, date);
+        } catch (err) {
+          if (err instanceof NightlyPriceMissingError) {
+            const who = [
+              res.guest?.fullName,
+              res.externalRef ? `ref ${res.externalRef}` : null,
+              res.room?.roomNumber ? `room ${res.room.roomNumber}` : null,
+              `rate ${err.ratePlanCode}`,
+            ]
+              .filter(Boolean)
+              .join(', ');
+            steps.push(
+              `Step 3: Nightly price missing — reservation ${res.id} (${who}); room charge skipped`,
+            );
+            continue;
+          }
+          throw err;
+        }
 
         await postCharge({
           reservationId: res.id,
