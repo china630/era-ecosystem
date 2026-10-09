@@ -4,6 +4,8 @@ import type { ImportTx } from '@/lib/import/types';
  * One Elektraweb revenue resolver for the Excel import (`03-Revenue-Codes`) and the live folio bridge.
  * Known Elektra names map onto the codes our services post to (`ROOM`, `BANQUET`, …); anything else
  * keeps its own Elektra code. `ROOM` is the fallback only when Elektra sent neither code nor name.
+ * Catalogs that kept the numeric department (`code` 10, `name` ROOM) are still the room charge:
+ * `findRevenueCodeByToken` matches the token on code first, then on name.
  */
 
 export type ElektraRevenueInput = {

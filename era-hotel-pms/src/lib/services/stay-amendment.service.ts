@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { replaceSlicesFromDate, resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.service';
@@ -137,8 +138,8 @@ export async function applyStayAmendment(input: {
 
   if (preview.folioImpact === 'DIFFERENCE_LINE' && preview.differenceAmount !== 0) {
     const adj =
-      (await prisma.revenueCode.findFirst({ where: { code: 'RATE_ADJ' } })) ??
-      (await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } }));
+      (await findRevenueCodeByToken('RATE_ADJ')) ??
+      (await findRevenueCodeByToken('ROOM'));
     if (adj) {
       const externalRef = rateAdjExternalRef(input.reservationId, isoDate(biz));
       const existing = await prisma.folioCharge.findFirst({ where: { externalRef } });

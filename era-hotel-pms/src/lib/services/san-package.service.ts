@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { scaleLinesToSell } from '@/lib/services/door-type.policy';
 import { resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 
@@ -53,7 +54,7 @@ export async function postNightlyPackageCharges(
   }
 
   const lines = ratePlan.packageLines;
-  const pkgCode = await prisma.revenueCode.findFirst({ where: { code: 'PKG' } });
+  const pkgCode = await findRevenueCodeByToken('PKG');
 
   // Wave D: prefer composed sell from pax medicalPackageCode when daily rate missing
   let sellAmount: number;
