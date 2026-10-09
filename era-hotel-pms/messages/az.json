@@ -599,7 +599,8 @@
     "cashDeskOpenBlock": "{count} sətir açıqdır",
     "cashDeskOk": "OK",
     "posShiftStatus": "POS növbələri:",
-    "posShiftOpen": "Oteldə {outlet} üçün açıq nüsxə qalıb. Növbəni F&B-də bağlayın, sonra gecə auditini yenidən işə salın.",
+    "posShiftOpen": "F&B-də {outlet} üçün növbə hələ açıqdır. Onu orada bağlayın, sonra gecə auditini yenidən işə salın.",
+    "posShiftUnreachable": "Otel F&B-dən cavab ala bilmədi, ona görə {outlet} üçün açıq nüsxə qaldı. F&B cavab verənə qədər gecə auditi blokdadır.",
     "posShiftOk": "OK",
     "openCashDesk": "Ön kassa cədvəli",
     "closeCashDeskBeforeNa": "Gecə auditindən əvvəl bu iş gününün kassa sətirlərini bağlayın.",
@@ -706,8 +707,8 @@
     "commercialSales": "Kommersiya və satış",
     "classification": "Təsnifat",
     "roomSection": "Otaq",
-    "cancelStay": "CANCELLED",
-    "noShowStay": "NO_SHOW",
+    "cancelStay": "CANCEL",
+    "noShowStay": "NO SHOW",
     "cancelDone": "Bron ləğv edildi",
     "noShowDone": "Gəlməmə qeyd olundu",
     "splitFrom": "Otağı tarixdən dəyiş",
@@ -2575,7 +2576,8 @@
       "NOTE_TYPE": "Qeyd tipi",
       "CONCIERGE_CATEGORY": "Konsyerj kateqoriyası",
       "EVENT_LINE_KIND": "Banket sətir növü",
-      "WALKIN_PROFILE": "Walk-in profili"
+      "WALKIN_PROFILE": "Walk-in profili",
+      "NATIONALITY": "Vətəndaşlıq"
     }
   },
   "opsWipe": {

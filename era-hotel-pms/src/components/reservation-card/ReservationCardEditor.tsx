@@ -45,6 +45,7 @@ import {
   ReservationCardStaysBar,
   type BookingStaySummary,
 } from '@/components/reservation-card/ReservationCardStaysBar';
+import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -55,7 +56,6 @@ import {
   paxAgeYears,
   hydratePaxDemographicsFromGuest,
   hydratePaxNames,
-  partySizeFromCounts,
   stampEmptySlotsFromCounts,
   syncPaxToBandCounts,
   syncPaxToPartySize,
@@ -301,7 +301,7 @@ export function ReservationCardEditor({
   const [checkInTime, setCheckInTime] = useState('14:00');
   const [checkOutTime, setCheckOutTime] = useState('12:00');
   const [voucherNo, setVoucherNo] = useState('');
-  const [adults, setAdults] = useState('1');
+  const [adults, setAdults] = useState('0');
   const [market, setMarket] = useState('');
   const [segment, setSegment] = useState('');
   const [booker, setBooker] = useState('');
@@ -737,7 +737,6 @@ export function ReservationCardEditor({
           children5_2: c5,
           children1_0: c1,
         };
-    if (!inHouse && partySizeFromCounts(bandCounts) < 1) bandCounts.adults = 1;
     const stamped = stampEmptySlotsFromCounts(nextPax, bandCounts);
     const sized = syncPaxToBandCounts(stamped, bandCounts, equalMode);
     setPax(sized);
@@ -894,13 +893,13 @@ export function ReservationCardEditor({
       setTab('guests');
       setQuoteText(null);
       setSellable(null);
-      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=1, CARD)
+      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=0, CARD)
       setCheckIn('');
       setCheckOut('');
       setCheckInTime('14:00');
       setCheckOutTime('12:00');
       setVoucherNo('');
-      setAdults('1');
+      setAdults('0');
       setChildren11_6('0');
       setChildren5_2('0');
       setChildren1_0('0');
@@ -1867,7 +1866,7 @@ export function ReservationCardEditor({
         }
         const selectedType = roomTypes.find((r) => r.id === roomTypeId);
         const capacity = selectedType?.adultCapacity ?? 2;
-        const adultCount = Math.max(1, Number(adults) || 1);
+        const adultCount = Math.max(0, Number(adults) || 0);
         if (adultCount > capacity) {
           showApiError(
             {
@@ -1898,7 +1897,7 @@ export function ReservationCardEditor({
             checkInDate: mergeDateTime(checkIn, checkInTime),
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
             paymentMethod,
-            adults: Number(adults) || 1,
+            adults: Math.max(0, Number(adults) || 0),
             children11_6: Number(children11_6) || 0,
             children5_2: Number(children5_2) || 0,
             children1_0: Number(children1_0) || 0,
@@ -1995,7 +1994,7 @@ export function ReservationCardEditor({
         }).catch(() => undefined);
       }
       let party = pax;
-      let partyAdults = Number(adults) || 1;
+      let partyAdults = Math.max(0, Number(adults) || 0);
       let partyC11 = Number(children11_6) || 0;
       let partyC5 = Number(children5_2) || 0;
       let partyC1 = Number(children1_0) || 0;
@@ -2182,7 +2181,7 @@ export function ReservationCardEditor({
       return canJoinOccupiedDoor({
         candidate: {
           shareEligible,
-          adults: Number(adults) || 1,
+          adults: Math.max(0, Number(adults) || 0),
           gender: guestGender || null,
         },
         overlapping: overlapping.map((res) => ({
@@ -2340,6 +2339,11 @@ export function ReservationCardEditor({
     onStayAction: stayActionKind ? requestStayAction : undefined,
     onClose,
     onToggleLock: isCreate ? undefined : () => void toggleLock(),
+    voidKind:
+      can(PERMISSIONS.RESERVATIONS_CANCEL)
+        ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
+        : null,
+    onVoidStay: (kind: 'cancel' | 'noShow') => void voidStay(kind),
     onSave: () => void save(),
     onConfirmCheckIn: isCreate ? undefined : () => void confirmCheckIn(),
     onHistory: reservationId ? () => setHistoryOpen(true) : undefined,
@@ -2379,15 +2383,10 @@ export function ReservationCardEditor({
             }
             swapDisabled={busy || isLocked}
           />
-          <p
-            className="m-0 mt-1 min-h-[1.25rem] truncate rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] text-[#34495E]"
-            data-testid="reservation-note-strip"
-          >
-            {Object.values(notes)
-              .map((value) => value.trim())
-              .filter(Boolean)
-              .join(' / ')}
-          </p>
+          <ReservationNoteLine
+            className="my-1 rounded-md border border-[#D5DADF] bg-white px-2.5 py-1 text-[12px] leading-5 text-[#34495E]"
+            notes={Object.entries(notes).map(([noteType, text]) => ({ noteType, text }))}
+          />
         </div>
       ) : null}
 
@@ -2478,12 +2477,6 @@ export function ReservationCardEditor({
             agencies={agencies}
             walkInProfileCode={walkInProfileCode}
             walkInProfiles={walkInProfiles}
-            voidKind={
-              can(PERMISSIONS.RESERVATIONS_CANCEL)
-                ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
-                : null
-            }
-            onVoidStay={(kind) => void voidStay(kind)}
             staySlices={
               Array.isArray(data?.staySlices)
                 ? (data.staySlices as Array<{

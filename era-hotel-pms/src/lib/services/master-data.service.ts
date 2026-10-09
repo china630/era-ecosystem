@@ -327,6 +327,9 @@ export async function ensureHotelLookupsSeeded() {
           kind: row.kind as HotelLookupKind,
           code: row.code,
           name: row.name,
+          nameEn: row.nameEn ?? null,
+          nameAz: row.nameAz ?? null,
+          nameRu: row.nameRu ?? null,
           sortOrder: row.sortOrder,
         },
       });

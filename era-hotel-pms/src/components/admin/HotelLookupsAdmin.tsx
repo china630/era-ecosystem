@@ -40,6 +40,7 @@ const KINDS = [
   'CONCIERGE_CATEGORY',
   'EVENT_LINE_KIND',
   'WALKIN_PROFILE',
+  'NATIONALITY',
 ] as const;
 
 type Kind = (typeof KINDS)[number];

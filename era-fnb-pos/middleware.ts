@@ -23,6 +23,8 @@ const staffGate = createSatelliteStaffMiddleware<NextRequest>({
     "/api/integration/staff-provision",
     // Route checks POS_BRIDGE_SECRET itself.
     "/api/integration/settlement-confirmed",
+    // Hotel night audit polls this with X-Pos-Bridge-Secret; the route checks the secret.
+    "/api/internal/v1/shifts/open",
     "/api/public/menu",
     "/api/auth/pin",
     "/api/auth/terminal",

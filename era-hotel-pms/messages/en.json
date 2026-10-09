@@ -598,7 +598,8 @@
     "cashDeskOpenBlock": "{count} row(s) still open",
     "cashDeskOk": "OK",
     "posShiftStatus": "POS shifts:",
-    "posShiftOpen": "Hotel still has an open copy for {outlet}. Close that shift in F&B, then run night audit again.",
+    "posShiftOpen": "F&B still has an open shift for {outlet}. Close it there, then run night audit again.",
+    "posShiftUnreachable": "Hotel could not ask F&B, so the open copy for {outlet} was left in place. Night audit stays blocked until F&B answers.",
     "posShiftOk": "OK",
     "openCashDesk": "Front cash summary",
     "closeCashDeskBeforeNa": "Close the front cash rows for this business date before night audit.",
@@ -705,8 +706,8 @@
     "commercialSales": "Commercial & sales",
     "classification": "Classification",
     "roomSection": "Room",
-    "cancelStay": "CANCELLED",
-    "noShowStay": "NO_SHOW",
+    "cancelStay": "CANCEL",
+    "noShowStay": "NO SHOW",
     "cancelDone": "Reservation cancelled",
     "noShowDone": "Marked as no-show",
     "splitFrom": "Change room from",
@@ -2584,7 +2585,8 @@
       "NOTE_TYPE": "Note type",
       "CONCIERGE_CATEGORY": "Concierge category",
       "EVENT_LINE_KIND": "Banquet line kind",
-      "WALKIN_PROFILE": "Walk-in profile"
+      "WALKIN_PROFILE": "Walk-in profile",
+      "NATIONALITY": "Citizenship"
     }
   },
   "opsWipe": {

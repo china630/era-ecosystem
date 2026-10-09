@@ -205,48 +205,82 @@ function fnbPosBaseUrl(): string | null {
   return raw ? raw.replace(/\/$/, '') : null;
 }
 
-/** Live open outlets in fb-pos. Null when the satellite cannot be asked. */
-async function liveOpenOutletCodes(): Promise<Set<string> | null> {
+type LivePosShift = { outletCode: string; shiftId: string; openedAt: string };
+
+type LivePosShifts =
+  | { ok: true; shifts: LivePosShift[] }
+  | { ok: false };
+
+/** Live open shifts in fb-pos. `ok: false` when the satellite cannot be asked. */
+async function liveOpenShifts(): Promise<LivePosShifts> {
   const base = fnbPosBaseUrl();
   const secret = process.env.POS_BRIDGE_SECRET?.trim();
-  if (!base || !secret) return null;
+  if (!base || !secret) return { ok: false };
   try {
     const res = await fetch(`${base}/api/internal/v1/shifts/open`, {
       headers: { 'X-Pos-Bridge-Secret': secret },
       cache: 'no-store',
     });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { open?: Array<{ outletCode?: string }> };
-    const codes = (body.open ?? [])
-      .map((row) => row.outletCode?.trim())
-      .filter((code): code is string => Boolean(code));
-    return new Set(codes);
+    if (!res.ok) return { ok: false };
+    const body = (await res.json()) as {
+      open?: Array<{ outletCode?: string; shiftId?: string; openedAt?: string }>;
+    };
+    const shifts = (body.open ?? [])
+      .map((row) => ({
+        outletCode: row.outletCode?.trim() ?? '',
+        shiftId: row.shiftId?.trim() ?? '',
+        openedAt: row.openedAt?.trim() ?? '',
+      }))
+      .filter((row) => row.outletCode || row.shiftId);
+    return { ok: true, shifts };
   } catch {
-    return null;
+    return { ok: false };
   }
 }
 
-/** Drop hotel copies of shifts fb-pos has already closed. The close ping can fail and leave KAFE OPEN here. */
-export async function reconcileStalePosBridgeShifts(): Promise<void> {
+/**
+ * Drop hotel copies fb-pos no longer lists. A failed close ping leaves the old
+ * shift id OPEN here; opening a new cafe shift does not reuse that id.
+ * A failed poll does not close anything: a live shift may still be open.
+ */
+export async function reconcileStalePosBridgeShifts(): Promise<LivePosShifts> {
   const open = await prisma.posBridgeShift.findMany({ where: { status: 'OPEN' } });
-  if (open.length === 0) return;
-  const live = await liveOpenOutletCodes();
-  if (!live) return;
-  const stale = open.filter((row) => !live.has(row.outletCode));
-  if (stale.length === 0) return;
+  const live = await liveOpenShifts();
+  if (!live.ok || open.length === 0) return live;
+  const liveIds = new Set(live.shifts.map((row) => row.shiftId).filter(Boolean));
+  const liveOutlets = new Set(live.shifts.map((row) => row.outletCode).filter(Boolean));
+  const matchByShiftId = live.shifts.length === 0 || liveIds.size > 0;
+  const stale = open.filter((row) =>
+    matchByShiftId ? !liveIds.has(row.externalShiftId) : !liveOutlets.has(row.outletCode),
+  );
+  if (stale.length === 0) return live;
   await prisma.posBridgeShift.updateMany({
     where: { id: { in: stale.map((row) => row.id) } },
     data: { status: 'CLOSED', closedAt: new Date() },
   });
+  return live;
 }
 
 export async function getPosShiftStatus() {
-  await reconcileStalePosBridgeShifts();
+  const live = await reconcileStalePosBridgeShifts();
+  if (live.ok) {
+    return {
+      confirmed: true,
+      hasOpenShift: live.shifts.length > 0,
+      openShiftCount: live.shifts.length,
+      outlets: live.shifts.map((row) => ({
+        outletCode: row.outletCode,
+        shiftId: row.shiftId,
+        openedAt: row.openedAt || null,
+      })),
+    };
+  }
   const open = await prisma.posBridgeShift.findMany({
     where: { status: 'OPEN' },
     orderBy: { openedAt: 'asc' },
   });
   return {
+    confirmed: false,
     hasOpenShift: open.length > 0,
     openShiftCount: open.length,
     outlets: open.map((s) => ({
@@ -296,13 +330,20 @@ export async function reportPosShiftStatus(input: {
 }
 
 export async function assertNoOpenPosShifts(): Promise<void> {
-  await reconcileStalePosBridgeShifts();
+  const live = await reconcileStalePosBridgeShifts();
+  if (live.ok) {
+    if (live.shifts.length === 0) return;
+    const outlets = [...new Set(live.shifts.map((row) => row.outletCode).filter(Boolean))];
+    throw new Error(
+      `Close all POS shifts (fb-pos outlet ${outlets.join(', ') || 'unknown'}) before night audit`,
+    );
+  }
   const open = await prisma.posBridgeShift.findFirst({
     where: { status: 'OPEN' },
   });
   if (open) {
     throw new Error(
-      `Close all POS shifts (fb-pos outlet ${open.outletCode}) before night audit`,
+      `Could not confirm POS shifts with F&B (hotel copy still open for ${open.outletCode}). Night audit stays blocked until F&B answers.`,
     );
   }
 }
