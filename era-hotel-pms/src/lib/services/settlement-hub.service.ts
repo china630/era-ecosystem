@@ -119,6 +119,7 @@ async function notifySourceSettlementConfirmed(
     id: string;
     sourceSystem: SettlementSourceSystem;
     sourceRef: string;
+    sourceOrgId: string;
   },
   paymentMethod: string,
   fiscalReceiptId: string | null,
@@ -144,6 +145,7 @@ async function notifySourceSettlementConfirmed(
       sourceRef: charge.sourceRef,
       paymentMethod,
       fiscalReceiptId,
+      organizationId: charge.sourceOrgId,
     }),
     signal: AbortSignal.timeout(15000),
   });

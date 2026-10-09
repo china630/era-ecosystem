@@ -107,9 +107,9 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 
 | Route | Auth |
 |-------|------|
-| `/api/integration/hotel-lifecycle` | bridge secret — check-in/out, **guest departed/moved**, room change, stay product changed |
+| `/api/integration/hotel-lifecycle` | bridge secret — `enterRequestTenant(event.organizationId)` before Prisma; check-in/out, **guest departed/moved**, room change, stay product changed |
 | `/api/integration/staff-provision` | bridge secret — `enterRequestTenant`; scrypt User hash; Practitioner unique name link |
-| `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback |
+| `/api/integration/settlement-confirmed` | bridge secret — hotel Front Cash paid callback; `organizationId` required, `enterRequestTenant` before Prisma |
 | `/api/billing/context` | session — `deferWalkInToHub` for cashier gate |
 | `/api/procedures/confirm` | session **DOCTOR** (+ admin) — confirm `PROPOSED` → `placeConfirmedProcedures` FIFO |
 | `/api/procedures/bulk-cancel` | session **RECEPTION** (+ admin) — bulk cancel + optional replace code |
