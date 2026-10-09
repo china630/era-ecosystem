@@ -19,6 +19,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   Field,
+  CatalogField,
   FieldRow,
   FieldSelect,
   FieldTextarea,
@@ -37,6 +38,7 @@ import {
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import type { CatalogFieldDef, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -68,6 +70,7 @@ type DiagnosticService = {
   titleRu: string;
   titleAz: string;
   serviceCode: string;
+  financeSku?: string | null;
   fieldsJson?: string | null;
   includesJson?: string | null;
   sortOrder: number;
@@ -171,6 +174,9 @@ export default function DiagnosticCatalogAdminPage() {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [financeServiceOptions, setFinanceServiceOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [financeServiceQ, setFinanceServiceQ] = useState("");
+  const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [formFields, setFormFields] = useState<CatalogFieldDef[]>([]);
@@ -195,6 +201,32 @@ export default function DiagnosticCatalogAdminPage() {
   useEffect(() => {
     void loadModalities();
   }, [loadModalities]);
+
+  useEffect(() => {
+    if (!modalOpen || tab !== "services") return;
+    let cancelled = false;
+    void (async () => {
+      const params = new URLSearchParams({ limit: "50", isService: "true" });
+      if (debouncedFinanceServiceQ.trim()) params.set("q", debouncedFinanceServiceQ.trim());
+      const res = await fetch(`/api/admin/finance-products?${params}`);
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json();
+      const payload = (parsed.data ?? parsed) as {
+        items?: Array<{ value: string; label: string; sku?: string }>;
+      };
+      if (!cancelled) {
+        setFinanceServiceOptions(
+          (payload.items ?? []).map((item) => ({
+            value: item.sku ?? item.value,
+            label: item.label,
+          })),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [modalOpen, tab, debouncedFinanceServiceQ]);
 
   useEffect(() => {
     void loadServices();
@@ -349,6 +381,7 @@ export default function DiagnosticCatalogAdminPage() {
   function openCreate() {
     setEditingId(null);
     setFormFields([]);
+    setFinanceServiceQ("");
     setForm(
       tab === "services"
         ? {
@@ -390,6 +423,7 @@ export default function DiagnosticCatalogAdminPage() {
 
   function openEditService(row: DiagnosticService) {
     setEditingId(row.id);
+    setFinanceServiceQ("");
     let includesText = "";
     try {
       includesText = row.includesJson ? (JSON.parse(row.includesJson) as string[]).join(", ") : "";
@@ -405,6 +439,7 @@ export default function DiagnosticCatalogAdminPage() {
       titleRu: row.titleRu,
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
+      financeSku: row.financeSku ?? "",
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
@@ -474,6 +509,7 @@ export default function DiagnosticCatalogAdminPage() {
         titleRu: form.titleRu?.trim(),
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
+        financeSku: form.financeSku?.trim() || null,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
@@ -1179,6 +1215,20 @@ export default function DiagnosticCatalogAdminPage() {
                 hint={t("serviceCodeHint")}
                 value={form.serviceCode ?? ""}
                 onChange={(e) => setForm({ ...form, serviceCode: e.target.value })}
+              />
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("financeSku")}
+                value={form.financeSku ?? ""}
+                serverSearch
+                onQueryChange={setFinanceServiceQ}
+                options={
+                  form.financeSku &&
+                  !financeServiceOptions.some((option) => option.value === form.financeSku)
+                    ? [{ value: form.financeSku, label: form.financeSku }, ...financeServiceOptions]
+                    : financeServiceOptions
+                }
+                onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
               />
               <Field
                 label={t("includes")}

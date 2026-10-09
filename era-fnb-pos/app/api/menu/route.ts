@@ -93,6 +93,7 @@ const createSchema = z.object({
   priceAzn: z.number().nonnegative(),
   active: z.boolean().optional(),
   recipeSku: z.string().min(1).nullable().optional(),
+  financeSku: z.string().min(1).nullable().optional(),
   imageUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
 });
 
@@ -145,6 +146,7 @@ export async function POST(request: Request) {
           priceAzn: body.priceAzn,
           active: body.active ?? true,
           recipeSku: body.recipeSku ?? null,
+          financeSku: body.financeSku ?? null,
           imageUrl,
         },
       });

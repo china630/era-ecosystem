@@ -109,23 +109,10 @@ export async function postStockMovement(input: {
   });
 }
 
-export async function consumeRecipeForProduct(productCode: string, portions = 1) {
-  const product = await prisma.product.findFirst({
-    where: { code: productCode },
-    include: { recipe: { include: { lines: true } } },
-  });
-  if (!product?.recipe) return;
-
-  const warehouse = await prisma.warehouse.findFirst({ orderBy: { code: 'asc' } });
-  if (!warehouse) return;
-
-  for (const line of product.recipe.lines) {
-    await postStockMovement({
-      productId: line.ingredientProductId,
-      warehouseId: warehouse.id,
-      type: 'ISSUE',
-      qty: decimalToNumber(line.qty) * portions,
-      reference: `POS sale ${productCode}`,
-    });
-  }
+/**
+ * Retired. Housekeeping consumption is a zero-price day-document line.
+ * Finance writes the hotel warehouse off; this function does not move local stock.
+ */
+export async function consumeRecipeForProduct(_productCode: string, _portions = 1) {
+  return;
 }

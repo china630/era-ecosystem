@@ -229,13 +229,19 @@ async function main() {
   const mealHB = await prisma.mealPlan.create({ data: { code: 'HB', name: 'Half board (rare)' } });
 
   const typeStd = await prisma.roomType.create({
-    data: { code: 'STWN', name: 'Standard Twin', baseQuota: 40, adultCapacity: 2 },
+    data: {
+      code: 'STWN',
+      name: 'Standard Twin',
+      baseQuota: 40,
+      adultCapacity: 3,
+      standardAdults: 2,
+    },
   });
   const typeDlx = await prisma.roomType.create({
-    data: { code: 'DLX', name: 'Deluxe', baseQuota: 20, adultCapacity: 2 },
+    data: { code: 'DLX', name: 'Deluxe', baseQuota: 20, adultCapacity: 2, standardAdults: 2 },
   });
   const typeSuite = await prisma.roomType.create({
-    data: { code: 'SUITE', name: 'Junior Suite', baseQuota: 8, adultCapacity: 3 },
+    data: { code: 'SUITE', name: 'Junior Suite', baseQuota: 8, adultCapacity: 3, standardAdults: 2 },
   });
 
   // Non-package BAR walk-in (no medical) — Nafta accounting: BB includes breakfast;
@@ -261,12 +267,13 @@ async function main() {
     },
   });
 
-  // Nafta 2026 commercial packages (PDF) — medicalFlag → EOD package split + clinic program
+  // Commercial sell lives on RatePlanSellVersion (room type × meal × occupancy × season).
+  // pricePerNight is not a package quote. Split weights are ratios, not the tariff.
   const naftaPackages = [
-    { code: 'PKG-STANDART', name: 'Standart müalicə paketi', price: 139, roomTypeId: typeStd.id },
-    { code: 'PKG-PREMIUM', name: 'Premium paket', price: 193, roomTypeId: typeDlx.id },
-    { code: 'PKG-DERMO', name: 'Dermo paket', price: 180, roomTypeId: typeDlx.id },
-    { code: 'PKG-DETOKS', name: 'Detoks paket', price: 178, roomTypeId: typeSuite.id },
+    { code: 'PKG-STANDART', name: 'Standart müalicə paketi' },
+    { code: 'PKG-PREMIUM', name: 'Premium paket' },
+    { code: 'PKG-DERMO', name: 'Dermo paket' },
+    { code: 'PKG-DETOKS', name: 'Detoks paket' },
   ] as const;
 
   const createdPkgs = [];
@@ -276,18 +283,17 @@ async function main() {
         code: p.code,
         name: p.name,
         type: 'DERIVED',
-        pricePerNight: p.price,
+        pricePerNight: 0,
         medicalFlag: true,
-        roomTypeId: p.roomTypeId,
         mealPlanId: mealFB.id,
       },
     });
     createdPkgs.push(rp);
     await prisma.ratePlanPackageLine.createMany({
       data: [
-        { ratePlanId: rp.id, revenueCodeId: revRoom.id, amount: Math.round(p.price * 0.5), sortOrder: 1 },
-        { ratePlanId: rp.id, revenueCodeId: revTreatment.id, amount: Math.round(p.price * 0.33), sortOrder: 2 },
-        { ratePlanId: rp.id, revenueCodeId: revBoard.id, amount: Math.round(p.price * 0.17), sortOrder: 3 },
+        { ratePlanId: rp.id, revenueCodeId: revRoom.id, amount: 50, sortOrder: 1 },
+        { ratePlanId: rp.id, revenueCodeId: revTreatment.id, amount: 33, sortOrder: 2 },
+        { ratePlanId: rp.id, revenueCodeId: revBoard.id, amount: 17, sortOrder: 3 },
       ],
     });
   }

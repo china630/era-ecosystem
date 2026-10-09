@@ -22,7 +22,10 @@ type ProductDto = {
   price: unknown;
   vatRate: unknown;
   isService?: boolean;
+  revenueAccountCode?: string | null;
 };
+
+type RevenueAccountOpt = { code: string; displayName: string };
 
 type VatSelect = "unset" | "18" | "8" | "2" | "0" | "exempt";
 
@@ -72,6 +75,8 @@ export function ProductModal({
   const [price, setPrice] = useState("");
   const [vatSelect, setVatSelect] = useState<VatSelect>("18");
   const [loadedIsService, setLoadedIsService] = useState(false);
+  const [revenueAccountCode, setRevenueAccountCode] = useState("");
+  const [revenueAccounts, setRevenueAccounts] = useState<RevenueAccountOpt[]>([]);
 
   const title = useMemo(() => {
     if (isEdit) return t("products.editTitle");
@@ -79,7 +84,32 @@ export function ProductModal({
     return t("products.newProductTitle");
   }, [isEdit, isServiceCreate, t]);
 
-  const showSkuField = isEdit ? !loadedIsService : !isServiceCreate;
+  const revenueRequired = isEdit ? loadedIsService : true;
+
+  useEffect(() => {
+    if (!open) return;
+    void apiFetch("/api/accounts?ledgerType=NAS")
+      .then(async (res) => {
+        if (!res.ok) {
+          setRevenueAccounts([]);
+          return;
+        }
+        const rows = (await res.json()) as Array<{
+          code: string;
+          type?: string;
+          displayName?: string;
+        }>;
+        setRevenueAccounts(
+          rows
+            .filter((row) => row.type === "REVENUE")
+            .map((row) => ({
+              code: row.code,
+              displayName: row.displayName?.trim() || row.code,
+            })),
+        );
+      })
+      .catch(() => setRevenueAccounts([]));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -90,6 +120,7 @@ export function ProductModal({
       setPrice("");
       setVatSelect("unset");
       setLoadedIsService(false);
+      setRevenueAccountCode("");
       return;
     }
     setLoading(true);
@@ -105,6 +136,7 @@ export function ProductModal({
         setPrice(String(r.price ?? ""));
         setVatSelect(vatSelectFromDto(r.vatRate));
         setLoadedIsService(!!r.isService);
+        setRevenueAccountCode(r.revenueAccountCode ?? "");
       })
       .catch(() => setLoadErr(t("products.loadErr")))
       .finally(() => setLoading(false));
@@ -126,8 +158,12 @@ export function ProductModal({
       return;
     }
 
-    if (showSkuField && !sku.trim()) {
+    if (!sku.trim()) {
       toast.error(t("common.fillRequired"));
+      return;
+    }
+    if (revenueRequired && !revenueAccountCode.trim()) {
+      toast.error(t("products.revenueAccountRequired"));
       return;
     }
 
@@ -137,12 +173,11 @@ export function ProductModal({
     setBusy(true);
     const body: Record<string, unknown> = {
       name: name.trim(),
+      sku: sku.trim(),
       price: p,
       vatRate,
+      revenueAccountCode: revenueAccountCode.trim(),
     };
-    if (showSkuField) {
-      body.sku = sku.trim();
-    }
     if (!isEdit) {
       body.isService = isServicePayload;
     }
@@ -202,19 +237,17 @@ export function ProductModal({
             />
           </div>
 
-          {showSkuField ? (
-            <div>
-              <span className={lbl}>{t("products.sku")}</span>
-              <input
-                className={MODAL_INPUT_CLASS}
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                required
-              />
-            </div>
-          ) : null}
+          <div>
+            <span className={lbl}>{t("products.sku")}</span>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              required
+            />
+          </div>
 
-          <div className={showSkuField ? "" : "md:col-span-2"}>
+          <div>
             <span className={lbl}>{t("products.vat")}</span>
             <Select
               value={vatSelect}
@@ -230,6 +263,23 @@ export function ProductModal({
                 <SelectItem value="2">{t("products.vatOption2")}</SelectItem>
                 <SelectItem value="0">{t("products.vatOption0")}</SelectItem>
                 <SelectItem value="exempt">{t("products.vatOptionExempt")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="md:col-span-2">
+            <span className={lbl}>{t("products.revenueAccount")}</span>
+            <Select value={revenueAccountCode || "unset"} onValueChange={(v) => setRevenueAccountCode(v === "unset" ? "" : v)}>
+              <SelectTrigger className="" />
+              <SelectContent>
+                <SelectItem value="unset" disabled={revenueRequired}>
+                  {t("products.revenueAccountPlaceholder")}
+                </SelectItem>
+                {revenueAccounts.map((account) => (
+                  <SelectItem key={account.code} value={account.code}>
+                    {account.code} — {account.displayName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -1,91 +1,114 @@
 import {
   composeNaftaPackageNightlySell,
   composeNaftaPackageNightlySellBreakdown,
-  halfOcc2,
   paxCodesForCompose,
+  type PackageSellCell,
 } from "@/lib/services/nafta-package-compose.service";
 
-describe("composeNaftaPackageNightlySell", () => {
-  it("Premium + Standart → 193+96", () => {
+/** Low-season singles sheet. Detoks Junior occupancy 3 (675) is not a cell. */
+function lowSeasonCells(): PackageSellCell[] {
+  const rows: Array<[string, string, number, number, number]> = [
+    ["PKG-STANDART", "SDBL", 129, 219, 315],
+    ["PKG-STANDART", "JSUIT", 139, 226, 322],
+    ["PKG-STANDART", "DLX", 151, 249, 345],
+    ["PKG-STANDART", "STRP", 129, 219, 285],
+    ["PKG-PREMIUM", "JSUIT", 193, 349, 542],
+    ["PKG-PREMIUM", "DLX", 193, 349, 542],
+    ["PKG-DERMO", "SDBL", 180, 321, 501],
+    ["PKG-DERMO", "JSUIT", 190, 328, 518],
+    ["PKG-DERMO", "DLX", 202, 351, 531],
+    ["PKG-DERMO", "STRP", 180, 321, 501],
+    ["PKG-DETOKS", "SDBL", 178, 319, 497],
+    ["PKG-DETOKS", "JSUIT", 188, 326, 0],
+    ["PKG-DETOKS", "DLX", 200, 349, 549],
+    ["PKG-DETOKS", "STRP", 178, 319, 497],
+  ];
+  const cells: PackageSellCell[] = [];
+  for (const [code, roomCode, a, b, c] of rows) {
+    cells.push({ code, roomCode, occupancy: 1, amount: a });
+    cells.push({ code, roomCode, occupancy: 2, amount: b });
+    if (c > 0) cells.push({ code, roomCode, occupancy: 3, amount: c });
+  }
+  return cells;
+}
+
+const cells = lowSeasonCells();
+
+describe("package grid nightly sell", () => {
+  it("same package uses the occupancy cell, not single plus companion", () => {
+    expect(composeNaftaPackageNightlySell(["PKG-STANDART", "PKG-STANDART"], "SDBL", cells)).toBe(219);
     expect(
-      composeNaftaPackageNightlySell(["PKG-PREMIUM", "PKG-STANDART"]),
-    ).toBe(289);
+      composeNaftaPackageNightlySell(
+        ["PKG-STANDART", "PKG-STANDART", "PKG-STANDART"],
+        "STWN",
+        cells,
+      ),
+    ).toBe(315);
   });
 
-  it("Dermo + Standart → 180+96", () => {
+  it("two Standart plus Detoks in Junior low season is 404", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-DERMO", "PKG-STANDART"]),
-    ).toBe(276);
+      composeNaftaPackageNightlySell(
+        ["PKG-STANDART", "PKG-STANDART", "PKG-DETOKS"],
+        "JSUIT",
+        cells,
+      ),
+    ).toBe(404);
   });
 
-  it("Premium + Detoks → 193+160", () => {
+  it("Premium plus Dermo is the flat pair 373", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-PREMIUM", "PKG-DETOKS"]),
-    ).toBe(353);
+      composeNaftaPackageNightlySell(["PKG-PREMIUM", "PKG-DERMO"], "DLX", cells),
+    ).toBe(373);
   });
 
-  it("Dermo + Detoks → 180+160", () => {
+  it("Standart plus Premium in Junior low season is 332", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-DERMO", "PKG-DETOKS"]),
-    ).toBe(340);
+      composeNaftaPackageNightlySell(["PKG-STANDART", "PKG-PREMIUM"], "SUITE", cells),
+    ).toBe(332);
   });
 
-  it("two Standart → occ2 239", () => {
+  it("Premium has no standard-room cell", () => {
+    expect(composeNaftaPackageNightlySell(["PKG-PREMIUM"], "SDBL", cells)).toBeNull();
+    expect(composeNaftaPackageNightlySell(["PKG-PREMIUM"], "JSUIT", cells)).toBe(193);
+  });
+
+  it("missing Detoks Junior occupancy 3 is not sold", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-STANDART", "PKG-STANDART"]),
-    ).toBe(239);
+      composeNaftaPackageNightlySell(
+        ["PKG-DETOKS", "PKG-DETOKS", "PKG-DETOKS"],
+        "JSUIT",
+        cells,
+      ),
+    ).toBeNull();
   });
 
-  it("three Standart → occ3 349", () => {
+  it("a missing required cell does not invent 96 or pricePerNight", () => {
     expect(
-      composeNaftaPackageNightlySell([
-        "PKG-STANDART",
-        "PKG-STANDART",
-        "PKG-STANDART",
-      ]),
-    ).toBe(349);
+      composeNaftaPackageNightlySell(["PKG-STANDART", "PKG-PREMIUM"], "SDBL", []),
+    ).toBeNull();
   });
 
-  it("mixed three adults: main + companions (not occ-3 of main)", () => {
+  it("Dermo and Detoks one each puts the room delta on Dermo", () => {
     expect(
-      composeNaftaPackageNightlySell([
-        "PKG-PREMIUM",
-        "PKG-STANDART",
-        "PKG-STANDART",
-      ]),
-    ).toBe(193 + 96 + 96);
+      composeNaftaPackageNightlySell(["PKG-DERMO", "PKG-DETOKS"], "DLX", cells),
+    ).toBe(202 + 178);
   });
 
-  it("unresolved → null", () => {
-    expect(composeNaftaPackageNightlySell([null, undefined])).toBeNull();
+  it("unresolved codes are not a package night", () => {
+    expect(composeNaftaPackageNightlySell([null, undefined], "SDBL", cells)).toBeNull();
+    expect(composeNaftaPackageNightlySell(["BAR-FB", "RO"], "SDBL", cells)).toBeNull();
   });
 
-  it("EW Rate Code ignored when not a PKG-* catalog code", () => {
-    expect(composeNaftaPackageNightlySell(["BAR-FB", "RO"])).toBeNull();
-  });
-
-  it("single Premium → 193", () => {
-    expect(composeNaftaPackageNightlySell(["PKG-PREMIUM"])).toBe(193);
-  });
-
-  it("halfOcc2 Dermo 321 → 160; Detoks 319 → 160", () => {
-    expect(halfOcc2({ code: "PKG-DERMO", occ1: 180, occ2: 321 })).toBe(160);
-    expect(halfOcc2({ code: "PKG-DETOKS", occ1: 178, occ2: 319 })).toBe(160);
-  });
-
-  it("breakdown lists main + companion lines", () => {
-    const b = composeNaftaPackageNightlySellBreakdown([
-      "PKG-PREMIUM",
-      "PKG-STANDART",
-    ]);
-    expect(b?.total).toBe(289);
-    expect(b?.lines).toHaveLength(2);
-    expect(b?.lines[0]).toMatchObject({ role: "main", code: "PKG-PREMIUM", amount: 193 });
-    expect(b?.lines[1]).toMatchObject({
-      role: "companion",
-      code: "PKG-STANDART",
-      amount: 96,
-    });
+  it("breakdown names the room block and the base block", () => {
+    const b = composeNaftaPackageNightlySellBreakdown(
+      ["PKG-STANDART", "PKG-PREMIUM"],
+      "JSUIT",
+      cells,
+    );
+    expect(b?.total).toBe(332);
+    expect(b?.lines[0]).toMatchObject({ role: "main", code: "PKG-STANDART", amount: 139 });
+    expect(b?.lines[1]).toMatchObject({ role: "companion", code: "PKG-PREMIUM", amount: 193 });
   });
 
   it("an empty guest package follows the stay SKU and an unnamed slot does not", () => {
@@ -99,5 +122,13 @@ describe("composeNaftaPackageNightlySell", () => {
         "PKG-STANDART",
       ),
     ).toEqual(["PKG-PREMIUM", "PKG-STANDART"]);
+  });
+
+  it("two seasons may store the same amount as two cells", () => {
+    const both: PackageSellCell[] = [
+      ...cells,
+      { code: "PKG-PREMIUM", roomCode: "JSUIT", occupancy: 1, amount: 193 },
+    ];
+    expect(composeNaftaPackageNightlySell(["PKG-PREMIUM"], "DLX", both)).toBe(193);
   });
 });

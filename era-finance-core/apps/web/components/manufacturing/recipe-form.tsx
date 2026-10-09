@@ -132,6 +132,8 @@ export function RecipeForm({
             value={value.finishedProductId}
             selectedLabel={value.finishedProductLabel}
             isService={false}
+            includeServices
+            enableQuickCreate={false}
             disabled={disabled}
             onChange={(id, item) =>
               patch({

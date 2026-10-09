@@ -21,6 +21,8 @@
 
 ## Handoff contract
 
+A walk-in that pays at the hotel cashier stays `PENDING_HUB`. `POST /api/integration/settlement-confirmed` marks the receipt **PAID** and emits `SATELLITE_RETAIL_SALE_COMPLETED` once. An in-house room charge still emits that sale when the receipt is paid. The sale is not emitted at both moments.
+
 On receipt **PAID**:
 
 1. Build event per [retail.events.ts](../../../packages/era-contracts/src/events/retail.events.ts)

@@ -83,10 +83,11 @@ Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS,
 | `reservationId` | one of | In-house reservation |
 | `roomNumber` | one of | Resolves active `IN_HOUSE` stay |
 | `revenueCode` | yes | Master code, e.g. `FOOD`, `SPA` |
-| `amount` | yes | AZN, > 0 |
+| `amount` | yes | AZN, zero allowed; negative only for an existing folio reverse |
+| `qty` | no | Defaults to 1. Stored on `FolioCharge` |
 | `description` | yes | Folio line text |
 | `outletCode` | no | Audit / reporting |
-| `productSku` | no | Deprecated for Nafta: stock in ERP; flag `STOCK_CONSUMPTION_ENABLED` only for dev/MVP |
+| `productSku` | no | Finance sku stored on `FolioCharge`. Room charge does not consume a local recipe |
 
 **Rules:** reservation `IN_HOUSE`, target folio `OPEN`, revenue code must exist. Posts via `postCharge` and emits `SATELLITE_HOTEL_FOLIO_CHARGE_POSTED` when enabled.
 

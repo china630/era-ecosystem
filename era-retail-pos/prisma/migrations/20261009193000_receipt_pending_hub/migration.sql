@@ -1,0 +1,3 @@
+ALTER TYPE "ReceiptStatus" ADD VALUE IF NOT EXISTS 'PENDING_HUB';
+
+ALTER TABLE "Receipt" ADD COLUMN "hubPendingIds" TEXT;

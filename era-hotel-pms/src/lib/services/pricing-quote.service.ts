@@ -157,6 +157,9 @@ export async function getNightlyRoomChargeForDate(
   );
   if (daily) return decimalToNumber(daily.amount);
 
+  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
+  const slice = await resolveStaySliceForDate(reservationId, businessDate);
+
   const { ownerPackageNightlySell } = await import(
     '@/lib/services/nafta-package-compose-apply.service'
   );
@@ -169,18 +172,18 @@ export async function getNightlyRoomChargeForDate(
   )
     .map((c) => (c ?? '').trim().toUpperCase())
     .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
-  if (packageCodes.length > 0) {
-    const nightly = await ownerPackageNightlySell(res.checkInDate, packageCodes);
-    if (nightly != null && nightly > 0) return nightly;
-  }
-  if (res.ratePlan.medicalFlag || packageCodes.length > 0) {
-    const amount = decimalToNumber(res.ratePlan.pricePerNight);
-    if (amount > 0) return amount;
-    throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+  if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
+    const roomTypeId = slice?.roomTypeId ?? res.roomTypeId;
+    const nightly = roomTypeId
+      ? await ownerPackageNightlySell(businessDate, packageCodes, {
+          roomTypeId,
+          mealPlanId: res.mealPlanId,
+        })
+      : null;
+    if (nightly == null) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+    return nightly;
   }
 
-  const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
-  const slice = await resolveStaySliceForDate(reservationId, businessDate);
   const planId = slice?.ratePlanId ?? res.ratePlanId;
   const plan =
     planId === res.ratePlan.id
@@ -213,6 +216,9 @@ export async function getNightlyRoomChargeForDate(
     const night = quote.nightlyRates.find((n) => n.date === key);
     return night?.amount ?? quote.adultNightly;
   } catch (err) {
+    if (err instanceof PricingEngineError && err.code === 'RATE_NOT_LOADED') {
+      throw new NightlyPriceMissingError(res.id, plan.code);
+    }
     if (
       err instanceof PricingEngineError &&
       (err.code === 'BASE_PLAN_NOT_FOUND' || err.code === 'INVALID_DERIVATION')

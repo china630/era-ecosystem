@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
-import { CHIP_CLASS, GHOST_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, TEXT_MUTED_CLASS } from '@era/satellite-kit/ui';
+import { CHIP_CLASS, TEXT_MUTED_CLASS } from '@era/satellite-kit/ui';
 
 export type BookingStaySummary = {
   id: string;
@@ -21,29 +20,19 @@ export type BookingStaySummary = {
 export function ReservationCardStaysBar({
   bookingCode,
   bookingName,
-  folioMode,
   stays,
   activeStayId,
   onSelectStay,
-  onAddStay,
-  addDisabled,
   onSaveBookingName,
   nameDisabled,
-  onSwapRooms,
-  swapDisabled,
 }: {
   bookingCode?: string | null;
   bookingName?: string | null;
-  folioMode?: string | null;
   stays: BookingStaySummary[];
   activeStayId?: string | null;
   onSelectStay: (id: string) => void;
-  onAddStay?: () => void;
-  addDisabled?: boolean;
   onSaveBookingName?: (name: string) => Promise<void> | void;
   nameDisabled?: boolean;
-  onSwapRooms?: () => void;
-  swapDisabled?: boolean;
 }) {
   const t = useTranslations('booking');
   const [editingName, setEditingName] = useState(false);
@@ -56,7 +45,7 @@ export function ReservationCardStaysBar({
   }, [bookingName, bookingCode]);
 
   const multiRoom = stays.length > 1;
-  if (!multiRoom && !bookingCode && !onAddStay) return null;
+  if (!multiRoom) return null;
 
   async function commitName() {
     if (!onSaveBookingName || nameDisabled) {
@@ -83,41 +72,6 @@ export function ReservationCardStaysBar({
   }
 
   const nameLabel = (bookingName ?? '').trim();
-
-  /** Single-door stay: thin GRP strip — no "Family / group · 1 room" chrome. */
-  if (!multiRoom) {
-    return (
-      <div
-        className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2.5 py-1.5"
-        data-testid="reservation-family-stays-bar"
-        data-mode="single"
-      >
-        <p className={`m-0 min-w-0 truncate text-[12px] ${TEXT_MUTED_CLASS}`}>
-          {bookingCode ? (
-            <>
-              <span className="font-mono text-[#34495E]">{bookingCode}</span>
-              {folioMode ? <span className="ml-2">{t('folioMode')}: {folioMode}</span> : null}
-            </>
-          ) : (
-            t('singleStayHint')
-          )}
-        </p>
-        {onAddStay ? (
-          <button
-            type="button"
-            className={GHOST_BUTTON_CLASS}
-            disabled={addDisabled}
-            title={addDisabled ? t('availableAfterSave') : t('addStay')}
-            aria-label={t('addStay')}
-            onClick={onAddStay}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">{t('addStay')}</span>
-          </button>
-        ) : null}
-      </div>
-    );
-  }
 
   return (
     <div
@@ -167,30 +121,6 @@ export function ReservationCardStaysBar({
 
           {bookingCode ? (
             <span className="truncate font-mono text-[12px] text-[#34495E]">{bookingCode}</span>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {onSwapRooms ? (
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={swapDisabled}
-              title={t('swapRooms')}
-              onClick={onSwapRooms}
-            >
-              {t('swapRooms')}
-            </button>
-          ) : null}
-          {onAddStay ? (
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={addDisabled}
-              title={addDisabled ? t('availableAfterSave') : t('addStay')}
-              onClick={onAddStay}
-            >
-              {t('addStay')}
-            </button>
           ) : null}
         </div>
       </div>

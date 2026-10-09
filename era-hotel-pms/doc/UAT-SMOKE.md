@@ -173,7 +173,7 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
 1. `/admin/integration` � revenue ? GL mapping table (ROOM?601, FOOD?602, �).
 2. `PUT /api/master/revenue-gl-mappings` with `{ "revenueCodeId", "glAccountCode" }`.
 3. Run night audit on `/operations` � outbound journal shows `NIGHT_AUDIT_CLOSED` with mapped lines.
-4. With `ERA_EVENT_GATEWAY_MODE=orchestrator`, finance worker posts multi-line NAS journal (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`).
+4. With `ERA_EVENT_GATEWAY_MODE=orchestrator` (the default), the finance worker posts one day document (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, reference `hotel-na:{date}`): sku sale lines, including a zero-price housekeeping line from `/hk/consumption`, no-sku revenue lines, split tenders, and a recipe write-off. A good with no recipe is written off itself. Repeating that day does not post a second journal. A missing catalog sku, including price 0, leaves the document rejected in Finance; the hotel day still closes and the night-audit screen shows the warning. Post the same document from Finance `/inventory/day-documents` after the card or warehouse is fixed. Reverse a closed housekeeping line from `/hk/consumption` onto the next open day. While `ElektrawebBridgePolicy.inboundEnabled`, the outbound log is `SKIPPED` and Finance has no posting.
 
 ## 17. INVOICE-AGENCY (Stage 23 / NW-2)
 
@@ -508,6 +508,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
 10. `/settings/policies#hk` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
+12. `/hk/consumption` — pick a Finance sku and a quantity for the open business day. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio.
 
 ## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
 
@@ -613,11 +614,11 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 **Status:** Engineering API — not SHIPPED.
 
-1. Premium + Standart pax → FO folio / dailyRates nightly sell **289** (193+96); breakdown lists main + companion.
-2. Night audit posts package lines scaled to **289** (resolved SKU, not only `medicalFlag`). Prefer **main** (highest occ-1) SKU rate-plan lines when present.
-3. Dermo + Detoks → **340** (180+160). Same SKU double Standart → **239**.
+1. Two Standart plus Detoks, Junior, low season → nightly sell **404** (226+178). Standart plus Premium, Junior, low season → **332**. Premium plus Dermo → **373**.
+2. Night audit posts package lines scaled to that night's grid amount. A missing cell skips the stay and the audit run continues.
+3. Same package uses the occupancy cell (Standart low-season standard triple is **315**, not 129+219).
 4. EW Rate Code alone does not invent compose sell.
-5. Catalog prefers `RatePlanSellVersion` occ1/2/3 for PKG-* when seeded; else `DEFAULT_NAFTA_PACKAGE_SELL`.
+5. A missing grid cell does not fall back to `pricePerNight` or the old 139/96 table.
 
 ## 41. One stay two episodes (HOT-PKG-04 / CLI-54 / Wave E)
 
@@ -625,7 +626,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 1. One FO card, husband Standart + wife Premium → check-in emits **two** lifecycle events (`paxKey` + per-pax `programCode`).
 2. Clinic `/sanatorium` shows **two** rows (same room); each has own chart / Select / program.
-3. Folio nightly sell still **289** (Wave D compose) — one folio, not split.
+3. Folio nightly sell is still one amount for the card (grid formula) — one folio, not split.
 4. Share `707`/`707S` still two reservations / two episodes (no merge).
 5. Checkout closes **both** OPEN episodes for the reservation.
 

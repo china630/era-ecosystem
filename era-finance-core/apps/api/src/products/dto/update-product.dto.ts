@@ -42,6 +42,13 @@ export class UpdateProductDto {
   isService?: boolean;
 
   @ApiPropertyOptional({
+    description: "Код счёта выручки NAS. Пустая строка очищает счёт (только у товара-ингредиента).",
+  })
+  @IsOptional()
+  @IsString()
+  revenueAccountCode?: string;
+
+  @ApiPropertyOptional({
     description: "Код единицы измерения из системного каталога (pcs, kg, m, m2, pack, litre, hour)",
   })
   @IsOptional()

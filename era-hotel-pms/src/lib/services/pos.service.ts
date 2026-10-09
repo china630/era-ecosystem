@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { postCharge } from '@/lib/services/folio.service';
-import { consumeRecipeForProduct } from '@/lib/services/stock.service';
 import {
   findRoomChargeByIdempotencyKey,
   hashRoomChargeRequest,
@@ -118,19 +117,18 @@ export async function postRoomCharge(
   });
   if (!code) throw new Error(`Revenue code ${input.revenueCode} not found`);
 
+  const qty =
+    input.qty != null && Number.isFinite(input.qty) && input.qty !== 0
+      ? Math.trunc(input.qty)
+      : 1;
   const charge = await postCharge({
     reservationId,
     revenueCodeId: code.id,
     amount: input.amount,
-    qty: 1,
+    qty,
+    sku: input.productSku,
     description: `[${input.outletCode ?? 'POS'}] ${input.description}`,
   });
-
-  if (input.productSku) {
-    await consumeRecipeForProduct(input.productSku, 1).catch(() => {
-      /* optional stock */
-    });
-  }
 
   if (idempotencyKey) {
     await saveRoomChargeIdempotency(

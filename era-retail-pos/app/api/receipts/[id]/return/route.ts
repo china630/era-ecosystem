@@ -1,8 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type ReceiptLine } from "@prisma/client";
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
+import { departmentFinanceEventsSilenced } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-client";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveOutletPreset } from "@/lib/retail-preset";
 import { prisma } from "@/lib/prisma";
 
@@ -72,6 +75,45 @@ export async function POST(
     });
 
     const preset = resolveOutletPreset(original.outlet.preset);
+    const orgId = requestOrganizationId();
+    if (orgId && (await departmentFinanceEventsSilenced(orgId))) {
+      const lines = returnReceipt.lines.filter((line: ReceiptLine) => line.lineStatus === "ACTIVE");
+      for (const line of lines) {
+        const sku = line.plu?.trim();
+        if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
+        if (original.reservationId || original.roomNumber) {
+          const charge = await postRoomCharge(
+            {
+              reservationId: original.reservationId ?? undefined,
+              roomNumber: original.roomNumber ?? undefined,
+              revenueCode: "RETAIL",
+              amount: Number(line.lineTotal),
+              qty: line.qty,
+              productSku: sku,
+              description: line.description,
+              outletCode: original.outlet.code,
+              externalTicketId: `return:${returnReceipt.id}:${line.id}`,
+            },
+            `return:${returnReceipt.id}:${line.id}`,
+          );
+          if (!charge.ok) {
+            return jsonError(`Hotel folio return failed: ${charge.status}`, 502);
+          }
+        } else {
+          await postHotelSettlementPending({
+            sourceRef: returnReceipt.id,
+            amount: Number(line.lineTotal),
+            description: line.description,
+            payerLabel: original.outlet.code,
+            idempotencyKey: `retail-return-${returnReceipt.id}-${line.id}`,
+            sku,
+            qty: line.qty,
+            revenueCode: "RETAIL",
+          });
+        }
+      }
+      return jsonOk({ originalReceiptId: original.id, returnReceipt }, 201);
+    }
 
     await dispatchSatelliteEvent({
       type: SATELLITE_RETAIL_SALE_COMPLETED,

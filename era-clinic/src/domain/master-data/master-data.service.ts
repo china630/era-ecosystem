@@ -233,6 +233,7 @@ export async function createProcedureType(data: {
   needsSite?: boolean;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
+  financeSku?: string | null;
 }) {
   const settings = await getSchedulingSettings();
   const durationMin =
@@ -261,6 +262,7 @@ export async function createProcedureType(data: {
     needsSite: needsSiteIn,
     physioOrderFields: fieldsIn,
     allowedSiteCodes: sitesIn,
+    financeSku,
     ...rest
   } = data;
   const gate = inferPhysioTypeGate(data.code, data.name);
@@ -278,6 +280,7 @@ export async function createProcedureType(data: {
       needsSite,
       physioOrderFields,
       allowedSiteCodes,
+      financeSku: financeSku?.trim() || null,
     },
   });
   await ensureDefaultRequirements(row.id);
@@ -306,6 +309,7 @@ export async function updateProcedureType(
     needsSite?: boolean;
     physioOrderFields?: string[];
     allowedSiteCodes?: string[];
+    financeSku?: string | null;
   },
 ) {
   const settings = await getSchedulingSettings();
@@ -317,11 +321,12 @@ export async function updateProcedureType(
       `durationMin must be a multiple of ${settings.schedulingSlotMinutes} minutes (got ${data.durationMin})`,
     );
   }
-  const { physioOrderFields: fieldsIn, allowedSiteCodes: sitesIn, ...rest } = data;
+  const { physioOrderFields: fieldsIn, allowedSiteCodes: sitesIn, financeSku, ...rest } = data;
   const patch = {
     ...rest,
     ...(fieldsIn !== undefined ? { physioOrderFields: parsePhysioOrderFields(fieldsIn) } : {}),
     ...(sitesIn !== undefined ? { allowedSiteCodes: uniqueSiteCodes(sitesIn) } : {}),
+    ...(financeSku !== undefined ? { financeSku: financeSku?.trim() || null } : {}),
     ...(data.durationMin != null
       ? {
           durationMin: alignDurationToSlotMinutes(

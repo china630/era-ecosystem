@@ -9,7 +9,7 @@ import {
   DEFAULT_OVER_QUOTA_AZN,
   resolveEntitlementCharge,
 } from "@/domain/sanatorium/entitlement-charge.service";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
+import { postHotelRoomCharge, resolveBillingTarget, resolveSellableSku } from "@/lib/billing-router";
 import { isSameDayFourthOrLater } from "@/lib/sanatorium-day1";
 
 export type ProcedureChargeContext = {
@@ -177,7 +177,6 @@ export async function resolveProcedureCharge(
   const shouldChargeFolio =
     billingTarget === "HOTEL_FOLIO" &&
     !!order.reservationId &&
-    amountNet > 0 &&
     (!overQuota || settings.procedureOverQuotaPolicy === "CHARGE_FOLIO");
 
   return { overQuota, amountNet, shouldChargeFolio, priceMissing, reason: charge.reason };
@@ -185,15 +184,24 @@ export async function resolveProcedureCharge(
 
 export async function postProcedureFolioCharge(input: {
   reservationId: string;
+  roomNumber?: string;
   amount: number;
   description: string;
   externalTicketId: string;
+  procedureCode: string;
+  qty?: number;
+  hotelOrganizationId?: string;
 }): Promise<void> {
+  const productSku = await resolveSellableSku(input.procedureCode);
   await postHotelRoomCharge({
     reservationId: input.reservationId,
+    roomNumber: input.roomNumber,
     amount: input.amount,
     description: input.description,
     externalTicketId: input.externalTicketId,
+    productSku,
+    qty: input.qty ?? 1,
+    hotelOrganizationId: input.hotelOrganizationId,
   });
 }
 

@@ -29,6 +29,7 @@ globs: era-finance-core/**/*
 | `/reporting/compare-books` | `GET /api/reporting/compare-books?bookA=&bookB=&dateFrom=&dateTo=`; book-scoped trial-balance comparison |
 | `/audit-hub/reconciliation` | `GET /api/audit-hub/reconciliation/nas-ifrs`; compatibility route comparing default ops book with every ACTIVE non-ops book for presence and debit parity |
 | `/expenses/quick` | `POST /api/accounting/quick-expense` (fixed 731/101) |
+| `/inventory/day-documents` | `GET /api/inventory/day-documents`, `POST /api/inventory/day-documents/:id/post` (`api:ledger.post`). Rejected hotel night-audit document; posting uses the same `hotel-na:{date}` |
 
 Roles for posting: Post/Approve = `api:ledger.post` (CP JWT grants via Nest `PermissionsGuard` + web `can()` — ADR [finance-domain-permissions-and-rbac](../../../docs/adr/finance-domain-permissions-and-rbac.md)). Matrix UI = Orchestrator `/settings/access` (no Finance local access matrix). `AuditorMutationGuard` locked belt on donor `AUDITOR`. USER / packages without `api:ledger.post` cannot post journal vouchers.
 

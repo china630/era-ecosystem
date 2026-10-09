@@ -53,6 +53,7 @@
     "hkRoster": "HK qrafik",
     "hkRotation": "Mərtəbə rotasiyası",
     "hkLaundry": "Qonaq camaşırxanası",
+    "hkConsumption": "HK sərfiyyatı",
     "hkForecast": "HK proqnoz",
     "hkPolicy": "HK ağ / deep",
     "hkDiscrepancy": "Skip / Sleep",
@@ -410,6 +411,12 @@
     "occupied": "Dolu",
     "vacant": "Boş",
     "hkStatus": "HK statusu",
+    "hkOpt": {
+      "DIRTY": "Çirkli",
+      "PICKUP": "Yüngül təmizlik",
+      "CLEAN": "Təmiz",
+      "INSPECTED": "Yoxlanılıb"
+    },
     "cleanOnly": "Yalnız təmiz",
     "dirtyOnly": "Yalnız çirkli",
     "inspectedOnly": "Yalnız yoxlanılıb",
@@ -459,6 +466,8 @@
     "guest": "Qonaq",
     "folio": "Folio",
     "openFolio": "Folio aç",
+    "arrival": "Giriş",
+    "departure": "Çıxış",
     "empty": "Qalan qonaq yoxdur."
   },
   "guestsPage": {
@@ -640,6 +649,7 @@
     "runNightAudit": "Night audit işlət",
     "processRetry": "Göndərilməyənləri təkrarla",
     "nightAuditResult": "Night audit: {status}",
+    "financeWarning": "Gecə auditi otel gününü bağladı. Maliyyə keçirmədi: {message}",
     "retryQueue": "Təkrar növbəsi: göndərildi {count}",
     "recentRuns": "Son işləmələr",
     "tourismRegistry": "Turizm reyestri (AZ-02)",
@@ -648,6 +658,7 @@
     "noShowCandidates": "No-show namizədləri (PMS-07)",
     "due": "tarix",
     "markNoShow": "No-show et",
+    "openReservation": "Bronu aç",
     "noShowMarked": "No-show: {name}",
     "polishPreviewTitle": "NA polish önbaxış (sınaq)",
     "polishPreviewHint": "Gecə auditindən əvvəl oxunan siqnallar — real NA deyil.",
@@ -660,7 +671,9 @@
   },
   "frontCashPending": {
     "title": "Gözləyən ödəniş",
-    "subtitle": "F&B və klinikadan walk-in ödənişlər front kassada.",
+    "subtitle": "Kafe, klinika və mağazadan walk-in ödənişlər front kassada.",
+    "colSku": "SKU",
+    "colQty": "Miqdar",
     "empty": "Gözləyən ödəniş yoxdur.",
     "colSource": "Mənbə",
     "colRef": "İstinad",
@@ -727,7 +740,8 @@
     "namesIncompleteBadge": "Adlar natamam",
     "bookingName": "Bron adı",
     "bookingNamePlaceholder": "İstəyə bağlı ad (toy, korporativ blok və s.)",
-    "singleStayHint": "Bu bron üzrə bir qalma"
+    "singleStayHint": "Bu bron üzrə bir qalma",
+    "familyGroupBadge": "{count} otaq"
   },
   "reservationCard": {
     "stay": "Qalma",
@@ -1127,6 +1141,15 @@
     "departGuestDone": "Qonaq çıxdı",
     "moveGuestDone": "Qonaq köçürüldü",
     "swapRoomsDone": "Otaqlar dəyişdirildi",
+    "moveReasonTitle": "Otaq köçürməsi",
+    "moveReasonHint": "Məskunlaşmış qonaq köçürüləndə əvvəlki otaq çirkli olur. «Qalmayıb» otağı təmiz saxlayır, yalnız qonaq gecələməyibsə və folioda yazı yoxdursa.",
+    "moveReasonLabel": "Səbəb",
+    "moveReasonConfirm": "Köçür",
+    "moveReason": {
+      "GUEST_REFUSED": "Qonağa otaq uyğun gəlmədi",
+      "DID_NOT_OCCUPY": "Qalmayıb",
+      "HOTEL": "Otel köçürməsi"
+    },
     "confirmEarlyStayCheckout": "Vaxtından əvvəl çıxış",
     "earlyStayCheckoutHint": "Qalma bu gün bitir. Yazılmış gecələr qalır, istifadə olunmayanlar azad edilir.",
     "earlyStayCheckoutUnused": "İstifadə olunmayan gecələr: {nights}",
@@ -1560,6 +1583,9 @@
     "reasonCard": "bron kartından",
     "reasonSwap": "otaq dəyişməsi",
     "reasonRelocate": "otaq planından",
+    "reasonGuestRefused": "qonağa otaq uyğun gəlmədi",
+    "reasonDidNotOccupy": "qalmayıb",
+    "reasonHotel": "otel köçürməsi",
     "reasonOther": "köçürmə",
     "statusPending": "Gözləyir",
     "statusApplied": "İcra olunub",
@@ -1720,6 +1746,7 @@
     "qty": "Say",
     "post": "Folioya yaz",
     "emptyCatalog": "Məhsul yoxdur. Add ilə su, içki və s. əlavə edin.",
+    "financeSku": "Maliyyə SKU",
     "floorFilter": "Mərtəbə",
     "floorAll": "Bütün mərtəbələr",
     "recent": "Son yazılar",
@@ -2548,6 +2575,7 @@
     "location": "Yerləşmə",
     "maxBed": "Maks. çarpayı",
     "adultCapacity": "Böyük tutumu",
+    "standardAdults": "Standart yataq",
     "filterPlaceholder": "Kod və ya ada görə süzgəc…",
     "filterRoomPlaceholder": "Otaq nömrəsinə görə süzgəc…",
     "allRoomTypes": "Bütün otaq tipləri",
@@ -2794,6 +2822,20 @@
     "glMappingSaved": "GL mapping saved",
     "noGlMappings": "No revenue codes — add codes in Master data first.",
     "platformSubscriptionReadonlyBadge": "Yalnız oxuma"
+  },
+  "hkConsumption": {
+    "title": "Otaq xidməti sərfiyyatı",
+    "hint": "Biznes günü {date}. Qonağa qiymət sıfırdır. Gecə auditi sku və miqdarı Maliyyəyə göndərir. Eyni sku yenidən saxlananda miqdar əvəz olunur. Boş gün normaldır. Ağ dəyişmə qrafiki sətir yaratmır. Bağlı günün, o cümlədən əvvəlki günün sətri bu açıq günə storno edilir.",
+    "sku": "Maliyyə SKU",
+    "qty": "Miqdar",
+    "saved": "Sərfiyyat saxlanıldı",
+    "deleted": "Sərfiyyat silindi",
+    "saveFailed": "Sərfiyyat saxlanılmadı",
+    "empty": "Bu biznes günü üçün sərfiyyat yoxdur.",
+    "date": "Tarix",
+    "closedTitle": "Bağlı günlər",
+    "reverse": "Açıq günə storno",
+    "reversed": "Storno edildi"
   },
   "stock": {
     "title": "Minibar kataloqu",
@@ -3108,7 +3150,7 @@
   },
   "packagePrices": {
     "title": "Paket sell və floor",
-    "subtitle": "Manual paket qiymətləri + cost floor — BAR-dan asılı deyil.",
+    "subtitle": "Paket şəbəkəsi: tarif × otaq tipi × qidalanma × böyüklər × mövsüm. Boş xana satılmır.",
     "policyLink": "Qiymət siyasəti",
     "package": "Paket tarif",
     "addVersion": "Yeni qiymət versiyası",
@@ -3118,7 +3160,11 @@
     "effectiveFrom": "Başlanğıc",
     "effectiveTo": "Son",
     "note": "Qeyd",
-    "versionCreated": "Qiymət versiyası yaradıldı"
+    "versionCreated": "Qiymət versiyası yaradıldı",
+    "meal": "Qidalanma",
+    "seasonDate": "Mövsüm tarixi",
+    "roomType": "Otaq tipi",
+    "notSold": "—"
   },
   "unitEconomics": {
     "title": "Unit economics",

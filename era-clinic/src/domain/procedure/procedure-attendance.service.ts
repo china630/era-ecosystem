@@ -418,6 +418,8 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
         ? `Over-quota procedure no-show ${order.procedureCode}`
         : `Procedure no-show ${order.procedureCode}`,
       externalTicketId: ticketId,
+      procedureCode: order.procedureCode,
+      qty: order.quantity,
     });
   }
 

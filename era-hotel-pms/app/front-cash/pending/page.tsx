@@ -26,6 +26,8 @@ type PendingRow = {
   sourceRef: string;
   amount: string | number;
   currency: string;
+  sku: string | null;
+  qty: number;
   description: string;
   payerLabel: string | null;
   createdAt: string;
@@ -118,7 +120,7 @@ export default function FrontCashPendingPage() {
     const needle = debouncedQ.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      `${row.sourceSystem} ${row.sourceRef} ${row.payerLabel ?? ''} ${row.description}`
+      `${row.sourceSystem} ${row.sourceRef} ${row.sku ?? ''} ${row.payerLabel ?? ''} ${row.description}`
         .toLowerCase()
         .includes(needle),
     );
@@ -142,6 +144,8 @@ export default function FrontCashPendingPage() {
           { key: 'sourceSystem', header: t('colSource') },
           { key: 'sourceRef', header: t('colRef'), render: (r) => r.sourceRef.slice(0, 12) },
           { key: 'payerLabel', header: t('colPayer'), render: (r) => r.payerLabel ?? '—' },
+          { key: 'sku', header: t('colSku'), render: (r) => r.sku ?? '—' },
+          { key: 'qty', header: t('colQty'), render: (r) => String(r.qty ?? 1) },
           { key: 'description', header: t('colDescription') },
           {
             key: 'amount',

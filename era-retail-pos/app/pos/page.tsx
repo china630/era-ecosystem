@@ -390,7 +390,11 @@ export default function PosCheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Payment failed");
       setReceipt(data);
-      setMessage("Paid — SATELLITE_RETAIL_SALE_COMPLETED dispatched");
+      const hotelCashier =
+        data.status === "PENDING_HUB" ||
+        data.settlementChannel === "HOTEL_FOLIO" ||
+        data.settlementChannel === "HOTEL_HUB";
+      setMessage(hotelCashier ? t("paidHotelCashier") : t("paid"));
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {

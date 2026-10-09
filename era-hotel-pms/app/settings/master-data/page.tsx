@@ -51,6 +51,7 @@ interface RoomType extends RetireRow {
   name: string;
   baseQuota: number;
   adultCapacity?: number;
+  standardAdults?: number;
 }
 
 interface Room {
@@ -558,6 +559,7 @@ export default function MasterDataPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('name')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('quota')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('adultCapacity')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('standardAdults')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('activeStatus')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
               </tr>
@@ -569,6 +571,7 @@ export default function MasterDataPage() {
                   <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(rt, locale)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.baseQuota}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.adultCapacity ?? '—'}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{rt.standardAdults ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <ActiveStatus active={rt.active} />
                   </td>
@@ -796,6 +799,7 @@ export default function MasterDataPage() {
                   ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
+                  standardAdults: Number(fd.get('standardAdults') || 2),
                   active: fd.get('active') === 'on',
                 }
               : {
@@ -804,6 +808,7 @@ export default function MasterDataPage() {
                   ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
+                  standardAdults: Number(fd.get('standardAdults') || 2),
                 };
             const res = await fetch(
               editRoomType ? `/api/master/room-types/${editRoomType.id}` : '/api/master/room-types',
@@ -854,7 +859,7 @@ export default function MasterDataPage() {
             required
           />
           <LocalizedNameFields idPrefix="rt" row={editRoomType} />
-          <FieldRow cols={2}>
+          <FieldRow cols={3}>
             <Field
               label={tc('quota')}
               preset="count"
@@ -871,6 +876,14 @@ export default function MasterDataPage() {
               name="adultCapacity"
               type="number"
               defaultValue={editRoomType?.adultCapacity ?? 2}
+            />
+            <Field
+              label={t('standardAdults')}
+              preset="count"
+              id="rt-standard-adults"
+              name="standardAdults"
+              type="number"
+              defaultValue={editRoomType?.standardAdults ?? 2}
             />
           </FieldRow>
           {editRoomType && (

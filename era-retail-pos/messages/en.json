@@ -118,6 +118,8 @@
     "openShift": "Open shift",
     "addReceipt": "Add receipt",
     "pay": "Pay",
+    "paid": "Paid",
+    "paidHotelCashier": "Paid — hotel cashier",
     "return": "Return",
     "xReport": "X-report",
     "closeShift": "Close shift",

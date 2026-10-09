@@ -39,6 +39,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, alreadyClosed: true });
   }
 
+  const storedPendingIds = ticket.settlementPendingId?.trim() ?? "";
+  if (storedPendingIds.startsWith("[")) {
+    const parsed = JSON.parse(storedPendingIds) as unknown;
+    const ids = Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+    const left = ids.filter((id) => id !== body.pendingId);
+    if (left.length > 0) {
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: { settlementPendingId: JSON.stringify(left) },
+      });
+      return NextResponse.json({ ok: true, waiting: left.length });
+    }
+  }
+
   const closedAt = new Date();
   await prisma.ticket.update({
     where: { id: ticket.id },

@@ -99,6 +99,7 @@ type ProcedureType = {
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
+  financeSku?: string | null;
   skillCoverage?: number | null;
   requirements?: RequirementRow[];
   _count?: { skills?: number };
@@ -225,8 +226,11 @@ export default function MasterDataPage() {
   const [requirements, setRequirements] = useState<RequirementRow[]>([]);
   const [consumables, setConsumables] = useState<ConsumableRow[]>([]);
   const [financeProductOptions, setFinanceProductOptions] = useState<FinanceProductOption[]>([]);
+  const [financeServiceOptions, setFinanceServiceOptions] = useState<FinanceProductOption[]>([]);
   const [financeProductQ, setFinanceProductQ] = useState("");
   const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
+  const [financeServiceQ, setFinanceServiceQ] = useState("");
+  const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
   const [skillCoverageMsg, setSkillCoverageMsg] = useState<string | null>(null);
   const [scheduleFor, setScheduleFor] = useState<{ id: string; name: string } | null>(null);
   const [showInactive, setShowInactive] = useState(false);
@@ -311,7 +315,7 @@ export default function MasterDataPage() {
     if (!modalOpen || tab !== "procedureTypes") return;
     let cancelled = false;
     void (async () => {
-      const params = new URLSearchParams({ limit: "30" });
+      const params = new URLSearchParams({ limit: "30", isService: "false" });
       if (debouncedFinanceQ.trim()) params.set("q", debouncedFinanceQ.trim());
       const res = await fetch(`/api/admin/finance-products?${params}`);
       if (!res.ok || cancelled) return;
@@ -335,6 +339,32 @@ export default function MasterDataPage() {
       cancelled = true;
     };
   }, [modalOpen, tab, debouncedFinanceQ]);
+
+  useEffect(() => {
+    if (!modalOpen || tab !== "procedureTypes") return;
+    let cancelled = false;
+    void (async () => {
+      const params = new URLSearchParams({ limit: "50", isService: "true" });
+      if (debouncedFinanceServiceQ.trim()) params.set("q", debouncedFinanceServiceQ.trim());
+      const res = await fetch(`/api/admin/finance-products?${params}`);
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json();
+      const payload = (parsed.data ?? parsed) as {
+        items?: Array<{ value: string; label: string; sku?: string }>;
+      };
+      if (!cancelled) {
+        setFinanceServiceOptions(
+          (payload.items ?? []).map((p) => ({
+            value: p.sku ?? p.value,
+            label: p.label,
+          })),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [modalOpen, tab, debouncedFinanceServiceQ]);
 
   useEffect(() => {
     setQ("");
@@ -477,6 +507,7 @@ export default function MasterDataPage() {
     setRequirements([]);
     setConsumables([]);
     setFinanceProductQ("");
+    setFinanceServiceQ("");
     setSkillCoverageMsg(null);
     setNeedsSite(true);
     setNeedsExtraFields(false);
@@ -570,11 +601,13 @@ export default function MasterDataPage() {
       patientRestMinutes: String(row.patientRestMinutes ?? 15),
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
+      financeSku: row.financeSku ?? "",
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
     setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
+    setFinanceServiceQ("");
     setMdmStatus(null);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
@@ -686,6 +719,7 @@ export default function MasterDataPage() {
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
+          financeSku: form.financeSku?.trim() || null,
         };
       }
     } else if (tab === "practitioners") {
@@ -1380,6 +1414,20 @@ export default function MasterDataPage() {
           )}
           {tab === "procedureTypes" && (
             <>
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("financeSku")}
+                value={form.financeSku ?? ""}
+                serverSearch
+                onQueryChange={setFinanceServiceQ}
+                options={
+                  form.financeSku &&
+                  !financeServiceOptions.some((option) => option.value === form.financeSku)
+                    ? [{ value: form.financeSku, label: form.financeSku }, ...financeServiceOptions]
+                    : financeServiceOptions
+                }
+                onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
+              />
               <FieldRow cols={4}>
                 <Field
                   label={t("durationMin")}

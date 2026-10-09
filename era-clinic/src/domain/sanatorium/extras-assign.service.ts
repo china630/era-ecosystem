@@ -14,9 +14,12 @@ import {
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
 import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
-import { resolveProcedureCharge } from "@/domain/procedure/procedure-charge.service";
+import {
+  postProcedureFolioCharge,
+  resolveProcedureCharge,
+} from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelRoomCharge } from "@/lib/billing-router";
+import { postHotelRoomCharge, tryResolveSellableSku } from "@/lib/billing-router";
 import {
   extraTicketIdForOrder,
   extraTicketPrintPath,
@@ -278,12 +281,14 @@ export async function payAndScheduleExtras(
         );
       }
       if (order.reservationId && amount > 0) {
-        await postHotelRoomCharge({
+        await postProcedureFolioCharge({
           hotelOrganizationId: hotelOrganizationId ?? undefined,
           reservationId: order.reservationId,
           amount,
           description,
           externalTicketId: `pay-${ticketId}`,
+          procedureCode: order.procedureCode,
+          qty: order.quantity,
         });
       }
       // Walk-in with receipt: FO already collected cash; clinic records receipt only.
@@ -378,11 +383,14 @@ export async function cancelPaidExtraWithFolioReverse(
   const amount = Number(order.amountNet);
   if (order.reservationId) {
     try {
+      const productSku = await tryResolveSellableSku(order.procedureCode);
       await postHotelRoomCharge({
         reservationId: order.reservationId,
         amount: -amount,
         description: `Reverse: ${order.procedureName}`,
         externalTicketId: `rev-${order.extraTicketId ?? order.id}`,
+        productSku: productSku ?? undefined,
+        qty: order.quantity,
       });
     } catch (err) {
       console.error("[extras] folio reverse failed", orderId, err);

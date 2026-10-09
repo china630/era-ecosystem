@@ -13,6 +13,7 @@ export type RoomChargeIdempotencyInput = {
   description: string;
   outletCode?: string;
   productSku?: string;
+  qty?: number;
 };
 
 export function hashRoomChargeRequest(input: RoomChargeIdempotencyInput): string {
@@ -24,6 +25,7 @@ export function hashRoomChargeRequest(input: RoomChargeIdempotencyInput): string
     description: input.description,
     outletCode: input.outletCode ?? null,
     productSku: input.productSku ?? null,
+    qty: input.qty ?? 1,
   };
   return createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
 }

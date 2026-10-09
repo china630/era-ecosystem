@@ -7,6 +7,7 @@ import type { FolioType, PaymentMethod, Reservation } from '@prisma/client';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { getElektrawebBridgePolicy } from '@/lib/integration/elektraweb-bridge/config';
 import { getPropertyCode } from '@/lib/services/hotel.service';
 import { getRedis, OUTBOUND_RETRY_QUEUE, IDEMPOTENCY_PREFIX } from '@/lib/redis';
 import {
@@ -116,13 +117,14 @@ export function buildNightAuditEvent(
   input: {
     businessDate: string;
     nightAuditId?: string;
+    saleLines?: Array<{ sku: string; qty: number; amount: number }>;
     revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
     paymentLines: Array<{ method: string; amount: number }>;
   },
   hotelId: string,
 ): IntegrationEnvelope {
   return {
-    correlationId: randomUUID(),
+    correlationId: `hotel-na:${input.businessDate}`,
     hotelId,
     eventType: 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED',
     timestamp: new Date().toISOString(),
@@ -130,6 +132,7 @@ export function buildNightAuditEvent(
       businessDate: input.businessDate,
       nightAuditId: input.nightAuditId,
       currency: 'AZN',
+      saleLines: input.saleLines ?? [],
       revenueLines: input.revenueLines,
       lines: input.revenueLines,
       paymentLines: input.paymentLines,
@@ -330,13 +333,53 @@ async function logOutboundEvent(
   }
 }
 
+function financeApiBase(): string {
+  const configured = (process.env.ERA_FINANCE_API_URL ?? process.env.FINANCE_API_URL)?.trim();
+  if (configured) return configured.replace(/\/$/, '');
+  if (process.env.ERA_IN_DOCKER === '1') return 'http://finance-core:4100';
+  return 'http://127.0.0.1:4100';
+}
+
+/** Ask Finance to post now. A refusal is a warning; the queued event remains the backup. */
+async function submitHotelDayDocument(event: object): Promise<string | undefined> {
+  const base = financeApiBase();
+  const token = process.env.FINANCE_SERVICE_TOKEN ?? process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+  const organizationId = requestOrganizationId();
+  try {
+    const res = await fetch(`${base}/api/internal/v1/hotel-day-document`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'x-organization-id': organizationId,
+      },
+      body: JSON.stringify(event),
+      signal: AbortSignal.timeout(60_000),
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      rejected?: boolean;
+      error?: string;
+      message?: string;
+    };
+    if (!res.ok) {
+      return body.error ?? body.message ?? `Finance rejected the day document (${res.status})`;
+    }
+    if (body.rejected) return body.error ?? 'Finance did not post the day document';
+    return undefined;
+  } catch (err) {
+    return err instanceof Error
+      ? `Finance did not answer: ${err.message}`
+      : 'Finance did not answer';
+  }
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function eventGatewayMode(): 'orchestrator' | 'legacy' {
-  const mode = (process.env.ERA_EVENT_GATEWAY_MODE ?? 'legacy').toLowerCase();
-  return mode === 'orchestrator' ? 'orchestrator' : 'legacy';
+  const mode = (process.env.ERA_EVENT_GATEWAY_MODE ?? 'orchestrator').toLowerCase();
+  return mode === 'legacy' ? 'legacy' : 'orchestrator';
 }
 
 export async function publishEvent(
@@ -363,6 +406,23 @@ export async function publishEvent(
         error: msg,
         attempts: 0,
       };
+    }
+    if (envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED') {
+      const policy = await getElektrawebBridgePolicy(organizationId);
+      if (policy?.inboundEnabled) {
+        await logOutboundEvent(
+          envelope,
+          'SKIPPED',
+          0,
+          'Elektraweb inboundEnabled: day document stays local',
+        );
+        return {
+          dispatched: false,
+          correlationId: envelope.correlationId,
+          attempts: 0,
+          skipped: true,
+        };
+      }
     }
     const contractEvent =
       envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED'
@@ -403,6 +463,15 @@ export async function publishEvent(
     if (gateway.ok) {
       await markIdempotency(envelope.correlationId);
       await logOutboundEvent(envelope, 'SENT', 1);
+      if (envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED') {
+        const warning = await submitHotelDayDocument(contractEvent);
+        return {
+          dispatched: true,
+          correlationId: envelope.correlationId,
+          attempts: 1,
+          warning,
+        };
+      }
       return { dispatched: true, correlationId: envelope.correlationId, attempts: 1 };
     }
     const err = gateway.error ?? 'Orchestrator gateway failed';
@@ -492,6 +561,7 @@ export async function dispatchReservationCompleted(
 export async function dispatchNightAuditClosed(input: {
   businessDate: string;
   nightAuditId?: string;
+  saleLines?: Array<{ sku: string; qty: number; amount: number }>;
   revenueLines: Array<{ revenueCode: string; amount: number }>;
   paymentLines: Array<{ method: string; amount: number }>;
 }): Promise<DispatchResult> {

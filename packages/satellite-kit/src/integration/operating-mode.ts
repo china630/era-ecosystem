@@ -63,6 +63,15 @@ export function shouldRouteRevenueToParent(mode: OperatingModeSnapshot): boolean
   );
 }
 
+/** Nafta department reads the hotel parent catalog. A standalone org reads its own. */
+export async function resolveCatalogOrganizationId(organizationId: string): Promise<string> {
+  const mode = await resolveOperatingMode(organizationId);
+  if (shouldRouteRevenueToParent(mode) && mode.parentOrgId) {
+    return mode.parentOrgId;
+  }
+  return organizationId;
+}
+
 /** True when fiscalization is owned by the parent (no own KKM receipt here —
  * the fiscal document is issued on the parent's side, avoiding double fiscalization). */
 export function shouldFiscalizeOnParent(mode: OperatingModeSnapshot): boolean {
@@ -128,4 +137,22 @@ export function shouldDeferWalkInToHub(
   policy: SettlementPolicySnapshot,
 ): boolean {
   return policy.deferWalkInToHub === true;
+}
+
+/**
+ * Nafta department: revenue is the hotel day document.
+ * A standalone company with its own cashier keeps sale events.
+ */
+export async function departmentFinanceEventsSilenced(
+  organizationId: string,
+): Promise<boolean> {
+  if (!organizationId) return false;
+  const [mode, policy] = await Promise.all([
+    resolveOperatingMode(organizationId),
+    resolveSettlementPolicy(organizationId),
+  ]);
+  return (
+    shouldRouteRevenueToParent(mode) ||
+    policy.settlementHub === "HOTEL_FRONT_CASH"
+  );
 }

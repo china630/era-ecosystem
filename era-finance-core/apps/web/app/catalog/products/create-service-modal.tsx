@@ -2,7 +2,7 @@
 
 import { ProductModal } from "./product-modal";
 
-/** Модалка создания услуги: только название, НДС, цена; на бэкенд уходит `isService: true`. */
+/** Service create: explicit SKU, VAT, price, and NAS revenue account; payload sets `isService: true`. */
 export function CreateServiceModal({
   open,
   onClose,

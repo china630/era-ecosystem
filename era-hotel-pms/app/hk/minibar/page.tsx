@@ -30,6 +30,8 @@ export default function MinibarPage() {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('5');
+  const [financeSku, setFinanceSku] = useState('');
+  const [financeSkuOptions, setFinanceSkuOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -52,10 +54,28 @@ export default function MinibarPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch('/api/housekeeping/finance-products?limit=50');
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json().catch(() => null);
+      const payload = (parsed?.data ?? parsed) as {
+        items?: Array<{ value: string; label: string }>;
+      } | null;
+      if (!cancelled) setFinanceSkuOptions(payload?.items ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   function openModal() {
     setCode('');
     setName('');
     setPrice('5');
+    setFinanceSku('');
     setOpen(true);
   }
 
@@ -69,7 +89,12 @@ export default function MinibarPage() {
       const res = await fetch('/api/housekeeping/minibar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, name, price: Number(price) }),
+        body: JSON.stringify({
+          code,
+          name,
+          price: Number(price),
+          financeSku: financeSku.trim() || null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -219,6 +244,29 @@ export default function MinibarPage() {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t('financeSku')}
+            value={financeSku}
+            serverSearch
+            onQueryChange={(q) => {
+              void fetch(`/api/housekeeping/finance-products?limit=50&q=${encodeURIComponent(q)}`)
+                .then((r) => (r.ok ? r.json() : null))
+                .then((parsed) => {
+                  const payload = (parsed?.data ?? parsed) as {
+                    items?: Array<{ value: string; label: string }>;
+                  } | null;
+                  setFinanceSkuOptions(payload?.items ?? []);
+                })
+                .catch(() => setFinanceSkuOptions([]));
+            }}
+            options={
+              financeSku && !financeSkuOptions.some((option) => option.value === financeSku)
+                ? [{ value: financeSku, label: financeSku }, ...financeSkuOptions]
+                : financeSkuOptions
+            }
+            onChange={(next) => setFinanceSku(Array.isArray(next) ? next[0] ?? '' : next)}
           />
         </div>
       </ModalShell>

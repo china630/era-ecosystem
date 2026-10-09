@@ -8,7 +8,7 @@ import { payPendingCharge } from '@/lib/services/settlement-hub.service';
 
 const schema = z.object({
   paymentMethod: z.enum(['CASH', 'CARD']),
-  amount: z.number().positive().optional(),
+  amount: z.number().finite().refine((amount) => amount !== 0).optional(),
 });
 
 export async function POST(

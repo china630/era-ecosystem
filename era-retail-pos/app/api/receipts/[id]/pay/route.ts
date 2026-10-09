@@ -12,7 +12,7 @@ import {
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
 import { isRetailPreset } from "@/lib/retail-preset";
-import { postRoomCharge } from "@/lib/pms-bridge-client";
+import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-client";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { prisma } from "@/lib/prisma";
 
@@ -47,12 +47,14 @@ export async function POST(
       },
     });
     if (!receipt) return jsonError("Receipt not found", 404);
-    if (receipt.status === "PAID") return jsonOk(receipt);
+    if (receipt.status === "PAID" || receipt.status === "PENDING_HUB") return jsonOk(receipt);
 
     const {
       isFiscalPaymentMethod,
       isFiscalSkipped,
       resolveOperatingMode,
+      resolveSettlementPolicy,
+      shouldDeferWalkInToHub,
       shouldFiscalizeOnParent,
       shouldRouteRevenueToParent,
     } = await import("@era/satellite-kit");
@@ -65,6 +67,12 @@ export async function POST(
       method === "ROOM_CHARGE" ||
       (shouldRouteRevenueToParent(mode) &&
         Boolean(body.reservationId || body.roomNumber));
+    const policy = await resolveSettlementPolicy(orgId);
+    const walkInHub =
+      !isRoomCharge &&
+      (shouldRouteRevenueToParent(mode) || shouldDeferWalkInToHub(policy));
+
+    const activeLines = receipt.lines.filter((line) => line.lineStatus === "ACTIVE");
 
     let fiscalNumber: string | null = null;
     let settlementChannel: string | null = null;
@@ -73,22 +81,61 @@ export async function POST(
       if (!body.reservationId && !body.roomNumber) {
         return jsonError("reservationId or roomNumber required for room charge", 400);
       }
-      const charge = await postRoomCharge(
-        {
-          reservationId: body.reservationId,
-          roomNumber: body.roomNumber,
-          revenueCode: "RETAIL",
-          amount: amountNet,
-          description: `Retail ${receipt.outlet.code} — ${receipt.id.slice(0, 8)}`,
-          outletCode: receipt.outlet.code,
-          externalTicketId: receipt.id,
-        },
-        receipt.id,
-      );
-      if (!charge.ok) {
-        return jsonError(`Hotel folio charge failed: ${charge.status}`, 502);
+      if (activeLines.length === 0) return jsonError("Finance SKU is required", 400);
+      for (const line of activeLines) {
+        const sku = line.plu?.trim();
+        if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
+        const lineKey = `${receipt.id}:${line.id}`;
+        const charge = await postRoomCharge(
+          {
+            reservationId: body.reservationId,
+            roomNumber: body.roomNumber,
+            revenueCode: "RETAIL",
+            amount: Number(line.lineTotal),
+            qty: line.qty,
+            productSku: sku,
+            description: `${line.qty}x ${line.description}`,
+            outletCode: receipt.outlet.code,
+            externalTicketId: lineKey,
+          },
+          lineKey,
+        );
+        if (!charge.ok) {
+          return jsonError(`Hotel folio charge failed: ${charge.status}`, 502);
+        }
       }
       settlementChannel = "HOTEL_FOLIO";
+    } else if (walkInHub) {
+      if (activeLines.length === 0) return jsonError("Finance SKU is required", 400);
+      const pendingIds: string[] = [];
+      for (const line of activeLines) {
+        const sku = line.plu?.trim();
+        if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
+        const pending = await postHotelSettlementPending({
+          sourceRef: receipt.id,
+          amount: Number(line.lineTotal),
+          description: `${line.qty}x ${line.description}`,
+          payerLabel: body.customerPhone?.trim() || receipt.outlet.code,
+          idempotencyKey: `retail-${receipt.id}-${line.id}`,
+          sku,
+          qty: line.qty,
+          revenueCode: "RETAIL",
+        });
+        pendingIds.push(pending.id);
+      }
+      const deferred = await prisma.receipt.update({
+        where: { id },
+        data: {
+          status: "PENDING_HUB",
+          paymentMethod: body.paymentMethod,
+          customerPhone: body.customerPhone?.trim() || null,
+          loyaltyRef: body.loyaltyRef?.trim() || null,
+          settlementChannel: "HOTEL_HUB",
+          hubPendingIds: JSON.stringify(pendingIds),
+        },
+        include: { lines: true },
+      });
+      return jsonOk(deferred);
     } else if (isFiscalPaymentMethod(body.paymentMethod) && !shouldFiscalizeOnParent(mode)) {
       const { saleForSatelliteRouted } = await import("@era/satellite-kit");
       const outcome = await saleForSatelliteRouted({

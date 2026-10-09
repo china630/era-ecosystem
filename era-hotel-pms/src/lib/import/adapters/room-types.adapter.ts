@@ -11,6 +11,13 @@ const rowSchema = z.object({
   adultCapacity: z.number().int().positive().optional(),
 });
 
+/** EW Max Adult is bedding. Standard still sells occupancy 3. Do not lower a higher ceiling. */
+function sellAdultCeiling(code: string, bedding: number, existing?: number | null): number {
+  const standard = /^(STWN|SDBL|STD|STANDARD|STANDART)$/.test(code.toUpperCase());
+  const fromSheet = standard ? Math.max(bedding, 3) : bedding;
+  return Math.max(fromSheet, existing ?? 0);
+}
+
 export const roomTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'room-types',
   label: 'Room Types',
@@ -43,18 +50,22 @@ export const roomTypesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   upsert: async (tx, row, dryRun) => {
     const existing = await tx.roomType.findFirst({ where: { code: row.code } });
     if (dryRun) return existing ? 'updated' : 'created';
+    const bedding = row.adultCapacity ?? 2;
+    const ceiling = sellAdultCeiling(row.code, bedding, existing?.adultCapacity);
     await tx.roomType.upsert({
       where: { code: row.code } as never,
       create: {
         code: row.code,
         name: row.name,
         baseQuota: row.baseQuota,
-        adultCapacity: row.adultCapacity ?? 2,
+        standardAdults: bedding,
+        adultCapacity: ceiling,
       },
       update: {
         name: row.name,
         baseQuota: row.baseQuota,
-        adultCapacity: row.adultCapacity ?? 2,
+        standardAdults: bedding,
+        adultCapacity: ceiling,
       },
     });
     return existing ? 'updated' : 'created';

@@ -17,6 +17,8 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
+import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import RoomPlanGrid, { type RoomPlanGroup, type RoomPlanRoom } from '@/components/RoomPlanGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -96,6 +98,9 @@ export default function RoomPlanPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cardReservationId, setCardReservationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingMove, setPendingMove] = useState<{ reservationId: string; toRoomId: string } | null>(
+    null,
+  );
   const [fullscreen, setFullscreen] = useState(false);
 
   const load = useCallback(async () => {
@@ -180,14 +185,18 @@ export default function RoomPlanPage() {
       .filter((g) => g.rooms.length > 0) as RoomPlanGroup[];
   }, [data, groupMode, filterRooms]);
 
-  async function moveReservation(reservationId: string, toRoomId: string) {
+  async function moveReservation(
+    reservationId: string,
+    toRoomId: string,
+    reasonCode: RoomMoveReason,
+  ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode: 'RACK_DND' }),
+        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -307,7 +316,7 @@ export default function RoomPlanPage() {
       }}
       onMoveReservation={
         can(PERMISSIONS.RESERVATIONS_WRITE)
-          ? (reservationId, toRoomId) => moveReservation(reservationId, toRoomId)
+          ? (reservationId, toRoomId) => setPendingMove({ reservationId, toRoomId })
           : undefined
       }
       onResizeEnd={
@@ -371,6 +380,16 @@ export default function RoomPlanPage() {
         onClose={() => {
           setCardReservationId(null);
           void load();
+        }}
+      />
+      <RoomMoveReasonModal
+        open={Boolean(pendingMove)}
+        busy={busy}
+        onClose={() => setPendingMove(null)}
+        onConfirm={(reason) => {
+          const move = pendingMove;
+          setPendingMove(null);
+          if (move) void moveReservation(move.reservationId, move.toRoomId, reason);
         }}
       />
     </>

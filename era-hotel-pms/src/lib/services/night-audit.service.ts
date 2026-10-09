@@ -77,6 +77,79 @@ export async function getNightAuditStatus() {
   };
 }
 
+function money2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** Folio money follows folioBalance (amount × qty). Pending amount is the cashier line total. */
+async function collectDayDocument(date: Date) {
+  const charges = await prisma.folioCharge.findMany({
+    where: { businessDate: date },
+    include: { revenueCode: true },
+  });
+  const pending = await prisma.settlementPendingCharge.findMany({
+    where: { status: 'PAID', businessDate: date },
+  });
+  const payments = await prisma.folioPayment.findMany({
+    where: { businessDate: date },
+  });
+
+  const saleBySku = new Map<string, { sku: string; qty: number; amount: number }>();
+  const revenueByCode = new Map<string, number>();
+  const addSale = (sku: string | null | undefined, qty: number, amount: number) => {
+    const trimmed = sku?.trim();
+    if (!trimmed) return false;
+    const key = trimmed.toLowerCase();
+    const row = saleBySku.get(key) ?? { sku: trimmed, qty: 0, amount: 0 };
+    row.qty += qty;
+    row.amount = money2(row.amount + amount);
+    saleBySku.set(key, row);
+    return true;
+  };
+
+  for (const charge of charges) {
+    const amount = money2(decimalToNumber(charge.amount) * charge.qty);
+    if (!addSale(charge.sku, charge.qty, amount)) {
+      const code = charge.revenueCode.code;
+      revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
+    }
+  }
+  for (const row of pending) {
+    const amount = money2(decimalToNumber(row.amount));
+    if (!addSale(row.sku, row.qty, amount)) {
+      const code = row.revenueCode?.trim() || 'UNKNOWN';
+      revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
+    }
+  }
+  const consumption = await prisma.hkConsumption.findMany({ where: { businessDate: date } });
+  for (const row of consumption) {
+    addSale(row.sku, decimalToNumber(row.qty), 0);
+  }
+
+  const saleLines = [...saleBySku.values()].filter((line) => line.qty !== 0 || line.amount !== 0);
+  const revenueLines = [...revenueByCode.entries()]
+    .filter(([, amount]) => amount !== 0)
+    .map(([revenueCode, amount]) => ({ revenueCode, amount: money2(amount) }));
+
+  const payByMethod = new Map<string, number>();
+  const addPay = (method: string, signed: number) => {
+    const key = method.trim() || 'CASH';
+    payByMethod.set(key, money2((payByMethod.get(key) ?? 0) + signed));
+  };
+  for (const payment of payments) {
+    const amount = decimalToNumber(payment.amount);
+    addPay(payment.paymentMethod, payment.kind === 'REFUND' ? -amount : amount);
+  }
+  for (const row of pending) {
+    addPay(row.paymentMethod?.trim() || 'CASH', decimalToNumber(row.amount));
+  }
+  const paymentLines = [...payByMethod.entries()]
+    .filter(([, amount]) => amount !== 0)
+    .map(([method, amount]) => ({ method, amount }));
+
+  return { saleLines, revenueLines, paymentLines };
+}
+
 export async function listNightAuditRuns(limit = 5) {
   return prisma.nightAuditRun.findMany({
     orderBy: { createdAt: 'desc' },
@@ -193,17 +266,21 @@ async function executeLockedNightAudit() {
       select: { amount: true, qty: true },
     });
     const dayPays = await prisma.folioPayment.findMany({
-      where: { createdAt: { gte: dayStart, lt: dayEnd } },
+      where: { businessDate: date },
       select: { amount: true, kind: true },
     });
-    const trialCharges = dayCharges.reduce(
-      (s, c) => s + decimalToNumber(c.amount) * c.qty,
-      0,
-    );
-    const trialPays = dayPays.reduce((s, p) => {
-      const n = decimalToNumber(p.amount);
-      return s + (p.kind === 'REFUND' ? -n : n);
-    }, 0);
+    const paidPending = await prisma.settlementPendingCharge.findMany({
+      where: { status: 'PAID', businessDate: date },
+      select: { amount: true },
+    });
+    const pendingMoney = paidPending.reduce((s, row) => s + decimalToNumber(row.amount), 0);
+    const trialCharges =
+      dayCharges.reduce((s, c) => s + decimalToNumber(c.amount) * c.qty, 0) + pendingMoney;
+    const trialPays =
+      dayPays.reduce((s, p) => {
+        const n = decimalToNumber(p.amount);
+        return s + (p.kind === 'REFUND' ? -n : n);
+      }, 0) + pendingMoney;
     steps.push(
       `Step 2d: Trial balance — charges ${trialCharges.toFixed(2)} / payments ${trialPays.toFixed(2)} AZN`,
     );
@@ -225,11 +302,29 @@ async function executeLockedNightAudit() {
     for (const res of inHouse) {
       if (res.ratePlan.medicalFlag) {
         const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
-        const pkgResult = await postNightlyPackageCharges(res.id, date);
-        if (pkgResult.posted > 0) {
-          steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
-        } else if (!pkgResult.skipped) {
-          steps.push(`Step 3: Package already posted — reservation ${res.id}`);
+        try {
+          const pkgResult = await postNightlyPackageCharges(res.id, date);
+          if (pkgResult.posted > 0) {
+            steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
+          } else if (!pkgResult.skipped) {
+            steps.push(`Step 3: Package already posted — reservation ${res.id}`);
+          }
+        } catch (err) {
+          if (err instanceof NightlyPriceMissingError) {
+            const who = [
+              res.guest?.fullName,
+              res.externalRef ? `ref ${res.externalRef}` : null,
+              res.room?.roomNumber ? `room ${res.room.roomNumber}` : null,
+              `rate ${err.ratePlanCode}`,
+            ]
+              .filter(Boolean)
+              .join(', ');
+            steps.push(
+              `Step 3: Nightly price missing — reservation ${res.id} (${who}); package charge skipped`,
+            );
+            continue;
+          }
+          throw err;
         }
         continue;
       }
@@ -279,7 +374,29 @@ async function executeLockedNightAudit() {
         steps.push(`Step 3: Room charge posted (${amount} AZN) — reservation ${res.id}`);
       }
     }
-    steps.push(`Step 3 complete: room charges for ${date.toISOString().slice(0, 10)}`);
+    const businessDateKey = hotelDateKey(date);
+    steps.push(`Step 3 complete: room charges for ${businessDateKey}`);
+
+    const document = await collectDayDocument(date);
+    const dispatch = await dispatchNightAuditClosed({
+      businessDate: businessDateKey,
+      nightAuditId: run.id,
+      saleLines: document.saleLines,
+      revenueLines: document.revenueLines,
+      paymentLines: document.paymentLines,
+    });
+    if (dispatch.warning) {
+      steps.push(`Step 4: Finance warning — ${dispatch.warning}`);
+      errors.push(dispatch.warning);
+    } else if (!dispatch.dispatched && !dispatch.skipped) {
+      const message = dispatch.error ?? 'Day document was not posted';
+      steps.push(`Step 4: Finance warning — ${message}`);
+      errors.push(message);
+    } else {
+      steps.push(
+        `Step 4: Day document — ${dispatch.skipped ? 'skipped' : 'posted'} (${document.saleLines.length} sale lines)`,
+      );
+    }
 
     await prisma.businessDay.update({
       where: { id: businessDay.id },
@@ -287,47 +404,7 @@ async function executeLockedNightAudit() {
     });
 
     const nextDate = await advanceBusinessDate();
-    steps.push(`Step 4: Roll business date — next open day ${nextDate.toISOString().slice(0, 10)}`);
-
-    const aggregates = await prisma.folioCharge.groupBy({
-      by: ['revenueCodeId'],
-      where: { businessDate: date },
-      _sum: { amount: true },
-    });
-
-    const codes = await prisma.revenueCode.findMany({
-      where: { id: { in: aggregates.map((a) => a.revenueCodeId) } },
-    });
-
-    const revenueLines = aggregates.map((a) => {
-      const code = codes.find((c) => c.id === a.revenueCodeId);
-      return {
-        revenueCode: code?.code ?? 'UNKNOWN',
-        amount: decimalToNumber(a._sum.amount ?? 0),
-      };
-    });
-
-    const payments = await prisma.folioPayment.findMany({
-      where: { createdAt: { gte: dayStart, lt: dayEnd } },
-    });
-    const paymentByMethod = new Map<string, number>();
-    for (const p of payments) {
-      const key = p.paymentMethod;
-      paymentByMethod.set(key, (paymentByMethod.get(key) ?? 0) + decimalToNumber(p.amount));
-    }
-    const paymentLines = [...paymentByMethod.entries()].map(([method, amount]) => ({
-      method,
-      amount,
-    }));
-
-    const dispatch = await dispatchNightAuditClosed({
-      businessDate: date.toISOString().slice(0, 10),
-      nightAuditId: run.id,
-      revenueLines,
-      paymentLines,
-    });
-
-    steps.push(`Step 5: E1 dispatch — ${dispatch.dispatched ? 'sent' : dispatch.skipped ? 'skipped' : 'failed'}`);
+    steps.push(`Step 5: Roll business date — next open day ${hotelDateKey(nextDate)}`);
 
     const completed = await prisma.nightAuditRun.update({
       where: { id: run.id },

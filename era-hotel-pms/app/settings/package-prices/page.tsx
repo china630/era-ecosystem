@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -17,7 +17,6 @@ import {
   FieldRow,
   FORM_STACK_CLASS,
   PageHeader,
-  PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -30,19 +29,36 @@ type Plan = {
   id: string;
   code: string;
   name: string;
-  pricePerNight: number | string;
   medicalFlag: boolean;
+  mealPlanId?: string | null;
 };
+
+type RoomTypeRow = {
+  id: string;
+  code: string;
+  name: string;
+  adultCapacity?: number;
+};
+
+type MealRow = { id: string; code: string; name: string };
 
 type Version = {
   id: string;
   sellPrice: number | string;
   costFloor: number | string | null;
   occupancy: number;
+  roomTypeId: string | null;
+  mealPlanId: string | null;
   effectiveFrom: string;
   effectiveTo: string | null;
   note: string | null;
 };
+
+function covers(version: Version, on: string): boolean {
+  const from = String(version.effectiveFrom).slice(0, 10);
+  const to = version.effectiveTo ? String(version.effectiveTo).slice(0, 10) : null;
+  return from <= on && (to == null || to >= on);
+}
 
 export default function PackagePricesPage() {
   const { can } = useAuth();
@@ -50,32 +66,51 @@ export default function PackagePricesPage() {
   const tc = useTranslations('common');
   const canWrite = can(PERMISSIONS.MASTER_DATA_MANAGE);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [roomTypes, setRoomTypes] = useState<RoomTypeRow[]>([]);
+  const [meals, setMeals] = useState<MealRow[]>([]);
   const [planId, setPlanId] = useState('');
+  const [mealId, setMealId] = useState('');
   const [versions, setVersions] = useState<Version[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sellPrice, setSellPrice] = useState('');
   const [costFloor, setCostFloor] = useState('');
   const [occupancy, setOccupancy] = useState('1');
+  const [roomTypeId, setRoomTypeId] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState(() => hotelDateKey());
   const [note, setNote] = useState('');
   const formId = 'pkg-sell-version-form';
 
   const loadPlans = useCallback(async () => {
     try {
-      const res = await fetch('/api/master/rate-plans');
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, tc('loadError'));
+      const [planRes, typeRes, mealRes] = await Promise.all([
+        fetch('/api/master/rate-plans'),
+        fetch('/api/master/room-types'),
+        fetch('/api/master/meal-plans'),
+      ]);
+      const planData = await planRes.json();
+      const typeData = await typeRes.json();
+      const mealData = await mealRes.json();
+      if (!planRes.ok) {
+        showApiError(planData, tc('loadError'));
         return;
       }
-      const list: Plan[] = (Array.isArray(data) ? data : []).filter((p: Plan) => p.medicalFlag);
+      const list: Plan[] = (Array.isArray(planData) ? planData : []).filter((p: Plan) => p.medicalFlag);
       setPlans(list);
       if (!planId && list[0]) setPlanId(list[0].id);
+      const types: RoomTypeRow[] = Array.isArray(typeData) ? typeData : [];
+      setRoomTypes(types.filter((row) => (row as { active?: boolean }).active !== false));
+      const mealList: MealRow[] = Array.isArray(mealData) ? mealData : [];
+      setMeals(mealList);
+      if (!mealId) {
+        const fb = mealList.find((m) => m.code.toUpperCase() === 'FB');
+        if (fb) setMealId(fb.id);
+        else if (mealList[0]) setMealId(mealList[0].id);
+      }
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
-  }, [planId, tc]);
+  }, [planId, mealId, tc]);
 
   const loadVersions = useCallback(async () => {
     if (!planId) {
@@ -103,9 +138,34 @@ export default function PackagePricesPage() {
     void loadVersions();
   }, [loadVersions]);
 
+  const maxOcc = useMemo(
+    () => Math.max(1, ...roomTypes.map((rt) => rt.adultCapacity ?? 2)),
+    [roomTypes],
+  );
+
+  function cellAt(typeId: string, occ: number): Version | undefined {
+    return versions.find(
+      (v) =>
+        v.roomTypeId === typeId &&
+        v.mealPlanId === mealId &&
+        v.occupancy === occ &&
+        covers(v, effectiveFrom),
+    );
+  }
+
+  function openCell(typeId: string, occ: number) {
+    const existing = cellAt(typeId, occ);
+    setRoomTypeId(typeId);
+    setOccupancy(String(occ));
+    setSellPrice(existing ? String(existing.sellPrice) : '');
+    setCostFloor(existing?.costFloor != null ? String(existing.costFloor) : '');
+    setNote(existing?.note ?? '');
+    setModalOpen(true);
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!planId) return;
+    if (!planId || !roomTypeId || !mealId) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/rate-plans/${planId}/sell-versions`, {
@@ -115,6 +175,8 @@ export default function PackagePricesPage() {
           sellPrice: Number(sellPrice),
           costFloor: costFloor.trim() === '' ? null : Number(costFloor),
           occupancy: Number(occupancy),
+          roomTypeId,
+          mealPlanId: mealId,
           effectiveFrom,
           note: note.trim() || null,
         }),
@@ -151,27 +213,34 @@ export default function PackagePricesPage() {
       />
 
       <section className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('package')}
-          value={planId}
-          onChange={(v) => setPlanId(String(v ?? ''))}
-          options={plans.map((p) => ({
-            value: p.id,
-            label: `${p.code} — ${p.name} (${p.pricePerNight})`,
-          }))}
-          emptyLabel={null}
-        />
-        {canWrite ? (
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={!planId}
-            onClick={() => setModalOpen(true)}
-          >
-            {t('addVersion')}
-          </button>
-        ) : null}
+        <FieldRow cols={3}>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('package')}
+            value={planId}
+            onChange={(v) => setPlanId(String(v ?? ''))}
+            options={plans.map((p) => ({
+              value: p.id,
+              label: `${p.code} — ${p.name}`,
+            }))}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('meal')}
+            value={mealId}
+            onChange={(v) => setMealId(String(v ?? ''))}
+            options={meals.map((m) => ({ value: m.id, label: `${m.code} — ${m.name}` }))}
+            emptyLabel={null}
+          />
+          <DatePicker
+            label={t('seasonDate')}
+            value={effectiveFrom}
+            onChange={setEffectiveFrom}
+            placeholder={tc('datePlaceholder')}
+            preset="date"
+          />
+        </FieldRow>
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} p-4`}>
@@ -179,27 +248,45 @@ export default function PackagePricesPage() {
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('occupancy')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('sellPrice')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('costFloor')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('effectiveFrom')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('effectiveTo')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('note')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('roomType')}</th>
+                {Array.from({ length: maxOcc }, (_, i) => (
+                  <th key={i + 1} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {i + 1}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {versions.map((v) => (
-                <tr key={v.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.occupancy}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.sellPrice}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.costFloor ?? '—'}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {String(v.effectiveFrom).slice(0, 10)}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {v.effectiveTo ? String(v.effectiveTo).slice(0, 10) : '—'}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.note ?? '—'}</td>
+              {roomTypes.map((rt) => (
+                <tr key={rt.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{rt.code}</td>
+                  {Array.from({ length: maxOcc }, (_, i) => {
+                    const occ = i + 1;
+                    const ceiling = rt.adultCapacity ?? 2;
+                    if (occ > ceiling) {
+                      return (
+                        <td key={occ} className={DATA_TABLE_TD_CLASS}>
+                          —
+                        </td>
+                      );
+                    }
+                    const cell = cellAt(rt.id, occ);
+                    return (
+                      <td key={occ} className={DATA_TABLE_TD_CLASS}>
+                        {canWrite ? (
+                          <button
+                            type="button"
+                            className="text-[#2980B9] hover:underline"
+                            onClick={() => openCell(rt.id, occ)}
+                          >
+                            {cell ? String(cell.sellPrice) : t('notSold')}
+                          </button>
+                        ) : (
+                          <span>{cell ? String(cell.sellPrice) : t('notSold')}</span>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -223,6 +310,22 @@ export default function PackagePricesPage() {
         <form id={formId} className={FORM_STACK_CLASS} onSubmit={(e) => void save(e)}>
           <FieldRow cols={2}>
             <Field
+              label={t('roomType')}
+              preset="shortText"
+              value={roomTypes.find((rt) => rt.id === roomTypeId)?.code ?? ''}
+              readOnly
+            />
+            <Field
+              label={t('occupancy')}
+              preset="count"
+              type="number"
+              min={1}
+              value={occupancy}
+              readOnly
+            />
+          </FieldRow>
+          <FieldRow cols={2}>
+            <Field
               label={t('sellPrice')}
               preset="amount"
               type="number"
@@ -238,24 +341,6 @@ export default function PackagePricesPage() {
               step="0.01"
               value={costFloor}
               onChange={(e) => setCostFloor(e.target.value)}
-            />
-          </FieldRow>
-          <FieldRow cols={2}>
-            <Field
-              label={t('occupancy')}
-              preset="count"
-              type="number"
-              min={1}
-              value={occupancy}
-              onChange={(e) => setOccupancy(e.target.value)}
-              required
-            />
-            <DatePicker
-              label={t('effectiveFrom')}
-              value={effectiveFrom}
-              onChange={setEffectiveFrom}
-              placeholder={tc('datePlaceholder')}
-              preset="date"
             />
           </FieldRow>
           <Field

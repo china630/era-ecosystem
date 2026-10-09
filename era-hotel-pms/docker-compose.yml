@@ -39,6 +39,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/era_hotel_pms?schema=public
       REDIS_URL: redis://redis:6379
+      ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-orchestrator}
       EXTERNAL_INTEGRATION_URL: http://localhost:3000/api/integration/mock-receiver
       EXTERNAL_INTEGRATION_TOKEN: ""
       EXTERNAL_HTTP_TIMEOUT_MS: "10000"
@@ -71,6 +72,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/era_hotel_pms?schema=public
       REDIS_URL: redis://redis:6379
+      ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-orchestrator}
       EXTERNAL_INTEGRATION_URL: http://app-prod:3000/api/integration/mock-receiver
       EXTERNAL_INTEGRATION_TOKEN: ""
       EXTERNAL_HTTP_TIMEOUT_MS: "10000"

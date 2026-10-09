@@ -39,6 +39,7 @@ const createSchema = z.object({
   needsSite: z.boolean().optional(),
   physioOrderFields: z.array(z.string().min(1)).optional(),
   allowedSiteCodes: z.array(z.string().min(1)).optional(),
+  financeSku: z.string().nullable().optional(),
 });
 
 export async function GET(req: Request) {

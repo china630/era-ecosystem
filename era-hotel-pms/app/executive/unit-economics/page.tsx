@@ -32,7 +32,7 @@ type Snapshot = {
   packages: Array<{
     code: string;
     name: string;
-    sell1: number;
+    sell1: number | null;
     floor1: number | null;
     belowFloor: boolean;
     sell2: number | null;
@@ -152,7 +152,7 @@ export default function UnitEconomicsPage() {
                           p.belowFloor ? 'font-semibold text-[#C0392B]' : ''
                         }`}
                       >
-                        {p.sell1.toFixed(2)}
+                        {p.sell1 == null ? '—' : p.sell1.toFixed(2)}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         {p.floor1 == null ? '—' : p.floor1.toFixed(2)}

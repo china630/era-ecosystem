@@ -416,6 +416,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
+              id: 'hk-consumption',
+              href: '/hk/consumption',
+              labelKey: 'hkConsumption',
+              icon: Package,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
               id: 'hk-stock',
               href: '/settings/stock',
               labelKey: 'minibarCatalog',

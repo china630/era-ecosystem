@@ -26,7 +26,7 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | 11 | `reservations` | `11-Reservations.xlsx` | [x] | **6 158** `Res Id` (August FOCP overlay + 41 new). One row = one `Res Id`. `Guest Id` = primary; `Guest Name` with `/` imports **ReservationGuest** party (co-guests matched from step 10). |
 | 12 | `reservation-notes` | `12-Reservation-Notes.xlsx` | [x] | YTD EW Notes → matched Res Id (skip Channel / empty type). 1 225 packed rows. |
 | 13 | `folios` | `hotel/13-folio-parts/13-Folio-p01.xlsx` … | [x] | Чанки Apply. Archive START `13-Folio-Transactions.merged.xlsx`. Splitter input: START `13-Folio-Transactions.hotel.xlsx`. |
-| 14 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | After folios. Desk sell from PDF (not EW). Adapter skips `desk=N`. **Extra bed:** Standart **96 AZN**, other packages **48** (half, rounded). |
+| 14 | `package-sell` | `14-Package-Sell-2026.xlsx` | [x] | Singles sheet only. Each row is package × room type × meal × occupancy × ISO season date. Combo rows, a missing season date, occupancy above the type ceiling, and Detoks Junior occupancy 3 = 675 are skipped. The +96 companion is not a sell fallback. |
 | 15 | `agency-statement` | `15-Agency-Statement.xlsx` | [x] | EW **Agency Statement** 2026-08-31. **Hotel FO city ledger**, not 1C. Remaining > 0 → AGENCY folio (`ew:agency-stmt:{ResId}`). Skip Remaining ≤ 0. Missing reservation = per-row error. |
 
 ### Hotel — related files (not hotel wizard)
@@ -52,10 +52,11 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 |-------|------|
 | Board | **FB only** (3 meals). No room-only sale. HB (2 meals) extremely rare — not a product matrix. |
 | Package vs à-la-carte | Package includes **pension board only**, not à-la-carte restaurant. |
-| Price unit | **Per person** (`nəfər üçün`). PDF has **single / double** columns — do not ×2 the single rate. |
-| Standart paket | Guest **chooses** room category (Standart / Junior / Deluxe / Triple per PDF matrix + season). |
-| Premium / Dermo / Detoks | **Independent medical packages** by indication (e.g. Dermo = skin). Hotel **assigns** room; only **Deluxe or Junior** (higher categories). Price is flat package rate — **no** Junior/Deluxe surcharge on top of PDF. |
-| Season | Standart: low/high in PDF. Premium / Dermo / Detoks: **no** seasonal split. |
+| Price unit | **Room-night total for N adults** on the grid cell. Do not ×2 the single rate. Children do not take an adult column. |
+| Standart paket | Guest **chooses** room category. The sheet has a price through occupancy 3 on standard. Triple occupancy 4 and 5 stay closed until those prices exist. |
+| Premium / Dermo / Detoks | Same grid. Premium is sold only where a Junior or Deluxe cell exists. Dermo and Detoks have standard-room cells and room-type cells. Season is an `effectiveFrom`/`effectiveTo` window on every package, including Premium. |
+| Mixed packages | Calculated from the singles cells (Standart at the charged room; the double block takes the room delta when Standart is absent; Dermo+Detoks one each puts the delta on Dermo). Combo-sheet prices are not imported. |
+| Season | Every package has a low and a high window, even when the two amounts match. Do not load the workbook until those dates are confirmed. |
 | Children (board) | Under **6**: **1st child free**, **2nd paid**; meals same as adult portions. (Align with PDF child/extra-bed rows when seeding.) |
 | Blackout / holidays | **Surcharge** (extra fee), not a different room/board product. |
 | Agency / corporate | **FB applies the same** as public package rules. |
@@ -65,7 +66,7 @@ Source: sales / front-office WhatsApp answers to package PDF questions. FB board
 | Package sell | **Manual** (sales). **Not required** to equal BAR. Store **cost floor** + **sell** with history/audit (planned). |
 | Costing reference | USALI-oriented note in [reference/hotel-costing-and-pricing-usali.md](./reference/hotel-costing-and-pricing-usali.md) (CPOR, floor, future auto-min BAR). |
 
-**PMS implication:** sell SKUs = Standart×roomType×season + Premium/Dermo/Detoks (JR/DLX). BAR calendar = accounting ladder ([BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md)). Folio: split via BAR/components; Σ postings = package/reservation sell.
+**PMS implication:** one `RatePlan` per package. Sell rows are `RatePlanSellVersion` (room type × meal × occupancy × season). BAR calendar stays the accounting ladder ([BAR_DERIVED_2026.md](./BAR_DERIVED_2026.md)) and is not the package quote. Folio split scales to the stored night. A grid change does not reprice nights already stored on a stay.
 
 ---
 

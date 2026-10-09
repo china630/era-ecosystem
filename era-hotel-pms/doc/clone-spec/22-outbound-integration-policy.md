@@ -12,6 +12,8 @@
 
 При сбое сети: **операция в PMS успешна**, событие в `OutboundEventLog` + Redis retry (как сейчас check-out).
 
+Финансовый путь checkout, ночного аудита, счёта и city ledger по умолчанию — шлюз `orchestrator` (`ERA_EVENT_GATEWAY_MODE`), не `EXTERNAL_INTEGRATION_URL`. Пока у организации `ElektrawebBridgePolicy.inboundEnabled`, документ дня в этот шлюз не уходит (исходящий лог `SKIPPED`). Флаги `OUTBOUND_*` этот запрет не снимают.
+
 ## События (маппинг на [08-erp-handoff.md](08-erp-handoff.md))
 
 | Триггер в PMS | `eventType` (satellite) | ERP (логически) | Real-time default |
