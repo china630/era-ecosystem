@@ -291,12 +291,14 @@ export {
 } from "./integration/platform-commerce-hooks";
 export {
   resolveOperatingMode,
+  resolveCatalogOrganizationId,
   parseOperatingMode,
   shouldRouteRevenueToParent,
   shouldFiscalizeOnParent,
   resolveSettlementPolicy,
   parseSettlementPolicy,
   shouldDeferWalkInToHub,
+  departmentFinanceEventsSilenced,
   DEFAULT_OPERATING_MODE,
   DEFAULT_SETTLEMENT_POLICY,
   type OperatingModeSnapshot,
@@ -306,6 +308,10 @@ export {
   type PendingSettlementNaPolicy,
   type SettlementPolicySnapshot,
 } from "./integration/operating-mode";
+export {
+  searchFinanceCatalog,
+  type FinanceCatalogItem,
+} from "./integration/finance-catalog";
 export {
   fiscalizeForSatellite,
   saleForSatelliteRouted,
