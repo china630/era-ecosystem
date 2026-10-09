@@ -50,6 +50,7 @@
     "check:acceptance": "node scripts/check-acceptance-consistency.mjs",
     "check:acceptance:strict": "node scripts/check-acceptance-consistency.mjs --strict",
     "check:satellite-raw-sql": "node scripts/check-satellite-raw-sql.mjs",
+    "check:bridge-tenant-bind": "node scripts/check-bridge-tenant-bind.mjs",
     "check:satellite-session": "node scripts/check-satellite-session-standard.mjs",
     "run:quality-gates": "node scripts/run-quality-gates.mjs",
     "run:quality-gates:strict": "node scripts/run-quality-gates.mjs --strict",
