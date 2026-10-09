@@ -3,7 +3,6 @@
  */
 
 import { todayBakuYmd } from "@era/satellite-kit/time";
-import { requestOrganizationId } from "@/lib/request-organization";
 
 export type RoomChargePayload = {
   reservationId?: string;
@@ -130,6 +129,8 @@ export async function reportPosShiftStatus(payload: {
   closedAt?: string;
 }): Promise<void> {
   if (isPmsStubMode()) return;
+  // Lazy: the kit barrel pulls jose, and a static import breaks CJS Jest on /api/health.
+  const { requestOrganizationId } = await import("@/lib/request-organization");
   const organizationId = requestOrganizationId();
   const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
     method: "PUT",
