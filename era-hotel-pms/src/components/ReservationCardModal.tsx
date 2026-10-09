@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ReservationCardEditor } from '@/components/reservation-card/ReservationCardEditor';
 import type { TabId } from '@/components/reservation-card/types';
 
@@ -15,11 +15,19 @@ export default function ReservationCardModal({
   reservationId?: string | null;
   initialTab?: TabId;
 }) {
-  const [editId, setEditId] = useState<string | null>(reservationIdProp ?? null);
+  const propId = reservationIdProp ?? null;
+  const [editId, setEditId] = useState<string | null>(propId);
+  const [seenOpen, setSeenOpen] = useState(open);
+  const [seenPropId, setSeenPropId] = useState(propId);
 
-  useEffect(() => {
-    if (open) setEditId(reservationIdProp ?? null);
-  }, [open, reservationIdProp]);
+  // Apply the open/id change before children paint, so a new booking never
+  // loads the card that was closed a moment earlier. A create that just saved
+  // keeps its local id: the prop stays null and this does not reset it.
+  if (open !== seenOpen || propId !== seenPropId) {
+    setSeenOpen(open);
+    setSeenPropId(propId);
+    setEditId(open ? propId : null);
+  }
 
   return (
     <ReservationCardEditor

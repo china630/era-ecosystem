@@ -58,6 +58,9 @@ export interface SatelliteHotelNightAuditClosedEvent {
     businessDate: string;
     nightAuditId?: string;
     currency: "AZN";
+    /** Lines that have a Finance sku. Amount may be 0 or negative. */
+    saleLines: Array<{ sku: string; qty: number; amount: number }>;
+    /** Rollup for lines that have no sku (room, package without a card). */
     revenueLines: Array<{
       revenueCode: string;
       amount: number;
@@ -66,6 +69,12 @@ export interface SatelliteHotelNightAuditClosedEvent {
     paymentLines: Array<{ method: string; amount: number }>;
   };
 }
+
+const nightAuditSaleLineSchema = z.object({
+  sku: z.string().min(1),
+  qty: z.number(),
+  amount: z.number(),
+});
 
 const nightAuditRevenueLineSchema = z.object({
   revenueCode: z.string(),
@@ -82,6 +91,7 @@ export const satelliteHotelNightAuditClosedSchema = z.object({
     businessDate: z.string().min(1),
     nightAuditId: z.string().optional(),
     currency: z.literal("AZN"),
+    saleLines: z.array(nightAuditSaleLineSchema).default([]),
     revenueLines: z.array(nightAuditRevenueLineSchema),
     paymentLines: z.array(
       z.object({

@@ -1,8 +1,7 @@
 import { saleForSatelliteRouted, isFiscalSkipped, voidForSatelliteRouted } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { postHotelRoomCharge } from "@/lib/billing-router";
+import { postClinicHotelLines } from "@/lib/billing-router";
 import { settleDenied } from "@/lib/cashier-settle-gates";
-import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
 import {
   buildUnifiedBill,
   type BillLine,
@@ -75,12 +74,19 @@ export async function settleVisitBill(input: SettleInput) {
 
   if (channel === "HOTEL_FOLIO") {
     if (!bill.reservationId) throw new Error("No reservation for folio charge");
-    const charge = await postHotelRoomCharge({
+    const folioPosted = await postClinicHotelLines({
+      kind: "folio",
       reservationId: bill.reservationId,
       roomNumber: bill.roomNumber ?? undefined,
-      amount: amountNet,
-      description: `Clinic visit ${bill.visitId}`,
-      externalTicketId: `clinic-visit-${bill.visitId}`,
+      sourceRef: bill.visitId,
+      idempotencyPrefix: `clinic-visit-${bill.visitId}`,
+      lines: bill.lines.map((line) => ({
+        serviceCode: line.serviceCode,
+        description: line.description,
+        amount: line.amount,
+        qty: line.qty,
+      })),
+      amountNet,
     });
     const receipt = await prisma.clinicReceipt.create({
       data: {
@@ -94,7 +100,7 @@ export async function settleVisitBill(input: SettleInput) {
         amountNet,
         paymentMethod: "FOLIO",
         paidAt: new Date(),
-        folioChargeRef: String((charge as { id?: string })?.id ?? `folio-${bill.visitId}`),
+        folioChargeRef: folioPosted.firstId || `folio-${bill.visitId}`,
         lines: {
           create: bill.lines.map((l) => lineCreate(l)),
         },
@@ -112,15 +118,20 @@ export async function settleVisitBill(input: SettleInput) {
   }
 
   if (channel === "SETTLEMENT_HUB") {
-    const pending = await postHotelSettlementPending({
+    const hubPosted = await postClinicHotelLines({
+      kind: "pending",
       sourceRef: bill.visitId,
-      amount: amountNet,
-      description: `Clinic visit ${bill.visitId}`,
+      idempotencyPrefix: `clinic-visit-${bill.visitId}`,
       payerLabel: bill.patientRef.refCode,
-      globalPersonId: undefined,
-      idempotencyKey: `clinic-visit-${bill.visitId}`,
+      lines: bill.lines.map((line) => ({
+        serviceCode: line.serviceCode,
+        description: line.description,
+        amount: line.amount,
+        qty: line.qty,
+      })),
+      amountNet,
     });
-    const pendingId = String((pending as { id?: string }).id ?? "");
+    const pendingId = hubPosted.ids.length > 1 ? JSON.stringify(hubPosted.ids) : hubPosted.firstId;
     const receipt = await prisma.clinicReceipt.create({
       data: {
         shiftId: shift.id,

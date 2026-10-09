@@ -654,6 +654,8 @@ model DiagnosticService {
   titleAz        String              @map("title_az")
   /// Price / Finance link code
   serviceCode    String              @map("service_code")
+  /// Sellable Finance Product.sku on the hotel parent catalog
+  financeSku     String?             @map("finance_sku")
   /// Imaging / visit template fields JSON (CatalogFieldDef[])
   fieldsJson     String?             @map("fields_json") @db.Text
   /// Package composition: child service codes JSON (string[])
@@ -1230,6 +1232,8 @@ model ProcedureType {
   dayEndHour         Int?                       @map("day_end_hour")
   /// When peak mode is on, this procedure may run until this hour (exclusive)
   extendedEndHour    Int?                       @map("extended_end_hour")
+  /// Sellable Finance Product.sku on the hotel parent catalog
+  financeSku         String?                    @map("finance_sku")
   orders             ProcedureOrder[]
   requirements       ProcedureTypeRequirement[]
   consumableLines    ProcedureConsumableLine[]

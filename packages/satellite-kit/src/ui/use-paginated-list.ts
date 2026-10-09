@@ -79,11 +79,12 @@ export function usePaginatedList<
     () => debounceKey(filters, qRaw === undefined ? undefined : debouncedQ),
     [filters, qRaw, debouncedQ],
   );
+  /** Content key. Object identity changes on every keystroke; this does not. */
+  const activeKey = JSON.stringify(activeFilters);
+  const activeFiltersRef = useRef(activeFilters);
+  activeFiltersRef.current = activeFilters;
 
-  const filterResetKey = useMemo(
-    () => JSON.stringify(activeFilters),
-    [activeFilters],
-  );
+  const filterResetKey = activeKey;
   const prevFilterKey = useRef(filterResetKey);
 
   useEffect(() => {
@@ -95,31 +96,36 @@ export function usePaginatedList<
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  const requestSeq = useRef(0);
 
   const load = useCallback(async () => {
     if (!enabled) return;
+    const seq = ++requestSeq.current;
+    const filtersNow = activeFiltersRef.current;
     setLoading(true);
     setError(null);
     try {
       const json = await fetcherRef.current({
         page,
         pageSize,
-        filters: activeFilters,
+        filters: filtersNow,
       });
+      if (seq !== requestSeq.current) return;
       const parsed = parsePaginatedList<T>(json);
       setItems(parsed.items);
       setTotal(parsed.total);
       setLastResult(parsed);
       // Intentionally do not setPage / setPageSize from API (echo race).
     } catch (e) {
+      if (seq !== requestSeq.current) return;
       setError(e);
       setItems([]);
       setTotal(0);
       setLastResult(null);
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) setLoading(false);
     }
-  }, [enabled, page, pageSize, activeFilters]);
+  }, [enabled, page, pageSize, activeKey]);
 
   useEffect(() => {
     void load();

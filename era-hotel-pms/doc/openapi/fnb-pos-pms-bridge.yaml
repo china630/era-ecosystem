@@ -375,8 +375,7 @@ components:
         amount:
           type: number
           format: double
-          exclusiveMinimum: 0
-          description: AZN, итог чека (или часть при split)
+          description: AZN. Zero is allowed. Negative is a folio reverse
         description:
           type: string
           minLength: 1
@@ -384,10 +383,12 @@ components:
         outletCode:
           type: string
           example: RESTAURANT
+        qty:
+          type: integer
+          description: Quantity on the folio line. A negative quantity reverses that line on the day document
         productSku:
           type: string
-          deprecated: true
-          description: Nafta — склад в ERP; только dev при `STOCK_CONSUMPTION_ENABLED`
+          description: Finance Product.sku stored on the folio line. Room charge does not consume a local recipe
         externalTicketId:
           type: string
           format: uuid

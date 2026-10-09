@@ -1,4 +1,3 @@
-import type { TicketLine } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
@@ -26,7 +25,7 @@ export async function POST(
     const { id } = await params;
     const ticket = await prisma.ticket.findUnique({
       where: { id },
-      include: { table: true, outlet: true, lines: true },
+      include: { table: true, outlet: true, lines: { include: { menuItem: true } } },
     });
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -46,31 +45,46 @@ export async function POST(
       return NextResponse.json({ error: "Ticket total must be positive" }, { status: 400 });
     }
 
-    const lineSummary = ticket.lines
-      .map((l: TicketLine) => `${l.qty}x ${l.description}`)
-      .join("; ")
-      .slice(0, 500);
+    if (ticket.lines.length === 0) {
+      return NextResponse.json({ error: "Finance SKU is required" }, { status: 400 });
+    }
+    for (const line of ticket.lines) {
+      if (!line.menuItem?.financeSku?.trim()) {
+        return NextResponse.json(
+          { error: `Finance SKU is required for ${line.description}` },
+          { status: 400 },
+        );
+      }
+    }
+
     const payerLabel =
       ticket.walkInLabel?.trim() ||
       ticket.guestName?.trim() ||
       ticket.table?.code ||
       "Walk-in";
 
-    const pending = await postHotelSettlementPending({
-      sourceSystem: "FNB_POS",
-      sourceRef: ticket.id,
-      amount,
-      description: `FB ${ticket.outlet.code}: ${lineSummary || ticket.id}`,
-      payerLabel,
-      idempotencyKey: `ticket-${ticket.id}`,
-    });
-
-    const pendingId = pending.id as string;
+    const pendingIds: string[] = [];
+    for (const line of ticket.lines) {
+      const pending = await postHotelSettlementPending({
+        sourceSystem: "FNB_POS",
+        sourceRef: ticket.id,
+        amount: Number(line.qty) * Number(line.unitPriceAzn),
+        description: `${line.qty}x ${line.description}`,
+        payerLabel,
+        idempotencyKey: `ticket-${ticket.id}-${line.id}`,
+        sku: line.menuItem?.financeSku?.trim(),
+        qty: line.qty,
+        revenueCode: "FOOD",
+      });
+      const pendingId = pending.id as string;
+      if (pendingId) pendingIds.push(pendingId);
+    }
+    const pendingId = pendingIds[0] ?? "";
     await prisma.ticket.update({
       where: { id },
       data: {
         status: "PENDING_HUB",
-        settlementPendingId: pendingId,
+        settlementPendingId: JSON.stringify(pendingIds),
       },
     });
     await releaseTableForTicket(id, ticket.tableId);

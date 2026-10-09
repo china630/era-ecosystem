@@ -12,6 +12,8 @@ export type RoomChargePayload = {
   description: string;
   outletCode: string;
   externalTicketId?: string;
+  productSku?: string;
+  qty?: number;
 };
 
 export type InHouseGuest = {
@@ -60,15 +62,27 @@ export async function postRoomCharge(
     };
   }
 
+  const { resolveOperatingMode, resolveSettlementPolicy } = await import("@era/satellite-kit");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const orgId = requestOrganizationId();
+  const [mode, policy] = await Promise.all([
+    resolveOperatingMode(orgId),
+    resolveSettlementPolicy(orgId),
+  ]);
+  const hotelOrg = policy.hubOrganizationId?.trim() || mode.parentOrgId?.trim() || "";
+  if (!hotelOrg) throw new Error("hotelOrganizationId required for hotel room charge");
   const headers: Record<string, string> = {
-    ...(bridgeHeaders() as Record<string, string>),
+    ...bridgeHeaders(hotelOrg || undefined),
   };
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
 
   const res = await fetch(`${pmsBaseUrl()}/api/pos/room-charge`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      organizationId: hotelOrg,
+    }),
   });
   const body = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, body };

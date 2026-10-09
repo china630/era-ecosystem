@@ -125,6 +125,9 @@ export class ManufacturingService {
       if (!c) {
         throw new NotFoundException(`Component product ${line.componentProductId} not found`);
       }
+      if (c.isService) {
+        throw new BadRequestException("Recipe component must be a goods SKU");
+      }
     }
     if (dto.byproducts?.length) {
       const uniqueBy = new Set(dto.byproducts.map((l) => l.productId));
@@ -140,6 +143,9 @@ export class ManufacturingService {
         });
         if (!bp) {
           throw new NotFoundException(`Byproduct ${b.productId} not found`);
+        }
+        if (bp.isService) {
+          throw new BadRequestException("Recipe byproduct must be a goods SKU");
         }
       }
     }

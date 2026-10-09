@@ -18,7 +18,7 @@ Paper / export sources (2026-08):
 
 | Area | Scaffold now | This spec |
 |------|----------------|-----------|
-| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, rotation, forecast, laundry, discrepancy, `/settings/policies#hk` |
+| Screens | `/hk`, `/hk/mobile`, `/hk/minibar`, `/hk/maids`, `/hk/closed-rooms`, `/hk/lost-and-found` | + roster, rotation, forecast, laundry, discrepancy, `/hk/consumption`, `/settings/policies#hk` |
 | Room state | One `RoomStatus` mix | Three axes coded (inventory × FO occupancy × HK condition) |
 | Check-in | Door forced to `OCCUPIED` | Occupied + Dirty/Clean/Inspected/Pickup coexist; no OCCUPIED write |
 | Task | PENDING / IN_PROGRESS / DONE, no type | Typed job + visit outcome + business date + optional needed-by |
@@ -71,7 +71,8 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Per-stay linen/deep N | **Coded** (HK job on stay, **not** a folio line) |
 | Laundry cycle §9 (intake ≠ return, post on Delivered, FO fallback, checkout stop) | **Coded** (SCREEN) — UAT unsigned |
 | UAT-SMOKE §34 pass / SHIPPED | **Open** |
-| Opera credits / turndown / rush-push / ƏG cash / finance stock | OUT |
+| Opera credits / turndown / rush-push / ƏG cash | OUT |
+| HK consumption line (sku + qty, guest price 0) | **Coded** (`/hk/consumption`). Schedule does not create it. Purchases stay Finance |
 
 ### 2.2 Derived job type on the daily sheet
 
@@ -95,7 +96,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | OOO ≠ OOS | **IN** |
 | Skip / Sleep (FO vs physical) | **IN** — separate from SO |
 | Rush / Queue + push | **OUT**. Soft sort: departures, VIP, needed-by time |
-| HK forecast (load) | **IN** (7–14 days). Finance stock norms later |
+| HK forecast (load) | **IN** (7–14 days). Consumption is a manual sku line; automatic stock norms stay later |
 | Turndown | **OUT** |
 | Guest laundry → folio | **IN** |
 
@@ -259,14 +260,14 @@ Skip / Sleep stay on a discrepancy board; they are not maid sheet codes.
 
 **Soft priority (IN):** sort the sheet; optional “needed by HH:MM”. FO sees arrival vs not Inspected. No push notification in this edition.
 
-**Finance inventory (later):** norms × (VC / DEEP / Departure) after those types are stable. Not wave 1.
+**Finance inventory:** `/hk/consumption` posts a Finance sku and quantity for the open business day. Guest price is 0. Night audit puts the line on the day document. A closed-day line, including an earlier closed day, is reversed as a negative quantity on the open day. The same sku from several days nets into one open line. Receipts and opening stock are the Finance purchase and warehouse receipt. The linen schedule does not create the line. Automatic norms from VC / DEEP / Departure stay later.
 
 ---
 
 ## 9. Guest laundry ticket
 
 Separate from the Çamaşırxana **shift** roster. Same department, different document.  
-**Room linen / deep every N nights** (and a stay override of that N) is an HK **job on the sheet**, not a `LAUNDRY` folio line. Guest wash/iron is the only laundry posting.
+**Room linen / deep every N nights** (and a stay override of that N) is an HK **job on the sheet**, not a `LAUNDRY` folio line and not a stock line. Guest wash/iron is the only laundry posting. Chemistry and linen stock is `/hk/consumption`.
 
 Ticket header: guest (default from in-house stay), room, date. Catalog rows: wash and iron steppers (minus, count, plus).
 
@@ -352,7 +353,7 @@ Change a shift cell with a closed select (E / L / N / OFF / ƏG). Swap two peopl
 | **1** | Three departments, roster, ƏG, daily pair rotation, Elektra sheet + outcomes, Pickup, OOO≠OOS stats |
 | **2** | Stayover/NSR on the reservation, DND×2 / SO×3, Skip/Sleep, soft priority, nationality on the sheet |
 | **3** | HK forecast 7–14 days |
-| **Later** | Credits (default off); linen norms → finance inventory; **laundry cycle §9 recode** |
+| **Later** | Credits (default off); automatic linen norms from VC/DEEP/Departure; **laundry cycle §9 recode** |
 | **OUT** | Turndown; rush-push; ƏG cash payout |
 
 No Scaffold ✅ / SHIPPED / Pilot-ready on this deepen without UAT-SMOKE UI evidence and matrix updates (`task-acceptance.mdc`).

@@ -39,6 +39,12 @@ The **PricingEngine** (`pricing-engine-core.ts` + `pricing-engine.service.ts`) a
 
 Nafta: BAR = accounting base / floor recommendation; medical **package sell** is manual and need not equal BAR — [hotel-bar-accounting-vs-package-sell.md](./hotel-bar-accounting-vs-package-sell.md).
 
+## Package sell grid (2026-10)
+
+A package stays one `RatePlan` (`PKG-STANDART` and the other medical codes). The sell price is a `RatePlanSellVersion` row: that plan × room type × meal × occupancy (1..`RoomType.adultCapacity`) × `effectiveFrom`/`effectiveTo`. This is the Opera Rate Detail shape. It is not a new rate plan per room and season, and it is not derived from the BAR calendar.
+
+`RoomType.adultCapacity` is the sellable adult ceiling (standard is 3). `RoomType.standardAdults` is the made-up bed count and stays 2 for standard. `Room.maxBed` can be lower than the type. An empty cell is not sold. Mixed guest packages are calculated from those cells; combo prices are not stored. A fix or discount stays on `ReservationDailyRate` and is not written back to the grid. Nights already stored on a stay are not recalculated when the grid changes.
+
 ## Constraints
 
 - Derived plans must reference a BASE plan directly (no derived→derived chains).

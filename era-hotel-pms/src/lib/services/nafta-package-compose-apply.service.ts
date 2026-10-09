@@ -1,169 +1,97 @@
 /**
- * Persist composed nightly sell into ReservationDailyRate for the stay.
- * Wave D — call after medical SKU stamp / check-in / stay amend.
+ * Persist a package night from the sell grid into ReservationDailyRate.
+ * Existing nights are left as stored. A missing cell does not invent a price.
  */
 
 import { prisma } from "@/lib/prisma";
 import { toDecimal } from "@/lib/decimal";
+import { addHotelDays, hotelDateKey } from "@/lib/hotel-calendar";
+import { bakuCivilUtcDate } from "@era/satellite-kit/time";
 import {
   composeNaftaPackageNightlySellBreakdown,
   paxCodesForCompose,
-  DEFAULT_NAFTA_PACKAGE_SELL,
-  DEFAULT_STANDART_COMPANION_AZN,
-  halfOcc2,
-  STANDART_COMPANION_COMPONENT_CODE,
   type ComposeBreakdown,
-  type PackageSellRow,
+  type PackageSellCell,
 } from "@/lib/services/nafta-package-compose.service";
 import { MEDICAL_PACKAGE_CODES } from "@/lib/services/medical-package-resolve.service";
 
-export async function resolveStandartCompanionAzn(
-  asOf: Date = new Date(),
-): Promise<number> {
-  try {
-    const { ensurePricingComponentsSeeded } = await import(
-      "@/lib/services/pricing-components.service"
-    );
-    await ensurePricingComponentsSeeded();
-    const row = await prisma.pricingComponent.findFirst({
-      where: { code: STANDART_COMPANION_COMPONENT_CODE, active: true },
-      include: {
-        versions: { orderBy: { effectiveFrom: "desc" } },
-      },
-    });
-    if (!row) return DEFAULT_STANDART_COMPANION_AZN;
-    const on = new Date(
-      Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate()),
-    );
-    const ver =
-      row.versions.find(
-        (v) =>
-          v.effectiveFrom <= on &&
-          (v.effectiveTo == null || v.effectiveTo >= on),
-      ) ?? row.versions[0];
-    if (ver?.sellAmount != null) {
-      return Number(ver.sellAmount);
-    }
-  } catch {
-    /* seed/DB optional in unit tests */
-  }
-  return DEFAULT_STANDART_COMPANION_AZN;
-}
-
-/**
- * Load occ1/2/3 from RatePlanSellVersion for PKG-* when present; else DEFAULT_NAFTA_PACKAGE_SELL.
- */
 function stayDateUtc(asOf: Date): Date {
   return new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate()));
 }
 
-/** Companion add-on for the stay date only. No compiled 96 fallback. */
-async function datedStandartCompanionAzn(asOf: Date): Promise<number | null> {
+function eachNight(checkIn: Date, checkOut: Date): Date[] {
+  const nights: Date[] = [];
+  let cursor = hotelDateKey(checkIn);
+  const end = hotelDateKey(checkOut);
+  while (cursor < end) {
+    nights.push(bakuCivilUtcDate(cursor));
+    cursor = addHotelDays(cursor, 1);
+  }
+  return nights;
+}
+
+export async function loadPackageSellCells(
+  asOf: Date,
+  mealPlanId?: string | null,
+): Promise<PackageSellCell[]> {
   const on = stayDateUtc(asOf);
-  const row = await prisma.pricingComponent.findFirst({
-    where: { code: STANDART_COMPANION_COMPONENT_CODE, active: true },
-    include: { versions: { orderBy: { effectiveFrom: "desc" } } },
+  const plans = await prisma.ratePlan.findMany({
+    where: { code: { in: [...MEDICAL_PACKAGE_CODES] } },
+    include: {
+      sellVersions: {
+        where: {
+          roomTypeId: { not: null },
+          effectiveFrom: { lte: on },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
+        },
+        include: { roomType: { select: { code: true } } },
+      },
+    },
   });
-  const ver = row?.versions.find(
-    (v) => v.effectiveFrom <= on && (v.effectiveTo == null || v.effectiveTo >= on),
-  );
-  return ver?.sellAmount != null ? Number(ver.sellAmount) : null;
+  const cells: PackageSellCell[] = [];
+  for (const plan of plans) {
+    for (const ver of plan.sellVersions) {
+      if (!ver.roomType) continue;
+      if (mealPlanId && ver.mealPlanId && ver.mealPlanId !== mealPlanId) continue;
+      if (mealPlanId && !ver.mealPlanId) continue;
+      cells.push({
+        code: plan.code,
+        roomCode: ver.roomType.code,
+        occupancy: ver.occupancy,
+        amount: Number(ver.sellPrice),
+      });
+    }
+  }
+  return cells;
+}
+
+export async function ownerPackageNightlyBreakdown(
+  asOf: Date,
+  codes: string[],
+  scope: { roomTypeId: string; mealPlanId?: string | null },
+): Promise<ComposeBreakdown | null> {
+  const packageCodes = codes.map((c) => c.trim().toUpperCase()).filter(Boolean);
+  if (packageCodes.length === 0 || !scope.roomTypeId) return null;
+  const roomType = await prisma.roomType.findUnique({
+    where: { id: scope.roomTypeId },
+    select: { code: true },
+  });
+  if (!roomType) return null;
+  const cells = await loadPackageSellCells(asOf, scope.mealPlanId);
+  return composeNaftaPackageNightlySellBreakdown(packageCodes, roomType.code, cells);
 }
 
 /**
- * Owner package nightly from RatePlanSellVersion on the stay date.
- * Returns null when a required occupancy (or Standart companion) has no version.
- * Does not use the compiled 139/193/180/178/96 table.
+ * Grid cell for this night, charged room type, meal, and guest packages.
+ * Null when a required cell is missing. Does not read pricePerNight or +96.
  */
 export async function ownerPackageNightlySell(
   asOf: Date,
   codes: string[],
+  scope: { roomTypeId: string; mealPlanId?: string | null },
 ): Promise<number | null> {
-  if (codes.length === 0) return null;
-  const on = stayDateUtc(asOf);
-  const unique = [...new Set(codes)];
-  const plans = await prisma.ratePlan.findMany({
-    where: { code: { in: unique } },
-    include: { sellVersions: { orderBy: { effectiveFrom: "desc" } } },
-  });
-
-  function occPrice(code: string, occ: 1 | 2 | 3): number | null {
-    const plan = plans.find((p) => p.code === code);
-    const ver = plan?.sellVersions.find(
-      (v) =>
-        v.occupancy === occ &&
-        v.effectiveFrom <= on &&
-        (v.effectiveTo == null || v.effectiveTo >= on),
-    );
-    return ver ? Number(ver.sellPrice) : null;
-  }
-
-  if (unique.length === 1) {
-    const bucket: 1 | 2 | 3 = codes.length === 1 ? 1 : codes.length === 2 ? 2 : 3;
-    return occPrice(unique[0]!, bucket);
-  }
-
-  const ranked = [...codes].sort((a, b) => (occPrice(b, 1) ?? -1) - (occPrice(a, 1) ?? -1));
-  const mainCode = ranked[0]!;
-  const mainOcc1 = occPrice(mainCode, 1);
-  if (mainOcc1 == null) return null;
-  let total = mainOcc1;
-  let skippedMain = false;
-  for (const code of ranked) {
-    if (code === mainCode && !skippedMain) {
-      skippedMain = true;
-      continue;
-    }
-    if (code === "PKG-STANDART") {
-      const companion = await datedStandartCompanionAzn(asOf);
-      if (companion == null) return null;
-      total += companion;
-      continue;
-    }
-    const occ2 = occPrice(code, 2);
-    const occ1 = occPrice(code, 1);
-    if (occ2 == null || occ1 == null) return null;
-    total += halfOcc2({ code, occ1, occ2 });
-  }
-  return total;
-}
-
-export async function loadNaftaPackageSellCatalog(
-  asOf: Date = new Date(),
-): Promise<PackageSellRow[]> {
-  const base = DEFAULT_NAFTA_PACKAGE_SELL.map((r) => ({ ...r }));
-  try {
-    const on = new Date(
-      Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate()),
-    );
-    const plans = await prisma.ratePlan.findMany({
-      where: { code: { in: [...MEDICAL_PACKAGE_CODES] } },
-      include: {
-        sellVersions: { orderBy: { effectiveFrom: "desc" } },
-      },
-    });
-    for (const plan of plans) {
-      const row = base.find((r) => r.code === plan.code);
-      if (!row) continue;
-      for (const occ of [1, 2, 3] as const) {
-        const ver = plan.sellVersions.find(
-          (v) =>
-            v.occupancy === occ &&
-            v.effectiveFrom <= on &&
-            (v.effectiveTo == null || v.effectiveTo >= on),
-        );
-        if (ver) {
-          const price = Number(ver.sellPrice);
-          if (occ === 1) row.occ1 = price;
-          else if (occ === 2) row.occ2 = price;
-          else row.occ3 = price;
-        }
-      }
-    }
-  } catch {
-    /* unit tests / empty DB */
-  }
-  return base;
+  const breakdown = await ownerPackageNightlyBreakdown(asOf, codes, scope);
+  return breakdown?.total ?? null;
 }
 
 export async function previewComposedPackageSell(
@@ -174,6 +102,8 @@ export async function previewComposedPackageSell(
     select: {
       medicalPackageCode: true,
       checkInDate: true,
+      roomTypeId: true,
+      mealPlanId: true,
       ratePlan: { select: { code: true } },
       paxGuests: {
         select: {
@@ -187,29 +117,31 @@ export async function previewComposedPackageSell(
     },
   });
   if (!reservation) return null;
-  const companion = await resolveStandartCompanionAzn(reservation.checkInDate);
-  const catalog = await loadNaftaPackageSellCatalog(reservation.checkInDate);
   const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
       ? paxCodesForCompose(reservation.paxGuests, stayCode)
-      : [reservation.medicalPackageCode];
-  return composeNaftaPackageNightlySellBreakdown(codes, catalog, companion);
+      : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
+  return ownerPackageNightlyBreakdown(reservation.checkInDate, codes, {
+    roomTypeId: reservation.roomTypeId,
+    mealPlanId: reservation.mealPlanId,
+  });
 }
 
 /**
- * Upsert dailyRates for each night with composed amount.
- * Skips when no resolved SKUs (null compose) — FO keeps manual / rate-plan sell.
+ * Fill nights that have no daily rate yet. Stored nights, including fix and in-house, stay as they are.
  */
 export async function syncComposedDailyRates(
   reservationId: string,
-): Promise<{ applied: boolean; total: number | null; breakdown: ComposeBreakdown | null }> {
+): Promise<{ applied: boolean; total: number | null; missing: boolean; breakdown: ComposeBreakdown | null }> {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     select: {
       checkInDate: true,
       checkOutDate: true,
       medicalPackageCode: true,
+      roomTypeId: true,
+      mealPlanId: true,
       ratePlan: { select: { code: true } },
       paxGuests: {
         select: {
@@ -220,51 +152,61 @@ export async function syncComposedDailyRates(
         },
         orderBy: { sortOrder: "asc" },
       },
+      dailyRates: { select: { stayDate: true, amount: true } },
     },
   });
   if (!reservation) {
-    return { applied: false, total: null, breakdown: null };
+    return { applied: false, total: null, missing: false, breakdown: null };
   }
-  const companion = await resolveStandartCompanionAzn(reservation.checkInDate);
-  const catalog = await loadNaftaPackageSellCatalog(reservation.checkInDate);
   const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
       ? paxCodesForCompose(reservation.paxGuests, stayCode)
-      : [reservation.medicalPackageCode];
-  const breakdown = composeNaftaPackageNightlySellBreakdown(
-    codes,
-    catalog,
-    companion,
-  );
-  if (!breakdown) {
-    return { applied: false, total: null, breakdown: null };
-  }
-
-  const nightsCount = Math.max(
-    1,
-    Math.round(
-      (reservation.checkOutDate.getTime() - reservation.checkInDate.getTime()) /
-        86_400_000,
-    ),
-  );
-  for (let i = 0; i < nightsCount; i++) {
-    const stayDate = new Date(reservation.checkInDate);
-    stayDate.setUTCDate(stayDate.getUTCDate() + i);
-    await prisma.reservationDailyRate.upsert({
-      where: {
-        reservationId_stayDate: { reservationId, stayDate },
-      },
-      create: {
+      : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
+  const nights = eachNight(reservation.checkInDate, reservation.checkOutDate);
+  let missing = false;
+  let wrote = 0;
+  let firstBreakdown: ComposeBreakdown | null = null;
+  for (const stayDate of nights) {
+    const stored = reservation.dailyRates.some(
+      (d) => hotelDateKey(d.stayDate) === hotelDateKey(stayDate),
+    );
+    if (stored) continue;
+    const breakdown = await ownerPackageNightlyBreakdown(stayDate, codes, {
+      roomTypeId: reservation.roomTypeId,
+      mealPlanId: reservation.mealPlanId,
+    });
+    if (!breakdown) {
+      missing = true;
+      continue;
+    }
+    if (!firstBreakdown) firstBreakdown = breakdown;
+    await prisma.reservationDailyRate.create({
+      data: {
         reservationId,
         stayDate,
         amount: toDecimal(breakdown.total),
         manualFlag: false,
-      },
-      update: {
-        amount: toDecimal(breakdown.total),
+        fixPrice: false,
       },
     });
+    wrote += 1;
   }
-  return { applied: true, total: breakdown.total, breakdown };
+  const rows = await prisma.reservationDailyRate.findMany({
+    where: { reservationId },
+    select: { amount: true },
+  });
+  const total = rows.reduce((sum, row) => sum + Number(row.amount), 0);
+  if (wrote > 0 && !missing) {
+    await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { totalAmount: toDecimal(total) },
+    });
+  }
+  return {
+    applied: wrote > 0 && !missing,
+    total: rows.length > 0 ? total : null,
+    missing,
+    breakdown: firstBreakdown,
+  };
 }

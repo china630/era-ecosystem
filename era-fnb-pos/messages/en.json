@@ -159,6 +159,7 @@
       "name": "Name",
       "price": "Price AZN",
       "recipeSku": "Recipe SKU",
+      "financeSku": "Sellable SKU",
       "recipeSkuHint": "Link to finished Product / ProductRecipe in Finance (stock write-off). Create BOM in Finance Manufacturing.",
       "search": "Search dishes",
       "showInactive": "Show inactive",

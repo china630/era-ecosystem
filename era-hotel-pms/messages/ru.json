@@ -53,6 +53,7 @@
     "hkRoster": "Табель HK",
     "hkRotation": "Ротация этажей",
     "hkLaundry": "Прачечная гостя",
+    "hkConsumption": "Расход HK",
     "hkForecast": "Прогноз HK",
     "hkPolicy": "HK бельё / deep",
     "hkDiscrepancy": "Skip / Sleep",
@@ -410,6 +411,12 @@
     "occupied": "Занято",
     "vacant": "Свободно",
     "hkStatus": "Статус HK",
+    "hkOpt": {
+      "DIRTY": "Грязный",
+      "PICKUP": "Убрать слегка",
+      "CLEAN": "Чистый",
+      "INSPECTED": "Проверен"
+    },
     "cleanOnly": "Только чистые",
     "dirtyOnly": "Только грязные",
     "inspectedOnly": "Только проверенные",
@@ -459,6 +466,8 @@
     "guest": "Гость",
     "folio": "Фолио",
     "openFolio": "Открыть фолио",
+    "arrival": "Заезд",
+    "departure": "Выезд",
     "empty": "Нет проживающих гостей."
   },
   "guestsPage": {
@@ -640,6 +649,7 @@
     "runNightAudit": "Запустить ночной аудит",
     "processRetry": "Повторить исходящие",
     "nightAuditResult": "Ночной аудит: {status}",
+    "financeWarning": "Ночной аудит закрыл день отеля. Финансы не провели: {message}",
     "retryQueue": "Очередь повтора: отправлено {count}",
     "recentRuns": "Последние запуски",
     "tourismRegistry": "Туристический реестр (AZ-02)",
@@ -648,6 +658,7 @@
     "noShowCandidates": "Кандидаты no-show (PMS-07)",
     "due": "дата",
     "markNoShow": "Отметить no-show",
+    "openReservation": "Открыть бронь",
     "noShowMarked": "No-show: {name}",
     "polishPreviewTitle": "NA polish preview (пробный)",
     "polishPreviewHint": "Только сигналы перед night audit — не живой NA.",
@@ -660,7 +671,9 @@
   },
   "frontCashPending": {
     "title": "Ожидают оплаты",
-    "subtitle": "Walk-in начисления из F&B и клиники для оплаты на фронт-кассе.",
+    "subtitle": "Walk-in начисления из кафе, клиники и магазина для оплаты на фронт-кассе.",
+    "colSku": "SKU",
+    "colQty": "Кол-во",
     "empty": "Нет ожидающих начислений.",
     "colSource": "Источник",
     "colRef": "Ссылка",
@@ -727,7 +740,8 @@
     "namesIncompleteBadge": "Имена неполные",
     "bookingName": "Название брони",
     "bookingNamePlaceholder": "Необязательно (свадьба, корпоратив и т.п.)",
-    "singleStayHint": "Одно проживание в этой брони"
+    "singleStayHint": "Одно проживание в этой брони",
+    "familyGroupBadge": "{count} номера"
   },
   "reservationCard": {
     "stay": "Проживание",
@@ -1127,6 +1141,15 @@
     "departGuestDone": "Гость выехал",
     "moveGuestDone": "Гость переселён",
     "swapRoomsDone": "Номера обменены",
+    "moveReasonTitle": "Переселение",
+    "moveReasonHint": "После переселения заселённого гостя прежний номер становится грязным. «Не занимал» оставляет его чистым, только если гость не ночевал и по фолио нет начислений.",
+    "moveReasonLabel": "Причина",
+    "moveReasonConfirm": "Переселить",
+    "moveReason": {
+      "GUEST_REFUSED": "Гостю не подошёл номер",
+      "DID_NOT_OCCUPY": "Не занимал",
+      "HOTEL": "Переселение отеля"
+    },
     "confirmEarlyStayCheckout": "Досрочный выезд",
     "earlyStayCheckoutHint": "Проживание закончится сегодня. Проведённые ночи остаются, неиспользованные освобождаются.",
     "earlyStayCheckoutUnused": "Неиспользованных ночей: {nights}",
@@ -1560,6 +1583,9 @@
     "reasonCard": "из карточки брони",
     "reasonSwap": "обмен номерами",
     "reasonRelocate": "с плана номеров",
+    "reasonGuestRefused": "гостю не подошёл номер",
+    "reasonDidNotOccupy": "не занимал",
+    "reasonHotel": "переселение отеля",
     "reasonOther": "переезд",
     "statusPending": "Ожидает",
     "statusApplied": "Выполнен",
@@ -1720,6 +1746,7 @@
     "qty": "Кол-во",
     "post": "Провести на фолио",
     "emptyCatalog": "Товаров нет. Кнопка Add — вода, напитки и снеки.",
+    "financeSku": "SKU финансов",
     "floorFilter": "Этаж",
     "floorAll": "Все этажи",
     "recent": "Последние проводки",
@@ -2548,6 +2575,7 @@
     "location": "Расположение",
     "maxBed": "Макс. кроватей",
     "adultCapacity": "Вместимость (взрослые)",
+    "standardAdults": "Стандартный застил",
     "filterPlaceholder": "Фильтр по коду или названию…",
     "filterRoomPlaceholder": "Фильтр по номеру…",
     "allRoomTypes": "Все типы номеров",
@@ -2794,6 +2822,20 @@
     "glMappingSaved": "GL mapping saved",
     "noGlMappings": "No revenue codes — add codes in Master data first.",
     "platformSubscriptionReadonlyBadge": "Только чтение"
+  },
+  "hkConsumption": {
+    "title": "Расход хаускипинга",
+    "hint": "Бизнес-день {date}. Цена гостю ноль. Ночной аудит отправляет sku и количество в Финансы. Повтор того же sku заменяет количество. Пустой день допустим. График смены белья строку не создаёт. Строка закрытого дня, в том числе более раннего, сторнируется на этот открытый день.",
+    "sku": "SKU Финансов",
+    "qty": "Количество",
+    "saved": "Расход сохранён",
+    "deleted": "Расход удалён",
+    "saveFailed": "Не удалось сохранить расход",
+    "empty": "За этот бизнес-день расхода нет.",
+    "date": "Дата",
+    "closedTitle": "Закрытые дни",
+    "reverse": "Сторно на открытый день",
+    "reversed": "Сторнировано"
   },
   "stock": {
     "title": "Каталог минибара",
@@ -3108,7 +3150,7 @@
   },
   "packagePrices": {
     "title": "Пакеты: sell и floor",
-    "subtitle": "Ручные цены пакетов с cost floor — независимо от BAR.",
+    "subtitle": "Сетка пакета: тариф × тип номера × питание × взрослые × сезон. Пустая клетка не продаётся.",
     "policyLink": "Политика цен",
     "package": "Пакетный тариф",
     "addVersion": "Новая версия цены",
@@ -3118,7 +3160,11 @@
     "effectiveFrom": "Действует с",
     "effectiveTo": "Действует до",
     "note": "Заметка",
-    "versionCreated": "Версия цены создана"
+    "versionCreated": "Версия цены создана",
+    "meal": "Питание",
+    "seasonDate": "Дата сезона",
+    "roomType": "Тип номера",
+    "notSold": "—"
   },
   "unitEconomics": {
     "title": "Unit economics",

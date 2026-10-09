@@ -7,6 +7,12 @@ jest.mock("@/lib/prisma", () => ({
     visit: {
       findUnique: jest.fn(),
     },
+    procedureType: {
+      findFirst: jest.fn().mockResolvedValue({ financeSku: "SKU-PROC" }),
+    },
+    diagnosticService: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   },
 }));
 
@@ -83,7 +89,7 @@ describe("billing-router", () => {
       reservationId: "res1",
       roomNumber: "101",
       patientRef: { refCode: "P2", globalPersonId: "gp2" },
-      serviceLines: [{ serviceCode: "PROC" }],
+      serviceLines: [{ serviceCode: "PROC", description: "Procedure", amount: 40 }],
     });
 
     const { completeVisitBilling } = await import("@/lib/billing-router");

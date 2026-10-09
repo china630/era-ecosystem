@@ -23,6 +23,8 @@ type InHouseGuest = {
   guestName: string;
   roomNumber: string | null;
   status: string;
+  checkInDate: string;
+  checkOutDate: string;
 };
 
 export default function InHousePage() {
@@ -32,6 +34,7 @@ export default function InHousePage() {
   const [rows, setRows] = useState<InHouseGuest[]>([]);
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
+  const [stayCardId, setStayCardId] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [room, setRoom] = useState('');
   const debouncedQ = useDebouncedValue(q, 300);
@@ -52,12 +55,16 @@ export default function InHousePage() {
             status: string;
             guest: { id: string; fullName: string };
             room: { roomNumber: string } | null;
+            checkInDate?: string;
+            checkOutDate?: string;
           }) => ({
             reservationId: r.id,
             guestId: r.guest.id,
             guestName: r.guest.fullName,
             roomNumber: r.room?.roomNumber ?? null,
             status: r.status,
+            checkInDate: String(r.checkInDate ?? '').slice(0, 10),
+            checkOutDate: String(r.checkOutDate ?? '').slice(0, 10),
           }),
         ),
       );
@@ -152,6 +159,20 @@ export default function InHousePage() {
           },
           { key: 'status', header: tc('status'), sortable: true, render: (r) => r.status },
           {
+            key: 'arrival',
+            header: t('arrival'),
+            sortable: true,
+            sortValue: (r) => r.checkInDate,
+            render: (r) => r.checkInDate || '—',
+          },
+          {
+            key: 'departure',
+            header: t('departure'),
+            sortable: true,
+            sortValue: (r) => r.checkOutDate,
+            render: (r) => r.checkOutDate || '—',
+          },
+          {
             key: 'folio',
             header: t('folio'),
             render: (r) =>
@@ -170,6 +191,7 @@ export default function InHousePage() {
         ]}
         rows={filtered as (InHouseGuest & Record<string, unknown>)[]}
         rowKey={(r) => r.reservationId}
+        onRowDoubleClick={(r) => setStayCardId(r.reservationId)}
         defaultSort={{ key: 'room', dir: 'asc' }}
         emptyMessage={t('empty')}
       />
@@ -183,6 +205,11 @@ export default function InHousePage() {
         reservationId={folioReservationId}
         initialTab="folio"
         onClose={() => setFolioReservationId(null)}
+      />
+      <ReservationCardModal
+        open={Boolean(stayCardId)}
+        reservationId={stayCardId}
+        onClose={() => setStayCardId(null)}
       />
     </>
   );

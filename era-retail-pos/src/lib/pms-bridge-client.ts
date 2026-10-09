@@ -8,15 +8,45 @@ export type RoomChargePayload = {
   description: string;
   outletCode: string;
   externalTicketId?: string;
+  productSku?: string;
+  qty?: number;
 };
 
-function bridgeHeaders(): HeadersInit {
+export type HotelPendingPayload = {
+  sourceRef: string;
+  amount: number;
+  description: string;
+  payerLabel?: string;
+  idempotencyKey: string;
+  sku: string;
+  qty: number;
+  revenueCode: "RETAIL";
+};
+
+function bridgeHeaders(hotelOrganizationId?: string): Record<string, string> {
   const secret = process.env.POS_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET is not configured");
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Pos-Bridge-Secret": secret,
   };
+  if (hotelOrganizationId?.trim()) {
+    headers["x-era-organization-id"] = hotelOrganizationId.trim();
+  }
+  return headers;
+}
+
+async function hotelOrganizationId(): Promise<string> {
+  const { resolveOperatingMode, resolveSettlementPolicy } = await import("@era/satellite-kit");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const orgId = requestOrganizationId();
+  const [mode, policy] = await Promise.all([
+    resolveOperatingMode(orgId),
+    resolveSettlementPolicy(orgId),
+  ]);
+  const hotelOrg = policy.hubOrganizationId?.trim() || mode.parentOrgId?.trim() || "";
+  if (!hotelOrg) throw new Error("hotelOrganizationId required for hotel charge");
+  return hotelOrg;
 }
 
 function pmsBaseUrl(): string | null {
@@ -45,18 +75,58 @@ export async function postRoomCharge(
     };
   }
 
+  const hotelOrg = await hotelOrganizationId();
   const headers: Record<string, string> = {
-    ...(bridgeHeaders() as Record<string, string>),
+    ...bridgeHeaders(hotelOrg),
   };
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
 
   const res = await fetch(`${pmsBaseUrl()}/api/pos/room-charge`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, organizationId: hotelOrg }),
   });
   const body = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, body };
+}
+
+export async function postHotelSettlementPending(
+  payload: HotelPendingPayload,
+): Promise<{ id: string }> {
+  const secret = process.env.POS_BRIDGE_SECRET;
+  if (!secret) throw new Error("POS_BRIDGE_SECRET is not configured");
+  const base = (pmsBaseUrl() ?? "http://127.0.0.1:3201").replace(/\/$/, "");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const hotelOrg = await hotelOrganizationId();
+  const res = await fetch(`${base}/api/settlement/pending`, {
+    method: "POST",
+    headers: {
+      ...bridgeHeaders(hotelOrg),
+      Authorization: `Bearer ${secret}`,
+      "Idempotency-Key": payload.idempotencyKey,
+    },
+    body: JSON.stringify({
+      sourceSystem: "RETAIL",
+      sourceOrgId: requestOrganizationId(),
+      hotelOrganizationId: hotelOrg,
+      sourceRef: payload.sourceRef,
+      amount: payload.amount,
+      description: payload.description,
+      payerLabel: payload.payerLabel,
+      sku: payload.sku,
+      qty: payload.qty,
+      revenueCode: payload.revenueCode,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Hotel pending charge failed: ${res.status} ${text}`);
+  }
+  const body = (await res.json()) as { id?: string; data?: { id?: string } };
+  const id = body.id ?? body.data?.id;
+  if (!id) throw new Error("Hotel pending charge returned no id");
+  return { id };
 }
 
 export async function listInHouseGuests(query?: string) {

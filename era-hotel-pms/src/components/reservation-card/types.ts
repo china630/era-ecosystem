@@ -81,6 +81,15 @@ export type RatePlanOption = SelectOption & {
   /** When set, plan is scoped to this room type (e.g. PKG-PREMIUM → DLX). */
   roomTypeId?: string | null;
   pricePerNight?: number | null;
+  /** Open grid cells. Empty on a medical plan means that package is not sold. */
+  sellCells?: Array<{
+    roomTypeId: string;
+    mealPlanId: string | null;
+    occupancy: number;
+    sellPrice: number;
+    effectiveFrom: string;
+    effectiveTo: string | null;
+  }>;
 };
 
 export type RoomOption = { id: string; roomNumber: string; status: string };

@@ -11,6 +11,7 @@ export const reservationFullPatchSchema = z.object({
   salesContractId: z.string().uuid().nullable().optional(),
   sourceId: z.string().uuid().nullable().optional(),
   roomId: z.string().uuid().nullable().optional(),
+  moveReasonCode: z.enum(['GUEST_REFUSED', 'DID_NOT_OCCUPY', 'HOTEL']).optional(),
   guestId: z.string().uuid().optional(),
   checkInDate: z.coerce.date().optional(),
   checkOutDate: z.coerce.date().optional(),

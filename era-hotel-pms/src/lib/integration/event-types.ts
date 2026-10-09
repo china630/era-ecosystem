@@ -21,6 +21,7 @@ export interface NightAuditPayload {
   businessDate: string;
   nightAuditId?: string;
   currency: 'AZN';
+  saleLines?: Array<{ sku: string; qty: number; amount: number }>;
   revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
   /** @deprecated use revenueLines */
   lines?: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
@@ -152,4 +153,6 @@ export interface DispatchResult {
   error?: string;
   attempts: number;
   skipped?: boolean;
+  /** Finance refused the day document. The hotel day still closes. */
+  warning?: string;
 }

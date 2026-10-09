@@ -218,6 +218,8 @@ export async function postMinibar(input: {
         reservationId: stay.id,
         revenueCodeId: code.id,
         amount: decimalToNumber(item.price) * input.qty,
+        qty: input.qty,
+        sku: item.financeSku,
         description: `Minibar ${item.code}`,
       });
     }

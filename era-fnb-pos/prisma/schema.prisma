@@ -159,6 +159,8 @@ model MenuItem {
   priceAzn   Decimal         @map("price_azn") @db.Decimal(12, 2)
   active     Boolean         @default(true)
   recipeSku  String?         @map("recipe_sku")
+  /// Sellable Finance Product.sku. Distinct from recipeSku (local recipe identity).
+  financeSku String?         @map("finance_sku")
   imageUrl   String?         @map("image_url")
   category   MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lines      TicketLine[]

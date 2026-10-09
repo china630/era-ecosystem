@@ -13,6 +13,7 @@ import { PageHeader } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import ReservationCardModal from '@/components/ReservationCardModal';
 
 interface Reservation {
   id: string;
@@ -81,6 +82,7 @@ export default function OperationsPage() {
   const [status, setStatus] = useState<NightAuditStatus | null>(null);
   const [runs, setRuns] = useState<NightAuditRunRow[]>([]);
   const [noShows, setNoShows] = useState<Reservation[]>([]);
+  const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tourismFailed, setTourismFailed] = useState<
@@ -137,7 +139,12 @@ export default function OperationsPage() {
       const res = await fetch('/api/night-audit/run', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? tc('failed'));
-      setMsg(t('nightAuditResult', { status: data.run?.status ?? 'done' }));
+      const warning = typeof data.dispatch?.warning === 'string' ? data.dispatch.warning : '';
+      setMsg(
+        warning
+          ? t('financeWarning', { message: warning })
+          : t('nightAuditResult', { status: data.run?.status ?? 'done' }),
+      );
       await loadStatus();
       await loadRuns();
     } catch (e) {
@@ -151,25 +158,6 @@ export default function OperationsPage() {
     const res = await fetch('/api/integration/retry', { method: 'POST' });
     const data = await res.json();
     setMsg(t('retryQueue', { count: data.sent }));
-  }
-
-  async function markNoShow(id: string) {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/reservations/${id}/cancel`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noShow: true }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? tc('failed'));
-      setMsg(t('noShowMarked', { name: data.guest?.fullName ?? id }));
-      await loadNoShows();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : tc('error'));
-    } finally {
-      setBusy(false);
-    }
   }
 
   function parseSteps(json: string): string[] {
@@ -345,6 +333,15 @@ export default function OperationsPage() {
         </section>
       )}
 
+      <ReservationCardModal
+        open={Boolean(openReservationId)}
+        reservationId={openReservationId}
+        onClose={() => {
+          setOpenReservationId(null);
+          void loadNoShows();
+        }}
+      />
+
       {can(PERMISSIONS.RESERVATIONS_CANCEL) && (
         <section className={`${CARD_CONTAINER_CLASS} p-4`}>
           <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('noShowCandidates')}</h2>
@@ -356,11 +353,10 @@ export default function OperationsPage() {
                 </span>
                 <button
                   type="button"
-                  disabled={busy}
-                  onClick={() => markNoShow(r.id)}
+                  onClick={() => setOpenReservationId(r.id)}
                   className={SECONDARY_BUTTON_CLASS}
                 >
-                  {t('markNoShow')}
+                  {t('openReservation')}
                 </button>
               </li>
             ))}

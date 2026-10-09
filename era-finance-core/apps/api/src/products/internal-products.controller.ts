@@ -33,7 +33,7 @@ export class InternalProductsController {
 
   @Get()
   @ApiOperation({
-    summary: "Search inventory products for satellite TTK pickers (service token)",
+    summary: "Search sellable services and goods, including the NAS revenue account (service token)",
   })
   async search(
     @OrganizationId() organizationId: string,
@@ -47,7 +47,7 @@ export class InternalProductsController {
     const parsedLimit = limitRaw ? Number.parseInt(limitRaw, 10) : NaN;
     const limit = Number.isFinite(parsedLimit) ? parsedLimit : 20;
     const rows = await this.products.list(organizationId, {
-      isService: isService ?? "false",
+      isService: isService === "true" || isService === "false" ? isService : undefined,
       search,
       limit,
     });
@@ -56,6 +56,7 @@ export class InternalProductsController {
       sku: p.sku,
       name: p.name,
       isService: p.isService,
+      revenueAccountCode: p.revenueAccountCode,
     }));
   }
 }

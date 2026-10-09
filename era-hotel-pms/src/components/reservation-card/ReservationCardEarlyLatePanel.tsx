@@ -60,49 +60,22 @@ export function ReservationCardEarlyLatePanel({
     };
   }, [reservationId, checkInTime, checkOutTime, tc]);
 
-  if (loading && !preview) {
-    return (
-      <div className="rounded-lg border border-[#D5DADF] bg-[#F8FAFC] p-3 text-[12px] text-[#7F8C8D]">
-        {tc('loading')}
-      </div>
-    );
-  }
+  if (loading && !preview) return null;
 
   if (!preview) return null;
+  if (preview.earlyFee <= 0 && preview.lateFee <= 0) return null;
 
-  const hasFees = preview.earlyFee > 0 || preview.lateFee > 0;
+  const parts: string[] = [];
+  if (preview.earlyFee > 0) {
+    parts.push(`${t('earlyLate.earlyFee')} ${preview.earlyFee.toFixed(2)} AZN`);
+  }
+  if (preview.lateFee > 0) {
+    parts.push(`${t('earlyLate.lateFee')} ${preview.lateFee.toFixed(2)} AZN`);
+  }
 
   return (
-    <div className="rounded-lg border border-[#D5DADF] bg-[#F8FAFC] p-3 text-[12px]">
-      <p className="mb-2 font-semibold text-[#34495E]">{t('earlyLate.title')}</p>
-      <p className="text-[#7F8C8D]">
-        {t('earlyLate.standardTimes', {
-          checkIn: preview.policy.standardCheckInTime,
-          checkOut: preview.policy.standardCheckOutTime,
-        })}
-      </p>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <div>
-          <span className="text-[#7F8C8D]">{t('earlyLate.earlyFee')}</span>
-          <p className={`font-mono font-medium ${preview.earlyFee > 0 ? 'text-[#E67E22]' : 'text-[#34495E]'}`}>
-            {preview.earlyFee.toFixed(2)} AZN
-          </p>
-        </div>
-        <div>
-          <span className="text-[#7F8C8D]">{t('earlyLate.lateFee')}</span>
-          <p className={`font-mono font-medium ${preview.lateFee > 0 ? 'text-[#E67E22]' : 'text-[#34495E]'}`}>
-            {preview.lateFee.toFixed(2)} AZN
-          </p>
-        </div>
-      </div>
-      <p className="mt-1 text-[#7F8C8D]">
-        {t('earlyLate.nightlyRate', { rate: preview.nightlyRate.toFixed(2) })}
-      </p>
-      {!hasFees ? (
-        <p className="mt-1 text-[#27AE60]">{t('earlyLate.noFees')}</p>
-      ) : (
-        <p className="mt-1 text-[#7F8C8D]">{t('earlyLate.previewHint')}</p>
-      )}
-    </div>
+    <p className="m-0 text-[12px] text-[#E67E22]" data-testid="early-late-fee-line">
+      {parts.join(' · ')}
+    </p>
   );
 }

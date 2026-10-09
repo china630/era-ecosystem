@@ -4,6 +4,8 @@ import { postCharge } from '@/lib/services/folio.service';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { scaleLinesToSell } from '@/lib/services/door-type.policy';
 import { resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
+import { NightlyPriceMissingError } from '@/lib/pricing/own-nightly-price';
+import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 
 function sameCalendarDay(a: Date, b: Date): boolean {
   return a.toDateString() === b.toDateString();
@@ -56,49 +58,52 @@ export async function postNightlyPackageCharges(
   const lines = ratePlan.packageLines;
   const pkgCode = await findRevenueCodeByToken('PKG');
 
-  // Wave D: prefer composed sell from pax medicalPackageCode when daily rate missing
   let sellAmount: number;
   let mainSkuCode: string | null = null;
   const pax = await prisma.reservationGuest.findMany({
     where: { reservationId },
-    select: { medicalPackageCode: true },
+    select: {
+      medicalPackageCode: true,
+      firstName: true,
+      lastName: true,
+      guestId: true,
+    },
     orderBy: { sortOrder: 'asc' },
   });
   const sellRow = reservation.dailyRates.find((d) => sameCalendarDay(d.stayDate, businessDate));
+  const stayCode = ratePlan.code ?? reservation.medicalPackageCode;
+  const packageCodes =
+    pax.length > 0
+      ? paxCodesForCompose(pax, stayCode)
+      : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
+  const roomTypeId = slice?.roomTypeId ?? reservation.roomTypeId;
   if (sellRow) {
     sellAmount = decimalToNumber(sellRow.amount);
   } else {
-    const { composeNaftaPackageNightlySell } = await import(
-      '@/lib/services/nafta-package-compose.service'
-    );
-    const { resolveStandartCompanionAzn, loadNaftaPackageSellCatalog } = await import(
+    const { ownerPackageNightlyBreakdown } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );
-    const companion = await resolveStandartCompanionAzn(businessDate);
-    const catalog = await loadNaftaPackageSellCatalog(businessDate);
-    const composed = composeNaftaPackageNightlySell(
-      [...pax.map((g) => g.medicalPackageCode), reservation.medicalPackageCode],
-      catalog,
-      companion,
-    );
-    sellAmount =
-      composed ?? decimalToNumber(ratePlan.pricePerNight);
+    const breakdown = roomTypeId
+      ? await ownerPackageNightlyBreakdown(businessDate, packageCodes, {
+          roomTypeId,
+          mealPlanId: reservation.mealPlanId,
+        })
+      : null;
+    if (breakdown == null) {
+      throw new NightlyPriceMissingError(reservation.id, ratePlan.code);
+    }
+    sellAmount = breakdown.total;
+    mainSkuCode = breakdown.lines.find((l) => l.role === 'main')?.code ?? null;
   }
-
-  // Pilot polish P1.3: package line split from **main** (highest occ-1) SKU rate plan
-  {
-    const { loadNaftaPackageSellCatalog } = await import(
+  if (sellRow && packageCodes.length > 0 && roomTypeId) {
+    const { ownerPackageNightlyBreakdown } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );
-    const { composeNaftaPackageNightlySellBreakdown } = await import(
-      '@/lib/services/nafta-package-compose.service'
-    );
-    const catalog = await loadNaftaPackageSellCatalog(businessDate);
-    const breakdown = composeNaftaPackageNightlySellBreakdown(
-      [...pax.map((g) => g.medicalPackageCode), reservation.medicalPackageCode],
-      catalog,
-    );
-    mainSkuCode = breakdown?.lines.find((l) => l.role === 'main')?.code ?? null;
+    const breakdown = await ownerPackageNightlyBreakdown(businessDate, packageCodes, {
+      roomTypeId,
+      mealPlanId: reservation.mealPlanId,
+    });
+    mainSkuCode = breakdown?.lines.find((l) => l.role === 'main')?.code ?? ratePlan.code;
   }
 
   let packageLines = lines;

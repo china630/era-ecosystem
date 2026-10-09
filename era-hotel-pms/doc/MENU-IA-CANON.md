@@ -94,7 +94,8 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 |-----------|-----|-------------|
 | Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
 | HK mobile | `/hk/mobile` | Maid mobile client |
-| Minibar | `/hk/minibar` | Minibar control |
+| Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
+| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. A closed day, including an earlier one, reverses onto the open day |
 | Minibar catalog | `/settings/stock` | Local hotel product catalog (minibar). Screen permission stays Settings |
 | Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
 | Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |

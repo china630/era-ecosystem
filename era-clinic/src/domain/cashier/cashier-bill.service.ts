@@ -17,6 +17,7 @@ export type BillLine = {
   sourceType: ClinicReceiptLineSource;
   sourceId: string | null;
   discountAmount?: number;
+  qty?: number;
 };
 
 export type UnifiedBill = {
@@ -155,6 +156,7 @@ export async function buildUnifiedBill(visitId: string): Promise<UnifiedBill | n
       amount,
       sourceType: "PROCEDURE",
       sourceId: po.id,
+      qty: po.quantity,
     });
   }
 

@@ -13,6 +13,7 @@ const patchSchema = z.object({
   active: z.boolean().optional(),
   categoryId: z.string().min(1).optional(),
   recipeSku: z.string().min(1).nullable().optional(),
+  financeSku: z.string().min(1).nullable().optional(),
   imageUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
   priceReason: z.string().max(200).optional(),
 });
@@ -52,6 +53,7 @@ export async function PATCH(
           ...(body.active !== undefined ? { active: body.active } : {}),
           ...(body.categoryId !== undefined ? { categoryId: body.categoryId } : {}),
           ...(body.recipeSku !== undefined ? { recipeSku: body.recipeSku } : {}),
+          ...(body.financeSku !== undefined ? { financeSku: body.financeSku } : {}),
           ...(imageUrl !== undefined ? { imageUrl } : {}),
         },
       });

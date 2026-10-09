@@ -38,6 +38,8 @@ Temporary **Chrome/Edge MV3** extension that intercepts Elektraweb SPA API traff
 
 Process kill switch: install env `ELEKTRAWEB_BRIDGE_ENABLED` **or** Sync runtime-config `vendorBridgesEnabled` (process-wide; not a Nafta org field). Per-org inbound/write stay on `ElektrawebBridgePolicy`. No property ids in env.
 
+While that policy has `inboundEnabled`, night audit still closes the ERA business day and does not publish `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`. The next close after inbound is turned off is the one that enters the Finance queue. Guest check-in, check-out, and room change keep publishing.
+
 ### Extension login form
 
 Yes — Options page: ERA Hotel URL + **ERA ID (orgNo, six digits)** + staff login/password → bridge JWT (12h). Roles: Hotel_Admin, Manager, Receptionist, NightAuditor (+ OWNER/DIRECTOR). Shared process Bearer was removed (unsafe on multi-org pool).

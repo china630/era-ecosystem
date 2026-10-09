@@ -7,13 +7,10 @@ export class CreateProductDto {
   @IsString()
   name!: string;
 
-  @ApiPropertyOptional({
-    description: "Артикул; для услуги (`isService: true`) можно не передавать — сервер сгенерирует служебный SKU",
-  })
-  @IsOptional()
+  @ApiProperty({ description: "Артикул. Обязателен и для товара, и для услуги." })
   @IsString()
   @MinLength(1)
-  sku?: string;
+  sku!: string;
 
   @ApiProperty()
   @Type(() => Number)
@@ -33,6 +30,14 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isService?: boolean;
+
+  @ApiPropertyOptional({
+    description: "Код счёта выручки NAS. Обязателен для услуги. Для товара-ингредиента можно не передавать.",
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  revenueAccountCode?: string;
 
   @ApiPropertyOptional({
     description: "Код единицы измерения из системного каталога (pcs, kg, m, m2, pack, litre, hour)",

@@ -206,7 +206,7 @@ Roadmap: [clone-spec/14-phase2-roadmap.md](clone-spec/14-phase2-roadmap.md) · P
 
 - [x] `Warehouse`, `Product`, `StockMovement`, `Recipe` / `RecipeLine`
 - [x] `/admin/stock` + APIs under `/api/stock/*`
-- [x] Optional consumption on room-charge (`STOCK_CONSUMPTION_ENABLED` + `productSku`)
+- [x] Room charge stores finance sku and qty and does not consume a local recipe
 - [-] Full PO / fixed assets / DMENU — out of scope (v1.1)
 
 ### Stage 17 — PMS bridge for fb-pos (FB-1 prep)

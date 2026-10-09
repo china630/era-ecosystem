@@ -317,12 +317,16 @@ export async function POST(req: Request) {
     // Post folio for confirmed 4th same-day paid
     if (forcePaidExtra && order.reservationId && (amountNet ?? 0) > 0) {
       try {
-        const { postHotelRoomCharge } = await import("@/lib/billing-router");
-        await postHotelRoomCharge({
+        const { postProcedureFolioCharge } = await import(
+          "@/domain/procedure/procedure-charge.service"
+        );
+        await postProcedureFolioCharge({
           reservationId: order.reservationId,
           amount: amountNet!,
           description: `Same-day 4th+ procedure ${order.procedureName}`,
           externalTicketId: `same-day-4-${order.id}`,
+          procedureCode: order.procedureCode,
+          qty: order.quantity,
         });
       } catch (err) {
         await prisma.procedureOrder.delete({ where: { id: order.id } });

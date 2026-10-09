@@ -37,7 +37,7 @@ export async function POST(
 
     const ticket = await prisma.ticket.findUnique({
       where: { id },
-      include: { outlet: true, table: true },
+      include: { outlet: true, table: true, lines: { include: { menuItem: true } } },
     });
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -94,28 +94,50 @@ export async function POST(
       }
     }
 
-    const result = await postRoomCharge(
-      {
-        reservationId,
-        roomNumber,
-        revenueCode: ticket.outlet.revenueCenterCode,
-        amount,
-        description: `FB ticket ${ticket.table?.code ?? "walk-in"} — ${ticket.id.slice(0, 8)}`,
-        outletCode: ticket.outlet.code,
-        externalTicketId: ticket.id,
-      },
-      ticket.id,
-    );
+    if (ticket.lines.length === 0) {
+      return NextResponse.json({ error: "Finance SKU is required" }, { status: 400 });
+    }
+    for (const line of ticket.lines) {
+      const productSku = line.menuItem?.financeSku?.trim();
+      if (!productSku) {
+        return NextResponse.json(
+          { error: `Finance SKU is required for ${line.description}` },
+          { status: 400 },
+        );
+      }
+    }
 
-    if (!result.ok) {
-      const body = result.body as { error?: string; code?: string };
+    let result: { ok: boolean; status: number; body: unknown } | null = null;
+    for (const line of ticket.lines) {
+      const productSku = line.menuItem?.financeSku?.trim() ?? "";
+      const lineAmount = Number(line.qty) * Number(line.unitPriceAzn);
+      const lineKey = `${ticket.id}:${line.id}`;
+      result = await postRoomCharge(
+        {
+          reservationId,
+          roomNumber,
+          revenueCode: ticket.outlet.revenueCenterCode,
+          amount: lineAmount,
+          qty: line.qty,
+          productSku,
+          description: `${line.qty}x ${line.description}`,
+          outletCode: ticket.outlet.code,
+          externalTicketId: lineKey,
+        },
+        lineKey,
+      );
+      if (!result.ok) break;
+    }
+
+    if (!result?.ok) {
+      const failed = result?.body as { error?: string; code?: string } | undefined;
       const denyReason =
-        body?.error === 'CREDIT_LIMIT' || String(body?.error ?? '').includes('CREDIT_LIMIT')
-          ? 'CREDIT_LIMIT'
-          : body?.error;
+        failed?.error === "CREDIT_LIMIT" || String(failed?.error ?? "").includes("CREDIT_LIMIT")
+          ? "CREDIT_LIMIT"
+          : failed?.error;
       return NextResponse.json(
-        { ...body, denyReason: denyReason ?? body?.error },
-        { status: result.status },
+        { ...failed, denyReason: denyReason ?? failed?.error },
+        { status: result?.status ?? 502 },
       );
     }
 

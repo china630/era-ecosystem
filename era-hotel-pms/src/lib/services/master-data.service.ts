@@ -14,6 +14,7 @@ export async function createRoomType(input: {
   code: string;
   name: string;
   adultCapacity?: number;
+  standardAdults?: number;
   childCapacity?: number;
   baseQuota: number;
 } & LocalizedNames) {
@@ -25,6 +26,7 @@ export async function updateRoomType(
   input: {
     name?: string;
     adultCapacity?: number;
+    standardAdults?: number;
     childCapacity?: number;
     baseQuota?: number;
     active?: boolean;
@@ -35,7 +37,21 @@ export async function updateRoomType(
 
 export async function listRatePlans() {
   return prisma.ratePlan.findMany({
-    include: { roomType: true, mealPlan: true },
+    include: {
+      roomType: true,
+      mealPlan: true,
+      sellVersions: {
+        where: { roomTypeId: { not: null } },
+        select: {
+          roomTypeId: true,
+          mealPlanId: true,
+          occupancy: true,
+          sellPrice: true,
+          effectiveFrom: true,
+          effectiveTo: true,
+        },
+      },
+    },
     orderBy: { code: 'asc' },
   });
 }

@@ -20,6 +20,8 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11 |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash and iron steppers; one agreed count per service |
 | `/fo/laundry` | same API + Delivered | FO fallback grid + filters; Delivered on existing ticket; no invent |
+| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line |
+| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open business day: Finance sku + qty, guest price 0. A closed-day line reverses onto the next open day. Night audit adds a day-document line. Linen schedule does not create it |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Only Skip/Sleep rows the maid already sent |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms` | OOO vs OOS + closures |
@@ -137,7 +139,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Staged — ADR `hotel-year-end-calendar`; HOT-NA-05 STUB |
 | `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
-| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic create pending (`POS_BRIDGE_SECRET`) |
+| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (`POS_BRIDGE_SECRET`) |
 
 Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/adr/unified-settlement-hub.md`.
 

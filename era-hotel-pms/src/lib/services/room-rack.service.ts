@@ -10,6 +10,8 @@ export type RackReservationSummary = {
   checkInDate: string;
   checkOutDate: string;
   payStatus: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
+  /** Guest folio balance. Positive is debt, negative is a credit. */
+  folioBalance: number;
   procedureCount: number;
   procedurePending: number;
   agencyId: string | null;
@@ -107,6 +109,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           checkInDate: r.checkInDate.toISOString(),
           checkOutDate: r.checkOutDate.toISOString(),
           payStatus: resolvePayStatus(balance, r.folios.length > 0),
+          folioBalance: Math.round(balance * 100) / 100,
           procedureCount: r.medicalOrders.length,
           procedurePending: pending,
           agencyId: r.agencyId,
@@ -178,6 +181,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       checkInDate,
       checkOutDate: slice.toDate.toISOString(),
       payStatus: 'NONE',
+      folioBalance: 0,
       procedureCount: 0,
       procedurePending: 0,
       agencyId: slice.reservation.agencyId,

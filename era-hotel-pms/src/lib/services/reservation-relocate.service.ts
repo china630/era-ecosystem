@@ -53,11 +53,19 @@ export async function relocateReservationRoom(
       fromRoomId,
       toRoomId,
       effectiveAt: new Date(),
-      notes: opts?.reason ?? 'Quick move from room rack / plan',
+      notes: opts?.reason ?? opts?.reasonCode ?? 'Quick move from room rack / plan',
       reasonCode: opts?.reasonCode,
       createdByUserId: opts?.actorUserId,
       kind: 'OCCURRED',
       status: 'APPLIED',
+    });
+    const { settleVacatedDoorAfterMove } = await import('@/lib/services/room-move-door.service');
+    await settleVacatedDoorAfterMove({
+      reservationId,
+      fromRoomId,
+      toRoomId,
+      status: reservation.status,
+      reasonCode: opts?.reasonCode,
     });
     const { dispatchRoomChanged } = await import('@/lib/integration/guest-lifecycle-events');
     const dest = await prisma.room.findUnique({ where: { id: toRoomId } });

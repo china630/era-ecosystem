@@ -594,6 +594,8 @@ export function rolePermissionsAreCustomized(
 const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   prefix: string;
   permission: ClinicPermission;
+  /** When set, any one of these grants the route. `permission` stays the primary for inventory. */
+  anyOf?: ClinicPermission[];
 }> = [
   { prefix: "/api/admin/catalog/import-nafta", permission: CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT },
   { prefix: "/api/import", permission: CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT },
@@ -628,7 +630,15 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/settings", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/workforce-policy", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
-  { prefix: "/api/admin/finance-products", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  {
+    prefix: "/api/admin/finance-products",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    anyOf: [
+      CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
+      CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    ],
+  },
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
@@ -638,17 +648,28 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
 
-export function adminApiRoutePermission(
-  pathname: string,
-): ClinicPermission | null {
+function matchAdminApiPrefix(pathname: string) {
   const path = pathname.split("?")[0] ?? pathname;
-  let best: { prefix: string; permission: ClinicPermission } | null = null;
+  let best: (typeof ADMIN_API_PREFIX_PERMISSIONS)[number] | null = null;
   for (const row of ADMIN_API_PREFIX_PERMISSIONS) {
     if (path === row.prefix || path.startsWith(`${row.prefix}/`)) {
       if (!best || row.prefix.length > best.prefix.length) best = row;
     }
   }
-  return best?.permission ?? null;
+  return best;
+}
+
+export function adminApiRoutePermission(
+  pathname: string,
+): ClinicPermission | null {
+  return matchAdminApiPrefix(pathname)?.permission ?? null;
+}
+
+/** Grants that may call the route. One match is enough. */
+export function adminApiRoutePermissions(pathname: string): ClinicPermission[] | null {
+  const row = matchAdminApiPrefix(pathname);
+  if (!row) return null;
+  return row.anyOf && row.anyOf.length > 0 ? row.anyOf : [row.permission];
 }
 
 /**

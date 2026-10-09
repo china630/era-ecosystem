@@ -9,6 +9,8 @@ import { PiiCryptoService } from "../security/pii-crypto.service";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { CounterpartiesModule } from "../counterparties/counterparties.module";
 import { InventoryModule } from "../inventory/inventory.module";
+import { HotelDayDocumentController } from "./hotel-day-document.controller";
+import { HotelDayDocumentInternalController } from "./hotel-day-document.internal.controller";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
 import { SatelliteEventWorker } from "./satellite-event.worker";
@@ -20,6 +22,7 @@ import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.servic
 import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
 
 @Module({
+  controllers: [HotelDayDocumentController, HotelDayDocumentInternalController],
   imports: [
     PrismaModule,
     AccountingModule,

@@ -803,6 +803,13 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/inventory/day-documents"
+            label={t("inventory.dayDocumentNav")}
+            isActive={pathname.startsWith("/inventory/day-documents")}
+            icon={FileText}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/inventory/receipts"
             label={t("inventory.receiptNav")}
             isActive={pathname.startsWith("/inventory/receipts")}

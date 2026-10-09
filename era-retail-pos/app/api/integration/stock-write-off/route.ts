@@ -1,7 +1,4 @@
-import { randomUUID } from "crypto";
-import { SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED } from "@era/contracts";
 import { NextResponse } from "next/server";
-import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { stockWriteOffDenied } from "@/lib/stock-gates";
 import { getSatelliteSession, handleRouteError, jsonError } from "@/lib/api-utils";
 
@@ -23,19 +20,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: denied }, { status: 400 });
   }
 
-  const amountAzn = lines.reduce((s, l) => s + l.qty, 0);
-  await dispatchSatelliteEvent({
-    type: SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED,
-    payload: {
-      ticketId: body.procedureOrderId ?? `clinic-${randomUUID()}`,
-      outletId: "clinic",
-      outletCode: "CLINIC",
-      paymentMethod: "INTERNAL",
-      amountAzn,
-      currency: "AZN",
-      lines,
-    },
+  return NextResponse.json({
+    ok: true,
+    skipped: true,
+    reason: "day document",
+    lineCount: lines.length,
   });
-
-  return NextResponse.json({ ok: true, lineCount: lines.length });
 }
