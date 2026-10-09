@@ -550,7 +550,7 @@ export default function RoomRackView({
               >
                 {onHkStatus && room.inventoryStatus !== 'OOO' && room.inventoryStatus !== 'OOS' ? (
                   <select
-                    className="mx-auto mb-1 block max-w-full rounded border border-[#D5DADF] bg-white px-1 py-0.5 text-center text-[10px] font-semibold uppercase text-[#34495E]"
+                    className={`${FORM_INPUT_CLASS} mx-auto mb-1 block h-7 min-h-0 max-w-full px-1 py-0.5 text-center text-[10px] font-semibold uppercase`}
                     aria-label={t('hkStatus')}
                     value={
                       room.hkCondition === 'DIRTY' ||

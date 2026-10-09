@@ -270,7 +270,7 @@ export function ProductModal({
           <div className="md:col-span-2">
             <span className={lbl}>{t("products.revenueAccount")}</span>
             <Select value={revenueAccountCode || "unset"} onValueChange={(v) => setRevenueAccountCode(v === "unset" ? "" : v)}>
-              <SelectTrigger className="" />
+              <SelectTrigger className={MODAL_INPUT_CLASS} />
               <SelectContent>
                 <SelectItem value="unset" disabled={revenueRequired}>
                   {t("products.revenueAccountPlaceholder")}
