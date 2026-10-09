@@ -8,6 +8,7 @@ import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-e
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
 import {
   applyContractRuleToNightly,
@@ -754,7 +755,7 @@ export async function checkInReservation(
     departKey = hotelDateKey(reservation.checkOutDate);
   }
 
-  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
+  const revenueRoom = await findRevenueCodeByToken('ROOM');
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({

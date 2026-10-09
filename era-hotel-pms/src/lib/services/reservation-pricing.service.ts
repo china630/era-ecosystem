@@ -9,6 +9,7 @@ import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
 import {
   applyLoadBasedAdjustment,
   computeChildNightlyAddon,
@@ -46,12 +47,11 @@ async function closedNightKeys(reservationId: string): Promise<{ bizKey: string;
   const bizKey = hotelDateKey(await getCurrentBusinessDate());
   const charges = await prisma.folioCharge.findMany({
     where: { folio: { reservationId } },
-    select: { businessDate: true, revenueCode: { select: { code: true } } },
+    select: { businessDate: true, revenueCode: { select: { code: true, name: true } } },
   });
   const posted = new Set<string>();
   for (const charge of charges) {
-    const code = charge.revenueCode.code;
-    if (code === 'ROOM' || code === 'PKG' || code === 'RATE_ADJ') {
+    if (matchesAnyRevenueToken(charge.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ'])) {
       posted.add(hotelDateKey(charge.businessDate));
     }
   }
@@ -425,7 +425,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       : { posted: [key], skipped: [] as string[] };
   }
 
-  const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
+  const revenueRoom = await findRevenueCodeByToken('ROOM');
   if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
 
   let rates = res.dailyRates;

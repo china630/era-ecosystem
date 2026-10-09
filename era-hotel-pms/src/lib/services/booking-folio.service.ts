@@ -1,17 +1,20 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import type { FolioType } from '@prisma/client';
+import { matchesAnyRevenueToken } from '@/lib/revenue-code-token';
 
 /** Heuristic: room & tax vs extras for MASTER / SPLIT booking folio mode. */
 export function isRoomAndTaxRevenueCode(code: {
   code: string;
+  name?: string | null;
   taxTag?: string | null;
   ratePlansRoom?: { id: string }[];
 }): boolean {
   if (code.ratePlansRoom && code.ratePlansRoom.length > 0) return true;
   const tag = (code.taxTag ?? '').toUpperCase();
   if (tag === 'ROOM' || tag === 'ACCOM' || tag === 'LODGING') return true;
-  return /^(ROOM|ACCOM|LODG|STAY)/i.test(code.code);
+  if (/^(ROOM|ACCOM|LODG|STAY)/i.test(code.code)) return true;
+  return matchesAnyRevenueToken(code, ['ROOM', 'ACCOM', 'LODGING', 'STAY']);
 }
 
 /** First active stay in the booking = master folio owner (variant A). */

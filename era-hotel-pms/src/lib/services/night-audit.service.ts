@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
 import { assertNoOpenPosShifts, getPosShiftStatus } from '@/lib/services/pms-bridge.service';
 import {
@@ -194,7 +195,7 @@ export async function runNightAudit() {
       `Step 2d: Trial balance — charges ${trialCharges.toFixed(2)} / payments ${trialPays.toFixed(2)} AZN`,
     );
 
-    const revenueRoom = await prisma.revenueCode.findFirst({ where: { code: 'ROOM' } });
+    const revenueRoom = await findRevenueCodeByToken('ROOM');
     if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
 
     const inHouse = await prisma.reservation.findMany({
