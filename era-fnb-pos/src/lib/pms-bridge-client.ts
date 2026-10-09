@@ -21,13 +21,16 @@ export type InHouseGuest = {
   allowRoomCharge: boolean;
 };
 
-function bridgeHeaders(): HeadersInit {
-  const secret = process.env.POS_BRIDGE_SECRET;
+function bridgeHeaders(organizationId?: string): Record<string, string> {
+  const secret = process.env.POS_BRIDGE_SECRET?.trim();
   if (!secret) throw new Error("POS_BRIDGE_SECRET is not configured");
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Pos-Bridge-Secret": secret,
   };
+  const org = organizationId?.trim();
+  if (org) headers["x-era-organization-id"] = org;
+  return headers;
 }
 
 function pmsBaseUrl(): string | null {
@@ -126,9 +129,12 @@ export async function reportPosShiftStatus(payload: {
   closedAt?: string;
 }): Promise<void> {
   if (isPmsStubMode()) return;
+  // Lazy: the kit barrel pulls jose, and a static import breaks CJS Jest on /api/health.
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const organizationId = requestOrganizationId();
   const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
     method: "PUT",
-    headers: bridgeHeaders(),
+    headers: bridgeHeaders(organizationId),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {

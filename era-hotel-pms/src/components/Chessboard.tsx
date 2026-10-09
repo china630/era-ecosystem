@@ -152,6 +152,15 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data?.code === 'BUSINESS_DATE_LAG') {
+          showApiError({
+            error: tCard('checkInBusinessDateLag', {
+              businessDate: String(data.businessDate ?? ''),
+              arrivalDate: String(data.arrivalDate ?? ''),
+            }),
+          });
+          return;
+        }
         if (data?.code === 'GUEST_CHECK_IN_INCOMPLETE') {
           showApiError({
             error: tCard('checkInBlocked', {

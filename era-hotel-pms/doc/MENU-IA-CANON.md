@@ -57,7 +57,7 @@ Legacy cutover (temporary redirects OK): `/` → `/fo/rack`, `/availability` →
 | Agency city ledger | `/front-cash/agency-ledger` | Travel-agent CL; AGENCY folios; commission %; Finance snapshot |
 | Company city ledger | `/front-cash/company-ledger` | Corporate CL; COMPANY folios; prepaid/postpaid; no commission |
 | Shift journal | `/front-cash/transactions` | FO cash journal (payments \| deposits tabs) + Z in modal + close shift (ops, not fiscal KKM Z) |
-| Folio (not a list item) | `/folio/[reservationId]` | Stay folio: charges, deposit, settle, refund, checkout/CL — open from FO card / in-house |
+| Folio (not a screen) | reservation card, Folio tab | Stay ledger. Payment, charge, invoice, checkout, void, and refund are modals on that tab. Header “Accept payment” opens the same payment modal. `/folio/[id]` redirects to the card. |
 
 Café/clinic tickets awaiting reception payment live on **`/front-cash/pending`** (not a separate sanatorium menu, not F&B floor).
 

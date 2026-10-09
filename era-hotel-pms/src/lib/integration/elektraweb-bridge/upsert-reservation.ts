@@ -26,7 +26,6 @@ import {
   dispatchGuestCheckedIn,
   dispatchGuestCheckedOut,
   dispatchRoomChanged,
-  dispatchSanatoriumBookingCreated,
   lifecycleDemographicsFromPax,
 } from '@/lib/integration/guest-lifecycle-events';
 import {
@@ -295,16 +294,6 @@ export async function upsertReservationFromElektrawebRow(
       }
     }
     events.push('GUEST_CHECKED_IN');
-  } else if (status === 'CONFIRMED' && !existing && programCode) {
-    await dispatchSanatoriumBookingCreated({
-      reservationId: reservation.id,
-      programCode,
-      globalPersonId: full?.guest.globalPersonId ?? undefined,
-      guestName: full?.guest.fullName,
-      checkInDate: checkInDate.toISOString(),
-      checkOutDate: checkOutDate.toISOString(),
-    });
-    events.push('SANATORIUM_BOOKING_CREATED');
   }
 
   if (status === 'CHECKED_OUT' && prevStatus !== 'CHECKED_OUT') {

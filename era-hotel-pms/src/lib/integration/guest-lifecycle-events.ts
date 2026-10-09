@@ -245,12 +245,12 @@ export async function dispatchStayProductChanged(input: {
 export type ClinicPackageEventKind = "booking" | "stay-product" | "none";
 
 /**
- * `STAY_PRODUCT_CHANGED` is only for a stay that already checked in.
- * A new or still-confirmed reservation publishes `SANATORIUM_BOOKING_CREATED`.
+ * Clinic hears about a stay only after check-in.
+ * A saved reservation does not open an episode. Package edits while in house
+ * update the course that check-in already opened.
  */
 export function clinicPackageEventKind(status: string): ClinicPackageEventKind {
   if (status === "IN_HOUSE") return "stay-product";
-  if (status === "CONFIRMED" || status === "OPTION") return "booking";
   return "none";
 }
 
@@ -271,7 +271,7 @@ type ClinicPackagePax = {
 
 /**
  * One clinic event per guest who has a medical SKU.
- * Checked-in stays use stay-product. Everyone still arriving uses booking-created.
+ * Checked-in stays use stay-product. A reservation that has not checked in stays quiet.
  */
 export async function fanOutClinicMedicalPackages(input: {
   status: string;
@@ -320,34 +320,20 @@ export async function fanOutClinicMedicalPackages(input: {
   }
 
   for (const row of rows) {
-    if (kind === "stay-product") {
-      await dispatchStayProductChanged({
-        reservationId: input.reservationId,
-        programCode: row.programCode,
-        previousProgramCode: input.previousProgramCode,
-        effectiveDate: new Date().toISOString(),
-        globalPersonId: row.globalPersonId,
-        guestName: row.guestName,
-        roomNumber: input.roomNumber,
-        checkInDate: input.checkInDate,
-        checkOutDate: input.checkOutDate,
-        paxKey: row.paxKey,
-        sex: row.sex,
-        birthDate: row.birthDate,
-      });
-    } else {
-      await dispatchSanatoriumBookingCreated({
-        reservationId: input.reservationId,
-        programCode: row.programCode,
-        globalPersonId: row.globalPersonId,
-        guestName: row.guestName,
-        checkInDate: input.checkInDate,
-        checkOutDate: input.checkOutDate,
-        roomNumber: input.roomNumber,
-        paxKey: row.paxKey,
-        sex: row.sex,
-        birthDate: row.birthDate,
-      });
-    }
+    if (kind !== "stay-product") continue;
+    await dispatchStayProductChanged({
+      reservationId: input.reservationId,
+      programCode: row.programCode,
+      previousProgramCode: input.previousProgramCode,
+      effectiveDate: new Date().toISOString(),
+      globalPersonId: row.globalPersonId,
+      guestName: row.guestName,
+      roomNumber: input.roomNumber,
+      checkInDate: input.checkInDate,
+      checkOutDate: input.checkOutDate,
+      paxKey: row.paxKey,
+      sex: row.sex,
+      birthDate: row.birthDate,
+    });
   }
 }

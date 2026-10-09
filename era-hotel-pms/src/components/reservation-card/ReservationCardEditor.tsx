@@ -38,7 +38,10 @@ import { SwapRoomsModal } from '@/components/reservation-card/SwapRoomsModal';
 import { ReservationCardGuestsTab } from '@/components/reservation-card/ReservationCardGuestsTab';
 import { ReservationCardPricingTab } from '@/components/reservation-card/ReservationCardPricingTab';
 import { StayAmendmentModal } from '@/components/reservation-card/StayAmendmentModal';
-import { ReservationCardFolioTab } from '@/components/reservation-card/ReservationCardFolioTab';
+import {
+  ReservationCardFolioTab,
+  type FolioAccount,
+} from '@/components/reservation-card/ReservationCardFolioTab';
 import { ReservationCardNotesTab } from '@/components/reservation-card/ReservationCardNotesTab';
 import { ReservationCardAttachPanel } from '@/components/reservation-card/ReservationCardAttachPanel';
 import {
@@ -1431,6 +1434,18 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json?.code === 'BUSINESS_DATE_LAG') {
+          showApiError(
+            {
+              error: t('checkInBusinessDateLag', {
+                businessDate: String(json.businessDate ?? ''),
+                arrivalDate: String(json.arrivalDate ?? ''),
+              }),
+            },
+            tc('failed'),
+          );
+          return;
+        }
         showApiError(
           json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
             ? { error: formatOperationalGaps(json.people, t) }
@@ -2241,32 +2256,9 @@ export function ReservationCardEditor({
     return 'exclusive' as const;
   }, [shareEligible, bookingGroupId, siblingStays.length]);
 
-  const folios = (data?.folios as Array<{
-    type: string;
-    charges: Array<{
-      id: string;
-      amount: number;
-      description?: string;
-      businessDate?: string;
-      paxNo?: number | null;
-      invoiceRef?: string | null;
-      revenueCode?: { code: string };
-    }>;
-    payments?: Array<{ amount: number }>;
-  }>) ?? [];
+  const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
 
   const guestFolioBalance = computeGuestFolioBalance(folios);
-
-  const fiscalInvoices = (data?.fiscalDocuments as Array<{ invoiceNumber?: string | null }>) ?? [];
-
-  const folioLines = folios.flatMap((f) =>
-    f.charges.map((c) => ({
-      folioType: f.type,
-      stayDate: c.businessDate?.slice?.(0, 10),
-      invoiceRef: c.invoiceRef ?? fiscalInvoices[0]?.invoiceNumber ?? null,
-      ...c,
-    })),
-  );
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -2725,11 +2717,21 @@ export function ReservationCardEditor({
                   <ReservationCardFolioTab
                     reservationId={reservationId}
                     folioTab={folioTab}
-                    lines={folioLines}
+                    accounts={folios}
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
                     canPostCharges={status === 'IN_HOUSE'}
+                    canCheckOut={status === 'IN_HOUSE'}
+                    fiscalDocuments={
+                      (data?.fiscalDocuments as Array<{
+                        id: string;
+                        invoiceNumber?: string | null;
+                        fiscalStatus: string;
+                        rejectionReason?: string | null;
+                      }>) ?? []
+                    }
                     onFolioTab={setFolioTab}
+                    onChanged={() => void load()}
                   />
                 ) : (
                   <p className="text-[13px] text-[#7F8C8D]">{tb('folioTabHint')}</p>
