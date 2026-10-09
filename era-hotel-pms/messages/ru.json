@@ -599,7 +599,8 @@
     "cashDeskOpenBlock": "Открытых строк: {count}",
     "cashDeskOk": "OK",
     "posShiftStatus": "Смены POS:",
-    "posShiftOpen": "В отеле осталась открытая копия смены {outlet}. Закройте смену в F&B и запустите ночной аудит снова.",
+    "posShiftOpen": "В F&B ещё открыта смена {outlet}. Закройте её там и запустите ночной аудит снова.",
+    "posShiftUnreachable": "Отель не дождался ответа F&B, поэтому открытая копия {outlet} осталась. Ночной аудит заблокирован, пока F&B не ответит.",
     "posShiftOk": "OK",
     "openCashDesk": "К сводке кассы",
     "closeCashDeskBeforeNa": "Перед ночным аудитом закройте строки фронт-кассы за этот рабочий день.",
@@ -706,8 +707,8 @@
     "commercialSales": "Коммерция и продажи",
     "classification": "Классификация",
     "roomSection": "Номер",
-    "cancelStay": "CANCELLED",
-    "noShowStay": "NO_SHOW",
+    "cancelStay": "CANCEL",
+    "noShowStay": "NO SHOW",
     "cancelDone": "Бронь отменена",
     "noShowDone": "Отмечен незаезд",
     "splitFrom": "Сменить номер с даты",
@@ -2575,7 +2576,8 @@
       "NOTE_TYPE": "Тип заметки",
       "CONCIERGE_CATEGORY": "Категория консьержа",
       "EVENT_LINE_KIND": "Вид строки банкета",
-      "WALKIN_PROFILE": "Профиль walk-in"
+      "WALKIN_PROFILE": "Профиль walk-in",
+      "NATIONALITY": "Гражданство"
     }
   },
   "opsWipe": {

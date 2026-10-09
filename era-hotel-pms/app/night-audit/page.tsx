@@ -60,6 +60,7 @@ interface NightAuditStatus {
   unclosedCashRows?: number;
   posShiftStatus?: {
     hasOpenShift: boolean;
+    confirmed?: boolean;
     outlets: Array<{ outletCode: string }>;
   };
 }
@@ -231,9 +232,13 @@ export default function OperationsPage() {
             {t('posShiftStatus')}{' '}
             {status?.posShiftStatus?.hasOpenShift ? (
               <span className="text-rose-600">
-                {t('posShiftOpen', {
-                  outlet: status.posShiftStatus.outlets.map((row) => row.outletCode).join(', '),
-                })}
+                {status.posShiftStatus.confirmed === false
+                  ? t('posShiftUnreachable', {
+                      outlet: status.posShiftStatus.outlets.map((row) => row.outletCode).join(', '),
+                    })
+                  : t('posShiftOpen', {
+                      outlet: status.posShiftStatus.outlets.map((row) => row.outletCode).join(', '),
+                    })}
               </span>
             ) : (
               t('posShiftOk')

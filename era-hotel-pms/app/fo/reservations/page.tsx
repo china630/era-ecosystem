@@ -22,6 +22,7 @@ import { Cake, MessageSquare, Plus } from 'lucide-react';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { birthdayIconVisible, birthdayNightInStay } from '@/lib/stay-birthday';
 import ReservationCardModal from '@/components/ReservationCardModal';
+import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { useListPaginationLabels } from '@/hooks/useListPaginationLabels';
@@ -39,6 +40,7 @@ type Row = {
   adults: number;
   hasNotes?: boolean;
   notePreview?: string | null;
+  notes?: Array<{ noteType: string; text: string }>;
 };
 
 const ROW_BG: Record<string, string> = {
@@ -245,11 +247,19 @@ export default function ReservationsListPage() {
             />
           </EraListFilterBar>
         }
+        toolbar={(() => {
+          const selected = rows.find((row) => row.id === selectedId);
+          const selectedNotes = (selected?.notes ?? []).filter((note) => (note.text ?? '').trim());
+          if (selectedNotes.length === 0) return undefined;
+          return (
+            <ReservationNoteLine
+              className="mb-1 rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2.5 py-1 text-[12px] leading-5 text-[#34495E]"
+              notes={selectedNotes}
+            />
+          );
+        })()}
         table={
           <div className="flex min-h-0 flex-1 flex-col">
-          <p className="mb-1 min-h-[1.5rem] truncate rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2 py-1 text-[12px] text-[#34495E]">
-            {rows.find((row) => row.id === selectedId)?.noteText ?? ''}
-          </p>
           <HotelDataGrid<Row & Record<string, unknown>>
             columns={[
               {
@@ -324,17 +334,15 @@ export default function ReservationsListPage() {
                   r.hasNotes ? (
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 text-amber-700"
-                      title={r.notePreview ?? ''}
+                      className="inline-flex items-center text-amber-700"
+                      title={t('notes')}
+                      aria-label={t('notes')}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedId(r.id);
                       }}
                     >
                       <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
-                      <span className="max-w-[8rem] truncate text-[12px]">
-                        {r.notePreview}
-                      </span>
                     </button>
                   ) : (
                     '—'

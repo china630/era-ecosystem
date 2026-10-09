@@ -420,6 +420,7 @@ enum HotelLookupKind {
   CONCIERGE_CATEGORY
   EVENT_LINE_KIND
   WALKIN_PROFILE
+  NATIONALITY
 }
 
 model HotelLookup {

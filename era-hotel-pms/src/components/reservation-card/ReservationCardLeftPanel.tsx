@@ -236,8 +236,6 @@ export type ReservationCardLeftPanelProps = {
   stayStatus?: string;
   earlyStayCheckoutBusy?: boolean;
   onStayAction?: () => void;
-  voidKind?: 'cancel' | 'noShow' | null;
-  onVoidStay?: (kind: 'cancel' | 'noShow') => void;
   staySlices?: Array<{
     id: string;
     fromDate: string;
@@ -392,9 +390,16 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
   const disabled = isLocked;
+  const [splitOpen, setSplitOpen] = useState(false);
   const [splitFrom, setSplitFrom] = useState('');
   const [splitTypeId, setSplitTypeId] = useState('');
   const [splitRoomId, setSplitRoomId] = useState('');
+  useEffect(() => {
+    setSplitOpen(false);
+    setSplitFrom('');
+    setSplitTypeId('');
+    setSplitRoomId('');
+  }, [props.reservationId]);
   const { byKind, roomViews, bedTypes } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
@@ -495,20 +500,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               onStayAction={props.onStayAction}
             />
           </div>
-          {props.voidKind && props.onVoidStay ? (
-            <button
-              type="button"
-              className={
-                props.voidKind === 'cancel'
-                  ? 'rounded-md bg-amber-400 px-3 py-1.5 text-[12px] font-semibold text-amber-950'
-                  : 'rounded-md bg-[#E74C3C] px-3 py-1.5 text-[12px] font-semibold text-white'
-              }
-              disabled={disabled || props.earlyStayCheckoutBusy}
-              onClick={() => props.onVoidStay?.(props.voidKind!)}
-            >
-              {props.voidKind === 'cancel' ? t('cancelStay') : t('noShowStay')}
-            </button>
-          ) : null}
           <fieldset disabled={disabled} className="space-y-2 border-0 p-0">
             <FieldRow cols={2}>
               <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
@@ -759,16 +750,45 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             </ul>
           ) : null}
           {props.onSplitStay && !props.isCreate ? (
-            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
-              <DatePicker
-                label={t('splitFrom')}
-                fluid
-                value={splitFrom}
-                onChange={setSplitFrom}
-                placeholder={tc('datePlaceholder')}
-                openCalendarLabel={tc('openCalendar')}
+            <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
+              <input
+                type="checkbox"
+                className={MODAL_CHECKBOX_CLASS}
+                checked={splitOpen}
                 disabled={disabled || props.splitBusy}
+                onChange={(e) => setSplitOpen(e.target.checked)}
               />
+              {t('splitFrom')}
+            </label>
+          ) : null}
+          {splitOpen && props.onSplitStay && !props.isCreate ? (
+            <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
+              <div className="grid grid-cols-2 items-end gap-2">
+                <DatePicker
+                  label={tc('date')}
+                  fluid
+                  value={splitFrom}
+                  onChange={setSplitFrom}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                  disabled={disabled || props.splitBusy}
+                />
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
+                  onClick={() =>
+                    props.onSplitStay?.({
+                      fromDate: splitFrom,
+                      roomTypeId: splitTypeId,
+                      roomId: splitRoomId || null,
+                    })
+                  }
+                >
+                  {t('splitStay')}
+                </button>
+              </div>
+              <FieldRow cols={2}>
               <CatalogField
                 kind="ENTITY_REF"
                 label={tb('roomType')}
@@ -809,20 +829,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 emptyLabel={t('splitQuotaOnly')}
                 disabled={disabled || props.splitBusy || !splitTypeId}
               />
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
-                onClick={() =>
-                  props.onSplitStay?.({
-                    fromDate: splitFrom,
-                    roomTypeId: splitTypeId,
-                    roomId: splitRoomId || null,
-                  })
-                }
-              >
-                {t('splitStay')}
-              </button>
+              </FieldRow>
             </div>
           ) : null}
           <RoomMoves changes={props.roomChanges} />

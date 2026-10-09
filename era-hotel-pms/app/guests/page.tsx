@@ -11,7 +11,6 @@ import {
   FieldSelect,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
-  NATIONALITY_OPTIONS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   showApiError,
@@ -22,6 +21,7 @@ import GuestCardModal from '@/components/GuestCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { formatGuestGenderLabel, type GuestListItem } from '@/lib/guest-list-identity';
+import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import { useListPaginationLabels } from '@/hooks/useListPaginationLabels';
 
 type ListFilters = {
@@ -63,6 +63,7 @@ export default function GuestsPage() {
   const [cardOpen, setCardOpen] = useState(false);
   const [cardGuestId, setCardGuestId] = useState<string | null>(null);
   const [filtersState, setFiltersState] = useState<ListFilters>(EMPTY_FILTERS);
+  const { byKind } = useHotelLookupOptions(['NATIONALITY']);
 
   const filters = useMemo(() => filtersState, [filtersState]);
 
@@ -185,7 +186,10 @@ export default function GuestsPage() {
               onChange={(v) =>
                 patchFilter({ nationality: (Array.isArray(v) ? v[0] : v) ?? '' })
               }
-              options={[{ value: '', label: tc('all') }, ...NATIONALITY_OPTIONS]}
+              options={withOrphanOption(
+                [{ value: '', label: tc('all') }, ...(byKind.NATIONALITY ?? [])],
+                filtersState.nationality,
+              )}
             />
             <Field
               label={t('fin')}

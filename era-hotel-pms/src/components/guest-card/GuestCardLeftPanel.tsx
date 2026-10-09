@@ -10,7 +10,6 @@ import {
   FieldRow,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
-  NATIONALITY_OPTIONS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
@@ -24,6 +23,7 @@ const GUEST_LOOKUP_KINDS = [
   'VISA_TYPE',
   'MARITAL_STATUS',
   'VERIFICATION_STATUS',
+  'NATIONALITY',
 ] as const;
 
 function maskPersonId(id: string | null | undefined): string {
@@ -259,7 +259,7 @@ export function GuestCardLeftPanel({
               label={t('fields.nationality')}
               value={nationality}
               onChange={setCatalog('nationality')}
-              options={withOrphanOption([...NATIONALITY_OPTIONS], nationality)}
+              options={withOrphanOption(byKind.NATIONALITY ?? [], nationality)}
               required
             />
           </FieldRow>
@@ -272,18 +272,18 @@ export function GuestCardLeftPanel({
               required
             />
             <Field
-              label={t('fields.middleName')}
-              preset="shortText"
-              value={middleName}
-              onChange={set('middleName')}
-              hint={t('fields.middleNameHint')}
-            />
-            <Field
               label={t('fields.lastName')}
               preset="shortText"
               value={lastName}
               onChange={set('lastName')}
               required
+            />
+            <Field
+              label={t('fields.middleName')}
+              preset="shortText"
+              value={middleName}
+              onChange={set('middleName')}
+              hint={t('fields.middleNameHint')}
             />
           </FieldRow>
           <FieldRow cols={2}>
