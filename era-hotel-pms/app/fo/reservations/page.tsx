@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
+  CHIP_ACTIVE_CLASS,
+  CHIP_CLASS,
+  CHIP_GROUP_CLASS,
   DatePicker,
   EraListFilterBar,
   EraListWorkspace,
   Field,
-  FieldSelect,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
@@ -26,6 +28,13 @@ import { ReservationNoteLine } from '@/components/reservation-card/ReservationNo
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { useListPaginationLabels } from '@/hooks/useListPaginationLabels';
+import { catalogLabel } from '@/lib/catalog-label';
+import {
+  RESERVATION_QUEUE_CODES,
+  isReservationQueue,
+  queueIgnoresDates,
+  type ReservationQueue,
+} from '@/lib/reservation-queue';
 
 type Row = {
   id: string;
@@ -33,6 +42,7 @@ type Row = {
   checkInDate: string;
   checkOutDate: string;
   guest: { fullName: string; birthDate?: string | null };
+  guestLabel?: string;
   noteText?: string | null;
   room: { roomNumber: string; status: string } | null;
   roomType: { code: string };
@@ -54,7 +64,8 @@ const ROW_BG: Record<string, string> = {
 
 type ListFilters = {
   q: string;
-  status: string;
+  queue: ReservationQueue;
+  overdue: boolean;
   noteQ: string;
   notesOnly: boolean;
   guestId: string;
@@ -69,6 +80,7 @@ export default function ReservationsListPage() {
   const t = useTranslations('reservationList');
   const tRes = useTranslations('reservationStatus');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const paginationLabels = useListPaginationLabels();
   const searchParams = useSearchParams();
   const guestIdFilter = searchParams.get('guestId') ?? '';
@@ -79,17 +91,33 @@ export default function ReservationsListPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | ''>('');
   const [createOpen, setCreateOpen] = useState(false);
   const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState(() =>
-    searchParams.get('guestId') ? 'ALL' : 'LIVE',
-  );
+  const [queue, setQueue] = useState<ReservationQueue>(() => {
+    const fromUrl = searchParams.get('queue');
+    if (isReservationQueue(fromUrl)) return fromUrl;
+    return searchParams.get('guestId') ? 'all' : 'bookings';
+  });
+  const [overdue, setOverdue] = useState(searchParams.get('overdue') === '1');
+  const [queueLabels, setQueueLabels] = useState<Record<string, string>>({});
   const [noteQ, setNoteQ] = useState(searchParams.get('noteQ') ?? '');
   const [notesOnly, setNotesOnly] = useState(searchParams.get('hasNotes') === '1');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
-    if (guestIdFilter) setStatusFilter('ALL');
+    if (guestIdFilter) setQueue('all');
   }, [guestIdFilter]);
+
+  useEffect(() => {
+    void fetch('/api/master/lookups?kind=RESERVATION_QUEUE&activeOnly=1')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: Array<{ code: string; name?: string; nameAz?: string; nameRu?: string; nameEn?: string }>) => {
+        if (!Array.isArray(rows)) return;
+        const next: Record<string, string> = {};
+        for (const row of rows) next[row.code] = catalogLabel(row, locale);
+        setQueueLabels(next);
+      })
+      .catch(() => setQueueLabels({}));
+  }, [locale]);
 
   useEffect(() => {
     setNotesOnly(searchParams.get('hasNotes') === '1');
@@ -98,7 +126,8 @@ export default function ReservationsListPage() {
   const filters = useMemo<ListFilters>(
     () => ({
       q,
-      status: statusFilter,
+      queue,
+      overdue: queue === 'bookings' && overdue,
       noteQ,
       notesOnly,
       guestId: guestIdFilter,
@@ -107,7 +136,7 @@ export default function ReservationsListPage() {
       sort: sortKey,
       dir: sortDir,
     }),
-    [q, statusFilter, noteQ, notesOnly, guestIdFilter, dateFrom, dateTo, sortKey, sortDir],
+    [q, queue, overdue, noteQ, notesOnly, guestIdFilter, dateFrom, dateTo, sortKey, sortDir],
   );
 
   const fetcher = useCallback(
@@ -123,8 +152,9 @@ export default function ReservationsListPage() {
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
-        status: f.status || 'LIVE',
+        queue: f.queue,
       });
+      if (f.overdue) params.set('overdue', '1');
       if (f.guestId) params.set('guestId', f.guestId);
       if (f.q.trim()) params.set('q', f.q.trim());
       if (f.noteQ.trim()) params.set('noteQ', f.noteQ.trim());
@@ -182,13 +212,31 @@ export default function ReservationsListPage() {
           }
         />
       </div>
+      <div className={`${CHIP_GROUP_CLASS} mb-3 shrink-0`} role="tablist">
+        {RESERVATION_QUEUE_CODES.map((code) => (
+          <button
+            key={code}
+            type="button"
+            role="tab"
+            aria-selected={queue === code}
+            className={queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+            onClick={() => {
+              setQueue(code);
+              setOverdue(false);
+            }}
+          >
+            {queueLabels[code] || t(`queue.${code}`)}
+          </button>
+        ))}
+      </div>
       <EraListWorkspace
         filter={
           <EraListFilterBar
             resetLabel={tc('filterReset')}
             onReset={() => {
               setQ('');
-              setStatusFilter(guestIdFilter ? 'ALL' : 'LIVE');
+              setQueue(guestIdFilter ? 'all' : 'bookings');
+              setOverdue(false);
               setNoteQ('');
               setNotesOnly(false);
               setDateFrom('');
@@ -210,35 +258,24 @@ export default function ReservationsListPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            <FieldSelect
-              label={tc('status')}
-              preset="select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="LIVE">{t('statusLive')}</option>
-              <option value="ALL">{tc('all')}</option>
-              <option value="IN_HOUSE">IN_HOUSE</option>
-              <option value="CONFIRMED">CONFIRMED</option>
-              <option value="OPTION">OPTION</option>
-              <option value="CHECKED_OUT">CHECKED_OUT</option>
-              <option value="CANCELLED">CANCELLED</option>
-              <option value="NO_SHOW">NO_SHOW</option>
-            </FieldSelect>
-            <DatePicker
-              label={tc('from')}
-              value={dateFrom}
-              onChange={setDateFrom}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-            />
-            <DatePicker
-              label={tc('to')}
-              value={dateTo}
-              onChange={setDateTo}
-              placeholder={tc('datePlaceholder')}
-              openCalendarLabel={tc('openCalendar')}
-            />
+            {queueIgnoresDates(queue) ? null : (
+              <>
+                <DatePicker
+                  label={tc('from')}
+                  value={dateFrom}
+                  onChange={setDateFrom}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                />
+                <DatePicker
+                  label={tc('to')}
+                  value={dateTo}
+                  onChange={setDateTo}
+                  placeholder={tc('datePlaceholder')}
+                  openCalendarLabel={tc('openCalendar')}
+                />
+              </>
+            )}
             <Field
               label={t('notes')}
               preset="longText"
@@ -296,7 +333,7 @@ export default function ReservationsListPage() {
                       {showCake ? (
                         <Cake className="h-4 w-4 shrink-0 text-amber-500" aria-label={t('birthday')} />
                       ) : null}
-                      {r.guest.fullName}
+                      {r.guestLabel || r.guest.fullName}
                     </span>
                   );
                 },

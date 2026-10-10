@@ -7,6 +7,7 @@ import {
   parseHotelNoon,
 } from '@/lib/hotel-calendar';
 import { normalizeShareGender } from '@/lib/share-gender';
+import { roomPlanSpans } from '@/lib/services/room-plan-spans';
 
 /** Active stays on the plan; CHECKED_OUT included so EW gold checkout bars appear. */
 export const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION', 'CHECKED_OUT'] as const;
@@ -34,10 +35,10 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   const reservations = await prisma.reservation.findMany({
     where: {
       status: { in: [...PLAN_STATUSES] },
-      roomId: { not: null },
       checkInDate: { lt: to },
       // gte: include same-noon departures on the window start day (EW departure / checkout bars).
       checkOutDate: { gte: from },
+      OR: [{ roomId: { not: null } }, { staySlices: { some: { roomId: { not: null } } } }],
     },
     include: {
       guest: { select: { fullName: true } },
@@ -75,6 +76,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     where: {
       status: { in: [...UNASSIGNED_STATUSES] },
       roomId: null,
+      staySlices: { none: { roomId: { not: null } } },
       checkInDate: { lt: to },
       checkOutDate: { gte: from },
     },
@@ -148,18 +150,40 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     };
   }
 
+  const roomChanges = await prisma.roomChangePlan.findMany({
+    where: {
+      reservationId: { in: reservations.map((row) => row.id) },
+      status: { not: 'CANCELLED' },
+    },
+    select: { reservationId: true, fromRoomId: true, effectiveAt: true },
+  });
+  const changesByStay = new Map<string, { fromRoomId: string | null; effectiveAt: Date }[]>();
+  for (const change of roomChanges) {
+    const list = changesByStay.get(change.reservationId) ?? [];
+    list.push({ fromRoomId: change.fromRoomId, effectiveAt: change.effectiveAt });
+    changesByStay.set(change.reservationId, list);
+  }
+  const stayLayout = new Map(
+    reservations.map((row) => [
+      row.id,
+      roomPlanSpans({
+        reservationId: row.id,
+        roomId: row.roomId,
+        checkIn: row.checkInDate,
+        checkOut: row.checkOutDate,
+        slices: row.staySlices ?? [],
+        changes: changesByStay.get(row.id) ?? [],
+        dayKey: hotelDateKey,
+      }),
+    ]),
+  );
+
   for (const r of reservations) {
-    const pinned = (r.staySlices ?? []).filter((slice) => slice.roomId);
-    const spans =
-      pinned.length > 0
-        ? pinned.map((slice) => ({
-            roomId: slice.roomId as string,
-            from: hotelDateKey(slice.fromDate),
-            to: hotelDateKey(slice.toDate),
-          }))
-        : r.roomId
-          ? [{ roomId: r.roomId, from: hotelDateKey(r.checkInDate), to: hotelDateKey(r.checkOutDate) }]
-          : [];
+    const spans = (stayLayout.get(r.id)?.placed ?? []).map((span) => ({
+      roomId: span.roomId,
+      from: hotelDateKey(span.from),
+      to: hotelDateKey(span.to),
+    }));
     for (const span of spans) {
       for (const dk of dateKeys) {
         if (dk >= span.from && dk < span.to) {
@@ -190,12 +214,14 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     const out: Record<string, number> = {};
     for (const dk of dateKeys) out[dk] = roomList.length;
     for (const r of reservations) {
-      if (!r.roomId || !roomList.some((x) => x.id === r.roomId)) continue;
-      const ciKey = hotelDateKey(r.checkInDate);
-      const coKey = hotelDateKey(r.checkOutDate);
-      for (const dk of dateKeys) {
-        if (dk >= ciKey && dk < coKey) {
-          out[dk] = Math.max(0, (out[dk] ?? roomList.length) - 1);
+      for (const span of stayLayout.get(r.id)?.placed ?? []) {
+        if (!roomList.some((x) => x.id === span.roomId)) continue;
+        const ciKey = hotelDateKey(span.from);
+        const coKey = hotelDateKey(span.to);
+        for (const dk of dateKeys) {
+          if (dk >= ciKey && dk < coKey) {
+            out[dk] = Math.max(0, (out[dk] ?? roomList.length) - 1);
+          }
         }
       }
     }
@@ -228,17 +254,11 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     rooms: rooms.map((room) => {
       const shareStays = reservations.flatMap((stay) => {
         if (!stay.shareEligible || !stay.shareGender || stay.adults !== 1) return [];
-        const pinned = (stay.staySlices ?? []).filter((slice) => slice.roomId);
-        const spans =
-          pinned.length > 0
-            ? pinned.map((slice) => ({
-                roomId: slice.roomId as string,
-                from: slice.fromDate,
-                to: slice.toDate,
-              }))
-            : stay.roomId
-              ? [{ roomId: stay.roomId, from: stay.checkInDate, to: stay.checkOutDate }]
-              : [];
+        const spans = (stayLayout.get(stay.id)?.placed ?? []).map((span) => ({
+          roomId: span.roomId,
+          from: span.from,
+          to: span.to,
+        }));
         return spans
           .filter((span) => span.roomId === room.id)
           .map((span) => ({
@@ -297,33 +317,36 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     }),
     reservations: reservations.flatMap((row) => {
       const base = mapBar(row);
-      const pinned = (row.staySlices ?? []).filter((slice) => slice.roomId);
-      if (pinned.length === 0) return [base];
-      return pinned.map((slice) => ({
+      const placed = stayLayout.get(row.id)?.placed ?? [];
+      if (placed.length === 0) return [];
+      if (placed.length === 1 && placed[0]!.key === row.id) {
+        return [{ ...base, roomId: placed[0]!.roomId }];
+      }
+      return placed.map((span) => ({
         ...base,
-        barKey: `${row.id}:${slice.id}`,
-        roomId: slice.roomId,
-        checkInDate: slice.fromDate.toISOString(),
-        checkOutDate: slice.toDate.toISOString(),
+        barKey: span.key,
+        roomId: span.roomId,
+        checkInDate: span.from.toISOString(),
+        checkOutDate: span.to.toISOString(),
       }));
     }),
     unassigned: [
       ...unassigned,
       ...reservations.flatMap((row) => {
-        const slices = row.staySlices ?? [];
-        if (!slices.some((slice) => slice.roomId)) return [];
-        return slices
-          .filter((slice) => !slice.roomId)
-          .map((slice) => ({
-            id: row.id,
-            chipKey: `${row.id}:${slice.id}`,
-            segmentNote: `${hotelDateKey(slice.fromDate)}–${hotelDateKey(slice.toDate)} ${slice.roomType?.code ?? ''}`.trim(),
-            guest: row.guest,
-            checkInDate: slice.fromDate,
-            checkOutDate: slice.toDate,
-            status: row.status,
-            roomType: slice.roomType,
-          }));
+        const layout = stayLayout.get(row.id);
+        if (!layout || layout.placed.length === 0) return [];
+        return layout.unplaced.map((slice) => ({
+          id: row.id,
+          chipKey: `${row.id}:${slice.id}`,
+          segmentNote: `${hotelDateKey(slice.fromDate)}–${hotelDateKey(slice.toDate)} ${
+            row.staySlices?.find((item) => item.id === slice.id)?.roomType?.code ?? ''
+          }`.trim(),
+          guest: row.guest,
+          checkInDate: slice.fromDate,
+          checkOutDate: slice.toDate,
+          status: row.status,
+          roomType: row.staySlices?.find((item) => item.id === slice.id)?.roomType ?? row.roomType,
+        }));
       }),
     ],
     availabilityByDay,

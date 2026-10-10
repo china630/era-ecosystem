@@ -109,7 +109,11 @@ export default function AppointmentCreateModal({ open, onClose, onCreated, prefi
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      showApiError(data, tc("failed"));
+      if (data?.code === "CLOSED_DAY") {
+        showApiError({ error: t("closedDay") }, t("closedDay"));
+      } else {
+        showApiError(data, tc("failed"));
+      }
       return;
     }
     setPatientRefId("");

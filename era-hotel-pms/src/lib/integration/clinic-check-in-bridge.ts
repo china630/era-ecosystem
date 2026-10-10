@@ -14,6 +14,7 @@ type ClinicCheckInInput = {
   paxKey?: string | null;
   sex?: string | null;
   birthDate?: string | null;
+  nationality?: string | null;
 };
 
 function clinicBaseUrl(): string | null {
@@ -68,6 +69,7 @@ export async function notifyClinicCheckIn(input: ClinicCheckInInput): Promise<vo
       paxKey: input.paxKey ?? null,
       sex: input.sex ?? null,
       birthDate: input.birthDate ?? null,
+      nationality: input.nationality ?? null,
     }),
     signal: AbortSignal.timeout(12000),
   });

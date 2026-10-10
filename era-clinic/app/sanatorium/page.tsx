@@ -268,6 +268,7 @@ export default function SanatoriumPage() {
   const [paidSameDayWarn, setPaidSameDayWarn] = useState<string | null>(null);
 
   const [listSort, setListSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+  const [careTeamOn, setCareTeamOn] = useState<Record<string, boolean>>({});
 
   const listFilters = useMemo<EpisodeListFilters>(
     () => ({
@@ -851,7 +852,7 @@ export default function SanatoriumPage() {
         className: "w-10",
         render: (e) => (
           <AssignmentDot
-            ok={e.hasCareTeam === true}
+            ok={careTeamOn[e.id] ?? e.hasCareTeam === true}
             yes={t("assignmentYes")}
             no={t("assignmentNo")}
           />
@@ -954,6 +955,7 @@ export default function SanatoriumPage() {
                 onClick={() => {
                   setCardPlanOnly(false);
                   setCardPanel(null);
+                  setCardEpisodeId(e.id);
                   setPatientCardId(e.patientRef!.id);
                 }}
               >
@@ -978,7 +980,7 @@ export default function SanatoriumPage() {
         ),
       },
     ],
-    [t, tc, busy],
+    [t, tc, busy, careTeamOn],
   );
 
   const program = selected?.programInstance;
@@ -1666,6 +1668,9 @@ export default function SanatoriumPage() {
           setCardPanel(null);
           setCardEpisodeId(null);
           setCardPlanOnly(false);
+        }}
+        onCareTeamSize={(episodeId, count) => {
+          setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));
         }}
         onOpenDayPlan={(episodeId) => {
           setPatientCardId(null);

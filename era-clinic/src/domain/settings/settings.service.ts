@@ -100,6 +100,7 @@ export async function getClinicSettings() {
     checkupSectionsJson: tenant.checkupSectionsJson ?? null,
     doctorBonusPercentInHouse: tenant.doctorBonusPercentInHouse ?? 0,
     doctorBonusPercentWalkIn: tenant.doctorBonusPercentWalkIn ?? 0,
+    hotelFolioRevenueCode: tenant.hotelFolioRevenueCode?.trim() || null,
   };
 }
 
@@ -155,6 +156,7 @@ export async function updateClinicSettings(input: {
   checkupSectionsJson?: string | null;
   doctorBonusPercentInHouse?: number;
   doctorBonusPercentWalkIn?: number;
+  hotelFolioRevenueCode?: string | null;
 }) {
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
@@ -309,6 +311,9 @@ export async function updateClinicSettings(input: {
               Math.max(0, Number(input.doctorBonusPercentWalkIn)),
             ),
           }
+        : {}),
+      ...(input.hotelFolioRevenueCode !== undefined
+        ? { hotelFolioRevenueCode: input.hotelFolioRevenueCode?.trim() || null }
         : {}),
     },
   });

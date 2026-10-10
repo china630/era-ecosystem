@@ -554,6 +554,7 @@ export async function createReservation(input: {
             toDate: input.checkOutDate,
             roomTypeId: input.roomTypeId,
             ratePlanId,
+            roomId: input.roomId ?? null,
           },
         },
       },
@@ -1215,6 +1216,9 @@ export async function updateReservationSchedule(
   }
 
   if (reservation.status === 'IN_HOUSE') {
+    if (input.roomId !== undefined && !input.roomId) {
+      throw new Error('Cannot clear the room after check-in');
+    }
     if (input.checkInDate && input.checkInDate.getTime() !== reservation.checkInDate.getTime()) {
       throw new Error('Cannot change check-in date while in-house (extend check-out only)');
     }

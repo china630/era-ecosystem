@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
 import { getClinicHotelOrganizationId } from "@/domain/physio/clinic-cutover.service";
+import { getDefaultTenant } from "@/domain/settings/settings.service";
 
 export type BillingTargetKind = "FINANCE" | "HOTEL_FOLIO" | "SETTLEMENT_HUB";
 
@@ -212,6 +213,18 @@ export async function postClinicHotelLines(input: {
   return { firstId, ids };
 }
 
+/** Explicit caller code wins (RETAIL). Otherwise the clinic setting. Empty setting refuses the folio post. */
+export async function resolveHotelFolioRevenueCode(explicit?: string | null): Promise<string> {
+  const given = explicit?.trim();
+  if (given) return given;
+  const tenant = await getDefaultTenant();
+  const code = tenant.hotelFolioRevenueCode?.trim() ?? "";
+  if (!code) {
+    throw new Error("Hotel folio revenue code is not configured");
+  }
+  return code;
+}
+
 export async function postHotelRoomCharge(input: {
   reservationId?: string;
   roomNumber?: string;
@@ -238,6 +251,7 @@ export async function postHotelRoomCharge(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel room charge");
   }
+  const revenueCode = await resolveHotelFolioRevenueCode(input.revenueCode);
   const ticket = input.externalTicketId.trim();
   const ticketIsUuid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -255,7 +269,7 @@ export async function postHotelRoomCharge(input: {
       organizationId: hotelOrganizationId,
       reservationId: input.reservationId,
       roomNumber: input.roomNumber,
-      revenueCode: input.revenueCode ?? "MEDICAL",
+      revenueCode,
       amount: input.amount,
       qty: hotelQty(input.qty),
       description: input.description,

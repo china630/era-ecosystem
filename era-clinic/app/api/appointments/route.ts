@@ -101,6 +101,10 @@ export async function POST(req: Request) {
     const scheduledAt = body.scheduledAt
       ? new Date(body.scheduledAt)
       : new Date();
+    const { electiveDayDenied } = await import("@/domain/appointment/elective-day");
+    if (await electiveDayDenied(scheduledAt)) {
+      return jsonError("Clinic is closed on this date", 409, { code: "CLOSED_DAY" });
+    }
     const serviceCode = body.serviceCode ?? body.serviceLines?.[0]?.serviceCode;
     const durationMinutes = await resolveAppointmentDurationMinutes({
       durationMinutes: body.durationMinutes,

@@ -159,6 +159,7 @@ export async function applyStayAmendment(input: {
     roomTypeId: input.roomTypeId,
     ratePlanId: input.ratePlanId,
     checkOutDate: res.checkOutDate,
+    keepRoomId: res.roomId,
   });
 
   const headerSlice = await resolveStaySliceForDate(input.reservationId, biz);

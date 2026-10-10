@@ -43,6 +43,7 @@ const patchSchema = z.object({
   patientCardPlanPageSize: z.number().int().min(10).max(100).optional(),
   doctorBonusPercentInHouse: z.number().min(0).max(100).optional(),
   doctorBonusPercentWalkIn: z.number().min(0).max(100).optional(),
+  hotelFolioRevenueCode: z.string().max(32).nullable().optional(),
   printLogoDataUrl: z.string().nullable().optional(),
   printClinicNameEn: z.string().nullable().optional(),
   printClinicNameRu: z.string().nullable().optional(),

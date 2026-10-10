@@ -664,7 +664,11 @@
     "polishPreviewTitle": "NA polish preview (trial)",
     "polishPreviewHint": "Read-only trial signals before night audit — not a live NA run.",
     "unassignedArrivals": "Unassigned arrivals today: {count}",
-    "noShowCandidatesCount": "Auto no-show candidates: {count}",
+    "noShowCandidatesCount": "Missed arrivals still open: {count}",
+    "deskHoldMissed": "Missed arrivals ({count}). Night audit stays closed until the desk marks no-show or checks them in.",
+    "deskHoldDue": "Due outs still in house ({count}). Night audit stays closed until the desk checks them out or moves the departure date.",
+    "openMissedList": "Open these bookings",
+    "openInHouseList": "Open in-house list",
     "bannerBusinessDate": "Business date",
     "bannerWallClock": "Wall clock",
     "bannerLag": "Lag: {count} day(s) — run night audit",
@@ -1774,6 +1778,16 @@
     "filterNotes": "With notes only",
     "birthday": "Birthday during the stay",
     "statusLive": "Live",
+    "queue": {
+      "bookings": "Reservations",
+      "dueIn": "Expected today",
+      "inHouse": "In house",
+      "dueOut": "Departing today",
+      "departed": "Departed",
+      "noShow": "No-show",
+      "cancel": "Cancelled",
+      "all": "All"
+    },
     "room": "Room",
     "hk": "HK",
     "agency": "Agency",
@@ -2645,7 +2659,8 @@
       "CONCIERGE_CATEGORY": "Concierge category",
       "EVENT_LINE_KIND": "Banquet line kind",
       "WALKIN_PROFILE": "Walk-in profile",
-      "NATIONALITY": "Citizenship"
+      "NATIONALITY": "Citizenship",
+      "RESERVATION_QUEUE": "Reservation list queues"
     }
   },
   "opsWipe": {

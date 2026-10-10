@@ -3,9 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
-import { paxHasRealName } from '@/lib/reservation-names';
+import { partyGuestLabel, paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
-import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
+import { ensurePartyGuestFolios, reconcilePartyFolios } from '@/lib/services/booking-folio.service';
+import { isReservationQueue, reservationQueueWhere } from '@/lib/reservation-queue';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { normalizeListPagination } from '@era/satellite-kit';
 import type { PartyBillingMode, Prisma, ReservationStatus } from '@prisma/client';
@@ -330,6 +331,14 @@ export async function patchReservationFull(
   const mealPlanChanged =
     data.mealPlanId !== undefined && data.mealPlanId !== existing.mealPlanId;
 
+  if (
+    existing.status === 'IN_HOUSE' &&
+    data.roomId !== undefined &&
+    (data.roomId === null || data.roomId === '')
+  ) {
+    throw new Error('Cannot clear the room after check-in');
+  }
+
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
   const effectiveRoomId =
@@ -515,6 +524,18 @@ export async function patchReservationFull(
       }
       seenGuestIds.add(p.guestId);
     }
+    const previousGuests = await prisma.reservationGuest.findMany({
+      where: { reservationId: id },
+      include: {
+        folio: {
+          include: {
+            charges: { select: { id: true } },
+            payments: { select: { id: true } },
+            deposits: { select: { id: true } },
+          },
+        },
+      },
+    });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
     const primaryIdx = Math.max(
       0,
@@ -554,9 +575,16 @@ export async function patchReservationFull(
         };
       }),
     });
-    if (billingMode === 'EQUAL') {
-      await ensurePartyGuestFolios(id);
-    }
+    const nextGuests = await prisma.reservationGuest.findMany({
+      where: { reservationId: id },
+      select: { id: true, guestId: true, firstName: true, lastName: true, ownsFolio: true },
+    });
+    await reconcilePartyFolios({
+      reservationId: id,
+      previous: previousGuests,
+      next: nextGuests,
+    });
+    await ensurePartyGuestFolios(id);
   }
 
   if (paxGuests || data.guestId !== undefined || (data.roomId !== undefined && data.roomId)) {
@@ -781,6 +809,10 @@ export type ListReservationsForGridQuery = {
   dateTo?: string;
   sort?: string;
   dir?: 'asc' | 'desc';
+  /** Front-desk chip. When set, it replaces the status dropdown. */
+  queue?: string;
+  /** Open bookings whose arrival is already before today. Night-audit link. */
+  overdue?: boolean;
 };
 
 const LIVE_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
@@ -801,13 +833,32 @@ export async function listReservationsForGrid(
   };
   if (opts.guestId) where.guestId = opts.guestId;
 
-  const statusRaw = (
-    opts.status ?? (opts.guestId ? 'ALL' : 'LIVE')
-  ).trim();
-  if (statusRaw === 'LIVE' || statusRaw === '') {
-    where.status = { in: [...LIVE_STATUSES] };
-  } else if (statusRaw !== 'ALL') {
-    where.status = statusRaw as ReservationStatus;
+  const queue = isReservationQueue(opts.queue) ? opts.queue : undefined;
+  if (queue) {
+    const queued = reservationQueueWhere({
+      queue,
+      today: todayBakuYmd(),
+      overdue: opts.overdue,
+      dateFrom: opts.dateFrom,
+      dateTo: opts.dateTo,
+    });
+    const { AND: queuedAnd, ...queuedRest } = queued;
+    Object.assign(where, queuedRest);
+    if (queuedAnd) {
+      const extra = Array.isArray(queuedAnd) ? queuedAnd : [queuedAnd];
+      const current = where.AND;
+      const prior = current == null ? [] : Array.isArray(current) ? current : [current];
+      where.AND = [...prior, ...extra];
+    }
+  } else {
+    const statusRaw = (
+      opts.status ?? (opts.guestId ? 'ALL' : 'LIVE')
+    ).trim();
+    if (statusRaw === 'LIVE' || statusRaw === '') {
+      where.status = { in: [...LIVE_STATUSES] };
+    } else if (statusRaw !== 'ALL') {
+      where.status = statusRaw as ReservationStatus;
+    }
   }
 
   const noteQ = opts.noteQ?.trim();
@@ -835,7 +886,7 @@ export async function listReservationsForGrid(
     where.id = { in: withNotesIds };
   }
 
-  if (opts.dateFrom || opts.dateTo) {
+  if (!queue && (opts.dateFrom || opts.dateTo)) {
     where.checkInDate = {};
     if (opts.dateFrom) {
       where.checkInDate.gte = new Date(`${opts.dateFrom}T00:00:00.000Z`);
@@ -850,6 +901,8 @@ export async function listReservationsForGrid(
     where.OR = [
       { id: { contains: q, mode: 'insensitive' } },
       { guest: { fullName: { contains: q, mode: 'insensitive' } } },
+      { paxGuests: { some: { firstName: { contains: q, mode: 'insensitive' } } } },
+      { paxGuests: { some: { lastName: { contains: q, mode: 'insensitive' } } } },
       { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
       { agency: { code: { contains: q, mode: 'insensitive' } } },
       { notes: { some: { text: { contains: q, mode: 'insensitive' } } } },
@@ -932,6 +985,10 @@ export async function listReservationsForGrid(
             guest: true,
             agency: true,
             notes: true,
+            paxGuests: {
+              select: { firstName: true, lastName: true, sortOrder: true },
+              orderBy: { sortOrder: 'asc' },
+            },
           },
         });
   const order = new Map(pageIds.map((id, index) => [id, index]));
@@ -942,6 +999,7 @@ export async function listReservationsForGrid(
     const preview = filled[0]?.text?.trim().slice(0, 80) ?? null;
     return {
       ...r,
+      guestLabel: partyGuestLabel(r.guest.fullName, r.paxGuests),
       hasNotes: filled.length > 0,
       notePreview: preview,
       noteText: filled.map((n) => n.text.trim()).join(' / '),

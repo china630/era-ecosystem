@@ -665,7 +665,11 @@
     "polishPreviewTitle": "NA polish önbaxış (sınaq)",
     "polishPreviewHint": "Gecə auditindən əvvəl oxunan siqnallar — real NA deyil.",
     "unassignedArrivals": "Bu gün təyin edilməmiş gəlişlər: {count}",
-    "noShowCandidatesCount": "Avtomatik no-show namizədləri: {count}",
+    "noShowCandidatesCount": "Açıq qalmış gəlməyənlər: {count}",
+    "deskHoldMissed": "Gəlməmiş açıq bronlar ({count}). Resepsiya no-show yazana və ya yerləşdirənə qədər gecə auditi bağlanmır.",
+    "deskHoldDue": "Nömrədə qalan çıxışlar ({count}). Resepsiya çıxarana və ya çıxış tarixini köçürənə qədər gecə auditi bağlanmır.",
+    "openMissedList": "Bu bronları aç",
+    "openInHouseList": "Qalanların siyahısı",
     "bannerBusinessDate": "Biznes tarixi",
     "bannerWallClock": "Divar saatı",
     "bannerLag": "Gecikmə: {count} gün — night audit işlədin",
@@ -1775,6 +1779,16 @@
     "filterNotes": "With notes only",
     "birthday": "Qalma ərzində ad günü",
     "statusLive": "Aktiv",
+    "queue": {
+      "bookings": "Rezervasiyalar",
+      "dueIn": "Bu gün gözlənilən",
+      "inHouse": "Qalırlar",
+      "dueOut": "Bu gün çıxanlar",
+      "departed": "Çıxıblar",
+      "noShow": "No-show",
+      "cancel": "Ləğv",
+      "all": "Hamısı"
+    },
     "room": "Otaq",
     "hk": "HK",
     "agency": "Agentlik",
@@ -2636,7 +2650,8 @@
       "CONCIERGE_CATEGORY": "Konsyerj kateqoriyası",
       "EVENT_LINE_KIND": "Banket sətir növü",
       "WALKIN_PROFILE": "Walk-in profili",
-      "NATIONALITY": "Vətəndaşlıq"
+      "NATIONALITY": "Vətəndaşlıq",
+      "RESERVATION_QUEUE": "Rezervasiya siyahısı"
     }
   },
   "opsWipe": {

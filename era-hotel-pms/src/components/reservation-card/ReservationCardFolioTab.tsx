@@ -195,6 +195,32 @@ export function ReservationCardFolioTab({
     return true;
   });
 
+  const personalSections = useMemo(() => {
+    const personal = accounts
+      .filter((folio) => folio.type === 'GUEST' && folio.reservationGuestId)
+      .map((folio) => {
+        const guest = namedPax.find((row) => row.row.id === folio.reservationGuestId);
+        const rows = ledger.filter((row) => row.folioId === folio.id);
+        const owns = Boolean(guest?.row.ownsFolio);
+        if (!owns && rows.length === 0) return null;
+        return { folio, label: guest?.label ?? folio.type, rows };
+      })
+      .filter((section): section is { folio: FolioAccount; label: string; rows: LedgerRow[] } => section != null);
+    const shared = accounts
+      .filter((folio) => folio.type === 'GUEST' && !folio.reservationGuestId)
+      .map((folio) => ({
+        folio,
+        label: t('folioTab.guest'),
+        rows: ledger.filter((row) => row.folioId === folio.id),
+      }))
+      .filter((section) => section.rows.length > 0);
+    return [...personal, ...shared];
+  }, [accounts, ledger, namedPax, t]);
+  const showPersonal =
+    (folioTab === 'guest' || folioTab === 'all') &&
+    personalSections.filter((section) => section.folio.reservationGuestId).length > 0 &&
+    personalSections.length > 1;
+
   const columns: EraDataGridColumn<LedgerRow>[] = useMemo(() => {
     const cols: EraDataGridColumn<LedgerRow>[] = [
       { key: 'folioType', header: t('folioType'), render: (row) => row.folioType },
@@ -376,7 +402,21 @@ export function ReservationCardFolioTab({
         ))}
       </div>
 
-      {ledger.length === 0 ? (
+      {showPersonal ? (
+        <div className="space-y-3" data-testid="folio-per-guest">
+          {personalSections.map((section) => (
+            <div key={section.folio.id} className={SUBSECTION_SURFACE_CLASS}>
+              <p className="m-0 mb-2 text-[12px] font-semibold text-[#34495E]">{section.label}</p>
+              {section.rows.length === 0 ? (
+                <p className={`m-0 text-[11px] ${TEXT_MUTED_CLASS}`}>{t('folioGuestEmpty')}</p>
+              ) : (
+                renderGrid(section.rows)
+              )}
+            </div>
+          ))}
+          {cashBar}
+        </div>
+      ) : ledger.length === 0 ? (
         <div
           className="rounded-md border border-dashed border-[#D5DADF] bg-[#F8FAFC] px-4 py-6 text-center"
           data-testid="folio-empty-state"
@@ -443,7 +483,7 @@ export function ReservationCardFolioTab({
         <div className="flex flex-wrap gap-2">
           {closable.map((f) => (
             <button key={f.id} type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCloseId(f.id)}>
-              {tf('closeFolio')} · {f.type}
+              {tf('closeFolio')} · {personalSections.find((section) => section.folio.id === f.id)?.label ?? f.type}
             </button>
           ))}
         </div>
