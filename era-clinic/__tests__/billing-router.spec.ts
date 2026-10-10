@@ -1,3 +1,7 @@
+jest.mock("@/domain/settings/settings.service", () => ({
+  getDefaultTenant: jest.fn().mockResolvedValue({ hotelFolioRevenueCode: "23" }),
+}));
+
 jest.mock("@/lib/dispatch-satellite-event", () => ({
   dispatchSatelliteEvent: jest.fn().mockResolvedValue({ ok: true }),
 }));
