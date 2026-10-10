@@ -11,6 +11,7 @@ import {
 } from "@era/contracts";
 import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-gateway";
 import { normalizeMedicalPackageCode } from "@/lib/services/medical-package-resolve.service";
+import { mapNationalityToIso } from "@/lib/person-documents";
 
 async function publishLifecycle(event: Record<string, unknown>) {
   const organizationId = requestOrganizationId();
@@ -31,8 +32,13 @@ async function publishLifecycle(event: Record<string, unknown>) {
 export function lifecycleDemographicsFromPax(pax: {
   sex?: string | null;
   birthDate?: Date | string | null;
-  guest?: { sex?: string | null; birthDate?: Date | string | null } | null;
-}): { sex?: string; birthDate?: string } {
+  nationality?: string | null;
+  guest?: {
+    sex?: string | null;
+    birthDate?: Date | string | null;
+    nationality?: string | null;
+  } | null;
+}): { sex?: string; birthDate?: string; nationality?: string } {
   const rawSex = pax.sex ?? pax.guest?.sex ?? undefined;
   const rawDob = pax.birthDate ?? pax.guest?.birthDate ?? undefined;
   let birthDate: string | undefined;
@@ -42,9 +48,12 @@ export function lifecycleDemographicsFromPax(pax: {
     birthDate = rawDob.trim().slice(0, 10);
   }
   const sex = rawSex?.trim() || undefined;
+  const rawNat = (pax.nationality ?? pax.guest?.nationality ?? "").trim();
+  const nationality = rawNat ? mapNationalityToIso(rawNat) : undefined;
   return {
     ...(sex ? { sex } : {}),
     ...(birthDate ? { birthDate } : {}),
+    ...(nationality ? { nationality } : {}),
   };
 }
 
@@ -60,6 +69,7 @@ export async function dispatchGuestCheckedIn(input: {
   paxKey?: string;
   sex?: string;
   birthDate?: string;
+  nationality?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
@@ -75,6 +85,7 @@ export async function dispatchGuestCheckedIn(input: {
       paxKey: input.paxKey,
       sex: input.sex,
       birthDate: input.birthDate,
+      nationality: input.nationality,
     },
   };
   await publishLifecycle(event);
@@ -164,6 +175,7 @@ export async function dispatchSanatoriumBookingCreated(input: {
   paxKey?: string;
   sex?: string;
   birthDate?: string;
+  nationality?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED,
@@ -179,6 +191,7 @@ export async function dispatchSanatoriumBookingCreated(input: {
       paxKey: input.paxKey,
       sex: input.sex,
       birthDate: input.birthDate,
+      nationality: input.nationality,
     },
   };
   await publishLifecycle(event);
@@ -217,6 +230,7 @@ export async function dispatchStayProductChanged(input: {
   paxKey?: string;
   sex?: string;
   birthDate?: string;
+  nationality?: string;
 }) {
   const event = {
     type: SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
@@ -237,6 +251,7 @@ export async function dispatchStayProductChanged(input: {
       paxKey: input.paxKey,
       sex: input.sex,
       birthDate: input.birthDate,
+      nationality: input.nationality,
     },
   };
   await publishLifecycle(event);
@@ -261,11 +276,13 @@ type ClinicPackagePax = {
   lastName?: string | null;
   sex?: string | null;
   birthDate?: Date | string | null;
+  nationality?: string | null;
   guest?: {
     fullName?: string | null;
     globalPersonId?: string | null;
     sex?: string | null;
     birthDate?: Date | string | null;
+    nationality?: string | null;
   } | null;
 };
 
@@ -334,6 +351,7 @@ export async function fanOutClinicMedicalPackages(input: {
       paxKey: row.paxKey,
       sex: row.sex,
       birthDate: row.birthDate,
+      nationality: row.nationality,
     });
   }
 }

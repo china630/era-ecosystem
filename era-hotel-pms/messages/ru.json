@@ -665,7 +665,11 @@
     "polishPreviewTitle": "NA polish preview (пробный)",
     "polishPreviewHint": "Только сигналы перед night audit — не живой NA.",
     "unassignedArrivals": "Неназначенные заезда сегодня: {count}",
-    "noShowCandidatesCount": "Кандидаты auto no-show: {count}",
+    "noShowCandidatesCount": "Открытые брони с прошедшим заездом: {count}",
+    "deskHoldMissed": "Незаехавшие открытые брони ({count}). Ночной аудит не закроет день, пока стойка не поставит no-show или не заселит.",
+    "deskHoldDue": "Выезды, которые ещё в номере ({count}). Ночной аудит не закроет день, пока стойка не выселит или не сдвинет дату.",
+    "openMissedList": "Открыть эти брони",
+    "openInHouseList": "Открыть проживающих",
     "bannerBusinessDate": "Бизнес-дата",
     "bannerWallClock": "Календарь",
     "bannerLag": "Отставание: {count} дн. — запустите ночной аудит",
@@ -1775,6 +1779,16 @@
     "filterNotes": "With notes only",
     "birthday": "День рождения в проживании",
     "statusLive": "Живые",
+    "queue": {
+      "bookings": "Бронирования",
+      "dueIn": "Ожидаются (сегодня)",
+      "inHouse": "Проживают",
+      "dueOut": "Выезжающие (сегодня)",
+      "departed": "Выехавшие",
+      "noShow": "No-show",
+      "cancel": "Отмена",
+      "all": "Все"
+    },
     "room": "Номер",
     "hk": "HK",
     "agency": "Агентство",
@@ -2636,7 +2650,8 @@
       "CONCIERGE_CATEGORY": "Категория консьержа",
       "EVENT_LINE_KIND": "Вид строки банкета",
       "WALKIN_PROFILE": "Профиль walk-in",
-      "NATIONALITY": "Гражданство"
+      "NATIONALITY": "Гражданство",
+      "RESERVATION_QUEUE": "Очереди списка броней"
     }
   },
   "opsWipe": {

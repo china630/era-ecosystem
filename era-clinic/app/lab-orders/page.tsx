@@ -27,6 +27,7 @@ import {
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
+import { labStatusTone } from "@/components/lab-status-tone";
 import { bakuDateDisplay } from "@/lib/baku-day";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
 import type {
@@ -77,14 +78,13 @@ function labOrderListDate(order: LabOrder): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+function StatusDot({ status, label }: { status: string; label: string }) {
+  const tone = labStatusTone(status);
   return (
     <span
-      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
-        ok ? "bg-[#27AE60]" : "bg-[#E74C3C]"
-      }`}
-      title={ok ? yes : no}
-      aria-label={ok ? yes : no}
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`}
+      title={label}
+      aria-label={label}
     />
   );
 }
@@ -239,6 +239,11 @@ export default function LabOrdersPage() {
     loading,
     reload: loadOrders,
   } = usePaginatedList<LabOrder, ListFilters>({ fetcher, filters });
+  const [statusById, setStatusById] = useState<Record<string, string>>({});
+
+  function orderStatus(order: LabOrder): string {
+    return statusById[order.id] ?? order.status;
+  }
 
   useEffect(() => {
     const fromQuery = searchParams.get("order");
@@ -294,7 +299,12 @@ export default function LabOrdersPage() {
   async function cancelOrder(id: string) {
     if (!window.confirm(t("cancelConfirm"))) return;
     const res = await fetch(`/api/lab-orders/${id}`, { method: "DELETE" });
-    if (res.ok) await loadOrders();
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, tc("failed"));
+      return;
+    }
+    setStatusById((prev) => ({ ...prev, [id]: "CANCELLED" }));
   }
 
   async function createOrder(confirmRepeat = false) {
@@ -368,23 +378,28 @@ export default function LabOrdersPage() {
   }
 
   async function completeOrder(id: string) {
-    await fetch(`/api/lab-orders/${id}/complete`, { method: "POST" });
-    await loadOrders();
+    const res = await fetch(`/api/lab-orders/${id}/complete`, { method: "POST" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, tc("failed"));
+      return;
+    }
+    setStatusById((prev) => ({ ...prev, [id]: "COMPLETED" }));
   }
 
   const columns = useMemo<EraDataGridColumn<LabOrder & Record<string, unknown>>[]>(
     () => [
       {
         key: "assignment",
-        header: t("colAssignment"),
+        header: t("colStatusMark"),
         className: "w-10",
-        render: (order) => (
-          <AssignmentDot
-            ok={Boolean(order.visitId)}
-            yes={t("assignmentYes")}
-            no={t("assignmentNo")}
-          />
-        ),
+        render: (order) => {
+          const status = orderStatus(order);
+          const label = (LAB_ORDER_STATUSES as readonly string[]).includes(status)
+            ? t(`orderStatus.${status}` as "orderStatus.ORDERED")
+            : status;
+          return <StatusDot status={status} label={label} />;
+        },
       },
       {
         key: "patient",
@@ -420,10 +435,13 @@ export default function LabOrdersPage() {
         key: "status",
         header: tc("status"),
         sortable: true,
-        render: (order) =>
-          (LAB_ORDER_STATUSES as readonly string[]).includes(order.status)
-            ? t(`orderStatus.${order.status}` as "orderStatus.ORDERED")
-            : order.status,
+        render: (order) => {
+          const status = orderStatus(order);
+          const label = (LAB_ORDER_STATUSES as readonly string[]).includes(status)
+            ? t(`orderStatus.${status}` as "orderStatus.ORDERED")
+            : status;
+          return <span className={`font-medium ${labStatusTone(status).text}`}>{label}</span>;
+        },
       },
       {
         key: "amount",
@@ -453,7 +471,7 @@ export default function LabOrdersPage() {
             >
               <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
-            {order.status === "ORDERED" ? (
+            {orderStatus(order) === "ORDERED" ? (
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
@@ -463,7 +481,7 @@ export default function LabOrdersPage() {
                 <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
               </button>
             ) : null}
-            {order.status === "PUBLISHED" ? (
+            {orderStatus(order) === "PUBLISHED" ? (
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
@@ -477,7 +495,7 @@ export default function LabOrdersPage() {
         ),
       },
     ],
-    [t, tc, locale, modalities],
+    [t, tc, locale, modalities, statusById],
   );
 
   return (
@@ -689,7 +707,10 @@ export default function LabOrdersPage() {
         open={Boolean(workflowId)}
         orderId={workflowId}
         onClose={closeWorkflow}
-        onChanged={() => void loadOrders()}
+        onChanged={(patch) => {
+          if (!patch) return;
+          setStatusById((prev) => ({ ...prev, [patch.id]: patch.status }));
+        }}
       />
 
       <ModalShell

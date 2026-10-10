@@ -20,6 +20,7 @@ import {
   TEXT_SUCCESS_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { labStatusTone } from "@/components/lab-status-tone";
 import {
   TemplateResultForm,
   linesFromAnalytes,
@@ -162,7 +163,7 @@ type Props = {
   open: boolean;
   orderId: string | null;
   onClose: () => void;
-  onChanged?: () => void;
+  onChanged?: (patch?: { id: string; status: string }) => void;
 };
 
 export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Props) {
@@ -244,6 +245,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
         }
       }
       setLoading(false);
+      return found;
     },
     [orderId],
   );
@@ -307,7 +309,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       return;
     }
     setBusy(false);
-    onChanged?.();
+    if (orderId) onChanged?.({ id: orderId, status: "CANCELLED" });
     onClose();
   }
 
@@ -327,8 +329,8 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     }
     setBusy(false);
     if (path === "results") setResultsModalOpen(false);
-    await loadOrder({ silent: true });
-    onChanged?.();
+    const fresh = await loadOrder({ silent: true });
+    if (fresh) onChanged?.({ id: fresh.id, status: fresh.status });
   }
 
   async function saveResults(e: React.FormEvent) {
@@ -441,7 +443,11 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
             <>
               <div className={`space-y-1 text-[13px] ${TEXT_MUTED_CLASS}`}>
                 <div>
-                  {t("status")}: {labOrderStatusLabel(tList, order.status)} ·{" "}
+                  {t("status")}:{" "}
+                  <span className={`font-medium ${labStatusTone(order.status).text}`}>
+                    {labOrderStatusLabel(tList, order.status)}
+                  </span>{" "}
+                  ·{" "}
                   {labOrderAmountLabel(order, tList("inPackage"))}
                   {order.visitId ? ` · ${t("visit")} ${order.visitId.slice(0, 8)}…` : ""}
                 </div>

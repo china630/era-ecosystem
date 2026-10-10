@@ -1,3 +1,7 @@
+jest.mock("@/domain/settings/settings.service", () => ({
+  getDefaultTenant: jest.fn().mockResolvedValue({ hotelFolioRevenueCode: "23" }),
+}));
+
 jest.mock("@/lib/dispatch-satellite-event", () => ({
   dispatchSatelliteEvent: jest.fn().mockResolvedValue({ ok: true }),
 }));
@@ -14,6 +18,9 @@ jest.mock("@/lib/prisma", () => ({
       findFirst: jest.fn().mockResolvedValue(null),
     },
     diagnosticService: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    serviceCatalogCache: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
   },

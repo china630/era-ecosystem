@@ -27,6 +27,7 @@ async function ensureEpisodeAndProgram(
       paxKey?: string;
       sex?: string;
       birthDate?: string;
+      nationality?: string;
     };
   },
 ) {
@@ -45,6 +46,7 @@ async function ensureEpisodeAndProgram(
     paxKey: p.paxKey,
     sex: p.sex,
     birthDate: p.birthDate,
+    nationality: p.nationality,
   });
   const existingProgram = await prisma.programInstance.findUnique({
     where: { episodeId: episode.id },
@@ -262,6 +264,26 @@ export async function handleStayProductChanged(
         }
       : {}),
   };
+
+  if (p.nationality || p.sex || p.birthDate) {
+    const people = await prisma.clinicalEpisode.findMany({
+      where: episodeWhere,
+      select: { patientRefId: true },
+    });
+    const seen = new Set<string>();
+    for (const row of people) {
+      if (!row.patientRefId || seen.has(row.patientRefId)) continue;
+      seen.add(row.patientRefId);
+      const { applyStayDemographicsCache } = await import(
+        "@/domain/patient/mdm-demographics-cache"
+      );
+      await applyStayDemographicsCache(row.patientRefId, {
+        nationality: p.nationality,
+        sex: p.sex,
+        birthDate: p.birthDate,
+      });
+    }
+  }
 
   if (p.programCode) {
     await prisma.clinicalEpisode.updateMany({

@@ -9,6 +9,7 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveAppointmentDurationMinutes } from "@/lib/scheduling.service";
+import { electiveDayDenied } from "@/domain/appointment/elective-day";
 import { parseBakuDateTime } from "@era/satellite-kit/time";
 
 const bodySchema = z.object({
@@ -43,6 +44,9 @@ export async function POST(
     if (visit.status === "CANCELLED") return jsonError("Visit is cancelled", 400);
 
     const scheduledAt = parseBakuDateTime(body.date, body.time);
+    if (await electiveDayDenied(scheduledAt)) {
+      return jsonError("Clinic is closed on this date", 409, { code: "CLOSED_DAY" });
+    }
     if (visit.appointmentId) {
       await prisma.appointment.update({
         where: { id: visit.appointmentId },

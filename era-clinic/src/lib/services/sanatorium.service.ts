@@ -172,6 +172,7 @@ export async function openEpisodeFromStay(input: {
   paxKey?: string | null;
   sex?: string | null;
   birthDate?: string | Date | null;
+  nationality?: string | null;
 }) {
   const hotelStayId = resolveHotelStayId(input);
   const legacyRef = resolveHotelPatientRefCode({
@@ -233,6 +234,7 @@ export async function openEpisodeFromStay(input: {
     await applyStayDemographicsCache(patientId, {
       sex: input.sex,
       birthDate: input.birthDate,
+      nationality: input.nationality,
     });
     await applyMdmDemographicsCache(patientId, gpid);
   };

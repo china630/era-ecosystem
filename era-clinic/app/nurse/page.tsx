@@ -69,6 +69,7 @@ export default function NursePage() {
   const [dayStartHour, setDayStartHour] = useState(9);
   const [dayEndHour, setDayEndHour] = useState(18);
   const [mineOn, setMineOn] = useState(false);
+  const [deskMine, setDeskMine] = useState(false);
   const [mineUnlinked, setMineUnlinked] = useState(false);
   const [mineDefaultApplied, setMineDefaultApplied] = useState(false);
   const [date, setDate] = useState(todayBakuYmd);
@@ -79,7 +80,9 @@ export default function NursePage() {
   const debouncedProcedure = useDebouncedValue(procedure, 300);
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [demoPractitionerId, setDemoPractitionerId] = useState("");
-  const [demoStaff, setDemoStaff] = useState<Array<{ id: string; fullName: string; code: string }>>([]);
+  const [demoStaff, setDemoStaff] = useState<
+    Array<{ id: string; fullName: string; code: string; staffKind: string; specialty: string | null }>
+  >([]);
   const [qrToken, setQrToken] = useState("");
   const [activeQrToken, setActiveQrToken] = useState<string | null>(null);
   const [qrOrders, setQrOrders] = useState<Proc[]>([]);
@@ -90,38 +93,47 @@ export default function NursePage() {
 
   useEffect(() => {
     if (mineDefaultApplied || !auth) return;
-    if (auth.staffKind === "NURSE" && !auth.isPlatformSuperAdmin) {
-      setMineOn(true);
-    }
-    setMineDefaultApplied(true);
-  }, [auth, auth?.staffKind, auth?.isPlatformSuperAdmin, mineDefaultApplied]);
-
-  useEffect(() => {
-    if (!isDemoStaffFilter) return;
     let cancelled = false;
-    void fetch("/api/admin/practitioners?staffKind=NURSE")
+    void fetch("/api/procedures/desk-staff")
       .then(async (res) => (res.ok ? res.json() : null))
       .then((raw) => {
-        if (cancelled || !raw) return;
-        const rows = (raw.data ?? raw) as Array<{
-          id: string;
-          fullName: string;
-          code: string;
-          active?: boolean;
-        }>;
-        if (!Array.isArray(rows)) return;
-        setDemoStaff(
-          rows
-            .filter((r) => r.active !== false)
-            .map((r) => ({ id: r.id, fullName: r.fullName, code: r.code }))
-            .sort((a, b) => a.fullName.localeCompare(b.fullName)),
-        );
+        if (cancelled) return;
+        const payload = (raw?.data ?? raw) as {
+          staff?: Array<{
+            id: string;
+            fullName: string;
+            code: string;
+            staffKind: string;
+            specialty: string | null;
+          }>;
+          mine?: boolean;
+        } | null;
+        const rows = Array.isArray(payload?.staff) ? payload.staff : [];
+        setDemoStaff(rows);
+        setDeskMine(payload?.mine === true);
+        const kind = auth.staffKind;
+        const procedureRole =
+          kind === "NURSE" || kind === "BATH" || kind === "MASSAGE";
+        if (!auth.isPlatformSuperAdmin && (payload?.mine || procedureRole)) {
+          setMineOn(true);
+        }
+        setMineDefaultApplied(true);
       })
-      .catch(() => null);
+      .catch(() => {
+        if (cancelled) return;
+        const kind = auth.staffKind;
+        if (
+          !auth.isPlatformSuperAdmin &&
+          (kind === "NURSE" || kind === "BATH" || kind === "MASSAGE")
+        ) {
+          setMineOn(true);
+        }
+        setMineDefaultApplied(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [isDemoStaffFilter]);
+  }, [auth, mineDefaultApplied]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
@@ -393,7 +405,10 @@ export default function NursePage() {
 
   function resetFilters() {
     const today = todayBakuYmd();
-    const defaultMine = auth?.staffKind === "NURSE" && !auth?.isPlatformSuperAdmin;
+    const kind = auth?.staffKind;
+    const defaultMine =
+      !auth?.isPlatformSuperAdmin &&
+      (deskMine || kind === "NURSE" || kind === "BATH" || kind === "MASSAGE");
     setDate(today);
     setStatus("ALL");
     setPatient("");
@@ -402,6 +417,13 @@ export default function NursePage() {
     setMineOn(defaultMine);
     setDemoPractitionerId("");
     setMineUnlinked(false);
+  }
+
+  function deskKindLabel(kind: string, specialty: string | null) {
+    if (kind === "DOCTOR") return specialty?.trim() || t("staffKindDoctor");
+    if (kind === "BATH") return t("staffKindBath");
+    if (kind === "MASSAGE") return t("staffKindMassage");
+    return t("staffKindNurse");
   }
 
   return (
@@ -433,7 +455,7 @@ export default function NursePage() {
             <option value="">{t("demoStaffFilterAll")}</option>
             {demoStaff.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.fullName} ({s.code})
+                {s.fullName} · {deskKindLabel(s.staffKind, s.specialty)}
               </option>
             ))}
           </FieldSelect>

@@ -4642,6 +4642,15 @@
           }
         },
         {
+          "code": "MXD#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "MXD abs",
+            "ru": "Смесь абс.",
+            "az": "MXD #"
+          }
+        },
+        {
           "code": "NEUT#",
           "unit": "10^9/L",
           "label": {
@@ -4693,6 +4702,60 @@
             "en": "Reticulocytes",
             "ru": "Ретикулоциты",
             "az": "Retikulositlər"
+          }
+        },
+        {
+          "code": "RET#",
+          "unit": "10^12/L",
+          "label": {
+            "en": "Reticulocytes abs",
+            "ru": "Ретикулоциты абс.",
+            "az": "Retikulositlər #"
+          }
+        },
+        {
+          "code": "IRF",
+          "unit": "%",
+          "label": {
+            "en": "Immature reticulocyte fraction",
+            "ru": "Фракция незрелых ретикулоцитов",
+            "az": "Yetişməmiş retikulosit fraksiyası"
+          }
+        },
+        {
+          "code": "NRBC#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "NRBC abs",
+            "ru": "Ядросодержащие эритроциты абс.",
+            "az": "Nüvəli eritrositlər #"
+          }
+        },
+        {
+          "code": "NRBC%",
+          "unit": "%",
+          "label": {
+            "en": "NRBC %",
+            "ru": "Ядросодержащие эритроциты %",
+            "az": "Nüvəli eritrositlər %"
+          }
+        },
+        {
+          "code": "IG#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Immature granulocytes abs",
+            "ru": "Незрелые гранулоциты абс.",
+            "az": "Yetişməmiş qranulositlər #"
+          }
+        },
+        {
+          "code": "IG%",
+          "unit": "%",
+          "label": {
+            "en": "Immature granulocytes %",
+            "ru": "Незрелые гранулоциты %",
+            "az": "Yetişməmiş qranulositlər %"
           }
         }
       ]
@@ -4984,6 +5047,15 @@
             "en": "BUN",
             "ru": "Азот мочевины",
             "az": "BUN"
+          }
+        },
+        {
+          "code": "BUN-CREA",
+          "unit": "",
+          "label": {
+            "en": "BUN/creatinine",
+            "ru": "Мочевина/креатинин",
+            "az": "Sidik cövhəri/kreatinin"
           }
         },
         {
@@ -5888,6 +5960,141 @@
             "en": "Bilirubin",
             "ru": "Билирубин",
             "az": "Bilirubin"
+          }
+        },
+        {
+          "code": "U-VOL",
+          "unit": "ml",
+          "label": {
+            "en": "Volume",
+            "ru": "Объём",
+            "az": "Miqdar"
+          }
+        },
+        {
+          "code": "U-YEAST",
+          "unit": "",
+          "label": {
+            "en": "Yeast",
+            "ru": "Дрожжи",
+            "az": "Göbələk"
+          }
+        },
+        {
+          "code": "U-EPI-SQ",
+          "unit": "/HPF",
+          "label": {
+            "en": "Squamous epithelium",
+            "ru": "Плоский эпителий",
+            "az": "Yastı epitel"
+          }
+        },
+        {
+          "code": "U-EPI-TRANS",
+          "unit": "/HPF",
+          "label": {
+            "en": "Transitional epithelium",
+            "ru": "Переходный эпителий",
+            "az": "Keçid epiteli"
+          }
+        },
+        {
+          "code": "U-EPI-RENAL",
+          "unit": "/HPF",
+          "label": {
+            "en": "Renal epithelium",
+            "ru": "Почечный эпителий",
+            "az": "Böyrək epiteli"
+          }
+        },
+        {
+          "code": "U-CAST-HYA",
+          "unit": "/LPF",
+          "label": {
+            "en": "Hyaline casts",
+            "ru": "Гиалиновые цилиндры",
+            "az": "Hialin silindrlər"
+          }
+        },
+        {
+          "code": "U-CAST-GRAN",
+          "unit": "/LPF",
+          "label": {
+            "en": "Granular casts",
+            "ru": "Зернистые цилиндры",
+            "az": "Dənəvər silindrlər"
+          }
+        },
+        {
+          "code": "U-CAST-WAX",
+          "unit": "/LPF",
+          "label": {
+            "en": "Waxy casts",
+            "ru": "Восковидные цилиндры",
+            "az": "Mumvari silindrlər"
+          }
+        },
+        {
+          "code": "U-CRY-CAOX",
+          "unit": "",
+          "label": {
+            "en": "Calcium oxalate crystals",
+            "ru": "Оксалат кальция",
+            "az": "Kalsium oksalat"
+          }
+        },
+        {
+          "code": "U-CRY-TPH",
+          "unit": "",
+          "label": {
+            "en": "Triple phosphate crystals",
+            "ru": "Трипельфосфат",
+            "az": "Tripel fosfat"
+          }
+        },
+        {
+          "code": "U-CRY-UA",
+          "unit": "",
+          "label": {
+            "en": "Uric acid crystals",
+            "ru": "Мочевая кислота (кристаллы)",
+            "az": "Sidik turşusu kristalları"
+          }
+        },
+        {
+          "code": "U-CRY-AMOR",
+          "unit": "",
+          "label": {
+            "en": "Amorphous crystals",
+            "ru": "Аморфные соли",
+            "az": "Amorf duzlar"
+          }
+        },
+        {
+          "code": "U-TRICH",
+          "unit": "",
+          "label": {
+            "en": "Trichomonas",
+            "ru": "Трихомонады",
+            "az": "Trihomonada"
+          }
+        },
+        {
+          "code": "U-RBC-FRESH",
+          "unit": "n/s",
+          "label": {
+            "en": "Unchanged RBC",
+            "ru": "Эритроциты неизменённые",
+            "az": "Eritrositlər dəyişməmiş"
+          }
+        },
+        {
+          "code": "U-RBC-DYSM",
+          "unit": "g/s",
+          "label": {
+            "en": "Dysmorphic RBC",
+            "ru": "Эритроциты изменённые",
+            "az": "Eritrositlər dəyişmiş"
           }
         }
       ]

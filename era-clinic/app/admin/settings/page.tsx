@@ -61,6 +61,7 @@ type SchedulingDefaults = {
   programSchedulingMode: "AFTER_CHECKUP" | "ON_CHECKIN";
   doctorBonusPercentInHouse: number;
   doctorBonusPercentWalkIn: number;
+  hotelFolioRevenueCode: string;
 };
 
 const CARD_DEFAULTS: CardLimits = {
@@ -89,6 +90,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   programSchedulingMode: "AFTER_CHECKUP",
   doctorBonusPercentInHouse: 0,
   doctorBonusPercentWalkIn: 0,
+  hotelFolioRevenueCode: "23",
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -164,6 +166,8 @@ export default function ClinicAdminSettingsPage() {
             row.programSchedulingMode === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
           doctorBonusPercentInHouse: Number(row.doctorBonusPercentInHouse ?? 0),
           doctorBonusPercentWalkIn: Number(row.doctorBonusPercentWalkIn ?? 0),
+          hotelFolioRevenueCode:
+            row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
@@ -242,6 +246,8 @@ export default function ClinicAdminSettingsPage() {
         doctorBonusPercentWalkIn: Number(
           row.doctorBonusPercentWalkIn ?? draftSched.doctorBonusPercentWalkIn,
         ),
+        hotelFolioRevenueCode:
+          row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
       });
       setOpen(false);
       showSuccess(tc("saved"));
@@ -321,6 +327,10 @@ export default function ClinicAdminSettingsPage() {
             <td className="p-3">{closedLabel || "—"}</td>
           </tr>
           <tr className="border-b">
+            <td className="p-3 font-medium">{t("hotelFolioRevenueCode")}</td>
+            <td className="p-3">{schedDefaults.hotelFolioRevenueCode || "—"}</td>
+          </tr>
+          <tr className="border-t border-slate-100">
             <td className="p-3 font-medium">{t("schedulingSlotMinutes")}</td>
             <td className="p-3">{schedDefaults.schedulingSlotMinutes} min</td>
           </tr>
@@ -445,6 +455,18 @@ export default function ClinicAdminSettingsPage() {
               </div>
             </div>
           </fieldset>
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("hotelFolioRevenueCode")}
+            options={[]}
+            value={draftSched.hotelFolioRevenueCode}
+            onChange={(v) =>
+              setDraftSched((prev) => ({
+                ...prev,
+                hotelFolioRevenueCode: String(v ?? "").trim(),
+              }))
+            }
+          />
           <Field
             label={t("schedulingSlotMinutes")}
             preset="count"

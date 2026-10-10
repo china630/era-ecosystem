@@ -1,6 +1,7 @@
 import {
   ensurePersonAccessGrant,
   getPersonOpsProfile,
+  normalizeNationalityIso,
   normalizePersonSex,
   parsePersonBirthDate,
   type PersonOpsProfile,
@@ -130,10 +131,18 @@ export async function fetchOpsProfileForPatientFill(
 /** Single-person fill from hotel check-in payload (fill-not-clear). */
 export async function applyStayDemographicsCache(
   patientId: string,
-  stay: { sex?: string | null; birthDate?: string | Date | null },
+  stay: { sex?: string | null; birthDate?: string | Date | null; nationality?: string | null },
 ): Promise<void> {
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return;
+  const nationality = normalizeNationalityIso(stay.nationality);
+  if (nationality && !patient.nationality?.trim()) {
+    await prisma.patientRef.update({
+      where: { id: patientId },
+      data: { nationality },
+    });
+    patient.nationality = nationality;
+  }
   const patch = buildPatientDemographicsFillPatch(patient, {
     sex: normalizePersonSex(stay.sex) ?? null,
     birthDate:

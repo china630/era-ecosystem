@@ -1072,6 +1072,10 @@ export function PatientCardClinicalSections({
               .then(async (res) => {
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
+                  if (data?.code === "CLOSED_DAY") {
+                    showApiError({ error: t("intakeClosedDay") }, t("intakeClosedDay"));
+                    return;
+                  }
                   showApiError(data, tc("failed"));
                   return;
                 }

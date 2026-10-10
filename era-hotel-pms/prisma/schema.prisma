@@ -421,6 +421,7 @@ enum HotelLookupKind {
   EVENT_LINE_KIND
   WALKIN_PROFILE
   NATIONALITY
+  RESERVATION_QUEUE
 }
 
 model HotelLookup {

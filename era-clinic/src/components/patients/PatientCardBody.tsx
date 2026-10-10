@@ -127,6 +127,8 @@ type Props = {
   /** Render only the procedure-plan modal. */
   planOnly?: boolean;
   onPlanClose?: () => void;
+  /** Fires when the care-team list for the selected episode loads or changes. */
+  onCareTeamSize?: (episodeId: string, count: number) => void;
 };
 
 export function PatientCardBody({
@@ -138,6 +140,7 @@ export function PatientCardBody({
   onOpenDayPlan,
   planOnly = false,
   onPlanClose,
+  onCareTeamSize,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
@@ -273,7 +276,8 @@ export function PatientCardBody({
       }
       return items.length;
     });
-  }, []);
+    if (selectedEpisodeId) onCareTeamSize?.(selectedEpisodeId, items.length);
+  }, [onCareTeamSize, selectedEpisodeId]);
 
   function onAnamnesisSaved(payload: {
     anamnesisText: string | null;
