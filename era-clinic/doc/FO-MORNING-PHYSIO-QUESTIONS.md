@@ -35,5 +35,5 @@
 
 - Gate: DAY_BLOCK only naftalan; aplikasiya + IR/Sollyuks/İşıq oil fields; turunda split sites
 - Seed: aplikasiya ♀/♂, traksiya; combined turunda dropped; demo appts remapped to turunda burun
-- `ensurePlanningDefaults` / wizard `planning-rules`: shared LOCATION requirements ♀/♂ bath + aplikasiya → `RES-VANNA-1..4-*`
+- Cabin links are procedure-type requirements (the live Vanna resources). `planning-rules` does not write `RES-VANNA-*`.
 - Rotation group includes aplikasiya ♀/♂

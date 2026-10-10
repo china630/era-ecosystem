@@ -354,11 +354,17 @@ export async function planProgramFifo(
  * Place confirmed PROPOSED orders onto resources (FIFO).
  * Reads already-placed patient orders as rotation/compat context; does not move them.
  */
+export type PlaceConfirmedResult = {
+  placed: number;
+  /** Procedure names whose type has no resolvable LOCATION/EQUIPMENT resource. */
+  missingCabinNames: string[];
+};
+
 export async function placeConfirmedProcedures(
   orderIds: string[],
   opts?: { confirmedByUserId?: string },
-): Promise<number> {
-  if (orderIds.length === 0) return 0;
+): Promise<PlaceConfirmedResult> {
+  if (orderIds.length === 0) return { placed: 0, missingCabinNames: [] };
 
   const settings = await getSchedulingSettings();
   const { schedulingSlotMinutes: slotMinutes } = settings;
@@ -370,7 +376,7 @@ export async function placeConfirmedProcedures(
     include: { procedureType: { include: { requirements: true } } },
     orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
   });
-  if (orders.length === 0) return 0;
+  if (orders.length === 0) return { placed: 0, missingCabinNames: [] };
 
   const patientRefId = orders[0].patientRefId;
   const episodeId = orders[0].clinicalEpisodeId;
@@ -435,6 +441,7 @@ export async function placeConfirmedProcedures(
   }));
 
   let placed = 0;
+  const missingCabinNames: string[] = [];
   const now = new Date();
 
   const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -487,7 +494,11 @@ export async function placeConfirmedProcedures(
             : "EQUIPMENT";
 
     const physicalResources = await listPhysicalRequirementResources(pt);
-    if (physicalResources.length === 0) continue;
+    if (physicalResources.length === 0) {
+      const label = order.procedureName?.trim() || order.procedureCode;
+      if (!missingCabinNames.includes(label)) missingCabinNames.push(label);
+      continue;
+    }
 
     const duration = alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes);
     const typeHours = {
@@ -696,5 +707,5 @@ export async function placeConfirmedProcedures(
     }
   }
 
-  return placed;
+  return { placed, missingCabinNames };
 }

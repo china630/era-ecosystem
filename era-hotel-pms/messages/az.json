@@ -109,7 +109,9 @@
     "lostAndFound": "Tapılan əşyalar",
     "promotionCodes": "Promotion codes",
     "travelAgencies": "Travel agencies",
-    "childMatrix": "Child matrix",
+    "childMatrix": "Uşaq qiymətləri",
+    "priceSeasons": "Mövsümlər",
+    "dailyPrices": "Gündəlik qiymətlər",
     "yieldRules": "Yield qaydaları",
     "auditViewer": "Dəyişiklik jurnalı",
     "airportTransfer": "Airport transfer confirmation",
@@ -1070,7 +1072,7 @@
     "folioMode": "Folio rejimi",
     "availableAfterSave": "Rezervasiya saxlanılandan sonra əlçatandır",
     "medicalPackageCode": "Medical package",
-    "packageFollowStay": "Bron paketi",
+    "packageFollowStay": "Paketi seçin",
     "guestAgeMismatch": "Bu qonağın yaşı bu sətirin zolağına uyğun gəlmir",
     "sourceWalkIn": "Walk-in (özü gəldi)",
     "sourceAgency": "Agentlik",
@@ -3164,7 +3166,21 @@
     "meal": "Qidalanma",
     "seasonDate": "Mövsüm tarixi",
     "roomType": "Otaq tipi",
-    "notSold": "—"
+    "notSold": "—",
+    "season": "Mövsüm",
+    "seasonsLink": "Mövsümlər",
+    "dailyTitle": "Gündəlik qiymətlər",
+    "dailySubtitle": "Daily rates: otaq tipi × böyüklər × qidalanma (BB və ya FB) × mövsüm.",
+    "dailyPlan": "Tarif"
+  },
+  "priceSeasons": {
+    "title": "Mövsümlər",
+    "subtitle": "Yüksək və aşağı mövsüm. Tarixi dəyişəndə həmin mövsümün bütün qiymət xanaları birlikdə sürüşür.",
+    "code": "Kod",
+    "name": "Ad",
+    "startsOn": "Başlanğıc",
+    "endsOn": "Son",
+    "saved": "Mövsüm saxlanıldı"
   },
   "unitEconomics": {
     "title": "Unit economics",

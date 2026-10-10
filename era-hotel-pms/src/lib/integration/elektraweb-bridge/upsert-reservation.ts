@@ -261,6 +261,7 @@ export async function upsertReservationFromElektrawebRow(
               },
             ]
           : [];
+    let clinicDispatched = 0;
     for (const pax of paxList) {
       const name =
         [pax.firstName, pax.lastName].filter(Boolean).join(' ') ||
@@ -269,10 +270,18 @@ export async function upsertReservationFromElektrawebRow(
         'Guest';
       const paxKey =
         'id' in pax && typeof pax.id === 'string' ? pax.id : pax.guest?.id ?? undefined;
+      const { normalizeMedicalPackageCode } = await import(
+        '@/lib/services/medical-package-resolve.service'
+      );
+      const guestProgram = normalizeMedicalPackageCode(
+        pax.medicalPackageCode ?? programCode,
+      );
+      if (!guestProgram) continue;
+      clinicDispatched += 1;
       await dispatchGuestCheckedIn({
         reservationId: reservation.id,
         roomNumber: newRoom ?? undefined,
-        programCode: pax.medicalPackageCode ?? programCode,
+        programCode: guestProgram,
         globalPersonId:
           pax.guest?.globalPersonId ?? full?.guest.globalPersonId ?? undefined,
         guestName: name,
@@ -286,14 +295,14 @@ export async function upsertReservationFromElektrawebRow(
           reservationId: reservation.id,
           guestName: name,
           globalPersonId: pax.guest?.globalPersonId ?? full?.guest.globalPersonId,
-          programCode: pax.medicalPackageCode ?? programCode,
+          programCode: guestProgram,
           roomNumber: newRoom ?? null,
           paxKey,
           ...lifecycleDemographicsFromPax(pax),
         }).catch((e) => console.error('clinic bridge', e));
       }
     }
-    events.push('GUEST_CHECKED_IN');
+    if (clinicDispatched > 0) events.push('GUEST_CHECKED_IN');
   }
 
   if (status === 'CHECKED_OUT' && prevStatus !== 'CHECKED_OUT') {

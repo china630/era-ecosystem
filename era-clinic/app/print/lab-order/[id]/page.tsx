@@ -3,6 +3,7 @@ import { PrintShell } from "@/components/print/PrintShell";
 import { buildLabOrderPrint } from "@/domain/print/print-lab.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
+import { enterPrintSession } from "@/domain/print/print-session";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default async function PrintLabOrderPage({ params, searchParams }: Props) {
+  await enterPrintSession();
   const { id } = await params;
   const sp = await searchParams;
   const lang = normalizePrintLang(sp.lang);

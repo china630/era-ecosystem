@@ -495,7 +495,39 @@ async function seedDiagnosticBase(prisma) {
     counts.metaFields += 1;
   }
 
+  counts.dictionary = await seedAnalyteDictionary(prisma);
+
   return { layer: "base", ...counts };
+}
+
+/** Upsert the unscoped analyte dictionary. Does not delete codes missing from the file. */
+async function seedAnalyteDictionary(prisma) {
+  const payload = loadJson("analyte-dictionary.json");
+  const items = Array.isArray(payload) ? payload : payload.items ?? [];
+  let n = 0;
+  for (const row of items) {
+    if (!row || !row.code) continue;
+    const label = row.label ?? {};
+    const data = {
+      unit: row.unit ?? null,
+      labelEn: label.en || row.code,
+      labelRu: label.ru || row.code,
+      labelAz: label.az || row.code,
+      refMin: row.refMin ?? null,
+      refMax: row.refMax ?? null,
+      section: row.section ?? null,
+      valueType: row.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
+      optionsJson: row.valueOptions ? JSON.stringify(row.valueOptions) : null,
+      active: true,
+    };
+    await prisma.analyteDictionary.upsert({
+      where: { code: row.code },
+      create: { code: row.code, ...data },
+      update: data,
+    });
+    n += 1;
+  }
+  return n;
 }
 
 async function seedDiagnosticNafta(prisma, organizationId = requireSeedOrgId()) {
@@ -569,5 +601,6 @@ module.exports = {
   applyCatalogCodeCanon,
   seedDiagnosticBase,
   seedDiagnosticNafta,
+  seedAnalyteDictionary,
   copyDiagnosticTemplatesToOrg,
 };

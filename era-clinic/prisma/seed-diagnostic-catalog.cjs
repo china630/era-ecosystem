@@ -21,6 +21,8 @@ async function main() {
       organizationId +
       " base.services=" +
       base.services +
+      " dictionary=" +
+      base.dictionary +
       " nafta.packages=" +
       nafta.packages +
       " nafta.patches=" +

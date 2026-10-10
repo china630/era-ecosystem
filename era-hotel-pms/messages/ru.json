@@ -109,7 +109,9 @@
     "lostAndFound": "Бюро находок",
     "promotionCodes": "Промокоды",
     "travelAgencies": "Турагентства",
-    "childMatrix": "Детская матрица",
+    "childMatrix": "Детские цены",
+    "priceSeasons": "Сезоны",
+    "dailyPrices": "Дневные цены",
     "yieldRules": "Правила yield",
     "auditViewer": "Журнал изменений",
     "airportTransfer": "Airport transfer confirmation",
@@ -1070,7 +1072,7 @@
     "folioMode": "Режим фолио",
     "availableAfterSave": "Доступно после сохранения брони",
     "medicalPackageCode": "Medical package",
-    "packageFollowStay": "Пакет брони",
+    "packageFollowStay": "Выберите пакет",
     "guestAgeMismatch": "Возраст этого гостя не подходит к этой строке",
     "sourceWalkIn": "Walk-in (сами пришли)",
     "sourceAgency": "Агентство",
@@ -3164,7 +3166,21 @@
     "meal": "Питание",
     "seasonDate": "Дата сезона",
     "roomType": "Тип номера",
-    "notSold": "—"
+    "notSold": "—",
+    "season": "Сезон",
+    "seasonsLink": "Сезоны",
+    "dailyTitle": "Дневные цены",
+    "dailySubtitle": "Daily rates: тип номера × взрослые × питание (BB или FB) × сезон.",
+    "dailyPlan": "Тариф"
+  },
+  "priceSeasons": {
+    "title": "Сезоны",
+    "subtitle": "Высокий и низкий сезон. Сдвиг дат двигает все ячейки этого сезона вместе.",
+    "code": "Код",
+    "name": "Название",
+    "startsOn": "Начало",
+    "endsOn": "Конец",
+    "saved": "Сезон сохранён"
   },
   "unitEconomics": {
     "title": "Unit economics",

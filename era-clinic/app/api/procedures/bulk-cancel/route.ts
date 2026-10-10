@@ -136,9 +136,11 @@ export async function POST(req: Request) {
         newIds.push(created.id);
         replaced++;
       }
-      placed = await placeConfirmedProcedures(newIds, {
-        confirmedByUserId: session.sub,
-      });
+      placed = (
+        await placeConfirmedProcedures(newIds, {
+          confirmedByUserId: session.sub,
+        })
+      ).placed;
     }
 
     return jsonOk({ cancelled, replaced, placed });

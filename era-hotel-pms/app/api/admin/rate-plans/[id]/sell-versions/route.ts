@@ -15,6 +15,7 @@ const postSchema = z.object({
   roomTypeId: z.string().uuid(),
   mealPlanId: z.string().uuid(),
   effectiveFrom: z.string().min(8),
+  seasonId: z.string().uuid().nullable().optional(),
   note: z.string().max(500).nullable().optional(),
 });
 
@@ -48,6 +49,7 @@ export async function POST(
       roomTypeId: body.roomTypeId,
       mealPlanId: body.mealPlanId,
       effectiveFrom: new Date(body.effectiveFrom),
+      seasonId: body.seasonId,
       note: body.note,
       createdById: session?.sub,
     });

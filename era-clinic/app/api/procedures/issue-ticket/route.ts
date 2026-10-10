@@ -42,6 +42,7 @@ export async function GET() {
         patientOrigin: o.patientOrigin,
         status: o.status,
         scheduledAt: o.scheduledAt.toISOString(),
+        patientRefId: o.patientRefId,
         patientName: o.patientRef.fullName,
         refCode: o.patientRef.refCode,
         extraTicketIssuedAt: o.extraTicketIssuedAt,

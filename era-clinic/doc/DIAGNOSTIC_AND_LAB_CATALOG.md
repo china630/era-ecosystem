@@ -2,11 +2,11 @@
 
 **Version:** 1.2.0 (AZ clinic + MediClub/Exonlab routine layer)  
 Source of truth: [`../prisma/seed-data/diagnostic-lab-catalog.json`](../prisma/seed-data/diagnostic-lab-catalog.json)  
-Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTemplate`). Org overlay (`Modality` / `DiagnosticService`) is copy-if-empty on Connect/login/catalog GET. Nafta overlay: wizard / `db:seed:diagnostic-catalog:nafta` (not droplet boot). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. Lab panels open analytes from a row icon; imaging, functional, endoscopy, and visit rows open form fields the same way. The service card does not edit either list, and saving it does not send `fields`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md) and ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).  
+Seed: `db:seed` writes **templates** (`ModalityTemplate` / `DiagnosticServiceTemplate`) and the unscoped **analyte dictionary** (`AnalyteDictionary` from [`analyte-dictionary.json`](../prisma/seed-data/analyte-dictionary.json)). Org overlay (`Modality` / `DiagnosticService`) is copy-if-empty on Connect/login/catalog GET. Nafta overlay: wizard / `db:seed:diagnostic-catalog:nafta` (not droplet boot). `ClinicalTemplate` **dropped**. Admin: `/admin/diagnostic-catalog`. Lab panels open analytes from a row icon; the add modal searches the dictionary and copies code, unit, labels, and the usual range onto that panel (the panel keeps its own norms). Imaging, functional, endoscopy, and visit rows open form fields the same way. The service card does not edit either list, and saving it does not send `fields`. See [CLINICAL_AND_PROGRAM_TEMPLATES.md](./CLINICAL_AND_PROGRAM_TEMPLATES.md) and ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md). Rebuild the dictionary file with `node prisma/scripts/build-analyte-dictionary.mjs` after lab-panel analyte edits.  
 P1 studies helper: `prisma/scripts/expand-diagnostic-catalog.mjs`  
 Lab analyte enrichment: `prisma/scripts/enrich-lab-catalog-v12.mjs` (idempotent)
 
-Commercial prices live on `ServiceCatalogCache` as one price (`listAmount` when set, otherwise `amount`) with append-only `ServiceCatalogPrice` history. `/admin/catalog` shows that single price. In-quota charges are 0 from the guest quota, not from a catalog flag. Form fields for a diagnostic service open as a table; row order is the order on the result form. Finance sync writes them when the finance catalog answers; an empty finance response does not invent demo prices. SatAdmin can add and edit rows on `/admin/catalog`. This diagnostic catalog owns **codes + form fields / analytes / packages**, not the price text in parentheses. The cashier bill uses the service title (`titleAz`, then `titleRu`, then `titleEn`) as the fiscal line name for a lab item.  
+Commercial prices live on `ServiceCatalogCache` as one price (`listAmount` when set, otherwise `amount`) with append-only `ServiceCatalogPrice` history. `/admin/catalog` shows that single price. In-quota charges are 0 from the guest quota, not from a catalog flag. Form fields for a diagnostic service open as a table; row order is the order on the result form. Finance sync writes them when the finance catalog answers; an empty finance response does not invent demo prices. SatAdmin can add and edit rows on `/admin/catalog`. This diagnostic catalog owns **codes + form fields / analytes / packages**, not the price text in parentheses. The service card «Maliyyə SKU» searches this clinic catalog (`GET /api/admin/catalog?q=`). When `financeSku` is empty the field opens on `serviceCode` (the price-catalog code already on the card). The cashier bill uses the service title (`titleAz`, then `titleRu`, then `titleEn`) as the fiscal line name for a lab item.  
 Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the rest). Rare send-out: SatAdmin add, not this JSON.
 
 **v1.2 sources:** Nafta Analyses price list; Exonlab special panels; MediClub public lab menus (biochem, general clinical, infections); Liv/Eurolab category pages. Not Referans 7000 / LOINC.
@@ -20,7 +20,8 @@ Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the r
 | Modalities | 9 |
 | Study templates (imaging / functional / endoscopy) | 85 |
 | Lab panels | 48 |
-| Lab analytes | ~362 |
+| Lab analytes (panel copies) | 362 |
+| Analyte dictionary (unique codes) | 310 |
 | Visit templates | 13 |
 | Check-up packages | 8 |
 

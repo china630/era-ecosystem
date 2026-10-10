@@ -11,7 +11,7 @@ Clinic SHARED pool needs one satellite ICD / base physio / base diagnostic catal
 
 ## Decision
 
-1. **Satellite templates (unscoped DB)** — `PhysioSiteTemplate`, `PhysioListItemTemplate`, `ModalityTemplate`, `DiagnosticServiceTemplate` (+ analytes on the service template). Seeded once by `npm run db:seed` (ICD + base physio + base diagnostic). No `organizationId`, no `demo-org`, no env UUID. Runtime may merge template ∪ org overlay; SatAdmin edits org rows.
+1. **Satellite templates (unscoped DB)** — `PhysioSiteTemplate`, `PhysioListItemTemplate`, `ModalityTemplate`, `DiagnosticServiceTemplate` (+ analytes on the service template), and `AnalyteDictionary` (one row per lab analyte code, for the add-analyte search). Seeded once by `npm run db:seed` (ICD + base physio + base diagnostic + analyte dictionary). No `organizationId`, no `demo-org`, no env UUID. Runtime may merge template ∪ org overlay; SatAdmin edits org rows. Dictionary upsert does not delete codes and does not rewrite panel norms.
 
 2. **ICD-10** — `IcdCode` stays unscoped WHO reference. Patient / visit / admission diagnoses stay org-scoped with FK to `IcdCode`. `load-icd10` **skips** when any ICD rows exist; never `deleteMany` on diagnosis tables. Force reload only with `ERA_ICD10_RELOAD=1` and empty diagnoses (or non-production guard).
 

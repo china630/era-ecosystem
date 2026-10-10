@@ -982,9 +982,10 @@ export async function assignPackageProcedures(
     }
   }
 
-  const placed = await placeConfirmedProcedures(createdIds, {
+  const placement = await placeConfirmedProcedures(createdIds, {
     confirmedByUserId: opts?.confirmedByUserId,
   });
+  const placed = placement.placed;
 
   if (placed < createdIds.length) {
     const stillProposed = await prisma.procedureOrder.findMany({
@@ -998,9 +999,19 @@ export async function assignPackageProcedures(
         data: {
           status: "CANCELLED",
           cancelledAt: new Date(),
-          cancelReason: "place_failed_no_slot_or_resource",
+          cancelReason:
+            placement.missingCabinNames.length > 0
+              ? "place_failed_no_cabinet"
+              : "place_failed_no_slot_or_resource",
         },
       });
+      if (placement.missingCabinNames.length > 0) {
+        throw new PackageAssignError(
+          placement.missingCabinNames.join(", "),
+          "NO_CABIN",
+          409,
+        );
+      }
       throw new PackageAssignError(
         `Could not place ${stillProposed.length} of ${createdIds.length} session(s) (${codes}). Check procedure resources, staff skills, and schedule capacity.`,
         "PLACE_FAILED",

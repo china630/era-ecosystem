@@ -255,6 +255,14 @@ export async function payAndScheduleExtras(
   if (orders.length === 0) {
     throw new PackageAssignError("No PENDING_PAY orders", "NOT_FOUND", 404);
   }
+  const patientIds = new Set(orders.map((order) => order.patientRefId));
+  if (patientIds.size > 1) {
+    throw new PackageAssignError(
+      "One cheque is one patient",
+      "MIXED_PATIENT",
+      400,
+    );
+  }
 
   const dualRun = await isClinicElektrawebDualRun(orgId);
   const hotelOrganizationId = dualRun
@@ -321,10 +329,12 @@ export async function payAndScheduleExtras(
 
   let placed = 0;
   try {
-    placed = await placeConfirmedProcedures(
-      chargedMeta.map((c) => c.orderId),
-      { confirmedByUserId: actorUserId },
-    );
+    placed = (
+      await placeConfirmedProcedures(
+        chargedMeta.map((c) => c.orderId),
+        { confirmedByUserId: actorUserId },
+      )
+    ).placed;
   } catch (err) {
     // Rollback to PENDING_PAY so reception can retry
     await prisma.procedureOrder.updateMany({

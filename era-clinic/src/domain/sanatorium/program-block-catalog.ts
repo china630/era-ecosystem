@@ -12,6 +12,19 @@ export type ProgramBlockKind =
 
 export type ProgramBlockFulfillment = "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
 
+/**
+ * Diagnostic catalog item kinds a LAB block may list.
+ * Studies (imaging, functional) book the same diagnostic order as lab panels.
+ */
+export const LAB_BLOCK_CATALOG_KINDS = ["lab_panel", "imaging", "functional"] as const;
+
+/** Kinds the program-template picker loads: LAB block kinds plus visit templates. */
+export const PROGRAM_TEMPLATE_CATALOG_KINDS = [...LAB_BLOCK_CATALOG_KINDS, "visit"] as const;
+
+export function isLabBlockCatalogKind(kind: string | null | undefined): boolean {
+  return (LAB_BLOCK_CATALOG_KINDS as readonly string[]).includes(kind ?? "");
+}
+
 export type CatalogSku = { code: string; name: string };
 
 function foldHay(s: string): string {

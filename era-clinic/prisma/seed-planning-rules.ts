@@ -1,5 +1,6 @@
 /**
- * Org overlay planning defaults (not satellite db:seed).
+ * Kept so older runbooks still execute. Does not write cabins, rotation,
+ * substitution, body part, or extended hours — those are master data.
  * Run: npx tsx prisma/seed-planning-rules.ts
  */
 import { PrismaClient } from "@prisma/client";

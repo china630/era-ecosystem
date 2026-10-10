@@ -73,4 +73,17 @@ describe("listPhysicalRequirementResources", () => {
 
     expect(rows).toEqual([]);
   });
+
+  it("does not pick an arbitrary room when no cabinet code is linked", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.resource.findFirst.mockResolvedValue({ id: "any", code: "WO-ROOM-1", capacity: 1 });
+
+    const rows = await listPhysicalRequirementResources({
+      resourceKind: "ROOM",
+      requirements: [],
+    });
+
+    expect(rows).toEqual([]);
+    expect(prisma.resource.findFirst).not.toHaveBeenCalled();
+  });
 });

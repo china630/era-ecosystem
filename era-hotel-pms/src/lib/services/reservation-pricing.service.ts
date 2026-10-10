@@ -200,6 +200,8 @@ export async function recalcReservationDailyRates(
       ratePlan: true,
       dailyRates: true,
       room: true,
+      roomType: { select: { code: true } },
+      mealPlan: { select: { code: true } },
       staySlices: true,
       paxGuests: { orderBy: { sortOrder: 'asc' } },
     },
@@ -210,7 +212,10 @@ export async function recalcReservationDailyRates(
   const packageCodes = stayPackageCodes(res);
   if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
     if (packageCodes.length === 0) {
-      throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+      throw new NightlyPriceMissingError(res.id, res.ratePlan.code, {
+        roomTypeCode: res.roomType?.code ?? null,
+        mealCode: res.mealPlan?.code ?? null,
+      });
     }
     const { resolveStaySliceForDate } = await import('@/lib/services/stay-slice.service');
     const quoteNight = async (night: Date) => {
@@ -221,7 +226,13 @@ export async function recalcReservationDailyRates(
         roomTypeId: typeId,
         mealPlanId: res.mealPlanId,
       });
-      if (amount == null) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+      if (amount == null) {
+        throw new NightlyPriceMissingError(res.id, res.ratePlan.code, {
+          packageCode: packageCodes.join('+'),
+          roomTypeCode: res.roomType?.code ?? null,
+          mealCode: res.mealPlan?.code ?? null,
+        });
+      }
       return amount;
     };
     return writeOwnerNightly(res, quoteNight, opts?.remainingFrom);
@@ -257,6 +268,19 @@ export async function recalcReservationDailyRates(
       ? res.ratePlan
       : await prisma.ratePlan.findUnique({ where: { id: planId } });
   if (!plan) throw new Error('Rate plan not found');
+  if (!plan.medicalFlag && res.mealPlanId && roomTypeId) {
+    const { ratePlanGridNightlySell } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
+    );
+    const grid = await ratePlanGridNightlySell(quoteDate, {
+      ratePlanId: plan.id,
+      roomTypeId,
+      mealPlanId: res.mealPlanId,
+      occupancy: Math.max(1, res.adults),
+    });
+    if (grid != null) return writeOwnerNightly(res, grid, opts?.remainingFrom);
+  }
+
   if (!usesBarCalendar(plan)) {
     const nightly = decimalToNumber(plan.pricePerNight);
     if (nightly <= 0) throw new NightlyPriceMissingError(res.id, plan.code);

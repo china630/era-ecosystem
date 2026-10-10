@@ -109,7 +109,9 @@
     "lostAndFound": "Lost & found",
     "promotionCodes": "Promotion codes",
     "travelAgencies": "Travel agencies",
-    "childMatrix": "Child matrix",
+    "childMatrix": "Child prices",
+    "priceSeasons": "Seasons",
+    "dailyPrices": "Daily prices",
     "yieldRules": "Yield rules",
     "auditViewer": "Mutation audit",
     "airportTransfer": "Airport transfer confirmation",
@@ -1069,7 +1071,7 @@
     "folioMode": "Folio mode",
     "availableAfterSave": "Available after the reservation is saved",
     "medicalPackageCode": "Medical package",
-    "packageFollowStay": "Stay package",
+    "packageFollowStay": "Select a package",
     "guestAgeMismatch": "This guest's age does not match this row",
     "sourceWalkIn": "Walk-in",
     "sourceAgency": "Agency",
@@ -3178,7 +3180,21 @@
     "meal": "Meal plan",
     "seasonDate": "Season date",
     "roomType": "Room type",
-    "notSold": "—"
+    "notSold": "—",
+    "season": "Season",
+    "seasonsLink": "Seasons",
+    "dailyTitle": "Daily prices",
+    "dailySubtitle": "Daily rates: room type × adults × board (BB or FB) × season.",
+    "dailyPlan": "Rate"
+  },
+  "priceSeasons": {
+    "title": "Seasons",
+    "subtitle": "High and low season. Changing the dates moves every price cell of that season together.",
+    "code": "Code",
+    "name": "Name",
+    "startsOn": "Starts",
+    "endsOn": "Ends",
+    "saved": "Season saved"
   },
   "unitEconomics": {
     "title": "Unit economics",

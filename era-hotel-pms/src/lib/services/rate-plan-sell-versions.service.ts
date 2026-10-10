@@ -8,6 +8,7 @@ export async function listRatePlanSellVersions(ratePlanId: string) {
     include: {
       roomType: { select: { id: true, code: true, adultCapacity: true } },
       mealPlan: { select: { id: true, code: true } },
+      season: { select: { id: true, code: true, name: true, startsOn: true, endsOn: true } },
     },
     orderBy: [{ occupancy: 'asc' }, { effectiveFrom: 'desc' }],
   });
@@ -21,6 +22,7 @@ export async function addRatePlanSellVersion(input: {
   costFloor?: number | null;
   occupancy?: number;
   effectiveFrom: Date;
+  seasonId?: string | null;
   note?: string | null;
   createdById?: string | null;
 }) {
@@ -35,18 +37,49 @@ export async function addRatePlanSellVersion(input: {
   const meal = await prisma.mealPlan.findUnique({ where: { id: input.mealPlanId } });
   if (!meal) throw new Error('Meal plan not found');
 
+  const season = input.seasonId
+    ? await prisma.priceSeason.findUnique({ where: { id: input.seasonId } })
+    : null;
+  if (input.seasonId && !season) throw new Error('Season not found');
+  const effectiveFrom = season?.startsOn ?? input.effectiveFrom;
+  const effectiveTo = season?.endsOn ?? null;
+
   const created = await prisma.$transaction(async (tx) => {
-    await tx.ratePlanSellVersion.updateMany({
-      where: {
-        ratePlanId: input.ratePlanId,
-        roomTypeId: input.roomTypeId,
-        mealPlanId: input.mealPlanId,
-        occupancy,
-        effectiveTo: null,
-        effectiveFrom: { lt: input.effectiveFrom },
-      },
-      data: { effectiveTo: input.effectiveFrom },
-    });
+    if (season) {
+      const existing = await tx.ratePlanSellVersion.findFirst({
+        where: {
+          ratePlanId: input.ratePlanId,
+          roomTypeId: input.roomTypeId,
+          mealPlanId: input.mealPlanId,
+          occupancy,
+          seasonId: season.id,
+        },
+      });
+      if (existing) {
+        return tx.ratePlanSellVersion.update({
+          where: { id: existing.id },
+          data: {
+            sellPrice: toDecimal(input.sellPrice),
+            costFloor: input.costFloor == null ? null : toDecimal(input.costFloor),
+            effectiveFrom,
+            effectiveTo,
+            note: input.note ?? null,
+          },
+        });
+      }
+    } else {
+      await tx.ratePlanSellVersion.updateMany({
+        where: {
+          ratePlanId: input.ratePlanId,
+          roomTypeId: input.roomTypeId,
+          mealPlanId: input.mealPlanId,
+          occupancy,
+          effectiveTo: null,
+          effectiveFrom: { lt: effectiveFrom },
+        },
+        data: { effectiveTo: effectiveFrom },
+      });
+    }
 
     return tx.ratePlanSellVersion.create({
       data: {
@@ -57,7 +90,9 @@ export async function addRatePlanSellVersion(input: {
         costFloor:
           input.costFloor == null ? null : toDecimal(input.costFloor),
         occupancy,
-        effectiveFrom: input.effectiveFrom,
+        effectiveFrom,
+        effectiveTo,
+        seasonId: season?.id ?? null,
         note: input.note ?? null,
         createdById: input.createdById ?? null,
       },
