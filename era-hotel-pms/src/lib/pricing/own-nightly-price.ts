@@ -21,10 +21,13 @@ export class NightlyPriceMissingError extends Error {
   constructor(
     readonly reservationId: string,
     readonly ratePlanCode: string,
+    detail?: { packageCode?: string | null; roomTypeCode?: string | null; mealCode?: string | null },
   ) {
-    super(
-      `Nightly price missing for reservation ${reservationId} (rate ${ratePlanCode})`,
+    const parts = [detail?.packageCode, detail?.roomTypeCode, detail?.mealCode].filter(
+      (part): part is string => Boolean(part && part.trim()),
     );
+    const tail = parts.length > 0 ? parts.join(' · ') : `rate ${ratePlanCode}`;
+    super(`Nightly price missing for reservation ${reservationId} (${tail})`);
     this.name = 'NightlyPriceMissingError';
   }
 }

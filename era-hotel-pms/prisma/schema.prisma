@@ -3237,6 +3237,9 @@ model RatePlanSellVersion {
   mealPlan      MealPlan? @relation(fields: [mealPlanId], references: [id])
   effectiveFrom DateTime
   effectiveTo   DateTime?
+  /// Price season this cell belongs to. Shifting the season rewrites these dates.
+  seasonId      String?
+  season        PriceSeason? @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   note          String?
   createdById   String?
   createdAt     DateTime  @default(now())
@@ -3247,6 +3250,24 @@ model RatePlanSellVersion {
   @@index([organizationId])
   @@index([roomTypeId])
   @@index([mealPlanId])
+  @@index([seasonId])
+}
+
+/// Hotel sell seasons. Package and daily grids hang off these dates.
+model PriceSeason {
+  id             String   @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  startsOn       DateTime @db.Date
+  endsOn         DateTime @db.Date
+  sortOrder      Int      @default(0)
+  sellVersions   RatePlanSellVersion[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 model PricingComponent {

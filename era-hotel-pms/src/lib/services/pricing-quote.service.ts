@@ -144,6 +144,8 @@ export async function getNightlyRoomChargeForDate(
       dailyRates: true,
       ratePlan: true,
       room: true,
+      roomType: { select: { code: true } },
+      mealPlan: { select: { code: true } },
       paxGuests: {
         select: { medicalPackageCode: true, firstName: true, lastName: true, guestId: true },
         orderBy: { sortOrder: 'asc' },
@@ -180,8 +182,28 @@ export async function getNightlyRoomChargeForDate(
           mealPlanId: res.mealPlanId,
         })
       : null;
-    if (nightly == null) throw new NightlyPriceMissingError(res.id, res.ratePlan.code);
+    if (nightly == null) {
+      throw new NightlyPriceMissingError(res.id, res.ratePlan.code, {
+        packageCode: packageCodes.join("+"),
+        roomTypeCode: res.roomType?.code ?? null,
+        mealCode: res.mealPlan?.code ?? null,
+      });
+    }
     return nightly;
+  }
+
+  const gridRoomTypeId = slice?.roomTypeId ?? res.roomTypeId;
+  if (!res.ratePlan.medicalFlag && gridRoomTypeId && res.mealPlanId) {
+    const { ratePlanGridNightlySell } = await import(
+      "@/lib/services/nafta-package-compose-apply.service"
+    );
+    const grid = await ratePlanGridNightlySell(businessDate, {
+      ratePlanId: res.ratePlanId,
+      roomTypeId: gridRoomTypeId,
+      mealPlanId: res.mealPlanId,
+      occupancy: Math.max(1, res.adults),
+    });
+    if (grid != null) return grid;
   }
 
   const planId = slice?.ratePlanId ?? res.ratePlanId;

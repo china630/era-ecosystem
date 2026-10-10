@@ -327,6 +327,8 @@ export async function patchReservationFull(
   const checkOut = data.checkOutDate ?? existing.checkOutDate;
   const ratePlanChanged =
     typeof data.ratePlanId === 'string' && data.ratePlanId !== existing.ratePlanId;
+  const mealPlanChanged =
+    data.mealPlanId !== undefined && data.mealPlanId !== existing.mealPlanId;
 
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
@@ -640,44 +642,63 @@ export async function patchReservationFull(
       })
     : undefined;
 
+  const stayPlanId =
+    typeof data.ratePlanId === 'string' ? data.ratePlanId : existing.ratePlanId;
+  const stayPlan = await prisma.ratePlan.findUnique({
+    where: { id: stayPlanId },
+    select: { code: true, medicalFlag: true },
+  });
+  const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  if (stayPlan && ratePlanRequiresGuestPackage(stayPlan)) {
+    const rows = paxGuests ?? existing.paxGuests;
+    const named = rows.filter(
+      (p) => p.guestId || ('firstName' in p && p.firstName?.trim()) || ('lastName' in p && p.lastName?.trim()),
+    );
+    if (named.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+      throw new Error('Select a medical package for each guest');
+    }
+    const packageCodes = named
+      .map((p) => normalizeMedicalPackageCode(p.medicalPackageCode))
+      .filter((code): code is NonNullable<typeof code> => Boolean(code));
+    const roomTypeId =
+      (typeof data.roomTypeId === 'string' ? data.roomTypeId : null) ?? existing.roomTypeId;
+    const mealPlanId =
+      (typeof data.mealPlanId === 'string' ? data.mealPlanId : null) ?? existing.mealPlanId;
+    if (packageCodes.length && roomTypeId) {
+      const { assertPackageGridCoversStay } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const [roomType, meal] = await Promise.all([
+        prisma.roomType.findUnique({ where: { id: roomTypeId }, select: { code: true } }),
+        mealPlanId
+          ? prisma.mealPlan.findUnique({ where: { id: mealPlanId }, select: { code: true } })
+          : Promise.resolve(null),
+      ]);
+      await assertPackageGridCoversStay({
+        reservationId: id,
+        checkIn,
+        checkOut,
+        roomTypeId,
+        mealPlanId,
+        packageCodes,
+        roomTypeCode: roomType?.code,
+        mealCode: meal?.code,
+        ratePlanCode: stayPlan.code,
+      });
+    }
+  }
+
   if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku || ratePlanChanged) {
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    const stamped = await stampMedicalPackagesForReservation(
+    await stampMedicalPackagesForReservation(
       prisma,
       id,
       foCodes ? { foPerGuestCodes: foCodes } : undefined,
     );
-    if (stamped.stayKind !== 'leisure') {
-      const { fanOutClinicMedicalPackages } = await import(
-        '@/lib/integration/guest-lifecycle-events'
-      );
-      const updated = await prisma.reservation.findUnique({
-        where: { id },
-        include: {
-          guest: true,
-          room: true,
-          paxGuests: { orderBy: { sortOrder: 'asc' }, include: { guest: true } },
-        },
-      });
-      if (updated) {
-        const previousProgram =
-          existing.medicalPackageCode ??
-          existing.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
-          undefined;
-        void fanOutClinicMedicalPackages({
-          status: existing.status,
-          reservationId: id,
-          roomNumber: updated.room?.roomNumber ?? undefined,
-          checkInDate: updated.checkInDate.toISOString(),
-          checkOutDate: updated.checkOutDate.toISOString(),
-          previousProgramCode: previousProgram ?? undefined,
-          datesChanged: Boolean(datesChanged),
-          pax: updated.paxGuests,
-        }).catch((e) => console.error('clinic package fan-out failed', e));
-      }
-    }
   }
 
   // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
@@ -695,7 +716,7 @@ export async function patchReservationFull(
     }
   }
 
-  if (ratePlanChanged || paxSkuChanged) {
+  if (ratePlanChanged || paxSkuChanged || mealPlanChanged) {
     const { recalcReservationDailyRates } = await import(
       '@/lib/services/reservation-pricing.service'
     );
@@ -711,6 +732,36 @@ export async function patchReservationFull(
       where: { id },
       data: { totalAmount: summed._sum.amount },
     });
+  }
+
+  if (datesChanged || paxSkuChanged || foSkuOverride || paxMissingSku || ratePlanChanged) {
+    const { fanOutClinicMedicalPackages } = await import(
+      '@/lib/integration/guest-lifecycle-events'
+    );
+    const updated = await prisma.reservation.findUnique({
+      where: { id },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: { orderBy: { sortOrder: 'asc' }, include: { guest: true } },
+      },
+    });
+    if (updated) {
+      const previousProgram =
+        existing.medicalPackageCode ??
+        existing.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
+        undefined;
+      await fanOutClinicMedicalPackages({
+        status: existing.status,
+        reservationId: id,
+        roomNumber: updated.room?.roomNumber ?? undefined,
+        checkInDate: updated.checkInDate.toISOString(),
+        checkOutDate: updated.checkOutDate.toISOString(),
+        previousProgramCode: previousProgram ?? undefined,
+        datesChanged: Boolean(datesChanged),
+        pax: updated.paxGuests,
+      }).catch((e) => console.error('clinic package fan-out failed', e));
+    }
   }
 
   return getReservationFull(id);
