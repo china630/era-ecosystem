@@ -41,6 +41,7 @@ const KINDS = [
   'EVENT_LINE_KIND',
   'WALKIN_PROFILE',
   'NATIONALITY',
+  'RESERVATION_QUEUE',
 ] as const;
 
 type Kind = (typeof KINDS)[number];

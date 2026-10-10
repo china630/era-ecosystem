@@ -23,7 +23,8 @@ export type HotelLookupKindCode =
   | 'CONCIERGE_CATEGORY'
   | 'EVENT_LINE_KIND'
   | 'WALKIN_PROFILE'
-  | 'NATIONALITY';
+  | 'NATIONALITY'
+  | 'RESERVATION_QUEUE';
 
 type LookupRow = LocalizedCatalogRow & { code: string; name: string; active?: boolean };
 

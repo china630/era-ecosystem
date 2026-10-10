@@ -16,6 +16,9 @@ jest.mock("@/lib/prisma", () => ({
     diagnosticService: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
+    serviceCatalogCache: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   },
 }));
 

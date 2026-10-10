@@ -83,6 +83,84 @@ export async function ensurePartyGuestFolios(reservationId: string) {
   return created;
 }
 
+function partyNameKey(row: { firstName: string | null; lastName: string | null }): string {
+  return [row.firstName, row.lastName].filter(Boolean).join(' ').trim().toLowerCase();
+}
+
+/**
+ * After the party rows are rewritten, keep each guest folio on the new row.
+ * A demoted guest keeps a folio that already has charges or payments.
+ * An empty folio of someone who no longer owns one is removed.
+ */
+export async function reconcilePartyFolios(input: {
+  reservationId: string;
+  previous: Array<{
+    guestId: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    folio: {
+      id: string;
+      charges: { id: string }[];
+      payments: { id: string }[];
+      deposits: { id: string }[];
+    } | null;
+  }>;
+  next: Array<{
+    id: string;
+    guestId: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    ownsFolio: boolean;
+  }>;
+}) {
+  for (const prev of input.previous) {
+    const folio = prev.folio;
+    if (!folio) continue;
+    const prevKey = partyNameKey(prev);
+    const match =
+      input.next.find((row) => prev.guestId && row.guestId === prev.guestId) ??
+      input.next.find((row) => prevKey.length > 0 && partyNameKey(row) === prevKey);
+    const empty =
+      folio.charges.length === 0 && folio.payments.length === 0 && folio.deposits.length === 0;
+    if (!match || (!match.ownsFolio && empty)) {
+      if (empty) await prisma.folio.delete({ where: { id: folio.id } });
+      continue;
+    }
+    await prisma.folio.update({
+      where: { id: folio.id },
+      data: { reservationGuestId: match.id },
+    });
+  }
+
+  const personal = await prisma.folio.count({
+    where: {
+      reservationId: input.reservationId,
+      type: 'GUEST',
+      reservationGuestId: { not: null },
+      status: 'OPEN',
+    },
+  });
+  if (personal < 2) return;
+  const loose = await prisma.folio.findMany({
+    where: {
+      reservationId: input.reservationId,
+      type: 'GUEST',
+      reservationGuestId: null,
+      status: 'OPEN',
+    },
+    include: {
+      charges: { select: { id: true } },
+      payments: { select: { id: true } },
+      deposits: { select: { id: true } },
+    },
+  });
+  for (const folio of loose) {
+    if (folio.charges.length === 0 && folio.payments.length === 0 && folio.deposits.length === 0) {
+      await prisma.folio.delete({ where: { id: folio.id } });
+    }
+  }
+}
+
 /**
  * Resolve which reservation+folioType receives a charge under booking folioMode.
  * INDIVIDUAL → null (caller uses default).

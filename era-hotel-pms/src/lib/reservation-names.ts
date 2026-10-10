@@ -11,6 +11,17 @@ export function isTbaDisplayName(name: string | null | undefined): boolean {
   return TBA_NAME_RE.test(n);
 }
 
+export function partyGuestLabel(
+  guestFullName: string | null | undefined,
+  pax: Array<{ firstName?: string | null; lastName?: string | null }>,
+): string {
+  const names = pax
+    .map((row) => [row.firstName, row.lastName].filter(Boolean).join(' ').trim())
+    .filter(Boolean);
+  if (names.length === 0) return (guestFullName ?? '').trim();
+  return names.join(' / ');
+}
+
 export function paxHasRealName(row: {
   firstName?: string | null;
   lastName?: string | null;

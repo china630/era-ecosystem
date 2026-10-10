@@ -10,6 +10,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { detectSchedulingConflict } from "@/lib/scheduling.service";
 import { isWithinShift } from "@/domain/appointment/practitioner-schedule.service";
+import { electiveDayDenied } from "@/domain/appointment/elective-day";
 
 const bodySchema = z.object({
   scheduledAt: z.string().datetime(),
@@ -40,6 +41,9 @@ export async function PATCH(
     if (!appt) return jsonError("Appointment not found", 404);
 
     const scheduledAt = new Date(body.scheduledAt);
+    if (await electiveDayDenied(scheduledAt)) {
+      return jsonError("Clinic is closed on this date", 409, { code: "CLOSED_DAY" });
+    }
     const resourceId =
       body.resourceId !== undefined ? body.resourceId : appt.resourceId;
 

@@ -36,7 +36,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 |-------|-----|------|
 | Staff `/login` | `POST /api/auth/login`; `getSatelliteSession` reads the cookie | Middleware stamps `x-user-id`, `x-user-role`, `x-era-organization-id` from the token |
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
-| /fo/reservations | reservations grid | Stay list / arrivals — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; default status=LIVE; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
+| /fo/reservations | reservations grid | Stay list — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; chip `queue` (bookings default, `overdue=1` for the night-audit tail); guest names joined with ` / `; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
 | /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state + occupancy-frame strokes; OOO/OOS hidden |
 | /fo/rack | rack | Door tiles; From–To stay overlap; filter pane and grid scroll separately |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |

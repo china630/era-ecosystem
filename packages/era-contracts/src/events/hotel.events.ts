@@ -223,6 +223,8 @@ const guestLifecycleBasePayload = z.object({
   sex: z.string().min(1).optional(),
   /** YYYY-MM-DD */
   birthDate: z.string().min(1).optional(),
+  /** ISO 3166-1 alpha-2 citizenship from the hotel guest. */
+  nationality: z.string().min(2).max(8).optional(),
 });
 
 export const SATELLITE_HOTEL_GUEST_CHECKED_IN =

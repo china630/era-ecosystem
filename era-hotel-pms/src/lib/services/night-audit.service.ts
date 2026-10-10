@@ -3,6 +3,7 @@ import { hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import type { ReservationStatus } from '@prisma/client';
 import { postCharge } from '@/lib/services/folio.service';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
@@ -50,13 +51,7 @@ export async function getNightAuditStatus() {
     },
   });
   const unclosedCashRows = await countUnclosedCashDesk(hotelDateKey(currentBiz));
-  const noShowCandidates = await prisma.reservation.count({
-    where: {
-      status: { in: ['CONFIRMED', 'OPTION'] },
-      checkInDate: { lt: dayStart },
-      roomId: null,
-    },
-  });
+  const deskHold = await listNightAuditDeskHolds(currentBiz);
 
   return {
     openShift,
@@ -71,8 +66,9 @@ export async function getNightAuditStatus() {
     },
     polishPreview: {
       unassignedArrivals,
-      noShowCandidates,
+      noShowCandidates: deskHold.missedCount,
     },
+    deskHold,
     unclosedCashRows,
   };
 }
@@ -158,8 +154,54 @@ export async function listNightAuditRuns(limit = 5) {
   });
 }
 
+const deskHoldSelect = {
+  id: true,
+  checkInDate: true,
+  checkOutDate: true,
+  guest: { select: { fullName: true } },
+  room: { select: { roomNumber: true } },
+} as const;
+
+/** Open arrivals before this business day, and in-house stays whose checkout is due. */
+export async function listNightAuditDeskHolds(businessDate: Date) {
+  const { start, end } = bakuDayBounds(hotelDateKey(businessDate));
+  const openStatuses: ReservationStatus[] = ['CONFIRMED', 'OPTION'];
+  const missedWhere = {
+    status: { in: openStatuses },
+    checkInDate: { lt: start },
+  };
+  const dueWhere = {
+    status: 'IN_HOUSE' as const,
+    checkOutDate: { lt: end },
+  };
+  const [missedArrivals, dueOuts, missedCount, dueCount] = await Promise.all([
+    prisma.reservation.findMany({
+      where: missedWhere,
+      select: deskHoldSelect,
+      orderBy: { checkInDate: 'asc' },
+      take: 100,
+    }),
+    prisma.reservation.findMany({
+      where: dueWhere,
+      select: deskHoldSelect,
+      orderBy: { checkOutDate: 'asc' },
+      take: 100,
+    }),
+    prisma.reservation.count({ where: missedWhere }),
+    prisma.reservation.count({ where: dueWhere }),
+  ]);
+  return { missedArrivals, dueOuts, missedCount, dueCount };
+}
+
 export async function runNightAudit() {
-  const businessDateForCash = hotelDateKey(await getCurrentBusinessDate());
+  const auditDate = await getCurrentBusinessDate();
+  const holds = await listNightAuditDeskHolds(auditDate);
+  if (holds.missedCount > 0 || holds.dueCount > 0) {
+    throw new Error(
+      'Night audit is waiting on the front desk. Resolve missed arrivals and due outs first.',
+    );
+  }
+  const businessDateForCash = hotelDateKey(auditDate);
   const unclosedCashRows = await countUnclosedCashDesk(businessDateForCash);
   if (unclosedCashRows > 0) {
     throw new Error('Close front cash rows for this business date before night audit');
@@ -232,23 +274,13 @@ async function executeLockedNightAudit() {
           : ''),
     );
 
-    const noShowCandidates = await prisma.reservation.findMany({
-      where: {
-        status: { in: ['CONFIRMED', 'OPTION'] },
-        checkInDate: { lt: dayStart },
-        roomId: null,
-      },
-      take: 50,
-    });
-    let noShowCount = 0;
-    for (const r of noShowCandidates) {
-      await prisma.reservation.update({
-        where: { id: r.id },
-        data: { status: 'NO_SHOW' },
-      });
-      noShowCount += 1;
+    const holds = await listNightAuditDeskHolds(date);
+    if (holds.missedCount > 0 || holds.dueCount > 0) {
+      throw new Error(
+        'Night audit is waiting on the front desk. Resolve missed arrivals and due outs first.',
+      );
     }
-    steps.push(`Step 2b: Auto no-show marked: ${noShowCount}`);
+    steps.push('Step 2b: Missed arrivals and due outs — none');
 
     const openFoliosWithBalance = await prisma.folio.findMany({
       where: { status: 'OPEN' },
@@ -300,6 +332,10 @@ async function executeLockedNightAudit() {
     });
 
     for (const res of inHouse) {
+      if (hotelDateKey(res.checkOutDate) <= hotelDateKey(date)) {
+        steps.push(`Step 3: Stay ended — reservation ${res.id}; night not posted`);
+        continue;
+      }
       if (res.ratePlan.medicalFlag) {
         const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
         try {

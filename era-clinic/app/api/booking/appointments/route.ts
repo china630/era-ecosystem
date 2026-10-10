@@ -4,6 +4,7 @@ import { createBookingAppointment } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveAppointmentDurationMinutes } from "@/lib/scheduling.service";
+import { electiveDayDenied } from "@/domain/appointment/elective-day";
 
 const schema = z.object({
   customerRef: z.string().min(1).max(64),
@@ -28,6 +29,12 @@ export async function POST(request: Request) {
     }
 
     const body = schema.parse(await request.json());
+    if (await electiveDayDenied(new Date(body.scheduledAt))) {
+      return NextResponse.json(
+        { error: "Clinic is closed on this date", code: "CLOSED_DAY" },
+        { status: 409 },
+      );
+    }
     let orgId: string | undefined;
     try {
       const id = requestOrganizationId();

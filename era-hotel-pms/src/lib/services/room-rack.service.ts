@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { folioBalance } from '@/lib/services/folio.service';
+import { roomPlanSpans } from '@/lib/services/room-plan-spans';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 
 export type RackReservationSummary = {
@@ -192,6 +194,68 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       shareGender: slice.reservation.shareGender,
       adults: slice.reservation.adults,
     });
+  }
+
+  const sliced = await prisma.reservation.findMany({
+    where: {
+      status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
+      staySlices: { some: {} },
+    },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      adults: true,
+      shareEligible: true,
+      shareGender: true,
+      agencyId: true,
+      sourceId: true,
+      guest: { select: { fullName: true, sex: true } },
+      agency: { select: { code: true } },
+      source: { select: { code: true } },
+      staySlices: { select: { id: true, fromDate: true, toDate: true, roomId: true } },
+      roomChanges: {
+        where: { status: { not: 'CANCELLED' } },
+        select: { fromRoomId: true, effectiveAt: true },
+      },
+    },
+  });
+  for (const stay of sliced) {
+    const { placed } = roomPlanSpans({
+      reservationId: stay.id,
+      roomId: stay.roomId,
+      checkIn: stay.checkInDate,
+      checkOut: stay.checkOutDate,
+      slices: stay.staySlices,
+      changes: stay.roomChanges,
+      dayKey: hotelDateKey,
+    });
+    for (const span of placed) {
+      const door = mapped.find((room) => room.id === span.roomId);
+      if (!door) continue;
+      const checkInDate = span.from.toISOString();
+      if (door.reservations.some((row) => row.id === stay.id && row.checkInDate === checkInDate)) continue;
+      door.reservations.push({
+        id: stay.id,
+        status: stay.status,
+        guest: { fullName: stay.guest.fullName, sex: stay.guest.sex },
+        checkInDate,
+        checkOutDate: span.to.toISOString(),
+        payStatus: 'NONE',
+        folioBalance: 0,
+        procedureCount: 0,
+        procedurePending: 0,
+        agencyId: stay.agencyId,
+        agencyCode: stay.agency?.code ?? null,
+        sourceId: stay.sourceId,
+        sourceCode: stay.source?.code ?? null,
+        shareEligible: stay.shareEligible,
+        shareGender: stay.shareGender,
+        adults: stay.adults,
+      });
+    }
   }
   return mapped;
 }

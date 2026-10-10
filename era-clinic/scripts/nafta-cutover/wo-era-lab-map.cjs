@@ -78,6 +78,8 @@ const ANALYTE_ALIASES = {
   "MXD%": "MXD%",
   MXDPCT: "MXD%",
   MXD: "MXD%",
+  "MXD#": "MXD#",
+  MXDABS: "MXD#",
   "MONO%": "MONO%",
   MONOPCT: "MONO%",
   "EOS%": "EOS%",

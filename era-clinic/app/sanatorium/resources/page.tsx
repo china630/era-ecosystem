@@ -28,7 +28,8 @@ import {
   type ResourceRow,
   type TimeHorizon,
 } from "@/components/sanatorium/ResourceDayMatrix";
-import { bakuDateTimeDisplay, bakuTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeDisplay, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
+import Link from "next/link";
 
 function bakuYmd(d = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -39,19 +40,42 @@ function bakuYmd(d = new Date()) {
   }).format(d);
 }
 
-type AvailSlot = {
-  resourceId: string;
-  resourceCode?: string;
-  resourceName?: string;
-  startsAt: string;
-  endsAt: string;
+type OrderCard = {
+  id: string;
+  patientName: string;
+  patientRefId: string;
+  patientRefCode: string;
+  roomNumber: string | null;
+  procedureName: string;
+  procedureCode: string;
+  status: string;
+  scheduledAt: string;
+  endsAt: string | null;
+  durationMinutes: number;
+  cabinName: string | null;
+  cabinCode: string | null;
+  staffName: string | null;
+  inPackage: boolean;
+  amountNet: number;
+  quotaIndex: number | null;
+  quotaTotal: number | null;
 };
 
-function availableSlotLabel(slot: AvailSlot): string {
-  const cabin = cabinLabel(slot.resourceName, slot.resourceCode);
-  const named = cabin === "—" ? "" : cabin;
-  const when = bakuDateTimeDisplay(slot.startsAt);
-  return named ? `${named} · ${when}` : when;
+function addCivilDays(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y!, (m ?? 1) - 1, (d ?? 1) + days));
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+function chipLabel(ymd: string, today: string): string {
+  const [y, m, d] = ymd.split("-");
+  const short = `${d}.${m}`;
+  if (ymd === today) return short;
+  if (ymd === addCivilDays(today, 1)) return short;
+  return `${short}.${y}`;
 }
 
 export default function SanatoriumResourcesPage() {
@@ -64,14 +88,14 @@ export default function SanatoriumResourcesPage() {
   const [patientFilter, setPatientFilter] = useState("");
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("full");
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
-  const [moveOrder, setMoveOrder] = useState<{
+  const [placing, setPlacing] = useState<{
     id: string;
-    procedureCode?: string;
-    patientRefId?: string;
+    patientName?: string;
+    procedureName?: string;
   } | null>(null);
-  const [avail, setAvail] = useState<AvailSlot[]>([]);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [detailSlot, setDetailSlot] = useState<Slot | null>(null);
+  const [orderCard, setOrderCard] = useState<OrderCard | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
 
   const load = useCallback(async () => {
@@ -88,9 +112,38 @@ export default function SanatoriumResourcesPage() {
   }, [load]);
 
   useEffect(() => {
+    if (!detailSlot?.procedureOrderId) {
+      setOrderCard(null);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/procedures/${detailSlot.procedureOrderId}`)
+      .then(async (res) => (res.ok ? res.json() : null))
+      .then((raw) => {
+        if (cancelled || !raw) return;
+        setOrderCard((raw.data ?? raw) as OrderCard);
+      })
+      .catch(() => {
+        if (!cancelled) setOrderCard(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [detailSlot?.procedureOrderId]);
+
+  useEffect(() => {
+    if (!placing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPlacing(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [placing]);
+
+  useEffect(() => {
     if (!fullscreen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFullscreen(false);
+      if (e.key === "Escape" && !placing) setFullscreen(false);
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -99,7 +152,7 @@ export default function SanatoriumResourcesPage() {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [fullscreen]);
+  }, [fullscreen, placing]);
 
   async function dropOnSlot(resourceId: string, slotTime: string) {
     if (!dragOrderId) return;
@@ -119,24 +172,19 @@ export default function SanatoriumResourcesPage() {
     await load();
   }
 
-  async function openMovePicker(slot: Slot) {
+  function beginPlace(slot: Slot) {
     if (!slot.procedureOrderId) return;
-    setMoveOrder({
+    setDetailSlot(null);
+    setPlacing({
       id: slot.procedureOrderId,
-      procedureCode: slot.procedureCode,
-      patientRefId: slot.patientRefId,
+      patientName: slot.patientName,
+      procedureName: slot.procedureName ?? slot.procedureCode,
     });
-    const params = new URLSearchParams({ date, excludeOrderId: slot.procedureOrderId });
-    if (slot.procedureCode) params.set("procedureCode", slot.procedureCode);
-    if (slot.patientRefId) params.set("patientRefId", slot.patientRefId);
-    const res = await fetch(`/api/sanatorium/resources/available-slots?${params}`);
-    const data = await res.json();
-    setAvail((data.data ?? data).slots ?? []);
   }
 
   async function confirmMove(startsAt: string, resourceId: string) {
-    if (!moveOrder) return;
-    const res = await fetch(`/api/procedures/${moveOrder.id}/reschedule`, {
+    if (!placing) return;
+    const res = await fetch(`/api/procedures/${placing.id}/reschedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ scheduledAt: startsAt, resourceId }),
@@ -146,7 +194,7 @@ export default function SanatoriumResourcesPage() {
       showApiError(data, t("moveFailed"));
       return;
     }
-    setMoveOrder(null);
+    setPlacing(null);
     showSuccess(t("moved"));
     await load();
   }
@@ -251,12 +299,62 @@ export default function SanatoriumResourcesPage() {
         legendLunch: t("legendLunch"),
       }}
       onDragStart={setDragOrderId}
-      onDropFree={(resourceId, slotTimeIso) => void dropOnSlot(resourceId, slotTimeIso)}
-      onMove={(slot) => void openMovePicker(slot)}
+      onDropFree={(resourceId, slotTimeIso) => {
+        if (placing) {
+          void confirmMove(slotTimeIso, resourceId);
+          return;
+        }
+        void dropOnSlot(resourceId, slotTimeIso);
+      }}
+      onFreeClick={
+        placing
+          ? (resourceId, slotTimeIso) => {
+              void confirmMove(slotTimeIso, resourceId);
+            }
+          : undefined
+      }
+      onMove={(slot) => beginPlace(slot)}
       onCancel={(orderId) => setCancelId(orderId)}
-      onSelect={(slot) => setDetailSlot(slot)}
+      onSelect={(slot) => {
+        if (placing) return;
+        setDetailSlot(slot);
+      }}
     />
   );
+
+  const today = todayBakuYmd();
+  const placeDays = Array.from({ length: 7 }, (_, i) => addCivilDays(today, i));
+  const placingBar = placing ? (
+    <div className="mb-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-[13px] font-medium">
+          {t("placingHint", {
+            patient: placing.patientName ?? "—",
+            procedure: placing.procedureName ?? "—",
+          })}
+        </p>
+        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlacing(null)}>
+          {t("placingCancel")}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {placeDays.map((ymd) => (
+          <button
+            key={ymd}
+            type="button"
+            className={ymd === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            onClick={() => setDate(ymd)}
+          >
+            {ymd === today
+              ? t("chipToday")
+              : ymd === addCivilDays(today, 1)
+                ? t("chipTomorrow")
+                : chipLabel(ymd, today)}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
   const closedHint =
     resources.length > 0 && resources.every((r) => (r.slots?.length ?? 0) === 0) ? (
@@ -269,6 +367,7 @@ export default function SanatoriumResourcesPage() {
         <>
           <PageHeader title={t("title")} subtitle={t("subtitle")} />
           {closedHint}
+          {placingBar}
           {filters}
           <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
         </>
@@ -298,6 +397,7 @@ export default function SanatoriumResourcesPage() {
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 py-3 sm:px-6">
             {closedHint}
+            {placingBar}
             {filters}
             <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
           </div>
@@ -305,62 +405,59 @@ export default function SanatoriumResourcesPage() {
       )}
 
       <ModalShell
-        open={Boolean(moveOrder)}
-        title={t("pickSlot")}
-        onClose={() => setMoveOrder(null)}
-        closeLabel="Close"
-      >
-        {avail.length === 0 ? (
-          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("noFreeSlots")}</p>
-        ) : (
-          <ul className="max-h-[50vh] space-y-1 overflow-y-auto text-[13px]">
-            {avail.map((s) => (
-              <li key={`${s.resourceId}-${s.startsAt}`}>
-                <button
-                  type="button"
-                  className={`${SECONDARY_BUTTON_CLASS} w-full !justify-start`}
-                  onClick={() => void confirmMove(s.startsAt, s.resourceId)}
-                >
-                  {availableSlotLabel(s)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ModalShell>
-
-      <ModalShell
         open={Boolean(detailSlot)}
-        title={t("detailsTitle")}
+        title={orderCard?.patientName ?? detailSlot?.patientName ?? t("detailsTitle")}
         onClose={() => setDetailSlot(null)}
-        closeLabel="Close"
+        closeLabel={tc("close")}
+        footer={
+          detailSlot ? (
+            <div className="flex flex-wrap justify-end gap-2">
+              {orderCard ? (
+                <Link href={`/patients/${orderCard.patientRefId}`} className={SECONDARY_BUTTON_CLASS}>
+                  {t("openPatient")}
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => beginPlace(detailSlot)}
+              >
+                {t("move")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  if (!detailSlot.procedureOrderId) return;
+                  setCancelId(detailSlot.procedureOrderId);
+                  setDetailSlot(null);
+                }}
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          ) : null
+        }
       >
         {detailSlot ? (
-          <dl className="grid grid-cols-[8rem_1fr] gap-y-2 text-[13px]">
-            <dt className={TEXT_MUTED_CLASS}>{t("detailPatient")}</dt>
-            <dd className="font-medium">
-              {detailSlot.patientName ?? "—"}
-              {detailSlot.patientRefCode ? ` · ${detailSlot.patientRefCode}` : ""}
-            </dd>
-            <dt className={TEXT_MUTED_CLASS}>{t("detailProcedure")}</dt>
-            <dd className="font-medium">
-              {detailSlot.procedureName ?? detailSlot.procedureCode ?? "—"}
-              {detailSlot.procedureCode ? ` (${detailSlot.procedureCode})` : ""}
-            </dd>
-            <dt className={TEXT_MUTED_CLASS}>{t("detailTime")}</dt>
-            <dd>
-              {bakuDateTimeDisplay(detailSlot.time)}
-              {detailSlot.endsAt
-                ? ` – ${bakuTimeLabel(detailSlot.endsAt)}`
-                : ""}
-            </dd>
-            <dt className={TEXT_MUTED_CLASS}>{t("detailCabin")}</dt>
-            <dd>{cabinLabel(detailSlot.resourceName, detailSlot.resourceCode)}</dd>
-            <dt className={TEXT_MUTED_CLASS}>{t("staff")}</dt>
-            <dd>{detailSlot.staffName ?? "—"}</dd>
-            <dt className={TEXT_MUTED_CLASS}>{t("detailStatus")}</dt>
-            <dd>{detailSlot.status ?? "—"}</dd>
-          </dl>
+          <ProcedureCardBody
+            card={orderCard}
+            slot={detailSlot}
+            statusLabel={(status) => procedureStatusLabel(t, status)}
+            labels={{
+              room: t("detailRoom"),
+              procedure: t("detailProcedure"),
+              time: t("detailTime"),
+              cabin: t("detailCabin"),
+              staff: t("staff"),
+              staffMissing: t("staffMissing"),
+              status: t("detailStatus"),
+              package: t("detailPackage"),
+              paid: t("detailPaid"),
+              quota: t("detailQuota"),
+              minutes: t("minutesShort"),
+            }}
+          />
         ) : null}
       </ModalShell>
 
@@ -373,5 +470,121 @@ export default function SanatoriumResourcesPage() {
         />
       </ModalShell>
     </>
+  );
+}
+
+function procedureStatusLabel(
+  t: {
+    (key: "orderStatus.SCHEDULED"): string;
+    (key: "orderStatus.CHECKED_IN"): string;
+    (key: "orderStatus.COMPLETED"): string;
+    (key: "orderStatus.CANCELLED"): string;
+    (key: "orderStatus.NO_SHOW"): string;
+    (key: "orderStatus.PROPOSED"): string;
+    (key: "orderStatus.PENDING_PAY"): string;
+  },
+  status: string | null | undefined,
+): string {
+  switch (status) {
+    case "SCHEDULED":
+      return t("orderStatus.SCHEDULED");
+    case "CHECKED_IN":
+      return t("orderStatus.CHECKED_IN");
+    case "COMPLETED":
+      return t("orderStatus.COMPLETED");
+    case "CANCELLED":
+      return t("orderStatus.CANCELLED");
+    case "NO_SHOW":
+      return t("orderStatus.NO_SHOW");
+    case "PROPOSED":
+      return t("orderStatus.PROPOSED");
+    case "PENDING_PAY":
+      return t("orderStatus.PENDING_PAY");
+    default:
+      return status?.trim() || "—";
+  }
+}
+
+function ProcedureCardBody({
+  card,
+  slot,
+  statusLabel,
+  labels,
+}: {
+  card: OrderCard | null;
+  slot: Slot;
+  statusLabel: (status: string | null | undefined) => string;
+  labels: {
+    room: string;
+    procedure: string;
+    time: string;
+    cabin: string;
+    staff: string;
+    staffMissing: string;
+    status: string;
+    package: string;
+    paid: string;
+    quota: string;
+    minutes: string;
+  };
+}) {
+  const name = card?.procedureName ?? slot.procedureName ?? slot.procedureCode ?? "—";
+  const code = card?.procedureCode ?? slot.procedureCode;
+  const when = card?.scheduledAt ?? slot.time;
+  const ends = card?.endsAt ?? slot.endsAt;
+  const duration = card?.durationMinutes ?? slot.durationMinutes;
+  const cabin = cabinLabel(
+    card?.cabinName ?? slot.resourceName,
+    card?.cabinCode ?? slot.resourceCode,
+  );
+  const staff = card?.staffName ?? slot.staffName;
+  const status = card?.status ?? slot.status;
+  return (
+    <div className="space-y-3 text-[13px]">
+      <div>
+        <p className="m-0 text-base font-semibold">{name}</p>
+        {code ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{code}</p> : null}
+      </div>
+      <dl className="grid grid-cols-[8rem_1fr] gap-y-2">
+        <dt className={TEXT_MUTED_CLASS}>{labels.room}</dt>
+        <dd>{card?.roomNumber ?? "—"}</dd>
+        <dt className={TEXT_MUTED_CLASS}>{labels.time}</dt>
+        <dd>
+          {bakuDateTimeDisplay(when)}
+          {ends ? ` – ${bakuTimeLabel(ends)}` : ""}
+          {duration ? ` · ${duration} ${labels.minutes}` : ""}
+        </dd>
+        <dt className={TEXT_MUTED_CLASS}>{labels.cabin}</dt>
+        <dd>{cabin}</dd>
+        <dt className={TEXT_MUTED_CLASS}>{labels.staff}</dt>
+        <dd>{staff?.trim() ? staff : labels.staffMissing}</dd>
+        <dt className={TEXT_MUTED_CLASS}>{labels.status}</dt>
+        <dd className="font-medium">{statusLabel(status)}</dd>
+        {card ? (
+          <>
+            <dt className={TEXT_MUTED_CLASS}>{card.inPackage ? labels.package : labels.paid}</dt>
+            <dd>
+              {card.inPackage
+                ? labels.package
+                : `${Number.isFinite(card.amountNet) ? card.amountNet.toFixed(2) : "0.00"} AZN`}
+            </dd>
+          </>
+        ) : null}
+        {card?.quotaIndex && card.quotaTotal ? (
+          <>
+            <dt className={TEXT_MUTED_CLASS}>{labels.quota}</dt>
+            <dd>
+              {card.quotaIndex} / {card.quotaTotal}
+            </dd>
+          </>
+        ) : null}
+      </dl>
+      {card ? (
+        <p className={`m-0 ${TEXT_MUTED_CLASS}`}>
+          {card.patientRefCode}
+          {card.roomNumber ? ` · ${card.roomNumber}` : ""}
+        </p>
+      ) : null}
+    </div>
   );
 }

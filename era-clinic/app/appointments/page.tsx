@@ -106,7 +106,11 @@ export default function AppointmentsPage() {
     const data = await res.json();
     setDragId(null);
     if (!res.ok) {
-      showApiError(data, t("rescheduleFailed"));
+      if (data?.code === "CLOSED_DAY") {
+        showApiError({ error: t("closedDay") }, t("closedDay"));
+      } else {
+        showApiError(data, t("rescheduleFailed"));
+      }
       return;
     }
     showSuccess(t("rescheduled"));

@@ -14,6 +14,7 @@ type Props = {
   /** Open only the procedure plan, without the patient card behind it. */
   planOnly?: boolean;
   onOpenDayPlan?: (episodeId: string) => void;
+  onCareTeamSize?: (episodeId: string, count: number) => void;
 };
 
 export function PatientCardModal({
@@ -24,6 +25,7 @@ export function PatientCardModal({
   initialEpisodeId,
   planOnly = false,
   onOpenDayPlan,
+  onCareTeamSize,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
@@ -59,6 +61,7 @@ export function PatientCardModal({
         panel={panel}
         initialEpisodeId={initialEpisodeId}
         onOpenDayPlan={onOpenDayPlan}
+        onCareTeamSize={onCareTeamSize}
       />
     </ModalShell>
   );

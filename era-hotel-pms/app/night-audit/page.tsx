@@ -10,15 +10,13 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { PageHeader } from '@era/satellite-kit/ui';
-import { useAuth } from '@/hooks/useAuth';
-import { PERMISSIONS } from '@/lib/auth/permissions';
-import { hotelDateKey } from '@/lib/hotel-calendar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 
 interface Reservation {
   id: string;
   status: string;
   checkInDate: string;
+  checkOutDate: string;
   guest: { fullName: string };
   room: { roomNumber: string } | null;
 }
@@ -58,6 +56,12 @@ interface NightAuditStatus {
     unassignedArrivals: number;
     noShowCandidates: number;
   };
+  deskHold?: {
+    missedArrivals: Reservation[];
+    dueOuts: Reservation[];
+    missedCount: number;
+    dueCount: number;
+  };
   unclosedCashRows?: number;
   posShiftStatus?: {
     hasOpenShift: boolean;
@@ -76,26 +80,16 @@ interface NightAuditRunRow {
 }
 
 export default function OperationsPage() {
-  const { can } = useAuth();
   const t = useTranslations('operations');
   const tc = useTranslations('common');
   const [status, setStatus] = useState<NightAuditStatus | null>(null);
   const [runs, setRuns] = useState<NightAuditRunRow[]>([]);
-  const [noShows, setNoShows] = useState<Reservation[]>([]);
   const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tourismFailed, setTourismFailed] = useState<
     { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
   >([]);
-
-  const loadNoShows = useCallback(async () => {
-    const res = await fetch('/api/reservations?status=CONFIRMED');
-    if (!res.ok) return;
-    const all: Reservation[] = await res.json();
-    const today = hotelDateKey();
-    setNoShows(all.filter((r) => !r.room && r.checkInDate.slice(0, 10) < today));
-  }, []);
 
   const loadStatus = useCallback(async () => {
     const res = await fetch('/api/night-audit/status');
@@ -116,8 +110,7 @@ export default function OperationsPage() {
     loadStatus();
     loadRuns();
     loadTourism();
-    if (can(PERMISSIONS.RESERVATIONS_CANCEL)) loadNoShows();
-  }, [loadStatus, loadRuns, loadTourism, loadNoShows, can]);
+  }, [loadStatus, loadRuns, loadTourism]);
 
   async function retryTourism(id: string) {
     const res = await fetch(`/api/tourism/${id}/retry`, { method: 'POST' });
@@ -130,7 +123,10 @@ export default function OperationsPage() {
   const pendingCount = status?.pendingSettlement?.count ?? 0;
   const pendingBlocksNa =
     pendingCount > 0 && status?.pendingSettlement?.policy === 'BLOCK';
-  const naBlocked = cashBlocked || pendingBlocksNa;
+  const missedCount = status?.deskHold?.missedCount ?? 0;
+  const dueOutCount = status?.deskHold?.dueCount ?? 0;
+  const deskBlocked = missedCount > 0 || dueOutCount > 0;
+  const naBlocked = cashBlocked || pendingBlocksNa || deskBlocked;
 
   async function runNightAudit() {
     setBusy(true);
@@ -258,9 +254,23 @@ export default function OperationsPage() {
                   })}
                 </li>
                 <li>
-                  {t('noShowCandidatesCount', {
-                    count: status.polishPreview.noShowCandidates,
-                  })}
+                  {t('deskHoldMissed', { count: missedCount })}{' '}
+                  {missedCount > 0 ? (
+                    <Link
+                      href="/fo/reservations?queue=bookings&overdue=1"
+                      className="text-[#2980B9] hover:underline"
+                    >
+                      {t('openMissedList')}
+                    </Link>
+                  ) : null}
+                </li>
+                <li>
+                  {t('deskHoldDue', { count: dueOutCount })}{' '}
+                  {dueOutCount > 0 ? (
+                    <Link href="/fo/reservations?queue=inHouse" className="text-[#2980B9] hover:underline">
+                      {t('openInHouseList')}
+                    </Link>
+                  ) : null}
                 </li>
               </ul>
             </li>
@@ -338,18 +348,20 @@ export default function OperationsPage() {
         reservationId={openReservationId}
         onClose={() => {
           setOpenReservationId(null);
-          void loadNoShows();
+          void loadStatus();
         }}
       />
 
-      {can(PERMISSIONS.RESERVATIONS_CANCEL) && (
+      {deskBlocked ? (
         <section className={`${CARD_CONTAINER_CLASS} p-4`}>
           <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('noShowCandidates')}</h2>
           <ul className="space-y-2 text-[13px] text-[#34495E]">
-            {noShows.map((r) => (
+            {(status?.deskHold?.missedArrivals ?? []).map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-2">
                 <span>
-                  {r.guest.fullName} — {t('due')} {r.checkInDate.slice(0, 10)}
+                  {r.guest.fullName}
+                  {r.room?.roomNumber ? ` · ${r.room.roomNumber}` : ''} — {t('due')}{' '}
+                  {String(r.checkInDate).slice(0, 10)}
                 </span>
                 <button
                   type="button"
@@ -360,10 +372,24 @@ export default function OperationsPage() {
                 </button>
               </li>
             ))}
-            {noShows.length === 0 && <li className="text-[#7F8C8D]">{tc('none')}</li>}
+            {(status?.deskHold?.dueOuts ?? []).map((r) => (
+              <li key={`out-${r.id}`} className="flex flex-wrap items-center gap-2">
+                <span>
+                  {r.guest.fullName}
+                  {r.room?.roomNumber ? ` · ${r.room.roomNumber}` : ''} — {String(r.checkOutDate).slice(0, 10)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOpenReservationId(r.id)}
+                  className={SECONDARY_BUTTON_CLASS}
+                >
+                  {t('openReservation')}
+                </button>
+              </li>
+            ))}
           </ul>
         </section>
-      )}
+      ) : null}
 
     </>
   );
