@@ -55,12 +55,6 @@ export async function resolveSellableSku(serviceCode: string): Promise<string> {
   });
   const fromProcedure = procedure?.financeSku?.trim();
   if (fromProcedure) return fromProcedure;
-  const catalog = await prisma.serviceCatalogCache.findFirst({
-    where: { code },
-    select: { code: true },
-  });
-  const fromCatalog = catalog?.code?.trim();
-  if (fromCatalog) return fromCatalog;
   const diagnostic = await prisma.diagnosticService.findFirst({
     where: { OR: [{ code }, { serviceCode: code }] },
     select: { financeSku: true },
@@ -71,7 +65,7 @@ export async function resolveSellableSku(serviceCode: string): Promise<string> {
     where: { code },
     select: { code: true },
   });
-  if (catalog?.code) return catalog.code;
+  if (catalog?.code?.trim()) return catalog.code.trim();
   throw new Error(`Finance SKU is required for ${code}`);
 }
 
