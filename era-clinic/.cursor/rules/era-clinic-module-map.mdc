@@ -121,7 +121,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/procedures/[id]/complete` | session NURSE — stuck `CHECKED_IN` fallback only (happy path = auto by `endsAt`) |
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
 | `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED`; Wave 4 `byOrganization` |
-| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products` (`isService=false` components, `isService=true` sellable sku on `ProcedureType` and `DiagnosticService`); complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
+| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products?isService=false` for components. Sellable SKU on `ProcedureType` and `DiagnosticService` searches `GET /api/admin/catalog?q=` and opens on the existing catalog code when `financeSku` is empty |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
 | `/api/cron/episode-walkin-close` | Bearer `PLATFORM_CRON_SECRET` — idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55; refuses live procedures/labs); path→module `clinic_inpatient` |
 | `GET/POST/PATCH/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |

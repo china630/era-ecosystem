@@ -344,27 +344,34 @@ export default function MasterDataPage() {
     if (!modalOpen || tab !== "procedureTypes") return;
     let cancelled = false;
     void (async () => {
-      const params = new URLSearchParams({ limit: "50", isService: "true" });
+      const params = new URLSearchParams({ limit: "50" });
       if (debouncedFinanceServiceQ.trim()) params.set("q", debouncedFinanceServiceQ.trim());
-      const res = await fetch(`/api/admin/finance-products?${params}`);
+      const res = await fetch(`/api/admin/catalog?${params}`);
       if (!res.ok || cancelled) return;
       const parsed = await res.json();
-      const payload = (parsed.data ?? parsed) as {
-        items?: Array<{ value: string; label: string; sku?: string }>;
-      };
+      const rows = (parsed.data ?? parsed) as Array<{
+        code: string;
+        description?: string | null;
+        descriptionAz?: string | null;
+        descriptionRu?: string | null;
+        descriptionEn?: string | null;
+      }>;
       if (!cancelled) {
         setFinanceServiceOptions(
-          (payload.items ?? []).map((p) => ({
-            value: p.sku ?? p.value,
-            label: p.label,
-          })),
+          (Array.isArray(rows) ? rows : []).map((row) => {
+            const name = localizedCatalogDescription(row, locale);
+            return {
+              value: row.code,
+              label: name && name !== row.code ? `${row.code} — ${name}` : row.code,
+            };
+          }),
         );
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [modalOpen, tab, debouncedFinanceServiceQ]);
+  }, [modalOpen, tab, debouncedFinanceServiceQ, locale]);
 
   useEffect(() => {
     setQ("");
@@ -601,13 +608,13 @@ export default function MasterDataPage() {
       patientRestMinutes: String(row.patientRestMinutes ?? 15),
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
-      financeSku: row.financeSku ?? "",
+      financeSku: row.financeSku?.trim() || row.code,
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
     setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
-    setFinanceServiceQ("");
+    setFinanceServiceQ(row.financeSku?.trim() || row.code);
     setMdmStatus(null);
     setGlobalPersonId(null);
     setIdentifierTypes([]);
@@ -1216,13 +1223,23 @@ export default function MasterDataPage() {
                   const match = catalogOptions.find((c) => c.code === code);
                   if (match) {
                     const gate = inferPhysioTypeGate(match.code, match.description);
-                    setForm({ ...form, code: match.code });
+                    const sku = form.financeSku ?? "";
+                    const follow = !sku.trim() || sku === (form.code ?? "");
+                    if (follow) setFinanceServiceQ(match.code);
+                    setForm({
+                      ...form,
+                      code: match.code,
+                      ...(follow ? { financeSku: match.code } : {}),
+                    });
                     setNeedsSite(gate.needsSite);
                     setPhysioOrderFields(gate.fields);
                     setNeedsExtraFields(gate.fields.length > 0);
                     setAllowedSiteCodes(gate.allowedSiteCodes);
                   } else {
-                    setForm({ ...form, code });
+                    const sku = form.financeSku ?? "";
+                    const follow = !sku.trim() || sku === (form.code ?? "");
+                    if (follow) setFinanceServiceQ(code);
+                    setForm({ ...form, code, ...(follow ? { financeSku: code } : {}) });
                   }
                 }}
               />

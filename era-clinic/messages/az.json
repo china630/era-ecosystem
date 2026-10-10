@@ -1332,6 +1332,8 @@
     "category": "Kateqoriya",
     "serviceCode": "Xidmət (qiymət) kodu",
     "serviceCodeHint": "Maliyyə xidmət kataloqu ilə bağlı qiymətləndirmə kodu",
+    "requiredFields": "Doldurun: {fields}",
+    "codeExists": "Kod {code} artıq var",
     "financeSku": "Maliyyə SKU",
     "includes": "Daxildir (paket kodları)",
     "includesHint": "Paket tərkibi üçün vergüllə ayrılmış alt xidmət kodları",

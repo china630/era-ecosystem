@@ -1344,6 +1344,8 @@
     "category": "Category",
     "serviceCode": "Service (price) code",
     "serviceCodeHint": "Code linked to the finance service catalog for pricing",
+    "requiredFields": "Fill in: {fields}",
+    "codeExists": "Code {code} already exists",
     "financeSku": "Finance SKU",
     "includes": "Includes (package codes)",
     "includesHint": "Comma-separated child service codes for package composition",

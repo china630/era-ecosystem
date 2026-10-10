@@ -40,6 +40,7 @@ import {
   TEXT_SUCCESS_CLASS,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
+import { localizedCatalogDescription } from "@era/clinic-domain";
 import type { CatalogFieldDef, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import {
@@ -188,6 +189,7 @@ export default function DiagnosticCatalogAdminPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [financeServiceOptions, setFinanceServiceOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [financeSkuPinned, setFinanceSkuPinned] = useState<{ value: string; label: string } | null>(null);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
   const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
   const [dictionaryQ, setDictionaryQ] = useState("");
@@ -223,27 +225,39 @@ export default function DiagnosticCatalogAdminPage() {
     if (!modalOpen || tab !== "services") return;
     let cancelled = false;
     void (async () => {
-      const params = new URLSearchParams({ limit: "50", isService: "true" });
+      const params = new URLSearchParams({ limit: "50" });
       if (debouncedFinanceServiceQ.trim()) params.set("q", debouncedFinanceServiceQ.trim());
-      const res = await fetch(`/api/admin/finance-products?${params}`);
+      const res = await fetch(`/api/admin/catalog?${params}`);
       if (!res.ok || cancelled) return;
       const parsed = await res.json();
-      const payload = (parsed.data ?? parsed) as {
-        items?: Array<{ value: string; label: string; sku?: string }>;
-      };
+      const rows = (parsed.data ?? parsed) as Array<{
+        code: string;
+        description?: string | null;
+        descriptionAz?: string | null;
+        descriptionRu?: string | null;
+        descriptionEn?: string | null;
+      }>;
       if (!cancelled) {
         setFinanceServiceOptions(
-          (payload.items ?? []).map((item) => ({
-            value: item.sku ?? item.value,
-            label: item.label,
-          })),
+          (Array.isArray(rows) ? rows : []).map((row) => {
+            const name = localizedCatalogDescription(row, locale);
+            return {
+              value: row.code,
+              label: name && name !== row.code ? `${row.code} — ${name}` : row.code,
+            };
+          }),
         );
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [modalOpen, tab, debouncedFinanceServiceQ]);
+  }, [modalOpen, tab, debouncedFinanceServiceQ, locale]);
+
+  useEffect(() => {
+    const hit = financeServiceOptions.find((option) => option.value === form.financeSku);
+    if (hit) setFinanceSkuPinned(hit);
+  }, [financeServiceOptions, form.financeSku]);
 
   useEffect(() => {
     if (!analyteEditOpen || editingId) return;
@@ -457,7 +471,8 @@ export default function DiagnosticCatalogAdminPage() {
 
   function openEditService(row: DiagnosticService) {
     setEditingId(row.id);
-    setFinanceServiceQ("");
+    const linkedSku = row.financeSku?.trim() || row.serviceCode?.trim() || row.code;
+    setFinanceServiceQ(linkedSku);
     let includesText = "";
     try {
       includesText = row.includesJson ? (JSON.parse(row.includesJson) as string[]).join(", ") : "";
@@ -473,7 +488,7 @@ export default function DiagnosticCatalogAdminPage() {
       titleRu: row.titleRu,
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
-      financeSku: row.financeSku ?? "",
+      financeSku: linkedSku,
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
@@ -503,6 +518,25 @@ export default function DiagnosticCatalogAdminPage() {
 
   async function save() {
     if (tab === "modalities") {
+      const missingModality = [
+        !editingId && !form.code?.trim() ? t("code") : "",
+        !form.kind?.trim() ? t("kind") : "",
+        !form.titleEn?.trim() ? t("titleEn") : "",
+        !form.titleRu?.trim() ? t("titleRu") : "",
+        !form.titleAz?.trim() ? t("titleAz") : "",
+      ].filter(Boolean);
+      if (missingModality.length > 0) {
+        showApiError({ error: t("requiredFields", { fields: missingModality.join(", ") }) });
+        return;
+      }
+      const modalityCode = form.code?.trim() ?? "";
+      if (
+        !editingId &&
+        modalities.some((row) => row.code.toLowerCase() === modalityCode.toLowerCase())
+      ) {
+        showApiError({ error: t("codeExists", { code: modalityCode }) });
+        return;
+      }
       const payload = {
         code: form.code?.trim(),
         kind: form.kind?.trim(),
@@ -521,7 +555,12 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        const failed = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+        if (failed.code === "CODE_EXISTS") {
+          showApiError({ error: t("codeExists", { code: form.code?.trim() ?? "" }) });
+          return;
+        }
+        showApiError(failed, tc("saveFailed"));
         return;
       }
       setModalOpen(false);
@@ -531,6 +570,27 @@ export default function DiagnosticCatalogAdminPage() {
     }
 
     if (tab === "services") {
+      const missingService = [
+        !editingId && !form.code?.trim() ? t("code") : "",
+        !form.modalityId?.trim() ? t("modality") : "",
+        !form.kind?.trim() ? t("kind") : "",
+        !form.titleEn?.trim() ? t("titleEn") : "",
+        !form.titleRu?.trim() ? t("titleRu") : "",
+        !form.titleAz?.trim() ? t("titleAz") : "",
+        !form.serviceCode?.trim() ? t("serviceCode") : "",
+      ].filter(Boolean);
+      if (missingService.length > 0) {
+        showApiError({ error: t("requiredFields", { fields: missingService.join(", ") }) });
+        return;
+      }
+      const code = form.code?.trim() ?? "";
+      if (
+        !editingId &&
+        services.some((row) => row.code.toLowerCase() === code.toLowerCase())
+      ) {
+        showApiError({ error: t("codeExists", { code }) });
+        return;
+      }
       const includes = form.includes?.trim()
         ? form.includes.split(",").map((c) => c.trim()).filter(Boolean)
         : null;
@@ -557,7 +617,12 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        const failed = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+        if (failed.code === "CODE_EXISTS") {
+          showApiError({ error: t("codeExists", { code: form.code?.trim() ?? "" }) });
+          return;
+        }
+        showApiError(failed, tc("saveFailed"));
         return;
       }
       setModalOpen(false);
@@ -568,6 +633,25 @@ export default function DiagnosticCatalogAdminPage() {
 
   async function saveAnalyte() {
     if (!selectedServiceId) return;
+      const missingAnalyte = [
+        !form.code?.trim() ? t("code") : "",
+        !form.labelEn?.trim() ? t("labelEn") : "",
+        !form.labelRu?.trim() ? t("labelRu") : "",
+        !form.labelAz?.trim() ? t("labelAz") : "",
+      ].filter(Boolean);
+      if (missingAnalyte.length > 0) {
+        showApiError({ error: t("requiredFields", { fields: missingAnalyte.join(", ") }) });
+        return;
+      }
+      const analyteCode = form.code?.trim() ?? "";
+      if (
+        analytes.some(
+          (row) => row.id !== editingId && row.code.toLowerCase() === analyteCode.toLowerCase(),
+        )
+      ) {
+        showApiError({ error: t("codeExists", { code: analyteCode }) });
+        return;
+      }
       let valueOptions;
       if (form.valueOptionsJson?.trim()) {
         try {
@@ -608,7 +692,12 @@ export default function DiagnosticCatalogAdminPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        const failed = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+        if (failed.code === "CODE_EXISTS") {
+          showApiError({ error: t("codeExists", { code: form.code?.trim() ?? "" }) });
+          return;
+        }
+        showApiError(failed, tc("saveFailed"));
         return;
       }
       setAnalyteEditOpen(false);
@@ -1184,6 +1273,7 @@ export default function DiagnosticCatalogAdminPage() {
                 <Field
                   label={t("code")}
                   preset="code"
+                  required
                   value={form.code ?? ""}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                 />
@@ -1191,6 +1281,7 @@ export default function DiagnosticCatalogAdminPage() {
               <FieldSelect
                 label={t("kind")}
                 preset="select"
+                required
                 value={form.kind ?? ""}
                 onChange={(e) => setForm({ ...form, kind: e.target.value })}
               >
@@ -1203,18 +1294,21 @@ export default function DiagnosticCatalogAdminPage() {
               <Field
                 label={t("titleEn")}
                 preset="shortText"
+                required
                 value={form.titleEn ?? ""}
                 onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
               />
               <Field
                 label={t("titleRu")}
                 preset="shortText"
+                required
                 value={form.titleRu ?? ""}
                 onChange={(e) => setForm({ ...form, titleRu: e.target.value })}
               />
               <Field
                 label={t("titleAz")}
                 preset="shortText"
+                required
                 value={form.titleAz ?? ""}
                 onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
               />
@@ -1233,6 +1327,7 @@ export default function DiagnosticCatalogAdminPage() {
                 <Field
                   label={t("code")}
                   preset="code"
+                  required
                   value={form.code ?? ""}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                 />
@@ -1240,6 +1335,7 @@ export default function DiagnosticCatalogAdminPage() {
               <FieldSelect
                 label={t("modality")}
                 preset="select"
+                required
                 value={form.modalityId ?? ""}
                 onChange={(e) => setForm({ ...form, modalityId: e.target.value })}
               >
@@ -1260,6 +1356,7 @@ export default function DiagnosticCatalogAdminPage() {
                 <FieldSelect
                   label={t("kind")}
                   preset="select"
+                  required
                   value={form.kind ?? ""}
                   onChange={(e) => setForm({ ...form, kind: e.target.value })}
                 >
@@ -1273,27 +1370,44 @@ export default function DiagnosticCatalogAdminPage() {
               <Field
                 label={t("titleEn")}
                 preset="shortText"
+                required
                 value={form.titleEn ?? ""}
                 onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
               />
               <Field
                 label={t("titleRu")}
                 preset="shortText"
+                required
                 value={form.titleRu ?? ""}
                 onChange={(e) => setForm({ ...form, titleRu: e.target.value })}
               />
               <Field
                 label={t("titleAz")}
                 preset="shortText"
+                required
                 value={form.titleAz ?? ""}
                 onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
               />
               <Field
                 label={t("serviceCode")}
                 preset="code"
+                required
                 hint={t("serviceCodeHint")}
                 value={form.serviceCode ?? ""}
-                onChange={(e) => setForm({ ...form, serviceCode: e.target.value })}
+                onChange={(e) => {
+                  const serviceCode = e.target.value;
+                  setForm((prev) => {
+                    const previous = prev.serviceCode ?? "";
+                    const sku = prev.financeSku ?? "";
+                    const follow = !sku.trim() || sku === previous;
+                    if (follow) setFinanceServiceQ(serviceCode);
+                    return {
+                      ...prev,
+                      serviceCode,
+                      ...(follow ? { financeSku: serviceCode } : {}),
+                    };
+                  });
+                }}
               />
               <CatalogField
                 kind="SEARCHABLE"
@@ -1304,7 +1418,12 @@ export default function DiagnosticCatalogAdminPage() {
                 options={
                   form.financeSku &&
                   !financeServiceOptions.some((option) => option.value === form.financeSku)
-                    ? [{ value: form.financeSku, label: form.financeSku }, ...financeServiceOptions]
+                    ? [
+                        financeSkuPinned?.value === form.financeSku
+                          ? financeSkuPinned
+                          : { value: form.financeSku, label: form.financeSku },
+                        ...financeServiceOptions,
+                      ]
                     : financeServiceOptions
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
@@ -1457,6 +1576,7 @@ export default function DiagnosticCatalogAdminPage() {
               <Field
                 label={t("code")}
                 preset="code"
+                required
                 value={form.code ?? ""}
                 onChange={(e) => setForm({ ...form, code: e.target.value })}
               />
@@ -1490,18 +1610,21 @@ export default function DiagnosticCatalogAdminPage() {
               <Field
                 label={t("labelEn")}
                 preset="shortText"
+                required
                 value={form.labelEn ?? ""}
                 onChange={(e) => setForm({ ...form, labelEn: e.target.value })}
               />
               <Field
                 label={t("labelRu")}
                 preset="shortText"
+                required
                 value={form.labelRu ?? ""}
                 onChange={(e) => setForm({ ...form, labelRu: e.target.value })}
               />
               <Field
                 label={t("labelAz")}
                 preset="shortText"
+                required
                 value={form.labelAz ?? ""}
                 onChange={(e) => setForm({ ...form, labelAz: e.target.value })}
               />
