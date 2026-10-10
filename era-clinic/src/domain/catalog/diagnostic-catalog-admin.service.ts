@@ -174,6 +174,28 @@ export async function deleteService(ctx: AuditCtx, id: string) {
 // Analytes (lab panel components) — belong to a DiagnosticService
 // ---------------------------------------------------------------------------
 
+export async function searchAnalyteDictionary(q: string, limit = 30) {
+  const take = Math.min(Math.max(limit, 1), 50);
+  const query = q.trim();
+  return prisma.analyteDictionary.findMany({
+    where: {
+      active: true,
+      ...(query
+        ? {
+            OR: [
+              { code: { contains: query, mode: "insensitive" } },
+              { labelEn: { contains: query, mode: "insensitive" } },
+              { labelRu: { contains: query, mode: "insensitive" } },
+              { labelAz: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { code: "asc" },
+    take,
+  });
+}
+
 export async function listAnalytes(serviceId: string) {
   return prisma.diagnosticAnalyte.findMany({
     where: { serviceId },

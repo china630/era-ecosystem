@@ -33,6 +33,19 @@ export function jsonError(
   return NextResponse.json({ error: message, ...extra }, { status });
 }
 
+function isCodeUniqueViolation(err: unknown): boolean {
+  if (!(err instanceof Error) || !("code" in err) || (err as { code?: string }).code !== "P2002") {
+    return false;
+  }
+  const target = (err as { meta?: { target?: unknown } }).meta?.target;
+  const tokens = Array.isArray(target)
+    ? target.map((part) => String(part))
+    : typeof target === "string"
+      ? target.split(/[^A-Za-z0-9]+/)
+      : [];
+  return tokens.includes("code");
+}
+
 export function handleRouteError(err: unknown) {
   if (isSatelliteBillingBlockedError(err)) {
     return NextResponse.json(
@@ -92,6 +105,9 @@ export function handleRouteError(err: unknown) {
         ...(testCode ? { testCode } : {}),
       });
     }
+  }
+  if (isCodeUniqueViolation(err)) {
+    return jsonError("Code already exists", 409, { code: "CODE_EXISTS" });
   }
   const msg = err instanceof Error ? err.message : "Internal error";
   if (/Failed to parse body as FormData/i.test(msg)) {

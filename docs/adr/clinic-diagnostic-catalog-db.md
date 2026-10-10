@@ -15,7 +15,7 @@ esultJson blob. Filtering by modality, paginating with accurate totals, and trea
 
 ### Catalog source of truth
 
-1. Tables Modality, DiagnosticService, DiagnosticAnalyte, DiagnosticMetaField hold the **org overlay** in Postgres. Satellite templates (`ModalityTemplate` / `DiagnosticServiceTemplate`) are unscoped; see [clinic-catalog-template-overlay.md](./clinic-catalog-template-overlay.md).
+1. Tables Modality, DiagnosticService, DiagnosticAnalyte, DiagnosticMetaField hold the **org overlay** in Postgres. Satellite templates (`ModalityTemplate` / `DiagnosticServiceTemplate`) are unscoped; see [clinic-catalog-template-overlay.md](./clinic-catalog-template-overlay.md). `AnalyteDictionary` is a second unscoped reference (like `IcdCode`): one row per analyte code, seeded from lab panels. A panel analyte is still an org copy so the clinic can keep a different range.
 2. JSON seed bootstraps **templates** via `db:seed` (`seed-diagnostic-catalog-base.cjs`). Nafta overlay is import / `db:seed:diagnostic-catalog:nafta`, never droplet entrypoint.
 3. SatAdmin CRUD at /admin/diagnostic-catalog (API under /api/admin/diagnostic-catalog/*) mutates the org overlay and invalidates the per-org catalog cache.
 4. getDiagnosticCatalog() / findCatalogItem() are async DB readers with per-org cache; copy-if-empty runs when overlay is empty.

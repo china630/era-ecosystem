@@ -18,6 +18,8 @@ seedDiagnosticBase(prisma)
         JSON.stringify(summary.byKind) +
         " analytes=" +
         summary.analytes +
+        " dictionary=" +
+        summary.dictionary +
         " metaFields=" +
         summary.metaFields,
     );

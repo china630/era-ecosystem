@@ -65,6 +65,47 @@ const episodeInclude = {
   labOrders: true,
 } as const;
 
+function looseGuestName(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function guestNamesMatch(a: string, b: string): boolean {
+  const left = looseGuestName(a);
+  const right = looseGuestName(b);
+  if (!left || !right) return false;
+  if (left === right || left.includes(right) || right.includes(left)) return true;
+  const leftParts = left.split(" ");
+  const rightParts = new Set(right.split(" "));
+  return leftParts.some((part) => part.length > 2 && rightParts.has(part));
+}
+
+/** An older check-in stored the episode on the reservation id, not the guest-row key. */
+async function findReusableOpenEpisode(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: any,
+  input: { organizationId: string; reservationId: string; guestName: string },
+) {
+  const rows = await client.clinicalEpisode.findMany({
+    where: {
+      organizationId: input.organizationId,
+      reservationId: input.reservationId,
+      status: "OPEN",
+    },
+    include: episodeInclude,
+    orderBy: { openedAt: "asc" },
+  });
+  const named = rows.filter((row: { patientRef?: { fullName?: string | null } }) =>
+    guestNamesMatch(row.patientRef?.fullName ?? "", input.guestName),
+  );
+  if (named.length > 0) return named[0];
+  const unbound = rows.filter(
+    (row: { hotelStayId?: string | null }) =>
+      !row.hotelStayId || row.hotelStayId === input.reservationId,
+  );
+  if (unbound.length === 1) return unbound[0];
+  return null;
+}
+
 async function findOpenEpisodeForStay(
   // Prisma client or interactive transaction — keep loose for SatellitePrisma $extends.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -200,6 +241,16 @@ export async function openEpisodeFromStay(input: {
   if (existingFast) {
     await fillPatientDemographics(existingFast.patientRefId);
     return patchOpenEpisode(existingFast);
+  }
+
+  const legacyOpen = await findReusableOpenEpisode(prisma, {
+    organizationId: input.organizationId,
+    reservationId: input.reservationId,
+    guestName: input.guestName,
+  });
+  if (legacyOpen) {
+    await fillPatientDemographics(legacyOpen.patientRefId);
+    return patchOpenEpisode(legacyOpen);
   }
 
   let created;

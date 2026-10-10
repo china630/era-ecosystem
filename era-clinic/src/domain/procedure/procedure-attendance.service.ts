@@ -43,7 +43,8 @@ export class ProcedureAttendanceError extends Error {
       | "NOT_IN_CHECKIN_WINDOW"
       | "RESOURCE_BUSY"
       | "OVERRIDE_FORBIDDEN"
-      | "TICKET_REQUIRED",
+      | "TICKET_REQUIRED"
+      | "MIXED_PATIENT",
   ) {
     super(message);
     this.name = "ProcedureAttendanceError";

@@ -51,6 +51,14 @@ export async function issueExtraTickets(
   }
   const orgId = resolveClinicCutoverOrgId(organizationId);
   enterSatelliteTenant({ organizationId: orgId });
+  const selected = await prisma.procedureOrder.findMany({
+    where: { id: { in: orderIds } },
+    select: { patientRefId: true },
+  });
+  const patientIds = new Set(selected.map((order) => order.patientRefId));
+  if (patientIds.size > 1) {
+    throw new ProcedureAttendanceError("One cheque is one patient", "MIXED_PATIENT");
+  }
   const dualRun = await isClinicElektrawebDualRun(orgId);
   const hotelOrganizationId = dualRun
     ? await getClinicHotelOrganizationId(orgId)

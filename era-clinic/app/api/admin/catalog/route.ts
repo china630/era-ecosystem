@@ -30,9 +30,21 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const kinds = parseCatalogKindQuery(url.searchParams.get("kind"));
     const missingListPrice = url.searchParams.get("missingListPrice") === "1";
+    const q = (url.searchParams.get("q") ?? "").trim();
+    const limitRaw = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : undefined;
 
     const where: Prisma.ServiceCatalogCacheWhereInput = {};
     if (kinds) where.kind = { in: kinds };
+    if (q) {
+      where.OR = [
+        { code: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { descriptionAz: { contains: q, mode: "insensitive" } },
+        { descriptionRu: { contains: q, mode: "insensitive" } },
+        { descriptionEn: { contains: q, mode: "insensitive" } },
+      ];
+    }
     if (missingListPrice) {
       where.AND = [
         { amount: 0 },
@@ -43,6 +55,7 @@ export async function GET(req: Request) {
     const rows = await prisma.serviceCatalogCache.findMany({
       where: Object.keys(where).length ? where : undefined,
       orderBy: { code: "asc" },
+      ...(limit != null ? { take: limit } : {}),
     });
     const prices = await prisma.serviceCatalogPrice.findMany({
       orderBy: { effectiveFrom: "desc" },

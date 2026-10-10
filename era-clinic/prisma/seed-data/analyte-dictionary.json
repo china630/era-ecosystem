@@ -1,0 +1,3034 @@
+{
+  "version": 1,
+  "source": "diagnostic-lab-catalog.json labPanels",
+  "items": [
+    {
+      "code": "AA-PROF",
+      "label": {
+        "en": "Amino acid profile",
+        "ru": "Профиль аминокислот",
+        "az": "Amin turşuları"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "AAT",
+      "label": {
+        "en": "Alpha-1 antitrypsin",
+        "ru": "А1-антитрипсин",
+        "az": "Alfa-1 antitripsin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/dL"
+    },
+    {
+      "code": "ABO",
+      "label": {
+        "en": "ABO",
+        "ru": "Группа ABO",
+        "az": "ABO"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "ACCP",
+      "label": {
+        "en": "Anti-CCP",
+        "ru": "Anti-CCP",
+        "az": "Anti-CCP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "ACE",
+      "label": {
+        "en": "ACE",
+        "ru": "АПФ",
+        "az": "ACE"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "ACP",
+      "label": {
+        "en": "Acid phosphatase",
+        "ru": "Кислая фосфатаза",
+        "az": "Turşu fosfataza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "ACTH",
+      "label": {
+        "en": "ACTH",
+        "ru": "АКТГ",
+        "az": "ACTH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "ADA",
+      "label": {
+        "en": "ADA",
+        "ru": "АДА",
+        "az": "ADA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "AFP",
+      "label": {
+        "en": "AFP",
+        "ru": "АФП",
+        "az": "AFP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "AG",
+      "label": {
+        "en": "A/G ratio",
+        "ru": "А/Г",
+        "az": "A/G"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "ALB",
+      "label": {
+        "en": "Albumin",
+        "ru": "Альбумин",
+        "az": "Albumin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "ALP",
+      "label": {
+        "en": "ALP",
+        "ru": "ЩФ",
+        "az": "ALP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "ALT",
+      "label": {
+        "en": "ALT",
+        "ru": "АЛТ",
+        "az": "ALT"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L",
+      "refMin": "0",
+      "refMax": "41"
+    },
+    {
+      "code": "AMH",
+      "label": {
+        "en": "AMH",
+        "ru": "АМГ",
+        "az": "AMH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "AMY",
+      "label": {
+        "en": "Amylase",
+        "ru": "Амилаза",
+        "az": "Amilaza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "ANA",
+      "label": {
+        "en": "ANA",
+        "ru": "ANA",
+        "az": "ANA"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "ANCA",
+      "label": {
+        "en": "ANCA",
+        "ru": "ANCA",
+        "az": "ANCA"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-CMV-IgG",
+      "label": {
+        "en": "CMV IgG",
+        "ru": "CMV IgG",
+        "az": "CMV IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-CMV-IgM",
+      "label": {
+        "en": "CMV IgM",
+        "ru": "CMV IgM",
+        "az": "CMV IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-HBc",
+      "label": {
+        "en": "Anti-HBc total",
+        "ru": "Anti-HBc",
+        "az": "Anti-HBc"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-HBe",
+      "label": {
+        "en": "Anti-HBe",
+        "ru": "Anti-HBe",
+        "az": "Anti-HBe"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-HBs",
+      "label": {
+        "en": "Anti-HBs",
+        "ru": "Anti-HBs",
+        "az": "Anti-HBs"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-HCV",
+      "label": {
+        "en": "Anti-HCV",
+        "ru": "Anti-HCV",
+        "az": "Anti-HCV"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "Anti-HIV",
+      "label": {
+        "en": "Anti-HIV 1/2",
+        "ru": "Anti-HIV 1/2",
+        "az": "Anti-HIV 1/2"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "APOA1",
+      "label": {
+        "en": "ApoA1",
+        "ru": "ApoA1",
+        "az": "ApoA1"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "APOB",
+      "label": {
+        "en": "ApoB",
+        "ru": "ApoB",
+        "az": "ApoB"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "APTT",
+      "label": {
+        "en": "APTT",
+        "ru": "АЧТВ",
+        "az": "APTT"
+      },
+      "valueType": "NUMERIC",
+      "unit": "s"
+    },
+    {
+      "code": "ASO",
+      "label": {
+        "en": "ASO",
+        "ru": "АСЛО",
+        "az": "ASO"
+      },
+      "valueType": "NUMERIC",
+      "unit": "IU/mL"
+    },
+    {
+      "code": "AST",
+      "label": {
+        "en": "AST",
+        "ru": "АСТ",
+        "az": "AST"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L",
+      "refMin": "0",
+      "refMax": "40"
+    },
+    {
+      "code": "AT3",
+      "label": {
+        "en": "Antithrombin III",
+        "ru": "Антитромбин III",
+        "az": "Antitrombin III"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "ATG",
+      "label": {
+        "en": "Anti-TG",
+        "ru": "АТ-ТГ",
+        "az": "Anti-TG"
+      },
+      "valueType": "NUMERIC",
+      "unit": "IU/mL"
+    },
+    {
+      "code": "ATPO",
+      "label": {
+        "en": "Anti-TPO",
+        "ru": "АТ-ТПО",
+        "az": "Anti-TPO"
+      },
+      "valueType": "NUMERIC",
+      "unit": "IU/mL"
+    },
+    {
+      "code": "B1",
+      "label": {
+        "en": "Vitamin B1",
+        "ru": "Витамин B1",
+        "az": "Vitamin B1"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "B12",
+      "label": {
+        "en": "Vitamin B12",
+        "ru": "Витамин B12",
+        "az": "Vitamin B12"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "B6",
+      "label": {
+        "en": "Vitamin B6",
+        "ru": "Витамин B6",
+        "az": "Vitamin B6"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "BASO#",
+      "label": {
+        "en": "Basophils abs",
+        "ru": "Базофилы абс.",
+        "az": "Bazofil abs"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L"
+    },
+    {
+      "code": "BASO%",
+      "label": {
+        "en": "Basophils %",
+        "ru": "Базофилы %",
+        "az": "Bazofillər %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "BHCG",
+      "label": {
+        "en": "β-hCG",
+        "ru": "β-ХГЧ",
+        "az": "β-hCG"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mIU/mL"
+    },
+    {
+      "code": "BILE",
+      "label": {
+        "en": "Bile acids",
+        "ru": "Жёлчные кислоты",
+        "az": "Öd turşuları"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "BNP",
+      "label": {
+        "en": "BNP",
+        "ru": "BNP",
+        "az": "BNP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "BRUCELLA",
+      "label": {
+        "en": "Brucella Ab",
+        "ru": "Бруцеллёз Ab",
+        "az": "Brusellyoz"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "BUN",
+      "label": {
+        "en": "BUN",
+        "ru": "Азот мочевины",
+        "az": "BUN"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "C3",
+      "label": {
+        "en": "C3",
+        "ru": "C3",
+        "az": "C3"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "C4",
+      "label": {
+        "en": "C4",
+        "ru": "C4",
+        "az": "C4"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "CA",
+      "label": {
+        "en": "Calcium",
+        "ru": "Кальций",
+        "az": "Kalsium"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "2.15",
+      "refMax": "2.55"
+    },
+    {
+      "code": "CA125",
+      "label": {
+        "en": "CA-125",
+        "ru": "CA-125",
+        "az": "CA-125"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "CA153",
+      "label": {
+        "en": "CA 15-3",
+        "ru": "CA 15-3",
+        "az": "CA 15-3"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "CA199",
+      "label": {
+        "en": "CA 19-9",
+        "ru": "CA 19-9",
+        "az": "CA 19-9"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "CALCIT",
+      "label": {
+        "en": "Calcitonin",
+        "ru": "Кальцитонин",
+        "az": "Kalsitonin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "CARN",
+      "label": {
+        "en": "Carnitine",
+        "ru": "Карнитин",
+        "az": "Karnitin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "CEA",
+      "label": {
+        "en": "CEA",
+        "ru": "РЭА",
+        "az": "CEA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "CERU",
+      "label": {
+        "en": "Ceruloplasmin",
+        "ru": "Церулоплазмин",
+        "az": "Seruloplazmin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/dL"
+    },
+    {
+      "code": "CHE",
+      "label": {
+        "en": "Cholinesterase",
+        "ru": "Холинэстераза",
+        "az": "Xolinesteraza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "CHOL",
+      "label": {
+        "en": "Cholesterol",
+        "ru": "Холестерин",
+        "az": "Xolesterol"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "0",
+      "refMax": "5.2"
+    },
+    {
+      "code": "CK",
+      "label": {
+        "en": "CK",
+        "ru": "КК",
+        "az": "CK"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "CKMB",
+      "label": {
+        "en": "CK-MB",
+        "ru": "КК-МБ",
+        "az": "CK-MB"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "CL",
+      "label": {
+        "en": "Chloride",
+        "ru": "Хлор",
+        "az": "Xlor"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "CMV-IgG",
+      "label": {
+        "en": "CMV IgG",
+        "ru": "CMV IgG",
+        "az": "CMV IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CMV-IgM",
+      "label": {
+        "en": "CMV IgM",
+        "ru": "CMV IgM",
+        "az": "CMV IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CORT",
+      "label": {
+        "en": "Cortisol",
+        "ru": "Кортизол",
+        "az": "Kortizol"
+      },
+      "valueType": "NUMERIC",
+      "unit": "nmol/L"
+    },
+    {
+      "code": "CP-COLOR",
+      "label": {
+        "en": "Color",
+        "ru": "Цвет",
+        "az": "Rəng"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-CONS",
+      "label": {
+        "en": "Consistency",
+        "ru": "Консистенция",
+        "az": "Konsistensiyа"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-FAT",
+      "label": {
+        "en": "Fat",
+        "ru": "Жир",
+        "az": "Yağ"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-IgM",
+      "label": {
+        "en": "C. pneumoniae IgM",
+        "ru": "C. pneumoniae IgM",
+        "az": "C. pneumoniae IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-MUSCLE",
+      "label": {
+        "en": "Muscle fibers",
+        "ru": "Мышечные волокна",
+        "az": "Əzələ lifləri"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-STARCH",
+      "label": {
+        "en": "Starch",
+        "ru": "Крахмал",
+        "az": "Nişasta"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CP-WBC",
+      "label": {
+        "en": "Leukocytes",
+        "ru": "Лейкоциты",
+        "az": "Leykositlər"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CPEP",
+      "label": {
+        "en": "C-peptide",
+        "ru": "C-пептид",
+        "az": "C-peptid"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "CREA",
+      "label": {
+        "en": "Creatinine",
+        "ru": "Креатинин",
+        "az": "Kreatinin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L",
+      "refMin": "44",
+      "refMax": "104"
+    },
+    {
+      "code": "CRP",
+      "label": {
+        "en": "CRP",
+        "ru": "СРБ",
+        "az": "CRP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/L",
+      "refMin": "0",
+      "refMax": "5"
+    },
+    {
+      "code": "CT",
+      "label": {
+        "en": "Chlamydia trachomatis",
+        "ru": "Chlamydia trachomatis",
+        "az": "Chlamydia trachomatis"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "CU",
+      "label": {
+        "en": "Copper",
+        "ru": "Медь",
+        "az": "Mis"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "CYFRA",
+      "label": {
+        "en": "CYFRA 21-1",
+        "ru": "CYFRA 21-1",
+        "az": "CYFRA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "CYSC",
+      "label": {
+        "en": "Cystatin C",
+        "ru": "Цистатин C",
+        "az": "Sistatin C"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/L"
+    },
+    {
+      "code": "DBIL",
+      "label": {
+        "en": "Direct bilirubin",
+        "ru": "Билирубин прямой",
+        "az": "Birbaşa bilirubin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "DDIMER",
+      "label": {
+        "en": "D-dimer",
+        "ru": "D-димер",
+        "az": "D-dimer"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "DGP-IGA",
+      "label": {
+        "en": "DGP IgA",
+        "ru": "DGP IgA",
+        "az": "DGP IgA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "DHEAS",
+      "label": {
+        "en": "DHEA-S",
+        "ru": "ДГЭА-С",
+        "az": "DHEA-S"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µg/dL"
+    },
+    {
+      "code": "DS-COMMENT",
+      "label": {
+        "en": "Comment",
+        "ru": "Комментарий",
+        "az": "Şərh"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "DS-PANEL",
+      "label": {
+        "en": "Panel result",
+        "ru": "Результат панели",
+        "az": "Panel nəticəsi"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "E2",
+      "label": {
+        "en": "Estradiol",
+        "ru": "Эстрадиол",
+        "az": "Estradiol"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "EBV-VCA-IgG",
+      "label": {
+        "en": "EBV VCA IgG",
+        "ru": "EBV VCA IgG",
+        "az": "EBV VCA IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "EBV-VCA-IgM",
+      "label": {
+        "en": "EBV VCA IgM",
+        "ru": "EBV VCA IgM",
+        "az": "EBV VCA IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "EGFR",
+      "label": {
+        "en": "eGFR",
+        "ru": "рСКФ",
+        "az": "eGFR"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mL/min"
+    },
+    {
+      "code": "EMA-IGA",
+      "label": {
+        "en": "EMA IgA",
+        "ru": "ЭМА IgA",
+        "az": "EMA IgA"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "EOS#",
+      "label": {
+        "en": "Eosinophils abs",
+        "ru": "Эозинофилы абс.",
+        "az": "Eozinofil abs"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L"
+    },
+    {
+      "code": "EOS%",
+      "label": {
+        "en": "Eosinophils %",
+        "ru": "Эозинофилы %",
+        "az": "Eozinofillər %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "EPO",
+      "label": {
+        "en": "Erythropoietin",
+        "ru": "Эритропоэтин",
+        "az": "Eritropoetin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mIU/mL"
+    },
+    {
+      "code": "ESR",
+      "label": {
+        "en": "ESR",
+        "ru": "СОЭ",
+        "az": "ECŞ"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mm/h",
+      "refMin": "0",
+      "refMax": "20"
+    },
+    {
+      "code": "FE",
+      "label": {
+        "en": "Iron",
+        "ru": "Железо",
+        "az": "Dəmir"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "FERR",
+      "label": {
+        "en": "Ferritin",
+        "ru": "Ферритин",
+        "az": "Ferritin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "FIB",
+      "label": {
+        "en": "Fibrinogen",
+        "ru": "Фибриноген",
+        "az": "Fibrinogen"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L",
+      "refMin": "2.0",
+      "refMax": "4.0"
+    },
+    {
+      "code": "FLU-A",
+      "label": {
+        "en": "Influenza A",
+        "ru": "Грипп A",
+        "az": "Qrip A"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "FLU-B",
+      "label": {
+        "en": "Influenza B",
+        "ru": "Грипп B",
+        "az": "Qrip B"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "FOL",
+      "label": {
+        "en": "Folate",
+        "ru": "Фолат",
+        "az": "Folat"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "FOLATE",
+      "label": {
+        "en": "Folate",
+        "ru": "Фолаты",
+        "az": "Folat"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "FPSA",
+      "label": {
+        "en": "Free PSA",
+        "ru": "ПСА свободный",
+        "az": "Sərbəst PSA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "FSH",
+      "label": {
+        "en": "FSH",
+        "ru": "ФСГ",
+        "az": "FSH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mIU/mL"
+    },
+    {
+      "code": "FT3",
+      "label": {
+        "en": "Free T3",
+        "ru": "Т3 свободный",
+        "az": "Sərbəst T3"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pmol/L"
+    },
+    {
+      "code": "FT4",
+      "label": {
+        "en": "Free T4",
+        "ru": "Т4 свободный",
+        "az": "Sərbəst T4"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pmol/L"
+    },
+    {
+      "code": "G6PD",
+      "label": {
+        "en": "G6PD",
+        "ru": "Г6ФД",
+        "az": "G6PD"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/g Hb"
+    },
+    {
+      "code": "GGT",
+      "label": {
+        "en": "GGT",
+        "ru": "ГГТ",
+        "az": "GGT"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "GH",
+      "label": {
+        "en": "Growth hormone",
+        "ru": "СТГ",
+        "az": "Boy hormonu"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "GLOB",
+      "label": {
+        "en": "Globulin",
+        "ru": "Глобулин",
+        "az": "Qlobalin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "GLU",
+      "label": {
+        "en": "Glucose",
+        "ru": "Глюкоза",
+        "az": "Qlükoza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "3.9",
+      "refMax": "6.1"
+    },
+    {
+      "code": "GLU-F",
+      "label": {
+        "en": "Fasting glucose",
+        "ru": "Глюкоза натощак",
+        "az": "Acqarına qlükoza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "3.9",
+      "refMax": "6.1"
+    },
+    {
+      "code": "GS-CAND",
+      "label": {
+        "en": "Candida",
+        "ru": "Кандида",
+        "az": "Candida"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "GS-CLEAN",
+      "label": {
+        "en": "Purity grade",
+        "ru": "Степень чистоты",
+        "az": "Təmizlik dərəcəsi"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "GS-EPI",
+      "label": {
+        "en": "Epithelium",
+        "ru": "Эпителий",
+        "az": "Epiteli"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "GS-FLORA",
+      "label": {
+        "en": "Flora",
+        "ru": "Флора",
+        "az": "Flora"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "GS-TRICH",
+      "label": {
+        "en": "Trichomonas",
+        "ru": "Трихомонады",
+        "az": "Trichomonas"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "GS-WBC",
+      "label": {
+        "en": "WBC",
+        "ru": "Лейкоциты",
+        "az": "Leykositlər"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HAPT",
+      "label": {
+        "en": "Haptoglobin",
+        "ru": "Гаптоглобин",
+        "az": "Haptoqlobin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "HAV-IgG",
+      "label": {
+        "en": "Anti-HAV IgG",
+        "ru": "Anti-HAV IgG",
+        "az": "Anti-HAV IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HAV-IgM",
+      "label": {
+        "en": "Anti-HAV IgM",
+        "ru": "Anti-HAV IgM",
+        "az": "Anti-HAV IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HBA1C",
+      "label": {
+        "en": "HbA1c",
+        "ru": "HbA1c",
+        "az": "HbA1c"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%",
+      "refMin": "4.0",
+      "refMax": "5.7"
+    },
+    {
+      "code": "HBDH",
+      "label": {
+        "en": "HBDH",
+        "ru": "ГБДГ",
+        "az": "HBDH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "HBeAg",
+      "label": {
+        "en": "HBeAg",
+        "ru": "HBeAg",
+        "az": "HBeAg"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HBsAg",
+      "label": {
+        "en": "HBsAg",
+        "ru": "HBsAg",
+        "az": "HBsAg"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HBV-DNA",
+      "label": {
+        "en": "HBV DNA",
+        "ru": "HBV DNA",
+        "az": "HBV DNA"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HCT",
+      "label": {
+        "en": "Hematocrit",
+        "ru": "Гематокрит",
+        "az": "Hematokrit"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%",
+      "refMin": "36",
+      "refMax": "48"
+    },
+    {
+      "code": "HCV-RNA",
+      "label": {
+        "en": "HCV RNA",
+        "ru": "HCV RNA",
+        "az": "HCV RNA"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HCY",
+      "label": {
+        "en": "Homocysteine",
+        "ru": "Гомоцистеин",
+        "az": "Homosistein"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "HDL",
+      "label": {
+        "en": "HDL",
+        "ru": "ЛПВП",
+        "az": "HDL"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "HE4",
+      "label": {
+        "en": "HE4",
+        "ru": "HE4",
+        "az": "HE4"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pmol/L"
+    },
+    {
+      "code": "HGB",
+      "label": {
+        "en": "Hemoglobin",
+        "ru": "Гемоглобин",
+        "az": "Hemoglobin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L",
+      "refMin": "120",
+      "refMax": "160"
+    },
+    {
+      "code": "HISTO-MACRO",
+      "label": {
+        "en": "Macro",
+        "ru": "Макроописание",
+        "az": "Makro"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HISTO-MICRO",
+      "label": {
+        "en": "Micro / diagnosis",
+        "ru": "Микро / диагноз",
+        "az": "Mikro / diaqnoz"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HISTO-SITE",
+      "label": {
+        "en": "Specimen site",
+        "ru": "Локализация материала",
+        "az": "Material lokalizasiyası"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HOMA",
+      "label": {
+        "en": "HOMA-IR",
+        "ru": "HOMA-IR",
+        "az": "HOMA-IR"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HP-IgG",
+      "label": {
+        "en": "H. pylori IgG",
+        "ru": "H. pylori IgG",
+        "az": "H. pylori IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HPV-16",
+      "label": {
+        "en": "HPV-16",
+        "ru": "HPV-16",
+        "az": "HPV-16"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HPV-18",
+      "label": {
+        "en": "HPV-18",
+        "ru": "HPV-18",
+        "az": "HPV-18"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HPV-COMMENT",
+      "label": {
+        "en": "Comment",
+        "ru": "Комментарий",
+        "az": "Şərh"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HPV-OTHER-HR",
+      "label": {
+        "en": "Other high-risk",
+        "ru": "Другие ВР",
+        "az": "Digər YR"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HSCRP",
+      "label": {
+        "en": "hs-CRP",
+        "ru": "вч-СРБ",
+        "az": "hs-CRP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/L"
+    },
+    {
+      "code": "HSV1-IgG",
+      "label": {
+        "en": "HSV-1 IgG",
+        "ru": "HSV-1 IgG",
+        "az": "HSV-1 IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HSV1-IgM",
+      "label": {
+        "en": "HSV-1 IgM",
+        "ru": "HSV-1 IgM",
+        "az": "HSV-1 IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HSV12",
+      "label": {
+        "en": "HSV-1/2",
+        "ru": "ВПГ-1/2",
+        "az": "HSV-1/2"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HSV2-IgG",
+      "label": {
+        "en": "HSV-2 IgG",
+        "ru": "HSV-2 IgG",
+        "az": "HSV-2 IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "HSV2-IgM",
+      "label": {
+        "en": "HSV-2 IgM",
+        "ru": "HSV-2 IgM",
+        "az": "HSV-2 IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IBIL",
+      "label": {
+        "en": "Indirect bilirubin",
+        "ru": "Билирубин непрямой",
+        "az": "Dolayı bilirubin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "ICA",
+      "label": {
+        "en": "Ionized calcium",
+        "ru": "Кальций ионизированный",
+        "az": "İonlaşmış Ca"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "IGA",
+      "label": {
+        "en": "IgA",
+        "ru": "IgA",
+        "az": "IgA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "IGE-CAT",
+      "label": {
+        "en": "Cat",
+        "ru": "Кошка",
+        "az": "Pişik"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-DOG",
+      "label": {
+        "en": "Dog",
+        "ru": "Собака",
+        "az": "İt"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-DUST",
+      "label": {
+        "en": "House dust mite",
+        "ru": "Клещ домашней пыли",
+        "az": "Ev tozu gənəsi"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-EGG",
+      "label": {
+        "en": "Egg",
+        "ru": "Яйцо",
+        "az": "Yumurta"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-FISH",
+      "label": {
+        "en": "Fish",
+        "ru": "Рыба",
+        "az": "Balıq"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-FOOD-NOTE",
+      "label": {
+        "en": "Other / comment",
+        "ru": "Прочее",
+        "az": "Digər"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-MILK",
+      "label": {
+        "en": "Milk",
+        "ru": "Молоко",
+        "az": "Süd"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-MOLD",
+      "label": {
+        "en": "Mold",
+        "ru": "Плесень",
+        "az": "Kif"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-PANEL",
+      "label": {
+        "en": "Specific IgE panel note",
+        "ru": "Специфические IgE (панель)",
+        "az": "Spesifik IgE paneli"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-PEANUT",
+      "label": {
+        "en": "Peanut",
+        "ru": "Арахис",
+        "az": "Fıstıq"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-PED-NOTE",
+      "label": {
+        "en": "Panel comment",
+        "ru": "Комментарий",
+        "az": "Şərh"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-POLLEN-GRASS",
+      "label": {
+        "en": "Grass pollen",
+        "ru": "Пыльца трав",
+        "az": "Ot poleni"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-POLLEN-TREE",
+      "label": {
+        "en": "Tree pollen",
+        "ru": "Пыльца деревьев",
+        "az": "Ağac poleni"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-SOY",
+      "label": {
+        "en": "Soy",
+        "ru": "Соя",
+        "az": "Soya"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGE-TOT",
+      "label": {
+        "en": "Total IgE",
+        "ru": "Общий IgE",
+        "az": "Ümumi IgE"
+      },
+      "valueType": "NUMERIC",
+      "unit": "IU/mL"
+    },
+    {
+      "code": "IGE-WHEAT",
+      "label": {
+        "en": "Wheat",
+        "ru": "Пшеница",
+        "az": "Buğda"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGF1",
+      "label": {
+        "en": "IGF-1",
+        "ru": "ИФР-1",
+        "az": "IGF-1"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "IGG",
+      "label": {
+        "en": "IgG",
+        "ru": "IgG",
+        "az": "IgG"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "IGM",
+      "label": {
+        "en": "IgM",
+        "ru": "IgM",
+        "az": "IgM"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "IGRA-MITOGEN",
+      "label": {
+        "en": "Mitogen",
+        "ru": "Mitogen",
+        "az": "Mitogen"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGRA-NIL",
+      "label": {
+        "en": "Nil",
+        "ru": "Nil",
+        "az": "Nil"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGRA-RESULT",
+      "label": {
+        "en": "Result",
+        "ru": "Результат",
+        "az": "Nəticə"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IGRA-TB",
+      "label": {
+        "en": "TB antigen",
+        "ru": "TB Ag",
+        "az": "TB Ag"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "IL6",
+      "label": {
+        "en": "IL-6",
+        "ru": "ИЛ-6",
+        "az": "IL-6"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "INHB",
+      "label": {
+        "en": "Inhibin B",
+        "ru": "Ингибин B",
+        "az": "Inhibin B"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "INHIBINB",
+      "label": {
+        "en": "Inhibin B",
+        "ru": "Ингибин B",
+        "az": "İnhibin B"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "INR",
+      "label": {
+        "en": "INR",
+        "ru": "МНО",
+        "az": "INR"
+      },
+      "valueType": "NUMERIC",
+      "refMin": "0.8",
+      "refMax": "1.2"
+    },
+    {
+      "code": "INS",
+      "label": {
+        "en": "Insulin",
+        "ru": "Инсулин",
+        "az": "İnsulin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µU/mL"
+    },
+    {
+      "code": "K",
+      "label": {
+        "en": "Potassium",
+        "ru": "Калий",
+        "az": "Kalium"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "3.5",
+      "refMax": "5.1"
+    },
+    {
+      "code": "LAC",
+      "label": {
+        "en": "Lactate",
+        "ru": "Лактат",
+        "az": "Laktat"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "LDH",
+      "label": {
+        "en": "LDH",
+        "ru": "ЛДГ",
+        "az": "LDH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "LDL",
+      "label": {
+        "en": "LDL",
+        "ru": "ЛПНП",
+        "az": "LDL"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "LH",
+      "label": {
+        "en": "LH",
+        "ru": "ЛГ",
+        "az": "LH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mIU/mL"
+    },
+    {
+      "code": "LIPASE",
+      "label": {
+        "en": "Lipase",
+        "ru": "Липаза",
+        "az": "Lipaza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/L"
+    },
+    {
+      "code": "LPA",
+      "label": {
+        "en": "Lp(a)",
+        "ru": "Lp(a)",
+        "az": "Lp(a)"
+      },
+      "valueType": "NUMERIC",
+      "unit": "nmol/L"
+    },
+    {
+      "code": "LYMPH#",
+      "label": {
+        "en": "Lymphocytes abs",
+        "ru": "Лимфоциты абс.",
+        "az": "Limfosit abs"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L"
+    },
+    {
+      "code": "LYMPH%",
+      "label": {
+        "en": "Lymphocytes %",
+        "ru": "Лимфоциты %",
+        "az": "Limfositlər %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "MAU",
+      "label": {
+        "en": "Microalbumin urine",
+        "ru": "МАУ",
+        "az": "MAU"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/L"
+    },
+    {
+      "code": "MC-GROWTH",
+      "label": {
+        "en": "Growth",
+        "ru": "Рост",
+        "az": "Böyümə"
+      },
+      "valueType": "NUMERIC",
+      "unit": "CFU/mL"
+    },
+    {
+      "code": "MC-ORG",
+      "label": {
+        "en": "Organism",
+        "ru": "Возбудитель",
+        "az": "Törədici"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "MC-SENS",
+      "label": {
+        "en": "Sensitivity",
+        "ru": "Чувствительность",
+        "az": "Həssaslıq"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "MC-SITE",
+      "label": {
+        "en": "Site",
+        "ru": "Локус",
+        "az": "Lokus"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "MCH",
+      "label": {
+        "en": "MCH",
+        "ru": "MCH",
+        "az": "MCH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg",
+      "refMin": "27",
+      "refMax": "33"
+    },
+    {
+      "code": "MCHC",
+      "label": {
+        "en": "MCHC",
+        "ru": "MCHC",
+        "az": "MCHC"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L",
+      "refMin": "320",
+      "refMax": "360"
+    },
+    {
+      "code": "MCV",
+      "label": {
+        "en": "MCV",
+        "ru": "MCV",
+        "az": "MCV"
+      },
+      "valueType": "NUMERIC",
+      "unit": "fL",
+      "refMin": "80",
+      "refMax": "96"
+    },
+    {
+      "code": "MG",
+      "label": {
+        "en": "Magnesium",
+        "ru": "Магний",
+        "az": "Maqnezium"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "MONO#",
+      "label": {
+        "en": "Monocytes abs",
+        "ru": "Моноциты абс.",
+        "az": "Monosit abs"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L"
+    },
+    {
+      "code": "MONO%",
+      "label": {
+        "en": "Monocytes %",
+        "ru": "Моноциты %",
+        "az": "Monositlər %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "MP-IgM",
+      "label": {
+        "en": "M. pneumoniae IgM",
+        "ru": "M. pneumoniae IgM",
+        "az": "M. pneumoniae IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "MPV",
+      "label": {
+        "en": "MPV",
+        "ru": "MPV",
+        "az": "MPV"
+      },
+      "valueType": "NUMERIC",
+      "unit": "fL"
+    },
+    {
+      "code": "MXD%",
+      "label": {
+        "en": "MXD %",
+        "ru": "Смесь %",
+        "az": "MXD %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "MYO",
+      "label": {
+        "en": "Myoglobin",
+        "ru": "Миоглобин",
+        "az": "Mioglobin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "NA",
+      "label": {
+        "en": "Sodium",
+        "ru": "Натрий",
+        "az": "Natrium"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "135",
+      "refMax": "145"
+    },
+    {
+      "code": "NEUT#",
+      "label": {
+        "en": "Neutrophils abs",
+        "ru": "Нейтрофилы абс.",
+        "az": "Neytrofil abs"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L"
+    },
+    {
+      "code": "NEUT%",
+      "label": {
+        "en": "Neutrophils %",
+        "ru": "Нейтрофилы %",
+        "az": "Neytrofillər %"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "NG",
+      "label": {
+        "en": "Neisseria gonorrhoeae",
+        "ru": "Neisseria gonorrhoeae",
+        "az": "Neisseria gonorrhoeae"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "NH3",
+      "label": {
+        "en": "Ammonia",
+        "ru": "Аммиак",
+        "az": "Ammoniak"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "NSE",
+      "label": {
+        "en": "NSE",
+        "ru": "NSE",
+        "az": "NSE"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "NTPROBNP",
+      "label": {
+        "en": "NT-proBNP",
+        "ru": "NT-proBNP",
+        "az": "NT-proBNP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "OHP17",
+      "label": {
+        "en": "17-OHP",
+        "ru": "17-OHP",
+        "az": "17-OHP"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "OSMO",
+      "label": {
+        "en": "Osmolality",
+        "ru": "Осмоляльность",
+        "az": "Osmolyarlıq"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mOsm/kg"
+    },
+    {
+      "code": "OSTEO",
+      "label": {
+        "en": "Osteocalcin",
+        "ru": "Остеокальцин",
+        "az": "Osteokalsin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "P",
+      "label": {
+        "en": "Phosphorus",
+        "ru": "Фосфор",
+        "az": "Fosfor"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "P-LCR",
+      "label": {
+        "en": "P-LCR",
+        "ru": "P-LCR",
+        "az": "P-LCR"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "P4",
+      "label": {
+        "en": "Progesterone",
+        "ru": "Прогестерон",
+        "az": "Progesteron"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "PAP-COMMENT",
+      "label": {
+        "en": "Comment",
+        "ru": "Комментарий",
+        "az": "Şərh"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PAP-INFLAM",
+      "label": {
+        "en": "Inflammation",
+        "ru": "Воспаление",
+        "az": "İltihab"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PAP-RESULT",
+      "label": {
+        "en": "Result (Bethesda)",
+        "ru": "Результат (Bethesda)",
+        "az": "Nəticə (Bethesda)"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PARVO-IgG",
+      "label": {
+        "en": "Parvo B19 IgG",
+        "ru": "Parvo B19 IgG",
+        "az": "Parvo B19 IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PARVO-IgM",
+      "label": {
+        "en": "Parvo B19 IgM",
+        "ru": "Parvo B19 IgM",
+        "az": "Parvo B19 IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PCT",
+      "label": {
+        "en": "Procalcitonin",
+        "ru": "Прокальцитонин",
+        "az": "Prokalsitonin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "PDW",
+      "label": {
+        "en": "PDW",
+        "ru": "PDW",
+        "az": "PDW"
+      },
+      "valueType": "NUMERIC",
+      "unit": "fL"
+    },
+    {
+      "code": "PEP",
+      "label": {
+        "en": "Protein electrophoresis",
+        "ru": "Электрофорез белка",
+        "az": "Zülal elektroforezi"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "PLT",
+      "label": {
+        "en": "Platelets",
+        "ru": "Тромбоциты",
+        "az": "Trombositlər"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L",
+      "refMin": "150",
+      "refMax": "400"
+    },
+    {
+      "code": "PLT-PCT",
+      "label": {
+        "en": "Plateletcrit",
+        "ru": "Тромбокрит",
+        "az": "Trombositokrit"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%",
+      "refMin": "0.1",
+      "refMax": "0.5"
+    },
+    {
+      "code": "PRL",
+      "label": {
+        "en": "Prolactin",
+        "ru": "Пролактин",
+        "az": "Prolaktin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "PSA",
+      "label": {
+        "en": "PSA",
+        "ru": "ПСА",
+        "az": "PSA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "PSARATIO",
+      "label": {
+        "en": "Free/total %",
+        "ru": "% своб./общ.",
+        "az": "% sərbəst"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "PT",
+      "label": {
+        "en": "PT",
+        "ru": "ПВ",
+        "az": "PT"
+      },
+      "valueType": "NUMERIC",
+      "unit": "s"
+    },
+    {
+      "code": "PTH",
+      "label": {
+        "en": "PTH",
+        "ru": "ПТГ",
+        "az": "PTH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "pg/mL"
+    },
+    {
+      "code": "RBC",
+      "label": {
+        "en": "RBC",
+        "ru": "Эритроциты",
+        "az": "Eritrositlər"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^12/L",
+      "refMin": "3.8",
+      "refMax": "5.5"
+    },
+    {
+      "code": "RDW-CV",
+      "label": {
+        "en": "RDW-CV",
+        "ru": "RDW-CV",
+        "az": "RDW-CV"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "RDW-SD",
+      "label": {
+        "en": "RDW-SD",
+        "ru": "RDW-SD",
+        "az": "RDW-SD"
+      },
+      "valueType": "NUMERIC",
+      "unit": "fL"
+    },
+    {
+      "code": "RETIC",
+      "label": {
+        "en": "Reticulocytes",
+        "ru": "Ретикулоциты",
+        "az": "Retikulositlər"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "RF",
+      "label": {
+        "en": "Rheumatoid factor",
+        "ru": "РФ",
+        "az": "RF"
+      },
+      "valueType": "NUMERIC",
+      "unit": "IU/mL"
+    },
+    {
+      "code": "RH",
+      "label": {
+        "en": "Rh(D)",
+        "ru": "Резус (D)",
+        "az": "Rezus (D)"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "RPR",
+      "label": {
+        "en": "Syphilis (RPR/VDRL)",
+        "ru": "Сифилис (RPR/VDRL)",
+        "az": "Sifilis (RPR)"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "RSV",
+      "label": {
+        "en": "RSV",
+        "ru": "RSV",
+        "az": "RSV"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "RUB-IgG",
+      "label": {
+        "en": "Rubella IgG",
+        "ru": "Rubella IgG",
+        "az": "Rubella IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "RUB-IgM",
+      "label": {
+        "en": "Rubella IgM",
+        "ru": "Rubella IgM",
+        "az": "Rubella IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "RUBELLA-IgG",
+      "label": {
+        "en": "Rubella IgG",
+        "ru": "Rubella IgG",
+        "az": "Rubella IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "S-CALPRO",
+      "label": {
+        "en": "Calprotectin",
+        "ru": "Кальпротектин",
+        "az": "Kalprotektin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µg/g"
+    },
+    {
+      "code": "S-ELAST",
+      "label": {
+        "en": "Pancreatic elastase",
+        "ru": "Эластаза",
+        "az": "Elastaza"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µg/g"
+    },
+    {
+      "code": "S-HELICO",
+      "label": {
+        "en": "H. pylori Ag (stool)",
+        "ru": "H. pylori Ag (кал)",
+        "az": "H. pylori Ag"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "S-OAP",
+      "label": {
+        "en": "Ova & parasites",
+        "ru": "Яйца глист / простейшие",
+        "az": "Parazit yumurta"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "S-OCCULT",
+      "label": {
+        "en": "Occult blood",
+        "ru": "Скрытая кровь",
+        "az": "Gizli qan"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "S100",
+      "label": {
+        "en": "S100",
+        "ru": "S100",
+        "az": "S100"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µg/L"
+    },
+    {
+      "code": "SAA",
+      "label": {
+        "en": "Serum amyloid A",
+        "ru": "Амилоид A",
+        "az": "Amiloid A"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/L"
+    },
+    {
+      "code": "SARS-COV2",
+      "label": {
+        "en": "SARS-CoV-2",
+        "ru": "SARS-CoV-2",
+        "az": "SARS-CoV-2"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SCC",
+      "label": {
+        "en": "SCC",
+        "ru": "SCC",
+        "az": "SCC"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "SE",
+      "label": {
+        "en": "Selenium",
+        "ru": "Селен",
+        "az": "Selen"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µg/L"
+    },
+    {
+      "code": "SEM-CONC",
+      "label": {
+        "en": "Concentration",
+        "ru": "Концентрация",
+        "az": "Konsentrasiya"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^6/mL"
+    },
+    {
+      "code": "SEM-MORPH",
+      "label": {
+        "en": "Normal morphology",
+        "ru": "Нормальная морфология",
+        "az": "Normal morfologiya"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "SEM-MOT",
+      "label": {
+        "en": "Motility",
+        "ru": "Подвижность",
+        "az": "Hərəkətlilik"
+      },
+      "valueType": "NUMERIC",
+      "unit": "%"
+    },
+    {
+      "code": "SEM-VOL",
+      "label": {
+        "en": "Volume",
+        "ru": "Объём",
+        "az": "Həcm"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mL"
+    },
+    {
+      "code": "SHBG",
+      "label": {
+        "en": "SHBG",
+        "ru": "ГСПГ",
+        "az": "SHBG"
+      },
+      "valueType": "NUMERIC",
+      "unit": "nmol/L"
+    },
+    {
+      "code": "SMEAR-NOTE",
+      "label": {
+        "en": "Smear description",
+        "ru": "Описание мазка",
+        "az": "Yaxma təsviri"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SMEAR-PLT",
+      "label": {
+        "en": "Platelet estimate",
+        "ru": "Тромбоциты (оценка)",
+        "az": "Trombosit qiyməti"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SMEAR-RBC",
+      "label": {
+        "en": "RBC morphology",
+        "ru": "Морфология эритроцитов",
+        "az": "Eritrosit morfologiyası"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SMEAR-WBC",
+      "label": {
+        "en": "WBC morphology",
+        "ru": "Морфология лейкоцитов",
+        "az": "Leykosit morfologiyası"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SP-AFB",
+      "label": {
+        "en": "AFB / BK",
+        "ru": "БК",
+        "az": "BK"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SP-APPEAR",
+      "label": {
+        "en": "Appearance",
+        "ru": "Характер",
+        "az": "Görünüş"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SP-CULT",
+      "label": {
+        "en": "Culture",
+        "ru": "Посев",
+        "az": "Əkmə"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "SP-WBC",
+      "label": {
+        "en": "WBC",
+        "ru": "Лейкоциты",
+        "az": "Leykositlər"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "TBIL",
+      "label": {
+        "en": "Total bilirubin",
+        "ru": "Билирубин общий",
+        "az": "Ümumi bilirubin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L",
+      "refMin": "3.4",
+      "refMax": "20.5"
+    },
+    {
+      "code": "TCO2",
+      "label": {
+        "en": "Total CO2",
+        "ru": "Общий CO2",
+        "az": "Ümumi CO2"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "TESTO",
+      "label": {
+        "en": "Testosterone",
+        "ru": "Тестостерон",
+        "az": "Testosteron"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/dL"
+    },
+    {
+      "code": "TG",
+      "label": {
+        "en": "Thyroglobulin",
+        "ru": "Тиреоглобулин",
+        "az": "Tireoqlobulin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "TIBC",
+      "label": {
+        "en": "TIBC",
+        "ru": "ОЖСС",
+        "az": "TIBC"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "TNI",
+      "label": {
+        "en": "Troponin I/T",
+        "ru": "Тропонин",
+        "az": "Troponin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "TOXO-IgG",
+      "label": {
+        "en": "Toxoplasma IgG",
+        "ru": "Toxoplasma IgG",
+        "az": "Toxoplasma IgG"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "TOXO-IgM",
+      "label": {
+        "en": "Toxo IgM",
+        "ru": "Toxo IgM",
+        "az": "Toxo IgM"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "TP",
+      "label": {
+        "en": "Total protein",
+        "ru": "Белок общий",
+        "az": "Ümumi zülal"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L",
+      "refMin": "64",
+      "refMax": "83"
+    },
+    {
+      "code": "TRF",
+      "label": {
+        "en": "Transferrin",
+        "ru": "Трансферрин",
+        "az": "Transferrin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/L"
+    },
+    {
+      "code": "TRIG",
+      "label": {
+        "en": "Triglycerides",
+        "ru": "Триглицериды",
+        "az": "Triqliseridlər"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "TSH",
+      "label": {
+        "en": "TSH",
+        "ru": "ТТГ",
+        "az": "TSH"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mIU/L",
+      "refMin": "0.4",
+      "refMax": "4.0"
+    },
+    {
+      "code": "TT",
+      "label": {
+        "en": "Thrombin time",
+        "ru": "Тромбиновое время",
+        "az": "Trombin vaxtı"
+      },
+      "valueType": "NUMERIC",
+      "unit": "s"
+    },
+    {
+      "code": "TT3",
+      "label": {
+        "en": "Total T3",
+        "ru": "Т3 общий",
+        "az": "Ümumi T3"
+      },
+      "valueType": "NUMERIC",
+      "unit": "nmol/L"
+    },
+    {
+      "code": "TT4",
+      "label": {
+        "en": "Total T4",
+        "ru": "Т4 общий",
+        "az": "Ümumi T4"
+      },
+      "valueType": "NUMERIC",
+      "unit": "nmol/L"
+    },
+    {
+      "code": "TTG-IGA",
+      "label": {
+        "en": "tTG IgA",
+        "ru": "тТГ IgA",
+        "az": "tTG IgA"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "TTG-IGG",
+      "label": {
+        "en": "tTG IgG",
+        "ru": "тТГ IgG",
+        "az": "tTG IgG"
+      },
+      "valueType": "NUMERIC",
+      "unit": "U/mL"
+    },
+    {
+      "code": "TV",
+      "label": {
+        "en": "Trichomonas vaginalis",
+        "ru": "Trichomonas vaginalis",
+        "az": "Trichomonas vaginalis"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-BACT",
+      "label": {
+        "en": "Bacteria",
+        "ru": "Бактерии",
+        "az": "Bakteriyalar"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-BIL",
+      "label": {
+        "en": "Bilirubin",
+        "ru": "Билирубин",
+        "az": "Bilirubin"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-BLD",
+      "label": {
+        "en": "Blood",
+        "ru": "Кровь",
+        "az": "Qan"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-CAST",
+      "label": {
+        "en": "Casts",
+        "ru": "Цилиндры",
+        "az": "Silindrlər"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-CLARITY",
+      "label": {
+        "en": "Clarity",
+        "ru": "Прозрачность",
+        "az": "Şəffaflıq"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-COLOR",
+      "label": {
+        "en": "Color",
+        "ru": "Цвет",
+        "az": "Rəng"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-EPI",
+      "label": {
+        "en": "Epithelium",
+        "ru": "Эпителий",
+        "az": "Epiteli"
+      },
+      "valueType": "NUMERIC",
+      "unit": "/HPF"
+    },
+    {
+      "code": "U-GLU",
+      "label": {
+        "en": "Glucose",
+        "ru": "Глюкоза",
+        "az": "Qlükoza"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-KET",
+      "label": {
+        "en": "Ketones",
+        "ru": "Кетоны",
+        "az": "Ketonlar"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-LEU",
+      "label": {
+        "en": "Leukocyte esterase",
+        "ru": "Лейкоцитарная эстераза",
+        "az": "Leykosit esteraza"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-MUCUS",
+      "label": {
+        "en": "Mucus",
+        "ru": "Слизь",
+        "az": "Selik"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-NIT",
+      "label": {
+        "en": "Nitrite",
+        "ru": "Нитриты",
+        "az": "Nitrit"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-PH",
+      "label": {
+        "en": "pH",
+        "ru": "pH",
+        "az": "pH"
+      },
+      "valueType": "NUMERIC",
+      "refMin": "5.0",
+      "refMax": "7.5"
+    },
+    {
+      "code": "U-PRO",
+      "label": {
+        "en": "Protein",
+        "ru": "Белок",
+        "az": "Zülal"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-RBC",
+      "label": {
+        "en": "RBC microscopy",
+        "ru": "Эритроциты (микроскопия)",
+        "az": "Eritrositlər (mikro)"
+      },
+      "valueType": "NUMERIC",
+      "unit": "/HPF"
+    },
+    {
+      "code": "U-SALT",
+      "label": {
+        "en": "Salts / crystals",
+        "ru": "Соли",
+        "az": "Duzlar"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-SG",
+      "label": {
+        "en": "Specific gravity",
+        "ru": "Удельный вес",
+        "az": "Xüsusi çəki"
+      },
+      "valueType": "NUMERIC",
+      "refMin": "1.005",
+      "refMax": "1.030"
+    },
+    {
+      "code": "U-URO",
+      "label": {
+        "en": "Urobilinogen",
+        "ru": "Уробилиноген",
+        "az": "Urobilinogen"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "U-WBC",
+      "label": {
+        "en": "WBC microscopy",
+        "ru": "Лейкоциты (микроскопия)",
+        "az": "Leykositlər (mikro)"
+      },
+      "valueType": "NUMERIC",
+      "unit": "/HPF"
+    },
+    {
+      "code": "UA",
+      "label": {
+        "en": "Uric acid",
+        "ru": "Мочевая кислота",
+        "az": "Sidik turşusu"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "UACR",
+      "label": {
+        "en": "Albumin/creatinine urine",
+        "ru": "МАУ/креатинин",
+        "az": "UACR"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mg/g"
+    },
+    {
+      "code": "UC-GROWTH",
+      "label": {
+        "en": "Growth",
+        "ru": "Рост",
+        "az": "Böyümə"
+      },
+      "valueType": "NUMERIC",
+      "unit": "CFU/mL"
+    },
+    {
+      "code": "UC-ORG",
+      "label": {
+        "en": "Organism",
+        "ru": "Возбудитель",
+        "az": "Törədici"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "UC-SENS",
+      "label": {
+        "en": "Sensitivity",
+        "ru": "Чувствительность",
+        "az": "Həssaslıq"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "UIBC",
+      "label": {
+        "en": "UIBC",
+        "ru": "НЖСС",
+        "az": "UIBC"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "UPRO-24",
+      "label": {
+        "en": "24h protein",
+        "ru": "Суточный белок мочи",
+        "az": "24s zülal"
+      },
+      "valueType": "NUMERIC",
+      "unit": "g/day"
+    },
+    {
+      "code": "UREA",
+      "label": {
+        "en": "Urea",
+        "ru": "Мочевина",
+        "az": "Karbamid"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L",
+      "refMin": "2.5",
+      "refMax": "8.3"
+    },
+    {
+      "code": "UU",
+      "label": {
+        "en": "Ureaplasma spp.",
+        "ru": "Ureaplasma spp.",
+        "az": "Ureaplasma spp."
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "VITD",
+      "label": {
+        "en": "25-OH Vitamin D",
+        "ru": "Витамин D (25-OH)",
+        "az": "Vitamin D (25-OH)"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    },
+    {
+      "code": "VLDL",
+      "label": {
+        "en": "VLDL",
+        "ru": "ЛПОНП",
+        "az": "VLDL"
+      },
+      "valueType": "NUMERIC",
+      "unit": "mmol/L"
+    },
+    {
+      "code": "WBC",
+      "label": {
+        "en": "WBC",
+        "ru": "Лейкоциты",
+        "az": "Leykositlər"
+      },
+      "valueType": "NUMERIC",
+      "unit": "10^9/L",
+      "refMin": "4.0",
+      "refMax": "9.0"
+    },
+    {
+      "code": "WIDAL",
+      "label": {
+        "en": "Widal / typhoid",
+        "ru": "Видаль / брюшной тиф",
+        "az": "Vidal / tif"
+      },
+      "valueType": "NUMERIC"
+    },
+    {
+      "code": "ZN",
+      "label": {
+        "en": "Zinc",
+        "ru": "Цинк",
+        "az": "Sink"
+      },
+      "valueType": "NUMERIC",
+      "unit": "µmol/L"
+    },
+    {
+      "code": "ZON",
+      "label": {
+        "en": "Zonulin",
+        "ru": "Зонулин",
+        "az": "Zonulin"
+      },
+      "valueType": "NUMERIC",
+      "unit": "ng/mL"
+    }
+  ]
+}

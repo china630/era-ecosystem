@@ -121,7 +121,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/procedures/[id]/complete` | session NURSE — stuck `CHECKED_IN` fallback only (happy path = auto by `endsAt`) |
 | `/api/nurse/qr-scan` | session NURSE — verifyGuestQrToken; returns `qrToken` for check-in |
 | `/api/cron/procedure-auto-complete` | Bearer `PLATFORM_CRON_SECRET` — `CHECKED_IN` past `endsAt` → `COMPLETED`; Wave 4 `byOrganization` |
-| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products` (`isService=false` components, `isService=true` sellable sku on `ProcedureType` and `DiagnosticService`); complete resolves BOM (no `PROC-*`, no retail HTTP); Finance write-off W2 |
+| Procedure TTK → Finance (CLI-47) | **API** — `ProcedureConsumableLine`; `GET/PUT …/procedure-types/[id]/consumables`; `GET /api/admin/finance-products?isService=false` for components. Sellable SKU on `ProcedureType` and `DiagnosticService` searches `GET /api/admin/catalog?q=` and opens on the existing catalog code when `financeSku` is empty |
 | `/api/cron/procedure-no-show-sweep` | Bearer `PLATFORM_CRON_SECRET` — stale `SCHEDULED` → `NO_SHOW` (burns quota); Wave 4 `byOrganization` |
 | `/api/cron/episode-walkin-close` | Bearer `PLATFORM_CRON_SECRET` — idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55; refuses live procedures/labs); path→module `clinic_inpatient` |
 | `GET/POST/PATCH/DELETE /api/patients/[id]/complaints` | session — course complaints (`?episode=`); CLOSED read-only |
@@ -141,6 +141,7 @@ Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav regist
 - GET|POST /api/admin/diagnostic-catalog/imaging-phrases, PATCH|DELETE .../[id]
 - GET /api/imaging-phrases (ops phrase picker)
 - Analyte section / valueType / AnalyteValueOption via analytes admin API
+- GET `/api/admin/diagnostic-catalog/analyte-dictionary?q=` — unscoped `AnalyteDictionary` search. Add-analyte modal fills the form from it. Seed: `prisma/seed-data/analyte-dictionary.json` via `db:seed` / `db:seed:diagnostic-catalog:base` (rebuild with `node prisma/scripts/build-analyte-dictionary.mjs`)
 - ADR: docs/adr/clinic-print-forms.md
 - Print checkup (`/print/checkup/[patientId]`) includes episode ICD diagnoses (`print-checkup.service`); default sections = Nafta intake 4 (`therapist` / `gynecologist` / `cardiologist` / `usm`)
 - Visit exam print: `/print/visit-exam/[cpoeEntryId]` (`print-visit-exam.service`) — one `CpoeEntry`; whole-visit / FHIR = future debt

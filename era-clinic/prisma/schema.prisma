@@ -817,6 +817,28 @@ model DiagnosticAnalyteTemplate {
   @@map("diagnostic_analyte_template")
 }
 
+/// Unscoped lab analyte dictionary. Shared by every organization.
+/// A panel row copies code, unit, labels, and the usual adult range; the panel keeps its own norms.
+model AnalyteDictionary {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  unit        String?
+  labelEn     String           @map("label_en")
+  labelRu     String           @map("label_ru")
+  labelAz     String           @map("label_az")
+  refMin      String?          @map("ref_min")
+  refMax      String?          @map("ref_max")
+  section     String?
+  valueType   AnalyteValueType @default(NUMERIC) @map("value_type")
+  optionsJson String?          @map("options_json") @db.Text
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([active])
+  @@map("analyte_dictionary")
+}
+
 model LabOrderItem {
   id                  String             @id @default(cuid())
   organizationId      String
