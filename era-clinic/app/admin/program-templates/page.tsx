@@ -32,6 +32,8 @@ import {
   filterCustomSkus,
   filterTreatmentSkus,
   fulfillmentFromKind,
+  isLabBlockCatalogKind,
+  PROGRAM_TEMPLATE_CATALOG_KINDS,
   type ProgramBlockFulfillment,
   type ProgramBlockKind,
 } from "@/domain/sanatorium/program-block-catalog";
@@ -225,7 +227,9 @@ export default function ProgramTemplatesAdminPage() {
       const [pRes, ptRes, diagRes] = await Promise.all([
         fetch(`/api/admin/program-templates${qs}`),
         fetch(`/api/admin/procedure-types?locale=${encodeURIComponent(locale)}`),
-        fetch("/api/diagnostic-catalog?kinds=lab_panel,visit&applyFavorites=false"),
+        fetch(
+          `/api/diagnostic-catalog?kinds=${PROGRAM_TEMPLATE_CATALOG_KINDS.join(",")}&applyFavorites=false`,
+        ),
       ]);
       if (!pRes.ok) {
         setRows([]);
@@ -320,8 +324,8 @@ export default function ProgramTemplatesAdminPage() {
       }));
     } else if (kind === "LAB") {
       source = diagSkuOptions.filter((o) => {
-        if (o.kind !== "lab_panel") return false;
-        if (labCategory && o.category !== labCategory) return false;
+        if (!isLabBlockCatalogKind(o.kind)) return false;
+        if (o.kind === "lab_panel" && labCategory && o.category !== labCategory) return false;
         return true;
       });
     } else if (kind === "EXAM") {
