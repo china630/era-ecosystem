@@ -224,15 +224,6 @@ export async function listPhysicalRequirementResources(
     const row = await prisma.resource.findFirst({ where: { code } });
     if (row) out.push(row);
   }
-  // Legacy types with only resourceKind and no requirement codes may pick any matching kind.
-  // When explicit cabinet codes exist (even if retired in DB), do not fall back to a random room.
-  if (out.length === 0 && source.resourceKind && codes.size === 0) {
-    const fallback = await prisma.resource.findFirst({
-      where: { kind: source.resourceKind },
-      orderBy: { code: "asc" },
-    });
-    if (fallback) out.push(fallback);
-  }
   return out;
 }
 

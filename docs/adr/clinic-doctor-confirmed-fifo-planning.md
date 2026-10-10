@@ -75,6 +75,6 @@ SatAdmin maintains `ProcedureRotationRule` (`/admin/procedure-rules`, `/api/admi
 ## Consequences
 
 - Package instantiate → proposed plan → doctor confirm is the happy path; one-shot auto-place is deprecated.
-- Seed `prisma/seed-planning-rules.cjs` bootstraps body parts, extended hours, and example rotation/substitution rules.
+- Cabins, rotation, substitution, body part, and extended hours are master data. `planning-rules` import and `prisma/seed-planning-rules.ts` do not rewrite them.
 - UAT: patient card confirm; bulk cancel+replace on sanatorium course; external lab >90d blocked; peak mode in `/admin/settings`.
 - Coverage: CLI row for doctor-confirm planning (OpsUI doctor/reception + SatAdmin rules).

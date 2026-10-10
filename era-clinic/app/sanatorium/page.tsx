@@ -218,6 +218,7 @@ export default function SanatoriumPage() {
   const [patientCardId, setPatientCardId] = useState<string | null>(null);
   const [cardPanel, setCardPanel] = useState<string | null>(null);
   const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
+  const [cardPlanOnly, setCardPlanOnly] = useState(false);
   const [chartDate, setChartDate] = useState(todayBakuYmd());
   const [complaint, setComplaint] = useState("");
   const [icdCodeId, setIcdCodeId] = useState("");
@@ -519,7 +520,15 @@ export default function SanatoriumPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      showApiError(await res.json().catch(() => ({})), t("failed"));
+      const failed = (await res.json().catch(() => ({}))) as { code?: string; error?: string };
+      if (failed.code === "NO_CABIN") {
+        showApiError(
+          { error: tCard("packageAssignNoCabin", { names: failed.error ?? "" }) },
+          t("failed"),
+        );
+      } else {
+        showApiError(failed, t("failed"));
+      }
       return;
     }
     const data = (await res.json().catch(() => ({}))) as {
@@ -931,6 +940,7 @@ export default function SanatoriumPage() {
                 if (!e.patientRef?.id) return;
                 setCardEpisodeId(e.id);
                 setCardPanel("plan");
+                setCardPlanOnly(true);
                 setPatientCardId(e.patientRef.id);
               }}
             >
@@ -941,7 +951,11 @@ export default function SanatoriumPage() {
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
                 aria-label={t("patientCard")}
-                onClick={() => setPatientCardId(e.patientRef!.id)}
+                onClick={() => {
+                  setCardPlanOnly(false);
+                  setCardPanel(null);
+                  setPatientCardId(e.patientRef!.id);
+                }}
               >
                 <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
               </button>
@@ -1646,10 +1660,12 @@ export default function SanatoriumPage() {
         open={Boolean(patientCardId)}
         panel={cardPanel}
         initialEpisodeId={cardEpisodeId}
+        planOnly={cardPlanOnly}
         onClose={() => {
           setPatientCardId(null);
           setCardPanel(null);
           setCardEpisodeId(null);
+          setCardPlanOnly(false);
         }}
         onOpenDayPlan={(episodeId) => {
           setPatientCardId(null);

@@ -141,6 +141,7 @@ Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav regist
 - GET|POST /api/admin/diagnostic-catalog/imaging-phrases, PATCH|DELETE .../[id]
 - GET /api/imaging-phrases (ops phrase picker)
 - Analyte section / valueType / AnalyteValueOption via analytes admin API
+- GET `/api/admin/diagnostic-catalog/analyte-dictionary?q=` — unscoped `AnalyteDictionary` search. Add-analyte modal fills the form from it. Seed: `prisma/seed-data/analyte-dictionary.json` via `db:seed` / `db:seed:diagnostic-catalog:base` (rebuild with `node prisma/scripts/build-analyte-dictionary.mjs`)
 - ADR: docs/adr/clinic-print-forms.md
 - Print checkup (`/print/checkup/[patientId]`) includes episode ICD diagnoses (`print-checkup.service`); default sections = Nafta intake 4 (`therapist` / `gynecologist` / `cardiologist` / `usm`)
 - Visit exam print: `/print/visit-exam/[cpoeEntryId]` (`print-visit-exam.service`) — one `CpoeEntry`; whole-visit / FHIR = future debt

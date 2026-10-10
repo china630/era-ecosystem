@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Banknote } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -31,9 +31,18 @@ type ExtraRow = {
   amountNet: number;
   patientOrigin: string;
   scheduledAt: string;
+  patientRefId: string;
   patientName: string;
   refCode: string;
   status?: string;
+};
+
+type PatientGroup = {
+  patientRefId: string;
+  patientName: string;
+  refCode: string;
+  items: ExtraRow[];
+  total: number;
 };
 
 export default function ExtraTicketsPage() {
@@ -42,6 +51,8 @@ export default function ExtraTicketsPage() {
   const [dualRun, setDualRun] = useState(false);
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [lockHint, setLockHint] = useState(false);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const [origin, setOrigin] = useState("");
@@ -77,27 +88,78 @@ export default function ExtraTicketsPage() {
     });
   }, [rows, origin, qDebounced]);
 
-  const visibleIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
-  const allVisibleSelected =
-    visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const groups = useMemo(() => {
+    const map = new Map<string, ExtraRow[]>();
+    for (const row of filtered) {
+      const key = row.patientRefId || row.refCode;
+      const list = map.get(key) ?? [];
+      list.push(row);
+      map.set(key, list);
+    }
+    const out: PatientGroup[] = [];
+    for (const [patientRefId, items] of map) {
+      const first = items[0]!;
+      out.push({
+        patientRefId,
+        patientName: first.patientName,
+        refCode: first.refCode,
+        items,
+        total: items.reduce((sum, row) => sum + Number(row.amountNet || 0), 0),
+      });
+    }
+    return out;
+  }, [filtered]);
 
-  function toggle(id: string) {
+  const lockedPatientId = useMemo(() => {
+    for (const row of rows) {
+      if (selected.has(row.id)) return row.patientRefId || row.refCode;
+    }
+    return null;
+  }, [rows, selected]);
+
+  function patientLocked(patientRefId: string): boolean {
+    return lockedPatientId != null && lockedPatientId !== patientRefId;
+  }
+
+  function toggleProcedure(row: ExtraRow) {
+    const key = row.patientRefId || row.refCode;
+    if (patientLocked(key)) {
+      setLockHint(true);
+      return;
+    }
+    setLockHint(false);
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(row.id)) next.delete(row.id);
+      else next.add(row.id);
       return next;
     });
   }
 
-  function toggleAllVisible() {
+  function togglePatient(group: PatientGroup) {
+    if (patientLocked(group.patientRefId)) {
+      setLockHint(true);
+      return;
+    }
+    setLockHint(false);
+    const ids = group.items.map((row) => row.id);
+    const allOn = ids.every((id) => selected.has(id));
     setSelected((prev) => {
       const next = new Set(prev);
-      if (allVisibleSelected) {
-        for (const id of visibleIds) next.delete(id);
+      if (allOn) {
+        for (const id of ids) next.delete(id);
       } else {
-        for (const id of visibleIds) next.add(id);
+        for (const id of ids) next.add(id);
       }
+      return next;
+    });
+  }
+
+  function toggleExpanded(patientRefId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(patientRefId)) next.delete(patientRefId);
+      else next.add(patientRefId);
       return next;
     });
   }
@@ -126,7 +188,12 @@ export default function ExtraTicketsPage() {
       });
       const d = await res.json();
       if (!res.ok) {
-        showApiError(d, t("issueFailed"));
+        const code = typeof d?.code === "string" ? d.code : "";
+        if (code === "MIXED_PATIENT") {
+          showApiError({ error: t("mixedPatient") }, t("issueFailed"));
+        } else {
+          showApiError(d, t("issueFailed"));
+        }
         return;
       }
       const payload = d.data ?? d;
@@ -139,6 +206,7 @@ export default function ExtraTicketsPage() {
         }
       }
       setSelected(new Set());
+      setLockHint(false);
       const receiptNo = payload.paymentReceiptRef as string | undefined;
       if (receiptNo) showSuccess(t("receiptIssued", { no: receiptNo }));
       await load();
@@ -167,6 +235,9 @@ export default function ExtraTicketsPage() {
                     <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {t("selectedTotal")}: {selectedTotal.toFixed(2)} AZN
                     </p>
+                  ) : null}
+                  {lockHint ? (
+                    <p className="max-w-xs text-right text-[12px] text-amber-800">{t("mixedPatient")}</p>
                   ) : null}
                   <button
                     type="button"
@@ -200,15 +271,7 @@ export default function ExtraTicketsPage() {
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>
-                  <input
-                    type="checkbox"
-                    checked={allVisibleSelected}
-                    disabled={visibleIds.length === 0}
-                    onChange={toggleAllVisible}
-                    aria-label={t("selectAll")}
-                  />
-                </th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patient")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedure")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("amount")}</th>
@@ -217,51 +280,166 @@ export default function ExtraTicketsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {groups.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                     {rows.length === 0 ? t("empty") : t("noMatch")}
                   </td>
                 </tr>
               ) : (
-                filtered.map((r) => (
-                  <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(r.id)}
-                        onChange={() => toggle(r.id)}
-                        aria-label={t("pay")}
-                      />
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <div className="font-medium">{r.patientName}</div>
-                      <div className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{r.refCode}</div>
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.procedureName}</td>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
-                      {Number(r.amountNet).toFixed(2)} AZN
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{originLabel(r.patientOrigin)}</td>
-                    <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        disabled={busy}
-                        aria-label={t("payRow")}
-                        title={t("payRow")}
-                        onClick={() => void issue([r.id])}
-                      >
-                        <Banknote className={`h-4 w-4 ${TEXT_SUCCESS_CLASS}`} aria-hidden />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                groups.map((group) => {
+                  const ids = group.items.map((row) => row.id);
+                  const selectedCount = ids.filter((id) => selected.has(id)).length;
+                  const allOn = selectedCount === ids.length && ids.length > 0;
+                  const someOn = selectedCount > 0 && !allOn;
+                  const locked = patientLocked(group.patientRefId);
+                  const open = expanded.has(group.patientRefId);
+                  return (
+                    <PatientBlock
+                      key={group.patientRefId}
+                      group={group}
+                      open={open}
+                      allOn={allOn}
+                      someOn={someOn}
+                      locked={locked}
+                      busy={busy}
+                      selected={selected}
+                      patientLabel={t("selectPatient")}
+                      procedureCountLabel={t("procedureCount", { count: group.items.length })}
+                      payLabel={t("pay")}
+                      payRowLabel={t("payRow")}
+                      originLabel={originLabel}
+                      onTogglePatient={() => togglePatient(group)}
+                      onToggleExpanded={() => toggleExpanded(group.patientRefId)}
+                      onToggleProcedure={toggleProcedure}
+                      onPay={(id) => {
+                        if (locked) {
+                          setLockHint(true);
+                          return;
+                        }
+                        void issue([id]);
+                      }}
+                    />
+                  );
+                })
               )}
             </tbody>
           </table>
         }
       />
     </div>
+  );
+}
+
+function PatientBlock({
+  group,
+  open,
+  allOn,
+  someOn,
+  locked,
+  busy,
+  selected,
+  patientLabel,
+  procedureCountLabel,
+  payLabel,
+  payRowLabel,
+  originLabel,
+  onTogglePatient,
+  onToggleExpanded,
+  onToggleProcedure,
+  onPay,
+}: {
+  group: PatientGroup;
+  open: boolean;
+  allOn: boolean;
+  someOn: boolean;
+  locked: boolean;
+  busy: boolean;
+  selected: Set<string>;
+  patientLabel: string;
+  procedureCountLabel: string;
+  payLabel: string;
+  payRowLabel: string;
+  originLabel: (code: string) => string;
+  onTogglePatient: () => void;
+  onToggleExpanded: () => void;
+  onToggleProcedure: (row: ExtraRow) => void;
+  onPay: (id: string) => void;
+}) {
+  return (
+    <>
+      <tr className={locked ? `${DATA_TABLE_TR_CLASS} opacity-60` : DATA_TABLE_TR_CLASS}>
+        <td className={DATA_TABLE_TD_CLASS}>
+          <input
+            ref={(el) => {
+              if (el) el.indeterminate = someOn;
+            }}
+            type="checkbox"
+            checked={allOn}
+            disabled={busy}
+            aria-label={patientLabel}
+            onChange={onTogglePatient}
+          />
+        </td>
+        <td className={DATA_TABLE_TD_CLASS}>
+          <button
+            type="button"
+            className="flex items-center gap-2 text-left"
+            onClick={onToggleExpanded}
+            aria-expanded={open}
+          >
+            {open ? (
+              <ChevronDown className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
+            )}
+            <span>
+              <span className="font-medium">{group.patientName}</span>
+              <span className={`ml-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{group.refCode}</span>
+            </span>
+          </button>
+        </td>
+        <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>{procedureCountLabel}</td>
+        <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
+          {group.total.toFixed(2)} AZN
+        </td>
+        <td className={DATA_TABLE_TD_CLASS} />
+        <td className={DATA_TABLE_TD_CLASS} />
+      </tr>
+      {open
+        ? group.items.map((row) => (
+            <tr key={row.id} className={locked ? `${DATA_TABLE_TR_CLASS} opacity-60` : DATA_TABLE_TR_CLASS}>
+              <td className={DATA_TABLE_TD_CLASS} />
+              <td className={DATA_TABLE_TD_CLASS}>
+                <input
+                  type="checkbox"
+                  className="ml-6"
+                  checked={selected.has(row.id)}
+                  disabled={busy}
+                  aria-label={payLabel}
+                  onChange={() => onToggleProcedure(row)}
+                />
+              </td>
+              <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
+                {Number(row.amountNet).toFixed(2)} AZN
+              </td>
+              <td className={DATA_TABLE_TD_CLASS}>{originLabel(row.patientOrigin)}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  disabled={busy}
+                  aria-label={payRowLabel}
+                  title={payRowLabel}
+                  onClick={() => onPay(row.id)}
+                >
+                  <Banknote className={`h-4 w-4 ${TEXT_SUCCESS_CLASS}`} aria-hidden />
+                </button>
+              </td>
+            </tr>
+          ))
+        : null}
+    </>
   );
 }

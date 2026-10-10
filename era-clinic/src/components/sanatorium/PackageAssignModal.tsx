@@ -813,6 +813,17 @@ export function PackageAssignModal({
     });
   }
 
+  function assignSaveMessage(payload: { code?: unknown; error?: unknown }): string {
+    const code = typeof payload.code === "string" ? payload.code : null;
+    const serverError = typeof payload.error === "string" ? payload.error.trim() : "";
+    if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
+    if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
+    if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
+      ? `${serverError} (${code})`
+      : serverError;
+    return tc("saveFailed");
+  }
+
   async function save() {
     let extras = extraDraft;
     let lines = draft;
@@ -891,7 +902,7 @@ export function PackageAssignModal({
         );
         if (!res.ok) {
           const d = await res.json();
-          showApiError(d, tc("failed"));
+          showApiError({ error: assignSaveMessage(d) }, tc("failed"));
           return;
         }
       }
@@ -915,21 +926,7 @@ export function PackageAssignModal({
         });
         const d = await res.json();
         if (!res.ok) {
-          const code = typeof d?.code === "string" ? d.code : null;
-          const msg =
-            code === "PLACE_FAILED"
-              ? tPhysio("packageAssignPlaceFailed")
-              : typeof d?.error === "string" && d.error.trim()
-                ? d.error
-                : tc("saveFailed");
-          showApiError(
-            {
-              error:
-                code && code !== "PLACE_FAILED" && !msg.includes(code)
-                  ? `${msg} (${code})`
-                  : msg,
-            },
-          );
+          showApiError({ error: assignSaveMessage(d) }, tc("saveFailed"));
           return;
         }
         const payload = d.data ?? d;
@@ -1136,7 +1133,7 @@ export function PackageAssignModal({
       );
       const d = await res.json();
       if (!res.ok) {
-        showApiError(d, tc("failed"));
+        showApiError({ error: assignSaveMessage(d) }, tc("failed"));
         return;
       }
       setReplaceOpen(false);

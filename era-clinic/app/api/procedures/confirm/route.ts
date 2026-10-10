@@ -94,11 +94,14 @@ export async function POST(req: Request) {
     // Soft warn only — never 4xx for >3 (contra / doctor may need 4).
     const softWarn = day1ConfirmSoftWarn(body.orderIds.length);
 
-    const placed = await placeConfirmedProcedures(body.orderIds, {
+    const placement = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });
+    if (placement.missingCabinNames.length > 0) {
+      return jsonError(placement.missingCabinNames.join(", "), 409, { code: "NO_CABIN" });
+    }
     return jsonOk({
-      placed,
+      placed: placement.placed,
       orderIds: body.orderIds,
       ...(softWarn ? { softWarn } : {}),
     });

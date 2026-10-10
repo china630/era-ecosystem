@@ -10,6 +10,9 @@ jest.mock("@/lib/prisma", () => ({
     procedureType: {
       findFirst: jest.fn().mockResolvedValue({ financeSku: "SKU-PROC" }),
     },
+    serviceCatalogCache: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
     diagnosticService: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
@@ -95,5 +98,17 @@ describe("billing-router", () => {
     const { completeVisitBilling } = await import("@/lib/billing-router");
     const result = await completeVisitBilling("v2");
     expect(result.channel).toBe("hotel_folio");
+  });
+
+  it("uses the catalog service code when financeSku is empty", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.procedureType.findFirst.mockResolvedValue({ financeSku: "  " });
+    prisma.serviceCatalogCache.findFirst.mockResolvedValue({
+      code: "SVC-KLASIK-MASSAJ-30-DEQIQE",
+    });
+    const { resolveSellableSku } = await import("@/lib/billing-router");
+    await expect(resolveSellableSku("SVC-KLASIK-MASSAJ-30-DEQIQE")).resolves.toBe(
+      "SVC-KLASIK-MASSAJ-30-DEQIQE",
+    );
   });
 });

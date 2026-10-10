@@ -1741,9 +1741,9 @@ const programTemplatesAdapter: ImportAdapter<{
 
 const planningRulesAdapter: ImportAdapter<Record<string, never>> = {
   entity: "planning-rules",
-  label: "Planning rules (body-part / rotation / cabin pools)",
+  label: "Planning rules (master data; import does not rewrite)",
   order: 9,
-  templateHint: "Fileless — applies Nafta planning defaults after procedures/rooms",
+  templateHint: "Fileless no-op — cabins, rotation, and substitution stay in master data",
   fileless: true,
   headerAliases: {},
   rowSchema: z.object({}),

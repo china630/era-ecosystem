@@ -124,6 +124,9 @@ type Props = {
   showBackLink?: boolean;
   onPatientLoaded?: (patient: PatientCardPatient) => void;
   onOpenDayPlan?: (episodeId: string) => void;
+  /** Render only the procedure-plan modal. */
+  planOnly?: boolean;
+  onPlanClose?: () => void;
 };
 
 export function PatientCardBody({
@@ -133,6 +136,8 @@ export function PatientCardBody({
   showBackLink = true,
   onPatientLoaded,
   onOpenDayPlan,
+  planOnly = false,
+  onPlanClose,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
@@ -387,6 +392,24 @@ export function PatientCardBody({
     setEditOpen(false);
     showSuccess(tc("saved"));
     await load();
+  }
+
+  if (planOnly) {
+    if (!patient) return null;
+    return (
+      <PatientCardClinicalSections
+        patientRefId={patient.id}
+        panel="plan"
+        episodeId={selectedEpisodeId}
+        patientOrigin={selectedEpisode?.patientOrigin}
+        readOnly={episodeReadOnly}
+        anamnesisOk={anamnesisOk}
+        studiesUnlocked={studiesUnlocked}
+        refreshKey={clinicalRefreshKey}
+        onOpenDayPlan={onOpenDayPlan}
+        onPlanClose={onPlanClose}
+      />
+    );
   }
 
   if (!patient) {

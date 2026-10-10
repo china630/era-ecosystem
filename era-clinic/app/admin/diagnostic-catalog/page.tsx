@@ -78,6 +78,19 @@ type DiagnosticService = {
   _count?: { analytes?: number };
 };
 
+type DictionaryAnalyte = {
+  code: string;
+  unit?: string | null;
+  labelEn: string;
+  labelRu: string;
+  labelAz: string;
+  refMin?: string | null;
+  refMax?: string | null;
+  section?: string | null;
+  valueType?: string;
+  optionsJson?: string | null;
+};
+
 type DiagnosticAnalyte = {
   id: string;
   serviceId: string;
@@ -177,6 +190,10 @@ export default function DiagnosticCatalogAdminPage() {
   const [financeServiceOptions, setFinanceServiceOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
   const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
+  const [dictionaryQ, setDictionaryQ] = useState("");
+  const debouncedDictionaryQ = useDebouncedValue(dictionaryQ, 300);
+  const [dictionaryItems, setDictionaryItems] = useState<DictionaryAnalyte[]>([]);
+  const [dictionaryPick, setDictionaryPick] = useState<DictionaryAnalyte | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [formFields, setFormFields] = useState<CatalogFieldDef[]>([]);
@@ -227,6 +244,23 @@ export default function DiagnosticCatalogAdminPage() {
       cancelled = true;
     };
   }, [modalOpen, tab, debouncedFinanceServiceQ]);
+
+  useEffect(() => {
+    if (!analyteEditOpen || editingId) return;
+    let cancelled = false;
+    void (async () => {
+      const params = new URLSearchParams({ limit: "30" });
+      if (debouncedDictionaryQ.trim()) params.set("q", debouncedDictionaryQ.trim());
+      const res = await fetch(`/api/admin/diagnostic-catalog/analyte-dictionary?${params}`);
+      if (!res.ok || cancelled) return;
+      const parsed = await res.json();
+      const payload = (parsed.data ?? parsed) as { items?: DictionaryAnalyte[] };
+      if (!cancelled) setDictionaryItems(payload.items ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [analyteEditOpen, editingId, debouncedDictionaryQ]);
 
   useEffect(() => {
     void loadServices();
@@ -543,8 +577,17 @@ export default function DiagnosticCatalogAdminPage() {
           return;
         }
       }
+      const code = form.code?.trim();
+      if (
+        !editingId &&
+        code &&
+        analytes.some((row) => row.code.toLowerCase() === code.toLowerCase())
+      ) {
+        showApiError({ error: t("analyteExists") });
+        return;
+      }
       const payload = {
-        code: form.code?.trim(),
+        code,
         unit: form.unit?.trim() || null,
         labelEn: form.labelEn?.trim(),
         labelRu: form.labelRu?.trim(),
@@ -605,7 +648,43 @@ export default function DiagnosticCatalogAdminPage() {
     if (!selectedServiceId) return;
     setAnalyteEditOpen(true);
     setEditingId(null);
+    setDictionaryQ("");
+    setDictionaryPick(null);
     setForm({ valueType: "NUMERIC" });
+  }
+
+  function applyDictionary(code: string) {
+    if (!code) {
+      setDictionaryPick(null);
+      return;
+    }
+    const row =
+      dictionaryItems.find((item) => item.code === code) ??
+      (dictionaryPick?.code === code ? dictionaryPick : null);
+    if (!row) return;
+    setDictionaryPick(row);
+    setForm((prev) => ({
+      ...prev,
+      code: row.code,
+      unit: row.unit ?? "",
+      labelEn: row.labelEn,
+      labelRu: row.labelRu,
+      labelAz: row.labelAz,
+      refMin: row.refMin ?? "",
+      refMax: row.refMax ?? "",
+      section: row.section ?? "",
+      valueType: row.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
+      valueOptionsJson: row.optionsJson ?? "",
+    }));
+  }
+
+  function dictionaryLabel(row: DictionaryAnalyte) {
+    const name = locale.startsWith("ru")
+      ? row.labelRu
+      : locale.startsWith("az")
+        ? row.labelAz
+        : row.labelEn;
+    return row.unit ? `${row.code} — ${name} · ${row.unit}` : `${row.code} — ${name}`;
   }
 
   async function toggleModalityActive(row: Modality) {
@@ -1349,6 +1428,32 @@ export default function DiagnosticCatalogAdminPage() {
         onClose={() => setAnalyteEditOpen(false)}
       >
         <div className="space-y-4">
+              {!editingId ? (
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={t("dictionarySearch")}
+                  hint={t("dictionarySearchHint")}
+                  value={dictionaryPick?.code ?? ""}
+                  serverSearch
+                  onQueryChange={setDictionaryQ}
+                  options={[
+                    ...(dictionaryPick &&
+                    !dictionaryItems.some((row) => row.code === dictionaryPick.code)
+                      ? [
+                          {
+                            value: dictionaryPick.code,
+                            label: dictionaryLabel(dictionaryPick),
+                          },
+                        ]
+                      : []),
+                    ...dictionaryItems.map((row) => ({
+                      value: row.code,
+                      label: dictionaryLabel(row),
+                    })),
+                  ]}
+                  onChange={(next) => applyDictionary(String(next ?? ""))}
+                />
+              ) : null}
               <Field
                 label={t("code")}
                 preset="code"

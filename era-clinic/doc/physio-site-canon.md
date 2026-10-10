@@ -132,7 +132,7 @@ Seeded from `inferPhysioTypeGate` (SatAdmin may override). PATCH rejects sites o
 | Yod-brom | `FULL-BODY`, `TO-WAIST` | water ≤ nipple line; heart open; head+neck always out |
 | Hidromasaj | `FULL-BODY`, `TO-WAIST` | same immersion; **jet safety hint** on form (not S chips) |
 | Naftalan ♀/♂ | `FULL-BODY` + `SITZ` | two chips; gender = schedule only. Fields: `NAFTALAN_FILL`, `BATH_SEQUENCE`, `DAY_BLOCK`. No SMEAR / laterality / device params |
-| Aplikasiya Naftalan ♀/♂ | anatomical surface (+ FULL) | paid smear 24 AZN; DAY_BLOCK; **shares RES-VANNA-\* with immersion bath** same gender |
+| Aplikasiya Naftalan ♀/♂ | anatomical surface (+ FULL) | paid smear 24 AZN; DAY_BLOCK; shares the gender cabin pool set on the procedure type |
 | İnfraqırmızı / Sollyuks | anatomical surface | lamp + substance/extra oil (NAFTALAN); **no lamp-count field** |
 | İşıq vannası | anatomical surface | light cabin after naftalan smear; **≠ İK**; no intensity from WO |
 | Paraffin aşağı | legs + hip/gluteal (to buttocks) | not abdomen |

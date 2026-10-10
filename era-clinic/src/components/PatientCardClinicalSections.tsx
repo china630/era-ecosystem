@@ -168,6 +168,8 @@ type Props = {
   refreshKey?: number;
   /** When set, opens the sanatorium treatment chart instead of navigating to the same URL. */
   onOpenDayPlan?: (episodeId: string) => void;
+  /** Plan opened without the patient card. Closing the plan closes the host. */
+  onPlanClose?: () => void;
 };
 
 export function PatientCardClinicalSections({
@@ -179,6 +181,7 @@ export function PatientCardClinicalSections({
   studiesUnlocked = false,
   readOnly = false,
   refreshKey = 0,
+  onPlanClose,
 }: Props) {
   const t = useTranslations("patientCard");
   const ts = useTranslations("sanatorium");
@@ -320,6 +323,7 @@ export function PatientCardClinicalSections({
   );
 
   if (loading || !summary) {
+    if (onPlanClose) return null;
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
 
@@ -678,10 +682,13 @@ export function PatientCardClinicalSections({
                       .then(async (res) => {
                         if (!res.ok) {
                           const d = await res.json();
+                          const names = typeof d.error === "string" ? d.error : "";
                           showApiError(
                             {
                               error:
-                                packageAssignBlockText(t, d.code) ?? d.error ?? tc("failed"),
+                                d.code === "NO_CABIN"
+                                  ? t("packageAssignNoCabin", { names })
+                                  : (packageAssignBlockText(t, d.code) ?? names) || tc("failed"),
                             },
                           );
                           return;
@@ -835,7 +842,10 @@ export function PatientCardClinicalSections({
       <ModalShell
         open={planOpen}
         title={t("planModalTitle")}
-        onClose={() => setPlanOpen(false)}
+        onClose={() => {
+          setPlanOpen(false);
+          onPlanClose?.();
+        }}
         closeLabel={tc("close")}
         maxWidthClass="max-w-4xl"
         headerActions={
