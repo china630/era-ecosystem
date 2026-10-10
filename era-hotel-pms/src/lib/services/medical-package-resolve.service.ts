@@ -74,6 +74,15 @@ export type AgencySkuRuleInput = {
 /**
  * True when agency is explicit non-medical Walkin leisure (hotel skips clinic lifecycle).
  */
+/** Medical stay tariff: guest row must name a PKG-* package. Daily rates do not. */
+export function ratePlanRequiresGuestPackage(plan: {
+  code?: string | null;
+  medicalFlag?: boolean | null;
+}): boolean {
+  if (plan.medicalFlag) return true;
+  return /^MEDICAL\b/i.test((plan.code ?? "").trim());
+}
+
 export function isLeisureAgency(agencyName: string | null | undefined): boolean {
   if (!agencyName?.trim()) return false;
   const raw = agencyName.trim();

@@ -85,6 +85,59 @@ export async function ownerPackageNightlyBreakdown(
  * Grid cell for this night, charged room type, meal, and guest packages.
  * Null when a required cell is missing. Does not read pricePerNight or +96.
  */
+/** One cell of a rate plan's sell grid: room type × meal × adult count × date. */
+export async function ratePlanGridNightlySell(
+  asOf: Date,
+  input: {
+    ratePlanId: string;
+    roomTypeId: string;
+    mealPlanId?: string | null;
+    occupancy: number;
+  },
+): Promise<number | null> {
+  if (!input.mealPlanId || input.occupancy < 1) return null;
+  const on = stayDateUtc(asOf);
+  const row = await prisma.ratePlanSellVersion.findFirst({
+    where: {
+      ratePlanId: input.ratePlanId,
+      roomTypeId: input.roomTypeId,
+      mealPlanId: input.mealPlanId,
+      occupancy: input.occupancy,
+      effectiveFrom: { lte: on },
+      OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
+    },
+    orderBy: { effectiveFrom: "desc" },
+  });
+  return row ? Number(row.sellPrice) : null;
+}
+
+export async function assertPackageGridCoversStay(input: {
+  reservationId: string;
+  checkIn: Date;
+  checkOut: Date;
+  roomTypeId: string;
+  mealPlanId?: string | null;
+  packageCodes: string[];
+  roomTypeCode?: string | null;
+  mealCode?: string | null;
+  ratePlanCode: string;
+}): Promise<void> {
+  const { NightlyPriceMissingError } = await import("@/lib/pricing/own-nightly-price");
+  for (const night of eachNight(input.checkIn, input.checkOut)) {
+    const amount = await ownerPackageNightlySell(night, input.packageCodes, {
+      roomTypeId: input.roomTypeId,
+      mealPlanId: input.mealPlanId,
+    });
+    if (amount == null) {
+      throw new NightlyPriceMissingError(input.reservationId, input.ratePlanCode, {
+        packageCode: input.packageCodes.join("+"),
+        roomTypeCode: input.roomTypeCode,
+        mealCode: input.mealCode,
+      });
+    }
+  }
+}
+
 export async function ownerPackageNightlySell(
   asOf: Date,
   codes: string[],

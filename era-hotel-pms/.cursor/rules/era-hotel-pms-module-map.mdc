@@ -180,7 +180,9 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 |-------|-----|------|
 | `/settings/policies#pricing` | `GET/PATCH /api/admin/pricing-policy` | Feature flags: occupancy / load yield / child absolute. `/settings/pricing-policy` redirects here |
 | `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
-| `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell + costFloor versions |
+| `/settings/seasons` | `GET /api/admin/price-seasons`, `PATCH …/[id]` | High/low season dates. Saving rewrites `effectiveFrom`/`effectiveTo` on sell cells of that season |
+| `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell grid by season, room type, meal, adults |
+| `/settings/daily-prices` | same sell-versions API | Daily rates (BB/FB) grid. Card meal plan selects the cell. No clinic episode without a PKG code |
 | `/distribution/travel-agencies` | travel-agencies API | Medical package is `Agency.medicalPackageCode` (CatalogField). Import stamps it from the name. `/settings/agency-medical-sku` redirects here |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
 | `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
