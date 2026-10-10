@@ -3,6 +3,7 @@ import {
   filterCustomSkus,
   filterTreatmentSkus,
   fulfillmentFromKind,
+  isLabBlockCatalogKind,
   treatmentFamily,
 } from "@/domain/sanatorium/program-block-catalog";
 
@@ -13,6 +14,10 @@ describe("program-block-catalog", () => {
     expect(fulfillmentFromKind("PARAFFIN")).toBe("PROCEDURE_ORDER");
     expect(fulfillmentFromKind("CUSTOM")).toBe("PROCEDURE_ORDER");
     expect(fulfillmentFromKind("LAB")).toBe("LAB_ORDER");
+    expect(isLabBlockCatalogKind("lab_panel")).toBe(true);
+    expect(isLabBlockCatalogKind("imaging")).toBe(true);
+    expect(isLabBlockCatalogKind("functional")).toBe(true);
+    expect(isLabBlockCatalogKind("visit")).toBe(false);
     expect(fulfillmentFromKind("EXAM")).toBe("VISIT");
     expect(fulfillmentFromKind(null)).toBe("PROCEDURE_ORDER");
   });
