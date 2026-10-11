@@ -6,7 +6,13 @@ import { PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 const BOTTOM_CTA_SECONDARY_CLASS =
   "inline-flex h-11 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900 px-6 text-sm font-semibold text-slate-100 shadow-sm no-underline transition-all duration-200 hover:bg-slate-800/80 hover:text-white";
 
-export function LandingBottomCta({ copy }: { copy: LandingMarketingCopy["bottomCta"] }) {
+export function LandingBottomCta({
+  copy,
+  calcLabel,
+}: {
+  copy: LandingMarketingCopy["bottomCta"];
+  calcLabel?: string;
+}) {
   return (
     <section className="px-4 pb-12 pt-4 md:pb-16" aria-labelledby="landing-bottom-cta-headline">
       <div
@@ -32,6 +38,11 @@ export function LandingBottomCta({ copy }: { copy: LandingMarketingCopy["bottomC
               <Link href="/login" className={BOTTOM_CTA_SECONDARY_CLASS}>
                 {copy.secondary}
               </Link>
+              {calcLabel ? (
+                <Link href="/calc" className={BOTTOM_CTA_SECONDARY_CLASS}>
+                  {calcLabel}
+                </Link>
+              ) : null}
             </div>
             <p className="m-0 max-w-md text-center text-[11px] font-medium leading-snug tracking-tight text-slate-400">
               {copy.ctaMicrocopy}

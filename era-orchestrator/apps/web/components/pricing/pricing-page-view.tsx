@@ -8,6 +8,7 @@ import { computePricingTotals } from "../../lib/pricing/compute-pricing-totals";
 import { getPricingStorefrontUiCopy } from "../../lib/i18n/pricing-storefront-copy";
 import { getPricingMetersCopy } from "../../lib/i18n/pricing-meters-copy";
 import type { PublicPricingResponse } from "../../lib/public-pricing-types";
+import { calcNavLabel } from "../../lib/i18n/calc-copy";
 import { LandingLanguageToggle } from "../locale/landing-language-toggle";
 import { PublicLegalFooter } from "@era/satellite-kit/ui";
 import { PricingBundlesSection } from "./pricing-bundles-section";
@@ -88,6 +89,12 @@ export function PricingPageView({
               className="hidden text-sm font-medium text-slate-600 no-underline hover:text-slate-900 sm:inline"
             >
               {locale === "ru" ? "Спутники" : "Peyklər"}
+            </Link>
+            <Link
+              href="/calc"
+              className="text-sm font-semibold text-[#2980B9] no-underline hover:text-[#216f9e]"
+            >
+              {calcNavLabel(locale)}
             </Link>
             <LandingLanguageToggle locale={locale} onChange={onLocaleChange} />
             <Link href="/login" className={PRICING_LOGIN_BTN_CLASS}>

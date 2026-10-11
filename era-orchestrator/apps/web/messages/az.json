@@ -29,6 +29,7 @@
   },
   "help": {
     "title": "Tez-tez verilən suallar",
+    "calcLink": "Abunə kalkulyatoru",
     "items": {
       "platform": {
         "q": "ERA 365 nədir?",
@@ -585,6 +586,7 @@
     "submit": "Kafe aç",
     "busy": "…",
     "alreadyHaveAccount": "Artıq ERA hesabın var?",
+    "calcLink": "Aylıq qiyməti hesabla",
     "signupFailed": "Qeydiyyat uğursuz oldu",
     "emailTaken": "Bu e-poçt artıq qeydiyyatdadır — girişə keç",
     "voenTaken": "Bu VÖEN artıq bağlıdır",
@@ -631,6 +633,7 @@
     "team": "Komanda",
     "subscription": "Abunəlik",
     "pricing": "Tariflər",
+    "calculator": "Kalkulyator",
     "help": "Kömək",
     "superAdmin": "Super admin",
     "platformHub": "Platforma",

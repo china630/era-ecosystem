@@ -6,7 +6,13 @@ import { SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 const HERO_CTA_CLASS =
   "relative inline-flex h-11 min-h-11 items-center justify-center gap-2 rounded-lg bg-[#2980B9] px-6 text-sm font-semibold text-white shadow-lg shadow-[#2980B9]/35 no-underline transition hover:bg-[#2471A3] focus:outline-none focus:ring-2 focus:ring-[#2980B9] focus:ring-offset-2";
 
-export function LandingHero({ copy }: { copy: LandingMarketingCopy["hero"] }) {
+export function LandingHero({
+  copy,
+  calcLabel,
+}: {
+  copy: LandingMarketingCopy["hero"];
+  calcLabel?: string;
+}) {
   return (
     <section className="relative px-4 pb-4 pt-6 md:pb-6 md:pt-10">
       <div className="mx-auto max-w-6xl text-center">
@@ -33,6 +39,11 @@ export function LandingHero({ copy }: { copy: LandingMarketingCopy["hero"] }) {
             <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} h-11 px-5 text-sm no-underline`}>
               {copy.ctaSecondary}
             </Link>
+            {calcLabel ? (
+              <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} h-11 px-5 text-sm no-underline`}>
+                {calcLabel}
+              </Link>
+            ) : null}
           </div>
           <p className="m-0 max-w-md text-center text-[11px] font-medium leading-snug tracking-tight text-[#7F8C8D]">
             {copy.ctaMicrocopy}
