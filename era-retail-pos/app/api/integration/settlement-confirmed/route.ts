@@ -34,7 +34,21 @@ export async function POST(request: Request) {
       where: { id: body.sourceRef },
       include: { lines: true, outlet: true },
     });
-    if (!receipt) return jsonError("Receipt not found", 404);
+    if (!receipt) {
+      const queued = await prisma.prescriptionQueue.findUnique({ where: { id: body.sourceRef } });
+      if (!queued) return jsonError("Receipt not found", 404);
+      if (queued.status === "AWAITING_PAY") {
+        await prisma.prescriptionQueue.update({
+          where: { id: queued.id },
+          data: { status: "READY", paidAt: new Date() },
+        });
+      }
+      return jsonOk({
+        ok: true,
+        prescriptionId: queued.id,
+        status: queued.status === "AWAITING_PAY" ? "READY" : queued.status,
+      });
+    }
     if (receipt.status === "PAID") return jsonOk({ ok: true, alreadySettled: true });
     if (receipt.status === "VOID") return jsonError("Receipt is void", 409);
 

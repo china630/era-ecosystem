@@ -28,6 +28,7 @@ async function ensureEpisodeAndProgram(
       sex?: string;
       birthDate?: string;
       nationality?: string;
+      phone?: string;
     };
   },
 ) {
@@ -37,7 +38,7 @@ async function ensureEpisodeAndProgram(
     reservationId: p.reservationId,
     guestName: p.guestName ?? "Guest",
     passportNumber: p.reservationId,
-    phone: undefined,
+    phone: p.phone?.trim() || undefined,
     organizationId: event.organizationId,
     globalPersonId: p.globalPersonId ?? event.globalPersonId,
     hotelStayId: p.reservationId,

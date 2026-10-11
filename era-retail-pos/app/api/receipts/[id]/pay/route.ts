@@ -13,6 +13,7 @@ import {
 } from "@/integration/control-plane-platform.client";
 import { isRetailPreset } from "@/lib/retail-preset";
 import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-client";
+import { revenueCodeForSaleLine } from "@/lib/revenue-code";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { prisma } from "@/lib/prisma";
 
@@ -86,11 +87,15 @@ export async function POST(
         const sku = line.plu?.trim();
         if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
         const lineKey = `${receipt.id}:${line.id}`;
+        const revenueCode = await revenueCodeForSaleLine({
+          plu: sku,
+          outletRevenueCode: receipt.outlet.revenueCode,
+        });
         const charge = await postRoomCharge(
           {
             reservationId: body.reservationId,
             roomNumber: body.roomNumber,
-            revenueCode: "RETAIL",
+            revenueCode,
             amount: Number(line.lineTotal),
             qty: line.qty,
             productSku: sku,
@@ -111,6 +116,10 @@ export async function POST(
       for (const line of activeLines) {
         const sku = line.plu?.trim();
         if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
+        const revenueCode = await revenueCodeForSaleLine({
+          plu: sku,
+          outletRevenueCode: receipt.outlet.revenueCode,
+        });
         const pending = await postHotelSettlementPending({
           sourceRef: receipt.id,
           amount: Number(line.lineTotal),
@@ -119,7 +128,7 @@ export async function POST(
           idempotencyKey: `retail-${receipt.id}-${line.id}`,
           sku,
           qty: line.qty,
-          revenueCode: "RETAIL",
+          revenueCode,
         });
         pendingIds.push(pending.id);
       }

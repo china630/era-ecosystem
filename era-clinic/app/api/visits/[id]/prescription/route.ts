@@ -9,8 +9,6 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { prisma } from "@/lib/prisma";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
-import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
 import { z } from "zod";
 
 const schema = z.object({
@@ -53,54 +51,39 @@ export async function POST(
       },
     });
 
-    const target = await resolveBillingTarget(visit.patientOrigin);
-    for (let index = 0; index < body.lines.length; index += 1) {
-      const line = body.lines[index]!;
-      const sku = line.sku.trim();
-      if (!sku) throw new Error("Finance SKU is required");
-      const qty = Math.max(1, Math.round(line.qty));
-      const description = line.description?.trim() || `Pharmacy ${sku}`;
-      if (target === "HOTEL_FOLIO" && visit.reservationId) {
-        await postHotelRoomCharge({
-          reservationId: visit.reservationId,
-          roomNumber: visit.roomNumber ?? undefined,
-          amount: 0,
-          description,
-          externalTicketId: `clinic-rx-${visit.id}-${index}`,
-          productSku: sku,
-          qty,
-          revenueCode: "RETAIL",
-        });
-      } else if (target === "HOTEL_FOLIO" || target === "SETTLEMENT_HUB") {
-        await postHotelSettlementPending({
-          sourceRef: `clinic-rx-${visit.id}`,
-          amount: 0,
-          description,
-          payerLabel: visit.patientRef.refCode,
-          globalPersonId: visit.patientRef.globalPersonId ?? undefined,
-          idempotencyKey: `clinic-rx-${visit.id}-${index}`,
-          sku,
-          qty,
-          revenueCode: "RETAIL",
-        });
-      }
+    for (const line of body.lines) {
+      if (!line.sku.trim()) throw new Error("Finance SKU is required");
     }
 
     const retailBase = (process.env.RETAIL_POS_URL ?? "http://127.0.0.1:3204").replace(
       /\/$/,
       "",
     );
-    await fetch(`${retailBase}/api/integration/prescription-reserve`, {
+    const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+    const queued = await fetch(`${retailBase}/api/integration/prescription-queue`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
+        organizationId: visit.organizationId,
         patientRef: visit.patientRef.refCode,
         visitId: visit.id,
+        patientOrigin: visit.patientOrigin,
+        reservationId: visit.reservationId,
         lines: body.lines,
       }),
-    }).catch(() => null);
+    });
+    if (!queued.ok) {
+      return jsonError("Pharmacy queue rejected the prescription", 502);
+    }
+    const queueBody = (await queued.json()) as { id?: string; data?: { id?: string } };
 
-    return jsonOk({ visitId: visit.id, reserved: body.lines.length });
+    return jsonOk({
+      visitId: visit.id,
+      prescriptionQueueId: queueBody.data?.id ?? queueBody.id ?? null,
+    });
   } catch (err) {
     return handleRouteError(err);
   }

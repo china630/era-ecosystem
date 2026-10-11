@@ -145,7 +145,8 @@ export async function reportPosShiftStatus(payload: {
   if (isPmsStubMode()) return;
   // Lazy: the kit barrel pulls jose, and a static import breaks CJS Jest on /api/health.
   const { requestOrganizationId } = await import("@/lib/request-organization");
-  const organizationId = requestOrganizationId();
+  const { resolveCatalogOrganizationId } = await import("@era/satellite-kit");
+  const organizationId = await resolveCatalogOrganizationId(requestOrganizationId());
   const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
     method: "PUT",
     headers: bridgeHeaders(organizationId),

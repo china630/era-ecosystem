@@ -110,13 +110,21 @@ export async function POST(
     let result: { ok: boolean; status: number; body: unknown } | null = null;
     for (const line of ticket.lines) {
       const productSku = line.menuItem?.financeSku?.trim() ?? "";
+      const revenueCode =
+        line.menuItem?.revenueCode?.trim() || ticket.outlet.revenueCenterCode?.trim() || "";
+      if (!revenueCode) {
+        return NextResponse.json(
+          { error: `Revenue code is required for ${line.description}` },
+          { status: 400 },
+        );
+      }
       const lineAmount = Number(line.qty) * Number(line.unitPriceAzn);
       const lineKey = `${ticket.id}:${line.id}`;
       result = await postRoomCharge(
         {
           reservationId,
           roomNumber,
-          revenueCode: ticket.outlet.revenueCenterCode,
+          revenueCode,
           amount: lineAmount,
           qty: line.qty,
           productSku,

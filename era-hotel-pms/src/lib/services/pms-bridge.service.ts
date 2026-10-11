@@ -14,6 +14,7 @@ export type RoomChargeIdempotencyInput = {
   outletCode?: string;
   productSku?: string;
   qty?: number;
+  sourceOrganizationId?: string;
 };
 
 export function hashRoomChargeRequest(input: RoomChargeIdempotencyInput): string {
@@ -357,16 +358,61 @@ export async function reportPosShiftStatus(input: {
   });
 }
 
+async function liveOpenRetailShifts(organizationId: string): Promise<LivePosShifts> {
+  const raw =
+    process.env.RETAIL_POS_URL?.trim() ||
+    process.env.NEXT_PUBLIC_RETAIL_POS_URL?.trim() ||
+    '';
+  const base = raw ? raw.replace(/\/$/, '') : '';
+  const secret = process.env.POS_BRIDGE_SECRET?.trim();
+  if (!base || !secret || !organizationId || organizationId === 'demo-org') return { ok: false };
+  try {
+    const res = await fetch(`${base}/api/internal/v1/shifts/open`, {
+      headers: {
+        'X-Pos-Bridge-Secret': secret,
+        'x-era-organization-id': organizationId,
+      },
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false };
+    const body = (await res.json()) as {
+      open?: Array<{ outletCode?: string; shiftId?: string; openedAt?: string }>;
+    };
+    const shifts = (body.open ?? [])
+      .map((row) => ({
+        outletCode: row.outletCode?.trim() ?? '',
+        shiftId: row.shiftId?.trim() ?? '',
+        openedAt: row.openedAt?.trim() ?? '',
+      }))
+      .filter((row) => row.outletCode || row.shiftId);
+    return { ok: true, shifts };
+  } catch {
+    return { ok: false };
+  }
+}
+
 export async function assertNoOpenPosShifts(): Promise<void> {
   const live = await reconcileStalePosBridgeShifts();
+  const organizationId = auditOrganizationId();
+  const retail = organizationId ? await liveOpenRetailShifts(organizationId) : { ok: false as const };
+  const retailOpen = retail.ok ? retail.shifts : [];
   if (live.ok) {
-    if (live.shifts.length === 0) return;
-    const outlets = [...new Set(live.shifts.map((row) => row.outletCode).filter(Boolean))];
+    const outlets = [
+      ...new Set(
+        [...live.shifts, ...retailOpen].map((row) => row.outletCode).filter(Boolean),
+      ),
+    ];
+    if (outlets.length === 0) return;
     throw new Error(
-      `Close all POS shifts (fb-pos outlet ${outlets.join(', ') || 'unknown'}) before night audit`,
+      `Close all POS shifts (outlet ${outlets.join(', ') || 'unknown'}) before night audit`,
     );
   }
-  const organizationId = auditOrganizationId();
+  if (retailOpen.length > 0) {
+    const outlets = [...new Set(retailOpen.map((row) => row.outletCode).filter(Boolean))];
+    throw new Error(
+      `Close all retail shifts (outlet ${outlets.join(', ') || 'unknown'}) before night audit`,
+    );
+  }
   const open = organizationId
     ? await prisma.posBridgeShift.findFirst({
         where: { status: 'OPEN', organizationId },

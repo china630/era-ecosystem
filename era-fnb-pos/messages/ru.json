@@ -168,6 +168,7 @@
       "price": "Цена AZN",
       "recipeSku": "SKU рецепта",
       "financeSku": "Продаваемый SKU",
+      "revenueCode": "Код дохода",
       "recipeSkuHint": "Ссылка на Product / ProductRecipe в Finance (списание склада). BOM создаётся в Manufacturing Finance.",
       "search": "Поиск блюда",
       "showInactive": "Показать неактивные",

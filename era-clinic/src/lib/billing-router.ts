@@ -3,6 +3,8 @@ import {
   type PatientOrigin,
 } from "@era/contracts";
 import {
+  listHotelRevenueCodes,
+  resolveHotelRevenueKey,
   resolveOperatingMode,
   resolveSettlementPolicy,
   shouldDeferWalkInToHub,
@@ -153,6 +155,33 @@ export async function completeVisitBilling(visitId: string) {
   return { channel: "finance" as const };
 }
 
+async function revenueCodeForServiceLine(
+  serviceCode: string,
+  explicit?: string | null,
+): Promise<string> {
+  const given = explicit?.trim();
+  if (given) return resolveHotelFolioRevenueCode(given);
+  const procedure = await prisma.procedureType.findFirst({
+    where: { code: serviceCode },
+    select: { hotelRevenueCode: true },
+  });
+  if (procedure?.hotelRevenueCode?.trim()) {
+    return resolveHotelFolioRevenueCode(procedure.hotelRevenueCode);
+  }
+  const diagnostic = await prisma.diagnosticService.findFirst({
+    where: { OR: [{ code: serviceCode }, { serviceCode }] },
+    select: { hotelRevenueCode: true },
+  });
+  if (diagnostic?.hotelRevenueCode?.trim()) {
+    return resolveHotelFolioRevenueCode(diagnostic.hotelRevenueCode);
+  }
+  const catalog = await prisma.serviceCatalogCache.findFirst({
+    where: { code: serviceCode },
+    select: { hotelRevenueCode: true },
+  });
+  return resolveHotelFolioRevenueCode(catalog?.hotelRevenueCode);
+}
+
 export async function postClinicHotelLines(input: {
   kind: "folio" | "pending";
   reservationId?: string;
@@ -163,7 +192,7 @@ export async function postClinicHotelLines(input: {
   globalPersonId?: string;
   lines: ClinicHotelLine[];
   amountNet: number;
-  revenueCode?: "FOOD" | "MEDICAL" | "RETAIL";
+  revenueCode?: string;
   hotelOrganizationId?: string;
 }): Promise<{ firstId: string; ids: string[] }> {
   if (input.lines.length === 0) throw new Error("Finance SKU is required");
@@ -187,7 +216,7 @@ export async function postClinicHotelLines(input: {
         externalTicketId: key,
         productSku,
         qty,
-        revenueCode: input.revenueCode,
+        revenueCode: await revenueCodeForServiceLine(line.serviceCode, input.revenueCode),
         hotelOrganizationId: input.hotelOrganizationId,
       })) as { id?: string };
       const chargeId = String(charge.id ?? key);
@@ -203,7 +232,7 @@ export async function postClinicHotelLines(input: {
         idempotencyKey: key,
         sku: productSku,
         qty,
-        revenueCode: input.revenueCode ?? "MEDICAL",
+        revenueCode: await revenueCodeForServiceLine(line.serviceCode, input.revenueCode),
       });
       const pendingId = String((pending as { id?: string }).id ?? "");
       if (pendingId) ids.push(pendingId);
@@ -213,16 +242,30 @@ export async function postClinicHotelLines(input: {
   return { firstId, ids };
 }
 
-/** Explicit caller code wins (RETAIL). Otherwise the clinic setting. Empty setting refuses the folio post. */
+/**
+ * Department posts the hotel catalog key. A name resolves to that key.
+ * Standalone keeps its own key. Empty or unknown refuses the post.
+ */
 export async function resolveHotelFolioRevenueCode(explicit?: string | null): Promise<string> {
-  const given = explicit?.trim();
-  if (given) return given;
   const tenant = await getDefaultTenant();
-  const code = tenant.hotelFolioRevenueCode?.trim() ?? "";
-  if (!code) {
+  const given = explicit?.trim() || tenant.hotelFolioRevenueCode?.trim() || "";
+  if (!given) {
     throw new Error("Hotel folio revenue code is not configured");
   }
-  return code;
+  const hotelOrg = await getClinicHotelOrganizationId();
+  const mode = await resolveOperatingMode(requestOrganizationId());
+  if (!shouldRouteRevenueToParent(mode) || !hotelOrg) {
+    return given;
+  }
+  const rows = await listHotelRevenueCodes(hotelOrg);
+  if (rows.length === 0) {
+    throw new Error("Hotel revenue catalog is unavailable");
+  }
+  const resolved = resolveHotelRevenueKey(rows, given);
+  if (!resolved) {
+    throw new Error(`Hotel revenue code ${given} not found`);
+  }
+  return resolved;
 }
 
 export async function postHotelRoomCharge(input: {
@@ -275,6 +318,7 @@ export async function postHotelRoomCharge(input: {
       description: input.description,
       ...(input.productSku?.trim() ? { productSku: input.productSku.trim() } : {}),
       ...(ticketIsUuid ? { externalTicketId: ticket } : { ticketNumber: ticket }),
+      sourceOrganizationId: requestOrganizationId(),
     }),
     signal: AbortSignal.timeout(15000),
   });

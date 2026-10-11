@@ -8,6 +8,7 @@
 import { HotelLookupKind, Prisma, PrismaClient } from "@prisma/client";
 import { createSatelliteTenantExtension } from "@era/satellite-kit/tenancy";
 import { HOTEL_LOOKUP_DEFAULTS } from "../src/lib/hotel-lookup-defaults";
+import { ensureRevenueGlSeedRows } from "../src/lib/revenue-gl-seed";
 
 const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
@@ -68,6 +69,7 @@ async function main() {
       created += 1;
     }
   }
+  await ensureRevenueGlSeedRows(prisma);
 
   for (const row of BED_TYPES) {
     const existing = await prisma.bedType.findUnique({

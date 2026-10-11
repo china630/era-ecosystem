@@ -49,12 +49,21 @@ export const stockCardsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       unitPrice: new Prisma.Decimal(row.unitPrice),
     };
     if (!existing) {
-      await tx.productCache.create({
+      const created = await tx.productCache.create({
         data: { organizationId: orgId, sku: row.sku, ...data },
+      });
+      await tx.productPrice.create({
+        data: { organizationId: orgId, productId: created.id, unitPrice: data.unitPrice },
       });
       return "created";
     }
+    const priceChanged = Number(existing.unitPrice) !== row.unitPrice;
     await tx.productCache.update({ where: { id: existing.id }, data });
+    if (priceChanged) {
+      await tx.productPrice.create({
+        data: { organizationId: orgId, productId: existing.id, unitPrice: data.unitPrice },
+      });
+    }
     return "updated";
   },
 };

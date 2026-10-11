@@ -92,6 +92,10 @@ export function elektraRevenueTarget(input: ElektraRevenueInput): ElektraRevenue
 
   const known = matchKnownElektraRevenue(input);
   if (known) {
+    // A numeric Elektra department stays the key. Posting finds it by name or alias.
+    if (code && /^\d+$/.test(code)) {
+      return { code, name: name ?? known.defaultName, canonical: false, fallback: false };
+    }
     return { code: known.code, name: name ?? known.defaultName, canonical: true, fallback: false };
   }
   if (code) {

@@ -9,6 +9,7 @@ import { payFolioCharge } from '@/lib/services/tour.service';
 
 const bodySchema = z.object({
   paymentMethod: z.enum(['CASH', 'CARD', 'BANK_TRANSFER']),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(req: Request, ctx: { params: Promise<{ chargeId: string }> }) {
@@ -18,7 +19,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ chargeId: stri
     await requireHotelModule('hotel_core', session.organizationId);
     const { chargeId } = await ctx.params;
     const body = bodySchema.parse(await req.json());
-    return jsonOk(serialize(await payFolioCharge(chargeId, body.paymentMethod)));
+    return jsonOk(
+      serialize(await payFolioCharge(chargeId, body.paymentMethod, body.bankTerminalId)),
+    );
   } catch (e) {
     return handleRouteError(e);
   }

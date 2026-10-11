@@ -313,6 +313,11 @@ export {
   type FinanceCatalogItem,
 } from "./integration/finance-catalog";
 export {
+  listHotelRevenueCodes,
+  resolveHotelRevenueKey,
+  type HotelRevenueCodeRow,
+} from "./integration/hotel-revenue-codes";
+export {
   fiscalizeForSatellite,
   saleForSatelliteRouted,
   refundForSatelliteRouted,

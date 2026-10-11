@@ -12,7 +12,10 @@ jest.mock("@/lib/prisma", () => ({
       findUnique: jest.fn(),
     },
     procedureType: {
-      findFirst: jest.fn().mockResolvedValue({ financeSku: "SKU-PROC" }),
+      findFirst: jest.fn().mockResolvedValue({ financeSku: "SKU-PROC", hotelRevenueCode: "AMB" }),
+    },
+    tenant: {
+      findFirst: jest.fn().mockResolvedValue({ hotelFolioRevenueCode: "AMB" }),
     },
     serviceCatalogCache: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -41,6 +44,8 @@ jest.mock("@era/satellite-kit", () => ({
   }),
   shouldRouteRevenueToParent: jest.fn().mockReturnValue(false),
   shouldDeferWalkInToHub: jest.fn().mockReturnValue(false),
+  listHotelRevenueCodes: jest.fn().mockResolvedValue([{ code: "AMB", name: "Ambulator" }]),
+  resolveHotelRevenueKey: jest.fn((_rows: unknown, token: string) => token ?? null),
   resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("org1"),
   satelliteOrganizationId: jest.fn().mockReturnValue("org1"),
   enterSatelliteTenant: jest.fn(),

@@ -7,6 +7,7 @@ import { IndustryHandoffsInventoryController } from "./industry-handoffs-invento
 import { IndustryHandoffsLogisticsController } from "./industry-handoffs-logistics.controller";
 import { IndustryHandoffsPurchasesController } from "./industry-handoffs-purchases.controller";
 import { IndustryHandoffsInsuranceController } from "./industry-handoffs-insurance.controller";
+import { IndustryHandoffsClinicController } from "./industry-handoffs-clinic.controller";
 
 @Module({
   imports: [PrismaModule, InventoryModule, DataHubModule],
@@ -15,6 +16,7 @@ import { IndustryHandoffsInsuranceController } from "./industry-handoffs-insuran
     IndustryHandoffsLogisticsController,
     IndustryHandoffsPurchasesController,
     IndustryHandoffsInsuranceController,
+    IndustryHandoffsClinicController,
   ],
   providers: [IndustryHandoffsService],
   exports: [IndustryHandoffsService],

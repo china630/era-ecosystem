@@ -37,16 +37,20 @@ function fakeDb(rows: Row[]) {
 describe('elektraRevenueTarget', () => {
   it('maps banquet names and codes to BANQUET', () => {
     expect(elektraRevenueTarget({ code: '45', name: 'Banket Gəliri' })).toMatchObject({
-      code: 'BANQUET',
-      canonical: true,
+      code: '45',
+      name: 'Banket Gəliri',
+      canonical: false,
     });
     expect(elektraRevenueTarget({ code: 'BANKET' }).code).toBe('BANQUET');
   });
 
-  it('maps known room / minibar / laundry names', () => {
-    expect(elektraRevenueTarget({ code: '1', name: 'Room Revenue' }).code).toBe('ROOM');
-    expect(elektraRevenueTarget({ code: '7', name: 'Mini Bar' }).code).toBe('MINIBAR');
-    expect(elektraRevenueTarget({ code: '9', name: 'Laundry' }).code).toBe('LAUNDRY');
+  it('keeps a numeric Elektra key when the name is a known department', () => {
+    expect(elektraRevenueTarget({ code: '1', name: 'Room Revenue' }).code).toBe('1');
+    expect(elektraRevenueTarget({ code: '7', name: 'Mini Bar' }).code).toBe('7');
+    expect(elektraRevenueTarget({ code: '9', name: 'Laundry' })).toMatchObject({
+      code: '9',
+      name: 'Laundry',
+    });
   });
 
   it('keeps an unknown Elektra code as its own code', () => {
@@ -75,11 +79,11 @@ describe('elektraRevenueTarget', () => {
 });
 
 describe('resolveElektraRevenueCodeId', () => {
-  it('creates BANQUET when the catalog has no such row', async () => {
+  it('keeps a numeric banquet code instead of rewriting it to BANQUET', async () => {
     const { db, store } = fakeDb([{ id: 'r1', code: 'ROOM', name: 'Room' }]);
     const id = await resolveElektraRevenueCodeId(db, { code: '45', name: 'Banquet' });
-    expect(id).toBe('new-BANQUET');
-    expect(store.some((r) => r.code === 'BANQUET')).toBe(true);
+    expect(id).toBe('new-45');
+    expect(store.some((r) => r.code === '45' && r.name === 'Banquet')).toBe(true);
   });
 
   it('does not route an unknown code to ROOM', async () => {

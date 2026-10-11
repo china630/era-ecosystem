@@ -161,6 +161,8 @@ model MenuItem {
   recipeSku  String?         @map("recipe_sku")
   /// Sellable Finance Product.sku. Distinct from recipeSku (local recipe identity).
   financeSku String?         @map("finance_sku")
+  /// Revenue article. Department: hotel RevenueCode.code. Outlet code is only the default for a new dish.
+  revenueCode String?        @map("revenue_code")
   imageUrl   String?         @map("image_url")
   category   MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lines      TicketLine[]

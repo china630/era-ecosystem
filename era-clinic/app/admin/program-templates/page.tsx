@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -147,6 +147,39 @@ function displayMemberCodes(b: ProgramBlock): string[] {
   if (b.memberCodes.length > 0) return b.memberCodes;
   if (isEntitlementPoolOrAlias(b.procedureCode)) return [];
   return b.procedureCode.trim() ? [b.procedureCode] : [];
+}
+
+function htmlEscape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Lab panels expand to analyte names. Other members stay one line each. */
+function blockCompositionLines(
+  block: ProgramBlock,
+  diagItems: DiagnosticCatalogItem[],
+  procTypes: ProcTypeOpt[],
+  locale: string,
+): string[] {
+  const rows: string[] = [];
+  for (const code of displayMemberCodes(block)) {
+    const diag = diagItems.find((item) => item.code === code);
+    if (diag && (diag.analytes?.length ?? 0) > 0) {
+      for (const analyte of diag.analytes ?? []) {
+        rows.push(pickL10n(analyte.label, locale));
+      }
+      continue;
+    }
+    if (diag) {
+      rows.push(pickL10n(diag.title, locale));
+      continue;
+    }
+    rows.push(procTypes.find((item) => item.code === code)?.name || code);
+  }
+  return rows.length > 0 ? rows : ["—"];
 }
 
 function todayYmd(): string {
@@ -609,6 +642,78 @@ export default function ProgramTemplatesAdminPage() {
     return code;
   }
 
+  function printPackageSheet() {
+    const title = form.name.trim() || form.code.trim() || t("title");
+    const nights =
+      form.minNights || form.maxNights
+        ? `${form.minNights || "—"}–${form.maxNights || "—"}`
+        : form.durationDays;
+    const from = formatYmd(form.effectiveFrom) || "—";
+    const to = formatYmd(form.effectiveTo) || "—";
+    const head = nightCols
+      .map((n) => `<th class="day">${htmlEscape(t("printNight", { n }))}</th>`)
+      .join("");
+    const body = matrixBlocks
+      .map((block) => {
+        const items = blockCompositionLines(block, diagItems, procTypes, locale)
+          .map((line) => `<li>${htmlEscape(line)}</li>`)
+          .join("");
+        const days = nightCols
+          .map((n) => {
+            const qty =
+              block.quotaBasis === "PER_STAY"
+                ? stayQty(block.procedureCode)
+                : knotQty(n, block.procedureCode);
+            return `<td class="day">${qty > 0 ? qty : "—"}</td>`;
+          })
+          .join("");
+        const mode = block.assignMode ? t(`assignMode_${block.assignMode}`) : "—";
+        const basis = block.quotaBasis ? t(`quotaBasis_${block.quotaBasis}`) : "—";
+        return `<tr>
+          <td class="name"><strong>${htmlEscape(block.procedureName || block.procedureCode)}</strong><div class="code">${htmlEscape(block.procedureCode)}</div></td>
+          <td><ul>${items}</ul></td>
+          <td>${htmlEscape(mode)}</td>
+          <td>${htmlEscape(basis)}</td>
+          ${days}
+        </tr>`;
+      })
+      .join("");
+    const html = `<!DOCTYPE html><html lang="${htmlEscape(locale)}"><head><meta charset="utf-8"/><title>${htmlEscape(title)}</title>
+<style>
+@page { size: A4 landscape; margin: 10mm 12mm; }
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 10px; }
+h1 { font-size: 16px; margin: 0 0 2px; }
+.meta { margin: 0 0 8px; color: #444; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #c8c8c8; padding: 4px 6px; vertical-align: top; }
+th { background: #f3f1ea; text-align: left; font-size: 10px; }
+td.day, th.day { width: 1%; text-align: center; white-space: nowrap; padding: 3px 4px; }
+td.day { font-weight: 700; font-size: 11px; }
+th.day { font-weight: 600; font-size: 9px; }
+.code { color: #666; font-size: 9px; margin-top: 2px; }
+ul { margin: 0; padding-left: 14px; } li { margin: 0; }
+</style></head><body>
+<h1>${htmlEscape(title)}</h1>
+<p class="meta">${htmlEscape(form.code)} · v${editingVersion} · ${htmlEscape(nights)} · ${htmlEscape(from)} — ${htmlEscape(to)}</p>
+<table><thead><tr>
+<th>${htmlEscape(t("blockName"))}</th>
+<th>${htmlEscape(t("printComposition"))}</th>
+<th>${htmlEscape(t("printAssign"))}</th>
+<th>${htmlEscape(t("printQuotaType"))}</th>
+${head}
+</tr></thead><tbody>${body}</tbody></table>
+<script>setTimeout(function(){window.print()},0)<\/script>
+</body></html>`;
+    const sheet = window.open("", "_blank");
+    if (!sheet) {
+      showApiError({ error: t("printBlocked") });
+      return;
+    }
+    sheet.document.open();
+    sheet.document.write(html);
+    sheet.document.close();
+  }
+
   function procShortLabel(code: string): string {
     const hit = procTypes.find((p) => p.code === code);
     if (hit) return hit.name;
@@ -934,6 +1039,18 @@ export default function ProgramTemplatesAdminPage() {
           closeBlockModal();
           setOpen(false);
         }}
+        closeLabel={tc("close")}
+        headerActions={
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={printPackageSheet}
+            aria-label={t("printSheet")}
+          >
+            <Printer className="h-4 w-4" aria-hidden />
+            {t("printSheet")}
+          </button>
+        }
         maxWidthClass="max-w-[76rem]"
       >
         <div className={`${FORM_STACK_CLASS} max-h-[min(70vh,42rem)] overflow-y-auto pr-1`}>

@@ -37,8 +37,9 @@ export function lifecycleDemographicsFromPax(pax: {
     sex?: string | null;
     birthDate?: Date | string | null;
     nationality?: string | null;
+    phone?: string | null;
   } | null;
-}): { sex?: string; birthDate?: string; nationality?: string } {
+}): { sex?: string; birthDate?: string; nationality?: string; phone?: string } {
   const rawSex = pax.sex ?? pax.guest?.sex ?? undefined;
   const rawDob = pax.birthDate ?? pax.guest?.birthDate ?? undefined;
   let birthDate: string | undefined;
@@ -50,10 +51,12 @@ export function lifecycleDemographicsFromPax(pax: {
   const sex = rawSex?.trim() || undefined;
   const rawNat = (pax.nationality ?? pax.guest?.nationality ?? "").trim();
   const nationality = rawNat ? mapNationalityToIso(rawNat) : undefined;
+  const phone = pax.guest?.phone?.trim() || undefined;
   return {
     ...(sex ? { sex } : {}),
     ...(birthDate ? { birthDate } : {}),
     ...(nationality ? { nationality } : {}),
+    ...(phone ? { phone } : {}),
   };
 }
 
@@ -62,6 +65,7 @@ export async function dispatchGuestCheckedIn(input: {
   roomNumber?: string;
   programCode?: string;
   globalPersonId?: string;
+  phone?: string;
   guestName?: string;
   checkInDate?: string;
   checkOutDate?: string;
@@ -86,6 +90,7 @@ export async function dispatchGuestCheckedIn(input: {
       sex: input.sex,
       birthDate: input.birthDate,
       nationality: input.nationality,
+      phone: input.phone,
     },
   };
   await publishLifecycle(event);

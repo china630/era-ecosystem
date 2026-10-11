@@ -43,4 +43,27 @@ export async function recordCatalogPriceIfChanged(input: CatalogPriceInput) {
       effectiveFrom: input.effectiveFrom ?? new Date(),
     },
   });
+  const procedure = await prisma.procedureType.findUnique({
+    where: {
+      organizationId_code: {
+        organizationId: input.organizationId,
+        code: input.code,
+      },
+    },
+    select: { id: true },
+  });
+  if (!procedure) return;
+  const lastProcedure = await prisma.procedureTypePrice.findFirst({
+    where: { procedureTypeId: procedure.id },
+    orderBy: { effectiveFrom: "desc" },
+  });
+  if (lastProcedure && Number(lastProcedure.amount) === input.amount) return;
+  await prisma.procedureTypePrice.create({
+    data: {
+      organizationId: input.organizationId,
+      procedureTypeId: procedure.id,
+      amount: input.amount,
+      effectiveFrom: input.effectiveFrom ?? new Date(),
+    },
+  });
 }

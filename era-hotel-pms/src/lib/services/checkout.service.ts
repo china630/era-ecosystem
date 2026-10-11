@@ -20,6 +20,12 @@ export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
   dispatch: DispatchResult;
   cityLedgerTransferred: string[];
+  depositRemainder: {
+    appliedCount: number;
+    refundedHeld: number;
+    heldAmount: number;
+    heldIds: string[];
+  };
 }
 
 export async function checkoutReservation(
@@ -29,6 +35,7 @@ export async function checkoutReservation(
     discountAmount?: number;
     discountDescription?: string;
     unusedNightsRefundMethod?: 'CASH' | 'CARD';
+    unusedNightsBankTerminalId?: string;
     unusedNightsReason?: string;
   },
 ): Promise<CheckoutResult> {
@@ -48,6 +55,7 @@ export async function checkoutReservation(
   );
   await applyEarlyCheckoutUnusedNights(id, {
     refundMethod: opts?.unusedNightsRefundMethod ?? 'CASH',
+    bankTerminalId: opts?.unusedNightsBankTerminalId,
     reason: opts?.unusedNightsReason,
   }).catch((e) => console.error('Early checkout unused-nights failed', e));
 
@@ -87,7 +95,7 @@ export async function checkoutReservation(
   await applyHeldDepositsToReservation(id);
 
   const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
-  await refundRemainingDeposits(id);
+  const depositRemainder = await refundRemainingDeposits(id);
 
   const settings = await getOutboundSettings();
   const openFolios = await prisma.folio.findMany({
@@ -199,5 +207,5 @@ export async function checkoutReservation(
   void submitTourismCheckOut(id).catch((e) => console.error('Tourism check-out failed', e));
   const reservation = await getReservation(id);
 
-  return { reservation, dispatch, cityLedgerTransferred };
+  return { reservation, dispatch, cityLedgerTransferred, depositRemainder };
 }

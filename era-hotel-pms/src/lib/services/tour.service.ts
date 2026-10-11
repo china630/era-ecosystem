@@ -2,6 +2,7 @@ import type { PaymentMethod, TourBookingStatus, TourDepartureStatus } from '@pri
 import { requestOrganizationId } from '@/lib/request-organization';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { folioBalance, postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
 
 export const TRANSFER_OCCUPANCY_MS = 90 * 60 * 1000;
@@ -14,7 +15,7 @@ export class TourConflictError extends Error {
 }
 
 async function tourRevenue() {
-  const code = await prisma.revenueCode.findFirst({ where: { code: 'TOUR' } });
+  const code = await findRevenueCodeByToken('TOUR');
   if (!code) throw new Error('Revenue code TOUR is not configured');
   return code;
 }
@@ -305,7 +306,11 @@ export async function removeTourBooking(id: string) {
   });
 }
 
-export async function payFolioCharge(chargeId: string, paymentMethod: PaymentMethod) {
+export async function payFolioCharge(
+  chargeId: string,
+  paymentMethod: PaymentMethod,
+  bankTerminalId?: string,
+) {
   const charge = await prisma.folioCharge.findUnique({
     where: { id: chargeId },
     include: { folio: true, revenueCode: true },
@@ -319,6 +324,7 @@ export async function payFolioCharge(chargeId: string, paymentMethod: PaymentMet
     folioId: charge.folioId,
     amount,
     paymentMethod,
+    bankTerminalId: paymentMethod === 'CARD' ? bankTerminalId : undefined,
   });
   await prisma.folioPaymentAllocation.create({
     data: { paymentId: payment.id, chargeId: charge.id, amount: toDecimal(amount) },

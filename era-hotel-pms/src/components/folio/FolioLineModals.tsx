@@ -74,7 +74,23 @@ export function FolioPayLineModal({
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
   const [method, setMethod] = useState('CASH');
+  const [bankTerminalId, setBankTerminalId] = useState('');
+  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setMethod('CASH');
+    setBankTerminalId('');
+    void fetch('/api/fiscal/devices?kind=BANK_POS')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { devices?: { id: string; label: string }[] } | null) => {
+        const devices = body?.devices ?? [];
+        setBankTerminals(devices);
+        setBankTerminalId(devices[0]?.id ?? '');
+      })
+      .catch(() => setBankTerminals([]));
+  }, [open]);
 
   async function submit() {
     if (!chargeId) return;
@@ -83,7 +99,10 @@ export function FolioPayLineModal({
       const res = await fetch(`/api/folios/charges/${chargeId}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethod: method }),
+        body: JSON.stringify({
+          paymentMethod: method,
+          bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -109,6 +128,7 @@ export function FolioPayLineModal({
           onSubmit={() => void submit()}
           busy={busy}
           submitLabel={t('pay')}
+          submitDisabled={method === 'CARD' && bankTerminals.length > 0 && !bankTerminalId.trim()}
         />
       }
     >
@@ -120,6 +140,16 @@ export function FolioPayLineModal({
         options={PAY_METHODS.map((m) => ({ value: m, label: tPay(m) }))}
         emptyLabel={null}
       />
+      {method === 'CARD' && bankTerminals.length > 0 ? (
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('bankTerminal')}
+          value={bankTerminalId}
+          onChange={(v) => setBankTerminalId(String(v ?? ''))}
+          options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+          emptyLabel={null}
+        />
+      ) : null}
     </EraModal>
   );
 }

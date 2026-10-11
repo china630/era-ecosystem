@@ -41,6 +41,11 @@ export async function POST(request: Request) {
       return jsonOk({ ok: true, prescription: true });
     }
 
+    const walkIn = await import("@/domain/sanatorium/extras-assign.service").then((mod) =>
+      mod.scheduleWalkInExtraAfterSettlement(body.sourceRef),
+    );
+    if (walkIn) return jsonOk({ ok: true, procedureOrderId: body.sourceRef, scheduled: true });
+
     const visit = await prisma.visit.findUnique({
       where: { id: body.sourceRef },
       include: { patientRef: true, serviceLines: true, receipts: true },

@@ -12,6 +12,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/events/dispatch",
   "/api/integration/staff-provision",
   "/api/integration/settlement-confirmed",
+  "/api/integration/prescription-queue",
 ];
 
 /** Any signed-in session; no grant. */
@@ -46,6 +47,7 @@ export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/api/offline/sync", [P.OFFLINE_SYNC]],
   ["/api/fiscal/devices", [P.FISCAL_DEVICES]],
   ["/api/uploads", [P.UPLOADS]],
+  ["/api/integration/prescription-queue/*", [P.RECEIPTS_SELL]],
   ["/api/integration/prescription-reserve", [P.INTEGRATIONS_STOCK]],
   ["/api/integration/stock-write-off", [P.INTEGRATIONS_STOCK]],
   ["/api/integrations/marketplace", [P.ADMIN_SETTINGS]],

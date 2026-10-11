@@ -10,7 +10,7 @@ export async function postHotelSettlementPending(input: {
   idempotencyKey: string;
   sku?: string;
   qty?: number;
-  revenueCode?: "FOOD" | "MEDICAL" | "RETAIL";
+  revenueCode?: string;
 }) {
   const base = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;

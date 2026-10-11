@@ -245,15 +245,49 @@ export async function payPendingCharge(input: PayPendingInput) {
   return paid;
 }
 
+async function notifyClinicPaidVoid(pending: {
+  sourceSystem: string;
+  sourceOrgId: string;
+  sourceRef: string;
+}) {
+  if (pending.sourceSystem !== 'CLINIC') return;
+  const clinicBase = (process.env.CLINIC_URL ?? process.env.ERA_CLINIC_URL ?? '').replace(/\/$/, '');
+  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? '';
+  if (!clinicBase || !token) return;
+  const res = await fetch(`${clinicBase}/api/internal/v1/extras/hotel-void`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      organizationId: pending.sourceOrgId,
+      orderId: pending.sourceRef,
+      externalTicketId: `clinic-ticket-${pending.sourceRef}`,
+    }),
+  }).catch(() => null);
+  if (!res?.ok) return;
+  const body = (await res.json()) as { reason?: string; data?: { reason?: string } };
+  if ((body.reason ?? body.data?.reason) === 'received') {
+    throw new Error('Clinic refused the void — procedure already received');
+  }
+}
+
 export async function voidPendingCharge(pendingId: string, reason: string) {
   const pending = await prisma.settlementPendingCharge.findUnique({
     where: { id: pendingId },
   });
   if (!pending) throw new Error('Pending charge not found');
-  if (pending.status !== 'PENDING') {
+  if (pending.status !== 'PENDING' && pending.status !== 'PAID') {
     throw new Error(`Cannot void charge in status ${pending.status}`);
   }
   if (!reason.trim()) throw new Error('Void reason required');
+  if (pending.status === 'PAID') {
+    if (pending.sourceSystem !== 'CLINIC') {
+      throw new Error(`Cannot void charge in status ${pending.status}`);
+    }
+    await notifyClinicPaidVoid(pending);
+  }
 
   return prisma.settlementPendingCharge.update({
     where: { id: pendingId },

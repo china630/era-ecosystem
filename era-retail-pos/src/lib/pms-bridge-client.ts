@@ -20,7 +20,7 @@ export type HotelPendingPayload = {
   idempotencyKey: string;
   sku: string;
   qty: number;
-  revenueCode: "RETAIL";
+  revenueCode: string;
 };
 
 function bridgeHeaders(hotelOrganizationId?: string): Record<string, string> {

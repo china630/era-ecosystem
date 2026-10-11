@@ -100,6 +100,7 @@ type ProcedureType = {
   allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
   financeSku?: string | null;
+  hotelRevenueCode?: string | null;
   skillCoverage?: number | null;
   requirements?: RequirementRow[];
   _count?: { skills?: number };
@@ -227,6 +228,7 @@ export default function MasterDataPage() {
   const [consumables, setConsumables] = useState<ConsumableRow[]>([]);
   const [financeProductOptions, setFinanceProductOptions] = useState<FinanceProductOption[]>([]);
   const [financeServiceOptions, setFinanceServiceOptions] = useState<FinanceProductOption[]>([]);
+  const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
   const [financeProductQ, setFinanceProductQ] = useState("");
   const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
@@ -310,6 +312,22 @@ export default function MasterDataPage() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    if (!modalOpen || tab !== "procedureTypes") return;
+    void fetch("/api/admin/hotel-revenue-codes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
+        const codes = body?.data?.codes ?? body?.codes ?? [];
+        setRevenueOptions(
+          codes.map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+      })
+      .catch(() => setRevenueOptions([]));
+  }, [modalOpen, tab]);
 
   useEffect(() => {
     if (!modalOpen || tab !== "procedureTypes") return;
@@ -609,6 +627,7 @@ export default function MasterDataPage() {
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
       financeSku: row.financeSku?.trim() || row.code,
+      hotelRevenueCode: row.hotelRevenueCode ?? "",
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
@@ -727,6 +746,7 @@ export default function MasterDataPage() {
             ? Number(form.extendedEndHour)
             : null,
           financeSku: form.financeSku?.trim() || null,
+          hotelRevenueCode: form.hotelRevenueCode?.trim() || null,
         };
       }
     } else if (tab === "practitioners") {
@@ -1444,6 +1464,18 @@ export default function MasterDataPage() {
                     : financeServiceOptions
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
+              />
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("hotelRevenueCode")}
+                value={form.hotelRevenueCode ?? ""}
+                options={
+                  form.hotelRevenueCode &&
+                  !revenueOptions.some((option) => option.value === form.hotelRevenueCode)
+                    ? [{ value: form.hotelRevenueCode, label: form.hotelRevenueCode }, ...revenueOptions]
+                    : revenueOptions
+                }
+                onChange={(next) => setForm({ ...form, hotelRevenueCode: String(next ?? "") })}
               />
               <FieldRow cols={4}>
                 <Field

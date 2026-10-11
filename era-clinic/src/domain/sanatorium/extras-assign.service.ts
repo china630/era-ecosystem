@@ -23,7 +23,6 @@ import { postHotelRoomCharge, tryResolveSellableSku } from "@/lib/billing-router
 import {
   extraTicketIdForOrder,
   extraTicketPrintPath,
-  isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
 import {
   getClinicHotelOrganizationId,
@@ -234,12 +233,21 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
  * and appended to the folio / Elektraweb description.
  * On any charge failure: leave all as PENDING_PAY (rollback status flips).
  */
+export type ExtraBatchLine = { id: string; name: string; reason?: string };
+
 export async function payAndScheduleExtras(
   orderIds: string[],
   actorUserId: string,
   organizationId?: string | null,
   opts?: { paymentReceiptRef?: string | null },
-): Promise<{ printPaths: string[]; placed: number; orders: unknown[]; paymentReceiptRef: string }> {
+): Promise<{
+  printPaths: string[];
+  placed: number;
+  orders: unknown[];
+  paymentReceiptRef: string;
+  accepted: ExtraBatchLine[];
+  rejected: ExtraBatchLine[];
+}> {
   if (!orderIds.length) {
     throw new PackageAssignError("No procedures selected", "INVALID", 400);
   }
@@ -248,47 +256,45 @@ export async function payAndScheduleExtras(
   const receipt = await allocateClinicReceiptNo(orgId);
   enterSatelliteTenant({ organizationId: orgId });
 
-  const orders = await prisma.procedureOrder.findMany({
-    where: { id: { in: orderIds }, status: "PENDING_PAY" },
+  const requested = await prisma.procedureOrder.findMany({
+    where: { id: { in: orderIds } },
     include: { patientRef: true },
   });
-  if (orders.length === 0) {
-    throw new PackageAssignError("No PENDING_PAY orders", "NOT_FOUND", 404);
-  }
-  const patientIds = new Set(orders.map((order) => order.patientRefId));
-  if (patientIds.size > 1) {
-    throw new PackageAssignError(
-      "One cheque is one patient",
-      "MIXED_PATIENT",
-      400,
-    );
-  }
-
-  const dualRun = await isClinicElektrawebDualRun(orgId);
-  const hotelOrganizationId = dualRun
-    ? await getClinicHotelOrganizationId(orgId)
-    : null;
-
-  // In-house with a reservation posts MEDICAL onto the hotel folio.
-  // Walk-in without a reservation: receipt only. Zero amount does not call the hotel.
-
-  // Phase 2: charge all first; on failure leave PENDING_PAY (nothing placed yet)
+  const byId = new Map(requested.map((row) => [row.id, row]));
+  const accepted: ExtraBatchLine[] = [];
+  const rejected: ExtraBatchLine[] = [];
   const chargedMeta: Array<{ orderId: string; amount: number; ticketId: string }> = [];
-  try {
-    for (const order of orders) {
+
+  const hotelOrganizationId = await getClinicHotelOrganizationId(orgId);
+
+  for (const id of orderIds) {
+    const order = byId.get(id);
+    if (!order || order.status !== "PENDING_PAY") {
+      rejected.push({
+        id,
+        name: order?.procedureName ?? id,
+        reason: "status is not PENDING_PAY",
+      });
+      continue;
+    }
+    try {
       const charge = await resolveProcedureCharge(order, { burnQuota: false });
       const amount = charge.amountNet > 0 ? charge.amountNet : Number(order.amountNet);
+      if (!(amount > 0)) {
+        rejected.push({ id: order.id, name: order.procedureName, reason: "amount is 0" });
+        continue;
+      }
       const ticketId = extraTicketIdForOrder(order.id);
       const description = `${order.procedureName} · çek ${receipt}`;
-
-      if (order.patientOrigin === "IN_HOUSE" && !order.reservationId) {
-        throw new PackageAssignError(
-          "In-house extra needs a hotel reservation before the folio charge",
-          "FOLIO_CHARGE_FAILED",
-          502,
-        );
-      }
-      if (order.reservationId && amount > 0) {
+      if (order.patientOrigin === "IN_HOUSE") {
+        if (!order.reservationId) {
+          rejected.push({
+            id: order.id,
+            name: order.procedureName,
+            reason: "no hotel reservation",
+          });
+          continue;
+        }
         await postProcedureFolioCharge({
           hotelOrganizationId: hotelOrganizationId ?? undefined,
           reservationId: order.reservationId,
@@ -298,25 +304,55 @@ export async function payAndScheduleExtras(
           procedureCode: order.procedureCode,
           qty: order.quantity,
         });
+        chargedMeta.push({ orderId: order.id, amount, ticketId });
+        accepted.push({ id: order.id, name: order.procedureName });
+        continue;
       }
-      // Walk-in with receipt: FO already collected cash; clinic records receipt only.
-      chargedMeta.push({ orderId: order.id, amount, ticketId });
+      const { postHotelSettlementPending } = await import("@/lib/settlement-hub-client");
+      const sku = await tryResolveSellableSku(order.procedureCode);
+      if (!sku) {
+        rejected.push({ id: order.id, name: order.procedureName, reason: "no SKU" });
+        continue;
+      }
+      await postHotelSettlementPending({
+        sourceRef: order.id,
+        amount,
+        description,
+        payerLabel: order.patientRef.fullName,
+        idempotencyKey: `pay-${ticketId}`,
+        sku,
+        qty: order.quantity,
+      });
+      rejected.push({
+        id: order.id,
+        name: order.procedureName,
+        reason: "waiting for hotel payment",
+      });
+    } catch (err) {
+      rejected.push({
+        id: order.id,
+        name: order.procedureName,
+        reason: err instanceof Error ? err.message : "hotel rejected the line",
+      });
     }
-  } catch (err) {
-    console.error("[extras] Pay charge batch failed — leaving PENDING_PAY", err);
-    throw new PackageAssignError(
-      err instanceof Error ? err.message : "Folio charge failed",
-      "FOLIO_CHARGE_FAILED",
-      502,
-    );
   }
 
-  // Phase 3: flip all to PROPOSED + receipt, then place, then tickets
+  if (chargedMeta.length === 0) {
+    return {
+      printPaths: [],
+      placed: 0,
+      orders: [],
+      paymentReceiptRef: receipt,
+      accepted,
+      rejected,
+    };
+  }
+
   await prisma.procedureOrder.updateMany({
     where: { id: { in: chargedMeta.map((c) => c.orderId) } },
     data: {
       status: "PROPOSED",
-      paymentReceiptRef: receipt,
+      paymentReceiptRef: opts?.paymentReceiptRef?.trim() || receipt,
       inPackage: false,
     },
   });
@@ -336,12 +372,10 @@ export async function payAndScheduleExtras(
       )
     ).placed;
   } catch (err) {
-    // Rollback to PENDING_PAY so reception can retry
-    await prisma.procedureOrder.updateMany({
-      where: { id: { in: chargedMeta.map((c) => c.orderId) } },
-      data: { status: "PENDING_PAY" },
-    });
-    throw err;
+    const reason = err instanceof Error ? err.message : "schedule failed";
+    for (const line of accepted) {
+      line.reason = reason;
+    }
   }
 
   const printPaths: string[] = [];
@@ -362,12 +396,31 @@ export async function payAndScheduleExtras(
   await recordClinicAudit(
     { userId: actorUserId },
     "ProcedureOrder",
-    orders[0]!.id,
+    chargedMeta[0]!.orderId,
     "EXTRA_PAY_AND_SCHEDULE",
-    { orderIds, placed, printPaths, paymentReceiptRef: receipt },
+    { orderIds, placed, printPaths, paymentReceiptRef: receipt, accepted, rejected },
   );
 
-  return { printPaths, placed, orders: issuedOrders, paymentReceiptRef: receipt };
+  return { printPaths, placed, orders: issuedOrders, paymentReceiptRef: receipt, accepted, rejected };
+}
+
+/** Walk-in extra becomes a plan and a ticket only after the hotel cashier confirms payment. */
+export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promise<boolean> {
+  const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
+  if (!order || order.status !== "PENDING_PAY" || order.patientOrigin === "IN_HOUSE") {
+    return false;
+  }
+  const ticketId = extraTicketIdForOrder(order.id);
+  await prisma.procedureOrder.update({
+    where: { id: order.id },
+    data: { status: "PROPOSED", inPackage: false },
+  });
+  await placeConfirmedProcedures([order.id], {});
+  await prisma.procedureOrder.update({
+    where: { id: order.id },
+    data: { extraTicketIssuedAt: new Date(), extraTicketId: ticketId },
+  });
+  return true;
 }
 
 /**
@@ -431,7 +484,7 @@ export async function cancelPaidExtraWithFolioReverse(
 export async function applyHotelVoidToExtra(input: {
   externalTicketId?: string;
   orderId?: string;
-}): Promise<{ cancelled: boolean }> {
+}): Promise<{ cancelled: boolean; reason?: string }> {
   const order = input.orderId
     ? await prisma.procedureOrder.findUnique({ where: { id: input.orderId } })
     : input.externalTicketId
@@ -439,9 +492,9 @@ export async function applyHotelVoidToExtra(input: {
           where: { extraTicketId: input.externalTicketId },
         })
       : null;
-  if (!order) return { cancelled: false };
-  if (["COMPLETED", "CANCELLED", "NO_SHOW"].includes(order.status)) {
-    return { cancelled: false };
+  if (!order) return { cancelled: false, reason: "not_found" };
+  if (["COMPLETED", "CANCELLED", "NO_SHOW", "CHECKED_IN"].includes(order.status)) {
+    return { cancelled: false, reason: "received" };
   }
   await prisma.procedureOrder.update({
     where: { id: order.id },

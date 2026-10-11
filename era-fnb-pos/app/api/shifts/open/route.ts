@@ -153,6 +153,9 @@ export async function POST(request: Request) {
       shiftId: shift.id,
     });
 
+    const { syncFnbChannelPrices } = await import("@/lib/channel-price-sync");
+    void syncFnbChannelPrices(organizationId).catch(() => undefined);
+
     const { reportFnbPosStationCapacity } = await import("@/lib/report-pos-capacity");
     void reportFnbPosStationCapacity(prisma).catch(() => undefined);
 

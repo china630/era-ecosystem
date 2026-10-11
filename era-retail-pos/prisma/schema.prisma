@@ -43,6 +43,8 @@ model Outlet {
   code           String
   name           String
   preset         String?
+  /// Default revenue key for products that do not set their own.
+  revenueCode    String?    @map("revenue_code")
   tenant         Tenant     @relation(fields: [tenantId], references: [id])
   createdAt      DateTime   @default(now())
   registers      Register[]
@@ -251,6 +253,44 @@ model MarketplaceWebhookEvent {
   @@index([organizationId])
 }
 
+enum PrescriptionQueueStatus {
+  AWAITING_PAY
+  READY
+  DISPENSED
+  RETURNED
+}
+
+/// Clinic sends the order. Dispense is allowed only after payment is marked.
+model PrescriptionQueue {
+  id             String                  @id @default(cuid())
+  organizationId String
+  visitId        String
+  patientRef     String
+  patientOrigin  String
+  reservationId  String?
+  linesJson      String
+  receiptId      String?
+  status         PrescriptionQueueStatus @default(AWAITING_PAY)
+  paidAt         DateTime?
+  dispensedAt    DateTime?
+  returnedAt     DateTime?
+  createdAt      DateTime                @default(now())
+
+  @@index([organizationId, status])
+  @@index([visitId])
+}
+
+/// Append-only selling price. The receipt line keeps the price it was rung at.
+model ProductPrice {
+  id             String   @id @default(cuid())
+  organizationId String
+  productId      String
+  unitPrice      Decimal  @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, productId, createdAt])
+}
+
 model ProductCache {
   id             String   @id @default(cuid())
   organizationId String
@@ -260,6 +300,8 @@ model ProductCache {
   unitPrice          Decimal  @db.Decimal(12, 2)
   /// NAS revenue account from the parent Finance SKU card
   revenueAccountCode String?
+  /// Revenue article. Falls back to the outlet default.
+  revenueCode        String?  @map("revenue_code")
   syncedAt           DateTime @default(now())
 
   @@unique([organizationId, sku])

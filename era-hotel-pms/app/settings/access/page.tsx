@@ -50,8 +50,38 @@ export default function HotelAccessPage() {
   const [newName, setNewName] = useState("");
   const [cloneFrom, setCloneFrom] = useState("Receptionist");
   const [permOpen, setPermOpen] = useState(false);
+  const [actionPick, setActionPick] = useState("");
 
   const selectedRole = roles.find((r) => r.code === selectedCode);
+
+  const actionOptions = useMemo(() => {
+    const hintFor = (perm: Permission): string => {
+      if (perm === "api:reservations.agency_pick") return t("actionAgencyPickHint");
+      if (perm === "api:reservations.company_pick") return t("actionCompanyPickHint");
+      return "";
+    };
+    const titleFor = (perm: Permission): string => {
+      if (perm === "api:reservations.agency_pick") return t("actionAgencyPick");
+      if (perm === "api:reservations.company_pick") return t("actionCompanyPick");
+      return t(`perm_${perm.replace(/[:.]/g, "_")}` as never);
+    };
+    return PERMISSION_PROCESSES.filter((group) => group.id === "party").flatMap((group) =>
+      group.permissions
+        .filter((perm) => !draft.has(perm))
+        .map((perm) => {
+          const hint = hintFor(perm);
+          const title = `${t(group.labelKey)} · ${titleFor(perm)}`;
+          return {
+            value: perm,
+            label: hint ? `${title} — ${hint}` : title,
+          };
+        }),
+    );
+  }, [draft, t]);
+
+  const addedParty = PERMISSION_PROCESSES.find((group) => group.id === "party")?.permissions.filter(
+    (perm) => draft.has(perm),
+  ) ?? [];
 
   const cloneOptions = useMemo(
     () =>
@@ -113,6 +143,10 @@ export default function HotelAccessPage() {
   useEffect(() => {
     if (selectedCode) void loadRoleDraft(selectedCode);
   }, [selectedCode, loadRoleDraft]);
+
+  useEffect(() => {
+    if (!permOpen) setActionPick("");
+  }, [permOpen, selectedCode]);
 
   async function refreshSessionAndNav() {
     await fetch("/api/auth/session/refresh-permissions", { method: "POST" });
@@ -408,8 +442,44 @@ export default function HotelAccessPage() {
             {t("resetDefaults")}
           </button>
         </div>
-        <div className="space-y-4">
-          {PERMISSION_PROCESSES.map((group) => (
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("addAction")}
+          value={actionPick}
+          disabled={busy || loading}
+          emptyLabel={null}
+          options={actionOptions}
+          onChange={(next) => {
+            const perm = String(next ?? "") as Permission;
+            if (!perm) return;
+            setDraft((prev) => {
+              const copy = new Set(prev);
+              copy.add(perm);
+              return copy;
+            });
+            setActionPick("");
+          }}
+        />
+        {addedParty.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {addedParty.map((perm) => (
+              <button
+                key={perm}
+                type="button"
+                className="rounded border border-[#D5DADF] px-3 py-1 text-sm text-[#34495E]"
+                disabled={busy || loading}
+                onClick={() => togglePermission(perm)}
+              >
+                {perm === "api:reservations.agency_pick"
+                  ? t("actionAgencyPick")
+                  : t("actionCompanyPick")}
+                {" ×"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-4 space-y-4">
+          {PERMISSION_PROCESSES.filter((group) => group.id !== "party").map((group) => (
             <div key={group.id} className="space-y-2">
               <h3 className="text-sm font-semibold text-[#34495E]">{t(group.labelKey)}</h3>
               <div className="flex flex-wrap gap-2">

@@ -7,7 +7,7 @@ import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
 import { postCharge } from '@/lib/services/folio.service';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { replaceSlicesFromDate, resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.service';
@@ -120,7 +120,7 @@ export async function previewStayAmendment(input: {
     f.charges.some(
       (c) =>
         isoDate(c.businessDate) === todayKey &&
-        ['ROOM', 'PKG', 'RATE_ADJ'].includes(c.revenueCode.code),
+        matchesAnyRevenueToken(c.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ']),
     ),
   );
   const tonight = nights.find((n) => n.date === todayKey);

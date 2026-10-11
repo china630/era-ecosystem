@@ -25,13 +25,22 @@ export async function GET(request: Request) {
 
   try {
     enterRequestTenant(organizationId);
+    const { resolveCatalogOrganizationId } = await import("@era/satellite-kit");
     const shifts = await prisma.posShift.findMany({
-      where: { status: "OPEN", organizationId },
+      where: { status: "OPEN" },
       include: { outlet: true },
       orderBy: { openedAt: "asc" },
     });
+    const matched = [];
+    for (const shift of shifts) {
+      const hub = await resolveCatalogOrganizationId(shift.organizationId);
+      if (hub === organizationId || shift.organizationId === organizationId) {
+        matched.push(shift);
+      }
+    }
+    const openShifts = matched;
     return NextResponse.json({
-      open: shifts
+      open: openShifts
         .filter((shift) => shift.outlet?.code)
         .map((shift) => ({
           outletCode: shift.outlet.code,

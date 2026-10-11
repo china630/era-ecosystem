@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       search: q,
       isService: includeServices ? undefined : false,
       limit,
+      channel: "HOTEL",
     });
     return jsonOk({
       items: result.items.map((p) => ({

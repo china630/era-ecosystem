@@ -96,6 +96,8 @@ export async function POST(req: Request) {
       "@/lib/report-pos-capacity"
     );
     void reportRetailPosStationCapacity(prisma).catch(() => undefined);
+    const { syncRetailChannelPrices } = await import("@/lib/channel-price-sync");
+    void syncRetailChannelPrices(organizationId).catch(() => undefined);
     return jsonOk(shift, 201);
   } catch (err) {
     return handleRouteError(err);
