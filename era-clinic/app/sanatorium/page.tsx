@@ -1672,6 +1672,9 @@ export default function SanatoriumPage() {
         onCareTeamSize={(episodeId, count) => {
           setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));
         }}
+        onCareTeamSize={(episodeId, count) => {
+          setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));
+        }}
         onOpenDayPlan={(episodeId) => {
           setPatientCardId(null);
           setSelectedId(episodeId);

@@ -5,6 +5,7 @@ import { departmentFinanceEventsSilenced } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-client";
+import { revenueCodeForSaleLine } from "@/lib/revenue-code";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveOutletPreset } from "@/lib/retail-preset";
 import { prisma } from "@/lib/prisma";
@@ -81,12 +82,16 @@ export async function POST(
       for (const line of lines) {
         const sku = line.plu?.trim();
         if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
+        const revenueCode = await revenueCodeForSaleLine({
+          plu: sku,
+          outletRevenueCode: original.outlet.revenueCode,
+        });
         if (original.reservationId || original.roomNumber) {
           const charge = await postRoomCharge(
             {
               reservationId: original.reservationId ?? undefined,
               roomNumber: original.roomNumber ?? undefined,
-              revenueCode: "RETAIL",
+              revenueCode,
               amount: Number(line.lineTotal),
               qty: line.qty,
               productSku: sku,
@@ -108,7 +113,7 @@ export async function POST(
             idempotencyKey: `retail-return-${returnReceipt.id}-${line.id}`,
             sku,
             qty: line.qty,
-            revenueCode: "RETAIL",
+            revenueCode,
           });
         }
       }

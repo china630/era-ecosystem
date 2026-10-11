@@ -344,6 +344,31 @@ export async function checkInProcedureOrder(
     include: { patientRef: true },
   });
 
+  if (order.reservationId && order.extraTicketId) {
+    const hotelBase = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
+    const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+    const { getClinicHotelOrganizationId } = await import(
+      "@/domain/physio/clinic-cutover.service"
+    );
+    const hotelOrg =
+      (await getClinicHotelOrganizationId()) ||
+      process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() ||
+      "";
+    if (token && hotelOrg) {
+      await fetch(`${hotelBase}/api/internal/v1/folio-charges/received`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          organizationId: hotelOrg,
+          externalRef: `pay-${order.extraTicketId}`,
+        }),
+      }).catch(() => null);
+    }
+  }
+
   await recordClinicAudit(
     { userId: actor.userId },
     "ProcedureOrder",

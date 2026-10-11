@@ -14,6 +14,7 @@ const patchSchema = z.object({
   categoryId: z.string().min(1).optional(),
   recipeSku: z.string().min(1).nullable().optional(),
   financeSku: z.string().min(1).nullable().optional(),
+  revenueCode: z.string().min(1).nullable().optional(),
   imageUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
   priceReason: z.string().max(200).optional(),
 });
@@ -54,6 +55,9 @@ export async function PATCH(
           ...(body.categoryId !== undefined ? { categoryId: body.categoryId } : {}),
           ...(body.recipeSku !== undefined ? { recipeSku: body.recipeSku } : {}),
           ...(body.financeSku !== undefined ? { financeSku: body.financeSku } : {}),
+          ...(body.revenueCode !== undefined
+            ? { revenueCode: body.revenueCode?.trim() || null }
+            : {}),
           ...(imageUrl !== undefined ? { imageUrl } : {}),
         },
       });

@@ -90,13 +90,14 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   programSchedulingMode: "AFTER_CHECKUP",
   doctorBonusPercentInHouse: 0,
   doctorBonusPercentWalkIn: 0,
-  hotelFolioRevenueCode: "23",
+  hotelFolioRevenueCode: "",
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export default function ClinicAdminSettingsPage() {
   const t = useTranslations("adminSettings");
+  const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
   const tc = useTranslations("common");
   const tNav = useTranslations("nav");
   const [clinicName, setClinicName] = useState("");
@@ -172,6 +173,21 @@ export default function ClinicAdminSettingsPage() {
         setSchedDefaults(sched);
         setDraftSched(sched);
       });
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/hotel-revenue-codes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { codes?: { code: string; name: string }[] } | null) => {
+        const codes = body?.codes ?? [];
+        setRevenueOptions(
+          codes.map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+      })
+      .catch(() => setRevenueOptions([]));
   }, []);
 
   function togglePreset(code: ClinicPresetCode) {
@@ -456,9 +472,9 @@ export default function ClinicAdminSettingsPage() {
             </div>
           </fieldset>
           <CatalogField
-            kind="FREE_TEXT"
+            kind="SEARCHABLE"
             label={t("hotelFolioRevenueCode")}
-            options={[]}
+            options={revenueOptions}
             value={draftSched.hotelFolioRevenueCode}
             onChange={(v) =>
               setDraftSched((prev) => ({

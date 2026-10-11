@@ -13,6 +13,7 @@ import {
   platformSuperAdminEmails,
 } from '../src/lib/auth/platform-super-admin';
 import { seedFoDemo } from './seed-fo-demo';
+import { ensureRevenueGlSeedRows } from '../src/lib/revenue-gl-seed';
 
 const prisma = new PrismaClient().$extends(
   createSatelliteTenantExtension(Prisma as never) as never,
@@ -209,19 +210,7 @@ async function main() {
     data: { revenueCodeId: revFood.id, targetFolioType: 'GUEST' },
   });
 
-  await prisma.hotelRevenueGlMapping.createMany({
-    data: [
-      { revenueCodeId: revRoom.id, glAccountCode: '601' },
-      { revenueCodeId: revFood.id, glAccountCode: '602' },
-      { revenueCodeId: revMedical.id, glAccountCode: '603' },
-      { revenueCodeId: revPkg.id, glAccountCode: '601' },
-      { revenueCodeId: revTreatment.id, glAccountCode: '604' },
-      { revenueCodeId: revBoard.id, glAccountCode: '605' },
-      // NAS 606 = other hotel services. Split airport vs tour on RevenueCode, not GL.
-      { revenueCodeId: revTransfer.id, glAccountCode: '606' },
-      { revenueCodeId: revTour.id, glAccountCode: '606' },
-    ],
-  });
+  await ensureRevenueGlSeedRows(prisma);
 
   const mealFB = await prisma.mealPlan.create({ data: { code: 'FB', name: 'Full board (3 meals)' } });
   const mealBB = await prisma.mealPlan.create({ data: { code: 'BB', name: 'Breakfast' } });

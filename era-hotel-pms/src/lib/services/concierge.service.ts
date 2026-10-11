@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import type { ConciergeOrderStatus } from '@prisma/client';
 
@@ -61,7 +62,7 @@ export async function completeConciergeOrder(orderId: string) {
     });
   }
 
-  const foodCode = await prisma.revenueCode.findFirst({ where: { code: 'FOOD' } as never });
+  const foodCode = await findRevenueCodeByToken('FOOD');
   if (foodCode) {
     await postCharge({
       reservationId: order.reservationId,

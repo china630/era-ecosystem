@@ -23,6 +23,7 @@ import {
   operationalGaps,
 } from '@/lib/guest-stay-requirements';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
 import { EraModal } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
@@ -2696,7 +2697,7 @@ export function ReservationCardEditor({
                   postedDates={folios.flatMap((folio) =>
                     folio.charges
                       .filter((charge) =>
-                        ['ROOM', 'PKG', 'RATE_ADJ'].includes(charge.revenueCode?.code ?? ''),
+                        matchesAnyRevenueToken(charge.revenueCode ?? {}, ['ROOM', 'PKG', 'RATE_ADJ']),
                       )
                       .map((charge) =>
                         charge.businessDate ? hotelDateKey(charge.businessDate) : '',

@@ -160,7 +160,9 @@ export function ReservationCardFolioTab({
           folioType: folio.type,
           folioStatus: folio.status,
           kind: 'charge',
-          description: charge.description ?? '—',
+          description: (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
+            ? `${charge.description ?? '—'} · received`
+            : (charge.description ?? '—'),
           code: charge.revenueCode?.code ?? '—',
           amount: Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)),
           paxNo: charge.paxNo,

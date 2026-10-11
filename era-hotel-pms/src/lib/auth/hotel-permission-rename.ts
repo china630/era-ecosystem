@@ -37,6 +37,8 @@ export const HOTEL_CANONICAL_PERMISSIONS = [
   "api:reservations.checkin",
   "api:reservations.checkout",
   "api:reservations.cancel",
+  "api:reservations.agency_pick",
+  "api:reservations.company_pick",
   "api:folio.read",
   "api:folio.charge",
   "api:folio.payment",

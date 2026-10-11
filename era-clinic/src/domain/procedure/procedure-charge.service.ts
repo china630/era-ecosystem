@@ -193,6 +193,10 @@ export async function postProcedureFolioCharge(input: {
   hotelOrganizationId?: string;
 }): Promise<void> {
   const productSku = await resolveSellableSku(input.procedureCode);
+  const procedure = await prisma.procedureType.findFirst({
+    where: { code: input.procedureCode },
+    select: { hotelRevenueCode: true },
+  });
   await postHotelRoomCharge({
     reservationId: input.reservationId,
     roomNumber: input.roomNumber,
@@ -201,6 +205,7 @@ export async function postProcedureFolioCharge(input: {
     externalTicketId: input.externalTicketId,
     productSku,
     qty: input.qty ?? 1,
+    revenueCode: procedure?.hotelRevenueCode ?? undefined,
     hotelOrganizationId: input.hotelOrganizationId,
   });
 }

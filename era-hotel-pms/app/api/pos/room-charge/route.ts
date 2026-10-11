@@ -18,6 +18,7 @@ const schema = z.object({
   productSku: z.string().min(1).optional(),
   externalTicketId: z.string().min(1).optional(),
   ticketNumber: z.string().optional(),
+  sourceOrganizationId: z.string().min(1).optional(),
   posShiftId: z.string().uuid().optional(),
   waiterCode: z.string().optional(),
 });
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
       description: body.description,
       outletCode: body.outletCode,
       productSku: body.productSku,
+      sourceOrganizationId: body.sourceOrganizationId,
       idempotencyKey,
     });
 

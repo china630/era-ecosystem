@@ -7,6 +7,7 @@ import type { FolioType, PaymentMethod, Reservation } from '@prisma/client';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
 import { getElektrawebBridgePolicy } from '@/lib/integration/elektraweb-bridge/config';
 import { getPropertyCode } from '@/lib/services/hotel.service';
 import { getRedis, OUTBOUND_RETRY_QUEUE, IDEMPOTENCY_PREFIX } from '@/lib/redis';
@@ -45,13 +46,13 @@ function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
   return method as SatellitePaymentMethod;
 }
 
-function mapRevenueToItemType(code: string): BreakdownItemType {
-  const upper = code.toUpperCase();
-  if (upper === 'ROOM') return 'ACCOMMODATION';
-  if (upper === 'FOOD') return 'FOOD';
-  if (upper === 'MEDICAL') return 'MEDICAL';
-  if (upper.includes('MINIBAR')) return 'MINIBAR';
-  if (upper.includes('LAUNDRY')) return 'LAUNDRY';
+function mapRevenueToItemType(row: { code: string; name?: string | null }): BreakdownItemType {
+  const blob = `${row.code} ${row.name ?? ''}`.toUpperCase();
+  if (matchesAnyRevenueToken(row, ['ROOM'])) return 'ACCOMMODATION';
+  if (matchesAnyRevenueToken(row, ['FOOD'])) return 'FOOD';
+  if (matchesAnyRevenueToken(row, ['MEDICAL'])) return 'MEDICAL';
+  if (matchesAnyRevenueToken(row, ['MINIBAR']) || blob.includes('MINIBAR')) return 'MINIBAR';
+  if (matchesAnyRevenueToken(row, ['LAUNDRY']) || blob.includes('LAUNDRY')) return 'LAUNDRY';
   return 'RESTAURANT';
 }
 
@@ -65,7 +66,7 @@ type ReservationWithFolios = Reservation & {
     charges: Array<{
       qty: number;
       amount: { toNumber(): number };
-      revenueCode: { code: string };
+      revenueCode: { code: string; name?: string | null };
     }>;
     payments: Array<{ amount: { toNumber(): number } }>;
   }>;
@@ -85,7 +86,7 @@ export async function buildReservationCompletedEvent(
       const lineTotal = decimalToNumber(charge.amount) * charge.qty;
       totalCharges += lineTotal;
       items.push({
-        itemType: mapRevenueToItemType(charge.revenueCode.code),
+        itemType: mapRevenueToItemType(charge.revenueCode),
         sku: charge.revenueCode.code,
         qty: charge.qty,
         price: decimalToNumber(charge.amount),
@@ -118,8 +119,10 @@ export function buildNightAuditEvent(
     businessDate: string;
     nightAuditId?: string;
     saleLines?: Array<{ sku: string; qty: number; amount: number }>;
-    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
-    paymentLines: Array<{ method: string; amount: number }>;
+    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
+    paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+    depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
+    depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
   },
   hotelId: string,
 ): IntegrationEnvelope {
@@ -136,6 +139,8 @@ export function buildNightAuditEvent(
       revenueLines: input.revenueLines,
       lines: input.revenueLines,
       paymentLines: input.paymentLines,
+      depositCarryLines: input.depositCarryLines ?? [],
+      depositPayoutLines: input.depositPayoutLines ?? [],
     } as NightAuditPayload,
   };
 }
@@ -563,11 +568,19 @@ export async function dispatchNightAuditClosed(input: {
   nightAuditId?: string;
   saleLines?: Array<{ sku: string; qty: number; amount: number }>;
   revenueLines: Array<{ revenueCode: string; amount: number }>;
-  paymentLines: Array<{ method: string; amount: number }>;
+  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+  depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
+  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
 }): Promise<DispatchResult> {
   const hotelId = await getPropertyCode();
   const { enrichRevenueLinesWithGl } = await import('@/lib/services/revenue-gl-mapping.service');
   const revenueLines = await enrichRevenueLinesWithGl(input.revenueLines);
+  const missing = revenueLines.filter((line) => line.unmapped && line.amount !== 0);
+  if (missing.length > 0) {
+    throw new Error(
+      `GL account is not saved for revenue code ${missing.map((line) => line.revenueCode).join(', ')}`,
+    );
+  }
   const envelope = buildNightAuditEvent({ ...input, revenueLines }, hotelId);
   return publishEvent(envelope);
 }

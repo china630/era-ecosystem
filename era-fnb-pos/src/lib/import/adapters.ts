@@ -97,6 +97,7 @@ const cardSchema = z.object({
   plu: z.string().min(1),
   name: z.string().min(1),
   groupName: z.string().nullable().optional(),
+  revenueName: z.string().nullable().optional(),
   price: z.number(),
   active: z.boolean(),
 });
@@ -111,6 +112,8 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
     "Ürün Kodu": "code",
     "Ürün Adı": "name",
     "Ürün Grubu Adı": "groupName",
+    "Revenue Group": "revenueName",
+    "Gelir Grubu": "revenueName",
     Fiyat: "price",
     "İndirim Aktif": "active",
   },
@@ -123,6 +126,7 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
       plu: cellString(raw.code) ?? (ewId ? `ERA-FNB-${ewId}` : slugCode(name)),
       name,
       groupName: cellString(raw.groupName),
+      revenueName: cellString(raw.revenueName),
       price: cellNumber(raw.price) ?? 0,
       active: raw.active === undefined ? true : cellBool(raw.active),
     };
@@ -146,6 +150,19 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
     }
     if (dryRun) return "created";
     if (!category) throw new Error("Category missing");
+    let revenueCode: string | null = outlet.revenueCenterCode?.trim() || null;
+    const revenueName = row.revenueName?.trim();
+    if (revenueName) {
+      const { listHotelRevenueCodes, resolveHotelRevenueKey, resolveCatalogOrganizationId } =
+        await import("@era/satellite-kit");
+      const hubOrg = await resolveCatalogOrganizationId(requestOrganizationId());
+      const rows = await listHotelRevenueCodes(hubOrg);
+      const resolved = resolveHotelRevenueKey(rows, revenueName);
+      if (!resolved) {
+        throw new Error(`Revenue code name ${revenueName} was not found`);
+      }
+      revenueCode = resolved;
+    }
     const existing = await tx.menuItem.findFirst({
       where: { categoryId: category.id, plu: row.plu },
     });
@@ -153,6 +170,7 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
       name: row.name,
       priceAzn: toDecimal(row.price),
       active: row.active,
+      revenueCode,
     };
     if (!existing) {
       await tx.menuItem.create({

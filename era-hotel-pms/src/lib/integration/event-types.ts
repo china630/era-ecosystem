@@ -22,10 +22,12 @@ export interface NightAuditPayload {
   nightAuditId?: string;
   currency: 'AZN';
   saleLines?: Array<{ sku: string; qty: number; amount: number }>;
-  revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
+  revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
   /** @deprecated use revenueLines */
   lines?: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
-  paymentLines: Array<{ method: string; amount: number }>;
+  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+  depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
+  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
 }
 
 export interface FolioChargePostedPayload {

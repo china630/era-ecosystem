@@ -38,6 +38,7 @@ const paymentSchema = z.object({
   ]),
   registerRef: z.string().optional(),
   bankReference: z.string().max(120).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(request: Request) {

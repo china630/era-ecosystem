@@ -1,4 +1,5 @@
 import { bakuDayBounds, bakuYmd } from '@era/satellite-kit/time';
+import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 export type HotelStatusLevel = 'NORMAL' | 'RISK' | 'CRITICAL';
@@ -63,15 +64,21 @@ export function computeHotelStatus(input: {
   return 'NORMAL';
 }
 
-/** Map revenue code → Daily Flash bucket. */
-export function revenueFlashBucket(code: string, departmentCode?: string | null): 'room' | 'fb' | 'spa' | 'medical' | 'other' {
-  const c = code.toUpperCase();
+/** Map revenue code → Daily Flash bucket. Numeric Elektra keys match on name. */
+export function revenueFlashBucket(
+  code: string,
+  departmentCode?: string | null,
+  name?: string | null,
+): 'room' | 'fb' | 'spa' | 'medical' | 'other' {
+  const row = { code, name };
   const dept = (departmentCode ?? '').toUpperCase();
   // TOUR is ACC-department but excursion P&L — do not inherit the ACC→room catch-all.
-  if (c === 'TOUR') return 'other';
-  if (c === 'ROOM' || c === 'PKG' || c === 'TRANSFER' || dept === 'ACC') return 'room';
-  if (c === 'FOOD' || c === 'BOARD' || c === 'MINIBAR' || dept === 'REST') return 'fb';
-  if (c === 'TREATMENT' || c.includes('SPA')) return 'spa';
-  if (c === 'MEDICAL' || c === 'MED' || dept === 'MED') return 'medical';
+  if (matchesAnyRevenueToken(row, ['TOUR'])) return 'other';
+  if (matchesAnyRevenueToken(row, ['ROOM', 'PKG', 'TRANSFER']) || dept === 'ACC') return 'room';
+  if (matchesAnyRevenueToken(row, ['FOOD', 'BOARD', 'MINIBAR']) || dept === 'REST') return 'fb';
+  if (matchesAnyRevenueToken(row, ['TREATMENT']) || (code ?? '').toUpperCase().includes('SPA') || (name ?? '').toUpperCase().includes('SPA')) {
+    return 'spa';
+  }
+  if (matchesAnyRevenueToken(row, ['MEDICAL', 'MED']) || dept === 'MED') return 'medical';
   return 'other';
 }

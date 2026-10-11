@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { folioBalance } from '@/lib/services/folio.service';
 import { decimalToNumber } from '@/lib/decimal';
+import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
 
 export type FolioBalanceTab =
   | 'inHouse'
@@ -39,9 +40,9 @@ export function passesFolioBalanceTab(
   return true;
 }
 
-function isRoomRevenue(code: string | undefined): boolean {
-  const c = (code ?? '').toUpperCase();
-  return c === 'ROOM' || c === 'LODGING' || c.startsWith('ROOM');
+function isRoomRevenue(row: { code?: string | null; name?: string | null } | undefined): boolean {
+  if (!row) return false;
+  return matchesAnyRevenueToken(row, ['ROOM', 'LODGING']);
 }
 
 export async function listReservationFolioBalances(
@@ -87,7 +88,7 @@ export async function listReservationFolioBalances(
       room: { select: { roomNumber: true } },
       folios: {
         include: {
-          charges: { include: { revenueCode: { select: { code: true } } } },
+          charges: { include: { revenueCode: { select: { code: true, name: true } } } },
           payments: true,
           reservationGuest: { select: { firstName: true, lastName: true, sortOrder: true } },
         },
@@ -113,7 +114,7 @@ export async function listReservationFolioBalances(
       else if (f.type === 'COMPANY') companyBalance += bal;
       for (const c of f.charges) {
         const amt = decimalToNumber(c.amount) * c.qty;
-        if (isRoomRevenue(c.revenueCode?.code)) roomCharges += amt;
+        if (isRoomRevenue(c.revenueCode)) roomCharges += amt;
         else extraCharges += amt;
       }
       if (f.type === 'GUEST' && f.reservationGuest) {

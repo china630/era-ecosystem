@@ -85,6 +85,8 @@ export async function openShift(
     assertLiveFiscalReady({ organizationId });
   }
   const defaults = resolveDefaultDevicesForSatellite({ organizationId });
+  const { syncClinicChannelPrices } = await import("@/domain/catalog/channel-price-sync");
+  void syncClinicChannelPrices(organizationId).catch(() => undefined);
   return prisma.clinicShift.create({
     data: {
       code: `SHIFT-${Date.now()}`,

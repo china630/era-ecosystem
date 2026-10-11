@@ -259,6 +259,7 @@ export async function applyEarlyCheckoutUnusedNights(
   opts?: {
     asOf?: Date;
     refundMethod?: 'CASH' | 'CARD';
+    bankTerminalId?: string;
     reason?: string;
     preview?: EarlyCheckoutPreview;
   },
@@ -304,6 +305,7 @@ export async function applyEarlyCheckoutUnusedNights(
         folioId: guestFolio.id,
         amount: preview.guestCashRefund,
         paymentMethod: method,
+        bankTerminalId: method === 'CARD' ? opts?.bankTerminalId : undefined,
         kind: 'REFUND',
         refundReason:
           opts?.reason?.trim() ||

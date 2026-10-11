@@ -110,6 +110,9 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | (event consumer) | `POST /api/integration/staff-provision` | `enterRequestTenant`; scrypt User hash; keyed on `cpEmploymentId` |
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 | (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
+| (revenue catalog) | `GET /api/internal/v1/revenue-codes` | Active `RevenueCode` `code` + `name` for department satellites (Bearer event token) |
+| (folio received) | `POST /api/internal/v1/folio-charges/received` | Clinic check-in marks the existing folio line received |
+| (deposit remainder) | `POST /api/reservations/[id]/deposits/settle` | Cashier pays out (fiscal receipt, night-audit debit deposit / credit cash or card terminal) or carries the unused deposit |
 | Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
 | Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO reservation card pricing tab `packageCompose` | Wave D; not SHIPPED |
 | Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); clinic opens one episode per pax | Wave E; share rooms stay two reservations |
@@ -123,7 +126,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 
 | Route | API | Role |
 |-------|-----|------|
-| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; modal line items + pay/void |
+| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; unpaid void stays local. Void of a paid clinic line before check-in calls clinic hotel-void |
 | `/front-cash/folio-balances` | `GET /api/front-cash/folio-balances?tab=` | Reservation with folio balances (HOT-CASH-07) |
 | `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations are modals on the reservation card Folio tab |
 | `/front-cash/desk` | `GET/POST /api/front-cash/desk` | Day position by department × tender; close time. No open-shift button |
@@ -132,7 +135,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
 | `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
 | `/folio/[reservationId]` | redirect → room plan `?folioStay=` | Opens the reservation card on the Folio tab. Settle, deposit, void, and payment run in modals (HOT-CASH-01) |
-| `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); polish H-BL-44 |
+| `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); the run button confirms the business date being closed and a second start is refused while the date is locked; polish H-BL-44 |
 | `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
 | `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Not in the night-audit menu. Linked from the EOD pack. Filters + CSV (HOT-NA-04) |
@@ -208,7 +211,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Notes |
 |-------|-----|-------|
-| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions`, `GET /api/internal/v1/workforce/roles` | Role×permission matrix; `admin:access_manage`; system seed `ensureSystemHotelRoles`; role code+name pushed to CP catalog (ADR cp-workforce-satellite-role-catalog) |
+| `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions`, `GET /api/internal/v1/workforce/roles` | Role×permission matrix plus a searchable extra-action field. `api:reservations.agency_pick` and `api:reservations.company_pick` open the booking name lists without `api:reports.read`. `admin:access_manage`; system seed `ensureSystemHotelRoles`; role code+name pushed to CP catalog (ADR cp-workforce-satellite-role-catalog) |
 | `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | Local logins; workforce (`cpEmploymentId`) name and password stay on provision. Position is `User.positionTitle` |
 | `/settings/logins` | `GET /api/admin/user-logins?q&from&to` | Successful staff and SSO sign-ins (`UserLogin`). `q` matches login, name, or IP; `from`/`to` are Asia/Baku days (swapped if reversed) |
 | `/settings/integration` | integration settings API | `?view=events` outbound, `?view=gl` revenue→GL, `?view=journal` outbound journal |

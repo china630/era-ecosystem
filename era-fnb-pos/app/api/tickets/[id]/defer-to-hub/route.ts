@@ -65,6 +65,14 @@ export async function POST(
 
     const pendingIds: string[] = [];
     for (const line of ticket.lines) {
+      const revenueCode =
+        line.menuItem?.revenueCode?.trim() || ticket.outlet.revenueCenterCode?.trim() || "";
+      if (!revenueCode) {
+        return NextResponse.json(
+          { error: `Revenue code is required for ${line.description}` },
+          { status: 400 },
+        );
+      }
       const pending = await postHotelSettlementPending({
         sourceSystem: "FNB_POS",
         sourceRef: ticket.id,
@@ -74,7 +82,7 @@ export async function POST(
         idempotencyKey: `ticket-${ticket.id}-${line.id}`,
         sku: line.menuItem?.financeSku?.trim(),
         qty: line.qty,
-        revenueCode: "FOOD",
+        revenueCode,
       });
       const pendingId = pending.id as string;
       if (pendingId) pendingIds.push(pendingId);

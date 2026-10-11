@@ -1,0 +1,1 @@
+ALTER TYPE "FolioDepositStatus" ADD VALUE IF NOT EXISTS 'CARRIED';

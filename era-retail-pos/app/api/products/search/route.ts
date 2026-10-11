@@ -10,24 +10,39 @@ async function refreshProductCacheFromFinance(search: string): Promise<void> {
     organizationId,
     search: search || undefined,
     limit: 50,
+    channel: "RETAIL",
   });
   if (result.source !== "finance" || result.items.length === 0) return;
   for (const item of result.items) {
-    await prisma.productCache.upsert({
-      where: { organizationId_sku: { organizationId, sku: item.sku } },
-      create: {
-        organizationId,
-        sku: item.sku,
-        description: item.name,
-        unitPrice: 0,
-        revenueAccountCode: item.revenueAccountCode,
-      },
-      update: {
-        description: item.name,
-        revenueAccountCode: item.revenueAccountCode,
-        syncedAt: new Date(),
-      },
+    const existing = await prisma.productCache.findFirst({
+      where: { organizationId, sku: item.sku },
     });
+    const nextPrice = item.unitPrice != null ? item.unitPrice : existing ? Number(existing.unitPrice) : 0;
+    const row = existing
+      ? await prisma.productCache.update({
+          where: { id: existing.id },
+          data: {
+            description: item.name,
+            revenueAccountCode: item.revenueAccountCode,
+            ...(item.unitPrice != null ? { unitPrice: item.unitPrice } : {}),
+            syncedAt: new Date(),
+          },
+        })
+      : await prisma.productCache.create({
+          data: {
+            organizationId,
+            sku: item.sku,
+            description: item.name,
+            unitPrice: nextPrice,
+            revenueAccountCode: item.revenueAccountCode,
+          },
+        });
+    const previous = existing ? Number(existing.unitPrice) : null;
+    if (item.unitPrice != null && previous !== item.unitPrice) {
+      await prisma.productPrice.create({
+        data: { organizationId, productId: row.id, unitPrice: item.unitPrice },
+      });
+    }
   }
 }
 

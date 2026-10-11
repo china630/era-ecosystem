@@ -259,7 +259,14 @@ export function GuestCardLeftPanel({
               label={t('fields.nationality')}
               value={nationality}
               onChange={setCatalog('nationality')}
-              options={withOrphanOption(byKind.NATIONALITY ?? [], nationality)}
+              options={withOrphanOption(byKind.NATIONALITY ?? [], nationality).map((opt) => {
+                const code = opt.value.trim().toUpperCase();
+                if (!/^[A-Z]{2}$/.test(code)) return opt;
+                if (opt.label.toUpperCase().startsWith(`${code} `) || opt.label.toUpperCase().startsWith(`${code}—`)) {
+                  return opt;
+                }
+                return { ...opt, label: `${code} — ${opt.label}` };
+              })}
               required
             />
           </FieldRow>

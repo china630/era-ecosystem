@@ -84,12 +84,14 @@ export async function POST(request: Request) {
         { paymentReceiptRef: body.paymentReceiptRef },
       );
       return jsonOk({
-        paid: true,
+        paid: result.accepted.length > 0,
         placed: result.placed,
         paymentReceiptRef: result.paymentReceiptRef,
         printPath: result.printPaths[0] ?? null,
         printPaths: result.printPaths,
         count: result.orders.length,
+        accepted: result.accepted,
+        rejected: result.rejected,
       });
     }
 

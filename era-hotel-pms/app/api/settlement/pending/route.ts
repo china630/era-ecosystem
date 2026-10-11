@@ -14,7 +14,7 @@ const schema = z.object({
   amount: z.number().finite(),
   sku: z.string().min(1).optional(),
   qty: z.number().int().refine((qty) => qty !== 0).optional(),
-  revenueCode: z.enum(['FOOD', 'MEDICAL', 'RETAIL']).optional(),
+  revenueCode: z.string().min(1).max(32).optional(),
   currency: z.string().default('AZN'),
   description: z.string().min(1),
   payerLabel: z.string().optional(),

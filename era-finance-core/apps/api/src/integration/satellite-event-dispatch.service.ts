@@ -851,7 +851,11 @@ export class SatelliteEventDispatchService {
     };
     const tenderByBucket = new Map<string, number>();
     for (const line of event.payload.paymentLines) {
-      const bucket = dayDocumentTender(line.method);
+      const bank = line.bankTerminalId?.trim();
+      const bucket =
+        line.method.trim().toUpperCase() === "CARD" && bank
+          ? `card:${bank}`
+          : dayDocumentTender(line.method);
       tenderByBucket.set(bucket, money((tenderByBucket.get(bucket) ?? 0) + line.amount));
     }
     const tenderTotal = money([...tenderByBucket.values()].reduce((sum, amount) => sum + amount, 0));
@@ -871,10 +875,44 @@ export class SatelliteEventDispatchService {
       else if (signedCredit < 0) push(accountCode, -signedCredit, 0);
     }
     for (const [bucket, signed] of tenderByBucket) {
-      const accountCode = tenderAccount[bucket];
+      const accountCode = bucket.startsWith("card:")
+        ? await this.satelliteGlAccount(
+            organizationId,
+            `SATELLITE_GL_CARD_${bucket.slice(5).replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+            "BANK_SETTLEMENT",
+            tx,
+          )
+        : tenderAccount[bucket];
       if (!accountCode) throw new Error(`Unknown day-document tender ${bucket}`);
       if (signed > 0) push(accountCode, signed, 0);
       else if (signed < 0) push(accountCode, 0, -signed);
+    }
+    const carryAccount = await this.satelliteGlAccount(
+      organizationId,
+      "SATELLITE_GL_DEPOSIT_CARRY",
+      "PREPAID_ASSET",
+      tx,
+    );
+    for (const line of event.payload.depositCarryLines ?? []) {
+      if (line.amount === 0) continue;
+      push(deposit, line.amount, 0);
+      push(carryAccount, 0, line.amount);
+    }
+    for (const line of event.payload.depositPayoutLines ?? []) {
+      if (line.amount === 0) continue;
+      const method = line.method.trim().toUpperCase();
+      const cashOut =
+        method === "CARD"
+          ? await this.satelliteGlAccount(
+              organizationId,
+              `SATELLITE_GL_CARD_${(line.bankTerminalId ?? "CARD").replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+              "BANK_SETTLEMENT",
+              tx,
+            )
+          : tenderAccount.cash;
+      if (!cashOut) throw new Error(`Unknown deposit payout tender ${method}`);
+      push(deposit, line.amount, 0);
+      push(cashOut, 0, line.amount);
     }
     if (ar > 0) push(receivable, ar, 0);
     if (advanceAmount > 0) push(advance, 0, advanceAmount);

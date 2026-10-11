@@ -1,0 +1,2 @@
+ALTER TABLE "Outlet" ADD COLUMN IF NOT EXISTS "revenue_code" TEXT;
+ALTER TABLE "ProductCache" ADD COLUMN IF NOT EXISTS "revenue_code" TEXT;

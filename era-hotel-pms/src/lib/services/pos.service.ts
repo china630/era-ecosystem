@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import {
   findRoomChargeByIdempotencyKey,
@@ -112,9 +113,7 @@ export async function postRoomCharge(
     throw new Error(creditCheck.denyReason ?? 'Room charge denied');
   }
 
-  const code = await prisma.revenueCode.findFirst({
-    where: { code: input.revenueCode },
-  });
+  const code = await findRevenueCodeByToken(input.revenueCode);
   if (!code) throw new Error(`Revenue code ${input.revenueCode} not found`);
 
   const qty =
@@ -128,7 +127,8 @@ export async function postRoomCharge(
     qty,
     sku: input.productSku,
     description: `[${input.outletCode ?? 'POS'}] ${input.description}`,
-  });
+    externalRef: idempotencyKey || undefined,
+    invoiceRef: input.sourceOrganizationId,
 
   if (idempotencyKey) {
     await saveRoomChargeIdempotency(

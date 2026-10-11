@@ -80,7 +80,7 @@ model Tenant {
   /// Doctor bonus % of COMPLETED extras (WALK_IN) — Wave D; default 0 until FO sets
   doctorBonusPercentWalkIn       Float                    @default(0) @map("doctor_bonus_percent_walk_in")
   /// Hotel RevenueCode.code posted on clinic folio charges (Nafta: 23 AMBULATOR). Empty refuses the charge.
-  hotelFolioRevenueCode          String?                  @default("23") @map("hotel_folio_revenue_code")
+  hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
@@ -658,6 +658,8 @@ model DiagnosticService {
   serviceCode    String              @map("service_code")
   /// Sellable Finance Product.sku on the hotel parent catalog
   financeSku     String?             @map("finance_sku")
+  /// Hotel RevenueCode.code when this clinic is a hotel department.
+  hotelRevenueCode String?           @map("hotel_revenue_code")
   /// Imaging / visit template fields JSON (CatalogFieldDef[])
   fieldsJson     String?             @map("fields_json") @db.Text
   /// Package composition: child service codes JSON (string[])
@@ -1258,7 +1260,10 @@ model ProcedureType {
   extendedEndHour    Int?                       @map("extended_end_hour")
   /// Sellable Finance Product.sku on the hotel parent catalog
   financeSku         String?                    @map("finance_sku")
+  /// Hotel RevenueCode.code (department) or this clinic's own revenue key.
+  hotelRevenueCode   String?                    @map("hotel_revenue_code")
   orders             ProcedureOrder[]
+  prices             ProcedureTypePrice[]
   requirements       ProcedureTypeRequirement[]
   consumableLines    ProcedureConsumableLine[]
   skills             PractitionerSkill[]
@@ -1268,6 +1273,20 @@ model ProcedureType {
   @@unique([organizationId, code])
   @@index([resourceCode])
   @@index([organizationId])
+}
+
+/// Dated extra price. Sold procedure orders keep the amount they were posted with.
+model ProcedureTypePrice {
+  id              String        @id @default(cuid())
+  organizationId  String
+  procedureTypeId String        @map("procedure_type_id")
+  amount          Decimal       @db.Decimal(12, 2)
+  effectiveFrom   DateTime      @default(now()) @map("effective_from")
+  procedureType   ProcedureType @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+
+  @@index([procedureTypeId, effectiveFrom])
+  @@index([organizationId])
+  @@map("procedure_type_prices")
 }
 
 /// Cabin TTK / consumable BOM per procedure session (Finance warehouse SKUs).
@@ -1511,6 +1530,8 @@ model ServiceCatalogCache {
   departmentCode  String?            @map("department_code")
   departmentRef   ServiceDepartment? @relation(fields: [organizationId, departmentCode], references: [organizationId, code], onDelete: SetNull, onUpdate: Cascade)
   kind            ServiceCatalogKind @default(OTHER)
+  /// Hotel or own revenue key for analytics. Package lines stay amount 0.
+  hotelRevenueCode String?           @map("hotel_revenue_code")
   syncedAt        DateTime           @default(now())
   prices          ServiceCatalogPrice[]
 

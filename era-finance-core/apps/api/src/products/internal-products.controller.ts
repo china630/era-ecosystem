@@ -40,23 +40,30 @@ export class InternalProductsController {
     @Query("search") search?: string,
     @Query("isService") isService?: string,
     @Query("limit") limitRaw?: string,
+    @Query("channel") channel?: string,
     @Headers("authorization") authorization?: string,
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     this.authorize(authorization, xServiceToken);
     const parsedLimit = limitRaw ? Number.parseInt(limitRaw, 10) : NaN;
     const limit = Number.isFinite(parsedLimit) ? parsedLimit : 20;
+    const channelKey = channel?.trim() || undefined;
     const rows = await this.products.list(organizationId, {
       isService: isService === "true" || isService === "false" ? isService : undefined,
       search,
       limit,
+      channel: channelKey,
     });
+    const prices = channelKey
+      ? await this.products.pricesForChannel(organizationId, channelKey)
+      : new Map<string, number>();
     return rows.map((p) => ({
       id: p.id,
       sku: p.sku,
       name: p.name,
       isService: p.isService,
       revenueAccountCode: p.revenueAccountCode,
+      unitPrice: prices.get(p.id) ?? null,
     }));
   }
 }

@@ -72,6 +72,7 @@ type DiagnosticService = {
   titleAz: string;
   serviceCode: string;
   financeSku?: string | null;
+  hotelRevenueCode?: string | null;
   fieldsJson?: string | null;
   includesJson?: string | null;
   sortOrder: number;
@@ -190,6 +191,22 @@ export default function DiagnosticCatalogAdminPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [financeServiceOptions, setFinanceServiceOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [financeSkuPinned, setFinanceSkuPinned] = useState<{ value: string; label: string } | null>(null);
+  const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    if (!modalOpen) return;
+    void fetch("/api/admin/hotel-revenue-codes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
+        const codes = body?.data?.codes ?? body?.codes ?? [];
+        setRevenueOptions(
+          codes.map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+      })
+      .catch(() => setRevenueOptions([]));
+  }, [modalOpen]);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
   const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
   const [dictionaryQ, setDictionaryQ] = useState("");
@@ -489,6 +506,7 @@ export default function DiagnosticCatalogAdminPage() {
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
       financeSku: linkedSku,
+      hotelRevenueCode: row.hotelRevenueCode ?? "",
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
@@ -604,6 +622,7 @@ export default function DiagnosticCatalogAdminPage() {
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
         financeSku: form.financeSku?.trim() || null,
+        hotelRevenueCode: form.hotelRevenueCode?.trim() || null,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
@@ -1427,6 +1446,18 @@ export default function DiagnosticCatalogAdminPage() {
                     : financeServiceOptions
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
+              />
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("hotelRevenueCode")}
+                value={form.hotelRevenueCode ?? ""}
+                options={
+                  form.hotelRevenueCode &&
+                  !revenueOptions.some((option) => option.value === form.hotelRevenueCode)
+                    ? [{ value: form.hotelRevenueCode, label: form.hotelRevenueCode }, ...revenueOptions]
+                    : revenueOptions
+                }
+                onChange={(next) => setForm({ ...form, hotelRevenueCode: String(next ?? "") })}
               />
               <Field
                 label={t("includes")}

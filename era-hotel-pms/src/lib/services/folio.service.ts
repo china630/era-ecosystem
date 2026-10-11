@@ -3,6 +3,7 @@ import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import type { FolioType, PaymentMethod } from '@prisma/client';
 import {
   dispatchFolioChargePosted,
@@ -86,6 +87,7 @@ export async function postCharge(input: {
   businessDate?: Date;
   departmentId?: string;
   externalRef?: string;
+  invoiceRef?: string;
 }) {
   const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
   await assertBusinessDayOpenForPosting();
@@ -154,7 +156,7 @@ export async function postCharge(input: {
       description: input.description,
       businessDate: input.businessDate ?? new Date(),
       externalRef: input.externalRef,
-    },
+      invoiceRef: input.invoiceRef,
     include: { revenueCode: true, folio: true },
   });
 
@@ -172,6 +174,7 @@ export async function postPayment(input: {
   paymentMethod: PaymentMethod;
   registerRef?: string;
   bankReference?: string;
+  bankTerminalId?: string;
   kind?: 'PAYMENT' | 'REFUND';
   refundOfPaymentId?: string;
   refundReason?: string;
@@ -277,6 +280,7 @@ export async function postPayment(input: {
       refundReason: input.refundReason,
       registerRef: input.registerRef,
       bankReference: input.bankReference,
+      bankTerminalId: input.bankTerminalId,
       businessDate: await getCurrentBusinessDate(),
       fiscalReceiptId,
       fiscalQrPayload,
@@ -399,7 +403,7 @@ export async function postDiscount(input: {
   folioId?: string;
 }) {
   if (input.amount <= 0) throw new Error('Discount amount must be positive');
-  let code = await prisma.revenueCode.findFirst({ where: { code: 'DISCOUNT' } });
+  let code = await findRevenueCodeByToken('DISCOUNT');
   if (!code) {
     code = await prisma.revenueCode.create({
       data: { code: 'DISCOUNT', name: 'Discount', active: true },
@@ -424,7 +428,43 @@ export async function voidCharge(chargeId: string) {
     },
   });
   if (!charge) throw new Error('Charge not found');
+  if (charge.serviceReceivedAt) {
+    throw new Error('Procedure already received — void refused');
+  }
   if (charge.folio.status !== 'OPEN') throw new Error('Cannot void charge on closed folio');
+  if (charge.externalRef?.startsWith('pay-clinic-ticket-')) {
+    const orderId = charge.externalRef.slice('pay-clinic-ticket-'.length).replace(/^pay-/, '');
+    const clinicBase = (
+      process.env.CLINIC_URL ??
+      process.env.ERA_CLINIC_URL ??
+      ''
+    ).replace(/\/$/, '');
+    const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? '';
+    if (clinicBase && token) {
+      const res = await fetch(`${clinicBase}/api/internal/v1/extras/hotel-void`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          organizationId: charge.invoiceRef?.trim() || charge.organizationId,
+          externalTicketId: charge.externalRef.replace(/^pay-/, ''),
+          orderId,
+        }),
+      }).catch(() => null);
+      if (res && res.ok) {
+        const body = (await res.json()) as {
+          reason?: string;
+          data?: { reason?: string };
+        };
+        const reason = body.reason ?? body.data?.reason;
+        if (reason === 'received') {
+          throw new Error('Clinic refused the void — procedure already received');
+        }
+      }
+    }
+  }
 
   const { hotelDateKey } = await import('@/lib/hotel-calendar');
   const { bakuCivilUtcDate } = await import('@era/satellite-kit/time');
