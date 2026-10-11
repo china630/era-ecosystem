@@ -29,6 +29,7 @@
   },
   "help": {
     "title": "Frequently asked questions",
+    "calcLink": "Subscription calculator",
     "items": {
       "platform": {
         "q": "What is the ERA platform?",
@@ -586,6 +587,7 @@
     "submit": "Open café",
     "busy": "…",
     "alreadyHaveAccount": "Already have an ERA account?",
+    "calcLink": "Estimate the monthly price",
     "signupFailed": "Sign-up failed",
     "emailTaken": "This email is already registered — sign in",
     "voenTaken": "This VÖEN is already linked",
@@ -632,6 +634,7 @@
     "team": "Team",
     "subscription": "Subscription",
     "pricing": "Pricing",
+    "calculator": "Calculator",
     "help": "Help",
     "superAdmin": "Super admin",
     "platformHub": "Platform hub",

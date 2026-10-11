@@ -21,6 +21,7 @@ globs:
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
 | `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor) |
+| `/calc` | `app/calc/**` | Public subscription calculator (same catalog rules: bundles, XOR, capacity, meters). Linked from landing, satellites, pricing, help, terms, Kafe |
 | `/satellites`, `/satellites/[slug]` | `app/satellites/**` | Public satellite pages (not `/industry/*` launcher) |
 | `/help`, `/terms`, `/partner` | `app/help`, `app/terms`, `app/partner` | Public |
 | `/portal/person-access` | `app/portal/person-access/page.tsx` | MDM Phase 2 citizen consent (guest QR session) |

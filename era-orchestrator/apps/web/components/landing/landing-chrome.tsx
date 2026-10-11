@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Locale } from "@era/i18n-common";
 import type { LandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { calcNavLabel } from "../../lib/i18n/calc-copy";
 import { LandingLanguageToggle } from "./landing-language-toggle";
 
 export function LandingChrome({
@@ -32,6 +33,9 @@ export function LandingChrome({
           </Link>
           <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
             {hero.navPricing}
+          </Link>
+          <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+            {calcNavLabel(locale)}
           </Link>
           <Link href="/login" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
             {loginLabel}

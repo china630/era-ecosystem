@@ -11,6 +11,7 @@ import {
   PUBLIC_SATELLITE_PAGES,
   type PublicSatelliteSlug,
 } from "../../lib/satellites/public-satellite-catalog";
+import { calcNavLabel } from "../../lib/i18n/calc-copy";
 import { LandingChrome } from "./landing-chrome";
 import { LandingFaq } from "./landing-faq";
 import { LandingHero } from "./landing-hero";
@@ -81,15 +82,15 @@ export function LandingPageView({ initialLocale }: { initialLocale: Locale }) {
       />
       <main id="landing-main">
         <div className="mx-auto max-w-6xl">
-          <LandingHero copy={copy.hero} />
+          <LandingHero copy={copy.hero} calcLabel={calcNavLabel(locale)} />
           <LandingTrialBanner copy={copy.trial} />
         </div>
-        <LandingHubGrid hub={copy.hub} satellites={cards} />
+        <LandingHubGrid hub={copy.hub} satellites={cards} calcLabel={calcNavLabel(locale)} />
         <LandingZeroKnowledge copy={copy.zeroKnowledge} />
         <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
           <LandingFaq faq={copy.faq} />
         </div>
-        <LandingBottomCta copy={copy.bottomCta} />
+        <LandingBottomCta copy={copy.bottomCta} calcLabel={calcNavLabel(locale)} />
       </main>
       <footer className="border-t border-[#D5DADF]/80 px-4 py-8">
         <p className="text-center text-[12px] text-[#7F8C8D]">
