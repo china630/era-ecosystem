@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Headers, Post, UnauthorizedException } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { assertEnvServiceToken } from "@era/satellite-kit";
+import { Public } from "../auth/decorators/public.decorator";
 import { IsArray, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -76,6 +77,7 @@ export class IndustryHandoffsClinicController {
   }
 
   @Post("clinic-service-catalog")
+  @Public()
   @ApiOperation({ summary: "Create clinic procedures as finance services and return their SKU" })
   async push(
     @OrganizationId() organizationId: string,
