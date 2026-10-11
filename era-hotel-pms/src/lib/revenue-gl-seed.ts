@@ -28,12 +28,13 @@ export function starterGlAccount(code: string, name: string): string {
 /** Insert a mapping when the revenue code has none. Does not overwrite a saved account. */
 export async function ensureRevenueGlSeedRows(db: PrismaClient): Promise<number> {
   const codes = await db.revenueCode.findMany({
-    select: { id: true, code: true, name: true },
+    select: { id: true, code: true, name: true, organizationId: true },
   });
   for (const code of codes) {
     await db.hotelRevenueGlMapping.upsert({
       where: { revenueCodeId: code.id },
       create: {
+        organizationId: code.organizationId,
         revenueCodeId: code.id,
         glAccountCode: starterGlAccount(code.code, code.name),
       },

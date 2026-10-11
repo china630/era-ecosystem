@@ -157,6 +157,7 @@ export async function postCharge(input: {
       businessDate: input.businessDate ?? new Date(),
       externalRef: input.externalRef,
       invoiceRef: input.invoiceRef,
+    },
     include: { revenueCode: true, folio: true },
   });
 

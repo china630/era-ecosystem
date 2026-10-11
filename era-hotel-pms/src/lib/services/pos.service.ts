@@ -129,6 +129,7 @@ export async function postRoomCharge(
     description: `[${input.outletCode ?? 'POS'}] ${input.description}`,
     externalRef: idempotencyKey || undefined,
     invoiceRef: input.sourceOrganizationId,
+  });
 
   if (idempotencyKey) {
     await saveRoomChargeIdempotency(

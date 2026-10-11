@@ -140,7 +140,7 @@ export async function payoutDepositRemainder(
   const dep = await prisma.folioDeposit.findUnique({ where: { id: depositId } });
   if (!dep || dep.status !== 'HELD') throw new Error('Deposit is not held');
   const amount = decimalToNumber(dep.amount);
-  const { requestOrganizationId } = await import('@era/satellite-kit');
+  const { requestOrganizationId } = await import('@/lib/request-organization');
   const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
   const orgId = requestOrganizationId();
   const cashShift = await prisma.cashShift.findFirst({

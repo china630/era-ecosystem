@@ -20,6 +20,12 @@ export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
   dispatch: DispatchResult;
   cityLedgerTransferred: string[];
+  depositRemainder: {
+    appliedCount: number;
+    refundedHeld: number;
+    heldAmount: number;
+    heldIds: string[];
+  };
 }
 
 export async function checkoutReservation(
