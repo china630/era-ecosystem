@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 function organizationIdFrom(request: Request): string {
   return (
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    enterRequestTenant(organizationId);
     const { resolveCatalogOrganizationId } = await import("@era/satellite-kit");
     const shifts = await prisma.posShift.findMany({
       where: { status: "OPEN" },

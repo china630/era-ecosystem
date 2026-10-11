@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { enterRequestTenant } from "@/lib/request-organization";
 
 function organizationIdFrom(request: Request): string {
   return (
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "organizationId required" }, { status: 400 });
   }
   try {
+    enterRequestTenant(organizationId);
     const { resolveCatalogOrganizationId } = await import("@era/satellite-kit");
     const shifts = await prisma.shift.findMany({
       where: { status: "OPEN" },
