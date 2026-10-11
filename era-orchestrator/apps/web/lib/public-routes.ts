@@ -5,6 +5,7 @@ const BARE_PUBLIC_PREFIXES = [
   "/register",
   "/register-org",
   "/pricing",
+  "/calc",
   "/satellites",
   "/terms",
   "/partner",

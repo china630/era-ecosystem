@@ -47,10 +47,12 @@ export function LandingHubGrid({
   hub,
   satellites,
   addonsHref = "/pricing#addons",
+  calcLabel,
 }: {
   hub: LandingHubCopy;
   satellites: HubCard[];
   addonsHref?: string;
+  calcLabel?: string;
 }) {
   const core = satellites.find((s) => s.slug === "finance");
   const dataHub = satellites.find((s) => s.slug === "data-hub");
@@ -113,6 +115,11 @@ export function LandingHubGrid({
             <Link href="/pricing" className="rounded-xl bg-[#2980B9] px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-[#2471A3]">
               {hub.catalogCta}
             </Link>
+            {calcLabel ? (
+              <Link href="/calc" className="rounded-xl border border-[#2980B9] bg-white px-4 py-2 text-sm font-semibold text-[#2980B9] no-underline hover:bg-[#2980B9]/5">
+                {calcLabel}
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>

@@ -151,6 +151,10 @@ export default function KafeLandingPage() {
           <Link href="/login" className={LINK_ACCENT_CLASS}>
             {tAuth("loginTitle")}
           </Link>
+          {" · "}
+          <Link href="/calc" className={LINK_ACCENT_CLASS}>
+            {t("calcLink")}
+          </Link>
         </p>
       }
     >

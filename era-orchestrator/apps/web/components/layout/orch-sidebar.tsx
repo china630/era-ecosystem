@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
+  Calculator,
   CalendarClock,
   CalendarDays,
   CalendarOff,
@@ -411,6 +412,14 @@ export function OrchSidebar({
             label={t("pricing")}
             isActive={pathname === "/pricing" || pathname.startsWith("/pricing/")}
             icon={Tags}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/calc"
+            label={t("calculator")}
+            isActive={pathname === "/calc" || pathname.startsWith("/calc/")}
+            icon={Calculator}
             nested
             onNavClick={onNavClick}
           />

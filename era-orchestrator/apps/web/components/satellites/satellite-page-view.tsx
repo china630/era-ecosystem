@@ -14,6 +14,7 @@ import {
   type PublicSatelliteDef,
   type PublicSatelliteSlug,
 } from "../../lib/satellites/public-satellite-catalog";
+import { calcNavLabel } from "../../lib/i18n/calc-copy";
 import { LandingChrome } from "../landing/landing-chrome";
 import { LandingEcosystemGrid } from "../landing/landing-ecosystem-grid";
 import { LandingFeatureSplits } from "../landing/landing-feature-splits";
@@ -164,6 +165,9 @@ export function SatellitePageView({
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href={pricingHrefForSatellite(slug)} className={`${PRIMARY_BUTTON_CLASS} text-sm no-underline`}>
               {copy.pricingCta}
+            </Link>
+            <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-sm no-underline`}>
+              {calcNavLabel(locale)}
             </Link>
             <Link
               href={slug === "fnb" ? "/kafe" : "/register-org"}

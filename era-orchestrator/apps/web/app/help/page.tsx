@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { FaqSection, SatelliteLocaleToggle, PublicLegalFooter } from "@era/satellite-kit/ui";
@@ -30,6 +31,11 @@ export default function HelpPage() {
           <SatelliteLocaleToggle locale={locale} />
         </div>
       ) : null}
+      <p className="mb-4">
+        <Link href="/calc" className="text-sm font-semibold text-[#2980B9] no-underline">
+          {t("calcLink")}
+        </Link>
+      </p>
       <FaqSection title={t("title")} items={items} />
       <PublicLegalFooter
         locale={locale}

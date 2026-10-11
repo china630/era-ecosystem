@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { SatelliteLocaleToggle } from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
+import { calcNavLabel } from "../../lib/i18n/calc-copy";
 
 type Props = {
   locale: Locale;
@@ -21,7 +23,12 @@ export function TermsPageClient({ locale, content }: Props) {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-[#34495E]">{content.title}</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-[#34495E]">{content.title}</h1>
+          <Link href="/calc" className="mt-1 inline-block text-sm font-semibold text-[#2980B9] no-underline">
+            {calcNavLabel(locale)}
+          </Link>
+        </div>
         <SatelliteLocaleToggle locale={locale} />
       </div>
       <article className="space-y-4 text-[13px] leading-relaxed text-[#34495E]">

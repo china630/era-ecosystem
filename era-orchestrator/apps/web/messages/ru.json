@@ -29,6 +29,7 @@
   },
   "help": {
     "title": "Частые вопросы",
+    "calcLink": "Калькулятор подписки",
     "items": {
       "platform": {
         "q": "Что такое ERA 365?",
@@ -585,6 +586,7 @@
     "submit": "Открыть кафе",
     "busy": "…",
     "alreadyHaveAccount": "Уже есть аккаунт ERA?",
+    "calcLink": "Посчитать цену в месяц",
     "signupFailed": "Не удалось зарегистрировать кафе",
     "emailTaken": "Этот email уже зарегистрирован — войдите",
     "voenTaken": "Этот VÖEN уже привязан",
@@ -631,6 +633,7 @@
     "team": "Команда",
     "subscription": "Подписка",
     "pricing": "Тарифы",
+    "calculator": "Калькулятор",
     "help": "Справка",
     "superAdmin": "Super admin",
     "platformHub": "Платформа",
