@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   CHIP_ACTIVE_CLASS,
@@ -515,9 +516,9 @@ export function ReservationCardFolioTab({
       </div>
       {folioFocus === 'deleted' ? (
         <p className="m-0 text-[12px]">
-          <a className="text-[#1F6FEB] underline" href="/reports/payment-voids">
+          <Link className="text-[#1F6FEB] underline" href="/reports/payment-voids">
             {t('folioTab.deleted')}
-          </a>
+          </Link>
         </p>
       ) : null}
 
