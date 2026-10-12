@@ -611,6 +611,7 @@ export async function patchReservationFull(
       next: nextGuests,
     });
     await ensurePartyGuestFolios(id);
+  }
 
   if (!guestPackageOnStay) {
     await prisma.reservationGuest.updateMany({
