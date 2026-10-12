@@ -383,15 +383,6 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
   const blocks = 0;
   const available = Math.max(0, input.capacity - endOfDay.rooms - dayUse - blocks - ooo);
 
-  const ratesByDay = new Map<string, number>();
-  if (input.withRevenue) {
-    const idSet = new Set(input.stays.map((s) => s.id));
-    for (const rate of input.nightRates) {
-      if (!idSet.has(rate.reservationId)) continue;
-      ratesByDay.set(rate.day, (ratesByDay.get(rate.day) ?? 0) + rate.amount);
-    }
-  }
-
   const forecast: ForecastPoint[] = input.forecastDays.map((forecastDay) => {
     const onNight = nightStays(input.stays, forecastDay, includeWaiting);
     const counted = matrixOf(onNight);
@@ -399,18 +390,29 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
     let group = 0;
     let complimentary = 0;
     let houseUse = 0;
-    const seen = new Set<string>();
+    const doors = new Map<string, DashStay[]>();
     for (const s of onNight) {
       const key = s.roomId ?? `stay:${s.id}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const rooms = key.startsWith('stay:') ? Math.max(1, s.roomCount) : 1;
-      if (s.group) group += rooms;
-      else individual += rooms;
-      const kind = accomKind(s.accomType);
-      if (kind === 'COMP') complimentary += rooms;
-      if (kind === 'HOUSE') houseUse += rooms;
+      const list = doors.get(key) ?? [];
+      list.push(s);
+      doors.set(key, list);
     }
+    for (const [key, list] of doors) {
+      const rooms = key.startsWith('stay:') ? Math.max(1, list[0].roomCount) : 1;
+      if (list.some((s) => s.group)) group += rooms;
+      else individual += rooms;
+      const kinds = list.map((s) => accomKind(s.accomType));
+      if (kinds.includes('COMP')) complimentary += rooms;
+      else if (kinds.includes('HOUSE')) houseUse += rooms;
+    }
+    const onNightIds = new Set(onNight.map((s) => s.id));
+    const nightRevenue = input.withRevenue
+      ? input.nightRates.reduce(
+          (sum, rate) =>
+            rate.day === forecastDay && onNightIds.has(rate.reservationId) ? sum + rate.amount : sum,
+          0,
+        )
+      : 0;
     const occupied = counted.rooms;
     const sold = Math.max(0, occupied - complimentary - houseUse);
     const arriving = matrixOf(
@@ -429,7 +431,7 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
       departing,
       individual,
       group,
-      revenue: round2(ratesByDay.get(forecastDay) ?? 0),
+      revenue: round2(nightRevenue),
       adults: counted.adults,
       child1: counted.child1,
       child2: counted.child2,
@@ -466,8 +468,9 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
     else other += c.gross;
   }
   if (roomGross === 0 && food === 0 && beverage === 0 && other === 0) {
+    const endIds = new Set(endStays.map((s) => s.id));
     const fallback = input.nightRates
-      .filter((r) => r.day === day)
+      .filter((r) => r.day === day && endIds.has(r.reservationId))
       .reduce((sum, r) => sum + r.amount, 0);
     roomGross = fallback;
     roomNet = fallback / 1.18;

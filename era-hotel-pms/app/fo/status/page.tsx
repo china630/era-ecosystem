@@ -135,15 +135,22 @@ function StackedChart({
   points,
   series,
   grid,
+  grouped = false,
 }: {
   title: string;
   points: ForecastPoint[];
   series: { key: keyof ForecastPoint; label: string; color: string }[];
   grid: boolean;
+  /** Parallel series (arrivals vs departures). A stack would add them together. */
+  grouped?: boolean;
 }) {
   const max = Math.max(
     1,
-    ...points.map((p) => series.reduce((sum, s) => sum + Number(p[s.key] ?? 0), 0)),
+    ...points.map((p) =>
+      grouped
+        ? Math.max(...series.map((s) => Number(p[s.key] ?? 0)))
+        : series.reduce((sum, s) => sum + Number(p[s.key] ?? 0), 0),
+    ),
   );
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-3">
@@ -176,11 +183,14 @@ function StackedChart({
           {points.map((p) => (
             <div key={p.day} className="flex items-center gap-2">
               <span className="w-10 shrink-0 text-[10px] text-slate-500">{ddmm(p.day)}</span>
-              <div className="flex h-3 flex-1 overflow-hidden rounded-sm bg-slate-100">
+              <div className={`flex h-3 flex-1 overflow-hidden rounded-sm bg-slate-100 ${grouped ? 'gap-0.5' : ''}`}>
                 {series.map((s) => (
                   <div
                     key={s.label}
-                    style={{ width: `${(Number(p[s.key] ?? 0) / max) * 100}%`, background: s.color }}
+                    style={{
+                      width: `${(Number(p[s.key] ?? 0) / max) * (grouped ? 100 / series.length : 100)}%`,
+                      background: s.color,
+                    }}
                     title={`${s.label}: ${String(p[s.key] ?? 0)}`}
                   />
                 ))}
@@ -201,8 +211,17 @@ function StackedChart({
   );
 }
 
+const RES_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW'] as const;
+const PAY_METHODS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS', 'DEPOSIT', 'COMPANY_ACCOUNT', 'EPOINT', 'CL_AGENCY', 'CL_COMPANY'] as const;
+
+function dmy(ymd: string): string {
+  const [y, m, d] = ymd.split('-');
+  return d && m && y ? `${d}.${m}.${y}` : ymd;
+}
+
 function StayTable({ rows, onOpen }: { rows: StatusListRow[]; onOpen: (id: string) => void }) {
   const t = useTranslations('foStatus');
+  const tRes = useTranslations('reservationStatus');
   if (rows.length === 0) return <p className="text-[13px] text-slate-500">{t('empty')}</p>;
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
@@ -215,7 +234,7 @@ function StayTable({ rows, onOpen }: { rows: StatusListRow[]; onOpen: (id: strin
             <th className="px-3 py-2">{t('meal')}</th>
             <th className="px-3 py-2">{t('arrival')}</th>
             <th className="px-3 py-2">{t('departure')}</th>
-            <th className="px-3 py-2">{t('adult')}</th>
+            <th className="px-3 py-2">{t('pax')}</th>
             <th className="px-3 py-2">{t('status')}</th>
           </tr>
         </thead>
@@ -230,10 +249,12 @@ function StayTable({ rows, onOpen }: { rows: StatusListRow[]; onOpen: (id: strin
               <td className="px-3 py-2">{row.roomNumber ?? '—'}</td>
               <td className="px-3 py-2">{row.roomType}</td>
               <td className="px-3 py-2">{row.meal ?? '—'}</td>
-              <td className="px-3 py-2">{row.inYmd}</td>
-              <td className="px-3 py-2">{row.outYmd}</td>
+              <td className="px-3 py-2">{dmy(row.inYmd)}</td>
+              <td className="px-3 py-2">{dmy(row.outYmd)}</td>
               <td className="px-3 py-2">{row.adults + row.child1 + row.child2 + row.baby}</td>
-              <td className="px-3 py-2">{row.status}</td>
+              <td className="px-3 py-2">
+                {(RES_STATUSES as readonly string[]).includes(row.status) ? tRes(row.status as 'IN_HOUSE') : row.status}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -244,6 +265,7 @@ function StayTable({ rows, onOpen }: { rows: StatusListRow[]; onOpen: (id: strin
 
 export default function FoStatusPage() {
   const t = useTranslations('foStatus');
+  const tPay = useTranslations('paymentMethod');
   const tc = useTranslations('common');
   const locale = useLocale();
   const [day, setDay] = useState('');
@@ -426,6 +448,7 @@ export default function FoStatusPage() {
                 title={t('arrivalsDepartures')}
                 points={data.forecast}
                 grid={grid}
+                grouped
                 series={[
                   { key: 'arriving', label: t('arrivingRooms'), color: '#ffe082' },
                   { key: 'departing', label: t('departingRooms'), color: '#b388ff' },
@@ -507,7 +530,13 @@ export default function FoStatusPage() {
                 ]}
               />
               <MiniList title={t('repeatGuests')} rows={[[t('repeatGuests'), String(data.repeatGuests)]]} />
-              <MiniList title={t('folioTypes')} rows={data.folioTypes.map((f) => [f.method, String(f.count)])} />
+              <MiniList
+                title={t('folioTypes')}
+                rows={data.folioTypes.map((f) => [
+                  (PAY_METHODS as readonly string[]).includes(f.method) ? tPay(f.method as 'CASH') : f.method,
+                  String(f.count),
+                ])}
+              />
             </div>
             <section className="rounded-lg border border-slate-200 bg-white p-3">
               <h2 className="mb-2 text-[14px] font-medium">{t('todayReservations')} ({data.todayReservations.length})</h2>
