@@ -25,6 +25,7 @@ export async function GET(req: Request) {
       search: q,
       isService,
       limit,
+      channel: "CLINIC",
     });
 
     return jsonOk({

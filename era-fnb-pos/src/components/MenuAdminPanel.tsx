@@ -37,6 +37,7 @@ type MenuItem = {
   active: boolean;
   recipeSku?: string | null;
   financeSku?: string | null;
+  revenueCode?: string | null;
   imageUrl?: string | null;
   categoryId?: string;
 };
@@ -64,6 +65,7 @@ type ItemForm = {
   priceAzn: string;
   recipeSku: string;
   financeSku: string;
+  revenueCode: string;
   imageUrl: string;
   active: boolean;
   priceReason: string;
@@ -76,6 +78,7 @@ const emptyItemForm = (categoryId = ""): ItemForm => ({
   priceAzn: "",
   recipeSku: "",
   financeSku: "",
+  revenueCode: "",
   imageUrl: "",
   active: true,
   priceReason: "",
@@ -96,6 +99,7 @@ export default function MenuAdminPanel() {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [itemForm, setItemForm] = useState<ItemForm>(emptyItemForm());
   const [financeSkuOptions, setFinanceSkuOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [revenueOptions, setRevenueOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTitle, setHistoryTitle] = useState("");
   const [priceHistory, setPriceHistory] = useState<PriceRow[]>([]);
@@ -133,6 +137,20 @@ export default function MenuAdminPanel() {
         items?: Array<{ value: string; label: string }>;
       } | null;
       if (!cancelled) setFinanceSkuOptions(payload?.items ?? []);
+      const revenueRes = await fetch("/api/admin/hotel-revenue-codes");
+      if (!revenueRes.ok || cancelled) return;
+      const revenueParsed = await revenueRes.json().catch(() => null);
+      const revenueBody = (revenueParsed?.data ?? revenueParsed) as {
+        codes?: Array<{ code: string; name: string }>;
+      } | null;
+      if (!cancelled) {
+        setRevenueOptions(
+          (revenueBody?.codes ?? []).map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+      }
     })();
     return () => {
       cancelled = true;
@@ -243,6 +261,7 @@ export default function MenuAdminPanel() {
       priceAzn: String(item.priceAzn),
       recipeSku: item.recipeSku ?? "",
       financeSku: item.financeSku ?? "",
+      revenueCode: item.revenueCode ?? "",
       imageUrl: item.imageUrl ?? "",
       active: item.active,
       priceReason: "",
@@ -273,6 +292,7 @@ export default function MenuAdminPanel() {
       priceAzn: price,
       recipeSku: itemForm.recipeSku.trim() || null,
       financeSku: itemForm.financeSku.trim() || null,
+      revenueCode: itemForm.revenueCode.trim() || null,
       imageUrl: itemForm.imageUrl.trim() || null,
       active: itemForm.active,
       ...(itemModal === "create"
@@ -609,6 +629,23 @@ export default function MenuAdminPanel() {
               setItemForm((f) => ({
                 ...f,
                 financeSku: Array.isArray(next) ? next[0] ?? "" : next,
+              }))
+            }
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("revenueCode")}
+            value={itemForm.revenueCode}
+            options={
+              itemForm.revenueCode &&
+              !revenueOptions.some((option) => option.value === itemForm.revenueCode)
+                ? [{ value: itemForm.revenueCode, label: itemForm.revenueCode }, ...revenueOptions]
+                : revenueOptions
+            }
+            onChange={(next) =>
+              setItemForm((f) => ({
+                ...f,
+                revenueCode: Array.isArray(next) ? next[0] ?? "" : next,
               }))
             }
           />

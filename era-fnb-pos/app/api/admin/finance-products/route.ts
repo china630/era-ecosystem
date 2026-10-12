@@ -20,6 +20,7 @@ export async function GET(request: Request) {
       search: q,
       isService: null,
       limit,
+      channel: "FNB",
     });
     return jsonOk({
       items: result.items.map((p) => ({

@@ -6,6 +6,7 @@ export type FinanceCatalogItem = {
   name: string;
   isService: boolean;
   revenueAccountCode: string | null;
+  unitPrice?: number | null;
 };
 
 function financeApiBase(): string {
@@ -25,14 +26,17 @@ export async function searchFinanceCatalog(input: {
   search?: string;
   isService?: boolean | null;
   limit?: number;
+  /** CLINIC, FNB, RETAIL, or HOTEL. Empty returns the whole catalog. */
+  channel?: "CLINIC" | "FNB" | "RETAIL" | "HOTEL";
 }): Promise<{ items: FinanceCatalogItem[]; source: "finance" | "unavailable" }> {
   const catalogOrgId = await resolveCatalogOrganizationId(input.organizationId);
-  const limit = Math.min(Math.max(input.limit ?? 20, 1), 50);
+  const limit = Math.min(Math.max(input.limit ?? 20, 1), 500);
   const params = new URLSearchParams({ limit: String(limit) });
   if (input.isService === true) params.set("isService", "true");
   if (input.isService === false) params.set("isService", "false");
   const search = input.search?.trim();
   if (search) params.set("search", search);
+  if (input.channel) params.set("channel", input.channel);
 
   const token =
     process.env.FINANCE_SERVICE_TOKEN ?? process.env.SATELLITE_EVENT_SERVICE_TOKEN;
@@ -55,6 +59,7 @@ export async function searchFinanceCatalog(input: {
       name: row.name,
       isService: Boolean(row.isService),
       revenueAccountCode: row.revenueAccountCode ?? null,
+      unitPrice: row.unitPrice ?? null,
     })),
   };
 }

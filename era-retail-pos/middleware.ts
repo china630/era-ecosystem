@@ -7,7 +7,11 @@ import { isPublicStaffPage, routePermissions } from "@/lib/auth/page-route-permi
 import { sessionHasAnyPermission } from "@/lib/auth/permission-check";
 
 export const middleware = createSatelliteStaffMiddleware<NextRequest>({
-  publicApiPrefixes: ["/api/integration/settlement-confirmed"],
+  publicApiPrefixes: [
+    "/api/integration/settlement-confirmed",
+    "/api/integration/prescription-queue",
+    "/api/internal/v1/shifts/open",
+  ],
   isPublicPage: isPublicStaffPage,
   authorizePage: ({ request, pathname, session }) => {
     const required = routePermissions(pathname);

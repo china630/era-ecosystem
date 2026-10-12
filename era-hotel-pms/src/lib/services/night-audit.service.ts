@@ -127,23 +127,47 @@ async function collectDayDocument(date: Date) {
     .filter(([, amount]) => amount !== 0)
     .map(([revenueCode, amount]) => ({ revenueCode, amount: money2(amount) }));
 
-  const payByMethod = new Map<string, number>();
-  const addPay = (method: string, signed: number) => {
-    const key = method.trim() || 'CASH';
-    payByMethod.set(key, money2((payByMethod.get(key) ?? 0) + signed));
+  const payByMethod = new Map<string, { method: string; amount: number; bankTerminalId?: string }>();
+  const addPay = (method: string, signed: number, bankTerminalId?: string | null) => {
+    const name = method.trim() || 'CASH';
+    const bank = name === 'CARD' ? bankTerminalId?.trim() || undefined : undefined;
+    const key = bank ? `${name}|${bank}` : name;
+    const row = payByMethod.get(key) ?? { method: name, amount: 0, bankTerminalId: bank };
+    row.amount = money2(row.amount + signed);
+    payByMethod.set(key, row);
   };
   for (const payment of payments) {
     const amount = decimalToNumber(payment.amount);
-    addPay(payment.paymentMethod, payment.kind === 'REFUND' ? -amount : amount);
+    addPay(
+      payment.paymentMethod,
+      payment.kind === 'REFUND' ? -amount : amount,
+      payment.bankTerminalId,
+    );
   }
   for (const row of pending) {
     addPay(row.paymentMethod?.trim() || 'CASH', decimalToNumber(row.amount));
   }
-  const paymentLines = [...payByMethod.entries()]
-    .filter(([, amount]) => amount !== 0)
-    .map(([method, amount]) => ({ method, amount }));
+  const paymentLines = [...payByMethod.values()].filter((row) => row.amount !== 0);
 
-  return { saleLines, revenueLines, paymentLines };
+  const day = bakuDayBounds(hotelDateKey(date));
+  const inDay = { gte: day.start, lt: day.end };
+  const carried = await prisma.folioDeposit.findMany({
+    where: { status: 'CARRIED', appliedAt: inDay },
+  });
+  const depositCarryLines = carried.map((row) => ({
+    amount: money2(decimalToNumber(row.amount)),
+    kind: 'LIABILITY_TRANSFER' as const,
+  }));
+  const payouts = await prisma.folioDeposit.findMany({
+    where: { status: 'REFUNDED', refundedAt: inDay },
+  });
+  const depositPayoutLines = payouts.map((row) => ({
+    amount: money2(decimalToNumber(row.amount)),
+    method: row.paymentMethod,
+    bankTerminalId: row.payoutBankTerminalId ?? undefined,
+  }));
+
+  return { saleLines, revenueLines, paymentLines, depositCarryLines, depositPayoutLines };
 }
 
 export async function listNightAuditRuns(limit = 5) {
@@ -420,6 +444,8 @@ async function executeLockedNightAudit() {
       saleLines: document.saleLines,
       revenueLines: document.revenueLines,
       paymentLines: document.paymentLines,
+      depositCarryLines: document.depositCarryLines,
+      depositPayoutLines: document.depositPayoutLines,
     });
     if (dispatch.warning) {
       steps.push(`Step 4: Finance warning — ${dispatch.warning}`);

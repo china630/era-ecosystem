@@ -1,16 +1,5 @@
 import { prisma } from '@/lib/prisma';
 
-const DEFAULT_GL_BY_CODE: Record<string, string> = {
-  ROOM: '601',
-  FOOD: '602',
-  MEDICAL: '603',
-  PKG: '601',
-  TREATMENT: '604',
-  BOARD: '605',
-  TRANSFER: '606',
-  TOUR: '606',
-};
-
 export async function listRevenueGlMappings() {
   const codes = await prisma.revenueCode.findMany({ orderBy: { code: 'asc' } });
   const mappings = await prisma.hotelRevenueGlMapping.findMany({
@@ -21,50 +10,52 @@ export async function listRevenueGlMappings() {
     const row = byCodeId.get(code.id);
     return {
       id: row?.id ?? code.id,
-      glAccountCode: row?.glAccountCode ?? DEFAULT_GL_BY_CODE[code.code] ?? '601',
+      glAccountCode: row?.glAccountCode ?? '',
       revenueCode: code,
     };
   });
 }
 
 export async function upsertRevenueGlMapping(revenueCodeId: string, glAccountCode: string) {
+  const account = glAccountCode.trim();
+  if (!account) throw new Error('GL account is required');
   return prisma.hotelRevenueGlMapping.upsert({
     where: { revenueCodeId },
-    create: { revenueCodeId, glAccountCode },
-    update: { glAccountCode },
+    create: { revenueCodeId, glAccountCode: account },
+    update: { glAccountCode: account },
     include: { revenueCode: true },
   });
 }
 
-export async function resolveGlAccountCode(revenueCode: string): Promise<string> {
+/** Saved HotelRevenueGlMapping only. No stand-in account. */
+export async function resolveGlAccountCode(
+  revenueCode: string,
+): Promise<{ glAccountCode: string; unmapped: boolean }> {
+  const token = revenueCode.trim();
+  if (!token) return { glAccountCode: '', unmapped: true };
   const row = await prisma.hotelRevenueGlMapping.findFirst({
-    where: { revenueCode: { code: revenueCode } },
+    where: {
+      OR: [
+        { revenueCode: { code: token } },
+        { revenueCode: { name: { equals: token, mode: 'insensitive' } } },
+      ],
+    },
   });
-  if (row) return row.glAccountCode;
-  return DEFAULT_GL_BY_CODE[revenueCode] ?? process.env.DEFAULT_HOTEL_GL_REVENUE ?? '601';
+  if (!row?.glAccountCode.trim()) return { glAccountCode: '', unmapped: true };
+  return { glAccountCode: row.glAccountCode.trim(), unmapped: false };
 }
 
 export async function enrichRevenueLinesWithGl(
   lines: Array<{ revenueCode: string; amount: number }>,
-): Promise<Array<{ revenueCode: string; amount: number; glAccountCode: string }>> {
+): Promise<Array<{ revenueCode: string; amount: number; glAccountCode: string; unmapped: boolean }>> {
   const enriched = [];
   for (const line of lines) {
+    const resolved = await resolveGlAccountCode(line.revenueCode);
     enriched.push({
       ...line,
-      glAccountCode: await resolveGlAccountCode(line.revenueCode),
+      glAccountCode: resolved.glAccountCode,
+      unmapped: resolved.unmapped,
     });
   }
   return enriched;
-}
-
-export async function seedDefaultRevenueGlMappings() {
-  const codes = await prisma.revenueCode.findMany();
-  for (const code of codes) {
-    const glAccountCode = DEFAULT_GL_BY_CODE[code.code] ?? '601';
-    await prisma.hotelRevenueGlMapping.upsert({
-      where: { revenueCodeId: code.id },
-      create: { revenueCodeId: code.id, glAccountCode },
-      update: {},
-    });
-  }
 }

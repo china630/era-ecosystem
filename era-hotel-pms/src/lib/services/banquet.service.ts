@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { createPosReservation } from '@/lib/services/pos.service';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { postCharge, postPayment } from '@/lib/services/folio.service';
 import {
   computeEventPlannedRevenue,
@@ -185,10 +186,10 @@ export async function confirmBanquetEvent(
 
   if (event.reservationId && planned > 0) {
     // Prefer BANQUET code so F&B extras on other codes do not look like package double-post
-    const banquetCode = await prisma.revenueCode.findFirst({
-      where: { code: { in: ['BANQUET', 'FB', 'ROOM'] }, active: true },
-      orderBy: { code: 'asc' },
-    });
+    const banquetCode =
+      (await findRevenueCodeByToken('BANQUET')) ??
+      (await findRevenueCodeByToken('FB')) ??
+      (await findRevenueCodeByToken('ROOM'));
     if (banquetCode) {
       const charge = await postCharge({
         reservationId: event.reservationId,

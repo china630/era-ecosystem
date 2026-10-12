@@ -105,10 +105,13 @@ export async function advanceBusinessDate(): Promise<Date> {
 export async function lockBusinessDateForAudit(): Promise<void> {
   const profile = await getHotelProfile();
   if (!profile) return;
-  await prisma.hotelProfile.update({
-    where: { id: profile.id },
+  const locked = await prisma.hotelProfile.updateMany({
+    where: { id: profile.id, businessDateLocked: false },
     data: { businessDateLocked: true },
   });
+  if (locked.count !== 1) {
+    throw new Error('Night audit is already running');
+  }
 }
 
 export async function unlockBusinessDateAfterAudit(): Promise<void> {

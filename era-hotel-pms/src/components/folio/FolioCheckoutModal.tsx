@@ -53,19 +53,30 @@ export function FolioCheckoutModal({
   const [heldDeposits, setHeldDeposits] = useState(0);
   const [applyDeposits, setApplyDeposits] = useState(true);
   const [discountAmount, setDiscountAmount] = useState('');
-  const [lines, setLines] = useState<{ method: string; amount: string; bankReference: string }[]>([
-    { method: 'CASH', amount: '', bankReference: '' },
-  ]);
+  const [lines, setLines] = useState<
+    { method: string; amount: string; bankReference: string; bankTerminalId: string }[]
+  >([{ method: 'CASH', amount: '', bankReference: '', bankTerminalId: '' }]);
+  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [early, setEarly] = useState<EarlyPreview | null>(null);
   const [refundMethod, setRefundMethod] = useState('CASH');
+  const [refundTerminal, setRefundTerminal] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [busy, setBusy] = useState(false);
+  const [remainder, setRemainder] = useState<{ ids: string[]; amount: number } | null>(null);
+  const [remainderMethod, setRemainderMethod] = useState('CASH');
+  const [remainderTerminal, setRemainderTerminal] = useState('');
   const [laundry, setLaundry] = useState<Array<{ id: string; guestName: string }>>([]);
   const [laundryScan, setLaundryScan] = useState('');
 
   useEffect(() => {
     if (!open) return;
     setTransferToCl(true);
+    void fetch('/api/fiscal/devices?kind=BANK_POS')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { devices?: { id: string; label: string }[] } | null) => {
+        setBankTerminals(body?.devices ?? []);
+      })
+      .catch(() => setBankTerminals([]));
     setEarly(null);
     setRefundMethod('CASH');
     setRefundReason('');
@@ -95,16 +106,28 @@ export function FolioCheckoutModal({
   }, [open, reservationId, guest?.id]);
 
   async function settleThenCheckout() {
+    const cardMissingTerminal =
+      (lines.some((line) => line.method === 'CARD' && Number(line.amount) > 0 && !line.bankTerminalId.trim()) ||
+        (early?.applicable &&
+          early.guestCashRefund > 0 &&
+          refundMethod === 'CARD' &&
+          !refundTerminal.trim())) &&
+      bankTerminals.length > 0;
+    if (cardMissingTerminal) {
+      showApiError({ error: t('bankTerminal') }, tc('error'));
+      return false;
+    }
     if (guest && balance > 0.01 && !transferToCl) {
       const tender = lines
         .map((l) => ({
           method: l.method,
           amount: Number(l.amount),
           bankReference: l.method === 'BANK_TRANSFER' && l.bankReference.trim() ? l.bankReference.trim() : undefined,
+          bankTerminalId: l.method === 'CARD' ? l.bankTerminalId.trim() || undefined : undefined,
         }))
         .filter((l) => l.amount > 0);
       if (tender.length === 0 && applyDeposits && heldDeposits > 0.01) {
-        tender.push({ method: 'DEPOSIT', amount: heldDeposits, bankReference: undefined });
+        tender.push({ method: 'DEPOSIT', amount: heldDeposits, bankReference: undefined, bankTerminalId: undefined });
       }
       if (tender.length > 0) {
         const res = await fetch('/api/folios/settle', {
@@ -131,12 +154,26 @@ export function FolioCheckoutModal({
         transferToCityLedger: transferToCl,
         discountAmount: discountAmount ? Number(discountAmount) : undefined,
         unusedNightsRefundMethod: early?.applicable && early.guestCashRefund > 0 ? refundMethod : undefined,
+        unusedNightsBankTerminalId:
+          early?.applicable && early.guestCashRefund > 0 && refundMethod === 'CARD'
+            ? refundTerminal.trim() || undefined
+            : undefined,
         unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
       }),
     });
     const data = await res.json();
     const payload = data.data ?? data;
     if (res.ok) {
+      const held = payload.depositRemainder as { heldAmount?: number; heldIds?: string[] } | undefined;
+      const heldAmount = Number(held?.heldAmount ?? 0);
+      const heldIds = Array.isArray(held?.heldIds) ? held.heldIds : [];
+      if (heldAmount > 0.01 && heldIds.length > 0) {
+        setRemainder({ ids: heldIds, amount: heldAmount });
+        setRemainderMethod('CASH');
+        onDone?.();
+        onClose();
+        return true;
+      }
       showSuccess(
         payload.cityLedgerTransferred?.length
           ? t('checkoutClSuccess', { count: payload.cityLedgerTransferred.length })
@@ -219,6 +256,20 @@ export function FolioCheckoutModal({
                       setLines(next);
                     }}
                   />
+                  {line.method === 'CARD' && bankTerminals.length > 0 ? (
+                    <CatalogField
+                      kind="CLOSED_SMALL"
+                      label={t('bankTerminal')}
+                      value={line.bankTerminalId}
+                      onChange={(v) => {
+                        const next = [...lines];
+                        next[idx] = { ...next[idx]!, bankTerminalId: String(v ?? '') };
+                        setLines(next);
+                      }}
+                      options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+                      emptyLabel={null}
+                    />
+                  ) : null}
                   {line.method === 'BANK_TRANSFER' ? (
                     <Field
                       label={t('bankReference')}
@@ -252,7 +303,9 @@ export function FolioCheckoutModal({
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setLines([...lines, { method: 'CASH', amount: '', bankReference: '' }])}
+                onClick={() =>
+                  setLines([...lines, { method: 'CASH', amount: '', bankReference: '', bankTerminalId: '' }])
+                }
               >
                 {t('addTenderLine')}
               </button>
@@ -278,6 +331,16 @@ export function FolioCheckoutModal({
                     ]}
                     emptyLabel={null}
                   />
+                  {refundMethod === 'CARD' && bankTerminals.length > 0 ? (
+                    <CatalogField
+                      kind="CLOSED_SMALL"
+                      label={t('bankTerminal')}
+                      value={refundTerminal}
+                      onChange={(v) => setRefundTerminal(String(v ?? ''))}
+                      options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+                      emptyLabel={null}
+                    />
+                  ) : null}
                   <Field
                     label={t('earlyCheckoutReason')}
                     preset="shortText"
@@ -287,6 +350,92 @@ export function FolioCheckoutModal({
                 </>
               ) : null}
             </div>
+          ) : null}
+        </div>
+      </EraModal>
+      <EraModal
+        open={remainder != null}
+        title={t('depositRemainderTitle')}
+        onClose={() => setRemainder(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => {
+              if (!remainder) return;
+              setBusy(true);
+              void Promise.all(
+                remainder.ids.map((depositId) =>
+                  fetch(`/api/reservations/${reservationId}/deposits/settle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ depositId, action: 'carry' }),
+                  }),
+                ),
+              )
+                .then(() => {
+                  showSuccess(t('depositCarry'));
+                  setRemainder(null);
+                })
+                .finally(() => setBusy(false));
+            }}
+            cancelLabel={t('depositCarry')}
+            submitLabel={t('depositPayout')}
+            busy={busy}
+            onSubmit={() => {
+              if (!remainder) return;
+              if (remainderMethod === 'CARD' && bankTerminals.length > 0 && !remainderTerminal.trim()) {
+                showApiError({ error: t('bankTerminal') }, tc('error'));
+                return;
+              }
+              setBusy(true);
+              void Promise.all(
+                remainder.ids.map((depositId) =>
+                  fetch(`/api/reservations/${reservationId}/deposits/settle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      depositId,
+                      action: 'payout',
+                      paymentMethod: remainderMethod,
+                      bankTerminalId:
+                        remainderMethod === 'CARD' ? remainderTerminal.trim() || undefined : undefined,
+                    }),
+                  }).then(async (res) => {
+                    if (!res.ok) throw await res.json();
+                  }),
+                ),
+              )
+                .then(() => {
+                  showSuccess(t('depositPayout'));
+                  setRemainder(null);
+                })
+                .catch((err) => showApiError(err, tc('error')))
+                .finally(() => setBusy(false));
+            }}
+          />
+        }
+      >
+        <div className="space-y-2">
+          <p className="m-0 text-[13px]">{t('depositRemainderHint', { amount: (remainder?.amount ?? 0).toFixed(2) })}</p>
+          <CatalogField
+            kind="OPS_HOT"
+            label={t('method')}
+            value={remainderMethod}
+            onChange={(v) => setRemainderMethod(String(v ?? 'CASH'))}
+            options={[
+              { value: 'CASH', label: tPay('CASH') },
+              { value: 'CARD', label: tPay('CARD') },
+            ]}
+            emptyLabel={null}
+          />
+          {remainderMethod === 'CARD' && bankTerminals.length > 0 ? (
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('bankTerminal')}
+              value={remainderTerminal}
+              onChange={(v) => setRemainderTerminal(String(v ?? ''))}
+              options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+              emptyLabel={null}
+            />
           ) : null}
         </div>
       </EraModal>

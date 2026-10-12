@@ -59,6 +59,8 @@ export function FolioPaymentModal({
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<string>('CASH');
   const [bankReference, setBankReference] = useState('');
+  const [bankTerminalId, setBankTerminalId] = useState('');
+  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
   const knownStay = Boolean(reservationId);
@@ -80,10 +82,23 @@ export function FolioPaymentModal({
     setAmount('');
     setMethod('CASH');
     setBankReference('');
+    setBankTerminalId('');
     setGuestId('');
     setStayId(reservationId ?? '');
     setFolios([]);
   }, [open, reservationId]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch('/api/fiscal/devices?kind=BANK_POS')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { devices?: { id: string; label: string }[] } | null) => {
+        const devices = body?.devices ?? [];
+        setBankTerminals(devices.map((row) => ({ id: row.id, label: row.label })));
+        setBankTerminalId((current) => current || devices[0]?.id || '');
+      })
+      .catch(() => setBankTerminals([]));
+  }, [open]);
 
   useEffect(() => {
     if (!open || knownStay || party !== 'guest') return;
@@ -128,7 +143,8 @@ export function FolioPaymentModal({
     !needsGuest &&
     amountN > 0 &&
     (asDeposit || Boolean(folio)) &&
-    (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0);
+    (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
+    (method !== 'CARD' || bankTerminals.length === 0 || bankTerminalId.trim().length > 0);
 
   async function submit() {
     if (!canSubmit || !activeStayId) return;
@@ -152,6 +168,7 @@ export function FolioPaymentModal({
               amount: amountN,
               paymentMethod: method,
               bankReference: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
+              bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
             }),
           });
       const data = await res.json();
@@ -241,6 +258,16 @@ export function FolioPaymentModal({
           options={methods.map((m) => ({ value: m, label: tPay(m) }))}
           emptyLabel={null}
         />
+        {method === 'CARD' && bankTerminals.length > 0 ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('bankTerminal')}
+            value={bankTerminalId}
+            onChange={(v) => setBankTerminalId(String(v ?? ''))}
+            options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+            emptyLabel={null}
+          />
+        ) : null}
         {method === 'BANK_TRANSFER' ? (
           <Field
             label={t('bankReference')}

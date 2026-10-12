@@ -18,6 +18,7 @@ const lineSchema = z.object({
   amount: z.number().positive(),
   registerRef: z.string().optional(),
   bankReference: z.string().max(120).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
   loyaltyCustomerRef: z.string().optional(),
   authorizationId: z.string().uuid().optional(),
 });

@@ -21,18 +21,32 @@ export class ProductsService {
     });
   }
 
-  list(
+  async list(
     orgId: string,
-    opts?: { isService?: string; search?: string; limit?: number },
+    opts?: { isService?: string; search?: string; limit?: number; channel?: string },
   ) {
     const searchTrim = opts?.search?.trim() ?? "";
-    const limit = opts?.limit !== undefined ? Math.min(Math.max(opts.limit, 1), 50) : undefined;
+    const cap = opts?.channel && !searchTrim ? 500 : 50;
+    const limit = opts?.limit !== undefined ? Math.min(Math.max(opts.limit, 1), cap) : undefined;
     const take =
       searchTrim.length > 0 ? (limit ?? 20) : limit !== undefined ? limit : undefined;
+    const channel = opts?.channel?.trim();
+    let channelIds: string[] | undefined;
+    if (channel) {
+      const lines = await this.prisma.priceListLine.findMany({
+        where: {
+          organizationId: orgId,
+          priceList: { organizationId: orgId, isActive: true, channel },
+        },
+        select: { productId: true },
+      });
+      channelIds = [...new Set(lines.map((line) => line.productId))];
+    }
 
     return this.prisma.product.findMany({
       where: {
         organizationId: orgId,
+        ...(channelIds ? { id: { in: channelIds } } : {}),
         ...(opts?.isService === "false" ? { isService: false } : {}),
         ...(opts?.isService === "true" ? { isService: true } : {}),
         ...(searchTrim.length > 0
@@ -47,6 +61,19 @@ export class ProductsService {
       orderBy: { name: "asc" },
       ...(take !== undefined ? { take } : {}),
     });
+  }
+
+  async pricesForChannel(orgId: string, channel: string): Promise<Map<string, number>> {
+    const lines = await this.prisma.priceListLine.findMany({
+      where: {
+        organizationId: orgId,
+        priceList: { organizationId: orgId, isActive: true, channel },
+      },
+      select: { productId: true, unitPrice: true },
+    });
+    const prices = new Map<string, number>();
+    for (const line of lines) prices.set(line.productId, Number(line.unitPrice));
+    return prices;
   }
 
   async getOne(orgId: string, id: string) {

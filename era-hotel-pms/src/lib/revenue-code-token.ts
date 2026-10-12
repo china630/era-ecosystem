@@ -1,27 +1,12 @@
 import { prisma } from '@/lib/prisma';
+import { matchKnownElektraRevenue } from '@/lib/integration/elektraweb-revenue';
+
+export { matchesAnyRevenueToken, revenueTokenMatches } from '@/lib/revenue-code-match';
 
 /**
- * Elektra catalogs keep the English token in `name` (ROOM) and a numeric
- * department in `code` (10). Posting looks up either field, code first.
+ * Active revenue row for a token. Code, then name, then an Elektra alias
+ * (Прачечная → LAUNDRY) when the live key is numeric.
  */
-export function revenueTokenMatches(
-  row: { code?: string | null; name?: string | null },
-  token: string,
-): boolean {
-  const key = token.trim().toUpperCase();
-  if (!key) return false;
-  const code = (row.code ?? '').trim().toUpperCase();
-  const name = (row.name ?? '').trim().toUpperCase();
-  return code === key || name === key;
-}
-
-export function matchesAnyRevenueToken(
-  row: { code?: string | null; name?: string | null },
-  tokens: readonly string[],
-): boolean {
-  return tokens.some((token) => revenueTokenMatches(row, token));
-}
-
 export async function findRevenueCodeByToken(token: string) {
   const key = token.trim();
   if (!key) return null;
@@ -29,7 +14,15 @@ export async function findRevenueCodeByToken(token: string) {
     where: { code: { equals: key, mode: 'insensitive' }, active: true },
   });
   if (byCode) return byCode;
-  return prisma.revenueCode.findFirst({
+  const byName = await prisma.revenueCode.findFirst({
     where: { name: { equals: key, mode: 'insensitive' }, active: true },
   });
+  if (byName) return byName;
+  const upper = key.toUpperCase();
+  const rows = await prisma.revenueCode.findMany({ where: { active: true } });
+  return (
+    rows.find(
+      (row) => matchKnownElektraRevenue({ code: row.code, name: row.name })?.code === upper,
+    ) ?? null
+  );
 }

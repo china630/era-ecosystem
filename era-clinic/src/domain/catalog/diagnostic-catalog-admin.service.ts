@@ -109,6 +109,7 @@ export type ServiceInput = {
   titleAz: string;
   serviceCode: string;
   financeSku?: string | null;
+  hotelRevenueCode?: string | null;
   fields?: CatalogFieldDef[] | null;
   includes?: string[] | null;
   sortOrder?: number;
@@ -123,10 +124,13 @@ type ServicePersistData<T> = Omit<T, "fields" | "includes"> & {
 function toServicePersistData<T extends Partial<ServiceInput>>(
   data: T,
 ): ServicePersistData<T> {
-  const { fields, includes, financeSku, ...rest } = data;
+  const { fields, includes, financeSku, hotelRevenueCode, ...rest } = data;
   return {
     ...rest,
     ...(financeSku !== undefined ? { financeSku: financeSku?.trim() || null } : {}),
+    ...(hotelRevenueCode !== undefined
+      ? { hotelRevenueCode: hotelRevenueCode?.trim() || null }
+      : {}),
     ...(fields !== undefined
       ? { fieldsJson: fields && fields.length > 0 ? JSON.stringify(fields) : null }
       : {}),

@@ -168,6 +168,7 @@
       "price": "Qiymət AZN",
       "recipeSku": "Resept SKU",
       "financeSku": "Satış SKU",
+      "revenueCode": "Gəlir kodu",
       "recipeSkuHint": "Finance-də Product / ProductRecipe bağlantısı (anbar silinməsi). BOM Manufacturing-də yaradılır.",
       "search": "Yemək axtar",
       "showInactive": "Qeyri-aktivləri göstər",

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -87,6 +87,7 @@ export default function OperationsPage() {
   const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const runGuard = useRef(false);
   const [tourismFailed, setTourismFailed] = useState<
     { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
   >([]);
@@ -129,6 +130,14 @@ export default function OperationsPage() {
   const naBlocked = cashBlocked || pendingBlocksNa || deskBlocked;
 
   async function runNightAudit() {
+    if (runGuard.current) return;
+    const closing = status?.businessDate?.currentBusinessDate;
+    if (!closing) return;
+    runGuard.current = true;
+    if (!window.confirm(t('confirmRun', { date: closing }))) {
+      runGuard.current = false;
+      return;
+    }
     setBusy(true);
     setMsg(null);
     try {
@@ -146,6 +155,7 @@ export default function OperationsPage() {
     } catch (e) {
       setMsg(e instanceof Error ? e.message : tc('error'));
     } finally {
+      runGuard.current = false;
       setBusy(false);
     }
   }
@@ -292,7 +302,7 @@ export default function OperationsPage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            disabled={busy || naBlocked}
+            disabled={busy || naBlocked || !status?.businessDate?.currentBusinessDate}
             onClick={runNightAudit}
             className={PRIMARY_BUTTON_CLASS}
           >

@@ -37,6 +37,7 @@ export type SettlementLine = {
   amount: number;
   registerRef?: string;
   bankReference?: string;
+  bankTerminalId?: string;
   loyaltyCustomerRef?: string;
   authorizationId?: string;
 };
@@ -130,6 +131,7 @@ export async function settleFolio(input: {
         paymentMethod: line.method,
         registerRef: line.registerRef,
         bankReference: line.bankReference,
+        bankTerminalId: line.bankTerminalId,
       });
 
       await tx.folioPayment.update({

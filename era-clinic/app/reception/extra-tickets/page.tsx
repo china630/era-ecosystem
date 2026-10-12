@@ -207,8 +207,25 @@ export default function ExtraTicketsPage() {
       }
       setSelected(new Set());
       setLockHint(false);
-      const receiptNo = payload.paymentReceiptRef as string | undefined;
-      if (receiptNo) showSuccess(t("receiptIssued", { no: receiptNo }));
+      const accepted = (payload.accepted as { name: string }[] | undefined) ?? [];
+      const rejected = (payload.rejected as { name: string; reason?: string }[] | undefined) ?? [];
+      if (accepted.length || rejected.length) {
+        const okNames = accepted.map((row) => row.name).join(", ");
+        const badNames = rejected
+          .map((row) => (row.reason ? `${row.name} (${row.reason})` : row.name))
+          .join(", ");
+        showSuccess(
+          [
+            okNames ? t("batchFolio", { names: okNames }) : "",
+            badNames ? t("batchCashier", { names: badNames }) : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
+      } else {
+        const receiptNo = payload.paymentReceiptRef as string | undefined;
+        if (receiptNo) showSuccess(t("receiptIssued", { no: receiptNo }));
+      }
       await load();
     } finally {
       setBusy(false);

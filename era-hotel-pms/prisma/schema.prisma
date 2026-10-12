@@ -117,6 +117,7 @@ enum FolioDepositStatus {
   APPLIED
   REFUNDED
   FORFEITED
+  CARRIED
 }
 
 enum CardAuthorizationStatus {
@@ -2290,6 +2291,8 @@ model FolioCharge {
   /// Finance Product.sku. Empty for room and package lines that have no card yet.
   sku           String?
   description   String
+  /// Set when the clinic checks the procedure in. Void is refused after this.
+  serviceReceivedAt DateTime? @map("service_received_at")
   businessDate  DateTime
   paxNo         Int?
   invoiceRef    String?
@@ -2317,6 +2320,8 @@ model FolioPayment {
   refundReason      String?
   registerRef     String?
   bankReference   String?
+  /** Acquirer chosen at payment time. Night audit sends it beside the card amount. */
+  bankTerminalId  String?          @map("bank_terminal_id")
   /** Hotel cashier business day. Night audit reads this, not createdAt. */
   businessDate    DateTime         @db.Date
   fiscalReceiptId String?
@@ -2373,6 +2378,8 @@ model FolioDeposit {
   status        FolioDepositStatus @default(HELD)
   registerRef   String?
   externalRef   String?
+  payoutBankTerminalId String?
+  fiscalReceiptId String?
   heldAt        DateTime           @default(now())
   appliedAt     DateTime?
   refundedAt    DateTime?

@@ -372,7 +372,7 @@ Doctor card (no curl):
 
 **Status:** Engineering API — not SHIPPED.
 
-1. `/admin/program-templates` — edit entitlement blocks (member SKUs) + knots matrix; composition save bumps version (open stays stay pinned). Empty list shows empty-state row.
+1. `/admin/program-templates` — edit entitlement blocks (member SKUs) + knots matrix; composition save bumps version (open stays stay pinned). Empty list shows empty-state row. Print (next to the editor close control) opens a landscape sheet: block name, members (analytes for lab panels, procedure or exam names otherwise), assign mode, quota type, and one column for every night currently on the matrix (defaults 7/10/14/21 plus any added length such as 8 or 9). A stay-basis block repeats its stay quantity in each of those columns. No separate stay-qty column.
 2. Instantiate Standart 12 nights → bath quota 9; Premium 13 nights interpolates.
 3. Extend/shorten stay from hotel → clinic recalc totals; SCHEDULED procedures remain.
 4. Standart→Premium: used baths count against new total; no SCHEDULED cancel.

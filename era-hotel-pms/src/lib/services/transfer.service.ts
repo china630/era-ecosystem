@@ -1,6 +1,7 @@
 import type { TransferDirection } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
+import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import { assertVehicleSlotFree, TRANSFER_OCCUPANCY_MS } from '@/lib/services/tour.service';
 
@@ -122,7 +123,7 @@ export async function completeTransfer(id: string) {
 
   let folioCharged = order.folioCharged;
   if (!folioCharged) {
-    const transferCode = await prisma.revenueCode.findFirst({ where: { code: 'TRANSFER' } });
+    const transferCode = await findRevenueCodeByToken('TRANSFER');
     if (!transferCode) throw new Error('Revenue code TRANSFER not configured');
     const directionLabel = order.direction === 'IN' ? 'Airport pickup' : 'Airport drop-off';
     // postCharge resolves stay override → property FolioRoutingRule → default
@@ -152,7 +153,7 @@ export async function cancelTransfer(id: string, reason?: string) {
   if (!order) throw new Error('Transfer order not found');
   if (order.status === 'CANCELLED') return order;
   if (order.status === 'DONE' && order.folioCharged) {
-    const transferCode = await prisma.revenueCode.findFirst({ where: { code: 'TRANSFER' } });
+    const transferCode = await findRevenueCodeByToken('TRANSFER');
     if (transferCode) {
       const charge = await prisma.folioCharge.findFirst({
         where: {

@@ -78,7 +78,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 
 1. `/front-cash/desk` — a posting for the business date shows a row with an empty close time.
 2. Run night audit — must fail while that row is open.
-3. Close the row, run night audit — steps list + COMPLETED.
+3. Close the row, run night audit — the button asks to confirm the business date being closed. Cancel does not run it. A second start while that run still holds the date lock is refused. Then steps list + COMPLETED.
 4. Journal: `NIGHT_AUDIT_CLOSED`.
 
 ### 6b. Settlement hub (pending walk-in)

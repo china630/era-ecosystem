@@ -74,6 +74,7 @@ export async function POST(request: Request) {
               active: item.active,
               recipeSku: item.recipeSku,
               financeSku: item.financeSku,
+              revenueCode: item.revenueCode,
               imageUrl: item.imageUrl,
             },
           });

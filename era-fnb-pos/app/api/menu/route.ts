@@ -94,6 +94,7 @@ const createSchema = z.object({
   active: z.boolean().optional(),
   recipeSku: z.string().min(1).nullable().optional(),
   financeSku: z.string().min(1).nullable().optional(),
+  revenueCode: z.string().min(1).nullable().optional(),
   imageUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
 });
 
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
           active: body.active ?? true,
           recipeSku: body.recipeSku ?? null,
           financeSku: body.financeSku ?? null,
+          revenueCode: body.revenueCode?.trim() || outlet.revenueCenterCode || null,
           imageUrl,
         },
       });

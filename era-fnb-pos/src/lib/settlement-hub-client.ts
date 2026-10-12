@@ -10,7 +10,7 @@ export type PostHotelPendingInput = {
   idempotencyKey: string;
   sku?: string;
   qty?: number;
-  revenueCode?: "FOOD" | "MEDICAL" | "RETAIL";
+  revenueCode?: string;
 };
 
 async function hotelOrganizationId(): Promise<string> {

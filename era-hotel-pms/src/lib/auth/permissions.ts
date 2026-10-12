@@ -11,6 +11,10 @@ export const PERMISSIONS = {
   RESERVATIONS_CHECKIN: "api:reservations.checkin",
   RESERVATIONS_CHECKOUT: "api:reservations.checkout",
   RESERVATIONS_CANCEL: "api:reservations.cancel",
+  /** Agency name list on a booking. Does not open reports. */
+  BOOKING_AGENCY_PICK: "api:reservations.agency_pick",
+  /** Company name list on a booking. Does not open reports. */
+  BOOKING_COMPANY_PICK: "api:reservations.company_pick",
   FOLIO_READ: "api:folio.read",
   FOLIO_CHARGE: "api:folio.charge",
   FOLIO_PAYMENT: "api:folio.payment",
@@ -168,6 +172,11 @@ export const PERMISSION_PROCESSES: PermissionGroup[] = [
       PERMISSIONS.RESERVATIONS_CHECKOUT,
       PERMISSIONS.RESERVATIONS_CANCEL,
     ],
+  },
+  {
+    id: "party",
+    labelKey: "procBooking",
+    permissions: [PERMISSIONS.BOOKING_AGENCY_PICK, PERMISSIONS.BOOKING_COMPANY_PICK],
   },
   {
     id: "folio",

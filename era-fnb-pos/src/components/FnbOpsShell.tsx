@@ -13,6 +13,7 @@ import {
   LayoutPanelTop,
   ScrollText,
   Settings,
+  Upload,
   Shield,
 } from "lucide-react";
 import {
@@ -42,6 +43,7 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/admin/menu": PERMISSIONS.SCREEN_ADMIN_MENU,
   "/admin/tables": PERMISSIONS.SCREEN_ADMIN_TABLES,
   "/admin/settings": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
+  "/admin/import": PERMISSIONS.SCREEN_ADMIN_IMPORT,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
   "/sales": PERMISSIONS.SCREEN_SALES,
 };
@@ -57,6 +59,7 @@ const SHELL_LINKS: (OpsNavCondition & { href: string; key: string; icon: typeof 
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed, preset: HALLS },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop, preset: HALLS },
   { href: "/sales", key: "sales", icon: ScrollText, preset: HALLS },
+  { href: "/admin/import", key: "import", icon: Upload, preset: HALLS },
   { href: "/admin/settings", key: "settings", icon: Settings, preset: HALLS },
   { href: "/admin/access", key: "access", icon: Shield, preset: HALLS },
 ];

@@ -43,6 +43,7 @@ export async function refundFolioPayment(input: {
     folioId: original.folioId,
     amount,
     paymentMethod: original.paymentMethod,
+    bankTerminalId: original.bankTerminalId ?? undefined,
     kind: 'REFUND',
     refundOfPaymentId: original.id,
     refundReason: input.reason ?? 'Payment refund',

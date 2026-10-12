@@ -65,8 +65,12 @@ export interface SatelliteHotelNightAuditClosedEvent {
       revenueCode: string;
       amount: number;
       glAccountCode: string;
+      /** True when the code has no GL map and fell back to 601. */
+      unmapped?: boolean;
     }>;
-    paymentLines: Array<{ method: string; amount: number }>;
+    paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+    depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
+    depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
   };
 }
 
@@ -80,6 +84,7 @@ const nightAuditRevenueLineSchema = z.object({
   revenueCode: z.string(),
   amount: z.number(),
   glAccountCode: z.string(),
+  unmapped: z.boolean().optional(),
 });
 
 export const satelliteHotelNightAuditClosedSchema = z.object({
@@ -97,8 +102,26 @@ export const satelliteHotelNightAuditClosedSchema = z.object({
       z.object({
         method: z.string(),
         amount: z.number(),
+        bankTerminalId: z.string().min(1).optional(),
       }),
     ),
+    depositCarryLines: z
+      .array(
+        z.object({
+          amount: z.number(),
+          kind: z.literal("LIABILITY_TRANSFER"),
+        }),
+      )
+      .optional(),
+    depositPayoutLines: z
+      .array(
+        z.object({
+          amount: z.number(),
+          method: z.string(),
+          bankTerminalId: z.string().min(1).optional(),
+        }),
+      )
+      .optional(),
   }),
 });
 
@@ -225,6 +248,8 @@ const guestLifecycleBasePayload = z.object({
   birthDate: z.string().min(1).optional(),
   /** ISO 3166-1 alpha-2 citizenship from the hotel guest. */
   nationality: z.string().min(2).max(8).optional(),
+  /** Guest.phone at check-in. Clinic uses it for the stay packet. */
+  phone: z.string().min(1).max(32).optional(),
 });
 
 export const SATELLITE_HOTEL_GUEST_CHECKED_IN =
