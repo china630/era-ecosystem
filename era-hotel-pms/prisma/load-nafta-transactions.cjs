@@ -144,7 +144,7 @@ async function main() {
     if (r < 0.45) return "PKG-STANDART";
     if (r < 0.65) return "BAR-FB";
     if (r < 0.85) return "BAR-BB";
-    return pick(["PKG-PREMIUM", "PKG-DERMO", "PKG-DETOKS"]);
+    return pick(["PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
   };
   const nightly = (pc, tc, ad) =>
     pc === "BAR-BB" ? BB[tc] : pc === "BAR-FB" ? FB[tc] : Number(planByCode[pc].pricePerNight) * ad;

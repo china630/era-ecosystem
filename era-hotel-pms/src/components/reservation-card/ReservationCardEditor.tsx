@@ -186,7 +186,7 @@ export type ReservationCardEditorProps = {
   onReservationCreated?: (id: string) => void;
 };
 
-const MEDICAL_PACKAGE_FALLBACK = ['PKG-STANDART', 'PKG-PREMIUM', 'PKG-DERMO', 'PKG-DETOKS'] as const;
+const MEDICAL_PACKAGE_FALLBACK = ['PKG-STANDART', 'PKG-PREMIUM', 'PKG-DERMA', 'PKG-DETOKS'] as const;
 
 function medicalPackageChoices(plans: RatePlanOption[]): Array<{ value: string; label: string }> {
   const seen = new Set<string>();
@@ -396,7 +396,7 @@ export function ReservationCardEditor({
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
-  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('PRIMARY');
+  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('EQUAL');
   const [roomTypes, setRoomTypes] = useState<SelectOption[]>([]);
   const [mealPlans, setMealPlans] = useState<SelectOption[]>([]);
   const [rooms, setRooms] = useState<
@@ -546,6 +546,7 @@ export function ReservationCardEditor({
         (json.dailyRates as Array<{
           stayDate: string;
           amount: number;
+          tariffAmount?: number | null;
           manualFlag?: boolean;
           currencyCode?: string;
           fixPrice?: boolean;
@@ -554,6 +555,7 @@ export function ReservationCardEditor({
       ).map((d) => ({
         stayDate: String(d.stayDate).slice(0, 10),
         amount: Number(d.amount),
+        tariffAmount: d.tariffAmount == null ? null : Number(d.tariffAmount),
         currencyCode: d.currencyCode ?? 'AZN',
         fixPrice: Boolean(d.fixPrice),
         discountPct: d.discountPct ?? null,
@@ -2083,6 +2085,7 @@ export function ReservationCardEditor({
           dailyRates: dailyRates.map((d) => ({
             stayDate: d.stayDate,
             amount: d.amount,
+            tariffAmount: d.tariffAmount ?? null,
             manualFlag: d.manualFlag,
             currencyCode: d.currencyCode ?? 'AZN',
             fixPrice: d.fixPrice ?? false,
@@ -2886,9 +2889,8 @@ export function ReservationCardEditor({
           const fn = firstName || fromFull[0] || '';
           const ln = lastName || (fromFull.length > 1 ? fromFull.slice(1).join(' ') : '');
           void loadGuests();
-          setGuestCardOpen(false);
-          setGuestCardOpenIdReader(false);
-          setGuestCardId(null);
+          setGuestCardId(id);
+          setGuestCardOpen(true);
           const target = scanPaxIndex;
           setScanPaxIndex(null);
           if (

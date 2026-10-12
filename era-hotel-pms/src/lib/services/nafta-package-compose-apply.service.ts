@@ -239,6 +239,7 @@ export async function syncComposedDailyRates(
         reservationId,
         stayDate,
         amount: toDecimal(breakdown.total),
+        tariffAmount: toDecimal(breakdown.total),
         manualFlag: false,
         fixPrice: false,
       },

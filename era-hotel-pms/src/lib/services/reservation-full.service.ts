@@ -134,6 +134,7 @@ export async function getReservationFull(id: string) {
       id: d.id,
       stayDate: d.stayDate,
       amount: decimalToNumber(d.amount),
+      tariffAmount: d.tariffAmount != null ? decimalToNumber(d.tariffAmount) : null,
       currencyCode: d.currencyCode,
       fixPrice: d.fixPrice,
       discountPct: d.discountPct ? decimalToNumber(d.discountPct) : null,
@@ -242,6 +243,7 @@ export async function patchReservationFull(
     dailyRates?: Array<{
       stayDate: string;
       amount: number;
+      tariffAmount?: number | null;
       manualFlag?: boolean;
       currencyCode?: string;
       fixPrice?: boolean;
@@ -628,6 +630,8 @@ export async function patchReservationFull(
           reservationId: id,
           stayDate,
           amount: toDecimal(d.amount),
+          tariffAmount:
+            d.tariffAmount == null ? toDecimal(d.amount) : toDecimal(d.tariffAmount),
           manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
@@ -638,6 +642,8 @@ export async function patchReservationFull(
         },
         update: {
           amount: toDecimal(d.amount),
+          tariffAmount:
+            d.tariffAmount == null ? undefined : toDecimal(d.tariffAmount),
           manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
@@ -921,7 +927,9 @@ export async function listReservationsForGrid(
       guest: { select: { fullName: true } },
       room: { select: { roomNumber: true, status: true } },
       roomType: { select: { code: true } },
-      agency: { select: { code: true } },
+      agency: { select: { code: true, name: true } },
+      company: { select: { code: true, name: true } },
+      source: { select: { code: true, name: true } },
       notes: { select: { text: true } },
     },
   });
@@ -946,7 +954,7 @@ export async function listReservationsForGrid(
       case 'state':
         return row.status;
       case 'agency':
-        return row.agency?.code ?? '';
+        return row.agency?.name || row.agency?.code || row.company?.name || row.source?.name || '';
       case 'notes':
         return row.notes
           .map((note) => note.text.trim())
@@ -958,12 +966,13 @@ export async function listReservationsForGrid(
         return '';
     }
   };
+  const effectiveSort = sortKey || 'room';
   ranked.sort((a, b) => {
-    if (sortKey) {
-      const cmp = textOf(a).localeCompare(textOf(b), undefined, { numeric: true });
-      if (cmp !== 0) return cmp * sortDir;
-      return a.id < b.id ? -1 : 1;
-    }
+    const left = effectiveSort === 'room' ? (a.room?.roomNumber ?? '') : textOf(a);
+    const right = effectiveSort === 'room' ? (b.room?.roomNumber ?? '') : textOf(b);
+    const cmp = left.localeCompare(right, undefined, { numeric: true });
+    if (cmp !== 0) return cmp * (sortKey ? sortDir : 1);
+    if (sortKey) return a.id < b.id ? -1 : 1;
     const aKey = hotelDateKey(a.checkInDate);
     const bKey = hotelDateKey(b.checkInDate);
     const aFuture = aKey >= today ? 0 : 1;
@@ -984,6 +993,8 @@ export async function listReservationsForGrid(
             roomType: true,
             guest: true,
             agency: true,
+            company: true,
+            source: true,
             notes: true,
             paxGuests: {
               select: { firstName: true, lastName: true, sortOrder: true },

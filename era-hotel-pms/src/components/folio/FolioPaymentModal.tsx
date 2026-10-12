@@ -11,8 +11,9 @@ import {
   type FolioParty,
   type PayerGuest,
 } from '@/lib/folio-payer';
+import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
 
-const METHODS = ['CASH', 'CARD', 'BANK_TRANSFER', 'COMPANY_ACCOUNT', 'LOYALTY_POINTS'] as const;
+const METHODS = DESK_PAYMENT_METHODS;
 
 type FolioRow = {
   id: string;
@@ -130,10 +131,15 @@ export function FolioPaymentModal({
 
   const folio = pickTargetFolio(folios, party, selectedGuest);
   const balance = folio ? accountBalance(folio) : 0;
-  const asDeposit = party === 'guest' && balance <= 0.01;
-  const methods = asDeposit ? METHODS.filter((m) => m !== 'LOYALTY_POINTS') : METHODS;
+  const asDeposit =
+    party === 'guest' &&
+    balance <= 0.01 &&
+    method !== 'DEPOSIT' &&
+    method !== 'CL_AGENCY' &&
+    method !== 'CL_COMPANY';
+  const methods = METHODS;
   useEffect(() => {
-    if (asDeposit && method === 'LOYALTY_POINTS') setMethod('CASH');
+    if (asDeposit && (method === 'LOYALTY_POINTS' || method === 'DEPOSIT')) setMethod('CASH');
   }, [asDeposit, method]);
   const needsGuest = party === 'guest' && payer.kind === 'pick' && !selectedGuest;
   const needsStay = !knownStay && !activeStayId;
@@ -144,13 +150,21 @@ export function FolioPaymentModal({
     amountN > 0 &&
     (asDeposit || Boolean(folio)) &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
-    (method !== 'CARD' || bankTerminals.length === 0 || bankTerminalId.trim().length > 0);
+    (method !== 'CARD' || bankTerminals.length === 0 || bankTerminalId.trim().length > 0) &&
+    (method !== 'DEPOSIT' || balance > 0.01);
 
   async function submit() {
     if (!canSubmit || !activeStayId) return;
     setBusy(true);
     try {
-      const res = asDeposit
+      const res =
+        method === 'DEPOSIT'
+          ? await fetch(`/api/reservations/${activeStayId}/deposits/apply`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ folioId: folio!.id, amount: amountN }),
+            })
+          : asDeposit
         ? await fetch(`/api/reservations/${activeStayId}/deposits`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -176,7 +190,9 @@ export function FolioPaymentModal({
         showApiError(data, tc('error'));
         return;
       }
-      showSuccess(asDeposit ? t('depositRecordedShort') : t('paymentRecorded'));
+      showSuccess(
+        method === 'DEPOSIT' ? t('depositApplied') : asDeposit ? t('depositRecordedShort') : t('paymentRecorded'),
+      );
       onDone?.();
       onClose();
     } finally {
@@ -258,15 +274,19 @@ export function FolioPaymentModal({
           options={methods.map((m) => ({ value: m, label: tPay(m) }))}
           emptyLabel={null}
         />
-        {method === 'CARD' && bankTerminals.length > 0 ? (
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t('bankTerminal')}
-            value={bankTerminalId}
-            onChange={(v) => setBankTerminalId(String(v ?? ''))}
-            options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
-            emptyLabel={null}
-          />
+        {method === 'CARD' ? (
+          bankTerminals.length > 0 ? (
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('bankTerminal')}
+              value={bankTerminalId}
+              onChange={(v) => setBankTerminalId(String(v ?? ''))}
+              options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+              emptyLabel={null}
+            />
+          ) : (
+            <p className="m-0 text-[12px] text-amber-800">{t('noBankTerminal')}</p>
+          )
         ) : null}
         {method === 'BANK_TRANSFER' ? (
           <Field

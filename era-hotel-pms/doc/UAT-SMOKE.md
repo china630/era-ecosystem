@@ -56,10 +56,11 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 
 ## 3. Check-in & folio (PMS-03, FIN-01)
 
-1. Assign room (INSPECTED/CLEAN), check-in.
-2. `/folio/[reservationId]` � post charge (ROOM or FOOD).
-3. Post cash payment 50 AZN.
-4. As `manager` � void one charge (FIN-03).
+1. Assign room (INSPECTED/CLEAN), check-in. Check-in does not post the arrival night. Night audit posts that night.
+2. `/folio/[reservationId]` — post charge (ROOM or FOOD).
+3. Post cash payment 50 AZN. Card asks for a bank terminal. From-deposit applies a held deposit. E-point, CL agency, and CL company are in the same list. Check-in does not post the arrival night; night audit does. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source and the default sort is room number. Folio chips are per guest. Delete a payment with a reason: it leaves the live folio, shows on Deleted, and on `/reports/payment-voids`. Card asks for a bank terminal. Deposit applies a held deposit. E-point, CL agency, and CL company are in the same list.
+4. As `manager` — void one charge (FIN-03). Delete a payment with a reason: it leaves the live folio, shows on the Deleted chip, and on `/reports/payment-voids`.
+5. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source. Default sort is room number. Folio chips are per guest, with no primary star until one is set.
 
 ## 4. Outbound events (Stage 10)
 
@@ -592,7 +593,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 **Status:** Engineering open — not SHIPPED.
 
 1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` (one line, no guest names) → every pax `medicalPackageCode` stamped. Named Extra lines only when packages differ.
-1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMO` (bridge v0.3.10 + hotel ingest). FOCP list does not carry Extra Req.
+1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMA` (bridge v0.3.10 + hotel ingest). FOCP list does not carry Extra Req.
 2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`; `Walkin leisure` stays unresolved **and** check-in does **not** emit sanatorium lifecycle (`stayKind: leisure`).
 3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
 4. Check-in lifecycle sends `programCode` only when unanimous; EW Rate Code alone never becomes SKU.

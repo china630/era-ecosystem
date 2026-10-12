@@ -11,7 +11,8 @@ describe("medical-package-resolve", () => {
     expect(normalizeMedicalPackageCode("STANDART")).toBe("PKG-STANDART");
     expect(normalizeMedicalPackageCode("Premium")).toBe("PKG-PREMIUM");
     expect(normalizeMedicalPackageCode("DETOX")).toBe("PKG-DETOKS");
-    expect(normalizeMedicalPackageCode("PKG-DERMO")).toBe("PKG-DERMO");
+    expect(normalizeMedicalPackageCode("PKG-DERMA")).toBe("PKG-DERMA");
+    expect(normalizeMedicalPackageCode("PKG-DERMO")).toBe("PKG-DERMA");
   });
 
   it("resolves ERA-PKG single line for all pax", () => {
@@ -95,9 +96,9 @@ describe("medical-package-resolve", () => {
   });
 
   it("agency Dermo / Detox walk-in labels", () => {
-    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Detox paket Walkin")).toBe("PKG-DETOKS");
-    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Premium Facebook")).toBe("PKG-PREMIUM");
   });
 
@@ -106,8 +107,8 @@ describe("medical-package-resolve", () => {
     expect(resolveAgencyPackageCode("Premium Sultan Travel medical")).toBe(
       "PKG-PREMIUM",
     );
-    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMO");
-    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMA");
+    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Sanatoriums booking leisure")).toBeNull();
     expect(resolveAgencyPackageCode("Walkin medical")).toBeNull();
   });
@@ -170,9 +171,9 @@ describe("medical-package-resolve", () => {
       notes: [],
       agencyName: "Custom Corp Travel",
       guests: [{ fullName: "Guest" }],
-      agencyPackageCode: "PKG-DERMO",
+      agencyPackageCode: "PKG-DERMA",
     });
-    expect(r.unanimousCode).toBe("PKG-DERMO");
+    expect(r.unanimousCode).toBe("PKG-DERMA");
     expect(r.stayKind).toBe("medical");
   });
 
@@ -207,7 +208,7 @@ describe("medical-package-resolve", () => {
       agencyName: null,
       guests: [{ fullName: "Guest" }],
     });
-    expect(r.unanimousCode).toBe("PKG-DERMO");
+    expect(r.unanimousCode).toBe("PKG-DERMA");
   });
 
   it("empty guest column inherits the sold package", () => {
@@ -228,8 +229,8 @@ describe("medical-package-resolve", () => {
       guests: [{ fullName: "A" }, { fullName: "B" }],
       ratePlanCode: "PKG-STANDART",
     });
-    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMO", null], null);
-    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMO", "PKG-STANDART"]);
+    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMA", null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMA", "PKG-STANDART"]);
     expect(overlaid.unanimousCode).toBeNull();
   });
 });

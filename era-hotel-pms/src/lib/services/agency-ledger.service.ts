@@ -14,11 +14,17 @@ type FolioSlice = {
     paymentMethod: string;
     createdAt: Date;
     kind?: string | null;
+    voidedAt?: Date | null;
   }>;
 };
 
 /** Net payment amount: PAYMENT increases settlement; REFUND reverses it. */
-export function paymentSignedAmount(amount: number, kind?: string | null): number {
+export function paymentSignedAmount(
+  amount: number,
+  kind?: string | null,
+  voidedAt?: Date | string | null,
+): number {
+  if (voidedAt) return 0;
   return kind === 'REFUND' ? -amount : amount;
 }
 
@@ -42,7 +48,7 @@ export function sumFolioTypeActivity(
       else if (c.businessDate >= from && c.businessDate <= to) newCharges += amt;
     }
     for (const p of folio.payments) {
-      const amt = paymentSignedAmount(decimalToNumber(p.amount), p.kind);
+      const amt = paymentSignedAmount(decimalToNumber(p.amount), p.kind, p.voidedAt);
       if (p.createdAt < from) openingPayments += amt;
       else if (p.createdAt >= from && p.createdAt <= to) {
         payments += amt;
@@ -94,6 +100,7 @@ type FolioForStatement = {
     paymentMethod: string;
     kind: string;
     createdAt: Date;
+    voidedAt?: Date | null;
   }>;
   reservation: {
     id: string;
@@ -149,6 +156,7 @@ function buildStatementLines(
     }
 
     for (const p of folio.payments) {
+      if (p.voidedAt) continue;
       if (p.createdAt < from || p.createdAt > to) continue;
       const abs = decimalToNumber(p.amount);
       const isRefund = p.kind === 'REFUND';

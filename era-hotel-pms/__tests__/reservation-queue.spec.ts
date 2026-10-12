@@ -6,7 +6,7 @@ describe('reservationQueueWhere', () => {
   it('keeps open bookings from today forward, including today before check-in', () => {
     const where = reservationQueueWhere({ queue: 'bookings', today });
     expect(where.status).toEqual({ in: ['OPTION', 'CONFIRMED'] });
-    expect(where.checkInDate).toEqual({ gte: new Date('2026-10-10T00:00:00.000Z') });
+    expect(where.checkInDate).toEqual({ gte: new Date('2026-10-10T00:00:00.000+04:00') });
   });
 
   it('does not let a past from-date pull yesterday into bookings', () => {
@@ -17,14 +17,14 @@ describe('reservationQueueWhere', () => {
       dateTo: '2026-10-20',
     });
     expect(where.checkInDate).toEqual({
-      gte: new Date('2026-10-10T00:00:00.000Z'),
-      lte: new Date('2026-10-20T23:59:59.999Z'),
+      gte: new Date('2026-10-10T00:00:00.000+04:00'),
+      lte: new Date('2026-10-20T23:59:59.999+04:00'),
     });
   });
 
   it('overdue bookings are open stays that should already have arrived', () => {
     const where = reservationQueueWhere({ queue: 'bookings', today, overdue: true });
-    expect(where.checkInDate).toEqual({ lt: new Date('2026-10-10T00:00:00.000Z') });
+    expect(where.checkInDate).toEqual({ lt: new Date('2026-10-10T00:00:00.000+04:00') });
   });
 
   it('due out is in-house with checkout today and ignores the date pickers', () => {
@@ -35,8 +35,8 @@ describe('reservationQueueWhere', () => {
     });
     expect(where.status).toBe('IN_HOUSE');
     expect(where.checkOutDate).toEqual({
-      gte: new Date('2026-10-10T00:00:00.000Z'),
-      lte: new Date('2026-10-10T23:59:59.999Z'),
+      gte: new Date('2026-10-10T00:00:00.000+04:00'),
+      lte: new Date('2026-10-10T23:59:59.999+04:00'),
     });
   });
 });

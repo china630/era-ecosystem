@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-30  
-**Context:** Elektraweb rate codes are not medical packages. FO writes package intent in Extra Request / agency labels. Clinic needs `PKG-STANDART` | `PKG-PREMIUM` | `PKG-DERMO` | `PKG-DETOKS`.
+**Context:** Elektraweb rate codes are not medical packages. FO writes package intent in Extra Request / agency labels. Clinic needs `PKG-STANDART` | `PKG-PREMIUM` | `PKG-DERMA` | `PKG-DETOKS`.
 
 ## Decision
 

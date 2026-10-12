@@ -208,9 +208,7 @@ export function ReservationCardGuestsTab({
         render: (row) => {
           if (isMinorPax(row)) return <span className={TEXT_MUTED_CLASS}>—</span>;
           const adults = pax.filter((p) => !isMinorPax(p));
-          const isPrimary =
-            !equalMode &&
-            (Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0));
+          const isPrimary = !equalMode && Boolean(row.isPrimary);
           const onlyAdult = adults.length <= 1;
           return (
             <button

@@ -82,6 +82,12 @@ enum PaymentMethod {
   /** Settle offset from FolioDeposit HELD → APPLIED */
   DEPOSIT
   BANK_TRANSFER
+  /** Pay-by-link acquiring (E-point). */
+  EPOINT
+  /** Guest folio settled onto the agency city ledger. */
+  CL_AGENCY
+  /** Guest folio settled onto the company city ledger. */
+  CL_COMPANY
 }
 
 enum FolioPaymentKind {
@@ -1663,7 +1669,7 @@ model ReservationGuest {
   /** Owns a personal GUEST folio (all true in EQUAL; only primary in PRIMARY). */
   ownsFolio     Boolean     @default(false)
   sortOrder     Int         @default(0)
-  /** Nafta commercial medical package (PKG-STANDART|PKG-PREMIUM|PKG-DERMO|PKG-DETOKS). */
+  /** Nafta commercial medical package (PKG-STANDART|PKG-PREMIUM|PKG-DERMA|PKG-DETOKS). */
   medicalPackageCode String?
   /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
   departedAt    DateTime?
@@ -1713,6 +1719,8 @@ model ReservationDailyRate {
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   stayDate      DateTime    @db.Date
   amount        Decimal     @db.Decimal(12, 2)
+  /// Catalog price for the night. `amount` is what the stay is actually charged.
+  tariffAmount  Decimal?    @db.Decimal(12, 2)
   currencyCode  String      @default("AZN")
   fixPrice      Boolean     @default(false)
   discountPct   Decimal?    @db.Decimal(5, 2)
@@ -2322,6 +2330,9 @@ model FolioPayment {
   bankReference   String?
   /** Acquirer chosen at payment time. Night audit sends it beside the card amount. */
   bankTerminalId  String?          @map("bank_terminal_id")
+  /** Removed from the live folio. The row stays for the Deleted tab and the voids report. */
+  voidedAt        DateTime?
+  voidReason      String?
   /** Hotel cashier business day. Night audit reads this, not createdAt. */
   businessDate    DateTime         @db.Date
   fiscalReceiptId String?

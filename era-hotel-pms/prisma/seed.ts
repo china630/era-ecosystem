@@ -261,7 +261,7 @@ async function main() {
   const naftaPackages = [
     { code: 'PKG-STANDART', name: 'Standart müalicə paketi' },
     { code: 'PKG-PREMIUM', name: 'Premium paket' },
-    { code: 'PKG-DERMO', name: 'Dermo paket' },
+    { code: 'PKG-DERMA', name: 'Dermo paket' },
     { code: 'PKG-DETOKS', name: 'Detoks paket' },
   ] as const;
 

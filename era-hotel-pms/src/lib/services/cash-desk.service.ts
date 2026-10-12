@@ -58,7 +58,7 @@ export async function listCashDesk(businessDate: string): Promise<{ date: string
 
   const [payments, deposits, pending, closes] = await Promise.all([
     prisma.folioPayment.findMany({
-      where: { createdAt: { gte: start, lt: end } },
+      where: { createdAt: { gte: start, lt: end }, voidedAt: null },
       select: { amount: true, paymentMethod: true, kind: true, createdAt: true },
     }),
     prisma.folioDeposit.findMany({

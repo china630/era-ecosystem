@@ -11,7 +11,6 @@ import {
   GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
@@ -22,6 +21,7 @@ import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import { FolioInvoiceModal } from '@/components/folio/FolioInvoiceModal';
 import {
   FolioCloseModal,
+  FolioDeletePaymentModal,
   FolioPayLineModal,
   FolioRefundModal,
   FolioVoidModal,
@@ -53,6 +53,9 @@ export type FolioAccount = {
     amount: number | string;
     paymentMethod: string;
     kind?: string | null;
+    voidedAt?: string | null;
+    voidReason?: string | null;
+    refundReason?: string | null;
   }>;
 };
 
@@ -69,9 +72,9 @@ type LedgerRow = Record<string, unknown> & {
   chargeId?: string;
   paymentId?: string;
   paymentKind?: string | null;
+  voidedAt?: string | null;
+  voidReason?: string | null;
 };
-
-const FOLIO_CHIPS: FolioSubTab[] = ['all', 'guest', 'agency', 'company'];
 
 function paxLabel(row: PaxRow, fallback: string): string {
   const name = [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ').trim();
@@ -127,6 +130,8 @@ export function ReservationCardFolioTab({
   const [payLineId, setPayLineId] = useState<string | null>(null);
   const [refund, setRefund] = useState<{ id: string; max: number; folioStatus: string } | null>(null);
   const [closeId, setCloseId] = useState<string | null>(null);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
+  const [folioFocus, setFolioFocus] = useState<string>('all');
 
   const namedPax = useMemo(
     () =>
@@ -171,6 +176,7 @@ export function ReservationCardFolioTab({
       }
       for (const payment of folio.payments ?? []) {
         if (!payment.id) continue;
+        if (payment.voidedAt) continue;
         rows.push({
           id: `pay-${payment.id}`,
           folioId: folio.id,
@@ -187,6 +193,46 @@ export function ReservationCardFolioTab({
     }
     return rows;
   }, [accounts, folioTab, tf]);
+
+  const deletedRows = useMemo(() => {
+    const rows: LedgerRow[] = [];
+    for (const folio of accounts) {
+      for (const payment of folio.payments ?? []) {
+        if (!payment.id || !payment.voidedAt) continue;
+        rows.push({
+          id: `void-${payment.id}`,
+          folioId: folio.id,
+          folioType: folio.type,
+          folioStatus: folio.status,
+          kind: 'payment',
+          description: payment.voidReason?.trim() || tf('deletePayment'),
+          code: payment.paymentMethod,
+          amount: -Number(payment.amount),
+          paymentId: payment.id,
+          paymentKind: payment.kind,
+          voidedAt: payment.voidedAt,
+          voidReason: payment.voidReason,
+        });
+      }
+    }
+    return rows;
+  }, [accounts, tf]);
+
+  const focusGuestId = folioFocus.startsWith('guest:') ? folioFocus.slice('guest:'.length) : '';
+  const visibleRows = useMemo(() => {
+    if (folioFocus === 'deleted') return deletedRows;
+    if (folioFocus === 'agency') return ledger.filter((row) => row.folioType === 'AGENCY');
+    if (folioFocus === 'company') return ledger.filter((row) => row.folioType === 'COMPANY');
+    if (focusGuestId) {
+      const folioIds = new Set(
+        accounts
+          .filter((folio) => folio.type === 'GUEST' && folio.reservationGuestId === focusGuestId)
+          .map((folio) => folio.id),
+      );
+      return ledger.filter((row) => folioIds.has(row.folioId));
+    }
+    return ledger;
+  }, [accounts, deletedRows, focusGuestId, folioFocus, ledger]);
 
   const closable = accounts.filter((f) => {
     if (f.status !== 'OPEN') return false;
@@ -218,10 +264,6 @@ export function ReservationCardFolioTab({
       .filter((section) => section.rows.length > 0);
     return [...personal, ...shared];
   }, [accounts, ledger, namedPax, t]);
-  const showPersonal =
-    (folioTab === 'guest' || folioTab === 'all') &&
-    personalSections.filter((section) => section.folio.reservationGuestId).length > 0 &&
-    personalSections.length > 1;
 
   const columns: EraDataGridColumn<LedgerRow>[] = useMemo(() => {
     const cols: EraDataGridColumn<LedgerRow>[] = [
@@ -247,6 +289,15 @@ export function ReservationCardFolioTab({
             {row.kind === 'charge' && can(PERMISSIONS.FOLIO_PAYMENT) && row.folioType === 'GUEST' && row.folioStatus === 'OPEN' ? (
               <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setPayLineId(row.chargeId ?? null)}>
                 {tf('pay')}
+              </button>
+            ) : null}
+            {row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentKind !== 'REFUND' && row.paymentId ? (
+              <button
+                type="button"
+                className={GHOST_BUTTON_CLASS}
+                onClick={() => setDeletePaymentId(row.paymentId ?? null)}
+              >
+                {tf('deletePayment')}
               </button>
             ) : null}
             {row.kind === 'payment' && can(PERMISSIONS.FOLIO_PAYMENT) && row.paymentKind !== 'REFUND' && row.paymentId ? (
@@ -366,6 +417,12 @@ export function ReservationCardFolioTab({
         onDone={onChanged}
       />
       <FolioRefundModal open={Boolean(refund)} payment={refund} onClose={() => setRefund(null)} onDone={onChanged} />
+      <FolioDeletePaymentModal
+        open={Boolean(deletePaymentId)}
+        paymentId={deletePaymentId}
+        onClose={() => setDeletePaymentId(null)}
+        onDone={onChanged}
+      />
       <FolioCloseModal open={Boolean(closeId)} folioId={closeId} onClose={() => setCloseId(null)} onDone={onChanged} />
     </>
   );
@@ -389,82 +446,92 @@ export function ReservationCardFolioTab({
       </div>
 
       <div className={CHIP_GROUP_CLASS} role="tablist">
-        {FOLIO_CHIPS.map((st) => (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={folioFocus === 'all'}
+          className={folioFocus === 'all' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+          onClick={() => {
+            setFolioFocus('all');
+            onFolioTab('all');
+          }}
+        >
+          {t('folioTab.all')}
+        </button>
+        {namedPax.map((guest) => {
+          const id = guest.row.id ?? `idx-${guest.idx}`;
+          const key = `guest:${id}`;
+          return (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={folioFocus === key}
+              className={folioFocus === key ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+              onClick={() => {
+                setFolioFocus(key);
+                onFolioTab('guest');
+              }}
+            >
+              {guest.label}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={folioFocus === 'agency'}
+          className={folioFocus === 'agency' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+          onClick={() => {
+            setFolioFocus('agency');
+            onFolioTab('agency');
+          }}
+        >
+          {t('folioTab.agency')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={folioFocus === 'company'}
+          className={folioFocus === 'company' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+          onClick={() => {
+            setFolioFocus('company');
+            onFolioTab('company');
+          }}
+        >
+          {t('folioTab.company')}
+        </button>
+        {deletedRows.length > 0 ? (
           <button
-            key={st}
             type="button"
             role="tab"
-            aria-selected={folioTab === st}
-            className={folioTab === st ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-            data-testid={`folio-chip-${st}`}
-            onClick={() => onFolioTab(st)}
+            aria-selected={folioFocus === 'deleted'}
+            className={folioFocus === 'deleted' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+            onClick={() => setFolioFocus('deleted')}
           >
-            {t(`folioTab.${st}`)}
+            {t('folioTab.deleted')}
           </button>
-        ))}
+        ) : null}
       </div>
+      {folioFocus === 'deleted' ? (
+        <p className="m-0 text-[12px]">
+          <a className="text-[#1F6FEB] underline" href="/reports/payment-voids">
+            {t('folioTab.deleted')}
+          </a>
+        </p>
+      ) : null}
 
-      {showPersonal ? (
-        <div className="space-y-3" data-testid="folio-per-guest">
-          {personalSections.map((section) => (
-            <div key={section.folio.id} className={SUBSECTION_SURFACE_CLASS}>
-              <p className="m-0 mb-2 text-[12px] font-semibold text-[#34495E]">{section.label}</p>
-              {section.rows.length === 0 ? (
-                <p className={`m-0 text-[11px] ${TEXT_MUTED_CLASS}`}>{t('folioGuestEmpty')}</p>
-              ) : (
-                renderGrid(section.rows)
-              )}
-            </div>
-          ))}
-          {cashBar}
-        </div>
-      ) : ledger.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <div
           className="rounded-md border border-dashed border-[#D5DADF] bg-[#F8FAFC] px-4 py-6 text-center"
           data-testid="folio-empty-state"
         >
           <p className={`m-0 text-[13px] ${TEXT_MUTED_CLASS}`}>{t('folioEmptyHint')}</p>
-          {namedPax.length > 1 ? (
-            <div className="mt-3 space-y-2 text-left">
-              {namedPax.map((g) => (
-                <div key={g.idx} className={SUBSECTION_SURFACE_CLASS}>
-                  <p className="m-0 text-[12px] font-semibold text-[#34495E]">{g.label}</p>
-                  <p className={`m-0 mt-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>{t('folioGuestEmpty')}</p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <div className="mt-3 flex justify-center">{cashBar}</div>
-        </div>
-      ) : namedPax.length > 1 && (folioTab === 'guest' || folioTab === 'all') ? (
-        <div className="space-y-3" data-testid="folio-guest-sections">
-          {namedPax.map((g) => {
-            const paxNo = g.idx + 1;
-            const rows = ledger.filter(
-              (row) =>
-                row.kind === 'charge' &&
-                row.folioType === 'GUEST' &&
-                (Number(row.paxNo ?? 0) === paxNo ||
-                  (g.idx === 0 && (row.paxNo == null || Number(row.paxNo) === 0))),
-            );
-            return (
-              <div key={g.idx} className={SUBSECTION_SURFACE_CLASS}>
-                <p className="m-0 mb-2 text-[12px] font-semibold text-[#34495E]">{g.label}</p>
-                {renderGrid(rows)}
-              </div>
-            );
-          })}
-          {(() => {
-            const rest = ledger.filter(
-              (row) => row.kind === 'payment' || (folioTab === 'all' && row.kind === 'charge' && row.folioType !== 'GUEST'),
-            );
-            return rest.length > 0 ? renderGrid(rest) : null;
-          })()}
-          {cashBar}
+          <div className="mt-3 flex justify-center">{folioFocus === 'deleted' ? null : cashBar}</div>
         </div>
       ) : (
         <>
-          {renderGrid(ledger)}
+          {renderGrid(visibleRows)}
           {cashBar}
         </>
       )}
