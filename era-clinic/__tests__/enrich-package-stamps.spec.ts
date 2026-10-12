@@ -104,7 +104,7 @@ describe("enrich package stamps for clinic #24", () => {
   });
 
   it("phraseSku maps dermo/premium paket lines", () => {
-    expect(phraseSku("Dermo paket tibbə xəbər verilsin")).toBe("PKG-DERMO");
+    expect(phraseSku("Dermo paket tibbə xəbər verilsin")).toBe("PKG-DERMA");
     expect(detectMix("Standart paketdən Premium paketə keçib", null)).toBeNull();
     expect(detectMix("DERMO+STANDART", null)).toBeTruthy();
   });

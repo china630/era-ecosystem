@@ -20,6 +20,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  CatalogField,
   Field,
   FORM_STACK_CLASS,
   LINK_ACCENT_CLASS,
@@ -40,11 +41,12 @@ type DeptRow = {
   nameAz: string | null;
   nameRu: string | null;
   nameEn: string | null;
+  hotelRevenueCode?: string | null;
   active: boolean;
   serviceCount: number;
 };
 
-const EMPTY = { code: "", nameAz: "", nameRu: "", nameEn: "" };
+const EMPTY = { code: "", nameAz: "", nameRu: "", nameEn: "", hotelRevenueCode: "" };
 
 export default function DepartmentsAdminPage() {
   const t = useTranslations("catalogAdmin");
@@ -62,6 +64,7 @@ export default function DepartmentsAdminPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [q, setQ] = useState("");
+  const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
   const [sort, setSort] = useState<ColumnSort | null>(null);
 
   const visibleRows = useMemo(() => {
@@ -102,6 +105,13 @@ export default function DepartmentsAdminPage() {
 
   useEffect(() => {
     void load();
+    void fetch("/api/admin/hotel-revenue-codes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
+        const codes = body?.data?.codes ?? body?.codes ?? [];
+        setRevenueOptions(codes.map((row) => ({ value: row.code, label: `${row.code} — ${row.name}` })));
+      })
+      .catch(() => setRevenueOptions([]));
   }, [load]);
 
   function openRow(row: DeptRow | null) {
@@ -113,6 +123,7 @@ export default function DepartmentsAdminPage() {
             nameAz: row.nameAz ?? "",
             nameRu: row.nameRu ?? "",
             nameEn: row.nameEn ?? "",
+            hotelRevenueCode: row.hotelRevenueCode ?? "",
           }
         : EMPTY,
     );
@@ -182,6 +193,7 @@ export default function DepartmentsAdminPage() {
         nameAz: draft.nameAz.trim() || null,
         nameRu: draft.nameRu.trim() || null,
         nameEn: draft.nameEn.trim() || null,
+        hotelRevenueCode: draft.hotelRevenueCode.trim() || null,
       };
       const res = await fetch(edit ? `/api/admin/departments/${edit.id}` : "/api/admin/departments", {
         method: edit ? "PATCH" : "POST",
@@ -377,6 +389,20 @@ export default function DepartmentsAdminPage() {
             preset="shortText"
             value={draft.nameRu}
             onChange={(e) => setDraft({ ...draft, nameRu: e.target.value })}
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("hotelRevenueCode")}
+            value={draft.hotelRevenueCode}
+            options={
+              draft.hotelRevenueCode &&
+              !revenueOptions.some((option) => option.value === draft.hotelRevenueCode)
+                ? [{ value: draft.hotelRevenueCode, label: draft.hotelRevenueCode }, ...revenueOptions]
+                : revenueOptions
+            }
+            onChange={(next) =>
+              setDraft({ ...draft, hotelRevenueCode: String(next ?? "") })
+            }
           />
           <Field
             label={t("descriptionEn")}

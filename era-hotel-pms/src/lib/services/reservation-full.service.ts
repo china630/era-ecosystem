@@ -67,6 +67,9 @@ const fullInclude = {
       room: { select: { roomNumber: true } },
     },
   },
+  tariffChanges: {
+    orderBy: { effectiveAt: 'asc' as const },
+  },
   roomChanges: {
     orderBy: { effectiveAt: 'asc' as const },
     include: { fromRoom: true, toRoom: true },
@@ -194,6 +197,7 @@ export async function patchReservationFull(
     paidBy?: string | null;
     vipType?: string | null;
     accomType?: string | null;
+    billingMode?: 'NORMAL' | 'COMP' | 'HOUSE';
     recordType?: string | null;
     specialStates?: string | null;
     tripReason?: string | null;
@@ -332,6 +336,16 @@ export async function patchReservationFull(
     typeof data.ratePlanId === 'string' && data.ratePlanId !== existing.ratePlanId;
   const mealPlanChanged =
     data.mealPlanId !== undefined && data.mealPlanId !== existing.mealPlanId;
+  const billingModeChanged =
+    input.billingMode !== undefined && input.billingMode !== existing.billingMode;
+
+  if (
+    existing.status === 'IN_HOUSE' &&
+    data.roomId !== undefined &&
+    (data.roomId === null || data.roomId === '')
+  ) {
+    throw new Error('Cannot clear the room after check-in');
+  }
 
   if (
     existing.status === 'IN_HOUSE' &&
@@ -517,6 +531,17 @@ export async function patchReservationFull(
     }
   }
 
+  const chargedPlanId =
+    typeof data.ratePlanId === 'string' ? data.ratePlanId : existing.ratePlanId;
+  const chargedPlan = await prisma.ratePlan.findUnique({
+    where: { id: chargedPlanId },
+    select: { code: true, medicalFlag: true },
+  });
+  const { ratePlanRequiresGuestPackage } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  const guestPackageOnStay = chargedPlan ? ratePlanRequiresGuestPackage(chargedPlan) : false;
+
   if (paxGuests) {
     const seenGuestIds = new Set<string>();
     for (const p of paxGuests) {
@@ -539,12 +564,10 @@ export async function patchReservationFull(
       },
     });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
-    const primaryIdx = Math.max(
-      0,
-      paxGuests.findIndex((p) => p.isPrimary),
-    );
     const billingMode: PartyBillingMode =
       input.partyBillingMode ?? existing.partyBillingMode;
+    const marked = paxGuests.findIndex((p) => p.isPrimary);
+    const primaryIdx = billingMode === 'EQUAL' ? -1 : marked >= 0 ? marked : 0;
     await prisma.reservationGuest.createMany({
       data: paxGuests.map((p, i) => {
         const isPrimary = i === primaryIdx;
@@ -570,9 +593,10 @@ export async function patchReservationFull(
           /** Contact / PRIMARY-mode folio owner */
           isPrimary,
           ownsFolio,
-          medicalPackageCode: p.medicalPackageCode?.trim()
-            ? p.medicalPackageCode.trim().toUpperCase()
-            : null,
+          medicalPackageCode:
+            guestPackageOnStay && p.medicalPackageCode?.trim()
+              ? p.medicalPackageCode.trim().toUpperCase()
+              : null,
           sortOrder: i,
         };
       }),
@@ -587,6 +611,29 @@ export async function patchReservationFull(
       next: nextGuests,
     });
     await ensurePartyGuestFolios(id);
+
+  if (!guestPackageOnStay) {
+    await prisma.reservationGuest.updateMany({
+      where: { reservationId: id, medicalPackageCode: { not: null } },
+      data: { medicalPackageCode: null },
+    });
+  }
+  if (ratePlanChanged && chargedPlan) {
+    const previousPlan = await prisma.ratePlan.findUnique({
+      where: { id: existing.ratePlanId },
+      select: { code: true },
+    });
+    await prisma.stayTariffChange.create({
+      data: {
+        organizationId: existing.organizationId,
+        reservationId: id,
+        effectiveAt: new Date(),
+        fromRatePlanId: existing.ratePlanId,
+        toRatePlanId: chargedPlanId,
+        fromCode: previousPlan?.code ?? null,
+        toCode: chargedPlan.code,
+      },
+    });
   }
 
   if (paxGuests || data.guestId !== undefined || (data.roomId !== undefined && data.roomId)) {
@@ -682,7 +729,7 @@ export async function patchReservationFull(
     where: { id: stayPlanId },
     select: { code: true, medicalFlag: true },
   });
-  const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+  const { normalizeMedicalPackageCode } = await import(
     '@/lib/services/medical-package-resolve.service'
   );
   if (stayPlan && ratePlanRequiresGuestPackage(stayPlan)) {
@@ -728,11 +775,10 @@ export async function patchReservationFull(
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    await stampMedicalPackagesForReservation(
-      prisma,
-      id,
-      foCodes ? { foPerGuestCodes: foCodes } : undefined,
-    );
+    await stampMedicalPackagesForReservation(prisma, id, {
+      ...(foCodes ? { foPerGuestCodes: foCodes } : {}),
+      inheritRatePlanPackage: false,
+    });
   }
 
   // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
@@ -750,7 +796,7 @@ export async function patchReservationFull(
     }
   }
 
-  if (ratePlanChanged || paxSkuChanged || mealPlanChanged) {
+  if (ratePlanChanged || paxSkuChanged || mealPlanChanged || billingModeChanged) {
     const { recalcReservationDailyRates } = await import(
       '@/lib/services/reservation-pricing.service'
     );

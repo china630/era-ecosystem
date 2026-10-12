@@ -15,6 +15,7 @@ const patchSchema = z.object({
     .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/)
     .optional(),
   sortOrder: z.number().int().optional(),
+  revenueCode: z.string().min(1).nullable().optional(),
 });
 
 export async function PATCH(
@@ -44,6 +45,7 @@ export async function PATCH(
         ...(body.name ? { name: body.name } : {}),
         ...(body.sortOrder != null ? { sortOrder: body.sortOrder } : {}),
         ...(code ? { code } : {}),
+        ...(body.revenueCode !== undefined ? { revenueCode: body.revenueCode?.trim() || null } : {}),
       },
     });
     return jsonOk(category);

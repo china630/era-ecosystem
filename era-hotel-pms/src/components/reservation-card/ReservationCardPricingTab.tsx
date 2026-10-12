@@ -95,6 +95,10 @@ export function ReservationCardPricingTab({
     () => dailyRates.reduce((sum, row) => sum + Number(row.amount || 0), 0),
     [dailyRates],
   );
+  const tariffTotal = useMemo(
+    () => dailyRates.reduce((sum, row) => sum + tariffOf(row), 0),
+    [dailyRates],
+  );
 
   const openNights = dailyRates.filter((row) => kindOf(row.stayDate) === 'open');
   const targets = openNights.filter((row) => !row.fixPrice);
@@ -383,10 +387,15 @@ export function ReservationCardPricingTab({
             </colgroup>
             <tbody>
               <tr>
-                <td className="px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]" colSpan={2}>
+                <td />
+                <td className="px-2 py-1.5 text-right text-[14px] font-medium text-[#95A5A6]">
+                  {money(tariffTotal)}
+                </td>
+                <td className="whitespace-nowrap px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]">
                   {t('stayGrandTotal')}: {money(stayTotal)} AZN
                 </td>
-                <td colSpan={2} />
+                <td />
+                <td />
               </tr>
             </tbody>
           </table>

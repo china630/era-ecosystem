@@ -18,7 +18,7 @@ const READY = process.env.NAFTA_READY || path.join("D:", "ERA-BACKUP", "NAFTA-ER
 const PKG = {
   "Standart paket": { code: "PKG-STANDART", name: "Nafta Standart", minNights: 5, maxNights: 21, durationDays: 10 },
   "Premium paket": { code: "PKG-PREMIUM", name: "Nafta Premium", minNights: 7, maxNights: 21, durationDays: 10 },
-  "Dermo paket": { code: "PKG-DERMO", name: "Nafta Dermo", minNights: 14, maxNights: 21, durationDays: 14 },
+  "Dermo paket": { code: "PKG-DERMA", name: "Nafta Dermo", minNights: 14, maxNights: 21, durationDays: 14 },
   "Detoks paket": { code: "PKG-DETOKS", name: "Nafta Detoks", minNights: 7, maxNights: 21, durationDays: 7 },
 };
 

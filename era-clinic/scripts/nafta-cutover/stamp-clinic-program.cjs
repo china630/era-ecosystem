@@ -14,7 +14,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const PKG = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMO", "PKG-DETOKS"]);
+const PKG = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
 
 const DEFAULT_ENRICHED = path.join(
   __dirname,
@@ -75,13 +75,14 @@ function normalizePkg(raw) {
     STANDART: "PKG-STANDART",
     STANDARD: "PKG-STANDART",
     PREMIUM: "PKG-PREMIUM",
-    DERMO: "PKG-DERMO",
+    DERMO: "PKG-DERMA",
+    "PKG-DERMO": "PKG-DERMA",
     DETOKS: "PKG-DETOKS",
     DETOX: "PKG-DETOKS",
     "PKG-STANDART": "PKG-STANDART",
     "PKG-STANDARD": "PKG-STANDART",
     "PKG-PREMIUM": "PKG-PREMIUM",
-    "PKG-DERMO": "PKG-DERMO",
+    "PKG-DERMA": "PKG-DERMA",
     "PKG-DETOKS": "PKG-DETOKS",
     "PKG-DETOX": "PKG-DETOKS",
   };

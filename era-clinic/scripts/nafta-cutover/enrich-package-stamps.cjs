@@ -30,7 +30,7 @@ function agencySku(agency) {
   if (/h[əe]mkarlar|hemkarlar|həmkərlar/i.test(raw)) return "PKG-STANDART";
   if (/\bpremium\b/i.test(raw)) return "PKG-PREMIUM";
   if (/\bdermo\b/i.test(raw) || /fecebook\s+dermo|facebook\s+dermo/i.test(raw)) {
-    return "PKG-DERMO";
+    return "PKG-DERMA";
   }
   if (/\bdetoks\b|\bdetox\b/i.test(raw)) return "PKG-DETOKS";
   if (/\bstandart\b/i.test(raw) && /paket|walkin|walk[\s-]?in|medical/i.test(raw)) {
@@ -41,13 +41,13 @@ function agencySku(agency) {
 
 function phraseSku(text) {
   if (!text) return null;
-  if (/dermo\s*paket|пакет\s*dermo|dermo\s*package/i.test(text)) return "PKG-DERMO";
+  if (/dermo\s*paket|пакет\s*dermo|dermo\s*package/i.test(text)) return "PKG-DERMA";
   if (/detoks\s*paket|detox\s*paket|пакет\s*detoks/i.test(text)) return "PKG-DETOKS";
   if (/premium\s*paket|пакет\s*premium|premium\s*package/i.test(text)) return "PKG-PREMIUM";
   if (/standart\s*paket|стандарт\s*пакет|standard\s*package/i.test(text)) {
     return "PKG-STANDART";
   }
-  if (/\bdermo\b/i.test(text) && /\+|paket|пакет|96|180/i.test(text)) return "PKG-DERMO";
+  if (/\bdermo\b/i.test(text) && /\+|paket|пакет|96|180/i.test(text)) return "PKG-DERMA";
   if (/\bpremium\b/i.test(text) && /\+|paket|пакет|96|193|349/i.test(text)) return "PKG-PREMIUM";
   return null;
 }
@@ -61,12 +61,13 @@ function parseEraPkg(extraReq) {
     STANDART: "PKG-STANDART",
     STANDARD: "PKG-STANDART",
     PREMIUM: "PKG-PREMIUM",
-    DERMO: "PKG-DERMO",
+    DERMO: "PKG-DERMA",
+    "PKG-DERMO": "PKG-DERMA",
     DETOKS: "PKG-DETOKS",
     DETOX: "PKG-DETOKS",
     "PKG-STANDART": "PKG-STANDART",
     "PKG-PREMIUM": "PKG-PREMIUM",
-    "PKG-DERMO": "PKG-DERMO",
+    "PKG-DERMA": "PKG-DERMA",
     "PKG-DETOKS": "PKG-DETOKS",
   };
   const key = m[1].toUpperCase();
@@ -115,8 +116,8 @@ function inferFromNightly(nightly, adults) {
     239: { code: "PKG-STANDART", conf: "high", note: "occ2 catalog" },
     193: { code: "PKG-PREMIUM", conf: "high", note: "occ1 catalog" },
     349: { code: "PKG-PREMIUM", conf: "high", note: "occ2 catalog" },
-    180: { code: "PKG-DERMO", conf: "high", note: "occ1 catalog" },
-    321: { code: "PKG-DERMO", conf: "high", note: "occ2 catalog" },
+    180: { code: "PKG-DERMA", conf: "high", note: "occ1 catalog" },
+    321: { code: "PKG-DERMA", conf: "high", note: "occ2 catalog" },
     178: { code: "PKG-DETOKS", conf: "high", note: "occ1 catalog" },
     319: { code: "PKG-DETOKS", conf: "med", note: "occ2-ish detoks" },
     289: { code: "MIX", conf: "high", note: "193+96 Premium+Standart" },
@@ -131,7 +132,7 @@ function inferFromNightly(nightly, adults) {
     return { code: "PKG-PREMIUM", conf: "med", note: "premium-like occ1" };
   }
   if (n === 179) {
-    return { code: "PKG-DERMO", conf: "med", note: "dermo-like occ1" };
+    return { code: "PKG-DERMA", conf: "med", note: "dermo-like occ1" };
   }
   if (n === 285 || n === 273 || n === 279) {
     return { code: "MIX", conf: "med", note: "compose-like mix total" };

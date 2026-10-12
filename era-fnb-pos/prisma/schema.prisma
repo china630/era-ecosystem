@@ -141,6 +141,8 @@ model MenuCategory {
   outletId  String     @map("outlet_id")
   name      String
   code      String
+  /// Default hotel revenue article for a new dish. Existing dishes are not rewritten.
+  revenueCode String?  @map("revenue_code")
   sortOrder Int        @default(0) @map("sort_order")
   items     MenuItem[]
   outlet    Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)

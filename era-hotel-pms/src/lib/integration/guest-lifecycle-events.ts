@@ -328,7 +328,7 @@ export async function fanOutClinicMedicalPackages(input: {
   });
 
   if (rows.length === 0) {
-    if (kind === "stay-product" && input.datesChanged) {
+    if (kind === "stay-product" && (input.datesChanged || input.previousProgramCode)) {
       await dispatchStayProductChanged({
         reservationId: input.reservationId,
         previousProgramCode: input.previousProgramCode,

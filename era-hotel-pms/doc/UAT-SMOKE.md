@@ -60,7 +60,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 2. `/folio/[reservationId]` — post charge (ROOM or FOOD).
 3. Post cash payment 50 AZN. Card asks for a bank terminal. From-deposit applies a held deposit. E-point, CL agency, and CL company are in the same list. Check-in does not post the arrival night; night audit does. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source and the default sort is room number. Folio chips are per guest. Delete a payment with a reason: it leaves the live folio, shows on Deleted, and on `/reports/payment-voids`. Card asks for a bank terminal. Deposit applies a held deposit. E-point, CL agency, and CL company are in the same list.
 4. As `manager` — void one charge (FIN-03). Delete a payment with a reason: it leaves the live folio, shows on the Deleted chip, and on `/reports/payment-voids`.
-5. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source. Default sort is room number. Folio chips are per guest, with no primary star until one is set.
+5. Pricing grid shows tariff and actual, with the tariff sum under the tariff column. New guest card starts empty and stays open after save. A new reservation starts with no primary guest. Reservation list source column shows the real source. Default sort is room number. Folio chips are per guest, with no primary star until one is set.
 
 ## 4. Outbound events (Stage 10)
 

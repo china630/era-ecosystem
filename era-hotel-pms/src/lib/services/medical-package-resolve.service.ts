@@ -327,13 +327,29 @@ export function resolveMedicalSku(
     agencyRules?: AgencySkuRuleInput[] | null;
     /** Package stored on the agency. Wins over the name. */
     agencyPackageCode?: string | null;
+    /**
+     * Elektra bridge only. A Walk-in Leisure label skips clinic when the imported
+     * row has no medical tariff. Front office never sets this: the agency name
+     * does not mute a package the receptionist chose.
+     */
+    applyLeisureAgencyRule?: boolean;
+    /**
+     * Elektra and note import may treat a PKG-* tariff as the package.
+     * Front office leaves this false: an empty guest column stays empty.
+     */
+    inheritRatePlanPackage?: boolean;
   },
 ): ResolveMedicalSkuResult {
   const guests = input.guests.length > 0 ? input.guests : [{}];
   const perGuestCodes: (MedicalPackageCode | null)[] = guests.map(() => null);
   let anyHit = false;
 
-  if (isLeisureAgency(input.agencyName) && !noteTextByType(input.notes, ["EXTRA_REQ"])) {
+  if (
+    input.applyLeisureAgencyRule &&
+    isLeisureAgency(input.agencyName) &&
+    !noteTextByType(input.notes, ["EXTRA_REQ"]) &&
+    !normalizeMedicalPackageCode(input.ratePlanCode)
+  ) {
     return {
       perGuestCodes,
       unanimousCode: null,
@@ -401,8 +417,8 @@ export function resolveMedicalSku(
     }
   }
 
-  // 5. Sold rate plan (PKG-*) when nothing else named a package
-  if (perGuestCodes.every((c): boolean => c == null)) {
+  // 5. Elektra / import only. Front office does not invent a package from the tariff.
+  if (input.inheritRatePlanPackage !== false && perGuestCodes.every((c): boolean => c == null)) {
     const planCode = normalizeMedicalPackageCode(input.ratePlanCode ?? null);
     if (planCode) {
       anyHit = true;

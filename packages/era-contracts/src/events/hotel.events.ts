@@ -58,8 +58,18 @@ export interface SatelliteHotelNightAuditClosedEvent {
     businessDate: string;
     nightAuditId?: string;
     currency: "AZN";
-    /** Lines that have a Finance sku. Amount may be 0 or negative. */
-    saleLines: Array<{ sku: string; qty: number; amount: number }>;
+    /**
+     * Lines that have a Finance sku. Revenue is credited to glAccountCode
+     * from the hotel revenue-code map. SKU is quantity and stock only.
+     * A zero amount with an empty account is a stock write-off (housekeeping).
+     */
+    saleLines: Array<{
+      sku: string;
+      qty: number;
+      amount: number;
+      revenueCode?: string;
+      glAccountCode?: string;
+    }>;
     /** Rollup for lines that have no sku (room, package without a card). */
     revenueLines: Array<{
       revenueCode: string;
@@ -78,6 +88,8 @@ const nightAuditSaleLineSchema = z.object({
   sku: z.string().min(1),
   qty: z.number(),
   amount: z.number(),
+  revenueCode: z.string().optional().default(""),
+  glAccountCode: z.string().optional().default(""),
 });
 
 const nightAuditRevenueLineSchema = z.object({

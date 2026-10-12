@@ -460,7 +460,7 @@ export default function SanatoriumPage() {
   }, [searchParams, loadDetail]);
 
   const naftaPackageTemplates = useMemo(() => {
-    const codes = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMO", "PKG-DETOKS"]);
+    const codes = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
     const filtered = programTemplates.filter((p) => codes.has(p.code));
     return filtered.length > 0 ? filtered : programTemplates;
   }, [programTemplates]);
@@ -1668,6 +1668,9 @@ export default function SanatoriumPage() {
           setCardPanel(null);
           setCardEpisodeId(null);
           setCardPlanOnly(false);
+        }}
+        onCareTeamSize={(episodeId, count) => {
+          setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));
         }}
         onCareTeamSize={(episodeId, count) => {
           setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));

@@ -16,9 +16,18 @@ export async function listRevenueGlMappings() {
   });
 }
 
-export async function upsertRevenueGlMapping(revenueCodeId: string, glAccountCode: string) {
+/** Analytical subaccounts use a dot (601.1). A hyphen is a different code. */
+export function assertDottedGlAccount(glAccountCode: string): string {
   const account = glAccountCode.trim();
   if (!account) throw new Error('GL account is required');
+  if (account.includes('-')) {
+    throw new Error('GL account uses a dot (601.1), not a hyphen');
+  }
+  return account;
+}
+
+export async function upsertRevenueGlMapping(revenueCodeId: string, glAccountCode: string) {
+  const account = assertDottedGlAccount(glAccountCode);
   return prisma.hotelRevenueGlMapping.upsert({
     where: { revenueCodeId },
     create: { revenueCodeId, glAccountCode: account },
@@ -43,6 +52,34 @@ export async function resolveGlAccountCode(
   });
   if (!row?.glAccountCode.trim()) return { glAccountCode: '', unmapped: true };
   return { glAccountCode: row.glAccountCode.trim(), unmapped: false };
+}
+
+export async function enrichSaleLinesWithGl(
+  lines: Array<{ sku: string; qty: number; amount: number; revenueCode: string }>,
+): Promise<
+  Array<{
+    sku: string;
+    qty: number;
+    amount: number;
+    revenueCode: string;
+    glAccountCode: string;
+    unmapped: boolean;
+  }>
+> {
+  const enriched = [];
+  for (const line of lines) {
+    if (line.amount === 0) {
+      enriched.push({ ...line, glAccountCode: '', unmapped: false });
+      continue;
+    }
+    const resolved = await resolveGlAccountCode(line.revenueCode);
+    enriched.push({
+      ...line,
+      glAccountCode: resolved.glAccountCode,
+      unmapped: resolved.unmapped,
+    });
+  }
+  return enriched;
 }
 
 export async function enrichRevenueLinesWithGl(

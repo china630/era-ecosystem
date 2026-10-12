@@ -46,7 +46,7 @@ export async function getFoStatusDashboard(
   const stayWindow = civilWindow(monthStart, forecastEnd);
   const createdWindow = civilWindow(monthStart, day);
 
-  const [profile, rooms, roomTypes, reservationRows, charges, rates] = await Promise.all([
+  const [profile, rooms, roomTypes, reservationRows, charges, rates, walkInLookups] = await Promise.all([
     prisma.hotelProfile.findFirst({
       where: { organizationId },
       select: { roomCapacity: true, bedCapacity: true },
@@ -93,13 +93,18 @@ export async function getFoStatusDashboard(
         walkInProfileCode: true,
         groupId: true,
         accomType: true,
+        billingMode: true,
         paymentMethod: true,
         totalAmount: true,
         guestId: true,
-        guest: { select: { fullName: true, visitCount: true } },
+        guest: { select: { fullName: true, visitCount: true, birthDate: true } },
         room: { select: { roomNumber: true } },
         roomType: { select: { code: true, name: true } },
         mealPlan: { select: { code: true } },
+        source: { select: { name: true } },
+        agency: { select: { name: true } },
+        company: { select: { name: true } },
+        folios: { select: { type: true, status: true } },
       },
     }),
     prisma.folioCharge.findMany({
@@ -114,6 +119,10 @@ export async function getFoStatusDashboard(
       where: { organizationId, stayDate: { gte: stayWindow.gte, lt: stayWindow.lt } },
       select: { reservationId: true, stayDate: true, amount: true, currencyCode: true },
     }),
+    prisma.hotelLookup.findMany({
+      where: { organizationId, kind: 'WALKIN_PROFILE' },
+      select: { code: true, name: true },
+    }),
   ]);
 
   const physical = rooms.length;
@@ -124,9 +133,17 @@ export async function getFoStatusDashboard(
     roomsOfType.set(code, (roomsOfType.get(code) ?? 0) + 1);
   }
 
+  const walkInName = new Map(walkInLookups.map((row) => [row.code, row.name]));
   const stays: DashStay[] = reservationRows.map((row) => {
     const inYmd = civilDay(row.checkInDate);
     const outYmd = civilDay(row.checkOutDate);
+    const walkIn = Boolean(row.walkInProfileCode);
+    const channel = walkIn
+      ? walkInName.get(row.walkInProfileCode ?? '') ?? row.walkInProfileCode ?? 'OTHERS'
+      : row.agency?.name || row.company?.name || row.source?.name || 'OTHERS';
+    const openFolios = row.folios
+      .filter((folio) => folio.status === 'OPEN' || folio.status === 'PENDING_AR')
+      .map((folio) => folio.type);
     return {
       id: row.id,
       status: row.status,
@@ -143,15 +160,20 @@ export async function getFoStatusDashboard(
       child2: row.children5_2 ?? 0,
       baby: row.children1_0 ?? 0,
       share: row.shareEligible || Boolean(row.shareNo),
-      walkIn: Boolean(row.walkInProfileCode),
+      walkIn,
       group: Boolean(row.groupId),
       accomType: row.accomType,
+      billingMode: row.billingMode,
       mealCode: row.mealPlan?.code ?? null,
       roomTypeCode: row.roomType.code,
       roomTypeName: row.roomType.name,
       guestId: row.guestId,
       guestName: row.guest.fullName,
       guestVisits: row.guest.visitCount ?? 0,
+      birthYmd: row.guest.birthDate ? civilDay(row.guest.birthDate) : null,
+      channel,
+      folios: openFolios,
+      billTo: row.agency ? 'AGENCY' : row.company ? 'COMPANY' : 'GUEST',
       paymentMethod: row.paymentMethod,
       totalAmount: decimalToNumber(row.totalAmount),
     };

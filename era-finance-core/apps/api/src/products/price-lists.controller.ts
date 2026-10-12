@@ -15,6 +15,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { OrganizationId } from "../common/org-id.decorator";
+import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import {
   CreateDiscountRuleDto,
   CreatePriceListDto,
@@ -27,8 +28,18 @@ import { PriceListsService } from "./price-lists.service";
 @ApiBearerAuth("bearer")
 @Controller("price-lists")
 @UseGuards(PermissionsGuard)
+const PRICE_CHANNELS = [
+  { code: "HOTEL", flag: "industryHotelPms" },
+  { code: "CLINIC", flag: "industryClinic" },
+  { code: "FNB", flag: "industryFnbPos" },
+  { code: "RETAIL", flag: "industryRetail" },
+] as const;
+
 export class PriceListsController {
-  constructor(private readonly priceLists: PriceListsService) {}
+  constructor(
+    private readonly priceLists: PriceListsService,
+    private readonly subscriptionAccess: SubscriptionAccessService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "List price lists" })
@@ -96,6 +107,16 @@ export class PriceListsController {
   @ApiOperation({ summary: "Deactivate discount rule" })
   removeDiscountRule(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.priceLists.removeDiscountRule(orgId, id);
+  }
+
+  @Get("channels")
+  @ApiOperation({ summary: "Price-list channels for satellites enabled on this organization" })
+  async channels(@OrganizationId() orgId: string) {
+    const snapshot = await this.subscriptionAccess.getOrganizationSnapshot(orgId);
+    const modules = snapshot.modules as Record<string, boolean>;
+    return {
+      channels: PRICE_CHANNELS.filter((row) => modules[row.flag]).map((row) => row.code),
+    };
   }
 
   @Get(":id")

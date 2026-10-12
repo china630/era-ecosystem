@@ -89,10 +89,7 @@ function stayPackageCodes(input: {
 }): string[] {
   const raw =
     input.paxGuests.length > 0
-      ? paxCodesForCompose(
-          input.paxGuests,
-          input.ratePlan?.code ?? input.medicalPackageCode,
-        )
+      ? paxCodesForCompose(input.paxGuests, null)
       : [input.medicalPackageCode];
   return raw
     .map((c) => (c ?? '').trim().toUpperCase())
@@ -215,6 +212,10 @@ export async function recalcReservationDailyRates(
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
+
+  if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+    return writeOwnerNightly(res, 0, opts?.remainingFrom);
+  }
 
   const packageCodes = stayPackageCodes(res);
   if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {

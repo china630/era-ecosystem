@@ -17,9 +17,6 @@ jest.mock("@/lib/prisma", () => ({
     tenant: {
       findFirst: jest.fn().mockResolvedValue({ hotelFolioRevenueCode: "AMB" }),
     },
-    serviceCatalogCache: {
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
     diagnosticService: {
       findFirst: jest.fn().mockResolvedValue(null),
     },

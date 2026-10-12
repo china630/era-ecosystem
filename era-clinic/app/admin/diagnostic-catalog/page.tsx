@@ -55,6 +55,7 @@ type Modality = {
   titleEn: string;
   titleRu: string;
   titleAz: string;
+  hotelRevenueCode?: string | null;
   sortOrder: number;
   active: boolean;
   _count?: { services?: number };
@@ -467,6 +468,7 @@ export default function DiagnosticCatalogAdminPage() {
       titleEn: row.titleEn,
       titleRu: row.titleRu,
       titleAz: row.titleAz,
+      hotelRevenueCode: row.hotelRevenueCode ?? "",
       sortOrder: String(row.sortOrder),
       active: String(row.active),
     });
@@ -561,6 +563,7 @@ export default function DiagnosticCatalogAdminPage() {
         titleEn: form.titleEn?.trim(),
         titleRu: form.titleRu?.trim(),
         titleAz: form.titleAz?.trim(),
+        hotelRevenueCode: form.hotelRevenueCode?.trim() || null,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
       };
@@ -1336,6 +1339,20 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="count"
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+              />
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("hotelRevenueCode")}
+                value={form.hotelRevenueCode ?? ""}
+                options={
+                  form.hotelRevenueCode &&
+                  !revenueOptions.some((option) => option.value === form.hotelRevenueCode)
+                    ? [{ value: form.hotelRevenueCode, label: form.hotelRevenueCode }, ...revenueOptions]
+                    : revenueOptions
+                }
+                onChange={(next) =>
+                  setForm({ ...form, hotelRevenueCode: String(next ?? "") })
+                }
               />
             </>
           )}

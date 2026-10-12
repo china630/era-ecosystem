@@ -277,7 +277,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] Spec: [TOURS-NAFTA-OPS.md](TOURS-NAFTA-OPS.md) · ADR `docs/adr/hotel-guest-tours.md` · HOT-TOUR-01 SHIPPED
 
 ### Stage 22 — GL-BRIDGE
-- [x] `HotelRevenueGlMapping` — revenue code → NAS GL account (601–606 seed)
+- [x] `HotelRevenueGlMapping` — revenue code → NAS account. New rows open on 601. A saved row is not rewritten. SKU lines credit that mapped account; the SKU is stock and quantity only.
 - [x] Night audit E1 enriches `revenueLines` with `glAccountCode`; orchestrator `@era/contracts` `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`
 - [x] Finance `SatelliteEventDispatchService.handleHotelNightAudit` — multi-line NAS journal
 - [x] Admin `/admin/integration` — GL mapping table + `PUT /api/master/revenue-gl-mappings`

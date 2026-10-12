@@ -34,12 +34,20 @@ export type DashStay = {
   walkIn: boolean;
   group: boolean;
   accomType: string | null;
+  billingMode?: string | null;
   mealCode: string | null;
   roomTypeCode: string;
   roomTypeName: string;
   guestId: string;
   guestName: string;
   guestVisits: number;
+  /** Civil birth date, when the guest record has one. */
+  birthYmd: string | null;
+  /** Walk-in profile, agency, company, or booking source. `OTHERS` when none. */
+  channel: string;
+  /** Open folio windows. Empty means one window inferred from `billTo`. */
+  folios: Array<'GUEST' | 'COMPANY' | 'AGENCY'>;
+  billTo: 'GUEST' | 'COMPANY' | 'AGENCY';
   paymentMethod: string;
   totalAmount: number;
 };
@@ -123,6 +131,11 @@ export type FlowCard = {
   revenue: number;
 };
 
+export type AgeSplit = { adults: number; child1: number; child2: number; baby: number };
+
+/** Pax on the night, split by the meals included in the stay's board code. */
+export type MealBoard = { breakfast: AgeSplit; lunch: AgeSplit; dinner: AgeSplit };
+
 export type ForecastPoint = {
   day: string;
   occupied: number;
@@ -138,6 +151,15 @@ export type ForecastPoint = {
   child1: number;
   child2: number;
   baby: number;
+  meals: MealBoard;
+  arrAdults: number;
+  arrChild1: number;
+  arrChild2: number;
+  arrBaby: number;
+  depAdults: number;
+  depChild1: number;
+  depChild2: number;
+  depBaby: number;
   sold: number;
   complimentary: number;
   houseUse: number;
@@ -169,10 +191,14 @@ export type FoStatusSnapshot = {
   };
   roomTypes: { code: string; name: string; sold: number; quota: number; available: number }[];
   board: { code: string; rooms: number }[];
-  ages: { adults: number; child1: number; child2: number; baby: number };
-  repeatGuests: number;
+  /** In-house guests on the night, by Elektra age band. `ageUnknown` is a missing birth date. */
+  ageBands: { key: string; count: number }[];
+  /** In-house guests bucketed by stored visit count (0, 1, 2, …). */
+  repeatBuckets: { visits: number; guests: number }[];
+  /** Reservations created on the day, by channel label. */
+  todaySources: { label: string; count: number }[];
   todayReservations: StatusListRow[];
-  folioTypes: { method: string; count: number }[];
+  folioTypes: { type: 'GUEST' | 'COMPANY' | 'AGENCY'; count: number }[];
   lists: {
     expectedArrivals: StatusListRow[];
     expectedDepartures: StatusListRow[];
@@ -231,6 +257,12 @@ function accomKind(value: string | null): 'COMP' | 'HOUSE' | null {
   return null;
 }
 
+function stayCompKind(stay: { billingMode?: string | null; accomType: string | null }): 'COMP' | 'HOUSE' | null {
+  if (stay.billingMode === 'COMP') return 'COMP';
+  if (stay.billingMode === 'HOUSE') return 'HOUSE';
+  return accomKind(stay.accomType);
+}
+
 function sells(status: StayStatus, includeWaiting: boolean): boolean {
   if (status === 'CONFIRMED' || status === 'IN_HOUSE' || status === 'CHECKED_OUT') return true;
   return includeWaiting && status === 'OPTION';
@@ -271,6 +303,70 @@ function matrixOf(stays: DashStay[]): TypeMatrix {
     else m.ot += rooms;
   }
   return m;
+}
+
+const AGE_BAND_KEYS = ['age0', 'age3', 'age7', 'age13', 'age18', 'age25', 'age40', 'ageUnknown'] as const;
+
+function ageYears(birthYmd: string, day: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthYmd)) return null;
+  const [by, bm, bd] = birthYmd.split('-').map(Number);
+  const [y, m, d] = day.split('-').map(Number);
+  let age = y - by;
+  if (m < bm || (m === bm && d < bd)) age -= 1;
+  return age >= 0 && age < 130 ? age : null;
+}
+
+function ageBandKey(age: number): (typeof AGE_BAND_KEYS)[number] {
+  if (age < 3) return 'age0';
+  if (age < 7) return 'age3';
+  if (age < 13) return 'age7';
+  if (age < 18) return 'age13';
+  if (age < 25) return 'age18';
+  if (age < 40) return 'age25';
+  return 'age40';
+}
+
+function ageBandsOf(guests: DashStay[], day: string): { key: string; count: number }[] {
+  const counts = new Map<string, number>(AGE_BAND_KEYS.map((key) => [key, 0]));
+  for (const guest of guests) {
+    const age = guest.birthYmd ? ageYears(guest.birthYmd, day) : null;
+    const key = age == null ? 'ageUnknown' : ageBandKey(age);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return AGE_BAND_KEYS.map((key) => ({ key, count: counts.get(key) ?? 0 }));
+}
+
+function repeatBucketsOf(guests: DashStay[]): { visits: number; guests: number }[] {
+  const counts = new Map<number, number>();
+  for (const guest of guests) {
+    const visits = Math.max(0, guest.guestVisits);
+    counts.set(visits, (counts.get(visits) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([visits, guestsInBucket]) => ({ visits, guests: guestsInBucket }))
+    .sort((a, b) => a.visits - b.visits);
+}
+
+function folioTypesOf(stays: DashStay[]): { type: 'GUEST' | 'COMPANY' | 'AGENCY'; count: number }[] {
+  const counts = new Map<'GUEST' | 'COMPANY' | 'AGENCY', number>();
+  for (const stay of stays) {
+    const types = stay.folios.length > 0 ? stay.folios : [stay.billTo];
+    for (const type of types) counts.set(type, (counts.get(type) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function sourceCounts(stays: DashStay[]): { label: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const stay of stays) {
+    const label = stay.channel.trim() || 'OTHERS';
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count || (a.label === 'OTHERS' ? 1 : 0) - (b.label === 'OTHERS' ? 1 : 0));
 }
 
 function toRow(s: DashStay): StatusListRow {
@@ -316,6 +412,60 @@ function flowCard(stays: DashStay[], capacity: number, bedCapacity: number | nul
 
 function nightStays(stays: DashStay[], day: string, includeWaiting: boolean): DashStay[] {
   return stays.filter((s) => sells(s.status, includeWaiting) && coversNight(s, day));
+}
+
+function sumAges(list: DashStay[]): AgeSplit {
+  let adults = 0;
+  let child1 = 0;
+  let child2 = 0;
+  let baby = 0;
+  for (const s of list) {
+    adults += s.adults;
+    child1 += s.child1;
+    child2 += s.child2;
+    baby += s.baby;
+  }
+  return { adults, child1, child2, baby };
+}
+
+function emptyAges(): AgeSplit {
+  return { adults: 0, child1: 0, child2: 0, baby: 0 };
+}
+
+function addAges(target: AgeSplit, stay: DashStay) {
+  target.adults += stay.adults;
+  target.child1 += stay.child1;
+  target.child2 += stay.child2;
+  target.baby += stay.baby;
+}
+
+/** BB = breakfast, HB = breakfast+dinner, FB/AI = all three, RO = none. */
+function mealFlags(code: string | null): { breakfast: boolean; lunch: boolean; dinner: boolean } {
+  const c = (code ?? '').trim().toUpperCase();
+  if (c === 'FB' || c === 'AI' || c === 'UAI' || c === 'FULL' || c === 'FULLBOARD') {
+    return { breakfast: true, lunch: true, dinner: true };
+  }
+  if (c === 'HB' || c === 'HALF' || c === 'MAP') {
+    return { breakfast: true, lunch: false, dinner: true };
+  }
+  if (c === 'BB' || c === 'B&B') return { breakfast: true, lunch: false, dinner: false };
+  if (c === 'RO' || c === 'OB' || c === 'BO' || c === 'ROOM' || c === '') {
+    return { breakfast: false, lunch: false, dinner: false };
+  }
+  return { breakfast: true, lunch: false, dinner: false };
+}
+
+function mealBoard(list: DashStay[]): MealBoard {
+  const breakfast = emptyAges();
+  const lunch = emptyAges();
+  const dinner = emptyAges();
+  for (const stay of list) {
+    const flags = mealFlags(stay.mealCode);
+    if (flags.breakfast) addAges(breakfast, stay);
+    if (flags.lunch) addAges(lunch, stay);
+    if (flags.dinner) addAges(dinner, stay);
+  }
+  return { breakfast, lunch, dinner };
 }
 
 export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
@@ -401,7 +551,7 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
       const rooms = key.startsWith('stay:') ? Math.max(1, list[0].roomCount) : 1;
       if (list.some((s) => s.group)) group += rooms;
       else individual += rooms;
-      const kinds = list.map((s) => accomKind(s.accomType));
+      const kinds = list.map((s) => stayCompKind(s));
       if (kinds.includes('COMP')) complimentary += rooms;
       else if (kinds.includes('HOUSE')) houseUse += rooms;
     }
@@ -415,12 +565,14 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
       : 0;
     const occupied = counted.rooms;
     const sold = Math.max(0, occupied - complimentary - houseUse);
-    const arriving = matrixOf(
-      input.stays.filter((s) => s.inYmd === forecastDay && sells(s.status, includeWaiting) && s.status !== 'NO_SHOW' && s.status !== 'CANCELLED'),
-    ).rooms;
-    const departing = matrixOf(
-      input.stays.filter((s) => s.outYmd === forecastDay && sells(s.status, includeWaiting)),
-    ).rooms;
+    const arrivingStays = input.stays.filter(
+      (s) => s.inYmd === forecastDay && sells(s.status, includeWaiting) && s.status !== 'NO_SHOW' && s.status !== 'CANCELLED',
+    );
+    const departingStays = input.stays.filter((s) => s.outYmd === forecastDay && sells(s.status, includeWaiting));
+    const arriving = matrixOf(arrivingStays).rooms;
+    const departing = matrixOf(departingStays).rooms;
+    const arrAges = sumAges(arrivingStays);
+    const depAges = sumAges(departingStays);
     return {
       day: forecastDay,
       occupied,
@@ -432,10 +584,19 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
       individual,
       group,
       revenue: round2(nightRevenue),
+      meals: mealBoard(onNight),
       adults: counted.adults,
       child1: counted.child1,
       child2: counted.child2,
       baby: counted.baby,
+      arrAdults: arrAges.adults,
+      arrChild1: arrAges.child1,
+      arrChild2: arrAges.child2,
+      arrBaby: arrAges.baby,
+      depAdults: depAges.adults,
+      depChild1: depAges.child1,
+      depChild2: depAges.child2,
+      depBaby: depAges.baby,
       sold,
       complimentary,
       houseUse,
@@ -499,13 +660,14 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
     boardMap.set(code, (boardMap.get(code) ?? 0) + rooms);
   }
 
-  const repeatIds = new Set(inHouseStays.filter((s) => s.guestVisits > 1).map((s) => s.guestId));
-  const folio = new Map<string, number>();
-  for (const s of endStays) folio.set(s.paymentMethod, (folio.get(s.paymentMethod) ?? 0) + 1);
-
-  const todayReservations = input.stays
-    .filter((s) => s.createdYmd === day && s.status !== 'CANCELLED')
-    .map(toRow);
+  const nightGuests = new Map<string, DashStay>();
+  for (const s of endStays) if (!nightGuests.has(s.guestId)) nightGuests.set(s.guestId, s);
+  const ageBands = ageBandsOf([...nightGuests.values()], day);
+  const repeatBuckets = repeatBucketsOf([...nightGuests.values()]);
+  const folioTypes = folioTypesOf(endStays);
+  const todayCreated = input.stays.filter((s) => s.createdYmd === day && s.status !== 'CANCELLED');
+  const todaySources = sourceCounts(todayCreated);
+  const todayReservations = todayCreated.map(toRow);
 
   return {
     day,
@@ -544,10 +706,11 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
       return { ...rt, sold, available: Math.max(0, rt.quota - sold) };
     }),
     board: [...boardMap.entries()].map(([code, rooms]) => ({ code, rooms })).sort((a, b) => b.rooms - a.rooms),
-    ages: { adults: endOfDay.adults, child1: endOfDay.child1, child2: endOfDay.child2, baby: endOfDay.baby },
-    repeatGuests: repeatIds.size,
+    ageBands,
+    repeatBuckets,
+    todaySources,
     todayReservations,
-    folioTypes: [...folio.entries()].map(([method, count]) => ({ method, count })).sort((a, b) => b.count - a.count),
+    folioTypes,
     lists: {
       expectedArrivals: expectedArrivals.map(toRow),
       expectedDepartures: expectedDepartures.map(toRow),

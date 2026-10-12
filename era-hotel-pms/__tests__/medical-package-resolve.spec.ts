@@ -158,6 +158,37 @@ describe("medical-package-resolve", () => {
     expect(programCodeForLifecycle(r)).toBeUndefined();
   });
 
+  it("Elektra leisure label skips clinic only when the tariff is not medical", () => {
+    const leisure = resolveMedicalSku({
+      notes: [],
+      agencyName: "Walkin leisure",
+      guests: [{ fullName: "Guest" }],
+      applyLeisureAgencyRule: true,
+    });
+    expect(leisure.stayKind).toBe("leisure");
+    const medicalTariff = resolveMedicalSku({
+      notes: [],
+      agencyName: "Walkin leisure",
+      guests: [{ fullName: "Guest" }],
+      ratePlanCode: "PKG-STANDART",
+      applyLeisureAgencyRule: true,
+    });
+    expect(medicalTariff.stayKind).toBe("medical");
+    expect(medicalTariff.unanimousCode).toBe("PKG-STANDART");
+  });
+
+  it("front office does not copy the tariff into an empty guest package", () => {
+    const r = resolveMedicalSku({
+      notes: [],
+      guests: [{ fullName: "Guest" }],
+      ratePlanCode: "PKG-STANDART",
+      inheritRatePlanPackage: false,
+    });
+    expect(r.perGuestCodes).toEqual([null]);
+    expect(r.unanimousCode).toBeNull();
+    expect(r.stayKind).toBe("unresolved");
+  });
+
   it("isLeisureAgency helper", async () => {
     const { isLeisureAgency } = await import(
       "@/lib/services/medical-package-resolve.service"

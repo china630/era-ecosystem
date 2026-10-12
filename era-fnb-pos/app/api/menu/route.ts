@@ -148,7 +148,11 @@ export async function POST(request: Request) {
           active: body.active ?? true,
           recipeSku: body.recipeSku ?? null,
           financeSku: body.financeSku ?? null,
-          revenueCode: body.revenueCode?.trim() || outlet.revenueCenterCode || null,
+          revenueCode:
+            body.revenueCode?.trim() ||
+            category!.revenueCode?.trim() ||
+            outlet.revenueCenterCode ||
+            null,
           imageUrl,
         },
       });

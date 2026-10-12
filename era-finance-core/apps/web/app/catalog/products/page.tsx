@@ -56,6 +56,7 @@ export default function ProductsPage() {
   const [createServiceOpen, setCreateServiceOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const addMenuRef = useRef<HTMLDetailsElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -94,6 +95,32 @@ export default function ProductsPage() {
       return name.includes(term) || sku.includes(term);
     });
   }, [rows, searchQ]);
+
+  async function downloadTemplate(path: string, filename: string) {
+    const res = await apiFetch(path);
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importExcel(file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    const res = await apiFetch("/api/products/import-xlsx", { method: "POST", body });
+    if (!res.ok) {
+      setError(await res.text());
+      return;
+    }
+    await load();
+  }
 
   function openEdit(id: string) {
     setCreateProductOpen(false);
@@ -158,6 +185,31 @@ export default function ProductsPage() {
               </button>
             </div>
           </details>
+          <button
+            type="button"
+            className="text-sm text-[#2980B9]"
+            onClick={() => void downloadTemplate("/api/products/import-template.xlsx", "products-import.xlsx")}
+          >
+            {t("products.importTemplate", "Excel template")}
+          </button>
+          <button
+            type="button"
+            className="h-8 rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px]"
+            onClick={() => importRef.current?.click()}
+          >
+            {t("products.importExcel", "Import Excel")}
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept=".xlsx"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void importExcel(file);
+            }}
+          />
         </div>
         {loading && <p className="text-gray-600">{t("common.loading")}</p>}
         {!loading && rows.length === 0 && !error && (

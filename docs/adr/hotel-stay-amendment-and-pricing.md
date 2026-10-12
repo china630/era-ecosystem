@@ -23,6 +23,28 @@ Three FO actions:
 
 Same-day folio: if tonight is already posted, add one `RATE_ADJ` difference line (`externalRef` `rate-adj:{resId}:{date}`). Package EOD lines **scale** so Σ = that night’s sell (`ReservationDailyRate.amount`).
 
+A rate-plan change (card save or the wizard) appends `StayTariffChange` (from code, to code, effective time). The reservation journal shows that line next to room moves. Posted nights stay as they were.
+
+## Stay billing
+
+`Reservation.billingMode`:
+
+| Mode | Room nights | Extras (restaurant, clinic, folio) |
+|------|-------------|-------------------------------------|
+| `NORMAL` | Tariff grid | Charged |
+| `COMP` | 0, occupancy complimentary | Charged |
+| `HOUSE` | 0, occupancy house use | Posted, then offset so the guest balance stays 0 |
+
+Meal plan (BB/FB) is not this mode. A zero nightly price is legal only for `COMP` and `HOUSE`.
+
+## Check-in and clinic
+
+Clinic receives a guest at check-in when that guest has an explicit medical package, and again when that package changes on an in-house stay. Saving a reservation that is not yet in house does not open a clinic episode. The tariff does not fill a package the receptionist left empty. `WALKIN` hides the package column and does not send clinic.
+
+A past arrival date moves to the business day on check-in. Nights before that day are dropped and not charged. The confirmation text names the new date only in that case.
+
+The Walk-in Leisure agency name does not mute clinic. The Elektra bridge still treats that label as non-medical when the imported tariff is not a `PKG-*` code.
+
 ## Coverage
 
 `HOT-FO-04` = **API** until UAT-SMOKE §35 is signed. Do not Scaffold-green `AC-HOT-AMEND`.

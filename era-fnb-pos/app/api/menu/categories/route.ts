@@ -38,6 +38,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   code: codeSchema.optional(),
   sortOrder: z.number().int().optional(),
+  revenueCode: z.string().min(1).nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
         name: body.name,
         code,
         sortOrder,
+        revenueCode: body.revenueCode?.trim() || null,
       },
     });
     return jsonOk(category, 201);
