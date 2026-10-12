@@ -24,10 +24,6 @@ import {
 } from "./dto/price-list.dto";
 import { PriceListsService } from "./price-lists.service";
 
-@ApiTags("price-lists")
-@ApiBearerAuth("bearer")
-@Controller("price-lists")
-@UseGuards(PermissionsGuard)
 const PRICE_CHANNELS = [
   { code: "HOTEL", flag: "industryHotelPms" },
   { code: "CLINIC", flag: "industryClinic" },
@@ -35,6 +31,10 @@ const PRICE_CHANNELS = [
   { code: "RETAIL", flag: "industryRetail" },
 ] as const;
 
+@ApiTags("price-lists")
+@ApiBearerAuth("bearer")
+@Controller("price-lists")
+@UseGuards(PermissionsGuard)
 export class PriceListsController {
   constructor(
     private readonly priceLists: PriceListsService,
