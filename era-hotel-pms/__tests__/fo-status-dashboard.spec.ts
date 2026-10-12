@@ -22,6 +22,10 @@ function stay(partial: Partial<DashStay> & Pick<DashStay, 'id' | 'status' | 'inY
     guestId: partial.id,
     guestName: partial.id,
     guestVisits: 1,
+    birthYmd: null,
+    channel: 'OTHERS',
+    folios: [],
+    billTo: 'GUEST',
     paymentMethod: 'CASH',
     totalAmount: 100,
     ...partial,
@@ -73,6 +77,69 @@ describe('fo status dashboard', () => {
     expect(snap.expectedArrivals.rooms).toBe(1);
     expect(snap.endOfDay.rooms).toBe(3);
     expect(row('current').percent).toBe(2.56);
+    expect(snap.forecast[0].meals.breakfast.adults).toBe(snap.forecast[0].adults);
+    expect(snap.forecast[0].meals.lunch.adults).toBe(0);
+    expect(snap.forecast[0].meals.dinner.adults).toBe(0);
+  });
+
+  it('buckets night guests by age, visit count, channel and folio window', () => {
+    const snap = buildFoStatus(
+      base([
+        stay({
+          id: 'old',
+          status: 'IN_HOUSE',
+          inYmd: '2026-10-10',
+          outYmd: '2026-10-20',
+          roomId: 'r1',
+          guestId: 'g1',
+          birthYmd: '1960-01-01',
+          guestVisits: 0,
+          channel: 'Walkin medical',
+          createdYmd: '2026-10-12',
+        }),
+        stay({
+          id: 'young',
+          status: 'IN_HOUSE',
+          inYmd: '2026-10-10',
+          outYmd: '2026-10-20',
+          roomId: 'r2',
+          guestId: 'g2',
+          birthYmd: null,
+          guestVisits: 1,
+          channel: 'FOTON MMC',
+          billTo: 'AGENCY',
+          createdYmd: '2026-10-12',
+        }),
+        stay({
+          id: 'child',
+          status: 'IN_HOUSE',
+          inYmd: '2026-10-11',
+          outYmd: '2026-10-18',
+          roomId: 'r3',
+          guestId: 'g3',
+          birthYmd: '2016-06-01',
+          guestVisits: 0,
+          folios: ['GUEST', 'COMPANY'],
+          createdYmd: '2026-10-01',
+        }),
+      ]),
+    );
+    expect(snap.ageBands.find((band) => band.key === 'age40')?.count).toBe(1);
+    expect(snap.ageBands.find((band) => band.key === 'age7')?.count).toBe(1);
+    expect(snap.ageBands.find((band) => band.key === 'ageUnknown')?.count).toBe(1);
+    expect(snap.repeatBuckets).toEqual([
+      { visits: 0, guests: 2 },
+      { visits: 1, guests: 1 },
+    ]);
+    expect(snap.todaySources).toEqual([
+      { label: 'Walkin medical', count: 1 },
+      { label: 'FOTON MMC', count: 1 },
+    ]);
+    expect(snap.folioTypes).toEqual([
+      { type: 'GUEST', count: 2 },
+      { type: 'AGENCY', count: 1 },
+      { type: 'COMPANY', count: 1 },
+    ]);
   });
 
   it('counts a shared door once and keeps a mixed group on the group series', () => {

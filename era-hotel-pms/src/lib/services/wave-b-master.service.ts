@@ -1,3 +1,4 @@
+import { requestFinanceCardIfMissing } from '@/lib/integration/finance-card-request';
 import { prisma } from '@/lib/prisma';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
@@ -102,7 +103,7 @@ export async function upsertTravelAgency(input: {
   const creditLimitAzn =
     input.creditLimitAzn != null ? toDecimal(input.creditLimitAzn) : input.creditLimitAzn;
   if (input.id) {
-    return prisma.agency.update({
+    const row = await prisma.agency.update({
       where: { id: input.id },
       data: {
         code: input.code,
@@ -117,8 +118,10 @@ export async function upsertTravelAgency(input: {
         medicalPackageCode: input.medicalPackageCode,
       },
     });
+    await requestFinanceCardIfMissing({ voen: row.voen, name: row.name, partyKind: 'AGENCY' });
+    return row;
   }
-  return prisma.agency.create({
+  const created = await prisma.agency.create({
     data: {
       code: input.code,
       name: input.name,
@@ -132,6 +135,12 @@ export async function upsertTravelAgency(input: {
       medicalPackageCode: input.medicalPackageCode ?? null,
     },
   });
+  await requestFinanceCardIfMissing({
+    voen: created.voen,
+    name: created.name,
+    partyKind: 'AGENCY',
+  });
+  return created;
 }
 
 export async function listClosedRooms() {

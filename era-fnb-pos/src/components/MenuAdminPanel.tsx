@@ -47,6 +47,7 @@ type Category = {
   name: string;
   code?: string;
   sortOrder?: number;
+  revenueCode?: string | null;
   items: MenuItem[];
 };
 
@@ -94,7 +95,13 @@ export default function MenuAdminPanel() {
   const t = useTranslations("admin.menu");
   const [categories, setCategories] = useState<Category[]>([]);
   const [catModal, setCatModal] = useState<"create" | "edit" | null>(null);
-  const [catDraft, setCatDraft] = useState({ id: "", name: "", code: "", sortOrder: "0" });
+  const [catDraft, setCatDraft] = useState({
+    id: "",
+    name: "",
+    code: "",
+    sortOrder: "0",
+    revenueCode: "",
+  });
   const [itemModal, setItemModal] = useState<"create" | "edit" | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [itemForm, setItemForm] = useState<ItemForm>(emptyItemForm());
@@ -187,7 +194,13 @@ export default function MenuAdminPanel() {
   }
 
   function openCreateCategory() {
-    setCatDraft({ id: "", name: "", code: "", sortOrder: String((categories.length + 1) * 10) });
+    setCatDraft({
+      id: "",
+      name: "",
+      code: "",
+      sortOrder: String((categories.length + 1) * 10),
+      revenueCode: "",
+    });
     setCatModal("create");
   }
 
@@ -197,6 +210,7 @@ export default function MenuAdminPanel() {
       name: cat.name,
       code: cat.code ?? "",
       sortOrder: String(cat.sortOrder ?? 0),
+      revenueCode: cat.revenueCode ?? "",
     });
     setCatModal("edit");
   }
@@ -210,6 +224,7 @@ export default function MenuAdminPanel() {
     const payload = {
       name,
       ...(catDraft.code.trim() ? { code: catDraft.code.trim() } : {}),
+      revenueCode: catDraft.revenueCode.trim() || null,
     };
     const res =
       catModal === "create"
@@ -247,7 +262,9 @@ export default function MenuAdminPanel() {
   function openCreateItem(categoryId: string) {
     setEditingItemId(null);
     setShowDetails(false);
-    setItemForm(emptyItemForm(categoryId || categories[0]?.id || ""));
+    const id = categoryId || categories[0]?.id || "";
+    const cat = categories.find((row) => row.id === id);
+    setItemForm({ ...emptyItemForm(id), revenueCode: cat?.revenueCode ?? "" });
     setItemModal("create");
   }
 
@@ -546,6 +563,23 @@ export default function MenuAdminPanel() {
           preset="code"
           value={catDraft.code}
           onChange={(e) => setCatDraft((d) => ({ ...d, code: e.target.value }))}
+        />
+        <CatalogField
+          kind={"SEARCHABLE" as CatalogFieldKind}
+          label={t("revenueCode")}
+          value={catDraft.revenueCode}
+          options={
+            catDraft.revenueCode &&
+            !revenueOptions.some((option) => option.value === catDraft.revenueCode)
+              ? [{ value: catDraft.revenueCode, label: catDraft.revenueCode }, ...revenueOptions]
+              : revenueOptions
+          }
+          onChange={(next) =>
+            setCatDraft((d) => ({
+              ...d,
+              revenueCode: Array.isArray(next) ? next[0] ?? "" : next,
+            }))
+          }
         />
         </div>
         <ModalFooter

@@ -33,11 +33,12 @@ import {
 } from '@/components/ReservationCardToolbar';
 import { ReservationCardHeaderSnapshot } from '@/components/reservation-card/ReservationCardHeaderSnapshot';
 import { ReservationCardLeftPanel } from '@/components/reservation-card/ReservationCardLeftPanel';
+import { ReservationCardGuestsTab } from '@/components/reservation-card/ReservationCardGuestsTab';
 import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal';
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
-import { ReservationCardGuestsTab } from '@/components/reservation-card/ReservationCardGuestsTab';
+import { ratePlanRequiresGuestPackage } from '@/lib/services/medical-package-resolve.service';
 import { ReservationCardPricingTab } from '@/components/reservation-card/ReservationCardPricingTab';
 import { StayAmendmentModal } from '@/components/reservation-card/StayAmendmentModal';
 import {
@@ -250,6 +251,7 @@ function stayMoveReason(
 function StayJournal({
   notes,
   changes,
+  tariffChanges,
 }: {
   notes: Record<string, string>;
   changes: Array<{
@@ -260,11 +262,20 @@ function StayJournal({
     reasonCode?: string | null;
     notes?: string | null;
   }>;
+  tariffChanges: Array<{
+    id: string;
+    effectiveAt: string;
+    fromCode?: string | null;
+    toCode?: string | null;
+  }>;
 }) {
   const t = useTranslations('reservationCard');
   const moves = [...changes].sort((a, b) => String(b.effectiveAt).localeCompare(String(a.effectiveAt)));
+  const tariffs = [...tariffChanges].sort((a, b) =>
+    String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
+  );
   const noteLines = Object.entries(notes).filter(([, value]) => value.trim());
-  if (moves.length === 0 && noteLines.length === 0) {
+  if (moves.length === 0 && tariffs.length === 0 && noteLines.length === 0) {
     return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
   }
   return (
@@ -275,6 +286,19 @@ function StayJournal({
             <li key={c.id}>
               {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
               {bakuDateTimeDisplay(c.effectiveAt)}, {stayMoveReason(c.reasonCode, c.notes, t)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {tariffs.length > 0 ? (
+        <ul className="m-0 list-none space-y-1 p-0">
+          {tariffs.map((row) => (
+            <li key={row.id}>
+              {t('tariffChangeLine', {
+                from: row.fromCode || '—',
+                to: row.toCode || '—',
+                at: bakuDateTimeDisplay(row.effectiveAt),
+              })}
             </li>
           ))}
         </ul>
@@ -329,6 +353,7 @@ export function ReservationCardEditor({
   const [paidBy, setPaidBy] = useState('');
   const [vipType, setVipType] = useState('');
   const [accomType, setAccomType] = useState('');
+  const [billingMode, setBillingMode] = useState<'NORMAL' | 'COMP' | 'HOUSE'>('NORMAL');
   const [recordType, setRecordType] = useState('');
   const [tripReason, setTripReason] = useState('');
   const [agencyId, setAgencyId] = useState('');
@@ -474,6 +499,9 @@ export function ReservationCardEditor({
     setPaidBy(String(json.paidBy ?? ''));
     setVipType(String(json.vipType ?? ''));
     setAccomType(String(json.accomType ?? ''));
+    setBillingMode(
+      json.billingMode === 'COMP' || json.billingMode === 'HOUSE' ? json.billingMode : 'NORMAL',
+    );
     setRecordType(String(json.recordType ?? ''));
     setTripReason(String(json.tripReason ?? ''));
     setAgencyId(String(json.agencyId ?? ''));
@@ -952,7 +980,7 @@ export function ReservationCardEditor({
       setBookingName(null);
       setSiblingStays([]);
       setIsLocked(false);
-      setPartyBillingMode('PRIMARY');
+      setPartyBillingMode('EQUAL');
     } else {
       void load();
     }
@@ -1570,6 +1598,7 @@ export function ReservationCardEditor({
       guestRep,
       paidBy,
       accomType,
+      billingMode,
       recordType,
     }),
     [
@@ -1614,6 +1643,7 @@ export function ReservationCardEditor({
       guestRep,
       paidBy,
       accomType,
+      billingMode,
       recordType,
     ],
   );
@@ -1671,6 +1701,14 @@ export function ReservationCardEditor({
           if (linkedRp?.mealPlanId) setMealPlanId(linkedRp.mealPlanId);
           if (linkedRp?.roomTypeId) setRoomTypeId(linkedRp.roomTypeId);
           if (linkedRp?.medicalFlag) setSegment('Medical');
+          if (
+            !ratePlanRequiresGuestPackage({
+              code: linkedRp?.code,
+              medicalFlag: linkedRp?.medicalFlag,
+            })
+          ) {
+            setPax((rows) => rows.map((row) => ({ ...row, medicalPackageCode: '' })));
+          }
         }
       } else {
         setContractRef('');
@@ -1751,7 +1789,15 @@ export function ReservationCardEditor({
       roomCount: setRoomCount,
       rateType: setRateType,
       mealPlanId: setMealPlanId,
-      ratePlanId: setRatePlanId,
+      ratePlanId: (v) => {
+        setRatePlanId(v);
+        const plan = ratePlans.find((row) => row.id === v);
+        if (!ratePlanRequiresGuestPackage({ code: plan?.code, medicalFlag: plan?.medicalFlag })) {
+          setPax((rows) => rows.map((row) => ({ ...row, medicalPackageCode: '' })));
+        }
+      },
+      billingMode: (v) =>
+        setBillingMode(v === 'COMP' || v === 'HOUSE' ? v : 'NORMAL'),
       paymentMethod: setPaymentMethod,
       adults: setAdults,
       children11_6: setChildren11_6,
@@ -1941,6 +1987,7 @@ export function ReservationCardEditor({
               creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
             rateType: rateType || null,
             accomType: accomType || null,
+            billingMode,
             recordType: recordType || null,
             roomId: pendingRoomId || undefined,
             useManualRate,
@@ -2079,6 +2126,7 @@ export function ReservationCardEditor({
           paidBy: paidBy || null,
           vipType: vipType || null,
           accomType: accomType || null,
+          billingMode,
           recordType: recordType || null,
           tripReason: tripReason || null,
           notes,
@@ -2391,9 +2439,12 @@ export function ReservationCardEditor({
                   })
                 : pendingStayAction === 'checkOut'
                   ? t('stayActionCheckOut')
-                  : checkInTime < '14:00'
-                    ? t('stayActionEarlyHour')
-                    : t('stayActionCheckIn')}
+                  : pendingStayAction === 'checkIn' &&
+                    checkIn < (pricingBusinessDate ?? todayBakuYmd())
+                  ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
+                    : checkInTime < '14:00'
+                      ? t('stayActionEarlyHour')
+                      : t('stayActionCheckIn')}
           </span>
           <span className="flex gap-2">
             <button
@@ -2676,6 +2727,10 @@ export function ReservationCardEditor({
                     setGuestCardOpen(true);
                   }}
                   packageOptions={medicalPackageChoices(ratePlans)}
+                  showMedicalPackages={ratePlanRequiresGuestPackage({
+                    code: ratePlans.find((row) => row.id === ratePlanId)?.code,
+                    medicalFlag: ratePlans.find((row) => row.id === ratePlanId)?.medicalFlag,
+                  })}
                 />
               )}
 
@@ -2944,6 +2999,16 @@ export function ReservationCardEditor({
                   toRoom?: { roomNumber: string } | null;
                   reasonCode?: string | null;
                   notes?: string | null;
+                }>)
+              : []
+          }
+          tariffChanges={
+            Array.isArray(data?.tariffChanges)
+              ? (data.tariffChanges as Array<{
+                  id: string;
+                  effectiveAt: string;
+                  fromCode?: string | null;
+                  toCode?: string | null;
                 }>)
               : []
           }

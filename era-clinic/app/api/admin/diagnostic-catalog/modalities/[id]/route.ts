@@ -14,6 +14,7 @@ const updateSchema = z.object({
   titleAz: z.string().min(1).optional(),
   sortOrder: z.number().int().optional(),
   active: z.boolean().optional(),
+  hotelRevenueCode: z.string().nullable().optional(),
 });
 
 export async function PATCH(

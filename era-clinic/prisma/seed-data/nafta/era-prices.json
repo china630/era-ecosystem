@@ -90,12 +90,42 @@
     "department": "Laboratuar Müayinə"
   },
   {
-    "code": "LAB-BIOCHEM",
+    "code": "LAB-BIOCHEM-STANDART",
     "descriptionAz": "Ümumi müayinə paneli (Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*)",
     "descriptionRu": "Общая метабоическая панель",
     "descriptionEn": "Comprhensice kit",
     "description": "Общая метабоическая панель",
     "amount": 30,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-BIOCHEM-DETOKS",
+    "descriptionAz": "Ümumi müayinə paneli (Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*)",
+    "descriptionRu": "Общая метабоическая панель",
+    "descriptionEn": "Comprhensice kit",
+    "description": "Общая метабоическая панель",
+    "amount": 40,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-BIOCHEM-DERMA",
+    "descriptionAz": "Ümumi müayinə paneli (Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*)",
+    "descriptionRu": "Общая метабоическая панель",
+    "descriptionEn": "Comprhensice kit",
+    "description": "Общая метабоическая панель",
+    "amount": 50,
+    "packageIncluded": false,
+    "department": "Laboratuar Müayinə"
+  },
+  {
+    "code": "LAB-BIOCHEM-PREMIUM",
+    "descriptionAz": "Ümumi müayinə paneli (Urea, Crea, GLU, ALT, AST, UA, HDL, TC, TG, LDL*)",
+    "descriptionRu": "Общая метабоическая панель",
+    "descriptionEn": "Comprhensice kit",
+    "description": "Общая метабоическая панель",
+    "amount": 60,
     "packageIncluded": false,
     "department": "Laboratuar Müayinə"
   },

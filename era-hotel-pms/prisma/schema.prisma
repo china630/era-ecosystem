@@ -118,6 +118,13 @@ enum PartyBillingMode {
   EQUAL
 }
 
+/// Who pays the stay. COMP = room nights free, extras billed. HOUSE = nothing billed to the guest.
+enum StayBillingMode {
+  NORMAL
+  COMP
+  HOUSE
+}
+
 enum FolioDepositStatus {
   HELD
   APPLIED
@@ -1537,6 +1544,8 @@ model Reservation {
   shareBedIndex Int?
   /** PRIMARY = one folio owner; EQUAL = each party member has own GUEST folio. */
   partyBillingMode PartyBillingMode @default(PRIMARY)
+  /** Room nights free (COMP) or the whole stay non-chargeable (HOUSE). */
+  billingMode   StayBillingMode   @default(NORMAL)
   optionDate    DateTime?
   optionState   String?
   salesProject  String?
@@ -1561,6 +1570,7 @@ model Reservation {
   dailyRates    ReservationDailyRate[]
   staySlices    ReservationStaySlice[]
   roomChanges   RoomChangePlan[]
+  tariffChanges StayTariffChange[]
   folios        Folio[]
   folioSettlements FolioSettlement[]
   folioDeposits FolioDeposit[]
@@ -1782,6 +1792,23 @@ enum RoomChangeStatus {
   PENDING
   APPLIED
   CANCELLED
+}
+
+/// Append-only log when the charged rate plan changes on a stay.
+model StayTariffChange {
+  id             String      @id @default(uuid())
+  organizationId String
+  reservationId  String
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  effectiveAt    DateTime
+  fromRatePlanId String?
+  toRatePlanId   String?
+  fromCode       String?
+  toCode         String?
+  createdAt      DateTime    @default(now())
+
+  @@index([reservationId, effectiveAt])
+  @@index([organizationId])
 }
 
 model PromotionCode {

@@ -31,6 +31,7 @@ export const reservationFullPatchSchema = z.object({
   paidBy: z.string().nullable().optional(),
   vipType: z.string().nullable().optional(),
   accomType: z.string().nullable().optional(),
+  billingMode: z.enum(['NORMAL', 'COMP', 'HOUSE']).optional(),
   recordType: z.string().nullable().optional(),
   specialStates: z.string().nullable().optional(),
   tripReason: z.string().nullable().optional(),

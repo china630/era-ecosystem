@@ -17,7 +17,7 @@ import {
   isoDate,
   rateAdjExternalRef,
 } from '@/lib/services/door-type.policy';
-import { dispatchStayProductChanged } from '@/lib/integration/guest-lifecycle-events';
+import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-events';
 
 function dateOnly(d: Date): Date {
   return bakuCivilUtcDate(hotelDateKey(d));
@@ -50,6 +50,31 @@ export async function previewStayAmendment(input: {
       ? res.ratePlan
       : await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
   if (!plan) throw new Error('Rate plan not found');
+
+  if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+    const nightlyRates: Array<{ date: string; amount: number }> = [];
+    let cursor = hotelDateKey(res.checkInDate);
+    const depart = hotelDateKey(res.checkOutDate);
+    while (cursor < depart) {
+      nightlyRates.push({ date: cursor, amount: 0 });
+      cursor = addHotelDays(cursor, 1);
+    }
+    const nights: Array<{ date: string; old: number; next: number; locked: boolean }> = [];
+    const lockedNights: string[] = [];
+    for (const n of nightlyRates) {
+      const existing = res.dailyRates.find((r) => isoDate(r.stayDate) === n.date);
+      const locked = Boolean(existing?.manualFlag);
+      if (locked) lockedNights.push(n.date);
+      const old = existing ? decimalToNumber(existing.amount) : 0;
+      nights.push({
+        date: n.date,
+        old,
+        next: locked ? old : 0,
+        locked,
+      });
+    }
+    return { nights, folioImpact: 'NONE' as const, differenceAmount: 0, lockedNights };
+  }
 
   const ownNights = async () => {
     const legacy = await quoteBookingRate({
@@ -147,9 +172,27 @@ export async function applyStayAmendment(input: {
   const preview = await previewStayAmendment(input);
   const res = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    include: { ratePlan: true, guest: true, room: true },
+    include: {
+      ratePlan: true,
+      room: true,
+      paxGuests: { orderBy: { sortOrder: 'asc' } },
+    },
   });
   if (!res) throw new Error('Reservation not found');
+  const newPlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
+  const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  const guestPackageOnStay = newPlan ? ratePlanRequiresGuestPackage(newPlan) : false;
+  if (guestPackageOnStay) {
+    const named = res.paxGuests.filter(
+      (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim(),
+    );
+    const rows = named.length > 0 ? named : res.paxGuests;
+    if (rows.length === 0 || rows.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+      throw new Error('Select a medical package for each guest');
+    }
+  }
   const biz = await getCurrentBusinessDate();
   const effective = dateOnly(input.effectiveDate);
 
@@ -163,7 +206,6 @@ export async function applyStayAmendment(input: {
   });
 
   const headerSlice = await resolveStaySliceForDate(input.reservationId, biz);
-  const newPlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
   if (headerSlice) {
     await prisma.reservation.update({
       where: { id: input.reservationId },
@@ -200,19 +242,54 @@ export async function applyStayAmendment(input: {
     }
   }
 
+  if (input.ratePlanId !== res.ratePlanId) {
+    await prisma.stayTariffChange.create({
+      data: {
+        organizationId: res.organizationId,
+        reservationId: input.reservationId,
+        effectiveAt: effective,
+        fromRatePlanId: res.ratePlanId,
+        toRatePlanId: input.ratePlanId,
+        fromCode: res.ratePlan.code,
+        toCode: newPlan?.code ?? null,
+      },
+    });
+  }
+
+  if (!guestPackageOnStay) {
+    await prisma.reservationGuest.updateMany({
+      where: { reservationId: input.reservationId, medicalPackageCode: { not: null } },
+      data: { medicalPackageCode: null },
+    });
+    await prisma.reservation.update({
+      where: { id: input.reservationId },
+      data: { medicalPackageCode: null },
+    });
+  }
+
   if (res.status === 'IN_HOUSE') {
-    void dispatchStayProductChanged({
-      reservationId: input.reservationId,
-      programCode: newPlan?.medicalFlag ? newPlan.code : undefined,
-      previousProgramCode: res.ratePlan.medicalFlag ? res.ratePlan.code : undefined,
-      effectiveDate: isoDate(effective),
-      roomTypeId: input.roomTypeId,
-      ratePlanId: input.ratePlanId,
-      globalPersonId: res.guest.globalPersonId ?? undefined,
-      roomNumber: res.room?.roomNumber,
-      checkInDate: res.checkInDate.toISOString(),
-      checkOutDate: res.checkOutDate.toISOString(),
-    }).catch((e) => console.error('Stay product event failed', e));
+    const nextPax = await prisma.reservationGuest.findMany({
+      where: { reservationId: input.reservationId },
+      orderBy: { sortOrder: 'asc' },
+      include: { guest: true },
+    });
+    const previousCodes = res.paxGuests.map((g) => g.medicalPackageCode ?? '').join('|');
+    const nextCodes = nextPax.map((g) => g.medicalPackageCode ?? '').join('|');
+    if (previousCodes !== nextCodes) {
+      const previousProgram =
+        res.paxGuests.find((g) => g.medicalPackageCode)?.medicalPackageCode ??
+        res.medicalPackageCode ??
+        undefined;
+      await fanOutClinicMedicalPackages({
+        status: res.status,
+        reservationId: input.reservationId,
+        roomNumber: res.room?.roomNumber ?? undefined,
+        checkInDate: res.checkInDate.toISOString(),
+        checkOutDate: res.checkOutDate.toISOString(),
+        previousProgramCode: previousProgram ?? undefined,
+        pax: nextPax,
+      }).catch((e) => console.error('Stay product event failed', e));
+    }
   }
 
   return { ok: true, preview };

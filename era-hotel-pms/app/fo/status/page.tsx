@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { addBakuDays, bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { DatePicker, showApiError } from '@era/satellite-kit/ui';
+import { DatePicker, MODAL_CHECKBOX_CLASS, showApiError } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
-import type { FlowCard, ForecastPoint, FoStatusSnapshot, StatusListRow, TypeMatrix } from '@/lib/services/fo-status-dashboard.math';
+import { AgeBoardChart, BoardDayChart, chartColor, ColumnChart, LineChart, PieChart, RoomTypeChart } from '@/components/FoStatusCharts';
+import type { FlowCard, FoStatusSnapshot, StatusListRow, TypeMatrix } from '@/lib/services/fo-status-dashboard.math';
 
 type Payload = FoStatusSnapshot & {
   reportedAt: string;
@@ -34,18 +35,6 @@ function percent(n: number | null): string {
 function ddmm(ymd: string): string {
   const [, m, d] = ymd.split('-');
   return `${d}.${m}`;
-}
-
-function conic(parts: { value: number; color: string }[]): string {
-  const total = parts.reduce((s, p) => s + p.value, 0);
-  if (total <= 0) return 'conic-gradient(#e5e7eb 0 100%)';
-  let cursor = 0;
-  const stops = parts.map((p) => {
-    const start = cursor;
-    cursor += (p.value / total) * 100;
-    return `${p.color} ${start}% ${cursor}%`;
-  });
-  return `conic-gradient(${stops.join(',')})`;
 }
 
 function MatrixCard({ title, matrix }: { title: string; matrix: TypeMatrix }) {
@@ -130,89 +119,18 @@ function FlowSection({ title, card }: { title: string; card: FlowCard }) {
   );
 }
 
-function StackedChart({
-  title,
-  points,
-  series,
-  grid,
-  grouped = false,
-}: {
-  title: string;
-  points: ForecastPoint[];
-  series: { key: keyof ForecastPoint; label: string; color: string }[];
-  grid: boolean;
-  /** Parallel series (arrivals vs departures). A stack would add them together. */
-  grouped?: boolean;
-}) {
-  const max = Math.max(
-    1,
-    ...points.map((p) =>
-      grouped
-        ? Math.max(...series.map((s) => Number(p[s.key] ?? 0)))
-        : series.reduce((sum, s) => sum + Number(p[s.key] ?? 0), 0),
-    ),
-  );
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-3">
-      <h2 className="mb-2 text-[13px] font-medium text-slate-700">{title}</h2>
-      {grid ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[11px]">
-            <thead>
-              <tr className="text-slate-500">
-                <th className="py-1 pr-2">{title}</th>
-                {points.map((p) => (
-                  <th key={p.day} className="px-1 py-1 font-medium">{ddmm(p.day)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {series.map((s) => (
-                <tr key={s.label}>
-                  <td className="py-1 pr-2 text-slate-600">{s.label}</td>
-                  {points.map((p) => (
-                    <td key={p.day} className="px-1 py-1">{String(p[s.key] ?? 0)}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {points.map((p) => (
-            <div key={p.day} className="flex items-center gap-2">
-              <span className="w-10 shrink-0 text-[10px] text-slate-500">{ddmm(p.day)}</span>
-              <div className={`flex h-3 flex-1 overflow-hidden rounded-sm bg-slate-100 ${grouped ? 'gap-0.5' : ''}`}>
-                {series.map((s) => (
-                  <div
-                    key={s.label}
-                    style={{
-                      width: `${(Number(p[s.key] ?? 0) / max) * (grouped ? 100 / series.length : 100)}%`,
-                      background: s.color,
-                    }}
-                    title={`${s.label}: ${String(p[s.key] ?? 0)}`}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-600">
-        {series.map((s) => (
-          <li key={s.label} className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2" style={{ background: s.color }} />
-            {s.label}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 const RES_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW'] as const;
-const PAY_METHODS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS', 'DEPOSIT', 'COMPANY_ACCOUNT', 'EPOINT', 'CL_AGENCY', 'CL_COMPANY'] as const;
+const AGE_COLORS: Record<string, string> = {
+  age0: '#ffc107',
+  age3: '#ff9800',
+  age7: '#f44336',
+  age13: '#9c27b0',
+  age18: '#03a9f4',
+  age25: '#8bc34a',
+  age40: '#2e7d32',
+  ageUnknown: '#9e9e9e',
+};
+const FOLIO_LABEL = { GUEST: 'folioGuest', COMPANY: 'folioCompany', AGENCY: 'folioAgency' } as const;
 
 function dmy(ymd: string): string {
   const [y, m, d] = ymd.split('-');
@@ -265,7 +183,6 @@ function StayTable({ rows, onOpen }: { rows: StatusListRow[]; onOpen: (id: strin
 
 export default function FoStatusPage() {
   const t = useTranslations('foStatus');
-  const tPay = useTranslations('paymentMethod');
   const tc = useTranslations('common');
   const locale = useLocale();
   const [day, setDay] = useState('');
@@ -374,15 +291,15 @@ export default function FoStatusPage() {
 
       <div className="mb-3 flex flex-wrap gap-4 text-[12px] text-slate-600">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={waiting} onChange={(e) => setWaiting(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={waiting} onChange={(e) => setWaiting(e.target.checked)} />
           {t('includingWaiting')}
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={withRevenue} onChange={(e) => setWithRevenue(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={withRevenue} onChange={(e) => setWithRevenue(e.target.checked)} />
           {t('withRevenue')}
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={grid} onChange={(e) => setGrid(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={grid} onChange={(e) => setGrid(e.target.checked)} />
           {t('gridView')}
         </label>
       </div>
@@ -423,125 +340,109 @@ export default function FoStatusPage() {
                   </tbody>
                 </table>
               </section>
-              <section className="rounded-lg border border-slate-200 bg-white p-3">
-                <h2 className="mb-3 text-[14px] font-medium">{t('roomStatus')}</h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <PieBlock title={t('cleanState')} parts={cleanParts} />
-                  <PieBlock title={t('occupancy')} parts={occParts} />
-                </div>
-              </section>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <PieChart title={t('cleanState')} parts={cleanParts} />
+                <PieChart title={t('occupancy')} parts={occParts} />
+              </div>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-2">
-              <StackedChart
+              <ColumnChart
                 title={t('availability')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
+                stacked
                 grid={grid}
+                hint="segment"
+                formatValue={(value) =>
+                  data.capacity > 0 ? `${value} (${Math.round((value / data.capacity) * 100)}%)` : String(value)
+                }
                 series={[
-                  { key: 'occupied', label: t('resOccupied'), color: '#80d8ff' },
-                  { key: 'available', label: t('availableRooms'), color: '#ffe082' },
-                  { key: 'blocks', label: t('blockOccupied'), color: '#b388ff' },
-                  { key: 'closed', label: t('closedRooms'), color: '#546e7a' },
+                  { label: t('resOccupied'), color: '#80d8ffaa', values: data.forecast.map((point) => point.occupied) },
+                  { label: t('availableRooms'), color: '#ffff8daa', values: data.forecast.map((point) => point.available) },
+                  { label: t('blockOccupied'), color: '#b388ffaa', values: data.forecast.map((point) => point.blocks) },
+                  { label: t('closedRooms'), color: '#37474faa', values: data.forecast.map((point) => point.closed) },
                 ]}
               />
-              <StackedChart
+              <ColumnChart
                 title={t('arrivalsDepartures')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
                 grid={grid}
-                grouped
                 series={[
-                  { key: 'arriving', label: t('arrivingRooms'), color: '#ffe082' },
-                  { key: 'departing', label: t('departingRooms'), color: '#b388ff' },
-                  { key: 'occupied', label: t('totalOccupied'), color: '#80d8ff' },
+                  { label: t('arrivingRooms'), color: '#ffff8daa', values: data.forecast.map((point) => point.arriving) },
+                  { label: t('departingRooms'), color: '#b388ffaa', values: data.forecast.map((point) => point.departing) },
+                  { label: t('totalOccupied'), color: '#80d8ffaa', values: data.forecast.map((point) => point.occupied) },
                 ]}
               />
-              <StackedChart
+              <ColumnChart
                 title={t('occupancyChart')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
+                stacked
                 grid={grid}
                 series={[
-                  { key: 'individual', label: t('individual'), color: '#ffe082' },
-                  { key: 'group', label: t('groupOcc'), color: '#b388ff' },
+                  { label: t('individual'), color: '#ffff8daa', values: data.forecast.map((point) => point.individual) },
+                  { label: t('groupOcc'), color: '#b388ffaa', values: data.forecast.map((point) => point.group) },
                 ]}
               />
-              <StackedChart
+              <LineChart
                 title={t('roomRevenue')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
+                values={data.forecast.map((point) => point.revenue)}
+                color="#9C27B0"
+                seriesLabel={t('roomRevenue')}
                 grid={grid}
-                series={[{ key: 'revenue', label: t('roomRevenue'), color: '#9c27b0' }]}
+                formatValue={(value) => money(value)}
               />
-              <StackedChart
+              <AgeBoardChart
                 title={t('boardState')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
                 grid={grid}
-                series={[
-                  { key: 'adults', label: t('adult'), color: '#80d8ff' },
-                  { key: 'child1', label: t('child1'), color: '#ffe082' },
-                  { key: 'child2', label: t('child2'), color: '#b388ff' },
-                  { key: 'baby', label: t('baby'), color: '#546e7a' },
+                mealHints={data.forecast.map((point) => point.meals)}
+                mealLabels={{
+                  breakfast: t('breakfast'),
+                  lunch: t('lunch'),
+                  dinner: t('dinner'),
+                  adult: t('adult'),
+                  child1: t('child1'),
+                  child2: t('child2'),
+                  baby: t('baby'),
+                  total: t('total'),
+                }}
+                ages={[
+                  { key: 'adults', label: t('adult'), color: '#80d8ffaa' },
+                  { key: 'child1', label: t('child1'), color: '#f44336aa' },
+                  { key: 'child2', label: t('child2'), color: '#ffc107aa' },
+                  { key: 'baby', label: t('baby'), color: '#4caf50aa' },
+                ]}
+                groups={[
+                  {
+                    name: t('boardState'),
+                    adults: data.forecast.map((point) => point.adults),
+                    child1: data.forecast.map((point) => point.child1),
+                    child2: data.forecast.map((point) => point.child2),
+                    baby: data.forecast.map((point) => point.baby),
+                  },
                 ]}
               />
-              <StackedChart
+              <ColumnChart
                 title={t('accommodation')}
-                points={data.forecast}
+                labels={data.forecast.map((point) => ddmm(point.day))}
+                stacked
                 grid={grid}
                 series={[
-                  { key: 'sold', label: t('soldRooms'), color: '#0d47a1' },
-                  { key: 'complimentary', label: t('complimentary'), color: '#b388ff' },
-                  { key: 'houseUse', label: t('houseUse'), color: '#78909c' },
-                  { key: 'available', label: t('availableRooms'), color: '#ffe082' },
+                  { label: t('soldRooms'), color: '#0d47a1aa', values: data.forecast.map((point) => point.sold) },
+                  { label: t('complimentary'), color: '#b388ffaa', values: data.forecast.map((point) => point.complimentary) },
+                  { label: t('houseUse'), color: '#78909caa', values: data.forecast.map((point) => point.houseUse) },
+                  { label: t('availableRooms'), color: '#ffff8daa', values: data.forecast.map((point) => point.available) },
                 ]}
               />
             </div>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-3">
-              <h2 className="mb-2 text-[14px] font-medium">{t('roomTypeAvailability')}</h2>
-              <table className="w-full text-[12px]">
-                <thead>
-                  <tr className="text-right text-slate-500">
-                    <th className="py-1 text-left">{t('roomType')}</th>
-                    <th>{t('soldRooms')}</th>
-                    <th>{t('quota')}</th>
-                    <th>{t('availableRooms')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.roomTypes.map((rt) => (
-                    <tr key={rt.code} className="border-t border-slate-100">
-                      <td className="py-1 text-left">{rt.code} · {rt.name}</td>
-                      <td className="text-right">{rt.sold}</td>
-                      <td className="text-right">{rt.quota}</td>
-                      <td className="text-right">{rt.available}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <MiniList title={t('boardToday')} rows={data.board.map((b) => [b.code, String(b.rooms)])} />
-              <MiniList
-                title={t('ages')}
-                rows={[
-                  [t('adult'), String(data.ages.adults)],
-                  [t('child1'), String(data.ages.child1)],
-                  [t('child2'), String(data.ages.child2)],
-                  [t('baby'), String(data.ages.baby)],
-                ]}
-              />
-              <MiniList title={t('repeatGuests')} rows={[[t('repeatGuests'), String(data.repeatGuests)]]} />
-              <MiniList
-                title={t('folioTypes')}
-                rows={data.folioTypes.map((f) => [
-                  (PAY_METHODS as readonly string[]).includes(f.method) ? tPay(f.method as 'CASH') : f.method,
-                  String(f.count),
-                ])}
-              />
-            </div>
-            <section className="rounded-lg border border-slate-200 bg-white p-3">
-              <h2 className="mb-2 text-[14px] font-medium">{t('todayReservations')} ({data.todayReservations.length})</h2>
-              <StayTable rows={data.todayReservations} onOpen={setOpenId} />
-            </section>
+            <RoomTypeChart
+              title={t('roomTypeAvailability')}
+              soldLabel={t('soldRooms')}
+              availableLabel={t('availableRooms')}
+              rows={data.roomTypes.map((row) => ({ code: row.code, sold: row.sold, available: row.available }))}
+            />
           </div>
 
           <aside className="space-y-3">
@@ -593,6 +494,54 @@ export default function FoStatusPage() {
               </table>
               <p className="mt-2 text-[10px] text-slate-400">{t('fxHint')}</p>
             </section>
+            {data.forecast[0] ? (
+              <BoardDayChart
+                title={t('boardToday')}
+                board={data.forecast.find((point) => point.day === data.day)?.meals ?? data.forecast[0].meals}
+                labels={{
+                  breakfast: t('breakfast'),
+                  lunch: t('lunch'),
+                  dinner: t('dinner'),
+                  adult: t('adult'),
+                  child1: t('child1'),
+                  child2: t('child2'),
+                  baby: t('baby'),
+                  total: t('total'),
+                }}
+              />
+            ) : null}
+            <PieChart
+              title={t('ages')}
+              parts={data.ageBands.map((band) => ({
+                label: t(band.key as 'age0'),
+                value: band.count,
+                color: AGE_COLORS[band.key] ?? '#9e9e9e',
+              }))}
+            />
+            <PieChart
+              title={t('repeatGuests')}
+              parts={data.repeatBuckets.map((bucket, index) => ({
+                label: String(bucket.visits),
+                value: bucket.guests,
+                color: chartColor(index),
+              }))}
+            />
+            <PieChart
+              title={t('todayReservations')}
+              parts={data.todaySources.map((row, index) => ({
+                label: row.label === 'OTHERS' ? t('others') : row.label,
+                value: row.count,
+                color: chartColor(index),
+              }))}
+            />
+            <PieChart
+              title={t('folioTypes')}
+              parts={data.folioTypes.map((row, index) => ({
+                label: t(FOLIO_LABEL[row.type]),
+                value: row.count,
+                color: chartColor(index),
+              }))}
+            />
           </aside>
         </div>
       ) : null}
@@ -604,36 +553,3 @@ export default function FoStatusPage() {
   );
 }
 
-function PieBlock({ title, parts }: { title: string; parts: { label: string; value: number; color: string }[] }) {
-  return (
-    <div>
-      <h3 className="mb-2 text-center text-[12px] text-slate-500">{title}</h3>
-      <div className="mx-auto h-28 w-28 rounded-full" style={{ background: conic(parts) }} />
-      <ul className="mt-2 space-y-0.5 text-[11px] text-slate-600">
-        {parts.map((p) => (
-          <li key={p.label} className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2" style={{ background: p.color }} />
-            {p.label} ({p.value})
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function MiniList({ title, rows }: { title: string; rows: [string, string][] }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-3">
-      <h2 className="mb-2 text-[13px] font-medium">{title}</h2>
-      {rows.length === 0 ? <p className="text-[12px] text-slate-400">—</p> : null}
-      <dl className="space-y-1 text-[12px]">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-2">
-            <dt className="text-slate-500">{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}

@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import {
   CatalogField,
   Field,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
@@ -93,6 +95,10 @@ export function ReservationCardPricingTab({
 
   const stayTotal = useMemo(
     () => dailyRates.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+    [dailyRates],
+  );
+  const tariffTotal = useMemo(
+    () => dailyRates.reduce((sum, row) => sum + tariffOf(row), 0),
     [dailyRates],
   );
 
@@ -328,7 +334,7 @@ export function ReservationCardPricingTab({
                       <input
                         type="number"
                         step="0.01"
-                        className="w-24 rounded border border-[#D5DADF] bg-white px-1 py-0.5 text-right disabled:bg-transparent disabled:text-[#95A5A6]"
+                        className={`w-24 ${MODAL_INPUT_CLASS} text-right disabled:bg-transparent disabled:text-[#95A5A6]`}
                         value={row.amount}
                         disabled={locked}
                         onChange={(e) => {
@@ -353,6 +359,7 @@ export function ReservationCardPricingTab({
                     <td className="p-2 text-center">
                       <input
                         type="checkbox"
+                        className={MODAL_CHECKBOX_CLASS}
                         checked={Boolean(row.fixPrice)}
                         disabled={locked}
                         aria-label={t('nightFixed')}
@@ -383,10 +390,15 @@ export function ReservationCardPricingTab({
             </colgroup>
             <tbody>
               <tr>
-                <td className="px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]" colSpan={2}>
+                <td />
+                <td className="px-2 py-1.5 text-right text-[14px] font-medium text-[#95A5A6]">
+                  {money(tariffTotal)}
+                </td>
+                <td className="whitespace-nowrap px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]">
                   {t('stayGrandTotal')}: {money(stayTotal)} AZN
                 </td>
-                <td colSpan={2} />
+                <td />
+                <td />
               </tr>
             </tbody>
           </table>

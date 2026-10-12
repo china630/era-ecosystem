@@ -69,7 +69,13 @@ export function envelopeToNightAuditClosedEvent(
     businessDate: string;
     nightAuditId?: string;
     currency: "AZN";
-    saleLines?: Array<{ sku: string; qty: number; amount: number }>;
+    saleLines?: Array<{
+      sku: string;
+      qty: number;
+      amount: number;
+      revenueCode?: string;
+      glAccountCode?: string;
+    }>;
     revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
     paymentLines: Array<{ method: string; amount: number }>;
   };
@@ -88,6 +94,8 @@ export function envelopeToNightAuditClosedEvent(
           sku: line.sku.trim(),
           qty: line.qty,
           amount: line.amount,
+          revenueCode: line.revenueCode?.trim() ?? '',
+          glAccountCode: line.glAccountCode?.trim() ?? '',
         })),
       revenueLines: payload.revenueLines.map((line) => ({
         revenueCode: line.revenueCode,

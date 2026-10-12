@@ -109,7 +109,7 @@ export function SellPriceGrid({ mode }: { mode: 'package' | 'daily' }) {
       if (!planId) {
         const preferred =
           mode === 'daily'
-            ? list.find((p) => p.code.toUpperCase() === 'DAILY RATES') ?? list[0]
+            ? list.find((p) => p.code.toUpperCase() === 'WALKIN') ?? list[0]
             : list[0];
         if (preferred) setPlanId(preferred.id);
       }

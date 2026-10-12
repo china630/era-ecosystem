@@ -21,7 +21,13 @@ type TxLike = Pick<
 export async function stampMedicalPackagesForReservation(
   tx: TxLike,
   reservationId: string,
-  opts?: { foPerGuestCodes?: Array<string | null | undefined> },
+  opts?: {
+    foPerGuestCodes?: Array<string | null | undefined>;
+    /** Elektra import: leisure agency label skips clinic when the tariff is not medical. */
+    applyLeisureAgencyRule?: boolean;
+    /** Default true for Elektra/import. Front office passes false. */
+    inheritRatePlanPackage?: boolean;
+  },
 ): Promise<{
   unanimousCode: MedicalPackageCode | null;
   unresolved: boolean;
@@ -74,6 +80,8 @@ export async function stampMedicalPackagesForReservation(
     guests,
     ratePlanCode: reservation.ratePlan.code,
     agencyPackageCode: reservation.agency?.medicalPackageCode ?? null,
+    applyLeisureAgencyRule: opts?.applyLeisureAgencyRule,
+    inheritRatePlanPackage: opts?.inheritRatePlanPackage,
   });
 
   if (opts?.foPerGuestCodes) {

@@ -25,7 +25,7 @@ Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the r
 | Visit templates | 13 |
 | Check-up packages | 8 |
 
-v1.2 lab adds: Sysmex CBC extras (`MCV`…`PLT-PCT`), Nafta liver/renal/cardiac/electrolyte fields (`IBIL`, `TCO2`, `VLDL`, `LDH`/`HBDH`/`CK`, `TT3`/`TT4`), urine mucus/salts, `LAB-SMEAR`, `LAB-BIOCHEM-EXT`, `LAB-CELIAC`.
+v1.2 lab adds: Sysmex CBC extras (`MCV`…`PLT-PCT`), Nafta liver/renal/cardiac/electrolyte fields (`IBIL`, `TCO2`, `VLDL`, `LDH`/`HBDH`/`CK`, `TT3`/`TT4`), urine mucus/salts, `LAB-SMEAR`, `LAB-BIOCHEM-EXT`, `LAB-CELIAC`. The standard biochemistry panel code is `LAB-BIOCHEM-STANDART` (same titles and analytes as the former `LAB-BIOCHEM`). `LAB-BIOCHEM-DETOKS`, `LAB-BIOCHEM-DERMA`, and `LAB-BIOCHEM-PREMIUM` are copies of that panel. Nafta price-list amounts: 30 / 40 / 50 / 60 AZN. Issued orders keep the code they were created with.
 
 ---
 
@@ -77,11 +77,11 @@ Also: mammography, DXA
 
 ---
 
-## 2. Laboratory panels (48)
+## 2. Laboratory panels (51)
 
 | Group | Codes (examples) |
 |-------|------------------|
-| Core | `LAB-CBC`, `LAB-BIOCHEM`, `LAB-BIOCHEM-EXT`, `LAB-ELECTRO`, `LAB-COAG`, `LAB-GLUCOSE`, `LAB-URINE`, `LAB-SMEAR` |
+| Core | `LAB-CBC`, `LAB-BIOCHEM-STANDART`, `LAB-BIOCHEM-DETOKS`, `LAB-BIOCHEM-DERMA`, `LAB-BIOCHEM-PREMIUM`, `LAB-BIOCHEM-EXT`, `LAB-ELECTRO`, `LAB-COAG`, `LAB-GLUCOSE`, `LAB-URINE`, `LAB-SMEAR` |
 | Organs | `LAB-LIVER`, `LAB-LIPID`, `LAB-RENAL`, `LAB-CARDIAC`, `LAB-INFLAM` |
 | Hormones | `LAB-THYROID`, `LAB-SEX-HORM`, `LAB-ENDO-HORM`, `LAB-BHCG` |
 | Infection | `LAB-INFECT`, `LAB-TORCH`, `LAB-HEP-EXT`, `LAB-INFECT-REG`, `LAB-TB-IGRA`, `LAB-RESP-PCR`, `LAB-PCR-STI` |

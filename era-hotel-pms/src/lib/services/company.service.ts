@@ -1,3 +1,4 @@
+import { requestFinanceCardIfMissing } from '@/lib/integration/finance-card-request';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { toDecimal } from '@/lib/decimal';
@@ -32,9 +33,13 @@ export async function upsertCompany(input: {
     active: input.active ?? true,
   };
   if (input.id) {
-    return prisma.company.update({ where: { id: input.id }, data });
+    const row = await prisma.company.update({ where: { id: input.id }, data });
+    await requestFinanceCardIfMissing({ voen: row.voen, name: row.name, partyKind: 'COMPANY' });
+    return row;
   }
-  return prisma.company.create({
+  const row = await prisma.company.create({
     data: { ...data, organizationId: org },
   });
+  await requestFinanceCardIfMissing({ voen: row.voen, name: row.name, partyKind: 'COMPANY' });
+  return row;
 }

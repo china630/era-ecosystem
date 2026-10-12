@@ -16,6 +16,7 @@ export interface StayRow {
   adults: number;
   children: number;
   accomType: string | null;
+  billingMode?: string | null;
   totalAmount: number;
 }
 
@@ -70,6 +71,7 @@ export async function loadStays(
       children5_2: true,
       children1_0: true,
       accomType: true,
+      billingMode: true,
       totalAmount: true,
     },
   });
@@ -85,6 +87,7 @@ export async function loadStays(
     adults: r.adults ?? 0,
     children: (r.children11_6 ?? 0) + (r.children5_2 ?? 0) + (r.children1_0 ?? 0),
     accomType: r.accomType,
+    billingMode: r.billingMode,
     totalAmount: Number(r.totalAmount),
   }));
 }
@@ -103,6 +106,12 @@ function accomKind(value: string | null): 'COMP' | 'HOUSE' | null {
   if (v.startsWith('COMP')) return 'COMP';
   if (v.startsWith('HOUSE') || v === 'HU') return 'HOUSE';
   return null;
+}
+
+function stayCompKind(stay: { billingMode?: string | null; accomType: string | null }): 'COMP' | 'HOUSE' | null {
+  if (stay.billingMode === 'COMP') return 'COMP';
+  if (stay.billingMode === 'HOUSE') return 'HOUSE';
+  return accomKind(stay.accomType);
 }
 
 export interface StayDay {
@@ -143,7 +152,7 @@ export function indexStayDays(stays: StayRow[], fromYmd: string, toYmd: string):
     if (s.outYmd <= fromYmd || s.inYmd > toYmd) continue;
     const start = s.inYmd < fromYmd ? 0 : (position.get(s.inYmd) ?? 0);
     const end = s.outYmd > toYmd ? days.length : (position.get(s.outYmd) ?? days.length);
-    const kind = accomKind(s.accomType);
+    const kind = stayCompKind(s);
     for (let i = start; i < end; i++) {
       let counted = 0;
       if (s.roomId) {

@@ -3038,6 +3038,9 @@ export const resources = {
       },
       counterparties: {
         title: "Контрагенты",
+        importExcel: "Импорт Excel",
+        importTemplate: "Шаблон Excel",
+        cardQueue: "Нет карточки",
         subtitle: "Покупатели и поставщики для счетов и банка.",
         search: "Поиск по имени или VÖEN…",
         newSection: "Новый контрагент",
@@ -3174,6 +3177,8 @@ export const resources = {
       products: {
         title: "Товары",
         catalogPageTitle: "Товары и услуги",
+        importExcel: "Импорт Excel",
+        importTemplate: "Шаблон Excel",
         subtitle: "Номенклатура для счетов и склада.",
         newBtn: "Создать товар",
         addDropdownLabel: "Добавить",
@@ -3951,6 +3956,11 @@ export const resources = {
         subtitle:
           "Локальные счета организации. Недостающие позиции можно добавить из глобального справочника NAS.",
         addFromCatalog: "Добавить из справочника NAS",
+        addSubaccount: "Добавить субсчёт",
+        subParent: "Родитель",
+        subParentPh: "Счёт",
+        subCode: "Субсчёт",
+        subName: "Название",
         modalTitle: "Справочник NAS (ещё не в плане)",
         searchPlaceholder: "Поиск по коду или названию…",
         colCode: "Код",
@@ -7782,6 +7792,9 @@ export const resources = {
       },
       counterparties: {
         title: "Kontragentlər",
+        importExcel: "Excel idxalı",
+        importTemplate: "Excel şablonu",
+        cardQueue: "Kart yoxdur",
         subtitle: "Hesab və bank üçün alıcılar və təchizatçılar.",
         search: "Ad və ya VÖEN üzrə axtarış…",
         newSection: "Yeni kontragent",
@@ -7918,6 +7931,8 @@ export const resources = {
       products: {
         title: "Məhsullar",
         catalogPageTitle: "Məhsullar və Xidmətlər",
+        importExcel: "Excel idxalı",
+        importTemplate: "Excel şablonu",
         subtitle: "Hesab və anbar üçün nomenklatura.",
         newBtn: "Məhsul yarat",
         addDropdownLabel: "Əlavə et",
@@ -8694,6 +8709,11 @@ export const resources = {
         subtitle:
           "Təşkilatın yerli hesabları. Çatışmayan mövqeləri qlobal NAS kitabxanasından əlavə edə bilərsiniz.",
         addFromCatalog: "NAS kitabxanasından əlavə et",
+        addSubaccount: "Subhesab əlavə et",
+        subParent: "Valideyn",
+        subParentPh: "Hesab",
+        subCode: "Subhesab",
+        subName: "Ad",
         modalTitle: "NAS kitabxanası (planda yoxdur)",
         searchPlaceholder: "Kod və ya ad ilə axtar…",
         colCode: "Kod",

@@ -367,7 +367,7 @@ async function main() {
   const naftaPackages: Array<{ code: string; name: string; durationDays: number }> = [
     { code: "PKG-STANDART", name: "Nafta Standart", durationDays: 10 },
     { code: "PKG-PREMIUM", name: "Nafta Premium", durationDays: 10 },
-    { code: "PKG-DERMO", name: "Nafta Dermo", durationDays: 10 },
+    { code: "PKG-DERMA", name: "Nafta Dermo", durationDays: 10 },
     { code: "PKG-DETOKS", name: "Nafta Detoks", durationDays: 10 },
   ];
   for (const pkg of naftaPackages) {
@@ -469,7 +469,7 @@ async function main() {
     { nights: 14, qty: 12 },
     { nights: 21, qty: 16 },
   ]);
-  await seedBathKnots("PKG-DERMO", [
+  await seedBathKnots("PKG-DERMA", [
     { nights: 7, qty: 5 },
     { nights: 10, qty: 8 },
     { nights: 14, qty: 10 },
@@ -539,7 +539,7 @@ async function main() {
   }
   await seedExamKnots("PKG-STANDART", [5, 7, 8, 9, 10, 11, 12, 14, 21]);
   await seedExamKnots("PKG-PREMIUM", [7, 10, 14, 21]);
-  await seedExamKnots("PKG-DERMO", [7, 10, 14, 21]);
+  await seedExamKnots("PKG-DERMA", [7, 10, 14, 21]);
   await seedExamKnots("PKG-DETOKS", [7, 10, 14, 21]);
 
   const diagnosticCatalog = loadDiagnosticCatalog();

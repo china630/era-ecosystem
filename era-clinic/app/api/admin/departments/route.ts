@@ -10,6 +10,7 @@ const createSchema = z.object({
   nameAz: z.string().optional().nullable(),
   nameRu: z.string().optional().nullable(),
   nameEn: z.string().optional().nullable(),
+  hotelRevenueCode: z.string().nullable().optional(),
 });
 
 export async function GET(req: Request) {
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
         nameAz: body.nameAz?.trim() || null,
         nameRu: body.nameRu?.trim() || null,
         nameEn: body.nameEn?.trim() || null,
+        hotelRevenueCode: body.hotelRevenueCode?.trim() || null,
       },
     });
     return jsonOk(row, 201);

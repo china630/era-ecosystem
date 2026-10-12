@@ -1046,14 +1046,14 @@ c.packages = [
   {
     code: "PKG-BASIC",
     title: L("Check-up Basic", "Чекап базовый", "Check-up Basic"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM-STANDART", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO"],
   },
   {
     code: "PKG-WOMAN",
     title: L("Check-up Woman", "Чекап женский", "Check-up Women"),
     includes: [
       "LAB-CBC",
-      "LAB-BIOCHEM",
+      "LAB-BIOCHEM-STANDART",
       "LAB-THYROID",
       "LAB-URINE",
       "USG-PELVIC",
@@ -1065,14 +1065,14 @@ c.packages = [
   {
     code: "PKG-MAN",
     title: L("Check-up Man", "Чекап мужской", "Check-up Men"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-LIPID", "LAB-URINE", "USG-ABD", "USG-PROSTATE", "CARDIO-ECG"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM-STANDART", "LAB-LIPID", "LAB-URINE", "USG-ABD", "USG-PROSTATE", "CARDIO-ECG"],
   },
   {
     code: "PKG-SENIOR",
     title: L("Check-up Senior", "Чекап 50+", "Check-up 50+"),
     includes: [
       "LAB-CBC",
-      "LAB-BIOCHEM",
+      "LAB-BIOCHEM-STANDART",
       "LAB-LIPID",
       "LAB-GLUCOSE",
       "LAB-CARDIAC",
@@ -1095,7 +1095,7 @@ c.packages = [
   {
     code: "PKG-SAN-ADM",
     title: L("Sanatorium admission", "Поступление в санаторий", "Sanatoriya qəbul"),
-    includes: ["LAB-CBC", "LAB-BIOCHEM", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO", "VISIT-SANATORIUM-INTAKE"],
+    includes: ["LAB-CBC", "LAB-BIOCHEM-STANDART", "LAB-URINE", "CARDIO-ECG", "XR-FLUORO", "VISIT-SANATORIUM-INTAKE"],
   },
 ];
 

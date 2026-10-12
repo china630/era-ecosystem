@@ -15,14 +15,14 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const DEMO_MARKER = "demo:lab-usg-v1";
 
-const LAB_CODES = ["LAB-CBC", "LAB-BIOCHEM", "LAB-LIPID", "LAB-THYROID", "LAB-URINE", "LAB-LIVER"];
+const LAB_CODES = ["LAB-CBC", "LAB-BIOCHEM-STANDART", "LAB-LIPID", "LAB-THYROID", "LAB-URINE", "LAB-LIVER"];
 const USG_CODES = ["USG-ABD", "USG-THYROID", "USG-KIDNEY", "USG-SOFT", "USG-PELVIC"];
 const USG_MALE = ["USG-ABD", "USG-THYROID", "USG-KIDNEY", "USG-PROSTATE", "USG-SOFT"];
 const USG_FEMALE = ["USG-ABD", "USG-THYROID", "USG-KIDNEY", "USG-PELVIC", "USG-BREAST"];
 
 const AMOUNTS = {
   "LAB-CBC": 25,
-  "LAB-BIOCHEM": 45,
+  "LAB-BIOCHEM-STANDART": 45,
   "LAB-LIPID": 35,
   "LAB-THYROID": 40,
   "LAB-URINE": 15,

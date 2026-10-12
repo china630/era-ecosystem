@@ -10,6 +10,7 @@ const patchSchema = z.object({
   nameRu: z.string().optional().nullable(),
   nameEn: z.string().optional().nullable(),
   active: z.boolean().optional(),
+  hotelRevenueCode: z.string().nullable().optional(),
 });
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -30,6 +31,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
         ...(body.nameRu !== undefined ? { nameRu: body.nameRu?.trim() || null } : {}),
         ...(body.nameEn !== undefined ? { nameEn: body.nameEn?.trim() || null } : {}),
         ...(body.active !== undefined ? { active: body.active } : {}),
+        ...(body.hotelRevenueCode !== undefined
+          ? { hotelRevenueCode: body.hotelRevenueCode?.trim() || null }
+          : {}),
       },
     });
     const label = departmentFallbackLabel(row);

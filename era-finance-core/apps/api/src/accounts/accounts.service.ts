@@ -818,4 +818,75 @@ export class AccountsService {
       });
     });
   }
+
+  /**
+   * Analytical NAS account under an official parent. Code uses a dot (601.1).
+   * A hyphen is rejected. The row must exist before a night audit can credit it.
+   */
+  async createNasSubaccount(
+    organizationId: string,
+    input: { parentCode: string; code: string; name: string },
+  ) {
+    const parentCode = input.parentCode.trim();
+    const code = input.code.trim();
+    const name = input.name.trim();
+    if (!parentCode || !code || !name) {
+      throw new BadRequestException("parentCode, code and name are required");
+    }
+    if (code.includes("-") || parentCode.includes("-")) {
+      throw new BadRequestException("Account code uses a dot (601.1), not a hyphen");
+    }
+    const prefix = `${parentCode}.`;
+    if (!code.startsWith(prefix) || !/^[A-Za-z0-9]+(\.[A-Za-z0-9]+)*$/.test(code.slice(prefix.length))) {
+      throw new BadRequestException(`code must be ${parentCode}.<suffix>`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await this.accountingBooks?.ensureSystemBooks(organizationId, {}, tx);
+      const nasBook = this.accountingBooks
+        ? await this.accountingBooks.resolveByLedgerType(organizationId, LedgerType.NAS, tx)
+        : null;
+      if (!nasBook) {
+        throw new NotFoundException("Active NAS accounting book not found");
+      }
+      const parent = await tx.account.findFirst({
+        where: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
+          code: parentCode,
+          deletedAt: null,
+        },
+        select: { id: true, type: true },
+      });
+      if (!parent) {
+        throw new NotFoundException(`Parent account ${parentCode} not found`);
+      }
+      const exists = await tx.account.findFirst({
+        where: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          accountingBookId: nasBook.id,
+          code,
+        },
+        select: { id: true },
+      });
+      if (exists) throw new BadRequestException("Account code already exists");
+      return tx.account.create({
+        data: {
+          organizationId,
+          accountingBookId: nasBook.id,
+          ledgerType: LedgerType.NAS,
+          code,
+          nameAz: name,
+          nameRu: name,
+          nameEn: name,
+          type: parent.type,
+          currency: "AZN",
+          parentId: parent.id,
+        },
+        select: { id: true, code: true, nameAz: true, nameRu: true, nameEn: true, type: true },
+      });
+    });
+  }
 }
