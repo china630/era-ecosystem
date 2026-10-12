@@ -90,39 +90,48 @@ async function collectDayDocument(date: Date) {
     where: { businessDate: date },
   });
 
-  const saleBySku = new Map<string, { sku: string; qty: number; amount: number }>();
+  const saleByKey = new Map<
+    string,
+    { sku: string; qty: number; amount: number; revenueCode: string }
+  >();
   const revenueByCode = new Map<string, number>();
-  const addSale = (sku: string | null | undefined, qty: number, amount: number) => {
+  const addSale = (
+    sku: string | null | undefined,
+    qty: number,
+    amount: number,
+    revenueCode: string,
+  ) => {
     const trimmed = sku?.trim();
     if (!trimmed) return false;
-    const key = trimmed.toLowerCase();
-    const row = saleBySku.get(key) ?? { sku: trimmed, qty: 0, amount: 0 };
+    const code = revenueCode.trim();
+    const key = `${trimmed.toLowerCase()}|${code}`;
+    const row = saleByKey.get(key) ?? { sku: trimmed, qty: 0, amount: 0, revenueCode: code };
     row.qty += qty;
     row.amount = money2(row.amount + amount);
-    saleBySku.set(key, row);
+    saleByKey.set(key, row);
     return true;
   };
 
   for (const charge of charges) {
     const amount = money2(decimalToNumber(charge.amount) * charge.qty);
-    if (!addSale(charge.sku, charge.qty, amount)) {
-      const code = charge.revenueCode.code;
+    const code = charge.revenueCode.code;
+    if (!addSale(charge.sku, charge.qty, amount, code)) {
       revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
     }
   }
   for (const row of pending) {
     const amount = money2(decimalToNumber(row.amount));
-    if (!addSale(row.sku, row.qty, amount)) {
-      const code = row.revenueCode?.trim() || 'UNKNOWN';
+    const code = row.revenueCode?.trim() || 'UNKNOWN';
+    if (!addSale(row.sku, row.qty, amount, code)) {
       revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
     }
   }
   const consumption = await prisma.hkConsumption.findMany({ where: { businessDate: date } });
   for (const row of consumption) {
-    addSale(row.sku, decimalToNumber(row.qty), 0);
+    addSale(row.sku, decimalToNumber(row.qty), 0, '');
   }
 
-  const saleLines = [...saleBySku.values()].filter((line) => line.qty !== 0 || line.amount !== 0);
+  const saleLines = [...saleByKey.values()].filter((line) => line.qty !== 0 || line.amount !== 0);
   const revenueLines = [...revenueByCode.entries()]
     .filter(([, amount]) => amount !== 0)
     .map(([revenueCode, amount]) => ({ revenueCode, amount: money2(amount) }));

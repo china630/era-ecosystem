@@ -351,7 +351,7 @@ Doctor card (no curl):
 **Status:** Engineering SCREEN — not SHIPPED.
 
 1. Hotel check-in without resolved `programCode` → `/sanatorium` shows OPEN episode (patient not dropped).
-2. **Complete checkup** → Select one of `PKG-STANDART` / `PKG-PREMIUM` / `PKG-DERMO` / `PKG-DETOKS` (empty allowed until submit; ICD/complaint still required).
+2. **Complete checkup** → Select one of `PKG-STANDART` / `PKG-PREMIUM` / `PKG-DERMA` / `PKG-DETOKS` (empty allowed until submit; ICD/complaint still required).
 3. Walk-in registration uses the same four-code Select.
 4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
 5. Patient card «Gün planını aç» href lands on that deep link.

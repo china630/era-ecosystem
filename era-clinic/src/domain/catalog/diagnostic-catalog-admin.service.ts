@@ -40,10 +40,16 @@ export type ModalityInput = {
   titleAz: string;
   sortOrder?: number;
   active?: boolean;
+  hotelRevenueCode?: string | null;
 };
 
 export async function createModality(ctx: AuditCtx, data: ModalityInput) {
-  const row = await prisma.modality.create({ data });
+  const row = await prisma.modality.create({
+    data: {
+      ...data,
+      hotelRevenueCode: data.hotelRevenueCode?.trim() || null,
+    },
+  });
   await audit(ctx, "modality", row.id, "CREATE", data);
   invalidateDiagnosticCatalogCache();
   return row;
@@ -54,7 +60,15 @@ export async function updateModality(
   id: string,
   data: Partial<ModalityInput>,
 ) {
-  const row = await prisma.modality.update({ where: { id }, data });
+  const row = await prisma.modality.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(data.hotelRevenueCode !== undefined
+        ? { hotelRevenueCode: data.hotelRevenueCode?.trim() || null }
+        : {}),
+    },
+  });
   await audit(ctx, "modality", id, "UPDATE", data);
   invalidateDiagnosticCatalogCache();
   return row;
@@ -141,8 +155,16 @@ function toServicePersistData<T extends Partial<ServiceInput>>(
 }
 
 export async function createService(ctx: AuditCtx, data: ServiceInput) {
+  let hotelRevenueCode = data.hotelRevenueCode?.trim() || null;
+  if (!hotelRevenueCode) {
+    const modality = await prisma.modality.findUnique({
+      where: { id: data.modalityId },
+      select: { hotelRevenueCode: true },
+    });
+    hotelRevenueCode = modality?.hotelRevenueCode?.trim() || null;
+  }
   const row = await prisma.diagnosticService.create({
-    data: toServicePersistData(data),
+    data: toServicePersistData({ ...data, hotelRevenueCode }),
   });
   await audit(ctx, "diagnosticService", row.id, "CREATE", data);
   invalidateDiagnosticCatalogCache();

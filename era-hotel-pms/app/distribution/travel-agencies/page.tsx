@@ -538,7 +538,7 @@ export default function TravelAgenciesPage() {
             options={[
               { value: 'PKG-STANDART', label: 'PKG-STANDART' },
               { value: 'PKG-PREMIUM', label: 'PKG-PREMIUM' },
-              { value: 'PKG-DERMO', label: 'PKG-DERMO' },
+              { value: 'PKG-DERMA', label: 'PKG-DERMA' },
               { value: 'PKG-DETOKS', label: 'PKG-DETOKS' },
             ]}
             emptyLabel={t('medicalPackageNone')}

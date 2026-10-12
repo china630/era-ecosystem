@@ -54,6 +54,7 @@ export default function PriceListsPage() {
   const [validFrom, setValidFrom] = useState(() => todayBakuYmd());
   const [validTo, setValidTo] = useState("");
   const [channel, setChannel] = useState("");
+  const [channels, setChannels] = useState<string[]>([]);
   const [lines, setLines] = useState<LineForm[]>([{ productId: "", unitPrice: "" }]);
 
   const load = useCallback(async () => {
@@ -80,11 +81,20 @@ export default function PriceListsPage() {
     if (res.ok) setProducts(await res.json());
   }, [token]);
 
+  const loadChannels = useCallback(async () => {
+    if (!token) return;
+    const res = await apiFetch("/api/price-lists/channels");
+    if (!res.ok) return;
+    const body = (await res.json()) as { channels?: string[] };
+    setChannels(body.channels ?? []);
+  }, [token]);
+
   useEffect(() => {
     if (!ready || !token) return;
     void load();
     void loadProducts();
-  }, [load, loadProducts, ready, token]);
+    void loadChannels();
+  }, [load, loadProducts, loadChannels, ready, token]);
 
   function openCreate() {
     setEditId(null);
@@ -281,12 +291,20 @@ export default function PriceListsPage() {
               </div>
               <label className="block">
                 <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.channel")}</span>
-                <input
-                  className={`${MODAL_INPUT_CLASS} w-full`}
+                <select
+                  className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  placeholder={t("catalog.priceList.channelPh")}
-                />
+                >
+                  <option value="">{t("catalog.priceList.channelPh")}</option>
+                  {(channel && !channels.includes(channel) ? [channel, ...channels] : channels).map(
+                    (code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ),
+                  )}
+                </select>
               </label>
               <div>
                 <div className="mb-2 flex justify-between">

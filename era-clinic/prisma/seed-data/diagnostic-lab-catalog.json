@@ -4761,14 +4761,1103 @@
       ]
     },
     {
-      "code": "LAB-BIOCHEM",
+      "code": "LAB-BIOCHEM-STANDART",
       "category": "biochemistry",
       "title": {
         "en": "Blood biochemistry panel",
         "ru": "Биохимический анализ крови",
         "az": "Qanın biokimyəvi analizi"
       },
-      "serviceCode": "LAB-BIOCHEM",
+      "serviceCode": "LAB-BIOCHEM-STANDART",
+      "analytes": [
+        {
+          "code": "GLU",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Glucose",
+            "ru": "Глюкоза",
+            "az": "Qlükoza"
+          },
+          "refMin": "3.9",
+          "refMax": "6.1"
+        },
+        {
+          "code": "UREA",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Urea",
+            "ru": "Мочевина",
+            "az": "Karbamid"
+          },
+          "refMin": "2.5",
+          "refMax": "8.3"
+        },
+        {
+          "code": "CREA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Creatinine",
+            "ru": "Креатинин",
+            "az": "Kreatinin"
+          },
+          "refMin": "44",
+          "refMax": "104"
+        },
+        {
+          "code": "UA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Uric acid",
+            "ru": "Мочевая кислота",
+            "az": "Sidik turşusu"
+          }
+        },
+        {
+          "code": "TBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Total bilirubin",
+            "ru": "Билирубин общий",
+            "az": "Ümumi bilirubin"
+          },
+          "refMin": "3.4",
+          "refMax": "20.5"
+        },
+        {
+          "code": "DBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Direct bilirubin",
+            "ru": "Билирубин прямой",
+            "az": "Birbaşa bilirubin"
+          }
+        },
+        {
+          "code": "ALT",
+          "unit": "U/L",
+          "label": {
+            "en": "ALT",
+            "ru": "АЛТ",
+            "az": "ALT"
+          },
+          "refMin": "0",
+          "refMax": "41"
+        },
+        {
+          "code": "AST",
+          "unit": "U/L",
+          "label": {
+            "en": "AST",
+            "ru": "АСТ",
+            "az": "AST"
+          },
+          "refMin": "0",
+          "refMax": "40"
+        },
+        {
+          "code": "GGT",
+          "unit": "U/L",
+          "label": {
+            "en": "GGT",
+            "ru": "ГГТ",
+            "az": "GGT"
+          }
+        },
+        {
+          "code": "ALP",
+          "unit": "U/L",
+          "label": {
+            "en": "ALP",
+            "ru": "ЩФ",
+            "az": "ALP"
+          }
+        },
+        {
+          "code": "TP",
+          "unit": "g/L",
+          "label": {
+            "en": "Total protein",
+            "ru": "Белок общий",
+            "az": "Ümumi zülal"
+          },
+          "refMin": "64",
+          "refMax": "83"
+        },
+        {
+          "code": "ALB",
+          "unit": "g/L",
+          "label": {
+            "en": "Albumin",
+            "ru": "Альбумин",
+            "az": "Albumin"
+          }
+        },
+        {
+          "code": "CHOL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Cholesterol",
+            "ru": "Холестерин",
+            "az": "Xolesterol"
+          },
+          "refMin": "0",
+          "refMax": "5.2"
+        },
+        {
+          "code": "HDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "HDL",
+            "ru": "ЛПВП",
+            "az": "HDL"
+          }
+        },
+        {
+          "code": "LDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "LDL",
+            "ru": "ЛПНП",
+            "az": "LDL"
+          }
+        },
+        {
+          "code": "TRIG",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Triglycerides",
+            "ru": "Триглицериды",
+            "az": "Triqliseridlər"
+          }
+        },
+        {
+          "code": "CRP",
+          "unit": "mg/L",
+          "label": {
+            "en": "CRP",
+            "ru": "СРБ",
+            "az": "CRP"
+          },
+          "refMin": "0",
+          "refMax": "5"
+        },
+        {
+          "code": "IBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Indirect bilirubin",
+            "ru": "Билирубин непрямой",
+            "az": "Dolayı bilirubin"
+          }
+        },
+        {
+          "code": "GLOB",
+          "unit": "g/L",
+          "label": {
+            "en": "Globulin",
+            "ru": "Глобулин",
+            "az": "Qlobalin"
+          }
+        },
+        {
+          "code": "AG",
+          "unit": "",
+          "label": {
+            "en": "A/G ratio",
+            "ru": "А/Г",
+            "az": "A/G"
+          }
+        },
+        {
+          "code": "AMY",
+          "unit": "U/L",
+          "label": {
+            "en": "Amylase",
+            "ru": "Амилаза",
+            "az": "Amilaza"
+          }
+        },
+        {
+          "code": "LIPASE",
+          "unit": "U/L",
+          "label": {
+            "en": "Lipase",
+            "ru": "Липаза",
+            "az": "Lipaza"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "CK",
+          "unit": "U/L",
+          "label": {
+            "en": "CK",
+            "ru": "КК",
+            "az": "CK"
+          }
+        },
+        {
+          "code": "HBDH",
+          "unit": "U/L",
+          "label": {
+            "en": "HBDH",
+            "ru": "ГБДГ",
+            "az": "HBDH"
+          }
+        },
+        {
+          "code": "CHE",
+          "unit": "U/L",
+          "label": {
+            "en": "Cholinesterase",
+            "ru": "Холинэстераза",
+            "az": "Xolinesteraza"
+          }
+        },
+        {
+          "code": "LAC",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Lactate",
+            "ru": "Лактат",
+            "az": "Laktat"
+          }
+        },
+        {
+          "code": "NH3",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Ammonia",
+            "ru": "Аммиак",
+            "az": "Ammoniak"
+          }
+        },
+        {
+          "code": "BUN",
+          "unit": "mmol/L",
+          "label": {
+            "en": "BUN",
+            "ru": "Азот мочевины",
+            "az": "BUN"
+          }
+        },
+        {
+          "code": "BUN-CREA",
+          "unit": "",
+          "label": {
+            "en": "BUN/creatinine",
+            "ru": "Мочевина/креатинин",
+            "az": "Sidik cövhəri/kreatinin"
+          }
+        },
+        {
+          "code": "FE",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Iron",
+            "ru": "Железо",
+            "az": "Dəmir"
+          }
+        },
+        {
+          "code": "TIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "TIBC",
+            "ru": "ОЖСС",
+            "az": "TIBC"
+          }
+        },
+        {
+          "code": "UIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "UIBC",
+            "ru": "НЖСС",
+            "az": "UIBC"
+          }
+        },
+        {
+          "code": "FERR",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Ferritin",
+            "ru": "Ферритин",
+            "az": "Ferritin"
+          }
+        },
+        {
+          "code": "TRF",
+          "unit": "g/L",
+          "label": {
+            "en": "Transferrin",
+            "ru": "Трансферрин",
+            "az": "Transferrin"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-BIOCHEM-DETOKS",
+      "category": "biochemistry",
+      "title": {
+        "en": "Blood biochemistry panel",
+        "ru": "Биохимический анализ крови",
+        "az": "Qanın biokimyəvi analizi"
+      },
+      "serviceCode": "LAB-BIOCHEM-DETOKS",
+      "analytes": [
+        {
+          "code": "GLU",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Glucose",
+            "ru": "Глюкоза",
+            "az": "Qlükoza"
+          },
+          "refMin": "3.9",
+          "refMax": "6.1"
+        },
+        {
+          "code": "UREA",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Urea",
+            "ru": "Мочевина",
+            "az": "Karbamid"
+          },
+          "refMin": "2.5",
+          "refMax": "8.3"
+        },
+        {
+          "code": "CREA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Creatinine",
+            "ru": "Креатинин",
+            "az": "Kreatinin"
+          },
+          "refMin": "44",
+          "refMax": "104"
+        },
+        {
+          "code": "UA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Uric acid",
+            "ru": "Мочевая кислота",
+            "az": "Sidik turşusu"
+          }
+        },
+        {
+          "code": "TBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Total bilirubin",
+            "ru": "Билирубин общий",
+            "az": "Ümumi bilirubin"
+          },
+          "refMin": "3.4",
+          "refMax": "20.5"
+        },
+        {
+          "code": "DBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Direct bilirubin",
+            "ru": "Билирубин прямой",
+            "az": "Birbaşa bilirubin"
+          }
+        },
+        {
+          "code": "ALT",
+          "unit": "U/L",
+          "label": {
+            "en": "ALT",
+            "ru": "АЛТ",
+            "az": "ALT"
+          },
+          "refMin": "0",
+          "refMax": "41"
+        },
+        {
+          "code": "AST",
+          "unit": "U/L",
+          "label": {
+            "en": "AST",
+            "ru": "АСТ",
+            "az": "AST"
+          },
+          "refMin": "0",
+          "refMax": "40"
+        },
+        {
+          "code": "GGT",
+          "unit": "U/L",
+          "label": {
+            "en": "GGT",
+            "ru": "ГГТ",
+            "az": "GGT"
+          }
+        },
+        {
+          "code": "ALP",
+          "unit": "U/L",
+          "label": {
+            "en": "ALP",
+            "ru": "ЩФ",
+            "az": "ALP"
+          }
+        },
+        {
+          "code": "TP",
+          "unit": "g/L",
+          "label": {
+            "en": "Total protein",
+            "ru": "Белок общий",
+            "az": "Ümumi zülal"
+          },
+          "refMin": "64",
+          "refMax": "83"
+        },
+        {
+          "code": "ALB",
+          "unit": "g/L",
+          "label": {
+            "en": "Albumin",
+            "ru": "Альбумин",
+            "az": "Albumin"
+          }
+        },
+        {
+          "code": "CHOL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Cholesterol",
+            "ru": "Холестерин",
+            "az": "Xolesterol"
+          },
+          "refMin": "0",
+          "refMax": "5.2"
+        },
+        {
+          "code": "HDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "HDL",
+            "ru": "ЛПВП",
+            "az": "HDL"
+          }
+        },
+        {
+          "code": "LDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "LDL",
+            "ru": "ЛПНП",
+            "az": "LDL"
+          }
+        },
+        {
+          "code": "TRIG",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Triglycerides",
+            "ru": "Триглицериды",
+            "az": "Triqliseridlər"
+          }
+        },
+        {
+          "code": "CRP",
+          "unit": "mg/L",
+          "label": {
+            "en": "CRP",
+            "ru": "СРБ",
+            "az": "CRP"
+          },
+          "refMin": "0",
+          "refMax": "5"
+        },
+        {
+          "code": "IBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Indirect bilirubin",
+            "ru": "Билирубин непрямой",
+            "az": "Dolayı bilirubin"
+          }
+        },
+        {
+          "code": "GLOB",
+          "unit": "g/L",
+          "label": {
+            "en": "Globulin",
+            "ru": "Глобулин",
+            "az": "Qlobalin"
+          }
+        },
+        {
+          "code": "AG",
+          "unit": "",
+          "label": {
+            "en": "A/G ratio",
+            "ru": "А/Г",
+            "az": "A/G"
+          }
+        },
+        {
+          "code": "AMY",
+          "unit": "U/L",
+          "label": {
+            "en": "Amylase",
+            "ru": "Амилаза",
+            "az": "Amilaza"
+          }
+        },
+        {
+          "code": "LIPASE",
+          "unit": "U/L",
+          "label": {
+            "en": "Lipase",
+            "ru": "Липаза",
+            "az": "Lipaza"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "CK",
+          "unit": "U/L",
+          "label": {
+            "en": "CK",
+            "ru": "КК",
+            "az": "CK"
+          }
+        },
+        {
+          "code": "HBDH",
+          "unit": "U/L",
+          "label": {
+            "en": "HBDH",
+            "ru": "ГБДГ",
+            "az": "HBDH"
+          }
+        },
+        {
+          "code": "CHE",
+          "unit": "U/L",
+          "label": {
+            "en": "Cholinesterase",
+            "ru": "Холинэстераза",
+            "az": "Xolinesteraza"
+          }
+        },
+        {
+          "code": "LAC",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Lactate",
+            "ru": "Лактат",
+            "az": "Laktat"
+          }
+        },
+        {
+          "code": "NH3",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Ammonia",
+            "ru": "Аммиак",
+            "az": "Ammoniak"
+          }
+        },
+        {
+          "code": "BUN",
+          "unit": "mmol/L",
+          "label": {
+            "en": "BUN",
+            "ru": "Азот мочевины",
+            "az": "BUN"
+          }
+        },
+        {
+          "code": "BUN-CREA",
+          "unit": "",
+          "label": {
+            "en": "BUN/creatinine",
+            "ru": "Мочевина/креатинин",
+            "az": "Sidik cövhəri/kreatinin"
+          }
+        },
+        {
+          "code": "FE",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Iron",
+            "ru": "Железо",
+            "az": "Dəmir"
+          }
+        },
+        {
+          "code": "TIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "TIBC",
+            "ru": "ОЖСС",
+            "az": "TIBC"
+          }
+        },
+        {
+          "code": "UIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "UIBC",
+            "ru": "НЖСС",
+            "az": "UIBC"
+          }
+        },
+        {
+          "code": "FERR",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Ferritin",
+            "ru": "Ферритин",
+            "az": "Ferritin"
+          }
+        },
+        {
+          "code": "TRF",
+          "unit": "g/L",
+          "label": {
+            "en": "Transferrin",
+            "ru": "Трансферрин",
+            "az": "Transferrin"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-BIOCHEM-DERMA",
+      "category": "biochemistry",
+      "title": {
+        "en": "Blood biochemistry panel",
+        "ru": "Биохимический анализ крови",
+        "az": "Qanın biokimyəvi analizi"
+      },
+      "serviceCode": "LAB-BIOCHEM-DERMA",
+      "analytes": [
+        {
+          "code": "GLU",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Glucose",
+            "ru": "Глюкоза",
+            "az": "Qlükoza"
+          },
+          "refMin": "3.9",
+          "refMax": "6.1"
+        },
+        {
+          "code": "UREA",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Urea",
+            "ru": "Мочевина",
+            "az": "Karbamid"
+          },
+          "refMin": "2.5",
+          "refMax": "8.3"
+        },
+        {
+          "code": "CREA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Creatinine",
+            "ru": "Креатинин",
+            "az": "Kreatinin"
+          },
+          "refMin": "44",
+          "refMax": "104"
+        },
+        {
+          "code": "UA",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Uric acid",
+            "ru": "Мочевая кислота",
+            "az": "Sidik turşusu"
+          }
+        },
+        {
+          "code": "TBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Total bilirubin",
+            "ru": "Билирубин общий",
+            "az": "Ümumi bilirubin"
+          },
+          "refMin": "3.4",
+          "refMax": "20.5"
+        },
+        {
+          "code": "DBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Direct bilirubin",
+            "ru": "Билирубин прямой",
+            "az": "Birbaşa bilirubin"
+          }
+        },
+        {
+          "code": "ALT",
+          "unit": "U/L",
+          "label": {
+            "en": "ALT",
+            "ru": "АЛТ",
+            "az": "ALT"
+          },
+          "refMin": "0",
+          "refMax": "41"
+        },
+        {
+          "code": "AST",
+          "unit": "U/L",
+          "label": {
+            "en": "AST",
+            "ru": "АСТ",
+            "az": "AST"
+          },
+          "refMin": "0",
+          "refMax": "40"
+        },
+        {
+          "code": "GGT",
+          "unit": "U/L",
+          "label": {
+            "en": "GGT",
+            "ru": "ГГТ",
+            "az": "GGT"
+          }
+        },
+        {
+          "code": "ALP",
+          "unit": "U/L",
+          "label": {
+            "en": "ALP",
+            "ru": "ЩФ",
+            "az": "ALP"
+          }
+        },
+        {
+          "code": "TP",
+          "unit": "g/L",
+          "label": {
+            "en": "Total protein",
+            "ru": "Белок общий",
+            "az": "Ümumi zülal"
+          },
+          "refMin": "64",
+          "refMax": "83"
+        },
+        {
+          "code": "ALB",
+          "unit": "g/L",
+          "label": {
+            "en": "Albumin",
+            "ru": "Альбумин",
+            "az": "Albumin"
+          }
+        },
+        {
+          "code": "CHOL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Cholesterol",
+            "ru": "Холестерин",
+            "az": "Xolesterol"
+          },
+          "refMin": "0",
+          "refMax": "5.2"
+        },
+        {
+          "code": "HDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "HDL",
+            "ru": "ЛПВП",
+            "az": "HDL"
+          }
+        },
+        {
+          "code": "LDL",
+          "unit": "mmol/L",
+          "label": {
+            "en": "LDL",
+            "ru": "ЛПНП",
+            "az": "LDL"
+          }
+        },
+        {
+          "code": "TRIG",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Triglycerides",
+            "ru": "Триглицериды",
+            "az": "Triqliseridlər"
+          }
+        },
+        {
+          "code": "CRP",
+          "unit": "mg/L",
+          "label": {
+            "en": "CRP",
+            "ru": "СРБ",
+            "az": "CRP"
+          },
+          "refMin": "0",
+          "refMax": "5"
+        },
+        {
+          "code": "IBIL",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Indirect bilirubin",
+            "ru": "Билирубин непрямой",
+            "az": "Dolayı bilirubin"
+          }
+        },
+        {
+          "code": "GLOB",
+          "unit": "g/L",
+          "label": {
+            "en": "Globulin",
+            "ru": "Глобулин",
+            "az": "Qlobalin"
+          }
+        },
+        {
+          "code": "AG",
+          "unit": "",
+          "label": {
+            "en": "A/G ratio",
+            "ru": "А/Г",
+            "az": "A/G"
+          }
+        },
+        {
+          "code": "AMY",
+          "unit": "U/L",
+          "label": {
+            "en": "Amylase",
+            "ru": "Амилаза",
+            "az": "Amilaza"
+          }
+        },
+        {
+          "code": "LIPASE",
+          "unit": "U/L",
+          "label": {
+            "en": "Lipase",
+            "ru": "Липаза",
+            "az": "Lipaza"
+          }
+        },
+        {
+          "code": "LDH",
+          "unit": "U/L",
+          "label": {
+            "en": "LDH",
+            "ru": "ЛДГ",
+            "az": "LDH"
+          }
+        },
+        {
+          "code": "CK",
+          "unit": "U/L",
+          "label": {
+            "en": "CK",
+            "ru": "КК",
+            "az": "CK"
+          }
+        },
+        {
+          "code": "HBDH",
+          "unit": "U/L",
+          "label": {
+            "en": "HBDH",
+            "ru": "ГБДГ",
+            "az": "HBDH"
+          }
+        },
+        {
+          "code": "CHE",
+          "unit": "U/L",
+          "label": {
+            "en": "Cholinesterase",
+            "ru": "Холинэстераза",
+            "az": "Xolinesteraza"
+          }
+        },
+        {
+          "code": "LAC",
+          "unit": "mmol/L",
+          "label": {
+            "en": "Lactate",
+            "ru": "Лактат",
+            "az": "Laktat"
+          }
+        },
+        {
+          "code": "NH3",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Ammonia",
+            "ru": "Аммиак",
+            "az": "Ammoniak"
+          }
+        },
+        {
+          "code": "BUN",
+          "unit": "mmol/L",
+          "label": {
+            "en": "BUN",
+            "ru": "Азот мочевины",
+            "az": "BUN"
+          }
+        },
+        {
+          "code": "BUN-CREA",
+          "unit": "",
+          "label": {
+            "en": "BUN/creatinine",
+            "ru": "Мочевина/креатинин",
+            "az": "Sidik cövhəri/kreatinin"
+          }
+        },
+        {
+          "code": "FE",
+          "unit": "µmol/L",
+          "label": {
+            "en": "Iron",
+            "ru": "Железо",
+            "az": "Dəmir"
+          }
+        },
+        {
+          "code": "TIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "TIBC",
+            "ru": "ОЖСС",
+            "az": "TIBC"
+          }
+        },
+        {
+          "code": "UIBC",
+          "unit": "µmol/L",
+          "label": {
+            "en": "UIBC",
+            "ru": "НЖСС",
+            "az": "UIBC"
+          }
+        },
+        {
+          "code": "FERR",
+          "unit": "ng/mL",
+          "label": {
+            "en": "Ferritin",
+            "ru": "Ферритин",
+            "az": "Ferritin"
+          }
+        },
+        {
+          "code": "TRF",
+          "unit": "g/L",
+          "label": {
+            "en": "Transferrin",
+            "ru": "Трансферрин",
+            "az": "Transferrin"
+          }
+        },
+        {
+          "code": "RET#",
+          "unit": "10^12/L",
+          "label": {
+            "en": "Reticulocytes abs",
+            "ru": "Ретикулоциты абс.",
+            "az": "Retikulositlər #"
+          }
+        },
+        {
+          "code": "IRF",
+          "unit": "%",
+          "label": {
+            "en": "Immature reticulocyte fraction",
+            "ru": "Фракция незрелых ретикулоцитов",
+            "az": "Yetişməmiş retikulosit fraksiyası"
+          }
+        },
+        {
+          "code": "NRBC#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "NRBC abs",
+            "ru": "Ядросодержащие эритроциты абс.",
+            "az": "Nüvəli eritrositlər #"
+          }
+        },
+        {
+          "code": "NRBC%",
+          "unit": "%",
+          "label": {
+            "en": "NRBC %",
+            "ru": "Ядросодержащие эритроциты %",
+            "az": "Nüvəli eritrositlər %"
+          }
+        },
+        {
+          "code": "IG#",
+          "unit": "10^9/L",
+          "label": {
+            "en": "Immature granulocytes abs",
+            "ru": "Незрелые гранулоциты абс.",
+            "az": "Yetişməmiş qranulositlər #"
+          }
+        },
+        {
+          "code": "IG%",
+          "unit": "%",
+          "label": {
+            "en": "Immature granulocytes %",
+            "ru": "Незрелые гранулоциты %",
+            "az": "Yetişməmiş qranulositlər %"
+          }
+        }
+      ]
+    },
+    {
+      "code": "LAB-BIOCHEM-PREMIUM",
+      "category": "biochemistry",
+      "title": {
+        "en": "Blood biochemistry panel",
+        "ru": "Биохимический анализ крови",
+        "az": "Qanın biokimyəvi analizi"
+      },
+      "serviceCode": "LAB-BIOCHEM-PREMIUM",
       "analytes": [
         {
           "code": "GLU",
@@ -9405,7 +10494,7 @@
       },
       "includes": [
         "LAB-CBC",
-        "LAB-BIOCHEM",
+        "LAB-BIOCHEM-STANDART",
         "LAB-URINE",
         "CARDIO-ECG",
         "XR-FLUORO"
@@ -9420,7 +10509,7 @@
       },
       "includes": [
         "LAB-CBC",
-        "LAB-BIOCHEM",
+        "LAB-BIOCHEM-STANDART",
         "LAB-THYROID",
         "LAB-URINE",
         "USG-PELVIC",
@@ -9438,7 +10527,7 @@
       },
       "includes": [
         "LAB-CBC",
-        "LAB-BIOCHEM",
+        "LAB-BIOCHEM-STANDART",
         "LAB-LIPID",
         "LAB-URINE",
         "USG-ABD",
@@ -9455,7 +10544,7 @@
       },
       "includes": [
         "LAB-CBC",
-        "LAB-BIOCHEM",
+        "LAB-BIOCHEM-STANDART",
         "LAB-LIPID",
         "LAB-GLUCOSE",
         "LAB-CARDIAC",
@@ -9508,7 +10597,7 @@
       },
       "includes": [
         "LAB-CBC",
-        "LAB-BIOCHEM",
+        "LAB-BIOCHEM-STANDART",
         "LAB-URINE",
         "CARDIO-ECG",
         "XR-FLUORO",

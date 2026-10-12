@@ -82,7 +82,7 @@ function addLab(p) {
   A("UIBC", "µmol/L", "UIBC", "НЖСС", "UIBC"),
   A("FERR", "ng/mL", "Ferritin", "Ферритин", "Ferritin"),
   A("TRF", "g/L", "Transferrin", "Трансферрин", "Transferrin"),
-].forEach((a) => addA("LAB-BIOCHEM", a));
+].forEach((a) => addA("LAB-BIOCHEM-STANDART", a));
 
 addA("LAB-ELECTRO", A("TCO2", "mmol/L", "Total CO2", "Общий CO2", "Ümumi CO2"));
 addA("LAB-ELECTRO", A("ICA", "mmol/L", "Ionized calcium", "Кальций ионизированный", "İonlaşmış Ca"));

@@ -6,7 +6,7 @@
 export const MEDICAL_PACKAGE_CODES = [
   "PKG-STANDART",
   "PKG-PREMIUM",
-  "PKG-DERMO",
+  "PKG-DERMA",
   "PKG-DETOKS",
 ] as const;
 
@@ -19,12 +19,13 @@ const ALIASES: Record<string, MedicalPackageCode> = {
   STANDART: "PKG-STANDART",
   STANDARD: "PKG-STANDART",
   PREMIUM: "PKG-PREMIUM",
-  DERMO: "PKG-DERMO",
+  DERMO: "PKG-DERMA",
+  "PKG-DERMO": "PKG-DERMA",
   DETOKS: "PKG-DETOKS",
   DETOX: "PKG-DETOKS",
   "PKG-STANDART": "PKG-STANDART",
   "PKG-PREMIUM": "PKG-PREMIUM",
-  "PKG-DERMO": "PKG-DERMO",
+  "PKG-DERMA": "PKG-DERMA",
   "PKG-DETOKS": "PKG-DETOKS",
   "PKG-DETOX": "PKG-DETOKS",
 };
@@ -238,7 +239,7 @@ function parseUnstructuredPhrases(text: string): MedicalPackageCode | null {
   if (/\d+\s*\+\s*\d+/.test(t) && /(?:dermo|detoks|detox|premium|standart)/i.test(t) === false) {
     // price-only mix like 180+96 without names — unresolved at phrase level
   }
-  if (/dermo\s*paket|пакет\s*dermo|dermo\s*package/i.test(text)) return "PKG-DERMO";
+  if (/dermo\s*paket|пакет\s*dermo|dermo\s*package/i.test(text)) return "PKG-DERMA";
   if (/detoks\s*paket|detox\s*paket|пакет\s*detoks|пакет\s*detox/i.test(text)) {
     return "PKG-DETOKS";
   }
@@ -248,7 +249,7 @@ function parseUnstructuredPhrases(text: string): MedicalPackageCode | null {
   }
   // Named mix with two package words → null (reservation unresolved)
   const hits: MedicalPackageCode[] = [];
-  if (/dermo/i.test(text) && /paket|пакет|package|pkg/i.test(text)) hits.push("PKG-DERMO");
+  if (/dermo/i.test(text) && /paket|пакет|package|pkg/i.test(text)) hits.push("PKG-DERMA");
   if (/detoks|detox/i.test(text) && /paket|пакет|package|pkg/i.test(text)) hits.push("PKG-DETOKS");
   if (/premium/i.test(text) && /paket|пакет|package|pkg/i.test(text)) hits.push("PKG-PREMIUM");
   if (/standart|стандарт|standard/i.test(text) && /paket|пакет|package|pkg/i.test(text)) {
@@ -306,7 +307,7 @@ export function resolveAgencyPackageCode(
   // Token anywhere (Premium Naftalan…, Fecebook Dermo paket, Detox paket Walkin)
   if (/\bpremium\b/i.test(raw)) return "PKG-PREMIUM";
   if (/\bdermo\b/i.test(raw) || /fecebook\s+dermo|facebook\s+dermo/i.test(raw)) {
-    return "PKG-DERMO";
+    return "PKG-DERMA";
   }
   if (/\bdetoks\b/i.test(raw) || /\bdetox\b/i.test(raw)) return "PKG-DETOKS";
 
@@ -326,13 +327,29 @@ export function resolveMedicalSku(
     agencyRules?: AgencySkuRuleInput[] | null;
     /** Package stored on the agency. Wins over the name. */
     agencyPackageCode?: string | null;
+    /**
+     * Elektra bridge only. A Walk-in Leisure label skips clinic when the imported
+     * row has no medical tariff. Front office never sets this: the agency name
+     * does not mute a package the receptionist chose.
+     */
+    applyLeisureAgencyRule?: boolean;
+    /**
+     * Elektra and note import may treat a PKG-* tariff as the package.
+     * Front office leaves this false: an empty guest column stays empty.
+     */
+    inheritRatePlanPackage?: boolean;
   },
 ): ResolveMedicalSkuResult {
   const guests = input.guests.length > 0 ? input.guests : [{}];
   const perGuestCodes: (MedicalPackageCode | null)[] = guests.map(() => null);
   let anyHit = false;
 
-  if (isLeisureAgency(input.agencyName) && !noteTextByType(input.notes, ["EXTRA_REQ"])) {
+  if (
+    input.applyLeisureAgencyRule &&
+    isLeisureAgency(input.agencyName) &&
+    !noteTextByType(input.notes, ["EXTRA_REQ"]) &&
+    !normalizeMedicalPackageCode(input.ratePlanCode)
+  ) {
     return {
       perGuestCodes,
       unanimousCode: null,
@@ -400,8 +417,8 @@ export function resolveMedicalSku(
     }
   }
 
-  // 5. Sold rate plan (PKG-*) when nothing else named a package
-  if (perGuestCodes.every((c): boolean => c == null)) {
+  // 5. Elektra / import only. Front office does not invent a package from the tariff.
+  if (input.inheritRatePlanPackage !== false && perGuestCodes.every((c): boolean => c == null)) {
     const planCode = normalizeMedicalPackageCode(input.ratePlanCode ?? null);
     if (planCode) {
       anyHit = true;

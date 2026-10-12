@@ -24,6 +24,17 @@ import {
   normalizeVoen,
 } from "../security/pii-crypto.util";
 
+async function closeCardRequest(
+  prisma: PrismaService,
+  organizationId: string,
+  taxIdBlindIndex: string,
+) {
+  await prisma.counterpartyCardRequest.updateMany({
+    where: { organizationId, taxIdBlindIndex, status: "PENDING" },
+    data: { status: "DONE" },
+  });
+}
+
 /**
  * Counterparties MDM adapter:
  * - GlobalCounterparty is the single source of truth per VÖEN (taxId).
@@ -87,6 +98,7 @@ export class CounterpartiesService {
       },
     });
     if (existingLocal) {
+      await closeCardRequest(this.prisma, params.organizationId, taxIdBlindIndex);
       if (!existingLocal.globalId) {
         return this.prisma.counterparty.update({
           where: { id: existingLocal.id },
@@ -102,7 +114,7 @@ export class CounterpartiesService {
     }
 
     // Local "subscription": keep local name for display but prefer global.name in UI.
-    return this.prisma.counterparty.create({
+    const created = await this.prisma.counterparty.create({
       data: {
         organizationId: params.organizationId,
         globalId: global.id,
@@ -117,6 +129,8 @@ export class CounterpartiesService {
         isVatPayer: global.vatStatus ?? false,
       },
     });
+    await closeCardRequest(this.prisma, params.organizationId, taxIdBlindIndex);
+    return created;
   }
 
   async lookupGlobalByVoen(taxId: string) {

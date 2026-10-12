@@ -51,6 +51,7 @@ const createSchema = z.object({
   creditLimitAzn: z.number().min(0).nullable().optional(),
   rateType: z.string().nullable().optional(),
   accomType: z.string().nullable().optional(),
+  billingMode: z.enum(['NORMAL', 'COMP', 'HOUSE']).optional(),
   recordType: z.string().nullable().optional(),
   useManualRate: z.boolean().optional(),
   manualDailyRate: z.number().nullable().optional(),

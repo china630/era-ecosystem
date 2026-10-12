@@ -14,10 +14,10 @@ function lowSeasonCells(): PackageSellCell[] {
     ["PKG-STANDART", "STRP", 129, 219, 285],
     ["PKG-PREMIUM", "JSUIT", 193, 349, 542],
     ["PKG-PREMIUM", "DLX", 193, 349, 542],
-    ["PKG-DERMO", "SDBL", 180, 321, 501],
-    ["PKG-DERMO", "JSUIT", 190, 328, 518],
-    ["PKG-DERMO", "DLX", 202, 351, 531],
-    ["PKG-DERMO", "STRP", 180, 321, 501],
+    ["PKG-DERMA", "SDBL", 180, 321, 501],
+    ["PKG-DERMA", "JSUIT", 190, 328, 518],
+    ["PKG-DERMA", "DLX", 202, 351, 531],
+    ["PKG-DERMA", "STRP", 180, 321, 501],
     ["PKG-DETOKS", "SDBL", 178, 319, 497],
     ["PKG-DETOKS", "JSUIT", 188, 326, 0],
     ["PKG-DETOKS", "DLX", 200, 349, 549],
@@ -58,7 +58,7 @@ describe("package grid nightly sell", () => {
 
   it("Premium plus Dermo is the flat pair 373", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-PREMIUM", "PKG-DERMO"], "DLX", cells),
+      composeNaftaPackageNightlySell(["PKG-PREMIUM", "PKG-DERMA"], "DLX", cells),
     ).toBe(373);
   });
 
@@ -91,7 +91,7 @@ describe("package grid nightly sell", () => {
 
   it("Dermo and Detoks one each puts the room delta on Dermo", () => {
     expect(
-      composeNaftaPackageNightlySell(["PKG-DERMO", "PKG-DETOKS"], "DLX", cells),
+      composeNaftaPackageNightlySell(["PKG-DERMA", "PKG-DETOKS"], "DLX", cells),
     ).toBe(202 + 178);
   });
 

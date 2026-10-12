@@ -121,6 +121,7 @@ model Organization {
   cashOrders                      CashOrder[]
   cashOrderSubtypes               CashOrderSubtype[]
   counterparties                  Counterparty[]
+  counterpartyCardRequests        CounterpartyCardRequest[]
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
   tradeCreditFacilities           TradeCreditFacility[]
   tradeCreditGrants               TradeCreditGrant[]
@@ -3157,6 +3158,27 @@ model Counterparty {
   @@index([globalId])
   @@index([organizationId, deletedAt], map: "counterparties_org_deleted_at_idx")
   @@map("counterparties")
+}
+
+/// Hotel asked Finance to open a company or agency card. No ledger account until the card exists.
+model CounterpartyCardRequest {
+  id               String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                @map("organization_id") @db.Uuid
+  taxIdBlindIndex  String                @map("tax_id_blind_index")
+  taxIdCipher      String                @map("tax_id_cipher")
+  nameCipher       String                @map("name_cipher")
+  /// COMPANY or AGENCY. Guest persons are not queued.
+  partyKind        String                @map("party_kind")
+  legalForm        CounterpartyLegalForm @default(LLC) @map("legal_form")
+  /// PENDING until a counterparty with this VÖEN is saved.
+  status           String                @default("PENDING")
+  source           String                @default("HOTEL")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, taxIdBlindIndex])
+  @@index([organizationId, status])
+  @@map("counterparty_card_requests")
 }
 
 enum TradeCreditFacilityStatus {

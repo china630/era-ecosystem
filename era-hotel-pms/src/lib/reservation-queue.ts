@@ -26,11 +26,11 @@ export function queueIgnoresDates(queue: ReservationQueue): boolean {
 }
 
 function dayStart(ymd: string): Date {
-  return new Date(`${ymd}T00:00:00.000Z`);
+  return new Date(`${ymd}T00:00:00.000+04:00`);
 }
 
 function dayEnd(ymd: string): Date {
-  return new Date(`${ymd}T23:59:59.999Z`);
+  return new Date(`${ymd}T23:59:59.999+04:00`);
 }
 
 function arrivalRange(dateFrom?: string, dateTo?: string): Prisma.DateTimeFilter | undefined {

@@ -365,6 +365,7 @@ export type ReservationCardLeftPanelProps = {
   guestRep?: string;
   paidBy?: string;
   accomType?: string;
+  billingMode?: string;
   recordType?: string;
   reservationId?: string | null;
   agencies: AgencyOption[];
@@ -415,6 +416,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     guestRep = '',
     paidBy = '',
     accomType = '',
+    billingMode = 'NORMAL',
     recordType = '',
     agencies,
     companies,
@@ -970,6 +972,18 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             }))}
             required
             emptyLabel={null}
+            disabled={disabled}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('billingMode')}
+            value={billingMode}
+            onChange={setCatalog('billingMode')}
+            options={[
+              { value: 'NORMAL', label: t('billingNormal') },
+              { value: 'COMP', label: t('billingComp') },
+              { value: 'HOUSE', label: t('billingHouse') },
+            ]}
             disabled={disabled}
           />
           {selectedRatePlan?.roomTypeId &&

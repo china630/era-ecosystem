@@ -827,15 +827,7 @@ export class SatelliteEventDispatchService {
     };
     for (const line of saleLines) {
       if (line.amount === 0) continue;
-      const product = await tx.product.findFirst({
-        where: {
-          organizationId,
-          deletedAt: null,
-          sku: { equals: line.sku, mode: "insensitive" },
-        },
-        select: { revenueAccountCode: true },
-      });
-      addRevenue(product?.revenueAccountCode ?? "", line.amount, `sku ${line.sku}`);
+      addRevenue(line.glAccountCode ?? "", line.amount, `revenue code ${line.revenueCode || line.sku}`);
     }
     for (const line of revenueLines) {
       addRevenue(line.glAccountCode, line.amount, `revenue code ${line.revenueCode}`);

@@ -118,7 +118,14 @@ export function buildNightAuditEvent(
   input: {
     businessDate: string;
     nightAuditId?: string;
-    saleLines?: Array<{ sku: string; qty: number; amount: number }>;
+    saleLines?: Array<{
+      sku: string;
+      qty: number;
+      amount: number;
+      revenueCode?: string;
+      glAccountCode?: string;
+      unmapped?: boolean;
+    }>;
     revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
     paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
     depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
@@ -566,22 +573,28 @@ export async function dispatchReservationCompleted(
 export async function dispatchNightAuditClosed(input: {
   businessDate: string;
   nightAuditId?: string;
-  saleLines?: Array<{ sku: string; qty: number; amount: number }>;
+  saleLines?: Array<{ sku: string; qty: number; amount: number; revenueCode: string }>;
   revenueLines: Array<{ revenueCode: string; amount: number }>;
   paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
   depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
   depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
 }): Promise<DispatchResult> {
   const hotelId = await getPropertyCode();
-  const { enrichRevenueLinesWithGl } = await import('@/lib/services/revenue-gl-mapping.service');
+  const { enrichRevenueLinesWithGl, enrichSaleLinesWithGl } = await import(
+    '@/lib/services/revenue-gl-mapping.service'
+  );
+  const saleLines = await enrichSaleLinesWithGl(input.saleLines ?? []);
   const revenueLines = await enrichRevenueLinesWithGl(input.revenueLines);
-  const missing = revenueLines.filter((line) => line.unmapped && line.amount !== 0);
+  const missing = [
+    ...saleLines.filter((line) => line.unmapped && line.amount !== 0),
+    ...revenueLines.filter((line) => line.unmapped && line.amount !== 0),
+  ];
   if (missing.length > 0) {
     throw new Error(
       `GL account is not saved for revenue code ${missing.map((line) => line.revenueCode).join(', ')}`,
     );
   }
-  const envelope = buildNightAuditEvent({ ...input, revenueLines }, hotelId);
+  const envelope = buildNightAuditEvent({ ...input, saleLines, revenueLines }, hotelId);
   return publishEvent(envelope);
 }
 

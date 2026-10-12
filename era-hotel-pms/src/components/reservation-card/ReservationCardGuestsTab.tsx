@@ -66,6 +66,7 @@ export function ReservationCardGuestsTab({
   onPax,
   onNewGuest,
   packageOptions = [],
+  showMedicalPackages = false,
   onOpenGuestCard,
   onScanId,
   preferredBed = '',
@@ -90,8 +91,9 @@ export function ReservationCardGuestsTab({
   onPax: (rows: PaxRow[]) => void;
   /** Create a guest card into this empty row. */
   onNewGuest: (paxIndex: number) => void;
-  /** Medical SKUs for a named guest. Empty value means the stay package. */
+  /** Medical SKUs for a named guest. Shown only on a medical tariff. */
   packageOptions?: Array<{ value: string; label: string }>;
+  showMedicalPackages?: boolean;
   onRepeatGuest?: () => void;
   /** Open existing guest profile (name click). */
   onOpenGuestCard?: (guestId: string) => void;
@@ -200,7 +202,8 @@ export function ReservationCardGuestsTab({
   );
 
   const columns: EraDataGridColumn<PaxGridRow>[] = useMemo(
-    () => [
+    () => {
+      const cols: EraDataGridColumn<PaxGridRow>[] = [
       {
         key: 'role',
         header: t('partyRole'),
@@ -208,9 +211,7 @@ export function ReservationCardGuestsTab({
         render: (row) => {
           if (isMinorPax(row)) return <span className={TEXT_MUTED_CLASS}>—</span>;
           const adults = pax.filter((p) => !isMinorPax(p));
-          const isPrimary =
-            !equalMode &&
-            (Boolean(row.isPrimary) || (!pax.some((p) => p.isPrimary) && row._idx === 0));
+          const isPrimary = !equalMode && Boolean(row.isPrimary);
           const onlyAdult = adults.length <= 1;
           return (
             <button
@@ -473,7 +474,9 @@ export function ReservationCardGuestsTab({
           );
         },
       },
-    ],
+    ];
+      return showMedicalPackages ? cols : cols.filter((col) => col.key !== 'medicalPackageCode');
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       pax,
@@ -487,6 +490,7 @@ export function ReservationCardGuestsTab({
       onScanId,
       onNewGuest,
       packageOptions,
+      showMedicalPackages,
       guestOptions,
       rowEdit,
       rowHits,

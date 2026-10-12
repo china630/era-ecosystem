@@ -338,7 +338,7 @@ function main() {
     labCatRows.push({ externalRef, code, name: name || code, group: "lab" });
   }
   addLabCat("era:LAB-CBC", "LAB-CBC", "Qanın ümumi analizi");
-  addLabCat("era:LAB-BIOCHEM", "LAB-BIOCHEM", "Biokimya");
+  addLabCat("era:LAB-BIOCHEM-STANDART", "LAB-BIOCHEM-STANDART", "Biokimya");
   addLabCat("era:LAB-URINE", "LAB-URINE", "Sidiyin ümumi analizi");
   addLabCat("era:LAB-WO-FILE", "LAB-WO-FILE", "Lab panel (other Word)");
   for (const a of analyses) {

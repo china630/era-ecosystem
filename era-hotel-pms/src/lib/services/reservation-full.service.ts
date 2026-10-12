@@ -67,6 +67,9 @@ const fullInclude = {
       room: { select: { roomNumber: true } },
     },
   },
+  tariffChanges: {
+    orderBy: { effectiveAt: 'asc' as const },
+  },
   roomChanges: {
     orderBy: { effectiveAt: 'asc' as const },
     include: { fromRoom: true, toRoom: true },
@@ -134,6 +137,7 @@ export async function getReservationFull(id: string) {
       id: d.id,
       stayDate: d.stayDate,
       amount: decimalToNumber(d.amount),
+      tariffAmount: d.tariffAmount != null ? decimalToNumber(d.tariffAmount) : null,
       currencyCode: d.currencyCode,
       fixPrice: d.fixPrice,
       discountPct: d.discountPct ? decimalToNumber(d.discountPct) : null,
@@ -193,6 +197,7 @@ export async function patchReservationFull(
     paidBy?: string | null;
     vipType?: string | null;
     accomType?: string | null;
+    billingMode?: 'NORMAL' | 'COMP' | 'HOUSE';
     recordType?: string | null;
     specialStates?: string | null;
     tripReason?: string | null;
@@ -242,6 +247,7 @@ export async function patchReservationFull(
     dailyRates?: Array<{
       stayDate: string;
       amount: number;
+      tariffAmount?: number | null;
       manualFlag?: boolean;
       currencyCode?: string;
       fixPrice?: boolean;
@@ -330,6 +336,16 @@ export async function patchReservationFull(
     typeof data.ratePlanId === 'string' && data.ratePlanId !== existing.ratePlanId;
   const mealPlanChanged =
     data.mealPlanId !== undefined && data.mealPlanId !== existing.mealPlanId;
+  const billingModeChanged =
+    input.billingMode !== undefined && input.billingMode !== existing.billingMode;
+
+  if (
+    existing.status === 'IN_HOUSE' &&
+    data.roomId !== undefined &&
+    (data.roomId === null || data.roomId === '')
+  ) {
+    throw new Error('Cannot clear the room after check-in');
+  }
 
   if (
     existing.status === 'IN_HOUSE' &&
@@ -515,6 +531,17 @@ export async function patchReservationFull(
     }
   }
 
+  const chargedPlanId =
+    typeof data.ratePlanId === 'string' ? data.ratePlanId : existing.ratePlanId;
+  const chargedPlan = await prisma.ratePlan.findUnique({
+    where: { id: chargedPlanId },
+    select: { code: true, medicalFlag: true },
+  });
+  const { ratePlanRequiresGuestPackage } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  const guestPackageOnStay = chargedPlan ? ratePlanRequiresGuestPackage(chargedPlan) : false;
+
   if (paxGuests) {
     const seenGuestIds = new Set<string>();
     for (const p of paxGuests) {
@@ -537,12 +564,10 @@ export async function patchReservationFull(
       },
     });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
-    const primaryIdx = Math.max(
-      0,
-      paxGuests.findIndex((p) => p.isPrimary),
-    );
     const billingMode: PartyBillingMode =
       input.partyBillingMode ?? existing.partyBillingMode;
+    const marked = paxGuests.findIndex((p) => p.isPrimary);
+    const primaryIdx = billingMode === 'EQUAL' ? -1 : marked >= 0 ? marked : 0;
     await prisma.reservationGuest.createMany({
       data: paxGuests.map((p, i) => {
         const isPrimary = i === primaryIdx;
@@ -568,9 +593,10 @@ export async function patchReservationFull(
           /** Contact / PRIMARY-mode folio owner */
           isPrimary,
           ownsFolio,
-          medicalPackageCode: p.medicalPackageCode?.trim()
-            ? p.medicalPackageCode.trim().toUpperCase()
-            : null,
+          medicalPackageCode:
+            guestPackageOnStay && p.medicalPackageCode?.trim()
+              ? p.medicalPackageCode.trim().toUpperCase()
+              : null,
           sortOrder: i,
         };
       }),
@@ -585,6 +611,30 @@ export async function patchReservationFull(
       next: nextGuests,
     });
     await ensurePartyGuestFolios(id);
+  }
+
+  if (!guestPackageOnStay) {
+    await prisma.reservationGuest.updateMany({
+      where: { reservationId: id, medicalPackageCode: { not: null } },
+      data: { medicalPackageCode: null },
+    });
+  }
+  if (ratePlanChanged && chargedPlan) {
+    const previousPlan = await prisma.ratePlan.findUnique({
+      where: { id: existing.ratePlanId },
+      select: { code: true },
+    });
+    await prisma.stayTariffChange.create({
+      data: {
+        organizationId: existing.organizationId,
+        reservationId: id,
+        effectiveAt: new Date(),
+        fromRatePlanId: existing.ratePlanId,
+        toRatePlanId: chargedPlanId,
+        fromCode: previousPlan?.code ?? null,
+        toCode: chargedPlan.code,
+      },
+    });
   }
 
   if (paxGuests || data.guestId !== undefined || (data.roomId !== undefined && data.roomId)) {
@@ -628,6 +678,8 @@ export async function patchReservationFull(
           reservationId: id,
           stayDate,
           amount: toDecimal(d.amount),
+          tariffAmount:
+            d.tariffAmount == null ? toDecimal(d.amount) : toDecimal(d.tariffAmount),
           manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
@@ -638,6 +690,8 @@ export async function patchReservationFull(
         },
         update: {
           amount: toDecimal(d.amount),
+          tariffAmount:
+            d.tariffAmount == null ? undefined : toDecimal(d.tariffAmount),
           manualFlag: Boolean(d.manualFlag),
           currencyCode: d.currencyCode ?? 'AZN',
           fixPrice: d.fixPrice ?? false,
@@ -676,7 +730,7 @@ export async function patchReservationFull(
     where: { id: stayPlanId },
     select: { code: true, medicalFlag: true },
   });
-  const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+  const { normalizeMedicalPackageCode } = await import(
     '@/lib/services/medical-package-resolve.service'
   );
   if (stayPlan && ratePlanRequiresGuestPackage(stayPlan)) {
@@ -722,11 +776,10 @@ export async function patchReservationFull(
     const { stampMedicalPackagesForReservation } = await import(
       '@/lib/services/medical-package-stamp.service'
     );
-    await stampMedicalPackagesForReservation(
-      prisma,
-      id,
-      foCodes ? { foPerGuestCodes: foCodes } : undefined,
-    );
+    await stampMedicalPackagesForReservation(prisma, id, {
+      ...(foCodes ? { foPerGuestCodes: foCodes } : {}),
+      inheritRatePlanPackage: false,
+    });
   }
 
   // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
@@ -744,7 +797,7 @@ export async function patchReservationFull(
     }
   }
 
-  if (ratePlanChanged || paxSkuChanged || mealPlanChanged) {
+  if (ratePlanChanged || paxSkuChanged || mealPlanChanged || billingModeChanged) {
     const { recalcReservationDailyRates } = await import(
       '@/lib/services/reservation-pricing.service'
     );
@@ -921,7 +974,9 @@ export async function listReservationsForGrid(
       guest: { select: { fullName: true } },
       room: { select: { roomNumber: true, status: true } },
       roomType: { select: { code: true } },
-      agency: { select: { code: true } },
+      agency: { select: { code: true, name: true } },
+      company: { select: { code: true, name: true } },
+      source: { select: { code: true, name: true } },
       notes: { select: { text: true } },
     },
   });
@@ -946,7 +1001,7 @@ export async function listReservationsForGrid(
       case 'state':
         return row.status;
       case 'agency':
-        return row.agency?.code ?? '';
+        return row.agency?.name || row.agency?.code || row.company?.name || row.source?.name || '';
       case 'notes':
         return row.notes
           .map((note) => note.text.trim())
@@ -958,12 +1013,13 @@ export async function listReservationsForGrid(
         return '';
     }
   };
+  const effectiveSort = sortKey || 'room';
   ranked.sort((a, b) => {
-    if (sortKey) {
-      const cmp = textOf(a).localeCompare(textOf(b), undefined, { numeric: true });
-      if (cmp !== 0) return cmp * sortDir;
-      return a.id < b.id ? -1 : 1;
-    }
+    const left = effectiveSort === 'room' ? (a.room?.roomNumber ?? '') : textOf(a);
+    const right = effectiveSort === 'room' ? (b.room?.roomNumber ?? '') : textOf(b);
+    const cmp = left.localeCompare(right, undefined, { numeric: true });
+    if (cmp !== 0) return cmp * (sortKey ? sortDir : 1);
+    if (sortKey) return a.id < b.id ? -1 : 1;
     const aKey = hotelDateKey(a.checkInDate);
     const bKey = hotelDateKey(b.checkInDate);
     const aFuture = aKey >= today ? 0 : 1;
@@ -984,6 +1040,8 @@ export async function listReservationsForGrid(
             roomType: true,
             guest: true,
             agency: true,
+            company: true,
+            source: true,
             notes: true,
             paxGuests: {
               select: { firstName: true, lastName: true, sortOrder: true },

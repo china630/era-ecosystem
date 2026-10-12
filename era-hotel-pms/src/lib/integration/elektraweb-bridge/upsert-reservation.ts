@@ -226,7 +226,9 @@ export async function upsertReservationFromElektrawebRow(
     guestName: guestDisplayNameFromRow(row),
   });
 
-  const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id);
+  const stamped = await stampMedicalPackagesForReservation(prisma, reservation.id, {
+    applyLeisureAgencyRule: true,
+  });
   const programCode = stamped.programCode;
 
   const full = await prisma.reservation.findUnique({

@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import { CatalogField, Field, FieldTextarea, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
-const PAY_METHODS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
+import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
+
+const PAY_METHODS = DESK_PAYMENT_METHODS;
 
 export function FolioVoidModal({
   open,
@@ -55,6 +57,69 @@ export function FolioVoidModal({
       }
     >
       <p className="m-0 text-[13px] text-[#34495E]">{t('voidConfirm')}</p>
+    </EraModal>
+  );
+}
+
+export function FolioDeletePaymentModal({
+  open,
+  onClose,
+  onDone,
+  paymentId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onDone?: () => void;
+  paymentId: string | null;
+}) {
+  const t = useTranslations('folio');
+  const tc = useTranslations('common');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open) setReason('');
+  }, [open]);
+
+  async function submit() {
+    if (!paymentId || !reason.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/folios/payments/${paymentId}/void`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('error'));
+        return;
+      }
+      showSuccess(t('deletePaymentSuccess'));
+      onDone?.();
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <EraModal
+      open={open}
+      title={t('deletePaymentTitle')}
+      onClose={onClose}
+      footer={
+        <EraModalFooter
+          onCancel={onClose}
+          onSubmit={() => void submit()}
+          busy={busy}
+          submitDisabled={!reason.trim()}
+          submitLabel={t('deletePayment')}
+        />
+      }
+    >
+      <p className="m-0 mb-2 text-[13px] text-[#34495E]">{t('deletePaymentHint')}</p>
+      <FieldTextarea label={t('refundReason')} value={reason} onChange={(e) => setReason(e.target.value)} />
     </EraModal>
   );
 }
@@ -140,15 +205,19 @@ export function FolioPayLineModal({
         options={PAY_METHODS.map((m) => ({ value: m, label: tPay(m) }))}
         emptyLabel={null}
       />
-      {method === 'CARD' && bankTerminals.length > 0 ? (
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t('bankTerminal')}
-          value={bankTerminalId}
-          onChange={(v) => setBankTerminalId(String(v ?? ''))}
-          options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
-          emptyLabel={null}
-        />
+      {method === 'CARD' ? (
+        bankTerminals.length > 0 ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('bankTerminal')}
+            value={bankTerminalId}
+            onChange={(v) => setBankTerminalId(String(v ?? ''))}
+            options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+            emptyLabel={null}
+          />
+        ) : (
+          <p className="m-0 text-[12px] text-amber-800">{t('noBankTerminal')}</p>
+        )
       ) : null}
     </EraModal>
   );

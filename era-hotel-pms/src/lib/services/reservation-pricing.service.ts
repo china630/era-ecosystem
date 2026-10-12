@@ -89,10 +89,7 @@ function stayPackageCodes(input: {
 }): string[] {
   const raw =
     input.paxGuests.length > 0
-      ? paxCodesForCompose(
-          input.paxGuests,
-          input.ratePlan?.code ?? input.medicalPackageCode,
-        )
+      ? paxCodesForCompose(input.paxGuests, null)
       : [input.medicalPackageCode];
   return raw
     .map((c) => (c ?? '').trim().toUpperCase())
@@ -112,6 +109,7 @@ async function writeOwnerNightly(
       currencyCode: string | null;
       fixPrice: boolean;
       discountPct: { toString(): string } | null;
+      tariffAmount?: { toString(): string } | null;
     }>;
   },
   nightly: number | ((night: Date) => Promise<number>),
@@ -127,6 +125,7 @@ async function writeOwnerNightly(
     currencyCode: string;
     fixPrice: boolean;
     discountPct: number | null;
+    tariffAmount?: number | null;
   }> = [];
   for (const night of nights) {
     const existing = res.dailyRates.find(
@@ -142,6 +141,9 @@ async function writeOwnerNightly(
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount as never),
+        tariffAmount: existing.tariffAmount
+          ? decimalToNumber(existing.tariffAmount as never)
+          : decimalToNumber(existing.amount as never),
         manualFlag: existing.manualFlag,
         currencyCode: existing.currencyCode ?? 'AZN',
         fixPrice: existing.fixPrice,
@@ -153,6 +155,7 @@ async function writeOwnerNightly(
     rows.push({
       stayDate: night,
       amount,
+      tariffAmount: amount,
       manualFlag: false,
       currencyCode: 'AZN',
       fixPrice: false,
@@ -169,6 +172,7 @@ async function writeOwnerNightly(
           reservationId: res.id,
           stayDate: r.stayDate,
           amount: toDecimal(r.amount),
+          tariffAmount: toDecimal(r.tariffAmount ?? r.amount),
           manualFlag: r.manualFlag,
           currencyCode: r.currencyCode,
           fixPrice: r.fixPrice,
@@ -208,6 +212,10 @@ export async function recalcReservationDailyRates(
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
+
+  if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+    return writeOwnerNightly(res, 0, opts?.remainingFrom);
+  }
 
   const packageCodes = stayPackageCodes(res);
   if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
@@ -370,6 +378,7 @@ export async function recalcReservationDailyRates(
     currencyCode: string;
     fixPrice: boolean;
     discountPct: number | null;
+    tariffAmount?: number | null;
   }> = [];
   for (const night of nights) {
     const existing = res.dailyRates.find(
@@ -379,6 +388,9 @@ export async function recalcReservationDailyRates(
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount),
+        tariffAmount: existing.tariffAmount
+          ? decimalToNumber(existing.tariffAmount)
+          : decimalToNumber(existing.amount),
         manualFlag: existing.manualFlag,
         currencyCode: existing.currencyCode ?? 'AZN',
         fixPrice: existing.fixPrice,
@@ -395,6 +407,9 @@ export async function recalcReservationDailyRates(
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount),
+        tariffAmount: existing.tariffAmount
+          ? decimalToNumber(existing.tariffAmount)
+          : decimalToNumber(existing.amount),
         manualFlag: existing.manualFlag,
         currencyCode: existing.currencyCode ?? 'AZN',
         fixPrice: existing.fixPrice,
@@ -403,7 +418,8 @@ export async function recalcReservationDailyRates(
     } else {
       const dateKey = night.toISOString().slice(0, 10);
       const barNight = nightlyByDate.get(dateKey);
-      let baseAmount = (barNight ?? adultNightly) + occupancySupplement + childAddonNightly;
+      const tariffAmount = (barNight ?? adultNightly) + occupancySupplement + childAddonNightly;
+      let baseAmount = tariffAmount;
       if (policy.loadBasedPricingEnabled) {
         const occPct = await estimateOccupancyPctForNight(night);
         const adj = await resolveLoadBasedAdjustmentPercent(occPct);
@@ -415,6 +431,7 @@ export async function recalcReservationDailyRates(
       rows.push({
         stayDate: night,
         amount: baseAmount,
+        tariffAmount,
         manualFlag: false,
         currencyCode: quoteResult.currency,
         fixPrice: res.useManualRate,
@@ -432,6 +449,7 @@ export async function recalcReservationDailyRates(
           reservationId,
           stayDate: r.stayDate,
           amount: toDecimal(r.amount),
+          tariffAmount: toDecimal(r.tariffAmount ?? r.amount),
           manualFlag: r.manualFlag,
           currencyCode: r.currencyCode,
           fixPrice: r.fixPrice,
@@ -491,6 +509,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       reservationId,
       stayDate: r.stayDate,
       amount: toDecimal(r.amount),
+      tariffAmount: null,
       manualFlag: r.manualFlag,
       currencyCode: r.currencyCode,
       fixPrice: r.fixPrice,

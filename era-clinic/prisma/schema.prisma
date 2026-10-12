@@ -632,6 +632,8 @@ model Modality {
   titleEn        String              @map("title_en")
   titleRu        String              @map("title_ru")
   titleAz        String              @map("title_az")
+  /// Default hotel revenue article for a new diagnostic service.
+  hotelRevenueCode String?           @map("hotel_revenue_code")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)
   services       DiagnosticService[]
@@ -1491,6 +1493,8 @@ model ServiceDepartment {
   nameAz         String?               @map("name_az")
   nameRu         String?               @map("name_ru")
   nameEn         String?               @map("name_en")
+  /// Default hotel revenue article for a new catalog row in this department.
+  hotelRevenueCode String?             @map("hotel_revenue_code")
   active         Boolean               @default(true)
   createdAt      DateTime              @default(now()) @map("created_at")
   updatedAt      DateTime              @updatedAt @map("updated_at")

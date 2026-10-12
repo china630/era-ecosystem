@@ -153,8 +153,10 @@ export default function GuestCardModal({
     accessDenied?: boolean;
   } | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [heldId, setHeldId] = useState<string | null>(null);
+  const activeId = guestId ?? heldId;
 
-  const isCreate = open && !guestId;
+  const isCreate = open && !activeId;
 
   const loadAux = useCallback(async (id: string) => {
     const [docRes, conRes, addrRes, loyRes, ptsRes] = await Promise.all([
@@ -269,9 +271,38 @@ export default function GuestCardModal({
   useEffect(() => {
     if (!open) return;
     if (!guestId) {
+      setHeldId(null);
       setLoading(false);
       setStats(null);
       setTab('identity');
+      setFullName('');
+      setFirstName('');
+      setLastName('');
+      setMiddleName('');
+      setTitle('');
+      setSex('');
+      setNationality('AZ');
+      setPhone('');
+      setEmail('');
+      setVipType('');
+      setGreyList(false);
+      setProblematic(false);
+      setGdprConfirmed(false);
+      setSmsConsent(false);
+      setWhatsappConsent(false);
+      setPhoneConsent(false);
+      setEmailConsent(false);
+      setCallBack(false);
+      setDetailFields({});
+      setDocuments([]);
+      setContacts([]);
+      setAddresses([]);
+      setLoyaltyTier('');
+      setLoyaltyCards([]);
+      setLoyaltyPoints([]);
+      setIsLocked(false);
+      setPhoneVerified(false);
+      setEmailVerified(false);
       setGlobalPersonId(null);
       setTransientIdentity({ nationalIdFin: '', passportNumber: '' });
       setMdmProfile(null);
@@ -387,6 +418,7 @@ export default function GuestCardModal({
         return;
       }
       showSuccess(tc('success'));
+      if (json.id) setHeldId(String(json.id));
       if (onCreated && json.id) {
         const full =
           fullName.trim() || `${firstName} ${lastName}`.trim() || String(json.fullName ?? '');
@@ -396,9 +428,6 @@ export default function GuestCardModal({
           lastName: lastName || String(json.lastName ?? ''),
           birthDate: detailFields.birthDate || undefined,
         });
-        onClose();
-      } else {
-        onClose();
       }
     } finally {
       setBusy(false);
@@ -406,7 +435,7 @@ export default function GuestCardModal({
   }
 
   async function save() {
-    if (!guestId) {
+    if (!activeId) {
       await saveCreate();
       return;
     }
@@ -418,7 +447,7 @@ export default function GuestCardModal({
       const emailFromList = pickPrimaryContact(contacts, ['EMAIL']);
       const finFromList = pickPrimaryDocument(documents, ['ID_CARD', 'FIN', 'NATIONAL_ID']);
       const passFromList = pickPrimaryDocument(documents, ['PASSPORT']);
-      const res = await fetch(`/api/guests/${guestId}/full`, {
+      const res = await fetch(`/api/guests/${activeId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -470,7 +499,7 @@ export default function GuestCardModal({
       }
       showSuccess(tc('success'));
       await load();
-      onSaved?.(guestId);
+      onSaved?.(activeId);
     } finally {
       setBusy(false);
     }
@@ -501,12 +530,12 @@ export default function GuestCardModal({
     : '';
 
   async function toggleGuestLock() {
-    if (!guestId) {
+    if (!activeId) {
       setIsLocked((v) => !v);
       return;
     }
     const next = !isLocked;
-    const res = await fetch(`/api/guests/${guestId}/full`, {
+    const res = await fetch(`/api/guests/${activeId}/full`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isLocked: next }),
@@ -522,7 +551,7 @@ export default function GuestCardModal({
   function printCard() {
     const lines = [
       displayName,
-      guestId ? guestId.slice(0, 8) : '',
+      activeId ? activeId.slice(0, 8) : '',
       phone,
       email,
       primaryDocument,
@@ -540,7 +569,7 @@ export default function GuestCardModal({
     <EraModal
       open={open}
       title={isCreate ? t('createTitle') : displayName || t('title')}
-      subtitle={guestId ? guestId.slice(0, 8) : undefined}
+      subtitle={activeId ? activeId.slice(0, 8) : undefined}
       onClose={onClose}
       maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
       bodyClassName="mt-3 min-h-0 flex-1 overflow-hidden flex flex-col"
@@ -550,7 +579,7 @@ export default function GuestCardModal({
           busy={busy}
           loading={loading && !isCreate}
           isLocked={isLocked}
-          guestId={guestId}
+                    guestId={activeId}
           onCopy={
             guestId
               ? () => {
@@ -643,7 +672,7 @@ export default function GuestCardModal({
               transientIdentity={transientIdentity}
               mdmProfile={mdmProfile}
               profileLoading={profileLoading}
-              guestId={guestId}
+              guestId={activeId}
               globalPersonId={globalPersonId}
               allergenCount={crmBadges.allergens}
               onChange={handleLeftPanelChange}
@@ -655,7 +684,7 @@ export default function GuestCardModal({
                 else setEmailVerified(value);
               }}
               onGlobalPersonIdChange={setGlobalPersonId}
-              onReload={() => (guestId ? void load() : undefined)}
+              onReload={() => (activeId ? void loadAux(activeId) : undefined)}
               locked={isLocked}
             />
 
@@ -687,7 +716,7 @@ export default function GuestCardModal({
                 {tab === 'identity' && (
                   <GuestCardIdentityTab
                     locked={isLocked}
-                    guestId={guestId}
+                    guestId={activeId}
                     documents={documents}
                     contacts={contacts}
                     addresses={addresses}
@@ -720,7 +749,7 @@ export default function GuestCardModal({
                       };
                       m[key]?.(value);
                     }}
-                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
+                    onReload={() => (activeId ? void loadAux(activeId) : undefined)}
                   />
                 )}
                 {tab === 'crm' && (
@@ -734,12 +763,12 @@ export default function GuestCardModal({
                     loyaltyTier={loyaltyTier}
                     cards={loyaltyCards}
                     pointEntries={loyaltyPoints}
-                    guestId={guestId}
+                    guestId={activeId}
                     locked={isLocked}
-                    onReload={() => (guestId ? void loadAux(guestId) : undefined)}
+                    onReload={() => (activeId ? void loadAux(activeId) : undefined)}
                     onReloadPoints={() =>
-                      guestId
-                        ? void fetch(`/api/guests/${guestId}/loyalty/points`)
+                      activeId
+                        ? void fetch(`/api/guests/${activeId}/loyalty/points`)
                             .then((r) => r.json())
                             .then((list) => setLoyaltyPoints(Array.isArray(list) ? list : []))
                         : undefined
@@ -771,8 +800,8 @@ export default function GuestCardModal({
             birthDate: data.birthDate ?? f.birthDate,
           }));
           showSuccess(t('idReaderApplied'));
-          if (guestId && data.passportNumber) {
-            void fetch(`/api/guests/${guestId}/documents`, {
+          if (activeId && data.passportNumber) {
+            void fetch(`/api/guests/${activeId}/documents`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -780,10 +809,10 @@ export default function GuestCardModal({
                 docNumber: data.passportNumber,
                 isPrimary: true,
               }),
-            }).then(() => void loadAux(guestId));
+            }).then(() => void loadAux(activeId));
           }
-          if (guestId && data.nationalIdFin) {
-            void fetch(`/api/guests/${guestId}/documents`, {
+          if (activeId && data.nationalIdFin) {
+            void fetch(`/api/guests/${activeId}/documents`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -791,13 +820,13 @@ export default function GuestCardModal({
                 docNumber: data.nationalIdFin,
                 isPrimary: !data.passportNumber,
               }),
-            }).then(() => void loadAux(guestId));
+            }).then(() => void loadAux(activeId));
           }
         }}
       />
       <GuestCardCrmDialog
         panelId={crmPanel}
-        guestId={guestId}
+                    guestId={activeId}
         onClose={() => setCrmPanel(null)}
         onOpenGuest={(id) => {
           if (id && id !== guestId) setStackedGuestId(id);

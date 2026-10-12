@@ -18,7 +18,7 @@ const FB = { "STD-TWN": 130, "STD-DBL": 130, "STD-TRP": 145, JS: 146, DLX: 152 }
 const PKG = [
   { code: "PKG-STANDART", name: "Standart müalicə paketi", price: 139 },
   { code: "PKG-PREMIUM",  name: "Premium paket",           price: 193 },
-  { code: "PKG-DERMO",    name: "Dermo paket",             price: 180 },
+  { code: "PKG-DERMA",    name: "Dermo paket",             price: 180 },
   { code: "PKG-DETOKS",   name: "Detoks paket",            price: 178 },
 ];
 

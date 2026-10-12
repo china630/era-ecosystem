@@ -1,3 +1,4 @@
+import { shouldOffsetHouseUse } from '@/lib/stay-billing';
 import { prisma } from '@/lib/prisma';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { requestOrganizationId } from '@/lib/request-organization';
@@ -17,10 +18,11 @@ function fireAndForgetDispatch(promise: Promise<unknown>) {
 
 export function folioBalance(
   charges: { amount: { toNumber(): number }; qty: number }[],
-  payments: { amount: { toNumber(): number }; kind?: string | null }[],
+  payments: { amount: { toNumber(): number }; kind?: string | null; voidedAt?: Date | null }[],
 ) {
   const chargeSum = charges.reduce((s, c) => s + decimalToNumber(c.amount) * c.qty, 0);
   const paySum = payments.reduce((s, p) => {
+    if (p.voidedAt) return s;
     const n = decimalToNumber(p.amount);
     return s + (p.kind === 'REFUND' ? -n : n);
   }, 0);
@@ -165,6 +167,28 @@ export async function postCharge(input: {
   if (chargeReservationId !== input.reservationId) {
     await recalcReservationTotal(input.reservationId);
   }
+  if (
+    shouldOffsetHouseUse({
+      billingMode: reservation.billingMode,
+      amount: input.amount,
+      externalRef: input.externalRef,
+    })
+  ) {
+    const offset = await prisma.folioCharge.create({
+      data: {
+        folioId: folio.id,
+        revenueCodeId: input.revenueCodeId,
+        departmentId: input.departmentId,
+        amount: toDecimal(-input.amount),
+        qty: input.qty ?? 1,
+        sku: input.sku?.trim() || null,
+        description: `${input.description} (house use)`,
+        businessDate: input.businessDate ?? new Date(),
+        externalRef: `house-use:${charge.id}`,
+      },
+    });
+    fireAndForgetDispatch(dispatchFolioChargePosted(offset.id));
+  }
   fireAndForgetDispatch(dispatchFolioChargePosted(charge.id));
   return charge;
 }
@@ -186,6 +210,9 @@ export async function postPayment(input: {
   });
   if (!folio) throw new Error('Folio not found');
   const kind = input.kind ?? 'PAYMENT';
+  if (kind === 'PAYMENT' && (input.paymentMethod === 'CL_AGENCY' || input.paymentMethod === 'CL_COMPANY')) {
+    await assertCityLedgerCounterparty(folio.reservationId, input.paymentMethod);
+  }
   if (folio.status !== 'OPEN' && !(kind === 'REFUND' && ['CLOSED', 'PENDING_AR'].includes(folio.status))) {
     throw new Error('Folio is not open');
   }
@@ -288,6 +315,15 @@ export async function postPayment(input: {
     },
   });
 
+  if (kind === 'PAYMENT' && (input.paymentMethod === 'CL_AGENCY' || input.paymentMethod === 'CL_COMPANY')) {
+    await mirrorCityLedgerCharge({
+      reservationId: folio.reservationId,
+      method: input.paymentMethod,
+      amount: input.amount,
+      businessDate: payment.businessDate,
+    });
+  }
+
   await recalcReservationTotal(folio.reservationId);
   fireAndForgetDispatch(dispatchFolioPaymentReceived(payment.id));
   if (fiscalReceiptId) {
@@ -320,6 +356,104 @@ export async function postPayment(input: {
   }
 
   return payment;
+}
+
+async function assertCityLedgerCounterparty(
+  reservationId: string,
+  method: 'CL_AGENCY' | 'CL_COMPANY',
+) {
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: { agencyId: true, companyId: true },
+  });
+  if (method === 'CL_AGENCY' && !reservation?.agencyId) {
+    throw new Error('Agency is not set on this stay');
+  }
+  if (method === 'CL_COMPANY' && !reservation?.companyId) {
+    throw new Error('Company is not set on this stay');
+  }
+}
+
+async function mirrorCityLedgerCharge(input: {
+  reservationId: string;
+  method: 'CL_AGENCY' | 'CL_COMPANY';
+  amount: number;
+  businessDate: Date;
+}) {
+  const type = input.method === 'CL_AGENCY' ? 'AGENCY' : 'COMPANY';
+  const organizationId = requestOrganizationId();
+  const existing = await prisma.folio.findFirst({
+    where: { reservationId: input.reservationId, type, status: 'OPEN' },
+  });
+  const target =
+    existing ??
+    (await prisma.folio.create({
+      data: {
+        organizationId,
+        reservationId: input.reservationId,
+        type,
+        status: 'OPEN',
+      },
+    }));
+  const revenue = await findRevenueCodeByToken('ROOM');
+  if (!revenue) throw new Error('ROOM revenue code missing');
+  await prisma.folioCharge.create({
+    data: {
+      organizationId,
+      folioId: target.id,
+      revenueCodeId: revenue.id,
+      amount: toDecimal(input.amount),
+      qty: 1,
+      description: input.method === 'CL_AGENCY' ? 'City ledger agency' : 'City ledger company',
+      businessDate: input.businessDate,
+    },
+  });
+}
+
+/** Take a posted payment off the live folio. The row stays for the Deleted tab and the voids report. */
+export async function voidFolioPayment(input: { paymentId: string; reason: string }) {
+  const reason = input.reason.trim();
+  if (!reason) throw new Error('A reason is required');
+  const payment = await prisma.folioPayment.findUnique({
+    where: { id: input.paymentId },
+    include: { folio: true },
+  });
+  if (!payment) throw new Error('Payment not found');
+  if (payment.voidedAt) throw new Error('Payment is already deleted');
+  if (payment.kind !== 'PAYMENT') throw new Error('Only a posted payment can be deleted');
+  if (payment.folio.status === 'TRANSFERRED_AR') {
+    throw new Error('Cannot delete a payment after City Ledger transfer');
+  }
+  const updated = await prisma.folioPayment.update({
+    where: { id: payment.id },
+    data: { voidedAt: new Date(), voidReason: reason },
+  });
+  await recalcReservationTotal(payment.folio.reservationId);
+  return updated;
+}
+
+export async function listVoidedFolioPayments() {
+  return prisma.folioPayment.findMany({
+    where: { voidedAt: { not: null } },
+    orderBy: { voidedAt: 'desc' },
+    take: 500,
+    include: {
+      folio: {
+        select: {
+          id: true,
+          type: true,
+          reservationId: true,
+          reservation: {
+            select: {
+              id: true,
+              room: { select: { roomNumber: true } },
+              guest: { select: { fullName: true } },
+            },
+          },
+        },
+      },
+    },
+  });
 }
 
 async function recalcReservationTotal(reservationId: string) {
@@ -472,23 +606,40 @@ export async function voidCharge(chargeId: string) {
   const postedDay = await prisma.businessDay.findFirst({
     where: { date: bakuCivilUtcDate(hotelDateKey(charge.businessDate)) },
   });
+  const housePair = charge.externalRef?.startsWith('house-use:')
+    ? await prisma.folioCharge.findUnique({
+        where: { id: charge.externalRef.slice('house-use:'.length) },
+        include: { revenueCode: true },
+      })
+    : await prisma.folioCharge.findFirst({
+        where: { externalRef: `house-use:${charge.id}`, folioId: charge.folioId },
+        include: { revenueCode: true },
+      });
+  const targets = housePair && housePair.id !== charge.id ? [charge, housePair] : [charge];
+
   if (postedDay?.status === 'CLOSED') {
     const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
     await assertBusinessDayOpenForPosting();
     const openDate = await getCurrentBusinessDate();
-    await prisma.folioCharge.create({
-      data: {
-        folioId: charge.folioId,
-        revenueCodeId: charge.revenueCodeId,
-        departmentId: charge.departmentId,
-        amount: charge.amount,
-        qty: -charge.qty,
-        sku: charge.sku,
-        description: `Void ${charge.description}`,
-        businessDate: openDate,
-        externalRef: `void-${charge.id}`,
-      },
-    });
+    for (const row of targets) {
+      const already = await prisma.folioCharge.findFirst({
+        where: { externalRef: `void-${row.id}` },
+      });
+      if (already) continue;
+      await prisma.folioCharge.create({
+        data: {
+          folioId: row.folioId,
+          revenueCodeId: row.revenueCodeId,
+          departmentId: row.departmentId,
+          amount: row.amount,
+          qty: -row.qty,
+          sku: row.sku,
+          description: `Void ${row.description}`,
+          businessDate: openDate,
+          externalRef: `void-${row.id}`,
+        },
+      });
+    }
     await recalcReservationTotal(charge.folio.reservationId);
     return { reservationId: charge.folio.reservationId };
   }
@@ -507,6 +658,19 @@ export async function voidCharge(chargeId: string) {
   };
 
   await prisma.folioCharge.delete({ where: { id: chargeId } });
+  if (housePair && housePair.id !== charge.id) {
+    await prisma.folioCharge.delete({ where: { id: housePair.id } });
+    fireAndForgetDispatch(
+      dispatchFolioChargeVoided({
+        ...voidPayload,
+        chargeId: housePair.id,
+        revenueCode: housePair.revenueCode.code,
+        amount: decimalToNumber(housePair.amount),
+        qty: housePair.qty,
+        description: housePair.description ?? '',
+      }),
+    );
+  }
   const { voidLaundryForCharge } = await import('@/lib/services/hk-nafta.service');
   await voidLaundryForCharge(chargeId);
   await recalcReservationTotal(charge.folio.reservationId);

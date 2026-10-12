@@ -21,7 +21,13 @@ export interface NightAuditPayload {
   businessDate: string;
   nightAuditId?: string;
   currency: 'AZN';
-  saleLines?: Array<{ sku: string; qty: number; amount: number }>;
+  saleLines?: Array<{
+    sku: string;
+    qty: number;
+    amount: number;
+    revenueCode?: string;
+    glAccountCode?: string;
+  }>;
   revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
   /** @deprecated use revenueLines */
   lines?: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;

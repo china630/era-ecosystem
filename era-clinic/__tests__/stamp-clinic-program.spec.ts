@@ -23,7 +23,7 @@ describe("stamp clinic program from EW notes", () => {
     ).toBe(true);
     expect(
       shouldStampProgram({
-        migrationSku: "PKG-DERMO",
+        migrationSku: "PKG-DERMA",
         migrationSource: "phrase",
       }),
     ).toBe(true);
@@ -89,7 +89,7 @@ describe("stamp clinic program from EW notes", () => {
         guests: "Someone Else",
         arrival: "8/24/26",
         room: "402",
-        migrationSku: "PKG-DERMO",
+        migrationSku: "PKG-DERMA",
         migrationSource: "phrase",
         stayKind: "medical",
       },
@@ -119,7 +119,7 @@ describe("stamp clinic program from EW notes", () => {
     const stats = overlayPatientProgramCodes(rows, stamps);
     expect(rows[0].programCode).toBe("PKG-PREMIUM");
     expect(rows[1].programCode).toBe("");
-    expect(rows[2].programCode).toBe("PKG-DERMO");
+    expect(rows[2].programCode).toBe("PKG-DERMA");
     expect(stats.stamped).toBe(2);
     expect(normalizePkg("PREMIUM")).toBe("PKG-PREMIUM");
     expect(ymd("8/27/26")).toBe("2026-08-27");

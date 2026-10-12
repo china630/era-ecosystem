@@ -7,7 +7,8 @@ import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CounterpartiesService } from "./counterparties.service";
-import { blindIndex, normalizeVoen } from "../security/pii-crypto.util";
+import { blindIndex, encryptText, normalizeName, normalizeVoen } from "../security/pii-crypto.util";
+import { CounterpartyLegalForm } from "@erafinance/database";
 
 const findByVoenQuerySchema = z.object({
   taxId: z.string().min(1),
@@ -16,6 +17,13 @@ const findByVoenQuerySchema = z.object({
 const findOrCreateBodySchema = z.object({
   taxId: z.string().min(1),
   nameFallback: z.string().min(1),
+});
+
+const cardRequestSchema = z.object({
+  taxId: z.string().min(1),
+  name: z.string().min(1),
+  partyKind: z.enum(["COMPANY", "AGENCY"]),
+  legalForm: z.nativeEnum(CounterpartyLegalForm).optional(),
 });
 
 @ApiTags("internal")
@@ -97,6 +105,52 @@ export class InternalCounterpartiesController {
     );
 
     return { id: cp.id, taxId: normalizeVoen(parsed.taxId.trim()) };
+  }
+
+  @Post("card-requests")
+  @ApiOperation({
+    summary: "Queue a company or agency card when Finance has no VÖEN. Does not create the card.",
+  })
+  async queueCard(
+    @OrganizationId() organizationId: string,
+    @Body() body: unknown,
+    @Headers("authorization") authorization?: string,
+    @Headers("x-service-token") xServiceToken?: string,
+  ) {
+    this.authorize(authorization, xServiceToken);
+    const parsed = cardRequestSchema.parse(body);
+    const normalized = normalizeVoen(parsed.taxId.trim());
+    if (!/^\d{10}$/.test(normalized)) {
+      throw new NotFoundException("Invalid VÖEN");
+    }
+    const taxIdBlindIndex = blindIndex("voen", normalized);
+    return runWithTenantContextAsync({ organizationId, skipTenantFilter: false }, async () => {
+      const existing = await this.prisma.counterparty.findFirst({
+        where: { organizationId, taxIdBlindIndex, deletedAt: null },
+        select: { id: true },
+      });
+      if (existing) return { queued: false, counterpartyId: existing.id };
+      await this.prisma.counterpartyCardRequest.upsert({
+        where: { organizationId_taxIdBlindIndex: { organizationId, taxIdBlindIndex } },
+        create: {
+          organizationId,
+          taxIdBlindIndex,
+          taxIdCipher: encryptText(normalized),
+          nameCipher: encryptText(normalizeName(parsed.name.trim())),
+          partyKind: parsed.partyKind,
+          legalForm: parsed.legalForm ?? CounterpartyLegalForm.LLC,
+          status: "PENDING",
+          source: "HOTEL",
+        },
+        update: {
+          nameCipher: encryptText(normalizeName(parsed.name.trim())),
+          partyKind: parsed.partyKind,
+          legalForm: parsed.legalForm ?? CounterpartyLegalForm.LLC,
+          status: "PENDING",
+        },
+      });
+      return { queued: true };
+    });
   }
 }
 

@@ -11,6 +11,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -68,6 +69,10 @@ export default function NasChartSettingsPage() {
   const [tplLoading, setTplLoading] = useState(false);
   const [tplErr, setTplErr] = useState<string | null>(null);
   const [importingId, setImportingId] = useState<string | null>(null);
+  const [subParent, setSubParent] = useState("");
+  const [subCode, setSubCode] = useState("");
+  const [subName, setSubName] = useState("");
+  const [subBusy, setSubBusy] = useState(false);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -151,6 +156,31 @@ export default function NasChartSettingsPage() {
         : "chartPage.planKindCommercial";
   const chartSubtitle = `${t(planKindKey)} — ${ledgerType} — ${t("chartPage.subtitle")}`;
 
+  async function onCreateSubaccount(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token || !canImport) return;
+    setSubBusy(true);
+    setErr(null);
+    const res = await apiFetch("/api/accounts/nas-subaccounts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        parentCode: subParent.trim(),
+        code: subCode.trim(),
+        name: subName.trim(),
+      }),
+    });
+    setSubBusy(false);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      setErr(text || `${t("chartPage.importErr")}: ${res.status}`);
+      return;
+    }
+    setSubCode("");
+    setSubName("");
+    await loadAccounts();
+  }
+
   async function onProvisionIfrs() {
     if (!token || !canImport) return;
     setProvisionBusy(true);
@@ -232,6 +262,52 @@ export default function NasChartSettingsPage() {
         }
       />
 
+      {ledgerType === "NAS" && canImport ? (
+        <form
+          className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-2 items-end p-4`}
+          onSubmit={(e) => void onCreateSubaccount(e)}
+        >
+          <label className="text-xs">
+            {t("chartPage.subParent", "Parent")}
+            <select
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
+              value={subParent}
+              onChange={(e) => setSubParent(e.target.value)}
+              required
+            >
+              <option value="">{t("chartPage.subParentPh", "Account")}</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.code}>
+                  {account.code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs">
+            {t("chartPage.subCode", "Subaccount")}
+            <input
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
+              value={subCode}
+              onChange={(e) => setSubCode(e.target.value)}
+              placeholder="601.1"
+              required
+            />
+          </label>
+          <label className="text-xs">
+            {t("chartPage.subName", "Name")}
+            <input
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
+              value={subName}
+              onChange={(e) => setSubName(e.target.value)}
+              required
+            />
+          </label>
+          <button type="submit" className={SECONDARY_BUTTON_CLASS} disabled={subBusy}>
+            {t("chartPage.addSubaccount", "Add subaccount")}
+          </button>
+        </form>
+      ) : null}
+
       {ledgerType === "IFRS" && canImport ? (
         <form
           className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-2 items-end p-4`}
@@ -240,7 +316,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             code
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsCode}
               onChange={(e) => setIfrsCode(e.target.value)}
               required
@@ -249,7 +325,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             name
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsName}
               onChange={(e) => setIfrsName(e.target.value)}
               required
@@ -258,7 +334,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             type
             <select
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsType}
               onChange={(e) => setIfrsType(e.target.value)}
             >

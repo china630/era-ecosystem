@@ -1,3 +1,4 @@
+import { requestFinanceCardIfMissing } from '@/lib/integration/finance-card-request';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 
@@ -48,7 +49,7 @@ export async function createQuickCompany(input: { name: string; voen: string }) 
   const organizationId = requestOrganizationId();
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      return await prisma.company.create({
+      const row = await prisma.company.create({
         data: {
           organizationId,
           code: profileCode(name),
@@ -57,6 +58,8 @@ export async function createQuickCompany(input: { name: string; voen: string }) 
           active: true,
         },
       });
+      await requestFinanceCardIfMissing({ voen: row.voen, name: row.name, partyKind: 'COMPANY' });
+      return row;
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'P2002' && attempt < 2) continue;

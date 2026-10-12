@@ -21,6 +21,7 @@ import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { AccountsService } from "./accounts.service";
 import { CreateBankAccountDto } from "./dto/create-bank-account.dto";
 import { CreateIfrsAccountDto } from "./dto/create-ifrs-account.dto";
+import { CreateNasSubaccountDto } from "./dto/create-nas-subaccount.dto";
 import { ImportFromTemplateDto } from "./dto/import-from-template.dto";
 
 function parseOrganizationKindQuery(raw?: string): OrganizationKind | undefined {
@@ -120,6 +121,19 @@ export class AccountsController {
     @Body() dto: CreateIfrsAccountDto,
   ) {
     return this.accounts.createIfrsAccount(organizationId, dto);
+  }
+
+  @Post("nas-subaccounts")
+  @UseGuards(PermissionsGuard)
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
+  @ApiOperation({
+    summary: "Create an analytical NAS subaccount under an official parent (601.1)",
+  })
+  createNasSubaccount(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CreateNasSubaccountDto,
+  ) {
+    return this.accounts.createNasSubaccount(organizationId, dto);
   }
 
   @Post("import-from-template")

@@ -11,7 +11,8 @@ describe("medical-package-resolve", () => {
     expect(normalizeMedicalPackageCode("STANDART")).toBe("PKG-STANDART");
     expect(normalizeMedicalPackageCode("Premium")).toBe("PKG-PREMIUM");
     expect(normalizeMedicalPackageCode("DETOX")).toBe("PKG-DETOKS");
-    expect(normalizeMedicalPackageCode("PKG-DERMO")).toBe("PKG-DERMO");
+    expect(normalizeMedicalPackageCode("PKG-DERMA")).toBe("PKG-DERMA");
+    expect(normalizeMedicalPackageCode("PKG-DERMO")).toBe("PKG-DERMA");
   });
 
   it("resolves ERA-PKG single line for all pax", () => {
@@ -95,9 +96,9 @@ describe("medical-package-resolve", () => {
   });
 
   it("agency Dermo / Detox walk-in labels", () => {
-    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Detox paket Walkin")).toBe("PKG-DETOKS");
-    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Premium Facebook")).toBe("PKG-PREMIUM");
   });
 
@@ -106,8 +107,8 @@ describe("medical-package-resolve", () => {
     expect(resolveAgencyPackageCode("Premium Sultan Travel medical")).toBe(
       "PKG-PREMIUM",
     );
-    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMO");
-    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMO");
+    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMA");
+    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMA");
     expect(resolveAgencyPackageCode("Sanatoriums booking leisure")).toBeNull();
     expect(resolveAgencyPackageCode("Walkin medical")).toBeNull();
   });
@@ -157,6 +158,37 @@ describe("medical-package-resolve", () => {
     expect(programCodeForLifecycle(r)).toBeUndefined();
   });
 
+  it("Elektra leisure label skips clinic only when the tariff is not medical", () => {
+    const leisure = resolveMedicalSku({
+      notes: [],
+      agencyName: "Walkin leisure",
+      guests: [{ fullName: "Guest" }],
+      applyLeisureAgencyRule: true,
+    });
+    expect(leisure.stayKind).toBe("leisure");
+    const medicalTariff = resolveMedicalSku({
+      notes: [],
+      agencyName: "Walkin leisure",
+      guests: [{ fullName: "Guest" }],
+      ratePlanCode: "PKG-STANDART",
+      applyLeisureAgencyRule: true,
+    });
+    expect(medicalTariff.stayKind).toBe("medical");
+    expect(medicalTariff.unanimousCode).toBe("PKG-STANDART");
+  });
+
+  it("front office does not copy the tariff into an empty guest package", () => {
+    const r = resolveMedicalSku({
+      notes: [],
+      guests: [{ fullName: "Guest" }],
+      ratePlanCode: "PKG-STANDART",
+      inheritRatePlanPackage: false,
+    });
+    expect(r.perGuestCodes).toEqual([null]);
+    expect(r.unanimousCode).toBeNull();
+    expect(r.stayKind).toBe("unresolved");
+  });
+
   it("isLeisureAgency helper", async () => {
     const { isLeisureAgency } = await import(
       "@/lib/services/medical-package-resolve.service"
@@ -170,9 +202,9 @@ describe("medical-package-resolve", () => {
       notes: [],
       agencyName: "Custom Corp Travel",
       guests: [{ fullName: "Guest" }],
-      agencyPackageCode: "PKG-DERMO",
+      agencyPackageCode: "PKG-DERMA",
     });
-    expect(r.unanimousCode).toBe("PKG-DERMO");
+    expect(r.unanimousCode).toBe("PKG-DERMA");
     expect(r.stayKind).toBe("medical");
   });
 
@@ -207,7 +239,7 @@ describe("medical-package-resolve", () => {
       agencyName: null,
       guests: [{ fullName: "Guest" }],
     });
-    expect(r.unanimousCode).toBe("PKG-DERMO");
+    expect(r.unanimousCode).toBe("PKG-DERMA");
   });
 
   it("empty guest column inherits the sold package", () => {
@@ -228,8 +260,8 @@ describe("medical-package-resolve", () => {
       guests: [{ fullName: "A" }, { fullName: "B" }],
       ratePlanCode: "PKG-STANDART",
     });
-    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMO", null], null);
-    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMO", "PKG-STANDART"]);
+    const overlaid = overlayFoPackageCodes(resolved, ["PKG-DERMA", null], null);
+    expect(overlaid.perGuestCodes).toEqual(["PKG-DERMA", "PKG-STANDART"]);
     expect(overlaid.unanimousCode).toBeNull();
   });
 });

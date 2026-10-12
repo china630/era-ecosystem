@@ -157,7 +157,6 @@ export async function previewComposedPackageSell(
       checkInDate: true,
       roomTypeId: true,
       mealPlanId: true,
-      ratePlan: { select: { code: true } },
       paxGuests: {
         select: {
           medicalPackageCode: true,
@@ -170,10 +169,9 @@ export async function previewComposedPackageSell(
     },
   });
   if (!reservation) return null;
-  const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
-      ? paxCodesForCompose(reservation.paxGuests, stayCode)
+      ? paxCodesForCompose(reservation.paxGuests, null)
       : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
   return ownerPackageNightlyBreakdown(reservation.checkInDate, codes, {
     roomTypeId: reservation.roomTypeId,
@@ -195,7 +193,6 @@ export async function syncComposedDailyRates(
       medicalPackageCode: true,
       roomTypeId: true,
       mealPlanId: true,
-      ratePlan: { select: { code: true } },
       paxGuests: {
         select: {
           medicalPackageCode: true,
@@ -211,10 +208,9 @@ export async function syncComposedDailyRates(
   if (!reservation) {
     return { applied: false, total: null, missing: false, breakdown: null };
   }
-  const stayCode = reservation.ratePlan?.code ?? reservation.medicalPackageCode;
   const codes =
     reservation.paxGuests.length > 0
-      ? paxCodesForCompose(reservation.paxGuests, stayCode)
+      ? paxCodesForCompose(reservation.paxGuests, null)
       : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
   const nights = eachNight(reservation.checkInDate, reservation.checkOutDate);
   let missing = false;
@@ -239,6 +235,7 @@ export async function syncComposedDailyRates(
         reservationId,
         stayDate,
         amount: toDecimal(breakdown.total),
+        tariffAmount: toDecimal(breakdown.total),
         manualFlag: false,
         fixPrice: false,
       },

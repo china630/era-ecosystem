@@ -2,6 +2,7 @@ import { CP_PERMISSION } from "@era/contracts";
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -12,9 +13,15 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Response } from "express";
 import { CounterpartyRole, CounterpartyLegalForm } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { PrismaService } from "../prisma/prisma.service";
@@ -30,6 +37,7 @@ import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { composePersonFullName, resolveIncomingNameParts } from "@era/satellite-kit";
 import {
   blindIndex,
+  decryptText,
   encryptText,
   normalizeFin,
   normalizeName,
@@ -253,6 +261,98 @@ export class CounterpartiesController {
       },
     });
     return { items: rows };
+  }
+
+  @Get("card-requests")
+  @ApiOperation({ summary: "Companies and agencies waiting for a Finance card" })
+  async cardRequests(@OrganizationId() orgId: string) {
+    const rows = await this.prisma.counterpartyCardRequest.findMany({
+      where: { organizationId: orgId, status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      partyKind: row.partyKind,
+      legalForm: row.legalForm,
+      name: decryptText(row.nameCipher),
+      taxId: decryptText(row.taxIdCipher),
+      createdAt: row.createdAt,
+    }));
+  }
+
+  @Get("import-template.xlsx")
+  @ApiOperation({ summary: "Blank Excel template for company and agency cards" })
+  async importTemplate(@Res({ passthrough: true }) res: Response): Promise<StreamableFile> {
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet("counterparties");
+    sheet.addRow(["partyKind", "voen", "name", "legalForm"]);
+    sheet.addRow(["company", "1234567890", "Nafta LLC", "LLC"]);
+    sheet.addRow(["agency", "0987654321", "Travel AZ", "LLC"]);
+    const buf = Buffer.from(await wb.xlsx.writeBuffer());
+    res.setHeader("Content-Disposition", 'attachment; filename="counterparties-import.xlsx"');
+    return new StreamableFile(buf);
+  }
+
+  @Post("import-xlsx")
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
+  @ApiConsumes("multipart/form-data")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiOperation({ summary: "Import company and agency cards from Excel" })
+  async importXlsx(
+    @OrganizationId() orgId: string,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (!file?.buffer) throw new BadRequestException("file is required");
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(file.buffer as unknown as ArrayBuffer);
+    const sheet = wb.worksheets[0];
+    if (!sheet) throw new BadRequestException("workbook has no sheet");
+    const header = (sheet.getRow(1).values as Array<unknown>).map((cell) =>
+      String(cell ?? "").trim(),
+    );
+    const col = (name: string) => header.indexOf(name);
+    if (col("partyKind") < 1 || col("voen") < 1 || col("name") < 1 || col("legalForm") < 1) {
+      throw new BadRequestException("header must include partyKind, voen, name, legalForm");
+    }
+    const created: string[] = [];
+    const errors: string[] = [];
+    for (let r = 2; r <= sheet.rowCount; r += 1) {
+      const row = sheet.getRow(r);
+      const partyKind = String(row.getCell(col("partyKind")).text).trim().toLowerCase();
+      const voen = String(row.getCell(col("voen")).text).trim();
+      const name = String(row.getCell(col("name")).text).trim();
+      const legalRaw = String(row.getCell(col("legalForm")).text).trim().toUpperCase();
+      if (!voen && !name) continue;
+      if (partyKind !== "company" && partyKind !== "agency") {
+        errors.push(`${voen || r}: partyKind must be company or agency`);
+        continue;
+      }
+      if (!(Object.values(CounterpartyLegalForm) as string[]).includes(legalRaw)) {
+        errors.push(`${voen || r}: unknown legalForm ${legalRaw}`);
+        continue;
+      }
+      if (legalRaw === CounterpartyLegalForm.INDIVIDUAL) {
+        errors.push(`${voen || r}: individual guests are not imported here`);
+        continue;
+      }
+      try {
+        const linked = await this.svc.findOrCreateByVoen({
+          organizationId: orgId,
+          taxId: voen,
+          nameFallback: name,
+        });
+        await this.prisma.counterparty.update({
+          where: { id: linked.id },
+          data: { legalForm: legalRaw as CounterpartyLegalForm },
+        });
+        created.push(voen);
+      } catch (err) {
+        errors.push(`${voen || r}: ${err instanceof Error ? err.message : "failed"}`);
+      }
+    }
+    return { created: created.length, errors };
   }
 
   @Get(":id")
