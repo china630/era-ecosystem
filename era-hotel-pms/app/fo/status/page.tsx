@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { addBakuDays, bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { DatePicker, showApiError } from '@era/satellite-kit/ui';
+import { DatePicker, MODAL_CHECKBOX_CLASS, showApiError } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { AgeBoardChart, BoardDayChart, chartColor, ColumnChart, LineChart, PieChart, RoomTypeChart } from '@/components/FoStatusCharts';
 import type { FlowCard, FoStatusSnapshot, StatusListRow, TypeMatrix } from '@/lib/services/fo-status-dashboard.math';
@@ -291,15 +291,15 @@ export default function FoStatusPage() {
 
       <div className="mb-3 flex flex-wrap gap-4 text-[12px] text-slate-600">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={waiting} onChange={(e) => setWaiting(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={waiting} onChange={(e) => setWaiting(e.target.checked)} />
           {t('includingWaiting')}
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={withRevenue} onChange={(e) => setWithRevenue(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={withRevenue} onChange={(e) => setWithRevenue(e.target.checked)} />
           {t('withRevenue')}
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={grid} onChange={(e) => setGrid(e.target.checked)} />
+          <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={grid} onChange={(e) => setGrid(e.target.checked)} />
           {t('gridView')}
         </label>
       </div>

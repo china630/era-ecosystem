@@ -11,6 +11,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -269,7 +270,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             {t("chartPage.subParent", "Parent")}
             <select
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={subParent}
               onChange={(e) => setSubParent(e.target.value)}
               required
@@ -285,7 +286,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             {t("chartPage.subCode", "Subaccount")}
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={subCode}
               onChange={(e) => setSubCode(e.target.value)}
               placeholder="601.1"
@@ -295,7 +296,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             {t("chartPage.subName", "Name")}
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={subName}
               onChange={(e) => setSubName(e.target.value)}
               required
@@ -315,7 +316,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             code
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsCode}
               onChange={(e) => setIfrsCode(e.target.value)}
               required
@@ -324,7 +325,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             name
             <input
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsName}
               onChange={(e) => setIfrsName(e.target.value)}
               required
@@ -333,7 +334,7 @@ export default function NasChartSettingsPage() {
           <label className="text-xs">
             type
             <select
-              className={INPUT_BORDERED_CLASS}
+              className={`${INPUT_BORDERED_CLASS} ${MODAL_INPUT_CLASS}`}
               value={ifrsType}
               onChange={(e) => setIfrsType(e.target.value)}
             >

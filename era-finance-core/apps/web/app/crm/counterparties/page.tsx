@@ -210,7 +210,7 @@ export default function CounterpartiesPage() {
               ref={importRef}
               type="file"
               accept=".xlsx"
-              className="hidden"
+              className={`hidden ${MODAL_INPUT_CLASS}`}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";

@@ -16,6 +16,7 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../../lib/design-system";
 
@@ -203,7 +204,7 @@ export default function ProductsPage() {
             ref={importRef}
             type="file"
             accept=".xlsx"
-            className="hidden"
+            className={`hidden ${MODAL_INPUT_CLASS}`}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
