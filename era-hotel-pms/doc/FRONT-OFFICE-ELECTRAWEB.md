@@ -25,6 +25,7 @@ Empty rack/plan cells = free **doors**, not sellable type inventory. Create form
 | # | Screen | Route | Status |
 |---|--------|-------|--------|
 | 1 | **Əsas** (Executive cockpit / Daily Flash) | `/executive` | Cockpit: fact/plan occupancy, ADR/RevPAR compare, revenue MTD/YTD, receivables, status |
+| 1a | **Status** | `/fo/status` | Second item in Əsas. In-house, arrivals, departures, end of day, room status, 9-day forecast, month-to-date sales |
 | 1b | **Forecast** | `/executive/forecast` | Occupancy forecast 7 / 14 / 30 / 90 days |
 | 1c | **Unit economics** (planned) | `/executive/unit-economics` | CPOR / BEP / service-fee·food·medical COGS trends + below-floor risks — [ADR](../../docs/adr/hotel-bar-accounting-vs-package-sell.md) `HOT-UE-01` |
 | 2 | Room rack | `/` | Wave C — enriched tiles + DnD relocate |

@@ -75,16 +75,18 @@ describe('fo status dashboard', () => {
     expect(row('current').percent).toBe(2.56);
   });
 
-  it('counts a shared door once and keeps both guests in pax', () => {
+  it('counts a shared door once and keeps a mixed group on the group series', () => {
     const snap = buildFoStatus(
       base([
         stay({ id: 'a', status: 'IN_HOUSE', inYmd: '2026-10-01', outYmd: '2026-10-20', roomId: 'door', share: true, adults: 1 }),
-        stay({ id: 'b', status: 'IN_HOUSE', inYmd: '2026-10-01', outYmd: '2026-10-20', roomId: 'door', share: true, adults: 1 }),
+        stay({ id: 'b', status: 'IN_HOUSE', inYmd: '2026-10-01', outYmd: '2026-10-20', roomId: 'door', share: true, adults: 1, group: true }),
       ]),
     );
     expect(snap.inHouse.rooms).toBe(1);
     expect(snap.inHouse.shr).toBe(1);
     expect(snap.inHouse.pax).toBe(2);
+    expect(snap.forecast[0].group).toBe(1);
+    expect(snap.forecast[0].individual).toBe(0);
   });
 
   it('rolls month-to-date sales into ADR', () => {
@@ -106,5 +108,23 @@ describe('fo status dashboard', () => {
     expect(snap.sales.roomNights).toBe(3);
     expect(snap.sales.adr).toBe(100);
     expect(snap.sales.roomPercent).toBeCloseTo((3 / (78 * 12)) * 100, 2);
+  });
+
+  it('keeps a daily rate off a night the stay does not cover', () => {
+    const snap = buildFoStatus(
+      base(
+        [
+          stay({ id: 'in', status: 'IN_HOUSE', inYmd: '2026-10-01', outYmd: '2026-10-20', roomId: 'r1' }),
+          stay({ id: 'later', status: 'CONFIRMED', inYmd: '2026-10-20', outYmd: '2026-10-22' }),
+        ],
+        {
+          nightRates: [
+            { day: '2026-10-12', reservationId: 'in', amount: 80 },
+            { day: '2026-10-12', reservationId: 'later', amount: 50 },
+          ],
+        },
+      ),
+    );
+    expect(snap.forecast[0].revenue).toBe(80);
   });
 });

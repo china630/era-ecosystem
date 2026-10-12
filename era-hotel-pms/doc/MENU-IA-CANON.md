@@ -238,7 +238,7 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 ### 2.15 Əsas — deferred
 
-`/executive`, `/executive/forecast` — decide later; not locked in this wave.
+`/executive`, `/fo/status` (second Əsas item), `/executive/forecast` — decide later; not locked in this wave.
 
 ---
 
