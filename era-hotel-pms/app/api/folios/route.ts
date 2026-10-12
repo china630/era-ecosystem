@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { listFolios, postCharge, postPayment } from '@/lib/services/folio.service';
+import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -28,14 +29,7 @@ const chargeSchema = z.object({
 const paymentSchema = z.object({
   folioId: z.string().uuid(),
   amount: z.number().positive(),
-  paymentMethod: z.enum([
-    'CASH',
-    'CARD',
-    'COMPANY_ACCOUNT',
-    'LOYALTY_POINTS',
-    'DEPOSIT',
-    'BANK_TRANSFER',
-  ]),
+  paymentMethod: z.enum(DESK_PAYMENT_METHODS),
   registerRef: z.string().optional(),
   bankReference: z.string().max(120).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),

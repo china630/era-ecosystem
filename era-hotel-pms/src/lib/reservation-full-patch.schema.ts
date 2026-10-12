@@ -86,6 +86,7 @@ export const reservationFullPatchSchema = z.object({
       z.object({
         stayDate: z.string(),
         amount: z.number(),
+        tariffAmount: z.number().nullable().optional(),
         manualFlag: z.boolean().optional(),
         currencyCode: z.string().optional(),
         fixPrice: z.boolean().optional(),

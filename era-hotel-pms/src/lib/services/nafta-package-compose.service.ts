@@ -25,7 +25,7 @@ export type ComposeBreakdown = {
 };
 
 const STANDART = "PKG-STANDART";
-const DERMO = "PKG-DERMO";
+const DERMO = "PKG-DERMA";
 const DETOKS = "PKG-DETOKS";
 
 export type RoomTypeFamily = "STANDARD" | "JUNIOR" | "DELUXE" | "TRIPLE" | "OTHER";

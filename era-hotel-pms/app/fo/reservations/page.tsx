@@ -30,6 +30,10 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { useListPaginationLabels } from '@/hooks/useListPaginationLabels';
 import { catalogLabel } from '@/lib/catalog-label';
 import {
+  bookingSourceKind,
+  inferSourceKindFromAgency,
+} from '@/lib/booking-source-kind';
+import {
   RESERVATION_QUEUE_CODES,
   isReservationQueue,
   queueIgnoresDates,
@@ -46,7 +50,10 @@ type Row = {
   noteText?: string | null;
   room: { roomNumber: string; status: string } | null;
   roomType: { code: string };
-  agency: { code: string } | null;
+  agency: { code: string; name?: string | null } | null;
+  company?: { code: string; name?: string | null } | null;
+  source?: { code: string; name?: string | null } | null;
+  walkInProfileCode?: string | null;
   adults: number;
   hasNotes?: boolean;
   notePreview?: string | null;
@@ -61,6 +68,21 @@ const ROW_BG: Record<string, string> = {
   CANCELLED: 'bg-rose-50/50',
   NO_SHOW: 'bg-rose-50',
 };
+
+function sourceLabel(row: Row, t: (key: string) => string): string {
+  const kind = row.source?.code
+    ? bookingSourceKind(row.source.code)
+    : inferSourceKindFromAgency(row.agency?.code, row.agency?.name);
+  if (kind === 'WALKIN') {
+    const profile = row.walkInProfileCode?.trim();
+    return profile ? `${t('sourceWalkIn')} · ${profile}` : t('sourceWalkIn');
+  }
+  if (kind === 'AGENCY') return row.agency?.name || row.agency?.code || t('sourceAgency');
+  if (kind === 'BOOKING') return row.agency?.name || row.source?.name || t('sourceOta');
+  if (kind === 'CORPORATE') return row.company?.name || row.company?.code || t('sourceCorporate');
+  if (kind === 'WEB') return row.source?.name || t('sourceWeb');
+  return row.agency?.name || row.company?.name || row.source?.name || '—';
+}
 
 type ListFilters = {
   q: string;
@@ -78,6 +100,7 @@ type ListFilters = {
 export default function ReservationsListPage() {
   const { can } = useAuth();
   const t = useTranslations('reservationList');
+  const tCard = useTranslations('reservationCard');
   const tRes = useTranslations('reservationStatus');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -87,8 +110,8 @@ export default function ReservationsListPage() {
 
   const [cardId, setCardId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState('');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc' | ''>('');
+  const [sortKey, setSortKey] = useState('room');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | ''>('asc');
   const [createOpen, setCreateOpen] = useState(false);
   const [q, setQ] = useState('');
   const [queue, setQueue] = useState<ReservationQueue>(() => {
@@ -315,7 +338,7 @@ export default function ReservationsListPage() {
                 key: 'agency',
                 header: t('agency'),
                 sortable: true,
-                render: (r) => r.agency?.code ?? '—',
+                render: (r) => sourceLabel(r, tCard),
               },
               {
                 key: 'guest',

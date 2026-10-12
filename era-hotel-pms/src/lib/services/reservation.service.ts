@@ -8,7 +8,6 @@ import { fanOutClinicMedicalPackages } from '@/lib/integration/guest-lifecycle-e
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
 import {
   applyContractRuleToNightly,
@@ -769,7 +768,6 @@ export async function checkInReservation(
   const biz = await getCurrentBusinessDate();
   const bizKey = hotelDateKey(biz);
   let arrivalKey = hotelDateKey(reservation.checkInDate);
-  let departKey = hotelDateKey(reservation.checkOutDate);
   if (arrivalKey > bizKey && !opts?.early) {
     const wallToday = todayBakuYmd();
     if (arrivalKey <= wallToday) {
@@ -888,10 +886,7 @@ export async function checkInReservation(
     }
     reservation = await getReservation(id);
     arrivalKey = hotelDateKey(reservation.checkInDate);
-    departKey = hotelDateKey(reservation.checkOutDate);
   }
-
-  const revenueRoom = await findRevenueCodeByToken('ROOM');
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
@@ -917,39 +912,6 @@ export async function checkInReservation(
       );
     }
 
-    const nightDue = bizKey >= arrivalKey && bizKey < departKey;
-    if (nightDue && reservation.ratePlan.medicalFlag) {
-      const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
-      await postNightlyPackageCharges(id, biz).catch((e) =>
-        console.error('Arrival night package post failed', e),
-      );
-    } else if (nightDue && revenueRoom) {
-      const rates = await prisma.reservationDailyRate.findMany({
-        where: { reservationId: id },
-      });
-      const daily = rates.find((d) => hotelDateKey(d.stayDate) === bizKey);
-      let amount = daily ? decimalToNumber(daily.amount) : null;
-      if (amount == null) {
-        try {
-          const { getNightlyRoomChargeForDate } = await import(
-            '@/lib/services/pricing-quote.service'
-          );
-          amount = await getNightlyRoomChargeForDate(id, biz);
-        } catch {
-          amount = decimalToNumber(reservation.ratePlan.pricePerNight);
-        }
-      }
-      if (amount != null && (daily || amount > 0)) {
-        await postCharge({
-          reservationId: id,
-          revenueCodeId: revenueRoom.id,
-          amount,
-          qty: 1,
-          description: `Room night ${bizKey}`,
-          businessDate: biz,
-        });
-      }
-    }
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');
     void submitTourismCheckIn(id).catch((e) => console.error('Tourism check-in failed', e));

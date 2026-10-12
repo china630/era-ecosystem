@@ -24,7 +24,7 @@ export type PaxRow = {
   isPrimary: boolean;
   /** Owns a personal GUEST folio (EQUAL: all; PRIMARY: only primary). */
   ownsFolio?: boolean;
-  /** Medical package SKU (PKG-STANDART | PKG-PREMIUM | PKG-DERMO | PKG-DETOKS). */
+  /** Medical package SKU (PKG-STANDART | PKG-PREMIUM | PKG-DERMA | PKG-DETOKS). */
   medicalPackageCode?: string;
   /** Person-level early departure (stay may remain IN_HOUSE). */
   departedAt?: string | null;
@@ -33,6 +33,8 @@ export type PaxRow = {
 export type DailyRateRow = {
   stayDate: string;
   amount: number;
+  /** Catalog price. `amount` is the price actually charged. */
+  tariffAmount?: number | null;
   currencyCode?: string;
   fixPrice?: boolean;
   discountPct?: number | null;

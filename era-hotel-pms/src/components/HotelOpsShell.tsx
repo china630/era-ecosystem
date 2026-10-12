@@ -204,6 +204,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               anyPermission: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.SCREEN_FO],
             },
             {
+              id: 'home-status',
+              href: '/fo/status',
+              label: t('hotelStatus'),
+              icon: BarChart3,
+              active: pathname === '/fo/status' || pathname.startsWith('/fo/status/'),
+              anyPermission: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.SCREEN_FO],
+            },
+            {
               id: 'home-forecast',
               href: '/executive/forecast',
               label: t('forecast'),

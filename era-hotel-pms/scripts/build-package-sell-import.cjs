@@ -24,7 +24,7 @@ const READY = process.env.NAFTA_READY || "D:/ERA-BACKUP/NAFTA-ERA-READY";
 const PKG = {
   "Standart paket": { code: "PKG-STANDART", name: "Nafta Standart" },
   "Premium paket": { code: "PKG-PREMIUM", name: "Nafta Premium" },
-  "Dermo paket": { code: "PKG-DERMO", name: "Nafta Dermo" },
+  "Dermo paket": { code: "PKG-DERMA", name: "Nafta Dermo" },
   "Detoks paket": { code: "PKG-DETOKS", name: "Nafta Detoks" },
 };
 

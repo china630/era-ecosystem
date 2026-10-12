@@ -41,13 +41,14 @@ export function pickTargetFolio<
 
 export function accountBalance(folio: {
   charges: Array<{ amount: number | string; qty?: number | null }>;
-  payments?: Array<{ amount: number | string; kind?: string | null }>;
+  payments?: Array<{ amount: number | string; kind?: string | null; voidedAt?: string | null }>;
 }): number {
   const charges = folio.charges.reduce(
     (s, c) => s + Number(c.amount) * (c.qty == null ? 1 : Number(c.qty)),
     0,
   );
   const payments = (folio.payments ?? []).reduce((s, p) => {
+    if (p.voidedAt) return s;
     const n = Number(p.amount);
     return s + (p.kind === 'REFUND' ? -n : n);
   }, 0);

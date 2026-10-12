@@ -36,7 +36,8 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 |-------|-----|------|
 | Staff `/login` | `POST /api/auth/login`; `getSatelliteSession` reads the cookie | Middleware stamps `x-user-id`, `x-user-role`, `x-era-organization-id` from the token |
 | /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
-| /fo/reservations | reservations grid | Stay list — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; chip `queue` (bookings default, `overdue=1` for the night-audit tail); guest names joined with ` / `; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
+| /fo/reservations | reservations grid | Stay list — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; chip `queue` (bookings = open arrivals from today, Baku day; `overdue=1` for the night-audit tail); default sort is room number; source column shows agency, walk-in, OTA, company, or website; guest names joined with ` / `; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
+| /reports/payment-voids | `GET /api/reports/payment-voids` | Deleted folio payments (reason required). Same rows as the folio Deleted chip |
 | /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state + occupancy-frame strokes; OOO/OOS hidden |
 | /fo/rack | rack | Door tiles; From–To stay overlap; filter pane and grid scroll separately |
 | Shared twin assign | `shareEligible` on `POST/PATCH /api/reservations`, `POST …/assign`; break share via PATCH | Union singles; M/F pool; N lanes; ADR `hotel-shared-twin-assignment.md` |
@@ -191,6 +192,7 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 | `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
 | `/settings/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON); legacy `/distribution/yield-rules` redirects |
 | `/executive/unit-economics` | `GET /api/executive/unit-economics` | HOT-UE-01 Phase A proxy CPOR + floor risk |
+| `/fo/status` | `GET /api/fo/status-dashboard` | Əsas menu, second item. Elektra hotel dashboard: in-house / arrivals / departures / end of day, HK and occupancy, 9-day forecast, month-to-date sales |
 
 ADR: `docs/adr/hotel-bar-accounting-vs-package-sell.md`, `docs/adr/hotel-occupancy-and-load-pricing-flags.md` · Nafta: `doc/nafta/BAR_DERIVED_2026.md`
 

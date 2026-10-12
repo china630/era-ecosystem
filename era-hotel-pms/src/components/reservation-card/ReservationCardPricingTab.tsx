@@ -24,6 +24,13 @@ function money(n: number): string {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
 
+function tariffOf(row: DailyRateRow): number {
+  if (row.tariffAmount != null && Number.isFinite(row.tariffAmount)) return row.tariffAmount;
+  const pct = Number(row.discountPct ?? 0);
+  if (pct > 0 && pct < 100) return Math.round((row.amount / (1 - pct / 100)) * 100) / 100;
+  return row.amount;
+}
+
 /** Night sell of the selected package. A plan price is only the fallback when no package is composed. */
 function packageNightBase(
   compose: PackageComposeSummary | null | undefined,
@@ -116,7 +123,14 @@ export function ReservationCardPricingTab({
       onDailyRates(
         dailyRates.map((row) =>
           kindOf(row.stayDate) === 'open'
-            ? { ...row, amount: nightly, discountPct: null, manualFlag: false, fixPrice: false }
+            ? {
+                ...row,
+                amount: nightly,
+                tariffAmount: nightly,
+                discountPct: null,
+                manualFlag: false,
+                fixPrice: false,
+              }
             : row,
         ),
       );
@@ -130,7 +144,14 @@ export function ReservationCardPricingTab({
       onDailyRates(
         dailyRates.map((row) =>
           kindOf(row.stayDate) === 'open' && !row.fixPrice
-            ? { ...row, amount: nightly, manualFlag: true, fixPrice: true, discountPct: null }
+            ? {
+                ...row,
+                tariffAmount: row.tariffAmount ?? row.amount,
+                amount: nightly,
+                manualFlag: true,
+                fixPrice: true,
+                discountPct: null,
+              }
             : row,
         ),
       );
@@ -143,7 +164,13 @@ export function ReservationCardPricingTab({
         dailyRates.map((row) => {
           if (kindOf(row.stayDate) !== 'open' || row.fixPrice) return row;
           const amount = Math.round(packageBase * (1 - percent / 100) * 100) / 100;
-          return { ...row, amount, discountPct: percent, manualFlag: false };
+          return {
+            ...row,
+            tariffAmount: row.tariffAmount ?? packageBase,
+            amount,
+            discountPct: percent,
+            manualFlag: false,
+          };
         }),
       );
       return;
@@ -158,7 +185,14 @@ export function ReservationCardPricingTab({
         if (kindOf(row.stayDate) !== 'open' || row.fixPrice) return row;
         const amount = parts[index] ?? 0;
         index += 1;
-        return { ...row, amount, manualFlag: true, fixPrice: true, discountPct: null };
+        return {
+          ...row,
+          tariffAmount: row.tariffAmount ?? row.amount,
+          amount,
+          manualFlag: true,
+          fixPrice: true,
+          discountPct: null,
+        };
       }),
     );
     if (parts[0] != null) onManualRate(money(parts[0]));
@@ -261,15 +295,17 @@ export function ReservationCardPricingTab({
           <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full table-fixed font-mono text-[12px]" data-testid="rate-grid-table">
             <colgroup>
-              <col className="w-[28%]" />
-              <col className="w-[28%]" />
-              <col className="w-[24%]" />
+              <col className="w-[22%]" />
               <col className="w-[20%]" />
+              <col className="w-[22%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
             </colgroup>
             <thead className="sticky top-0 bg-[#F8FAFC]">
               <tr>
                 <th className="p-2 text-left">{t('stayDate')}</th>
-                <th className="p-2 text-right">{t('amount')}</th>
+                <th className="p-2 text-right">{t('tariffPrice')}</th>
+                <th className="p-2 text-right">{t('actualPrice')}</th>
                 <th className="p-2 text-right">{t('nightDiscountPct')}</th>
                 <th className="p-2 text-center">{t('nightFixed')}</th>
               </tr>
@@ -287,6 +323,7 @@ export function ReservationCardPricingTab({
                 return (
                   <tr key={row.stayDate} className={rowClass} data-night-kind={kind}>
                     <td className="p-2">{row.stayDate.slice(0, 10)}</td>
+                    <td className="p-2 text-right text-[#7F8C8D]">{money(tariffOf(row))}</td>
                     <td className="p-2 text-right">
                       <input
                         type="number"
@@ -298,6 +335,7 @@ export function ReservationCardPricingTab({
                           const next = [...dailyRates];
                           next[index] = {
                             ...row,
+                            tariffAmount: row.tariffAmount ?? row.amount,
                             amount: Number(e.target.value),
                             manualFlag: true,
                             fixPrice: true,
@@ -337,10 +375,11 @@ export function ReservationCardPricingTab({
           </div>
           <table className="w-full table-fixed shrink-0 border-t border-[#D5DADF] font-mono" data-testid="pricing-stay-total">
             <colgroup>
-              <col className="w-[28%]" />
-              <col className="w-[28%]" />
-              <col className="w-[24%]" />
+              <col className="w-[22%]" />
               <col className="w-[20%]" />
+              <col className="w-[22%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
             </colgroup>
             <tbody>
               <tr>
