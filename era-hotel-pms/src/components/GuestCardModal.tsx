@@ -366,10 +366,7 @@ export default function GuestCardModal({
 
   function identityLabel(field: IdentityField): string {
     if (field === 'firstName') return t('fields.firstName');
-    if (field === 'lastName') return t('fields.lastName');
-    if (field === 'sex') return t('fields.gender');
-    if (field === 'birthDate') return t('details.birthDate');
-    return t('fields.nationality');
+    return t('fields.lastName');
   }
 
   function rejectIncompleteIdentity(): boolean {

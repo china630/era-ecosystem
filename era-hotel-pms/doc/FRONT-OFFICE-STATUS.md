@@ -126,3 +126,13 @@
 - Night audit asks F&B `GET /api/internal/v1/shifts/open` with the hotel's organization (`x-era-organization-id`) and the bridge secret. F&B lists open shifts for that organization only. There is no fallback to the container's organization. An empty answer closes that organization's hotel copies whose shift id is missing from the list. Another cafe's copy does not block this hotel. A shift ping from F&B must send the cafe's organization; the hotel stores the copy under that id and rejects a ping without it.
 - A clinic episode opens on check-in. Saving a reservation that has not checked in does not publish a clinic booking. Package changes after check-in update the open course.
 - Check-in while the business date is behind the arrival date (and the arrival date is already today on the wall calendar) tells the cashier which business date night audit is still on. Early check-in stays for an arrival that is still in the future.
+
+## 11. 2026-10-13 stay billing and packages (not a sell claim)
+
+ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-and-pricing.md). UAT: [UAT-SMOKE.md](./UAT-SMOKE.md) §35 steps 6–9 and §38. Not SHIPPED until §35 is signed. Apply `20261013010000_stay_billing_and_tariff_log`.
+
+- Reservation card Rate & source has Stay billing: Normal, Compliment (room nights 0, extras billed), House use (room nights 0, each positive folio charge offset so the guest balance stays 0). Meal plan is not this field.
+- A rate-plan change on the card or in the product wizard appends `StayTariffChange`. The stay journal shows it next to room moves. Posted nights are not rewritten.
+- A medical tariff keeps the guest package column. An empty package blocks save and check-in. The tariff code is not copied into that column. `WALKIN` hides the column, uses the daily-price grid, and does not open a clinic episode.
+- Clinic hears a guest at check-in, and again when that guest's package changes on an in-house stay (card save or the product wizard). Saving a reservation that is not yet in house does not open an episode. The agency name Walk-in Leisure does not mute clinic on the desk. The Elektra bridge still treats that label as non-medical when the imported tariff is not `PKG-*`.
+- Check-in of a past arrival moves `checkInDate` to the open business date and drops nights before that date. The confirmation names the new date only then. `/settings/daily-prices` opens on `WALKIN`; `DAILY RATES` stays in the filter.

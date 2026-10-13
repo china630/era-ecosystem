@@ -22,11 +22,13 @@ Suspected duplicates are grouped by:
 - Same normalized phone (+994…)
 - Same `globalPersonId` on multiple `Guest` rows (data quality — should be one guest row per person per deployment)
 
-**Merge workflow (orchestrator MDM):**
+**Merge workflow (guest dedup screen):**
 
-1. Reception uses guest card **FIN obtained (merge)** or orchestrator MDM merge API.
-2. Pick canonical `globalPersonId`; hotel updates guest row via `POST /api/mdm/person-merge`.
-3. Re-run dedup report until `suspectedDuplicateGroups` is acceptable for go-live.
+1. Open `/reports/guest-dedup`. Each group is a set of cards (name, phone, birth date, gender, citizenship, passport, FIN, stay count, in-house, registry linked). Nothing is typed.
+2. **Keep this card** folds the other cards into that one. Filled fields on the survivor win; blank fields copy from the duplicate. Reservations, party rows and CRM children move, then the duplicate card is deleted. Checked-out history is re-pointed, not renamed by the open-stay name rule.
+3. If two cards are linked to different registry people, a second button **Merge these people** confirms that registry merge. There is no FIN field.
+4. **Not the same people** records the pair and hides the group. Shared phones are never auto-merged.
+5. Re-open the screen until `suspectedDuplicateGroups` is acceptable for go-live.
 
 **Pre-migration (W4 cutover):**
 

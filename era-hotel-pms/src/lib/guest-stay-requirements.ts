@@ -1,10 +1,10 @@
 import { GUEST_FIN_DOC_TYPES, GUEST_PASSPORT_DOC_TYPES } from '@/lib/guest-list-identity';
 
-/** Person identifiers required to save a guest card. */
-export type IdentityField = 'firstName' | 'lastName' | 'sex' | 'birthDate' | 'nationality';
+/** Person identifiers required to save a guest card. Sex, birth date and citizenship wait for check-in. */
+export type IdentityField = 'firstName' | 'lastName';
 
 /** Missing at check-in. Phone is waived for guests under 18. */
-export type OperationalGap = 'phone' | 'document' | 'birthDate';
+export type OperationalGap = 'phone' | 'document' | 'birthDate' | 'sex' | 'nationality';
 
 export type StayOperationalGap = {
   name: string;
@@ -46,9 +46,6 @@ export function guestIdentityGaps(input: {
   const gaps: IdentityField[] = [];
   if (!input.firstName?.trim()) gaps.push('firstName');
   if (!input.lastName?.trim()) gaps.push('lastName');
-  if (!input.sex?.trim()) gaps.push('sex');
-  if (!toYmd(input.birthDate)) gaps.push('birthDate');
-  if (!input.nationality?.trim()) gaps.push('nationality');
   return gaps;
 }
 
@@ -88,6 +85,7 @@ export function isMinorGuest(
 
 export type StayPersonInput = {
   name: string;
+  sex?: string | null;
   nationality?: string | null;
   birthDate?: string | Date | null;
   age?: number | null;
@@ -99,7 +97,15 @@ export type StayPersonInput = {
 };
 
 export function operationalGaps(person: StayPersonInput, todayYmd: string): OperationalGap[] {
-  const nationality = (person.nationality?.trim() || 'AZ').toUpperCase();
+  const gaps: OperationalGap[] = [];
+  if (!person.sex?.trim()) gaps.push('sex');
+  if (!toYmd(person.birthDate)) gaps.push('birthDate');
+  const rawNat = person.nationality?.trim().toUpperCase() ?? '';
+  if (!rawNat) {
+    gaps.push('nationality');
+    return gaps;
+  }
+  const nationality = rawNat;
   const minor = isMinorGuest(person, todayYmd);
   const hasPhone =
     Boolean(person.phone?.trim()) ||
@@ -124,8 +130,6 @@ export function operationalGaps(person: StayPersonInput, todayYmd: string): Oper
         Boolean(row.docNumber?.trim()),
     );
 
-  const gaps: OperationalGap[] = [];
-  if (!toYmd(person.birthDate)) gaps.push('birthDate');
   if (nationality === 'AZ' && !minor && !hasPhone) gaps.push('phone');
   if (nationality === 'AZ') {
     if (!hasFin && !hasPassport) gaps.push('document');
@@ -140,6 +144,7 @@ type StayGuestSlice = {
   fullName: string;
   firstName: string | null;
   lastName: string | null;
+  sex?: string | null;
   nationality: string;
   birthDate: Date | null;
   phone: string | null;
@@ -152,6 +157,7 @@ type StayPaxSlice = {
   guestId: string | null;
   firstName: string | null;
   lastName: string | null;
+  sex?: string | null;
   nationality: string | null;
   birthDate: Date | null;
   age: number | null;
@@ -179,6 +185,7 @@ function displayName(input: {
 function blankPerson(name: string): StayPersonInput {
   return {
     name,
+    sex: null,
     nationality: null,
     birthDate: null,
     age: null,
@@ -191,6 +198,7 @@ function blankPerson(name: string): StayPersonInput {
 }
 
 function mergeGuest(person: StayPersonInput, guest: StayGuestSlice) {
+  if (!person.sex?.trim() && guest.sex) person.sex = guest.sex;
   if (!person.nationality?.trim() && guest.nationality) person.nationality = guest.nationality;
   if (!person.birthDate && guest.birthDate) person.birthDate = guest.birthDate;
   if (!person.phone?.trim() && guest.phone) person.phone = guest.phone;
@@ -214,6 +222,7 @@ export function gapsForStay(stay: StayForOperationalGaps, todayYmd: string): Sta
     const key = pax.guestId ? `guest:${pax.guestId}` : `pax:${pax.id}`;
     const person = people.get(key) ?? blankPerson(displayName(pax));
     if (pax.firstName?.trim() || pax.lastName?.trim()) person.name = displayName(pax);
+    if (!person.sex?.trim() && pax.sex) person.sex = pax.sex;
     if (!person.nationality?.trim() && pax.nationality) person.nationality = pax.nationality;
     if (!person.birthDate && pax.birthDate) person.birthDate = pax.birthDate;
     if (person.age == null && pax.age != null) person.age = pax.age;
@@ -231,9 +240,13 @@ export function gapsForStay(stay: StayForOperationalGaps, todayYmd: string): Sta
   return found;
 }
 
-export function operationalGapLabelKey(gap: string): 'gapPhone' | 'gapBirthDate' | 'gapDocument' {
+export function operationalGapLabelKey(
+  gap: string,
+): 'gapPhone' | 'gapBirthDate' | 'gapDocument' | 'gapSex' | 'gapNationality' {
   if (gap === 'phone') return 'gapPhone';
   if (gap === 'birthDate') return 'gapBirthDate';
+  if (gap === 'sex') return 'gapSex';
+  if (gap === 'nationality') return 'gapNationality';
   return 'gapDocument';
 }
 export function operationalGapDetails(

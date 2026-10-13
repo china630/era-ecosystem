@@ -124,6 +124,21 @@ export async function swapReservationRooms(
     status: b.status,
     reasonCode: 'SWAP',
   });
+  const { moveStayDoor } = await import('@/lib/services/stay-slice.service');
+  await moveStayDoor({
+    reservationId: a.id,
+    fromRoomId: fromA,
+    toRoomId: fromB,
+    status: a.status,
+    checkIn: a.checkInDate,
+  });
+  await moveStayDoor({
+    reservationId: b.id,
+    fromRoomId: fromB,
+    toRoomId: fromA,
+    status: b.status,
+    checkIn: b.checkInDate,
+  });
 
   void dispatchRoomChanged({
     reservationId: a.id,

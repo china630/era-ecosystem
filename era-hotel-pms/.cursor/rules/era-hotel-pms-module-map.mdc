@@ -61,6 +61,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | Add room from stay | `POST /api/reservations/:id/add-room` | Ensure Booking group if missing, clone sibling RoomStay |
 | Cutoff release | `POST /api/cron/allotment-block-cutoff` | HEADLESS soft-release past cutoff; Wave 4 `runCronForEachTenant` → `byOrganization` |
 | Reservation card | `salesContractId` on `POST /api/reservations`, `PATCH …/full` | Tag booking under contract; StaysBar + names-incomplete gate |
+| Stay billing + tariff journal | `billingMode` on `POST /api/reservations` and `PATCH …/full` | `NORMAL` / `COMP` / `HOUSE`. Tariff change appends `StayTariffChange`. Medical plans require a guest package; `WALKIN` does not |
 | Stay split | `POST /api/reservations/:id/stay-split` | Second room segment from a date inside the stay; door or type quota |
 | Cancel / no-show | `PATCH /api/reservations/:id/cancel` `{ noShow? }` | CONFIRMED/OPTION only; yellow cancel before arrival, red no-show from arrival |
 | Desk quick profile | `POST /api/fo/quick-profile` | Incomplete agency (name+phone) or company (name+VÖEN) from the reservation card. No commission, settlement, or contract |
@@ -186,7 +187,7 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 | `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
 | `/settings/seasons` | `GET /api/admin/price-seasons`, `PATCH …/[id]` | High/low season dates. Saving rewrites `effectiveFrom`/`effectiveTo` on sell cells of that season |
 | `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell grid by season, room type, meal, adults |
-| `/settings/daily-prices` | same sell-versions API | Daily rates (BB/FB) grid. Card meal plan selects the cell. No clinic episode without a PKG code |
+| `/settings/daily-prices` | same sell-versions API | Daily grid for `WALKIN` (opens on that plan; `DAILY RATES` stays in the filter). Card meal plan selects the cell. Non-medical plans hide the guest package column and do not open a clinic episode |
 | `/distribution/travel-agencies` | travel-agencies API | Medical package is `Agency.medicalPackageCode` (CatalogField). Import stamps it from the name. `/settings/agency-medical-sku` redirects here |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
 | `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
@@ -204,6 +205,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 |-------|-----|------|
 | `/reports` | `GET /api/reports/{slug}/layout?from&to&lang[&dim]` → `{ layout }`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, Start/End always visible, period radios (manual edit clears the radio), Show, PDF and Excel. Screen, PDF and Excel render the same `ReportLayout` sections (`src/lib/reports/layouts/*`). `GET /api/reports/{slug}` is an alias of `/layout`, shadowed by static routes such as `guest-demographics`. Category hubs and old slug URLs redirect here. |
 | `/reports/analytics` | booking analytics API | Under Reports (not a catalog slug, no PDF). Booking sources, cancellations, guest demographics |
+| `/reports/guest-dedup` | `GET /api/admin/guest-dedup/summary`, `POST /api/admin/guest-dedup/merge`, `POST /api/admin/guest-dedup/dismiss` | Duplicate guest cards (same phone or same registry person). Cards show name, phone, birth date, citizenship, document, stays. Keep-this-card merges the others (blank fields copy; reservations follow). Not-the-same-people hides the group. Two different registry people need a second button, no typed FIN. Read = `REPORTS_READ`; merge and dismiss = `RESERVATIONS_WRITE` |
 | `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Under Reports (not Tools). Room-type occupancy grid, color legend (not a catalog slug) |
 | `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit (each on its `resolveDateMode` ending on that day), ZIP for that date |
 | `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |

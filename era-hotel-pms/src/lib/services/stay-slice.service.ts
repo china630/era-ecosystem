@@ -1,5 +1,8 @@
+import { todayBakuYmd, bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { dateOnlyUtc, isoDate } from '@/lib/services/door-type.policy';
+import { planDoorMove } from '@/lib/services/stay-door-move';
 
 export async function resolveStaySliceForDate(reservationId: string, stayDate: Date) {
   const day = dateOnlyUtc(stayDate);
@@ -137,6 +140,128 @@ export async function splitStayFromDate(input: {
       status: 'PENDING',
     },
   });
+}
+
+const LIVE_STAY = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
+
+function doorEffective(status: string, checkIn: Date): Date {
+  const key = status === 'IN_HOUSE' ? todayBakuYmd() : hotelDateKey(checkIn);
+  return bakuCivilUtcDate(key);
+}
+
+/** Point future nights of `fromRoomId` at `toRoomId`. Past nights stay put. */
+export async function moveStayDoor(input: {
+  reservationId: string;
+  fromRoomId: string | null | undefined;
+  toRoomId: string | null;
+  status: string;
+  checkIn: Date;
+}) {
+  if (!input.fromRoomId || input.fromRoomId === input.toRoomId) return;
+  const slices = await prisma.reservationStaySlice.findMany({
+    where: { reservationId: input.reservationId },
+  });
+  const pending = await prisma.roomChangePlan.findMany({
+    where: { reservationId: input.reservationId, status: 'PENDING' },
+    select: { toRoomId: true },
+  });
+  const plan = planDoorMove({
+    slices,
+    fromRoomId: input.fromRoomId,
+    toRoomId: input.toRoomId,
+    effective: doorEffective(input.status, input.checkIn),
+    keepRoomIds: pending.map((row) => row.toRoomId).filter((id): id is string => Boolean(id)),
+    dayKey: hotelDateKey,
+  });
+  await applyDoorPlan(input.reservationId, slices[0]?.organizationId, plan);
+}
+
+async function applyDoorPlan(
+  reservationId: string,
+  organizationId: string | undefined,
+  plan: ReturnType<typeof planDoorMove>,
+) {
+  if (plan.updates.length === 0 && plan.creates.length === 0) return;
+  await prisma.$transaction(async (tx) => {
+    for (const update of plan.updates) {
+      await tx.reservationStaySlice.update({
+        where: { id: update.id },
+        data: {
+          ...(update.toDate ? { toDate: update.toDate } : {}),
+          ...(update.roomId !== undefined ? { roomId: update.roomId } : {}),
+        },
+      });
+    }
+    if (plan.creates.length > 0) {
+      const org =
+        organizationId ??
+        (
+          await tx.reservation.findUnique({
+            where: { id: reservationId },
+            select: { organizationId: true },
+          })
+        )?.organizationId;
+      if (!org) throw new Error('Reservation not found');
+      await tx.reservationStaySlice.createMany({
+        data: plan.creates.map((slice) => ({
+          organizationId: org,
+          reservationId,
+          fromDate: slice.fromDate,
+          toDate: slice.toDate,
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        })),
+      });
+    }
+  });
+}
+
+/**
+ * Live stays whose header door moved but a future slice still pins the old door.
+ * A pending scheduled door is left on its slice.
+ */
+export async function repairLiveStayDoors() {
+  const stays = await prisma.reservation.findMany({
+    where: { status: { in: [...LIVE_STAY] }, roomId: { not: null } },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      checkInDate: true,
+      organizationId: true,
+      staySlices: true,
+      roomChanges: {
+        where: { status: 'PENDING' },
+        select: { toRoomId: true },
+      },
+    },
+  });
+  for (const stay of stays) {
+    if (!stay.roomId) continue;
+    const keep = stay.roomChanges
+      .map((row) => row.toRoomId)
+      .filter((id): id is string => Boolean(id));
+    const effective = doorEffective(stay.status, stay.checkInDate);
+    const fromRooms = [
+      ...new Set(
+        stay.staySlices
+          .map((slice) => slice.roomId)
+          .filter((id): id is string => id != null && id !== stay.roomId && !keep.includes(id)),
+      ),
+    ];
+    for (const fromRoomId of fromRooms) {
+      const plan = planDoorMove({
+        slices: stay.staySlices,
+        fromRoomId,
+        toRoomId: stay.roomId,
+        effective,
+        keepRoomIds: keep,
+        dayKey: hotelDateKey,
+      });
+      await applyDoorPlan(stay.id, stay.organizationId, plan);
+    }
+  }
 }
 
 export { isoDate };
