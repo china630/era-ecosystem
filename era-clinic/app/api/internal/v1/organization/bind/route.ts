@@ -1,6 +1,6 @@
 import { createOrganizationBindHandlers } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { ensureClinicCatalogFromTemplates } from "@/domain/catalog/ensure-clinic-catalog-from-templates";
+import { ensureClinicCatalogIfEmpty } from "@/domain/catalog/ensure-clinic-catalog-from-templates";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
 
 const handlers = createOrganizationBindHandlers({
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const orgId = body.organizationId?.trim();
     if (orgId && orgId !== "demo-org") {
       await ensureSystemClinicRoles(prisma, orgId);
-      await ensureClinicCatalogFromTemplates(prisma, orgId);
+      await ensureClinicCatalogIfEmpty(prisma, orgId);
     }
   } catch (err) {
     console.error("[clinic] post-bind catalog ensure failed", err);

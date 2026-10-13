@@ -20,6 +20,7 @@ import {
   showApiError,
 } from "@era/satellite-kit/ui";
 import { IcdPicker } from "@/components/IcdPicker";
+import { icdTitle, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
 import { authorLabelFrom } from "@/domain/staff/practitioner-label";
 
 type DxRow = {
@@ -32,7 +33,7 @@ type DxRow = {
     id?: string;
     code: string;
     titleEn: string;
-    titleRu: string;
+    titleRu: string | null;
     titleAz?: string | null;
   };
   recordedByPractitioner?: { fullName: string; specialty: string | null } | null;
@@ -57,13 +58,8 @@ export type DiagnosisPanelHandle = {
   openCreate: () => void;
 };
 
-function titleFor(
-  row: DxRow["icdCode"],
-  locale: string,
-): string {
-  if (locale.startsWith("ru")) return row.titleRu;
-  if (locale.startsWith("az")) return row.titleAz?.trim() || row.titleRu;
-  return row.titleEn;
+function titleFor(row: DxRow["icdCode"], locale: string): string {
+  return icdTitle(row, normalizeIcdLocale(locale));
 }
 
 export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(

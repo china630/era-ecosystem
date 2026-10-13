@@ -403,6 +403,8 @@ exports.Prisma.WorkforceEmploymentScalarFieldEnum = {
   globalPersonId: 'globalPersonId',
   status: 'status',
   hireDate: 'hireDate',
+  contractEndDate: 'contractEndDate',
+  workRegime: 'workRegime',
   financeEmployeeId: 'financeEmployeeId',
   commercialOrganizationId: 'commercialOrganizationId',
   platformUserId: 'platformUserId',
@@ -432,6 +434,9 @@ exports.Prisma.WorkforceAbsenceScalarFieldEnum = {
   rejectionReason: 'rejectionReason',
   source: 'source',
   sourceRef: 'sourceRef',
+  currentStepOrder: 'currentStepOrder',
+  correctionOfId: 'correctionOfId',
+  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -559,6 +564,7 @@ exports.Prisma.WorkforceHourlyLeaveRequestScalarFieldEnum = {
   decidedAt: 'decidedAt',
   decidedByUserId: 'decidedByUserId',
   rejectionReason: 'rejectionReason',
+  currentStepOrder: 'currentStepOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -575,6 +581,7 @@ exports.Prisma.WorkforceAdvanceRequestScalarFieldEnum = {
   decidedAt: 'decidedAt',
   decidedByUserId: 'decidedByUserId',
   rejectionReason: 'rejectionReason',
+  currentStepOrder: 'currentStepOrder',
   financeQueuedAt: 'financeQueuedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -704,6 +711,10 @@ exports.Prisma.WorkforceVacationPlanScalarFieldEnum = {
   approvedAt: 'approvedAt',
   rejectedAt: 'rejectedAt',
   rejectionReason: 'rejectionReason',
+  currentStepOrder: 'currentStepOrder',
+  cancelledAt: 'cancelledAt',
+  cancelledByUserId: 'cancelledByUserId',
+  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -869,6 +880,59 @@ exports.Prisma.PermissionScalarFieldEnum = {
 exports.Prisma.RolePermissionScalarFieldEnum = {
   roleId: 'roleId',
   permissionId: 'permissionId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceOrgSettingsScalarFieldEnum = {
+  organizationId: 'organizationId',
+  fiveDayWeeklyHours: 'fiveDayWeeklyHours',
+  sixDayWeeklyHours: 'sixDayWeeklyHours',
+  medicalWeeklyHours: 'medicalWeeklyHours',
+  customWeeklyHours: 'customWeeklyHours',
+  advanceMaxPercent: 'advanceMaxPercent',
+  advanceMaxAmount: 'advanceMaxAmount',
+  advanceMaxOpen: 'advanceMaxOpen',
+  advanceAllowHrProxy: 'advanceAllowHrProxy',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceApprovalRouteScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceApprovalStepScalarFieldEnum = {
+  id: 'id',
+  routeId: 'routeId',
+  stepOrder: 'stepOrder',
+  kind: 'kind',
+  orgUnitId: 'orgUnitId',
+  positionId: 'positionId'
+};
+
+exports.Prisma.WorkforceApprovalDecisionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  stepOrder: 'stepOrder',
+  stepKind: 'stepKind',
+  orgUnitId: 'orgUnitId',
+  orgUnitName: 'orgUnitName',
+  outcome: 'outcome',
+  actorUserId: 'actorUserId',
+  reason: 'reason',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceVacationPlanRevisionScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  snapshotJson: 'snapshotJson',
+  createdByUserId: 'createdByUserId',
   createdAt: 'createdAt'
 };
 
@@ -1471,6 +1535,13 @@ exports.WorkforceEmploymentStatus = exports.$Enums.WorkforceEmploymentStatus = {
   TERMINATED: 'TERMINATED'
 };
 
+exports.WorkforceWorkRegime = exports.$Enums.WorkforceWorkRegime = {
+  FIVE_DAY: 'FIVE_DAY',
+  SIX_DAY: 'SIX_DAY',
+  MEDICAL: 'MEDICAL',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.WorkforceAbsenceKind = exports.$Enums.WorkforceAbsenceKind = {
   VACATION: 'VACATION',
   SICK: 'SICK',
@@ -1486,7 +1557,8 @@ exports.WorkforceAbsenceStatus = exports.$Enums.WorkforceAbsenceStatus = {
   SUBMITTED: 'SUBMITTED',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  SUPERSEDED: 'SUPERSEDED'
 };
 
 exports.WorkforceTimesheetStatus = exports.$Enums.WorkforceTimesheetStatus = {
@@ -1566,7 +1638,8 @@ exports.WorkforceVacationPlanStatus = exports.$Enums.WorkforceVacationPlanStatus
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
 };
 
 exports.WorkforcePersonnelOrderType = exports.$Enums.WorkforcePersonnelOrderType = {
@@ -1624,6 +1697,26 @@ exports.PermissionCategory = exports.$Enums.PermissionCategory = {
   ADMIN: 'ADMIN',
   REPORTING: 'REPORTING',
   INTEGRATIONS: 'INTEGRATIONS'
+};
+
+exports.WorkforceApprovalRequestKind = exports.$Enums.WorkforceApprovalRequestKind = {
+  FULL_DAY: 'FULL_DAY',
+  HOURLY: 'HOURLY',
+  ADVANCE: 'ADVANCE',
+  VACATION: 'VACATION'
+};
+
+exports.WorkforceApprovalStepKind = exports.$Enums.WorkforceApprovalStepKind = {
+  REQUESTER_MANAGER: 'REQUESTER_MANAGER',
+  ORG_UNIT_HEAD: 'ORG_UNIT_HEAD',
+  POSITION_IN_UNIT: 'POSITION_IN_UNIT'
+};
+
+exports.WorkforceApprovalOutcome = exports.$Enums.WorkforceApprovalOutcome = {
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  CORRECTION: 'CORRECTION'
 };
 
 exports.OrgOperatingMode = exports.$Enums.OrgOperatingMode = {
@@ -1832,6 +1925,11 @@ exports.Prisma.ModelName = {
   Role: 'Role',
   Permission: 'Permission',
   RolePermission: 'RolePermission',
+  WorkforceOrgSettings: 'WorkforceOrgSettings',
+  WorkforceApprovalRoute: 'WorkforceApprovalRoute',
+  WorkforceApprovalStep: 'WorkforceApprovalStep',
+  WorkforceApprovalDecision: 'WorkforceApprovalDecision',
+  WorkforceVacationPlanRevision: 'WorkforceVacationPlanRevision',
   Organization: 'Organization',
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
   ClinicCutoverPolicy: 'ClinicCutoverPolicy',

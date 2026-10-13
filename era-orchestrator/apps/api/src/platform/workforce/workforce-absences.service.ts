@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   forwardRef,
 } from "@nestjs/common";
 import {
@@ -13,6 +14,7 @@ import {
 import {
   WorkforceAbsenceKind,
   WorkforceAbsenceStatus,
+  WorkforceApprovalOutcome,
   WorkforceEmploymentStatus,
 } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -21,6 +23,7 @@ import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
+import { WorkforceApprovalService } from "./workforce-approval.service";
 import type {
   CreateWorkforceAbsenceDto,
   ListWorkforceAbsencesQueryDto,
@@ -47,6 +50,7 @@ export class WorkforceAbsencesService {
     private readonly timesheets: WorkforceTimesheetsService,
     @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
     private readonly personnelOrders: WorkforcePersonnelOrdersService,
+    @Optional() private readonly approval?: WorkforceApprovalService,
   ) {}
 
   async list(
@@ -194,6 +198,24 @@ export class WorkforceAbsencesService {
       row.endDate,
       id,
     );
+    if (this.approval) {
+      const gate = await this.approval.gate({
+        organizationId,
+        kind: this.approval.kindForAbsence(row.kind),
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "ABSENCE",
+        entityId: id,
+      });
+      if (gate.action === "advance") {
+        return this.prisma.workforceAbsence.update({
+          where: { id },
+          data: { currentStepOrder: gate.nextStep },
+          include: { employment: true },
+        });
+      }
+    }
     const approvedAt = new Date();
     const updated = await this.prisma.workforceAbsence.update({
       where: { id },
@@ -204,6 +226,16 @@ export class WorkforceAbsencesService {
       },
       include: { employment: true },
     });
+    if (updated.correctionOfId) {
+      await this.prisma.workforceAbsence.updateMany({
+        where: {
+          id: updated.correctionOfId,
+          organizationId,
+          status: WorkforceAbsenceStatus.APPROVED,
+        },
+        data: { status: WorkforceAbsenceStatus.SUPERSEDED },
+      });
+    }
     await this.audit.log({
       organizationId,
       actorUserId,
@@ -252,6 +284,18 @@ export class WorkforceAbsencesService {
     if (row.status !== WorkforceAbsenceStatus.SUBMITTED) {
       throw new BadRequestException("Only SUBMITTED absences can be rejected");
     }
+    if (this.approval) {
+      await this.approval.rejectStep({
+        organizationId,
+        kind: this.approval.kindForAbsence(row.kind),
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "ABSENCE",
+        entityId: id,
+        reason: dto.rejectionReason,
+      });
+    }
     const updated = await this.prisma.workforceAbsence.update({
       where: { id },
       data: {
@@ -273,21 +317,39 @@ export class WorkforceAbsencesService {
     return updated;
   }
 
-  async cancel(organizationId: string, id: string, actorUserId: string) {
+  async cancel(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+    reason?: string,
+  ) {
     const row = await this.getOne(organizationId, id);
     if (row.status !== WorkforceAbsenceStatus.APPROVED) {
       throw new BadRequestException("Only APPROVED absences can be cancelled");
     }
     const cancelledAt = new Date();
+    const cancelReason = (reason ?? "").trim() || null;
     const updated = await this.prisma.workforceAbsence.update({
       where: { id },
       data: {
         status: WorkforceAbsenceStatus.CANCELLED,
         cancelledAt,
         cancelledByUserId: actorUserId,
+        cancelReason,
       },
       include: { employment: true },
     });
+    if (this.approval) {
+      await this.approval.recordOutcome({
+        organizationId,
+        entityType: "ABSENCE",
+        entityId: id,
+        stepOrder: row.currentStepOrder ?? 0,
+        outcome: WorkforceApprovalOutcome.CANCELLED,
+        actorUserId,
+        reason: cancelReason,
+      });
+    }
     await this.audit.log({
       organizationId,
       actorUserId,
@@ -310,6 +372,58 @@ export class WorkforceAbsencesService {
     return updated;
   }
 
+  async correct(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+    dto: UpdateWorkforceAbsenceDto,
+  ) {
+    const row = await this.getOne(organizationId, id);
+    if (row.status !== WorkforceAbsenceStatus.APPROVED) {
+      throw new BadRequestException("Only APPROVED absences can be corrected");
+    }
+    const start = dto.startDate ? parseDateOnly(dto.startDate) : row.startDate;
+    const end = dto.endDate ? parseDateOnly(dto.endDate) : row.endDate;
+    this.assertDateRange(start, end);
+    await this.assertNoOverlap(organizationId, row.employmentId, start, end, id);
+    const created = await this.prisma.workforceAbsence.create({
+      data: {
+        organizationId,
+        employmentId: row.employmentId,
+        kind: dto.kind ?? row.kind,
+        startDate: start,
+        endDate: end,
+        note: dto.note != null ? dto.note.trim() : row.note,
+        status: WorkforceAbsenceStatus.SUBMITTED,
+        submittedAt: new Date(),
+        submittedByUserId: actorUserId,
+        currentStepOrder: 0,
+        correctionOfId: row.id,
+        source: "correction",
+      },
+      include: { employment: true },
+    });
+    if (this.approval) {
+      await this.approval.recordOutcome({
+        organizationId,
+        entityType: "ABSENCE",
+        entityId: row.id,
+        stepOrder: row.currentStepOrder ?? 0,
+        outcome: WorkforceApprovalOutcome.CORRECTION,
+        actorUserId,
+      });
+    }
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "ABSENCE_CORRECTION",
+      entityType: "ABSENCE",
+      entityId: created.id,
+      payload: { corrects: row.id },
+    });
+    return created;
+  }
+
   async update(
     organizationId: string,
     id: string,
@@ -319,8 +433,7 @@ export class WorkforceAbsencesService {
     const row = await this.getOne(organizationId, id);
     if (
       row.status !== WorkforceAbsenceStatus.DRAFT &&
-      row.status !== WorkforceAbsenceStatus.SUBMITTED &&
-      row.status !== WorkforceAbsenceStatus.APPROVED
+      row.status !== WorkforceAbsenceStatus.SUBMITTED
     ) {
       throw new BadRequestException("Absence cannot be edited in this status");
     }
@@ -335,14 +448,6 @@ export class WorkforceAbsencesService {
       end,
       id,
     );
-
-    const kindChanged =
-      dto.kind != null && dto.kind !== row.kind;
-    const datesChanged =
-      dto.startDate != null || dto.endDate != null
-        ? isoDay(start) !== isoDay(row.startDate) ||
-          isoDay(end) !== isoDay(row.endDate)
-        : false;
 
     const updated = await this.prisma.workforceAbsence.update({
       where: { id },
@@ -363,18 +468,6 @@ export class WorkforceAbsencesService {
       entityId: id,
       payload: dto as unknown as Record<string, unknown>,
     });
-
-    if (
-      row.status === WorkforceAbsenceStatus.APPROVED &&
-      (kindChanged || datesChanged)
-    ) {
-      await this.emitAbsenceEvent(
-        WORKFORCE_ABSENCE_UPDATED,
-        updated,
-        updated.approvedAt ?? new Date(),
-        actorUserId,
-      );
-    }
 
     return updated;
   }

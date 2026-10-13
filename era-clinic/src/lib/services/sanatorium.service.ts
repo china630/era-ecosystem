@@ -158,6 +158,34 @@ function walkInLegacyRefCode(finOrPassport: string): string {
   return `WALKIN-${finOrPassport.replace(/\s+/g, '-').slice(0, 20)}`;
 }
 
+/** Replace the patient display name. Hotel guest-card edits are the source. */
+export async function renamePatientFromGuestName(patientId: string, guestName: string) {
+  const trimmed = guestName.trim();
+  if (!trimmed || trimmed === 'Guest') return;
+  const parts = splitFullNameToParts(trimmed);
+  const firstName = parts.firstName?.trim() || trimmed;
+  const lastName = parts.lastName?.trim() || '';
+  const middleName = parts.middleName?.trim() || null;
+  const fullName = composeFullName({ firstName, lastName, middleName }) || trimmed;
+  const current = await prisma.patientRef.findUnique({
+    where: { id: patientId },
+    select: { fullName: true, firstName: true, lastName: true, middleName: true },
+  });
+  if (!current) return;
+  if (
+    current.fullName === fullName &&
+    (current.firstName ?? '') === firstName &&
+    (current.lastName ?? '') === lastName &&
+    (current.middleName ?? null) === middleName
+  ) {
+    return;
+  }
+  await prisma.patientRef.update({
+    where: { id: patientId },
+    data: { firstName, lastName, middleName, fullName },
+  });
+}
+
 export async function openEpisodeFromStay(input: {
   reservationId: string;
   hotelStayId?: string | null;
@@ -231,6 +259,9 @@ export async function openEpisodeFromStay(input: {
 
   const fillPatientDemographics = async (patientId: string | null | undefined) => {
     if (!patientId) return;
+    if (input.guestName?.trim()) {
+      await renamePatientFromGuestName(patientId, input.guestName);
+    }
     await applyStayDemographicsCache(patientId, {
       sex: input.sex,
       birthDate: input.birthDate,

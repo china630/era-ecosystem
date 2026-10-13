@@ -437,6 +437,62 @@ export class WorkforceEmploymentsService {
     return out;
   }
 
+  /** Employment list only: surname-first label and plaintext FIN. */
+  async presentHrList(
+    organizationId: string,
+    persons: Awaited<ReturnType<WorkforceEmploymentsService["resolvePersonProfiles"]>>,
+  ) {
+    const fins = await this.mdm.batchHrListFin(Object.keys(persons), organizationId);
+    const out: Record<string, (typeof persons)[string] & { fin: string | null }> = {};
+    for (const [id, person] of Object.entries(persons)) {
+      const listName = [person.lastName, person.firstName, person.middleName]
+        .map((part) => part?.trim())
+        .filter((part): part is string => Boolean(part))
+        .join(" ");
+      out[id] = {
+        ...person,
+        displayName: listName || person.displayName,
+        fin: fins[id] ?? null,
+      };
+    }
+    return out;
+  }
+
+  async updateCadre(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+    dto: { contractEndDate?: string | null; workRegime?: string | null },
+  ) {
+    await this.getOne(organizationId, id);
+    const data: {
+      contractEndDate?: Date | null;
+      workRegime?: "FIVE_DAY" | "SIX_DAY" | "MEDICAL" | "CUSTOM" | null;
+    } = {};
+    if (dto.contractEndDate !== undefined) {
+      data.contractEndDate = dto.contractEndDate
+        ? parseDateOnly(dto.contractEndDate)
+        : null;
+    }
+    if (dto.workRegime !== undefined) {
+      data.workRegime = (dto.workRegime || null) as typeof data.workRegime;
+    }
+    const updated = await this.prisma.workforceEmployment.update({
+      where: { id },
+      data,
+      include: EMPLOYMENT_INCLUDE,
+    });
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "EMPLOYMENT_CADRE_UPDATED",
+      entityType: "EMPLOYMENT",
+      entityId: id,
+      payload: dto as Record<string, unknown>,
+    });
+    return omitStaffPin(updated);
+  }
+
   /**
    * S2S picker for satellite ops (hotel housekeeping). Active CP employments
    * with an MDM display name. Not the finance payroll mirror.

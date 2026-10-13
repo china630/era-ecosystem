@@ -47,6 +47,11 @@ function resolvePayStatus(balance: number, hasFolio: boolean): RackReservationSu
 }
 
 export async function listRoomsForRack(): Promise<RackRoomDto[]> {
+  const { repairLiveStayDoors } = await import('@/lib/services/stay-slice.service');
+  const { alignAllOpenStayNames } = await import('@/lib/services/guest-name-sync.service');
+  await repairLiveStayDoors().catch((error) => console.error('stay door repair', error));
+  await alignAllOpenStayNames().catch((error) => console.error('guest name align', error));
+
   const rooms = await prisma.room.findMany({
     where: roomInventoryWhere,
     orderBy: { roomNumber: 'asc' },

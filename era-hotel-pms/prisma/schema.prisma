@@ -3096,6 +3096,18 @@ model GuestCrmExtension {
   @@index([organizationId])
 }
 
+/** A dedup group the desk marked as different people. Pair ids are sorted. */
+model GuestDedupDismissal {
+  id             String   @id @default(uuid())
+  organizationId String
+  guestIdLow     String
+  guestIdHigh    String
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, guestIdLow, guestIdHigh])
+  @@index([organizationId])
+}
+
 model StockMovement {
   id          String            @id @default(uuid())
   organizationId String

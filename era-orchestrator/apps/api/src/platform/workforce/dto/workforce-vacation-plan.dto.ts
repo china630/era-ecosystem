@@ -66,6 +66,13 @@ export class RejectWorkforceVacationPlanDto {
   rejectionReason?: string;
 }
 
+export class CancelWorkforceVacationPlanDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  reason?: string;
+}
+
 export class ListWorkforceVacationPlansQueryDto {
   @IsOptional()
   @Type(() => Number)

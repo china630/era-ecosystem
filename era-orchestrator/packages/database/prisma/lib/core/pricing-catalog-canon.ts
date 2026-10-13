@@ -389,6 +389,7 @@ const WORKFORCE_NAV: { prefix: string; feature: WorkforceFeature }[] = [
   { prefix: "/workspace/workforce/timesheets", feature: "timesheet" },
   { prefix: "/workspace/workforce/plan-fact", feature: "planFact" },
   { prefix: "/workspace/workforce/requests", feature: "cabinet" },
+  { prefix: "/workspace/workforce/hr-settings", feature: "absence" },
   { prefix: "/workspace/me", feature: "cabinet" },
   { prefix: "/workspace/workforce/attendance", feature: "floor" },
   { prefix: "/workspace/workforce/floor", feature: "floor" },

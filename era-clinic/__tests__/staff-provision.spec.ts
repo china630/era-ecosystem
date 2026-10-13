@@ -99,6 +99,10 @@ describe("clinic staff-provision", () => {
         }),
       }),
     );
+    const { ensureClinicCatalogIfEmpty, ensureClinicCatalogFromTemplates } =
+      jest.requireMock("@/domain/catalog/ensure-clinic-catalog-from-templates");
+    expect(ensureClinicCatalogIfEmpty).toHaveBeenCalledWith(expect.anything(), ORG_ID);
+    expect(ensureClinicCatalogFromTemplates).not.toHaveBeenCalled();
     expect(prisma.practitioner.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

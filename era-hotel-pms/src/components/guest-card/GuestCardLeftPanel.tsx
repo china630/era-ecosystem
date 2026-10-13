@@ -252,7 +252,6 @@ export function GuestCardLeftPanel({
               value={sex}
               onChange={setCatalog('sex')}
               options={withOrphanOption(byKind.GENDER ?? [], sex)}
-              required
             />
             <CatalogField
               kind="SEARCHABLE"
@@ -267,7 +266,6 @@ export function GuestCardLeftPanel({
                 }
                 return { ...opt, label: `${code} — ${opt.label}` };
               })}
-              required
             />
           </FieldRow>
           <FieldRow cols={3}>
@@ -301,7 +299,6 @@ export function GuestCardLeftPanel({
               onChange={(iso) => onChange({ birthDate: iso })}
               placeholder={tc('datePlaceholder')}
               openCalendarLabel={tc('openCalendar')}
-              required
             />
             <Field
               label={t('details.birthPlace')}

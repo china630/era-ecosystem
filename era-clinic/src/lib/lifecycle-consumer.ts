@@ -8,7 +8,12 @@ import type {
   SatelliteHotelStayProductChangedEvent,
 } from "@era/contracts";
 import { shouldAutoInstantiateProgramOnCheckin } from "@/domain/settings/scheduling-settings";
-import { openEpisodeFromStay, resolveHotelPatientRefCode, resolveHotelStayId } from "@/lib/services/sanatorium.service";
+import {
+  openEpisodeFromStay,
+  renamePatientFromGuestName,
+  resolveHotelPatientRefCode,
+  resolveHotelStayId,
+} from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant } from "@/lib/request-organization";
@@ -265,6 +270,27 @@ export async function handleStayProductChanged(
         }
       : {}),
   };
+
+  if (p.guestName?.trim()) {
+    const nameTargets = new Set<string>();
+    const linked = await prisma.clinicalEpisode.findMany({
+      where: episodeWhere,
+      select: { patientRefId: true },
+    });
+    for (const row of linked) {
+      if (row.patientRefId) nameTargets.add(row.patientRefId);
+    }
+    if (gpid) {
+      const people = await prisma.patientRef.findMany({
+        where: { organizationId: event.organizationId, globalPersonId: gpid },
+        select: { id: true },
+      });
+      for (const row of people) nameTargets.add(row.id);
+    }
+    for (const patientId of nameTargets) {
+      await renamePatientFromGuestName(patientId, p.guestName);
+    }
+  }
 
   if (p.nationality || p.sex || p.birthDate) {
     const people = await prisma.clinicalEpisode.findMany({

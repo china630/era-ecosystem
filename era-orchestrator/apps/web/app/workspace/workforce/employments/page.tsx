@@ -71,6 +71,8 @@ type EmploymentRow = {
   id: string;
   globalPersonId: string;
   hireDate: string;
+  contractEndDate?: string | null;
+  workRegime?: string | null;
   status: string;
   financeEmployeeId?: string | null;
   platformUserId?: string | null;
@@ -114,6 +116,7 @@ type ListResponse = {
       middleName?: string | null;
       lastName?: string | null;
       finMasked?: string | null;
+      fin?: string | null;
       accessDenied: boolean;
       sex?: string | null;
       birthDate?: string | null;
@@ -392,8 +395,26 @@ export default function WorkforceEmploymentsPage() {
   const [cardSatelliteKeys, setCardSatelliteKeys] = useState<string[]>([]);
   const [cardOrders, setCardOrders] = useState<PersonnelOrderRef[]>([]);
   const [cardTab, setCardTab] = useState<
-    "identity" | "contacts" | "job" | "access" | "fitness"
+    "identity" | "documents" | "contacts" | "job" | "access" | "fitness"
   >("identity");
+  const [cardContractEnd, setCardContractEnd] = useState("");
+  const [cardRegime, setCardRegime] = useState("");
+  const [idCard, setIdCard] = useState({
+    series: "",
+    number: "",
+    issuedBy: "",
+    issuedOn: "",
+    expiresOn: "",
+  });
+  const [passportDoc, setPassportDoc] = useState({
+    series: "",
+    number: "",
+    issuedBy: "",
+    issuedOn: "",
+    expiresOn: "",
+    issuingCountry: "AZ",
+  });
+  const [docsLoaded, setDocsLoaded] = useState(false);
   const [cardOrgUnitId, setCardOrgUnitId] = useState("");
   const [cardPositionId, setCardPositionId] = useState("");
   const [cardKin, setCardKin] = useState<
@@ -1235,18 +1256,66 @@ export default function WorkforceEmploymentsPage() {
     setFitnessPreview({});
     setCabinetMsg(null);
     setCardTab("identity");
+    setCardContractEnd(emp.contractEndDate ? String(emp.contractEndDate).slice(0, 10) : "");
+    setCardRegime(emp.workRegime ?? "");
+    setDocsLoaded(false);
+    setIdCard({ series: "", number: "", issuedBy: "", issuedOn: "", expiresOn: "" });
+    setPassportDoc({
+      series: "",
+      number: "",
+      issuedBy: "",
+      issuedOn: "",
+      expiresOn: "",
+      issuingCountry: "AZ",
+    });
     setCardOrgUnitId(emp.orgUnitId ?? emp.orgUnit?.id ?? "");
     setCardPositionId(emp.positionId ?? emp.position?.id ?? "");
     setCardKin([]);
     setCardFinance(Boolean(emp.platformUserId));
 
-    const [opsRes, hrRes, ordersRes, fitnessRes] = await Promise.all([
+    const [opsRes, hrRes, docsRes, ordersRes, fitnessRes] = await Promise.all([
       mdmWorkforceFetch(`${emp.globalPersonId}/ops-profile`),
       mdmWorkforceFetch(`${emp.globalPersonId}/hr-profile`),
+      mdmWorkforceFetch(`${emp.globalPersonId}/identity-documents`),
       workforceFetch(`personnel-orders?employmentId=${encodeURIComponent(emp.id)}`),
       workforceFetch(`employments/${emp.id}/fitness`),
     ]);
     setBusy(false);
+    if (docsRes.ok) {
+      setDocsLoaded(true);
+      const body = (await docsRes.json()) as {
+        documents?: Array<{
+          kind: string;
+          series?: string;
+          number?: string;
+          issuedBy?: string;
+          issuedOn?: string;
+          expiresOn?: string;
+          issuingCountry?: string;
+        }>;
+      };
+      const idDoc = body.documents?.find((d) => d.kind === "ID_CARD");
+      const pass = body.documents?.find((d) => d.kind === "PASSPORT");
+      if (idDoc) {
+        setIdCard({
+          series: idDoc.series ?? "",
+          number: idDoc.number ?? "",
+          issuedBy: idDoc.issuedBy ?? "",
+          issuedOn: idDoc.issuedOn ?? "",
+          expiresOn: idDoc.expiresOn ?? "",
+        });
+      }
+      if (pass) {
+        setPassportDoc({
+          series: pass.series ?? "",
+          number: pass.number ?? "",
+          issuedBy: pass.issuedBy ?? "",
+          issuedOn: pass.issuedOn ?? "",
+          expiresOn: pass.expiresOn ?? "",
+          issuingCountry: pass.issuingCountry ?? "AZ",
+        });
+      }
+    }
     if (fitnessRes.ok) {
       const body = (await fitnessRes.json()) as {
         items?: typeof fitnessItems;
@@ -1437,6 +1506,53 @@ export default function WorkforceEmploymentsPage() {
     );
     if (!hrRes.ok) {
       setModalError(await describeWorkforceError(hrRes));
+      setBusy(false);
+      return;
+    }
+
+    const saveDoc = async (
+      kind: "ID_CARD" | "PASSPORT",
+      doc: {
+        series: string;
+        number: string;
+        issuedBy: string;
+        issuedOn: string;
+        expiresOn: string;
+        issuingCountry?: string;
+      },
+    ) => {
+      const res = await mdmWorkforceFetch(
+        `${actionEmp.globalPersonId}/identity-documents`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ kind, ...doc }),
+        },
+      );
+      return res;
+    };
+    if (docsLoaded) {
+      const idRes = await saveDoc("ID_CARD", idCard);
+      if (!idRes.ok) {
+        setModalError(await describeWorkforceError(idRes));
+        setBusy(false);
+        return;
+      }
+      const passRes = await saveDoc("PASSPORT", passportDoc);
+      if (!passRes.ok) {
+        setModalError(await describeWorkforceError(passRes));
+        setBusy(false);
+        return;
+      }
+    }
+    const cadreRes = await workforceFetch(`employments/${actionEmp.id}/cadre`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        contractEndDate: cardContractEnd || null,
+        workRegime: cardRegime || null,
+      }),
+    });
+    if (!cadreRes.ok) {
+      setModalError(await describeWorkforceError(cadreRes));
       setBusy(false);
       return;
     }
@@ -1688,12 +1804,14 @@ export default function WorkforceEmploymentsPage() {
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFinMasked")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colFin")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSex")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colBirthDate")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPosition")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHireDate")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colContractEnd")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRegime")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
               </tr>
@@ -1703,7 +1821,7 @@ export default function WorkforceEmploymentsPage() {
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td
                     className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                    colSpan={9}
+                    colSpan={11}
                   >
                     {loading ? t("loading") : t("empty")}
                   </td>
@@ -1731,7 +1849,9 @@ export default function WorkforceEmploymentsPage() {
                           : tCommon("unnamedPerson"))}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
-                      {persons[r.globalPersonId]?.finMasked ?? "—"}
+                      {persons[r.globalPersonId]?.fin ||
+                        persons[r.globalPersonId]?.finMasked ||
+                        "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {formatSex(persons[r.globalPersonId]?.sex)}
@@ -1751,6 +1871,12 @@ export default function WorkforceEmploymentsPage() {
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
                       {bakuDateDisplay(r.hireDate)}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
+                      {r.contractEndDate ? bakuDateDisplay(r.contractEndDate) : t("openEnded")}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {r.workRegime ? t(`regime.${r.workRegime}` as "regime.FIVE_DAY") : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex flex-col gap-1">
@@ -2297,6 +2423,7 @@ export default function WorkforceEmploymentsPage() {
             {(
               [
                 ["identity", "chipIdentity"],
+                ["documents", "chipDocuments"],
                 ["contacts", "chipContacts"],
                 ["job", "chipJob"],
                 ["access", "chipAccess"],
@@ -2390,6 +2517,107 @@ export default function WorkforceEmploymentsPage() {
                 onChange={(next) => setCardBlood(String(next))}
                 options={bloodOptions.filter((o) => o.value !== "UNKNOWN")}
                 emptyLabel={tCommon("select")}
+              />
+            </div>
+          </fieldset>
+          ) : null}
+
+          {cardTab === "documents" ? (
+          <fieldset className={ZONE_CLASS}>
+            <legend className="px-1 text-xs font-semibold text-[#34495E]">
+              {t("chipDocuments")}
+            </legend>
+            <p className="text-sm font-medium text-[#34495E]">{t("idCardTitle")}</p>
+            <div className={ROW3_CLASS}>
+              {(
+                [
+                  ["series", "docSeries"],
+                  ["number", "docNumber"],
+                  ["issuedBy", "docIssuedBy"],
+                ] as const
+              ).map(([field, label]) => (
+                <label key={field} className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                  {t(label)}
+                  <input
+                    className={FIELD_INPUT_CLASS}
+                    value={idCard[field]}
+                    onChange={(e) => setIdCard((prev) => ({ ...prev, [field]: e.target.value }))}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className={ROW3_CLASS}>
+              <DatePicker
+                label={t("docIssuedOn")}
+                value={idCard.issuedOn}
+                onChange={(value) => setIdCard((prev) => ({ ...prev, issuedOn: value }))}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
+              <DatePicker
+                label={t("docExpiresOn")}
+                value={idCard.expiresOn}
+                onChange={(value) => setIdCard((prev) => ({ ...prev, expiresOn: value }))}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
+            </div>
+            <p className="text-sm font-medium text-[#34495E]">{t("passportTitle")}</p>
+            <div className={ROW3_CLASS}>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("docCountry")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={passportDoc.issuingCountry}
+                  maxLength={2}
+                  onChange={(e) =>
+                    setPassportDoc((prev) => ({
+                      ...prev,
+                      issuingCountry: e.target.value.toUpperCase(),
+                    }))
+                  }
+                />
+              </label>
+              {(
+                [
+                  ["series", "docSeries"],
+                  ["number", "docNumber"],
+                ] as const
+              ).map(([field, label]) => (
+                <label key={field} className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                  {t(label)}
+                  <input
+                    className={FIELD_INPUT_CLASS}
+                    value={passportDoc[field]}
+                    onChange={(e) =>
+                      setPassportDoc((prev) => ({ ...prev, [field]: e.target.value }))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+            <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+              {t("docIssuedBy")}
+              <input
+                className={FIELD_INPUT_CLASS}
+                value={passportDoc.issuedBy}
+                onChange={(e) => setPassportDoc((prev) => ({ ...prev, issuedBy: e.target.value }))}
+              />
+            </label>
+            <div className={ROW3_CLASS}>
+              <DatePicker
+                label={t("docIssuedOn")}
+                value={passportDoc.issuedOn}
+                onChange={(value) => setPassportDoc((prev) => ({ ...prev, issuedOn: value }))}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
+              />
+              <DatePicker
+                label={t("docExpiresOn")}
+                value={passportDoc.expiresOn}
+                onChange={(value) => setPassportDoc((prev) => ({ ...prev, expiresOn: value }))}
+                placeholder={tCommon("datePlaceholder")}
+                fluid
               />
             </div>
           </fieldset>
@@ -2563,6 +2791,27 @@ export default function WorkforceEmploymentsPage() {
                   readOnly
                 />
               </label>
+            </div>
+            <div className={ROW3_CLASS}>
+              <DatePicker
+                label={t("colContractEnd")}
+                value={cardContractEnd}
+                onChange={setCardContractEnd}
+                placeholder={t("openEnded")}
+                fluid
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                className="min-w-0"
+                label={t("colRegime")}
+                value={cardRegime}
+                onChange={(next) => setCardRegime(String(next))}
+                options={["FIVE_DAY", "SIX_DAY", "MEDICAL", "CUSTOM"].map((value) => ({
+                  value,
+                  label: t(`regime.${value}` as "regime.FIVE_DAY"),
+                }))}
+                emptyLabel={t("regimeEmpty")}
+              />
             </div>
             {actionEmp?.status === "ACTIVE" ? (
               <button

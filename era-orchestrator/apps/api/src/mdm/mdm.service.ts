@@ -1863,4 +1863,140 @@ export class MdmService {
       accessDenied: false as const,
     };
   }
+
+  /** Plain FIN for the workforce employment list. One access log per batch. */
+  async batchHrListFin(
+    personIds: string[],
+    organizationId: string,
+  ): Promise<Record<string, string | null>> {
+    const ids = [...new Set(personIds.map((id) => id.trim()).filter(Boolean))];
+    const out: Record<string, string | null> = {};
+    for (const id of ids) out[id] = null;
+    if (ids.length === 0) return out;
+    const grants = await this.mdm.personAccessGrant.findMany({
+      where: { granteeOrgId: organizationId, personId: { in: ids } },
+      select: { personId: true },
+    });
+    const allowed = grants.map((g) => g.personId);
+    if (allowed.length === 0) return out;
+    const rows = await this.mdm.globalNaturalPerson.findMany({
+      where: { id: { in: allowed } },
+      select: { id: true, finCipher: true },
+    });
+    for (const row of rows) {
+      out[row.id] = row.finCipher ? decryptText(row.finCipher) : null;
+    }
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: allowed[0],
+        actorOrgId: organizationId,
+        action: "WORKFORCE_HR_FIN_LIST",
+        metaJson: JSON.stringify({ count: allowed.length }),
+      },
+    });
+    return out;
+  }
+
+  async listIdentityDocuments(personId: string, requesterOrgId: string) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const gate = await this.assertPersonAccessGrant(canonical, requesterOrgId);
+    if (gate.accessDenied) {
+      return { globalPersonId: canonical, accessDenied: true as const, documents: [] };
+    }
+    const rows = await this.mdm.personIdentityDocument.findMany({
+      where: { personId: canonical },
+      orderBy: { kind: "asc" },
+    });
+    return {
+      globalPersonId: canonical,
+      accessDenied: false as const,
+      documents: rows.map((row) => this.presentIdentityDocument(row)),
+    };
+  }
+
+  async upsertIdentityDocument(
+    personId: string,
+    requesterOrgId: string,
+    body: {
+      kind: "ID_CARD" | "PASSPORT";
+      series?: string | null;
+      number?: string | null;
+      issuedBy?: string | null;
+      issuedOn?: string | null;
+      expiresOn?: string | null;
+      issuingCountry?: string | null;
+    },
+  ) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const gate = await this.assertPersonAccessGrant(canonical, requesterOrgId);
+    if (gate.accessDenied) {
+      throw new BadRequestException("Person access denied");
+    }
+    if (body.kind !== "ID_CARD" && body.kind !== "PASSPORT") {
+      throw new BadRequestException("Unknown document kind");
+    }
+    const series = body.series?.trim() || "";
+    const number = body.number?.trim() || "";
+    const issuedBy = body.issuedBy?.trim() || "";
+    const issuedOn = parseDocDate(body.issuedOn);
+    const expiresOn = parseDocDate(body.expiresOn);
+    const issuingCountry = (body.issuingCountry?.trim() || "AZ").toUpperCase();
+    if (!series && !number && !issuedBy && !issuedOn && !expiresOn) {
+      await this.mdm.personIdentityDocument.deleteMany({
+        where: { personId: canonical, kind: body.kind },
+      });
+      return { globalPersonId: canonical, document: null };
+    }
+    const data = {
+      seriesCipher: series ? encryptText(series) : null,
+      numberCipher: number ? encryptText(number) : null,
+      issuedByCipher: issuedBy ? encryptText(issuedBy) : null,
+      issuedOn,
+      expiresOn,
+      issuingCountry,
+    };
+    const row = await this.mdm.personIdentityDocument.upsert({
+      where: { personId_kind: { personId: canonical, kind: body.kind } },
+      create: { personId: canonical, kind: body.kind, ...data },
+      update: data,
+    });
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: canonical,
+        actorOrgId: gate.orgId,
+        action: "IDENTITY_DOCUMENT_UPSERT",
+        metaJson: JSON.stringify({ kind: body.kind }),
+      },
+    });
+    return { globalPersonId: canonical, document: this.presentIdentityDocument(row) };
+  }
+
+  private presentIdentityDocument(row: {
+    kind: string;
+    seriesCipher: string | null;
+    numberCipher: string | null;
+    issuedByCipher: string | null;
+    issuedOn: Date | null;
+    expiresOn: Date | null;
+    issuingCountry: string;
+  }) {
+    return {
+      kind: row.kind,
+      series: row.seriesCipher ? decryptText(row.seriesCipher) : "",
+      number: row.numberCipher ? decryptText(row.numberCipher) : "",
+      issuedBy: row.issuedByCipher ? decryptText(row.issuedByCipher) : "",
+      issuedOn: row.issuedOn ? row.issuedOn.toISOString().slice(0, 10) : "",
+      expiresOn: row.expiresOn ? row.expiresOn.toISOString().slice(0, 10) : "",
+      issuingCountry: row.issuingCountry,
+    };
+  }
+}
+
+function parseDocDate(value: string | null | undefined): Date | null {
+  const raw = value?.trim().slice(0, 10);
+  if (!raw) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    throw new BadRequestException("Invalid document date");
+  }
+  return new Date(`${raw}T00:00:00.000Z`);
 }

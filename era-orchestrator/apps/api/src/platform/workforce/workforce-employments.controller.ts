@@ -13,6 +13,13 @@ import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  ValidateIf,
+} from "class-validator";
+import { WorkforceWorkRegime } from "@era365/database";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
@@ -26,6 +33,18 @@ import { ReprovisionEmploymentDto } from "./dto/workforce-reprovision.dto";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceOrgScopeService } from "./workforce-org-scope.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
+
+class UpdateCadreDto {
+  @IsOptional()
+  @ValidateIf((_, value) => value != null && value !== "")
+  @IsDateString()
+  contractEndDate?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null && value !== "")
+  @IsEnum(WorkforceWorkRegime)
+  workRegime?: WorkforceWorkRegime | null;
+}
 
 @ApiTags("platform-workforce-employments")
 @ApiBearerAuth("bearer")
@@ -69,11 +88,26 @@ export class WorkforceEmploymentsController {
       pageSize: Math.min(100, Math.max(1, Number(query.pageSize) || 50)),
     });
     const personIds = rows.items.map((r) => r.globalPersonId);
-    const persons = await this.employments.resolvePersonProfiles(
+    const persons = await this.employments.presentHrList(
       organizationId,
-      personIds,
+      await this.employments.resolvePersonProfiles(organizationId, personIds),
     );
     return { ...rows, persons };
+  }
+
+  @Patch(":id/cadre")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_HIRE)
+  @ApiOperation({ summary: "Contract end date and work regime" })
+  updateCadre(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: UpdateCadreDto,
+  ) {
+    return this.employments.updateCadre(organizationId, id, user.sub, {
+      contractEndDate: dto.contractEndDate,
+      workRegime: dto.workRegime,
+    });
   }
 
   @Post("hire")

@@ -338,7 +338,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 4. **Meal gate:** BB guest zero-post ticket → 201; RO guest zero-post → 403 `MEAL_NOT_INCLUDED`.
 5. **Deposits:** `POST /api/reservations/{id}/deposits` HELD → check-in applies payment to folio.
 6. **Split settlement:** `/folio/{id}` → add CASH + CARD lines → Complete settlement → balance 0.
-7. **Guest dedup:** `/reports/guest-dedup` summary loads; see `doc/NAFTA-GUEST-INTELLIGENCE.md`.
+7. **Guest dedup:** `/reports/guest-dedup` summary loads. A group shows guest cards; **Keep this card** and **Not the same people** are buttons (no typed FIN). See `doc/NAFTA-GUEST-INTELLIGENCE.md`.
 8. **Omnichannel:** guest card send SMS/WA with CP env → `GuestCommunication.status=SENT`.
 
 ## 24. Nafta P3 — H-BL-20…28 (2026-06-14)
@@ -520,6 +520,10 @@ ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-a
 3. Pricing tab: Manual Price nightly → Apply to all nights; Recalc skips locked nights. Stay % is mutually exclusive with Manual Price.
 4. Wizard: effective date = today or later; preview nights; apply. Past posted nights unchanged. If tonight already posted, folio shows one `RATE_ADJ` line.
 5. Medical package stay: night audit package lines sum to that night’s sell. Clinic remaining `PROPOSED`/`SCHEDULED` from effective date cancelled; completed procedures remain.
+6. Rate & source → Stay billing. Compliment → save → room nights are 0; an extra on the folio stays charged. House use → the extra is posted and a matching negative line `(house use)` leaves the guest balance at 0. Meal plan stays BB/FB. Apply migration `20261013010000_stay_billing_and_tariff_log` before this step.
+7. Change the rate plan on the card and save, or apply the product wizard → the stay journal shows from-code → to-code. Posted nights stay as they were.
+8. A medical rate plan keeps the Guests package column. Save or check-in with an empty package is refused, and the tariff code is not written into that column. `WALKIN` hides the column, prices from `/settings/daily-prices`, and check-in sends no clinic event.
+9. Check-in when arrival is before the open business date: the confirmation names that business date, the stored arrival moves to it, and nights before it are not charged. Same-day check-in does not say the date changes. If night audit is behind and the arrival is still ahead of the business date, check-in names both dates and does not move the arrival.
 
 ## 36. HOT-06 Elektraweb dual-run (SaaS Wave 6 lab)
 
@@ -594,11 +598,11 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` (one line, no guest names) → every pax `medicalPackageCode` stamped. Named Extra lines only when packages differ.
 1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMA` (bridge v0.3.10 + hotel ingest). FOCP list does not carry Extra Req.
-2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`; `Walkin leisure` stays unresolved **and** check-in does **not** emit sanatorium lifecycle (`stayKind: leisure`).
+2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`. Elektra import of `Walkin leisure` with a non-PKG tariff stays leisure and does not emit a sanatorium lifecycle. A `PKG-*` tariff on that import still resolves the package. Front office does not use the agency name to skip clinic: check-in emits one event per guest who has an explicit package.
 3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
-4. Check-in lifecycle sends `programCode` only when unanimous; EW Rate Code alone never becomes SKU.
+4. Front-office check-in sends `programCode` only for a guest who has an explicit package. An Elektra `PKG-*` tariff can still fill the package on import. A non-PKG Elektra rate code does not.
 5. Travel agency form: medical package CatalogField. Stored `Agency.medicalPackageCode` wins; empty means the name tokens (`Premium` / `Dermo` / `Detoks` / Həmkarlar / standart).
-6. FO Guests tab: Select medical package per pax → Save → `dailyRates` / folio `packageCompose` refresh.
+6. FO Guests tab: a medical rate plan shows a package Select per guest. `WALKIN` and other non-medical plans hide that column. Save on a medical plan with an empty package is refused. A filled package refreshes `dailyRates` / folio `packageCompose`.
 7. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md).
 
 ## 39. Stay date amend → clinic quota nights (CLI-51 / Wave B)
