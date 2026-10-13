@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { randomBytes } from "crypto";
 import * as bcrypt from "bcrypt";
@@ -11,6 +12,7 @@ import {
   UserRole,
   WorkforceAbsenceKind,
   WorkforceAbsenceStatus,
+  WorkforceApprovalRequestKind,
   WorkforceAttendanceDirection,
   WorkforceAttendanceJournalAction,
   WorkforceEmploymentStatus,
@@ -26,6 +28,8 @@ import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceAbsencesService } from "./workforce-absences.service";
 import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
+import { WorkforceApprovalService } from "./workforce-approval.service";
+import { WorkforceHrSettingsService } from "./workforce-hr-settings.service";
 import { todayBakuYmd, bakuDateKey } from "@era/satellite-kit/time";
 
 const SELF_ROLE_CODE = "WORKFORCE_SELF";
@@ -48,6 +52,8 @@ export class WorkforceSelfService {
     private readonly absences: WorkforceAbsencesService,
     private readonly mdm: MdmService,
     private readonly financeMirror: FinanceWorkforceMirrorClient,
+    @Optional() private readonly approval?: WorkforceApprovalService,
+    @Optional() private readonly hrSettings?: WorkforceHrSettingsService,
   ) {}
 
   /** Active employments linked to this platform user (multi-VÖEN switch). */
@@ -243,6 +249,13 @@ export class WorkforceSelfService {
     if (!(dto.amountAzn > 0)) {
       throw new BadRequestException("amountAzn must be positive");
     }
+    if (this.hrSettings) {
+      await this.hrSettings.assertAdvanceAllowed(
+        organizationId,
+        dto.employmentId,
+        dto.amountAzn,
+      );
+    }
     const row = await this.prisma.workforceAdvanceRequest.create({
       data: {
         organizationId,
@@ -260,6 +273,61 @@ export class WorkforceSelfService {
       entityType: "ADVANCE_REQUEST",
       entityId: row.id,
       payload: { amountAzn: dto.amountAzn },
+    });
+    return row;
+  }
+
+  /** HR files an advance for an employee who has no cabinet login. */
+  async submitAdvanceByHr(
+    organizationId: string,
+    actorUserId: string,
+    dto: { employmentId: string; amountAzn: number; note?: string },
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const settings = await this.prisma.workforceOrgSettings.findUnique({
+      where: { organizationId },
+    });
+    if (!settings?.advanceAllowHrProxy) {
+      throw new ForbiddenException({
+        code: "ADVANCE_PROXY_DISABLED",
+        message: "HR proxy advance is turned off for this organization",
+      });
+    }
+    if (!(dto.amountAzn > 0)) {
+      throw new BadRequestException("amountAzn must be positive");
+    }
+    const employment = await this.prisma.workforceEmployment.findFirst({
+      where: {
+        id: dto.employmentId,
+        organizationId,
+        status: WorkforceEmploymentStatus.ACTIVE,
+      },
+    });
+    if (!employment) throw new NotFoundException("Active employment required");
+    if (this.hrSettings) {
+      await this.hrSettings.assertAdvanceAllowed(
+        organizationId,
+        dto.employmentId,
+        dto.amountAzn,
+      );
+    }
+    const row = await this.prisma.workforceAdvanceRequest.create({
+      data: {
+        organizationId,
+        employmentId: dto.employmentId,
+        amountAzn: new Prisma.Decimal(dto.amountAzn),
+        note: (dto.note ?? "").trim(),
+        status: WorkforceSelfRequestStatus.SUBMITTED,
+        submittedByUserId: actorUserId,
+      },
+    });
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "ADVANCE_SUBMITTED",
+      entityType: "ADVANCE_REQUEST",
+      entityId: row.id,
+      payload: { amountAzn: dto.amountAzn, proxy: true },
     });
     return row;
   }
@@ -580,6 +648,24 @@ export class WorkforceSelfService {
     if (row.status !== WorkforceSelfRequestStatus.SUBMITTED) {
       throw new BadRequestException("Request is not SUBMITTED");
     }
+    if (this.approval) {
+      const gate = await this.approval.gate({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.HOURLY,
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "HOURLY",
+        entityId: id,
+      });
+      if (gate.action === "advance") {
+        await this.prisma.workforceHourlyLeaveRequest.update({
+          where: { id },
+          data: { currentStepOrder: gate.nextStep },
+        });
+        return { ok: true, advanced: true };
+      }
+    }
     const minutes = row.endMinute - row.startMinute;
     const y = row.workDate.getUTCFullYear();
     const m = row.workDate.getUTCMonth() + 1;
@@ -691,6 +777,18 @@ export class WorkforceSelfService {
     if (row.status !== WorkforceSelfRequestStatus.SUBMITTED) {
       throw new BadRequestException("Request is not SUBMITTED");
     }
+    if (this.approval) {
+      await this.approval.rejectStep({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.HOURLY,
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "HOURLY",
+        entityId: id,
+        reason,
+      });
+    }
     return this.prisma.workforceHourlyLeaveRequest.update({
       where: { id },
       data: {
@@ -715,6 +813,23 @@ export class WorkforceSelfService {
     if (!row) throw new NotFoundException("Advance request not found");
     if (row.status !== WorkforceSelfRequestStatus.SUBMITTED) {
       throw new BadRequestException("Request is not SUBMITTED");
+    }
+    if (this.approval) {
+      const gate = await this.approval.gate({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.ADVANCE,
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "ADVANCE",
+        entityId: id,
+      });
+      if (gate.action === "advance") {
+        return this.prisma.workforceAdvanceRequest.update({
+          where: { id },
+          data: { currentStepOrder: gate.nextStep },
+        });
+      }
     }
 
     let financeQueuedAt: Date | null = null;
@@ -768,6 +883,18 @@ export class WorkforceSelfService {
     if (!row) throw new NotFoundException("Advance request not found");
     if (row.status !== WorkforceSelfRequestStatus.SUBMITTED) {
       throw new BadRequestException("Request is not SUBMITTED");
+    }
+    if (this.approval) {
+      await this.approval.rejectStep({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.ADVANCE,
+        employmentId: row.employmentId,
+        stepOrder: row.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "ADVANCE",
+        entityId: id,
+        reason,
+      });
     }
     return this.prisma.workforceAdvanceRequest.update({
       where: { id },

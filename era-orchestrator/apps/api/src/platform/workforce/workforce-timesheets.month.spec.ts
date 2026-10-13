@@ -110,7 +110,7 @@ describe("WorkforceTimesheetsService month grid", () => {
     prisma.workforceTimesheet.findFirst.mockResolvedValue(sheet);
     prisma.workforceTimesheetEntry.findMany.mockResolvedValue([]);
     prisma.workforceTimesheetEntry.upsert.mockResolvedValue({});
-    await svc.autofill(ORG, TS);
+    await svc.autofill(ORG, TS, ACTOR);
     const typesByDay = new Map<number, string>();
     for (const call of prisma.workforceTimesheetEntry.upsert.mock.calls) {
       const workDate = call[0].create.workDate as Date;
@@ -144,7 +144,7 @@ describe("WorkforceTimesheetsService month grid", () => {
         toDay: 2,
         type: WorkforceTimesheetEntryType.SICK,
       },
-    ]);
+    ], ACTOR);
     expect(prisma.workforceTimesheetEntry.upsert).not.toHaveBeenCalled();
   });
 
@@ -171,7 +171,7 @@ describe("WorkforceTimesheetsService month grid", () => {
       .mockResolvedValue([]);
     prisma.workforceTimesheetEntry.update.mockResolvedValue({});
     prisma.workforceTimesheetEntry.upsert.mockResolvedValue({});
-    await svc.syncAbsences(ORG, TS);
+    await svc.syncAbsences(ORG, TS, ACTOR);
     expect(prisma.workforceTimesheetEntry.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "orphan" },
@@ -211,7 +211,7 @@ describe("WorkforceTimesheetsService month grid", () => {
         status: WorkforceTimesheetEntryStatus.DRAFT,
       },
     ]);
-    await svc.syncAbsences(ORG, TS);
+    await svc.syncAbsences(ORG, TS, ACTOR);
     expect(prisma.workforceTimesheetEntry.delete).toHaveBeenCalledWith({
       where: { id: "stale-work" },
     });

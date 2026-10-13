@@ -1,9 +1,33 @@
 /**
- * Copy satellite catalog templates into an org overlay (copy-if-empty per code).
+ * Copy satellite catalog templates into an org overlay.
+ * Missing services are inserted. Analytes are copied only with a service
+ * created in this pass — an existing SatAdmin panel is not refilled.
+ * Pre-canon template codes (ECG-12) resolve to the canon code (CARDIO-ECG)
+ * and are not inserted as a second row.
  * ADR: docs/adr/clinic-catalog-template-overlay.md
  */
 import type { PrismaClient } from "@prisma/client";
 import { invalidateDiagnosticCatalogCache } from "@/domain/catalog/diagnostic-catalog";
+import catalogCodeCanon from "../../../prisma/seed-data/catalog-code-canon.map.json";
+
+const CODE_CANON: Record<string, string> = catalogCodeCanon;
+
+function canonCode(code: string): string {
+  return CODE_CANON[code] ?? code;
+}
+
+function canonIncludes(includesJson: string | null): string | null {
+  if (!includesJson) return includesJson;
+  let arr: unknown;
+  try {
+    arr = JSON.parse(includesJson);
+  } catch {
+    return includesJson;
+  }
+  if (!Array.isArray(arr)) return includesJson;
+  const next = arr.map((item) => (typeof item === "string" ? canonCode(item) : item));
+  return JSON.stringify(next);
+}
 
 type CatalogDb = Pick<
   PrismaClient,
@@ -30,7 +54,7 @@ export type EnsureClinicCatalogResult = {
 
 /**
  * For each template code missing on the org, insert an overlay row.
- * Never overwrites existing SatAdmin / import rows.
+ * Does not add analytes onto a service that already exists.
  */
 export async function ensureClinicCatalogFromTemplates(
   db: CatalogDb,
@@ -143,35 +167,33 @@ export async function ensureClinicCatalogFromTemplates(
     }
 
     for (const st of mt.services) {
+      const code = canonCode(st.code);
+      const serviceCode = canonCode(st.serviceCode);
       let service = await db.diagnosticService.findUnique({
-        where: { organizationId_code: { organizationId: orgId, code: st.code } },
+        where: { organizationId_code: { organizationId: orgId, code } },
       });
-      if (!service) {
-        service = await db.diagnosticService.create({
-          data: {
-            organizationId: orgId,
-            code: st.code,
-            modalityId: modality.id,
-            category: st.category,
-            kind: st.kind,
-            titleEn: st.titleEn,
-            titleRu: st.titleRu,
-            titleAz: st.titleAz,
-            serviceCode: st.serviceCode,
-            fieldsJson: st.fieldsJson,
-            includesJson: st.includesJson,
-            sortOrder: st.sortOrder,
-            active: st.active,
-          },
-        });
-        result.servicesCreated += 1;
-      }
+      if (service) continue;
+
+      service = await db.diagnosticService.create({
+        data: {
+          organizationId: orgId,
+          code,
+          modalityId: modality.id,
+          category: st.category,
+          kind: st.kind,
+          titleEn: st.titleEn,
+          titleRu: st.titleRu,
+          titleAz: st.titleAz,
+          serviceCode,
+          fieldsJson: st.fieldsJson,
+          includesJson: canonIncludes(st.includesJson),
+          sortOrder: st.sortOrder,
+          active: st.active,
+        },
+      });
+      result.servicesCreated += 1;
 
       for (const at of st.analytes) {
-        const existingA = await db.diagnosticAnalyte.findUnique({
-          where: { serviceId_code: { serviceId: service.id, code: at.code } },
-        });
-        if (existingA) continue;
         await db.diagnosticAnalyte.create({
           data: {
             organizationId: orgId,

@@ -17,12 +17,14 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { OrganizationId } from "../../common/org-id.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
+  CancelWorkforceAbsenceDto,
   CreateWorkforceAbsenceDto,
   ListWorkforceAbsencesQueryDto,
   RejectWorkforceAbsenceDto,
   UpdateWorkforceAbsenceDto,
 } from "./dto/workforce-absence.dto";
 import { WorkforceAbsencesService } from "./workforce-absences.service";
+import { WorkforceApprovalService } from "./workforce-approval.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceOrgScopeService } from "./workforce-org-scope.service";
 import { RequireWorkforceFeature, WorkforcePackageGuard } from "./workforce-package.guard";
@@ -37,6 +39,7 @@ export class WorkforceAbsencesController {
     private readonly absences: WorkforceAbsencesService,
     private readonly employments: WorkforceEmploymentsService,
     private readonly orgScope: WorkforceOrgScopeService,
+    private readonly approval: WorkforceApprovalService,
   ) {}
 
   @Get()
@@ -58,7 +61,16 @@ export class WorkforceAbsencesController {
       organizationId,
       personIds,
     );
-    return { items: rows, persons };
+    const approval: Record<string, Awaited<ReturnType<WorkforceApprovalService["labelFor"]>>> = {};
+    for (const row of rows) {
+      approval[row.id] = await this.approval.labelFor(
+        organizationId,
+        this.approval.kindForAbsence(row.kind),
+        row.employmentId,
+        row.currentStepOrder ?? 0,
+      );
+    }
+    return { items: rows, persons, approval };
   }
 
   @Get(":id")
@@ -73,9 +85,16 @@ export class WorkforceAbsencesController {
       organizationId,
       [row.employment.globalPersonId],
     );
+    const approval = await this.approval.labelFor(
+      organizationId,
+      this.approval.kindForAbsence(row.kind),
+      row.employmentId,
+      row.currentStepOrder ?? 0,
+    );
     return {
       ...row,
       person: persons[row.employment.globalPersonId] ?? null,
+      approval,
     };
   }
 
@@ -143,7 +162,20 @@ export class WorkforceAbsencesController {
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
     @CurrentUser() user: EraJwtPayload,
+    @Body() dto: CancelWorkforceAbsenceDto,
   ) {
-    return this.absences.cancel(organizationId, id, user.sub);
+    return this.absences.cancel(organizationId, id, user.sub, dto.reason);
+  }
+
+  @Post(":id/correct")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ABSENCES)
+  @ApiOperation({ summary: "APPROVED → new SUBMITTED correction; original stays until the correction is approved" })
+  correct(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: UpdateWorkforceAbsenceDto,
+  ) {
+    return this.absences.correct(organizationId, id, user.sub, dto);
   }
 }

@@ -122,7 +122,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 
 ### ICD-10 catalog (CLI-39…42)
 
-1. **`/sanatorium`** — single ICD searchable picker for `I10` or «гипертенз»; add diagnosis (selectable category/leaf only) + optional note; delete diagnosis from chart; then **Complete checkup & schedule program**. Chapter/BLOCK codes must not save. Empty chapter list must not block search (catalog must be seeded: `node prisma/load-icd10.cjs`).
+1. **`/sanatorium`** — single ICD searchable picker for `I10` or «гипертенз»; add diagnosis (selectable category/leaf only) + optional note; delete diagnosis from chart; then **Complete checkup & schedule program**. Chapter/BLOCK codes must not save. Empty chapter list must not block search (catalog must be seeded: `node prisma/load-icd10.cjs`). Search `M42` → only `M42`, `M42.0` (Юношеский остеохондроз позвоночника), `M42.1`, `M42.9`; no `M42.2…M42.8`.
 2. **Patient card** (`/patients/[id]` or sanatorium patient modal) — contraindications body map **collapsed** (title + expand **inside** amber box); ICD-10 list below with `+ Diaqnoz` on the header row; complaints `+ Şikayət`; add/remove against the **open** episode. Without an open episode the add path is hidden (409 `NO_OPEN_EPISODE` if posted).
 3. **`/visits/[id]`** — add primary/secondary visit diagnoses; list updates.
 4. **`/inpatient`** — admission diagnoses modal (admission/discharge + role).

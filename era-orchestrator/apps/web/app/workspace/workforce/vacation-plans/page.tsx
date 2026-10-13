@@ -35,7 +35,8 @@ type PlanRow = {
   id: string;
   year: number;
   status: string;
-  orgUnit?: { name: string } | null;
+  orgUnitId?: string | null;
+  orgUnit?: { id?: string; name: string } | null;
   lines: Array<{
     employmentId: string;
     startDate: string;
@@ -70,6 +71,11 @@ export default function VacationPlansPage() {
   const t = useTranslations("workforceVacation");
   const tCommon = useTranslations("common");
   const [rows, setRows] = useState<PlanRow[]>([]);
+  const [approval, setApproval] = useState<
+    Record<string, { configured: boolean; stepOrder: number; orgUnitName: string | null }>
+  >({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
   const [persons, setPersons] = useState<
     Record<string, { displayName: string | null }>
   >({});
@@ -88,7 +94,7 @@ export default function VacationPlansPage() {
   const [busy, setBusy] = useState(false);
   const [confirmAct, setConfirmAct] = useState<{
     id: string;
-    action: "submit" | "approve" | "reject";
+    action: "submit" | "approve" | "reject" | "correct" | "cancel";
   } | null>(null);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
@@ -143,8 +149,16 @@ export default function VacationPlansPage() {
     }
     const data = (await res.json()) as
       | PlanRow[]
-      | { items?: PlanRow[]; persons?: Record<string, { displayName: string | null }> };
+      | {
+          items?: PlanRow[];
+          persons?: Record<string, { displayName: string | null }>;
+          approval?: Record<
+            string,
+            { configured: boolean; stepOrder: number; orgUnitName: string | null }
+          >;
+        };
     setRows(Array.isArray(data) ? data : (data.items ?? []));
+    setApproval(Array.isArray(data) ? {} : (data.approval ?? {}));
     if (!Array.isArray(data) && data.persons) setPersons(data.persons);
     if (unitRes.ok) {
       const u = (await unitRes.json()) as { items?: OrgUnitOpt[] } | OrgUnitOpt[];
@@ -158,7 +172,37 @@ export default function VacationPlansPage() {
     if (ready) void load();
   }, [ready, load]);
 
+  async function openEdit(row: PlanRow) {
+    setEditingId(row.id);
+    setPlanYear(row.year);
+    setOrgUnitId(row.orgUnitId ?? row.orgUnit?.id ?? "");
+    setLines(
+      row.lines.length
+        ? row.lines.map((line) => ({
+            key: `${line.employmentId}-${line.startDate}`,
+            employmentId: line.employmentId,
+            startDate: String(line.startDate).slice(0, 10),
+            endDate: String(line.endDate).slice(0, 10),
+            days: String(line.days),
+          }))
+        : [emptyLine()],
+    );
+    setOpen(true);
+    if (employments.length === 0) {
+      const empRes = await workforceFetch("employments?status=ACTIVE");
+      if (empRes.ok) {
+        const e = (await empRes.json()) as {
+          items?: EmploymentOpt[];
+          persons?: Record<string, { displayName: string | null }>;
+        };
+        setEmployments(e.items ?? []);
+        if (e.persons) setPersons((p) => ({ ...p, ...e.persons }));
+      }
+    }
+  }
+
   async function openCreate() {
+    setEditingId(null);
     setPlanYear(year);
     setOrgUnitId("");
     setLines([emptyLine()]);
@@ -198,26 +242,37 @@ export default function VacationPlansPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await workforceFetch("vacation-plans", {
-        method: "POST",
-        body: JSON.stringify({
-          year: planYear,
-          orgUnitId: orgUnitId || undefined,
-          lines: payloadLines,
-        }),
-      });
+      const res = await workforceFetch(
+        editingId ? `vacation-plans/${editingId}` : "vacation-plans",
+        {
+          method: editingId ? "PATCH" : "POST",
+          body: JSON.stringify(
+            editingId
+              ? { lines: payloadLines }
+              : {
+                  year: planYear,
+                  orgUnitId: orgUnitId || undefined,
+                  lines: payloadLines,
+                },
+          ),
+        },
+      );
       if (!res.ok) {
         setError(t("createFailed"));
         return;
       }
       setOpen(false);
+      setEditingId(null);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function act(id: string, action: "submit" | "approve" | "reject") {
+  async function act(
+    id: string,
+    action: "submit" | "approve" | "reject" | "correct" | "cancel",
+  ) {
     setBusy(true);
     setConfirmAct(null);
     setError(null);
@@ -226,8 +281,10 @@ export default function VacationPlansPage() {
         method: "POST",
         body:
           action === "reject"
-            ? JSON.stringify({ rejectionReason: "rejected" })
-            : "{}",
+            ? JSON.stringify({ rejectionReason: cancelReason })
+            : action === "cancel"
+              ? JSON.stringify({ reason: cancelReason })
+              : "{}"
       });
       if (!res.ok) {
         setError(t("actionFailed"));
@@ -291,7 +348,7 @@ export default function VacationPlansPage() {
               label={t("colStatus")}
               value={filterStatus}
               onChange={(next) => setFilterStatus(String(next))}
-              options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"].map((v) => ({
+              options={["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "CANCELLED"].map((v) => ({
                 value: v,
                 label: t(`status.${v}` as "status.DRAFT"),
               }))}
@@ -328,6 +385,12 @@ export default function VacationPlansPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{r.lines?.length ?? 0}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
+                      {approval[r.id]?.configured ? (
+                        <span className="mt-0.5 block text-[11px] text-[#7F8C8D]">
+                          {t("colStep")} {approval[r.id].stepOrder + 1}
+                          {approval[r.id].orgUnitName ? ` · ${approval[r.id].orgUnitName}` : ""}
+                        </span>
+                      ) : null}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="relative flex flex-wrap items-center gap-1">
@@ -385,6 +448,39 @@ export default function VacationPlansPage() {
                                 <X className="h-3.5 w-3.5 text-[#C0392B]" aria-hidden />
                                 {t("reject")}
                               </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || (r.status !== "DRAFT" && r.status !== "REJECTED")}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  openEdit(r);
+                                }}
+                              >
+                                {t("edit")}
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || r.status !== "APPROVED"}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  setConfirmAct({ id: r.id, action: "correct" });
+                                }}
+                              >
+                                {t("correct")}
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#34495E] hover:bg-[#F4F6F7] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={busy || r.status !== "APPROVED"}
+                                onClick={() => {
+                                  setMoreMenuId(null);
+                                  setConfirmAct({ id: r.id, action: "cancel" });
+                                }}
+                              >
+                                {t("cancel")}
+                              </button>
                             </div>
                           ) : null}
                         </div>
@@ -414,7 +510,7 @@ export default function VacationPlansPage() {
       />
       <ModalShell
         open={open}
-        title={t("createTitle")}
+        title={editingId ? t("edit") : t("createTitle")}
         onClose={() => setOpen(false)}
         closeLabel={tCommon("close")}
         maxWidthClass="max-w-2xl"
@@ -426,6 +522,7 @@ export default function VacationPlansPage() {
               type="number"
               className="mt-1 block w-28 rounded-lg border border-[#D5DADF] px-2 py-1.5"
               value={planYear}
+              readOnly={Boolean(editingId)}
               onChange={(e) => setPlanYear(Number(e.target.value))}
             />
           </label>
@@ -436,6 +533,7 @@ export default function VacationPlansPage() {
             onChange={(next) => setOrgUnitId(String(next))}
             options={orgUnits.map((u) => ({ value: u.id, label: u.name }))}
             emptyLabel={t("filterAll")}
+            disabled={Boolean(editingId)}
           />
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -533,7 +631,7 @@ export default function VacationPlansPage() {
             }
             onClick={() => void createPlan()}
           >
-            {t("create")}
+            {editingId ? t("save") : t("create")}
           </button>
         </form>
       </ModalShell>
@@ -545,7 +643,11 @@ export default function VacationPlansPage() {
             ? t("approve")
             : confirmAct?.action === "reject"
               ? t("reject")
-              : t("submit")
+              : confirmAct?.action === "correct"
+                ? t("correct")
+                : confirmAct?.action === "cancel"
+                  ? t("cancel")
+                  : t("submit")
         }
         onClose={() => setConfirmAct(null)}
         closeLabel={tCommon("close")}
@@ -562,18 +664,36 @@ export default function VacationPlansPage() {
                 ? t("approve")
                 : confirmAct?.action === "reject"
                   ? t("reject")
-                  : t("submit")
+                  : confirmAct?.action === "correct"
+                    ? t("correct")
+                    : confirmAct?.action === "cancel"
+                      ? t("cancel")
+                      : t("submit")
             }
             busy={busy}
           />
         }
       >
+        {confirmAct?.action === "cancel" || confirmAct?.action === "reject" ? (
+          <label className="mb-2 block text-[13px] font-medium text-[#34495E]">
+            {confirmAct?.action === "reject" ? t("reject") : t("cancelReason")}
+            <input
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+          </label>
+        ) : null}
         <p className="text-sm text-[#34495E]">
           {confirmAct?.action === "approve"
             ? t("confirmApprove")
             : confirmAct?.action === "reject"
               ? t("confirmReject")
-              : t("confirmSubmit")}
+              : confirmAct?.action === "correct"
+                ? t("confirmCorrect")
+                : confirmAct?.action === "cancel"
+                  ? t("confirmCancel")
+                  : t("confirmSubmit")}
         </p>
       </ModalShell>
     </div>

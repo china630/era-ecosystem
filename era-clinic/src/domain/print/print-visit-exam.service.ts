@@ -13,6 +13,7 @@ import {
 } from "@/domain/cpoe/cpoe-payload";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
+import { formatIcdLabel, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import { bakuDateKey } from "@/lib/baku-day";
 
@@ -207,13 +208,7 @@ export async function buildVisitExamPrint(
       : printLabel(lang, "visitExam");
 
   const diagnoses = entry.visit.diagnoses.map((d) => {
-    const title =
-      lang === "ru"
-        ? d.icdCode.titleRu
-        : lang === "az"
-          ? d.icdCode.titleAz?.trim() || d.icdCode.titleRu
-          : d.icdCode.titleEn;
-    const base = `${d.icdCode.code} — ${title}`;
+    const base = formatIcdLabel(d.icdCode, normalizeIcdLocale(lang));
     const role = d.role === "PRIMARY" ? "" : ` [${d.role}]`;
     return d.note ? `${base}${role} (${d.note})` : `${base}${role}`;
   });

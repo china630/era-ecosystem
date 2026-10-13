@@ -23,6 +23,11 @@ enum PersonIdentifierType {
   ERA_SURROGATE
 }
 
+enum PersonDocumentKind {
+  ID_CARD
+  PASSPORT
+}
+
 enum IdentifierTrust {
   SELF_DECLARED
   DOCUMENT_SCANNED
@@ -114,6 +119,7 @@ model GlobalNaturalPerson {
   hrProfile         PersonHrProfile?
   addresses         PersonAddress[]
   kinContacts       PersonKinContact[]
+  identityDocuments PersonIdentityDocument[]
   mergedInto        GlobalNaturalPerson?  @relation("PersonMerge", fields: [mergedIntoPersonId], references: [id], onDelete: SetNull)
   mergedFrom        GlobalNaturalPerson[] @relation("PersonMerge")
 
@@ -167,6 +173,26 @@ model PersonKinContact {
 
   @@index([personId])
   @@map("person_kin_contacts")
+}
+
+/// Identity card or passport held on the person. Series, number, and issuer are ciphered.
+model PersonIdentityDocument {
+  id                String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId          String             @map("person_id") @db.Uuid
+  kind              PersonDocumentKind
+  seriesCipher      String?            @map("series_cipher")
+  numberCipher      String?            @map("number_cipher")
+  issuedByCipher    String?            @map("issued_by_cipher")
+  issuedOn          DateTime?          @map("issued_on") @db.Date
+  expiresOn         DateTime?          @map("expires_on") @db.Date
+  issuingCountry    String             @default("AZ") @map("issuing_country") @db.VarChar(2)
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  person            GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, kind])
+  @@index([personId])
+  @@map("person_identity_documents")
 }
 
 model PersonIdentifier {

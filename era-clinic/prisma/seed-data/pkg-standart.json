@@ -1,0 +1,254 @@
+{
+  "code": "PKG-STANDART",
+  "name": "Nafta Standart",
+  "durationDays": 7,
+  "minNights": 7,
+  "maxNights": 21,
+  "source": "Live current template snapshot (droplet era_clinic, version 9, 2026-10-13). Knot cells are the quota.",
+  "procedures": [
+    {
+      "procedureCode": "LAB-CBC",
+      "procedureName": "Qannı ümumi analizi",
+      "quotaTotal": 1,
+      "kind": "LAB",
+      "sortOrder": 0,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "LAB_ORDER",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": false,
+      "members": ["LAB-CBC"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "LAB-BIOCHEM-STANDART",
+      "procedureName": "Qanın biokimya analizi",
+      "quotaTotal": 1,
+      "kind": "LAB",
+      "sortOrder": 1,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "LAB_ORDER",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": false,
+      "members": ["LAB-BIOCHEM-STANDART"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "LAB-URINE",
+      "procedureName": "Sidiyin ümümu analizi",
+      "quotaTotal": 1,
+      "kind": "LAB",
+      "sortOrder": 2,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "LAB_ORDER",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": false,
+      "members": ["LAB-URINE"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "USG-ABD",
+      "procedureName": "USM",
+      "quotaTotal": 1,
+      "kind": "LAB",
+      "sortOrder": 3,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "LAB_ORDER",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": false,
+      "members": ["USG-ABD"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "CARDIO-ECG",
+      "procedureName": "EKQ",
+      "quotaTotal": 1,
+      "kind": "LAB",
+      "sortOrder": 4,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "LAB_ORDER",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": false,
+      "members": ["CARDIO-ECG"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "SVC-VANNA",
+      "procedureName": "Vanna prosedurları",
+      "quotaTotal": 18,
+      "kind": "BATH",
+      "sortOrder": 5,
+      "assignMode": "MANUAL",
+      "fulfillment": "PROCEDURE_ORDER",
+      "quotaBasis": "PER_NIGHTS",
+      "requiresDoctor": false,
+      "members": [
+        "SVC-4-KAMERALI-NAFTALAN-VANNASI",
+        "SVC-HIDROMASAJ-VANNASI",
+        "SVC-NAFTALAN-APLIKASIYA",
+        "SVC-NAFTALAN-APLIKASIYA-KISI",
+        "SVC-NAFTALAN-VANNASI-KISI",
+        "SVC-NAFTALAN-VANNASI-QADIN",
+        "SVC-YOD-BROM-VANNASI"
+      ],
+      "knots": [
+        { "nights": 7, "qty": 6 },
+        { "nights": 10, "qty": 9 },
+        { "nights": 14, "qty": 12 },
+        { "nights": 21, "qty": 18 }
+      ]
+    },
+    {
+      "procedureCode": "SVC-PARAFINO-TERAPIYA",
+      "procedureName": "Parafin prosedurları",
+      "quotaTotal": 18,
+      "kind": "PARAFFIN",
+      "sortOrder": 6,
+      "assignMode": "MANUAL",
+      "fulfillment": "PROCEDURE_ORDER",
+      "quotaBasis": "PER_NIGHTS",
+      "requiresDoctor": false,
+      "members": [
+        "SVC-PARAFINO-TERAPIYA-ASAGI-ETRAF",
+        "SVC-PARAFINO-TERAPIYA-BOYUN-KUREK",
+        "SVC-PARAFINO-TERAPIYA-BUTUN-BEDEN",
+        "SVC-PARAFINO-TERAPIYA-YUXARI-ETRAF"
+      ],
+      "knots": [
+        { "nights": 7, "qty": 6 },
+        { "nights": 10, "qty": 9 },
+        { "nights": 14, "qty": 12 },
+        { "nights": 21, "qty": 18 }
+      ]
+    },
+    {
+      "procedureCode": "SVC-FIZIO",
+      "procedureName": "Fizio prosedurlar",
+      "quotaTotal": 54,
+      "kind": "PHYSIO",
+      "sortOrder": 7,
+      "assignMode": "MANUAL",
+      "fulfillment": "PROCEDURE_ORDER",
+      "quotaBasis": "PER_NIGHTS",
+      "requiresDoctor": false,
+      "members": [
+        "SVC-AMPLIPULS",
+        "SVC-DARSONVAL",
+        "SVC-ELEKTRO-TERAPIYA",
+        "SVC-INFRAQIRMIZI",
+        "SVC-LAZERTERAPIYA",
+        "SVC-MAQNITO-TERAPIYA",
+        "SVC-QISA-DALGA-TERAPIYA",
+        "SVC-ULTRAFONOFOREZ-GEL",
+        "SVC-ULTRAFONOFOREZ-YAG"
+      ],
+      "knots": [
+        { "nights": 7, "qty": 18 },
+        { "nights": 10, "qty": 27 },
+        { "nights": 14, "qty": 36 },
+        { "nights": 21, "qty": 54 }
+      ]
+    },
+    {
+      "procedureCode": "VISIT-GP",
+      "procedureName": "Həkim müayinəsi",
+      "quotaTotal": 12,
+      "kind": "EXAM",
+      "sortOrder": 8,
+      "assignMode": "MANUAL",
+      "fulfillment": "VISIT",
+      "quotaBasis": "PER_NIGHTS",
+      "requiresDoctor": true,
+      "members": ["VISIT-GP"],
+      "knots": [
+        { "nights": 7, "qty": 4 },
+        { "nights": 8, "qty": 5 },
+        { "nights": 9, "qty": 6 },
+        { "nights": 10, "qty": 7 },
+        { "nights": 11, "qty": 8 },
+        { "nights": 12, "qty": 9 },
+        { "nights": 14, "qty": 10 },
+        { "nights": 16, "qty": 12 },
+        { "nights": 21, "qty": 10 }
+      ]
+    },
+    {
+      "procedureCode": "VISIT-NEURO",
+      "procedureName": "Nevropatoloqun  müayinəsi",
+      "quotaTotal": 1,
+      "kind": "EXAM",
+      "sortOrder": 9,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "VISIT",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": true,
+      "members": ["VISIT-NEURO"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "VISIT-GYN-URO",
+      "procedureName": "Ginekoloq/uroloq  müayinəs",
+      "quotaTotal": 1,
+      "kind": "EXAM",
+      "sortOrder": 10,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "VISIT",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": true,
+      "members": ["VISIT-GYN", "VISIT-URO"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    },
+    {
+      "procedureCode": "VISIT-CARDIO",
+      "procedureName": "Kardioloqun  müayinəsi",
+      "quotaTotal": 1,
+      "kind": "EXAM",
+      "sortOrder": 11,
+      "assignMode": "AUTO_ON_OPEN",
+      "fulfillment": "VISIT",
+      "quotaBasis": "PER_STAY",
+      "requiresDoctor": true,
+      "members": ["VISIT-CARDIO"],
+      "knots": [
+        { "nights": 7, "qty": 1 },
+        { "nights": 10, "qty": 1 },
+        { "nights": 14, "qty": 1 },
+        { "nights": 21, "qty": 1 }
+      ]
+    }
+  ]
+}

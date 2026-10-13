@@ -1,46 +1,34 @@
-import { Controller, Get, Query, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { createRequire } from "node:module";
 import { Public } from "../../auth/decorators/public.decorator";
 import { SatelliteCatalogGuard } from "./satellite-catalog.guard";
 
-const requireCjs = createRequire(__filename);
-const {
-  generateIcd10Catalog,
-  catalogStats,
-  ICD10_VERSION,
-} = requireCjs("@era/satellite-kit/icd10/generate") as {
-  ICD10_VERSION: string;
-  generateIcd10Catalog: () => {
-    version: string;
-    rows: Array<{
-      code: string;
-      kind: string;
-      chapterCode: string;
-      blockCode: string;
-      parentCode: string | null;
-      titleAz: string | null;
-      titleRu: string;
-      titleEn: string;
-      searchText: string;
-      selectable: boolean;
-      active: boolean;
-    }>;
-  };
-  catalogStats: (rows: unknown[]) => Record<string, unknown>;
+type Icd10Row = {
+  code: string;
+  kind: string;
+  chapterCode: string;
+  blockCode: string;
+  parentCode: string | null;
+  titleAz: string | null;
+  titleRu: string | null;
+  titleEn: string;
+  searchText: string;
+  selectable: boolean;
+  active: boolean;
 };
 
-let cached:
-  | {
-      version: string;
-      rows: ReturnType<typeof generateIcd10Catalog>["rows"];
-      stats: Record<string, unknown>;
-    }
-  | null = null;
+const requireCjs = createRequire(__filename);
+const { loadIcd10Catalog, catalogStats } = requireCjs("@era/satellite-kit/icd10/catalog") as {
+  loadIcd10Catalog: () => { version: string; rows: Icd10Row[] };
+  catalogStats: (rows: Icd10Row[]) => Record<string, unknown>;
+};
+
+let cached: { version: string; rows: Icd10Row[]; stats: Record<string, unknown> } | null = null;
 
 function catalog() {
   if (!cached) {
-    const { version, rows } = generateIcd10Catalog();
+    const { version, rows } = loadIcd10Catalog();
     cached = { version, rows, stats: catalogStats(rows) };
   }
   return cached;
@@ -53,7 +41,7 @@ function catalog() {
 export class CatalogIcd10Controller {
   @Get()
   @ApiOperation({
-    summary: "WHO ICD-10 catalog page (served in-process; not data-hub)",
+    summary: "WHO ICD-10 2019 catalog page with RU/AZ titles (served in-process; not data-hub)",
   })
   getCatalog(
     @Query("q") q?: string,
@@ -92,7 +80,7 @@ export class CatalogIcd10Controller {
     const next = slice.length === take ? slice[slice.length - 1]?.code ?? null : null;
 
     return {
-      version: version || ICD10_VERSION,
+      version,
       total: filtered.length,
       stats,
       items: slice,

@@ -34,6 +34,11 @@ export type PersonAddress = $Result.DefaultSelection<Prisma.$PersonAddressPayloa
  */
 export type PersonKinContact = $Result.DefaultSelection<Prisma.$PersonKinContactPayload>
 /**
+ * Model PersonIdentityDocument
+ * Identity card or passport held on the person. Series, number, and issuer are ciphered.
+ */
+export type PersonIdentityDocument = $Result.DefaultSelection<Prisma.$PersonIdentityDocumentPayload>
+/**
  * Model PersonIdentifier
  * 
  */
@@ -81,6 +86,14 @@ export const PersonIdentifierType: {
 };
 
 export type PersonIdentifierType = (typeof PersonIdentifierType)[keyof typeof PersonIdentifierType]
+
+
+export const PersonDocumentKind: {
+  ID_CARD: 'ID_CARD',
+  PASSPORT: 'PASSPORT'
+};
+
+export type PersonDocumentKind = (typeof PersonDocumentKind)[keyof typeof PersonDocumentKind]
 
 
 export const IdentifierTrust: {
@@ -173,6 +186,10 @@ export const PersonAccessRequestStatus: typeof $Enums.PersonAccessRequestStatus
 export type PersonIdentifierType = $Enums.PersonIdentifierType
 
 export const PersonIdentifierType: typeof $Enums.PersonIdentifierType
+
+export type PersonDocumentKind = $Enums.PersonDocumentKind
+
+export const PersonDocumentKind: typeof $Enums.PersonDocumentKind
 
 export type IdentifierTrust = $Enums.IdentifierTrust
 
@@ -366,6 +383,16 @@ export class PrismaClient<
     * ```
     */
   get personKinContact(): Prisma.PersonKinContactDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.personIdentityDocument`: Exposes CRUD operations for the **PersonIdentityDocument** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PersonIdentityDocuments
+    * const personIdentityDocuments = await prisma.personIdentityDocument.findMany()
+    * ```
+    */
+  get personIdentityDocument(): Prisma.PersonIdentityDocumentDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.personIdentifier`: Exposes CRUD operations for the **PersonIdentifier** model.
@@ -854,6 +881,7 @@ export namespace Prisma {
     PersonHrProfile: 'PersonHrProfile',
     PersonAddress: 'PersonAddress',
     PersonKinContact: 'PersonKinContact',
+    PersonIdentityDocument: 'PersonIdentityDocument',
     PersonIdentifier: 'PersonIdentifier',
     GlobalLegalEntity: 'GlobalLegalEntity',
     PersonAccessRequest: 'PersonAccessRequest',
@@ -874,7 +902,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "globalNaturalPerson" | "personHrProfile" | "personAddress" | "personKinContact" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
+      modelProps: "globalNaturalPerson" | "personHrProfile" | "personAddress" | "personKinContact" | "personIdentityDocument" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1171,6 +1199,80 @@ export namespace Prisma {
           count: {
             args: Prisma.PersonKinContactCountArgs<ExtArgs>
             result: $Utils.Optional<PersonKinContactCountAggregateOutputType> | number
+          }
+        }
+      }
+      PersonIdentityDocument: {
+        payload: Prisma.$PersonIdentityDocumentPayload<ExtArgs>
+        fields: Prisma.PersonIdentityDocumentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PersonIdentityDocumentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PersonIdentityDocumentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          findFirst: {
+            args: Prisma.PersonIdentityDocumentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PersonIdentityDocumentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          findMany: {
+            args: Prisma.PersonIdentityDocumentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>[]
+          }
+          create: {
+            args: Prisma.PersonIdentityDocumentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          createMany: {
+            args: Prisma.PersonIdentityDocumentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PersonIdentityDocumentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>[]
+          }
+          delete: {
+            args: Prisma.PersonIdentityDocumentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          update: {
+            args: Prisma.PersonIdentityDocumentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          deleteMany: {
+            args: Prisma.PersonIdentityDocumentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PersonIdentityDocumentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PersonIdentityDocumentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>[]
+          }
+          upsert: {
+            args: Prisma.PersonIdentityDocumentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentityDocumentPayload>
+          }
+          aggregate: {
+            args: Prisma.PersonIdentityDocumentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePersonIdentityDocument>
+          }
+          groupBy: {
+            args: Prisma.PersonIdentityDocumentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PersonIdentityDocumentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PersonIdentityDocumentCountArgs<ExtArgs>
+            result: $Utils.Optional<PersonIdentityDocumentCountAggregateOutputType> | number
           }
         }
       }
@@ -1656,6 +1758,7 @@ export namespace Prisma {
     personHrProfile?: PersonHrProfileOmit
     personAddress?: PersonAddressOmit
     personKinContact?: PersonKinContactOmit
+    personIdentityDocument?: PersonIdentityDocumentOmit
     personIdentifier?: PersonIdentifierOmit
     globalLegalEntity?: GlobalLegalEntityOmit
     personAccessRequest?: PersonAccessRequestOmit
@@ -1747,6 +1850,7 @@ export namespace Prisma {
     accessLogs: number
     addresses: number
     kinContacts: number
+    identityDocuments: number
     mergedFrom: number
   }
 
@@ -1757,6 +1861,7 @@ export namespace Prisma {
     accessLogs?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessLogsArgs
     addresses?: boolean | GlobalNaturalPersonCountOutputTypeCountAddressesArgs
     kinContacts?: boolean | GlobalNaturalPersonCountOutputTypeCountKinContactsArgs
+    identityDocuments?: boolean | GlobalNaturalPersonCountOutputTypeCountIdentityDocumentsArgs
     mergedFrom?: boolean | GlobalNaturalPersonCountOutputTypeCountMergedFromArgs
   }
 
@@ -1811,6 +1916,13 @@ export namespace Prisma {
    */
   export type GlobalNaturalPersonCountOutputTypeCountKinContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PersonKinContactWhereInput
+  }
+
+  /**
+   * GlobalNaturalPersonCountOutputType without action
+   */
+  export type GlobalNaturalPersonCountOutputTypeCountIdentityDocumentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonIdentityDocumentWhereInput
   }
 
   /**
@@ -2084,6 +2196,7 @@ export namespace Prisma {
     hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
     addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
     kinContacts?: boolean | GlobalNaturalPerson$kinContactsArgs<ExtArgs>
+    identityDocuments?: boolean | GlobalNaturalPerson$identityDocumentsArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -2157,6 +2270,7 @@ export namespace Prisma {
     hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
     addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
     kinContacts?: boolean | GlobalNaturalPerson$kinContactsArgs<ExtArgs>
+    identityDocuments?: boolean | GlobalNaturalPerson$identityDocumentsArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -2178,6 +2292,7 @@ export namespace Prisma {
       hrProfile: Prisma.$PersonHrProfilePayload<ExtArgs> | null
       addresses: Prisma.$PersonAddressPayload<ExtArgs>[]
       kinContacts: Prisma.$PersonKinContactPayload<ExtArgs>[]
+      identityDocuments: Prisma.$PersonIdentityDocumentPayload<ExtArgs>[]
       mergedInto: Prisma.$GlobalNaturalPersonPayload<ExtArgs> | null
       mergedFrom: Prisma.$GlobalNaturalPersonPayload<ExtArgs>[]
     }
@@ -2623,6 +2738,7 @@ export namespace Prisma {
     hrProfile<T extends GlobalNaturalPerson$hrProfileArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$hrProfileArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     addresses<T extends GlobalNaturalPerson$addressesArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$addressesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     kinContacts<T extends GlobalNaturalPerson$kinContactsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$kinContactsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonKinContactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    identityDocuments<T extends GlobalNaturalPerson$identityDocumentsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$identityDocumentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mergedInto<T extends GlobalNaturalPerson$mergedIntoArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedIntoArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     mergedFrom<T extends GlobalNaturalPerson$mergedFromArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedFromArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -3231,6 +3347,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PersonKinContactScalarFieldEnum | PersonKinContactScalarFieldEnum[]
+  }
+
+  /**
+   * GlobalNaturalPerson.identityDocuments
+   */
+  export type GlobalNaturalPerson$identityDocumentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    where?: PersonIdentityDocumentWhereInput
+    orderBy?: PersonIdentityDocumentOrderByWithRelationInput | PersonIdentityDocumentOrderByWithRelationInput[]
+    cursor?: PersonIdentityDocumentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PersonIdentityDocumentScalarFieldEnum | PersonIdentityDocumentScalarFieldEnum[]
   }
 
   /**
@@ -6620,6 +6760,1147 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PersonKinContactInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PersonIdentityDocument
+   */
+
+  export type AggregatePersonIdentityDocument = {
+    _count: PersonIdentityDocumentCountAggregateOutputType | null
+    _min: PersonIdentityDocumentMinAggregateOutputType | null
+    _max: PersonIdentityDocumentMaxAggregateOutputType | null
+  }
+
+  export type PersonIdentityDocumentMinAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kind: $Enums.PersonDocumentKind | null
+    seriesCipher: string | null
+    numberCipher: string | null
+    issuedByCipher: string | null
+    issuedOn: Date | null
+    expiresOn: Date | null
+    issuingCountry: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonIdentityDocumentMaxAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kind: $Enums.PersonDocumentKind | null
+    seriesCipher: string | null
+    numberCipher: string | null
+    issuedByCipher: string | null
+    issuedOn: Date | null
+    expiresOn: Date | null
+    issuingCountry: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonIdentityDocumentCountAggregateOutputType = {
+    id: number
+    personId: number
+    kind: number
+    seriesCipher: number
+    numberCipher: number
+    issuedByCipher: number
+    issuedOn: number
+    expiresOn: number
+    issuingCountry: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PersonIdentityDocumentMinAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    seriesCipher?: true
+    numberCipher?: true
+    issuedByCipher?: true
+    issuedOn?: true
+    expiresOn?: true
+    issuingCountry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonIdentityDocumentMaxAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    seriesCipher?: true
+    numberCipher?: true
+    issuedByCipher?: true
+    issuedOn?: true
+    expiresOn?: true
+    issuingCountry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonIdentityDocumentCountAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    seriesCipher?: true
+    numberCipher?: true
+    issuedByCipher?: true
+    issuedOn?: true
+    expiresOn?: true
+    issuingCountry?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PersonIdentityDocumentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonIdentityDocument to aggregate.
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentityDocuments to fetch.
+     */
+    orderBy?: PersonIdentityDocumentOrderByWithRelationInput | PersonIdentityDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PersonIdentityDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentityDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentityDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PersonIdentityDocuments
+    **/
+    _count?: true | PersonIdentityDocumentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PersonIdentityDocumentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PersonIdentityDocumentMaxAggregateInputType
+  }
+
+  export type GetPersonIdentityDocumentAggregateType<T extends PersonIdentityDocumentAggregateArgs> = {
+        [P in keyof T & keyof AggregatePersonIdentityDocument]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePersonIdentityDocument[P]>
+      : GetScalarType<T[P], AggregatePersonIdentityDocument[P]>
+  }
+
+
+
+
+  export type PersonIdentityDocumentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonIdentityDocumentWhereInput
+    orderBy?: PersonIdentityDocumentOrderByWithAggregationInput | PersonIdentityDocumentOrderByWithAggregationInput[]
+    by: PersonIdentityDocumentScalarFieldEnum[] | PersonIdentityDocumentScalarFieldEnum
+    having?: PersonIdentityDocumentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PersonIdentityDocumentCountAggregateInputType | true
+    _min?: PersonIdentityDocumentMinAggregateInputType
+    _max?: PersonIdentityDocumentMaxAggregateInputType
+  }
+
+  export type PersonIdentityDocumentGroupByOutputType = {
+    id: string
+    personId: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher: string | null
+    numberCipher: string | null
+    issuedByCipher: string | null
+    issuedOn: Date | null
+    expiresOn: Date | null
+    issuingCountry: string
+    createdAt: Date
+    updatedAt: Date
+    _count: PersonIdentityDocumentCountAggregateOutputType | null
+    _min: PersonIdentityDocumentMinAggregateOutputType | null
+    _max: PersonIdentityDocumentMaxAggregateOutputType | null
+  }
+
+  type GetPersonIdentityDocumentGroupByPayload<T extends PersonIdentityDocumentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PersonIdentityDocumentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PersonIdentityDocumentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PersonIdentityDocumentGroupByOutputType[P]>
+            : GetScalarType<T[P], PersonIdentityDocumentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PersonIdentityDocumentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    seriesCipher?: boolean
+    numberCipher?: boolean
+    issuedByCipher?: boolean
+    issuedOn?: boolean
+    expiresOn?: boolean
+    issuingCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentityDocument"]>
+
+  export type PersonIdentityDocumentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    seriesCipher?: boolean
+    numberCipher?: boolean
+    issuedByCipher?: boolean
+    issuedOn?: boolean
+    expiresOn?: boolean
+    issuingCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentityDocument"]>
+
+  export type PersonIdentityDocumentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    seriesCipher?: boolean
+    numberCipher?: boolean
+    issuedByCipher?: boolean
+    issuedOn?: boolean
+    expiresOn?: boolean
+    issuingCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentityDocument"]>
+
+  export type PersonIdentityDocumentSelectScalar = {
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    seriesCipher?: boolean
+    numberCipher?: boolean
+    issuedByCipher?: boolean
+    issuedOn?: boolean
+    expiresOn?: boolean
+    issuingCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PersonIdentityDocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "personId" | "kind" | "seriesCipher" | "numberCipher" | "issuedByCipher" | "issuedOn" | "expiresOn" | "issuingCountry" | "createdAt" | "updatedAt", ExtArgs["result"]["personIdentityDocument"]>
+  export type PersonIdentityDocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonIdentityDocumentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonIdentityDocumentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+
+  export type $PersonIdentityDocumentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PersonIdentityDocument"
+    objects: {
+      person: Prisma.$GlobalNaturalPersonPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      personId: string
+      kind: $Enums.PersonDocumentKind
+      seriesCipher: string | null
+      numberCipher: string | null
+      issuedByCipher: string | null
+      issuedOn: Date | null
+      expiresOn: Date | null
+      issuingCountry: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["personIdentityDocument"]>
+    composites: {}
+  }
+
+  type PersonIdentityDocumentGetPayload<S extends boolean | null | undefined | PersonIdentityDocumentDefaultArgs> = $Result.GetResult<Prisma.$PersonIdentityDocumentPayload, S>
+
+  type PersonIdentityDocumentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PersonIdentityDocumentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PersonIdentityDocumentCountAggregateInputType | true
+    }
+
+  export interface PersonIdentityDocumentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PersonIdentityDocument'], meta: { name: 'PersonIdentityDocument' } }
+    /**
+     * Find zero or one PersonIdentityDocument that matches the filter.
+     * @param {PersonIdentityDocumentFindUniqueArgs} args - Arguments to find a PersonIdentityDocument
+     * @example
+     * // Get one PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PersonIdentityDocumentFindUniqueArgs>(args: SelectSubset<T, PersonIdentityDocumentFindUniqueArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PersonIdentityDocument that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PersonIdentityDocumentFindUniqueOrThrowArgs} args - Arguments to find a PersonIdentityDocument
+     * @example
+     * // Get one PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PersonIdentityDocumentFindUniqueOrThrowArgs>(args: SelectSubset<T, PersonIdentityDocumentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonIdentityDocument that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentFindFirstArgs} args - Arguments to find a PersonIdentityDocument
+     * @example
+     * // Get one PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PersonIdentityDocumentFindFirstArgs>(args?: SelectSubset<T, PersonIdentityDocumentFindFirstArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonIdentityDocument that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentFindFirstOrThrowArgs} args - Arguments to find a PersonIdentityDocument
+     * @example
+     * // Get one PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PersonIdentityDocumentFindFirstOrThrowArgs>(args?: SelectSubset<T, PersonIdentityDocumentFindFirstOrThrowArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PersonIdentityDocuments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PersonIdentityDocuments
+     * const personIdentityDocuments = await prisma.personIdentityDocument.findMany()
+     * 
+     * // Get first 10 PersonIdentityDocuments
+     * const personIdentityDocuments = await prisma.personIdentityDocument.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const personIdentityDocumentWithIdOnly = await prisma.personIdentityDocument.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PersonIdentityDocumentFindManyArgs>(args?: SelectSubset<T, PersonIdentityDocumentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PersonIdentityDocument.
+     * @param {PersonIdentityDocumentCreateArgs} args - Arguments to create a PersonIdentityDocument.
+     * @example
+     * // Create one PersonIdentityDocument
+     * const PersonIdentityDocument = await prisma.personIdentityDocument.create({
+     *   data: {
+     *     // ... data to create a PersonIdentityDocument
+     *   }
+     * })
+     * 
+     */
+    create<T extends PersonIdentityDocumentCreateArgs>(args: SelectSubset<T, PersonIdentityDocumentCreateArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PersonIdentityDocuments.
+     * @param {PersonIdentityDocumentCreateManyArgs} args - Arguments to create many PersonIdentityDocuments.
+     * @example
+     * // Create many PersonIdentityDocuments
+     * const personIdentityDocument = await prisma.personIdentityDocument.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PersonIdentityDocumentCreateManyArgs>(args?: SelectSubset<T, PersonIdentityDocumentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PersonIdentityDocuments and returns the data saved in the database.
+     * @param {PersonIdentityDocumentCreateManyAndReturnArgs} args - Arguments to create many PersonIdentityDocuments.
+     * @example
+     * // Create many PersonIdentityDocuments
+     * const personIdentityDocument = await prisma.personIdentityDocument.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PersonIdentityDocuments and only return the `id`
+     * const personIdentityDocumentWithIdOnly = await prisma.personIdentityDocument.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PersonIdentityDocumentCreateManyAndReturnArgs>(args?: SelectSubset<T, PersonIdentityDocumentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PersonIdentityDocument.
+     * @param {PersonIdentityDocumentDeleteArgs} args - Arguments to delete one PersonIdentityDocument.
+     * @example
+     * // Delete one PersonIdentityDocument
+     * const PersonIdentityDocument = await prisma.personIdentityDocument.delete({
+     *   where: {
+     *     // ... filter to delete one PersonIdentityDocument
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PersonIdentityDocumentDeleteArgs>(args: SelectSubset<T, PersonIdentityDocumentDeleteArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PersonIdentityDocument.
+     * @param {PersonIdentityDocumentUpdateArgs} args - Arguments to update one PersonIdentityDocument.
+     * @example
+     * // Update one PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PersonIdentityDocumentUpdateArgs>(args: SelectSubset<T, PersonIdentityDocumentUpdateArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PersonIdentityDocuments.
+     * @param {PersonIdentityDocumentDeleteManyArgs} args - Arguments to filter PersonIdentityDocuments to delete.
+     * @example
+     * // Delete a few PersonIdentityDocuments
+     * const { count } = await prisma.personIdentityDocument.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PersonIdentityDocumentDeleteManyArgs>(args?: SelectSubset<T, PersonIdentityDocumentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonIdentityDocuments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PersonIdentityDocuments
+     * const personIdentityDocument = await prisma.personIdentityDocument.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PersonIdentityDocumentUpdateManyArgs>(args: SelectSubset<T, PersonIdentityDocumentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonIdentityDocuments and returns the data updated in the database.
+     * @param {PersonIdentityDocumentUpdateManyAndReturnArgs} args - Arguments to update many PersonIdentityDocuments.
+     * @example
+     * // Update many PersonIdentityDocuments
+     * const personIdentityDocument = await prisma.personIdentityDocument.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PersonIdentityDocuments and only return the `id`
+     * const personIdentityDocumentWithIdOnly = await prisma.personIdentityDocument.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PersonIdentityDocumentUpdateManyAndReturnArgs>(args: SelectSubset<T, PersonIdentityDocumentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PersonIdentityDocument.
+     * @param {PersonIdentityDocumentUpsertArgs} args - Arguments to update or create a PersonIdentityDocument.
+     * @example
+     * // Update or create a PersonIdentityDocument
+     * const personIdentityDocument = await prisma.personIdentityDocument.upsert({
+     *   create: {
+     *     // ... data to create a PersonIdentityDocument
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PersonIdentityDocument we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PersonIdentityDocumentUpsertArgs>(args: SelectSubset<T, PersonIdentityDocumentUpsertArgs<ExtArgs>>): Prisma__PersonIdentityDocumentClient<$Result.GetResult<Prisma.$PersonIdentityDocumentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PersonIdentityDocuments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentCountArgs} args - Arguments to filter PersonIdentityDocuments to count.
+     * @example
+     * // Count the number of PersonIdentityDocuments
+     * const count = await prisma.personIdentityDocument.count({
+     *   where: {
+     *     // ... the filter for the PersonIdentityDocuments we want to count
+     *   }
+     * })
+    **/
+    count<T extends PersonIdentityDocumentCountArgs>(
+      args?: Subset<T, PersonIdentityDocumentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PersonIdentityDocumentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PersonIdentityDocument.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PersonIdentityDocumentAggregateArgs>(args: Subset<T, PersonIdentityDocumentAggregateArgs>): Prisma.PrismaPromise<GetPersonIdentityDocumentAggregateType<T>>
+
+    /**
+     * Group by PersonIdentityDocument.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentityDocumentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PersonIdentityDocumentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PersonIdentityDocumentGroupByArgs['orderBy'] }
+        : { orderBy?: PersonIdentityDocumentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PersonIdentityDocumentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPersonIdentityDocumentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PersonIdentityDocument model
+   */
+  readonly fields: PersonIdentityDocumentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PersonIdentityDocument.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PersonIdentityDocumentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    person<T extends GlobalNaturalPersonDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPersonDefaultArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PersonIdentityDocument model
+   */
+  interface PersonIdentityDocumentFieldRefs {
+    readonly id: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly personId: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly kind: FieldRef<"PersonIdentityDocument", 'PersonDocumentKind'>
+    readonly seriesCipher: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly numberCipher: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly issuedByCipher: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly issuedOn: FieldRef<"PersonIdentityDocument", 'DateTime'>
+    readonly expiresOn: FieldRef<"PersonIdentityDocument", 'DateTime'>
+    readonly issuingCountry: FieldRef<"PersonIdentityDocument", 'String'>
+    readonly createdAt: FieldRef<"PersonIdentityDocument", 'DateTime'>
+    readonly updatedAt: FieldRef<"PersonIdentityDocument", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PersonIdentityDocument findUnique
+   */
+  export type PersonIdentityDocumentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentityDocument to fetch.
+     */
+    where: PersonIdentityDocumentWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentityDocument findUniqueOrThrow
+   */
+  export type PersonIdentityDocumentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentityDocument to fetch.
+     */
+    where: PersonIdentityDocumentWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentityDocument findFirst
+   */
+  export type PersonIdentityDocumentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentityDocument to fetch.
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentityDocuments to fetch.
+     */
+    orderBy?: PersonIdentityDocumentOrderByWithRelationInput | PersonIdentityDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonIdentityDocuments.
+     */
+    cursor?: PersonIdentityDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentityDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentityDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentityDocuments.
+     */
+    distinct?: PersonIdentityDocumentScalarFieldEnum | PersonIdentityDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentityDocument findFirstOrThrow
+   */
+  export type PersonIdentityDocumentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentityDocument to fetch.
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentityDocuments to fetch.
+     */
+    orderBy?: PersonIdentityDocumentOrderByWithRelationInput | PersonIdentityDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonIdentityDocuments.
+     */
+    cursor?: PersonIdentityDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentityDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentityDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentityDocuments.
+     */
+    distinct?: PersonIdentityDocumentScalarFieldEnum | PersonIdentityDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentityDocument findMany
+   */
+  export type PersonIdentityDocumentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentityDocuments to fetch.
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentityDocuments to fetch.
+     */
+    orderBy?: PersonIdentityDocumentOrderByWithRelationInput | PersonIdentityDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PersonIdentityDocuments.
+     */
+    cursor?: PersonIdentityDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentityDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentityDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentityDocuments.
+     */
+    distinct?: PersonIdentityDocumentScalarFieldEnum | PersonIdentityDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentityDocument create
+   */
+  export type PersonIdentityDocumentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PersonIdentityDocument.
+     */
+    data: XOR<PersonIdentityDocumentCreateInput, PersonIdentityDocumentUncheckedCreateInput>
+  }
+
+  /**
+   * PersonIdentityDocument createMany
+   */
+  export type PersonIdentityDocumentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PersonIdentityDocuments.
+     */
+    data: PersonIdentityDocumentCreateManyInput | PersonIdentityDocumentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PersonIdentityDocument createManyAndReturn
+   */
+  export type PersonIdentityDocumentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * The data used to create many PersonIdentityDocuments.
+     */
+    data: PersonIdentityDocumentCreateManyInput | PersonIdentityDocumentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonIdentityDocument update
+   */
+  export type PersonIdentityDocumentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PersonIdentityDocument.
+     */
+    data: XOR<PersonIdentityDocumentUpdateInput, PersonIdentityDocumentUncheckedUpdateInput>
+    /**
+     * Choose, which PersonIdentityDocument to update.
+     */
+    where: PersonIdentityDocumentWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentityDocument updateMany
+   */
+  export type PersonIdentityDocumentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PersonIdentityDocuments.
+     */
+    data: XOR<PersonIdentityDocumentUpdateManyMutationInput, PersonIdentityDocumentUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonIdentityDocuments to update
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * Limit how many PersonIdentityDocuments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonIdentityDocument updateManyAndReturn
+   */
+  export type PersonIdentityDocumentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * The data used to update PersonIdentityDocuments.
+     */
+    data: XOR<PersonIdentityDocumentUpdateManyMutationInput, PersonIdentityDocumentUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonIdentityDocuments to update
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * Limit how many PersonIdentityDocuments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonIdentityDocument upsert
+   */
+  export type PersonIdentityDocumentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PersonIdentityDocument to update in case it exists.
+     */
+    where: PersonIdentityDocumentWhereUniqueInput
+    /**
+     * In case the PersonIdentityDocument found by the `where` argument doesn't exist, create a new PersonIdentityDocument with this data.
+     */
+    create: XOR<PersonIdentityDocumentCreateInput, PersonIdentityDocumentUncheckedCreateInput>
+    /**
+     * In case the PersonIdentityDocument was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PersonIdentityDocumentUpdateInput, PersonIdentityDocumentUncheckedUpdateInput>
+  }
+
+  /**
+   * PersonIdentityDocument delete
+   */
+  export type PersonIdentityDocumentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
+    /**
+     * Filter which PersonIdentityDocument to delete.
+     */
+    where: PersonIdentityDocumentWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentityDocument deleteMany
+   */
+  export type PersonIdentityDocumentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonIdentityDocuments to delete
+     */
+    where?: PersonIdentityDocumentWhereInput
+    /**
+     * Limit how many PersonIdentityDocuments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonIdentityDocument without action
+   */
+  export type PersonIdentityDocumentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentityDocument
+     */
+    select?: PersonIdentityDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentityDocument
+     */
+    omit?: PersonIdentityDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentityDocumentInclude<ExtArgs> | null
   }
 
 
@@ -12072,6 +13353,23 @@ export namespace Prisma {
   export type PersonKinContactScalarFieldEnum = (typeof PersonKinContactScalarFieldEnum)[keyof typeof PersonKinContactScalarFieldEnum]
 
 
+  export const PersonIdentityDocumentScalarFieldEnum: {
+    id: 'id',
+    personId: 'personId',
+    kind: 'kind',
+    seriesCipher: 'seriesCipher',
+    numberCipher: 'numberCipher',
+    issuedByCipher: 'issuedByCipher',
+    issuedOn: 'issuedOn',
+    expiresOn: 'expiresOn',
+    issuingCountry: 'issuingCountry',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PersonIdentityDocumentScalarFieldEnum = (typeof PersonIdentityDocumentScalarFieldEnum)[keyof typeof PersonIdentityDocumentScalarFieldEnum]
+
+
   export const PersonIdentifierScalarFieldEnum: {
     id: 'id',
     personId: 'personId',
@@ -12292,6 +13590,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'PersonDocumentKind'
+   */
+  export type EnumPersonDocumentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonDocumentKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonDocumentKind[]'
+   */
+  export type ListEnumPersonDocumentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonDocumentKind[]'>
+    
+
+
+  /**
    * Reference to a field of type 'PersonIdentifierType'
    */
   export type EnumPersonIdentifierTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonIdentifierType'>
@@ -12384,6 +13696,7 @@ export namespace Prisma {
     hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
     addresses?: PersonAddressListRelationFilter
     kinContacts?: PersonKinContactListRelationFilter
+    identityDocuments?: PersonIdentityDocumentListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }
@@ -12412,6 +13725,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileOrderByWithRelationInput
     addresses?: PersonAddressOrderByRelationAggregateInput
     kinContacts?: PersonKinContactOrderByRelationAggregateInput
+    identityDocuments?: PersonIdentityDocumentOrderByRelationAggregateInput
     mergedInto?: GlobalNaturalPersonOrderByWithRelationInput
     mergedFrom?: GlobalNaturalPersonOrderByRelationAggregateInput
   }
@@ -12443,6 +13757,7 @@ export namespace Prisma {
     hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
     addresses?: PersonAddressListRelationFilter
     kinContacts?: PersonKinContactListRelationFilter
+    identityDocuments?: PersonIdentityDocumentListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }, "id" | "finBlindIndex">
@@ -12710,6 +14025,92 @@ export namespace Prisma {
     phoneCipher?: StringWithAggregatesFilter<"PersonKinContact"> | string
     createdAt?: DateTimeWithAggregatesFilter<"PersonKinContact"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PersonKinContact"> | Date | string
+  }
+
+  export type PersonIdentityDocumentWhereInput = {
+    AND?: PersonIdentityDocumentWhereInput | PersonIdentityDocumentWhereInput[]
+    OR?: PersonIdentityDocumentWhereInput[]
+    NOT?: PersonIdentityDocumentWhereInput | PersonIdentityDocumentWhereInput[]
+    id?: UuidFilter<"PersonIdentityDocument"> | string
+    personId?: UuidFilter<"PersonIdentityDocument"> | string
+    kind?: EnumPersonDocumentKindFilter<"PersonIdentityDocument"> | $Enums.PersonDocumentKind
+    seriesCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    numberCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedByCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    expiresOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    issuingCountry?: StringFilter<"PersonIdentityDocument"> | string
+    createdAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }
+
+  export type PersonIdentityDocumentOrderByWithRelationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    seriesCipher?: SortOrderInput | SortOrder
+    numberCipher?: SortOrderInput | SortOrder
+    issuedByCipher?: SortOrderInput | SortOrder
+    issuedOn?: SortOrderInput | SortOrder
+    expiresOn?: SortOrderInput | SortOrder
+    issuingCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    person?: GlobalNaturalPersonOrderByWithRelationInput
+  }
+
+  export type PersonIdentityDocumentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    personId_kind?: PersonIdentityDocumentPersonIdKindCompoundUniqueInput
+    AND?: PersonIdentityDocumentWhereInput | PersonIdentityDocumentWhereInput[]
+    OR?: PersonIdentityDocumentWhereInput[]
+    NOT?: PersonIdentityDocumentWhereInput | PersonIdentityDocumentWhereInput[]
+    personId?: UuidFilter<"PersonIdentityDocument"> | string
+    kind?: EnumPersonDocumentKindFilter<"PersonIdentityDocument"> | $Enums.PersonDocumentKind
+    seriesCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    numberCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedByCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    expiresOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    issuingCountry?: StringFilter<"PersonIdentityDocument"> | string
+    createdAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }, "id" | "personId_kind">
+
+  export type PersonIdentityDocumentOrderByWithAggregationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    seriesCipher?: SortOrderInput | SortOrder
+    numberCipher?: SortOrderInput | SortOrder
+    issuedByCipher?: SortOrderInput | SortOrder
+    issuedOn?: SortOrderInput | SortOrder
+    expiresOn?: SortOrderInput | SortOrder
+    issuingCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PersonIdentityDocumentCountOrderByAggregateInput
+    _max?: PersonIdentityDocumentMaxOrderByAggregateInput
+    _min?: PersonIdentityDocumentMinOrderByAggregateInput
+  }
+
+  export type PersonIdentityDocumentScalarWhereWithAggregatesInput = {
+    AND?: PersonIdentityDocumentScalarWhereWithAggregatesInput | PersonIdentityDocumentScalarWhereWithAggregatesInput[]
+    OR?: PersonIdentityDocumentScalarWhereWithAggregatesInput[]
+    NOT?: PersonIdentityDocumentScalarWhereWithAggregatesInput | PersonIdentityDocumentScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PersonIdentityDocument"> | string
+    personId?: UuidWithAggregatesFilter<"PersonIdentityDocument"> | string
+    kind?: EnumPersonDocumentKindWithAggregatesFilter<"PersonIdentityDocument"> | $Enums.PersonDocumentKind
+    seriesCipher?: StringNullableWithAggregatesFilter<"PersonIdentityDocument"> | string | null
+    numberCipher?: StringNullableWithAggregatesFilter<"PersonIdentityDocument"> | string | null
+    issuedByCipher?: StringNullableWithAggregatesFilter<"PersonIdentityDocument"> | string | null
+    issuedOn?: DateTimeNullableWithAggregatesFilter<"PersonIdentityDocument"> | Date | string | null
+    expiresOn?: DateTimeNullableWithAggregatesFilter<"PersonIdentityDocument"> | Date | string | null
+    issuingCountry?: StringWithAggregatesFilter<"PersonIdentityDocument"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"PersonIdentityDocument"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PersonIdentityDocument"> | Date | string
   }
 
   export type PersonIdentifierWhereInput = {
@@ -13054,6 +14455,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -13082,6 +14484,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -13108,6 +14511,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -13136,6 +14540,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -13433,6 +14838,103 @@ export namespace Prisma {
     kinship?: EnumKinshipKindFieldUpdateOperationsInput | $Enums.KinshipKind
     nameCipher?: StringFieldUpdateOperationsInput | string
     phoneCipher?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentityDocumentCreateInput = {
+    id?: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    person: GlobalNaturalPersonCreateNestedOneWithoutIdentityDocumentsInput
+  }
+
+  export type PersonIdentityDocumentUncheckedCreateInput = {
+    id?: string
+    personId: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentityDocumentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    person?: GlobalNaturalPersonUpdateOneRequiredWithoutIdentityDocumentsNestedInput
+  }
+
+  export type PersonIdentityDocumentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentityDocumentCreateManyInput = {
+    id?: string
+    personId: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentityDocumentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentityDocumentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13892,6 +15394,12 @@ export namespace Prisma {
     none?: PersonKinContactWhereInput
   }
 
+  export type PersonIdentityDocumentListRelationFilter = {
+    every?: PersonIdentityDocumentWhereInput
+    some?: PersonIdentityDocumentWhereInput
+    none?: PersonIdentityDocumentWhereInput
+  }
+
   export type GlobalNaturalPersonNullableScalarRelationFilter = {
     is?: GlobalNaturalPersonWhereInput | null
     isNot?: GlobalNaturalPersonWhereInput | null
@@ -13929,6 +15437,10 @@ export namespace Prisma {
   }
 
   export type PersonKinContactOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PersonIdentityDocumentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -14311,6 +15823,70 @@ export namespace Prisma {
     _max?: NestedEnumKinshipKindFilter<$PrismaModel>
   }
 
+  export type EnumPersonDocumentKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonDocumentKind | EnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonDocumentKindFilter<$PrismaModel> | $Enums.PersonDocumentKind
+  }
+
+  export type PersonIdentityDocumentPersonIdKindCompoundUniqueInput = {
+    personId: string
+    kind: $Enums.PersonDocumentKind
+  }
+
+  export type PersonIdentityDocumentCountOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    seriesCipher?: SortOrder
+    numberCipher?: SortOrder
+    issuedByCipher?: SortOrder
+    issuedOn?: SortOrder
+    expiresOn?: SortOrder
+    issuingCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonIdentityDocumentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    seriesCipher?: SortOrder
+    numberCipher?: SortOrder
+    issuedByCipher?: SortOrder
+    issuedOn?: SortOrder
+    expiresOn?: SortOrder
+    issuingCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonIdentityDocumentMinOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    seriesCipher?: SortOrder
+    numberCipher?: SortOrder
+    issuedByCipher?: SortOrder
+    issuedOn?: SortOrder
+    expiresOn?: SortOrder
+    issuingCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumPersonDocumentKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonDocumentKind | EnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonDocumentKindWithAggregatesFilter<$PrismaModel> | $Enums.PersonDocumentKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonDocumentKindFilter<$PrismaModel>
+    _max?: NestedEnumPersonDocumentKindFilter<$PrismaModel>
+  }
+
   export type EnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
     in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
@@ -14581,6 +16157,13 @@ export namespace Prisma {
     connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
   }
 
+  export type PersonIdentityDocumentCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput> | PersonIdentityDocumentCreateWithoutPersonInput[] | PersonIdentityDocumentUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentityDocumentCreateOrConnectWithoutPersonInput | PersonIdentityDocumentCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonIdentityDocumentCreateManyPersonInputEnvelope
+    connect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+  }
+
   export type GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
@@ -14640,6 +16223,13 @@ export namespace Prisma {
     connectOrCreate?: PersonKinContactCreateOrConnectWithoutPersonInput | PersonKinContactCreateOrConnectWithoutPersonInput[]
     createMany?: PersonKinContactCreateManyPersonInputEnvelope
     connect?: PersonKinContactWhereUniqueInput | PersonKinContactWhereUniqueInput[]
+  }
+
+  export type PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput> | PersonIdentityDocumentCreateWithoutPersonInput[] | PersonIdentityDocumentUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentityDocumentCreateOrConnectWithoutPersonInput | PersonIdentityDocumentCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonIdentityDocumentCreateManyPersonInputEnvelope
+    connect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
   }
 
   export type GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput = {
@@ -14767,6 +16357,20 @@ export namespace Prisma {
     deleteMany?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
   }
 
+  export type PersonIdentityDocumentUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput> | PersonIdentityDocumentCreateWithoutPersonInput[] | PersonIdentityDocumentUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentityDocumentCreateOrConnectWithoutPersonInput | PersonIdentityDocumentCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonIdentityDocumentUpsertWithWhereUniqueWithoutPersonInput | PersonIdentityDocumentUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonIdentityDocumentCreateManyPersonInputEnvelope
+    set?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    disconnect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    delete?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    connect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    update?: PersonIdentityDocumentUpdateWithWhereUniqueWithoutPersonInput | PersonIdentityDocumentUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonIdentityDocumentUpdateManyWithWhereWithoutPersonInput | PersonIdentityDocumentUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonIdentityDocumentScalarWhereInput | PersonIdentityDocumentScalarWhereInput[]
+  }
+
   export type GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
@@ -14885,6 +16489,20 @@ export namespace Prisma {
     deleteMany?: PersonKinContactScalarWhereInput | PersonKinContactScalarWhereInput[]
   }
 
+  export type PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput> | PersonIdentityDocumentCreateWithoutPersonInput[] | PersonIdentityDocumentUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentityDocumentCreateOrConnectWithoutPersonInput | PersonIdentityDocumentCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonIdentityDocumentUpsertWithWhereUniqueWithoutPersonInput | PersonIdentityDocumentUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonIdentityDocumentCreateManyPersonInputEnvelope
+    set?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    disconnect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    delete?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    connect?: PersonIdentityDocumentWhereUniqueInput | PersonIdentityDocumentWhereUniqueInput[]
+    update?: PersonIdentityDocumentUpdateWithWhereUniqueWithoutPersonInput | PersonIdentityDocumentUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonIdentityDocumentUpdateManyWithWhereWithoutPersonInput | PersonIdentityDocumentUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonIdentityDocumentScalarWhereInput | PersonIdentityDocumentScalarWhereInput[]
+  }
+
   export type GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
@@ -14964,6 +16582,24 @@ export namespace Prisma {
     upsert?: GlobalNaturalPersonUpsertWithoutKinContactsInput
     connect?: GlobalNaturalPersonWhereUniqueInput
     update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutKinContactsInput, GlobalNaturalPersonUpdateWithoutKinContactsInput>, GlobalNaturalPersonUncheckedUpdateWithoutKinContactsInput>
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutIdentityDocumentsInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedCreateWithoutIdentityDocumentsInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutIdentityDocumentsInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type EnumPersonDocumentKindFieldUpdateOperationsInput = {
+    set?: $Enums.PersonDocumentKind
+  }
+
+  export type GlobalNaturalPersonUpdateOneRequiredWithoutIdentityDocumentsNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedCreateWithoutIdentityDocumentsInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutIdentityDocumentsInput
+    upsert?: GlobalNaturalPersonUpsertWithoutIdentityDocumentsInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutIdentityDocumentsInput, GlobalNaturalPersonUpdateWithoutIdentityDocumentsInput>, GlobalNaturalPersonUncheckedUpdateWithoutIdentityDocumentsInput>
   }
 
   export type GlobalNaturalPersonCreateNestedOneWithoutIdentifiersInput = {
@@ -15324,6 +16960,23 @@ export namespace Prisma {
     _max?: NestedEnumKinshipKindFilter<$PrismaModel>
   }
 
+  export type NestedEnumPersonDocumentKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonDocumentKind | EnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonDocumentKindFilter<$PrismaModel> | $Enums.PersonDocumentKind
+  }
+
+  export type NestedEnumPersonDocumentKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonDocumentKind | EnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonDocumentKind[] | ListEnumPersonDocumentKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonDocumentKindWithAggregatesFilter<$PrismaModel> | $Enums.PersonDocumentKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonDocumentKindFilter<$PrismaModel>
+    _max?: NestedEnumPersonDocumentKindFilter<$PrismaModel>
+  }
+
   export type NestedEnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
     in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
@@ -15587,6 +17240,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PersonIdentityDocumentCreateWithoutPersonInput = {
+    id?: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentityDocumentUncheckedCreateWithoutPersonInput = {
+    id?: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentityDocumentCreateOrConnectWithoutPersonInput = {
+    where: PersonIdentityDocumentWhereUniqueInput
+    create: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonIdentityDocumentCreateManyPersonInputEnvelope = {
+    data: PersonIdentityDocumentCreateManyPersonInput | PersonIdentityDocumentCreateManyPersonInput[]
+    skipDuplicates?: boolean
+  }
+
   export type GlobalNaturalPersonCreateWithoutMergedFromInput = {
     id?: string
     finBlindIndex?: string | null
@@ -15610,6 +17299,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
   }
 
@@ -15637,6 +17327,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput = {
@@ -15667,6 +17358,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -15693,6 +17385,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -15916,6 +17609,39 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PersonKinContact"> | Date | string
   }
 
+  export type PersonIdentityDocumentUpsertWithWhereUniqueWithoutPersonInput = {
+    where: PersonIdentityDocumentWhereUniqueInput
+    update: XOR<PersonIdentityDocumentUpdateWithoutPersonInput, PersonIdentityDocumentUncheckedUpdateWithoutPersonInput>
+    create: XOR<PersonIdentityDocumentCreateWithoutPersonInput, PersonIdentityDocumentUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonIdentityDocumentUpdateWithWhereUniqueWithoutPersonInput = {
+    where: PersonIdentityDocumentWhereUniqueInput
+    data: XOR<PersonIdentityDocumentUpdateWithoutPersonInput, PersonIdentityDocumentUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonIdentityDocumentUpdateManyWithWhereWithoutPersonInput = {
+    where: PersonIdentityDocumentScalarWhereInput
+    data: XOR<PersonIdentityDocumentUpdateManyMutationInput, PersonIdentityDocumentUncheckedUpdateManyWithoutPersonInput>
+  }
+
+  export type PersonIdentityDocumentScalarWhereInput = {
+    AND?: PersonIdentityDocumentScalarWhereInput | PersonIdentityDocumentScalarWhereInput[]
+    OR?: PersonIdentityDocumentScalarWhereInput[]
+    NOT?: PersonIdentityDocumentScalarWhereInput | PersonIdentityDocumentScalarWhereInput[]
+    id?: UuidFilter<"PersonIdentityDocument"> | string
+    personId?: UuidFilter<"PersonIdentityDocument"> | string
+    kind?: EnumPersonDocumentKindFilter<"PersonIdentityDocument"> | $Enums.PersonDocumentKind
+    seriesCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    numberCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedByCipher?: StringNullableFilter<"PersonIdentityDocument"> | string | null
+    issuedOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    expiresOn?: DateTimeNullableFilter<"PersonIdentityDocument"> | Date | string | null
+    issuingCountry?: StringFilter<"PersonIdentityDocument"> | string
+    createdAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonIdentityDocument"> | Date | string
+  }
+
   export type GlobalNaturalPersonUpsertWithoutMergedFromInput = {
     update: XOR<GlobalNaturalPersonUpdateWithoutMergedFromInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
     create: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
@@ -15950,6 +17676,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
   }
 
@@ -15977,6 +17704,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
   }
 
   export type GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput = {
@@ -16039,6 +17767,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16066,6 +17795,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16107,6 +17837,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16134,6 +17865,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16159,6 +17891,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16186,6 +17919,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16227,6 +17961,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16254,6 +17989,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16279,6 +18015,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16306,6 +18043,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16347,6 +18085,7 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16374,6 +18113,131 @@ export namespace Prisma {
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonCreateWithoutIdentityDocumentsInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    emailCipher?: string | null
+    nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutIdentityDocumentsInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    firstNameCipher?: string | null
+    middleNameCipher?: string | null
+    lastNameCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    emailCipher?: string | null
+    nationality?: string | null
+    sex?: $Enums.PersonSex
+    birthDate?: Date | string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutIdentityDocumentsInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedCreateWithoutIdentityDocumentsInput>
+  }
+
+  export type GlobalNaturalPersonUpsertWithoutIdentityDocumentsInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedUpdateWithoutIdentityDocumentsInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedCreateWithoutIdentityDocumentsInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutIdentityDocumentsInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutIdentityDocumentsInput, GlobalNaturalPersonUncheckedUpdateWithoutIdentityDocumentsInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutIdentityDocumentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutIdentityDocumentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    middleNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    emailCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: EnumPersonSexFieldUpdateOperationsInput | $Enums.PersonSex
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16399,6 +18263,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16426,6 +18291,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16467,6 +18333,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16494,6 +18361,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16519,6 +18387,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16546,6 +18415,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16587,6 +18457,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16614,6 +18485,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16639,6 +18511,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16666,6 +18539,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16707,6 +18581,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16734,6 +18609,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16759,6 +18635,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -16786,6 +18663,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
     addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     kinContacts?: PersonKinContactUncheckedCreateNestedManyWithoutPersonInput
+    identityDocuments?: PersonIdentityDocumentUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -16827,6 +18705,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -16854,6 +18733,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -16908,6 +18788,19 @@ export namespace Prisma {
     kinship: $Enums.KinshipKind
     nameCipher: string
     phoneCipher: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentityDocumentCreateManyPersonInput = {
+    id?: string
+    kind: $Enums.PersonDocumentKind
+    seriesCipher?: string | null
+    numberCipher?: string | null
+    issuedByCipher?: string | null
+    issuedOn?: Date | string | null
+    expiresOn?: Date | string | null
+    issuingCountry?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -17095,6 +18988,45 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PersonIdentityDocumentUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentityDocumentUncheckedUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentityDocumentUncheckedUpdateManyWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonDocumentKindFieldUpdateOperationsInput | $Enums.PersonDocumentKind
+    seriesCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    numberCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresOn?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type GlobalNaturalPersonUpdateWithoutMergedIntoInput = {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17118,6 +19050,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -17144,6 +19077,7 @@ export namespace Prisma {
     hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
     addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     kinContacts?: PersonKinContactUncheckedUpdateManyWithoutPersonNestedInput
+    identityDocuments?: PersonIdentityDocumentUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 

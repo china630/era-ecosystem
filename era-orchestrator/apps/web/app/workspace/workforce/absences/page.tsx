@@ -64,6 +64,13 @@ function periodBounds(
   return { dateFrom: monthStart, dateTo: today };
 }
 
+function calendarDayCount(start: string, end: string): number {
+  const a = Date.parse(String(start).slice(0, 10) + "T00:00:00Z");
+  const b = Date.parse(String(end).slice(0, 10) + "T00:00:00Z");
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  return Math.round((b - a) / 86400000) + 1;
+}
+
 type AbsenceRow = {
   id: string;
   kind: string;
@@ -82,11 +89,24 @@ type AbsenceDetail = {
   startDate: string;
   endDate: string;
   note: string;
+  approval?: {
+    configured: boolean;
+    stepOrder: number;
+    stepKind: string | null;
+    orgUnitName: string | null;
+  };
   rejectionReason?: string | null;
   person?: { displayName: string | null; accessDenied: boolean } | null;
 };
 
 type EmploymentRow = { id: string; globalPersonId: string; status: string };
+
+type ApprovalLabel = {
+  configured: boolean;
+  stepOrder: number;
+  stepKind: string | null;
+  orgUnitName: string | null;
+};
 
 type ListResponse = {
   items: AbsenceRow[];
@@ -94,6 +114,7 @@ type ListResponse = {
     string,
     { globalPersonId: string; displayName: string | null; accessDenied: boolean }
   >;
+  approval?: Record<string, ApprovalLabel>;
 };
 
 const ABSENCE_KINDS = [
@@ -122,11 +143,15 @@ function personLabel(
 export default function WorkforceAbsencesPage() {
   const { ready, user } = useRequireAuth();
   const t = useTranslations("workforceAbsences");
+  const tRoute = useTranslations("workforceHrSettings");
   const tCommon = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<AbsenceRow[]>([]);
+  const [approval, setApproval] = useState<Record<string, ApprovalLabel>>({});
+  const [correctStart, setCorrectStart] = useState("");
+  const [correctEnd, setCorrectEnd] = useState("");
   const [persons, setPersons] = useState<ListResponse["persons"]>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,11 +213,13 @@ export default function WorkforceAbsencesPage() {
       if (await isWorkforceGate403(res)) {
         setNotEntitled(true);
         setRows([]);
+        setApproval({});
         setLoading(false);
         return;
       }
       setError(`${res.status}`);
       setRows([]);
+      setApproval({});
       setLoading(false);
       return;
     }
@@ -200,6 +227,7 @@ export default function WorkforceAbsencesPage() {
     const data = (await res.json()) as ListResponse;
     setRows(data.items ?? []);
     setPersons(data.persons ?? {});
+    setApproval(data.approval ?? {});
     setLoading(false);
   }, [bounds]);
 
@@ -219,7 +247,10 @@ export default function WorkforceAbsencesPage() {
       setDetailLoading(false);
       return;
     }
-    setDetail((await res.json()) as AbsenceDetail);
+    const body = (await res.json()) as AbsenceDetail;
+    setDetail(body);
+    setCorrectStart(String(body.startDate).slice(0, 10));
+    setCorrectEnd(String(body.endDate).slice(0, 10));
     setDetailLoading(false);
   }, []);
 
@@ -432,6 +463,7 @@ export default function WorkforceAbsencesPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPerson")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colKind")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPeriod")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colDays")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colActions")}</th>
               </tr>
@@ -441,7 +473,7 @@ export default function WorkforceAbsencesPage() {
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td
                     className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                    colSpan={5}
+                    colSpan={6}
                   >
                     {loading ? t("loading") : t("empty")}
                   </td>
@@ -463,8 +495,17 @@ export default function WorkforceAbsencesPage() {
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
                       {bakuDateDisplay(r.startDate)} — {bakuDateDisplay(r.endDate)}
                     </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
+                      {calendarDayCount(r.startDate, r.endDate)}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
+                      {approval[r.id]?.configured ? (
+                        <span className="mt-0.5 block text-[11px] text-[#7F8C8D]">
+                          {t("colStep")} {approval[r.id].stepOrder + 1}
+                          {approval[r.id].orgUnitName ? ` · ${approval[r.id].orgUnitName}` : ""}
+                        </span>
+                      ) : null}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                       <button
@@ -610,7 +651,19 @@ export default function WorkforceAbsencesPage() {
             <p className="text-[13px]">
               <span className="font-semibold text-[#34495E]">{t("colPeriod")}: </span>
               {bakuDateDisplay(detail.startDate)} — {bakuDateDisplay(detail.endDate)}
+              {" · "}
+              {calendarDayCount(detail.startDate, detail.endDate)} {t("colDays")}
             </p>
+            {detail.approval?.configured ? (
+              <p className="text-[13px]">
+                <span className="font-semibold text-[#34495E]">{t("colStep")}: </span>
+                {(detail.approval.stepOrder ?? 0) + 1}
+                {detail.approval.orgUnitName ? ` · ${detail.approval.orgUnitName}` : ""}
+                {detail.approval.stepKind
+                  ? ` · ${tRoute(`step.${detail.approval.stepKind}` as "step.REQUESTER_MANAGER")}`
+                  : ""}
+              </p>
+            ) : null}
             <p className="text-[13px]">
               <span className="font-semibold text-[#34495E]">{t("colStatus")}: </span>
               {t(`status.${detail.status}` as "status.DRAFT")}
@@ -671,14 +724,55 @@ export default function WorkforceAbsencesPage() {
                 </>
               ) : null}
               {detail.status === "APPROVED" ? (
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  disabled={detailBusy}
-                  onClick={() => void detailAction(`absences/${detailId}/cancel`)}
-                >
-                  {t("cancel")}
-                </button>
+                <div className="w-full space-y-2">
+                  <DatePicker
+                    label={t("fieldFrom")}
+                    value={correctStart}
+                    onChange={setCorrectStart}
+                    placeholder={tCommon("datePlaceholder")}
+                    fluid
+                  />
+                  <DatePicker
+                    label={t("fieldTo")}
+                    value={correctEnd}
+                    onChange={setCorrectEnd}
+                    placeholder={tCommon("datePlaceholder")}
+                    fluid
+                  />
+                  <input
+                    className="block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                    placeholder={t("rejectReasonPlaceholder")}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={detailBusy || !correctStart || !correctEnd}
+                      onClick={() =>
+                        void detailAction(`absences/${detailId}/correct`, {
+                          startDate: correctStart,
+                          endDate: correctEnd,
+                        })
+                      }
+                    >
+                      {t("correct")}
+                    </button>
+                    <button
+                      type="button"
+                      className={SECONDARY_BUTTON_CLASS}
+                      disabled={detailBusy}
+                      onClick={() =>
+                        void detailAction(`absences/${detailId}/cancel`, {
+                          reason: rejectReason,
+                        })
+                      }
+                    >
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </div>
               ) : null}
             </div>
           </div>

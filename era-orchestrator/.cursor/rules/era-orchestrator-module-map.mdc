@@ -131,7 +131,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET /platform/v1/catalog/calendar/:country/is-working-day` | `catalog-calendar.controller.ts` |
 | `GET /platform/v1/catalog/calendar/:country/add-business-days` | `catalog-calendar.controller.ts` |
 | `GET /platform/v1/catalog/fx/convert` | `catalog-fx.controller.ts` |
-| `GET /platform/v1/catalog/icd10` | `catalog-icd10.controller.ts` — WHO ICD-10 in-process (not data-hub) |
+| `GET /platform/v1/catalog/icd10` | `catalog-icd10.controller.ts` — WHO ICD-10 2019 + RU/AZ titles in-process from `@era/satellite-kit/icd10/catalog` (not data-hub; `selectable=0` = all kinds) |
 | `GET /platform/v1/workforce/policy` | `workforce-policy.controller.ts` |
 | `GET/POST /platform/v1/workforce/employments` | `workforce-employments.controller.ts` — list/detail include active `roleBindings` (⋯ Reprovision + satellite filter) |
 | `GET/POST/PATCH /platform/v1/workforce/absences/*` | `workforce-absences.controller.ts` |
@@ -206,7 +206,11 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | BFF `/api/platform/workforce/*` | `apps/web/app/api/platform/workforce/[[...path]]/route.ts` |
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |
 | `PATCH /internal/v1/workforce/employments/:id/finance-link` | `workforce-registry.controller.ts` — Finance hire-mirror write-back (`financeEmployeeId` on `WorkforceEmployment` + assignments); Bearer `CONTROL_PLANE_SERVICE_TOKEN` / internal token |
-| `GET /platform/v1/workforce/timesheets?year=&month=&page=&pageSize=` | Month grid; employment pagination; `employmentOptions` for batch (full ACTIVE roster) |
+| `GET /platform/v1/workforce/timesheets?year=&month=&page=&pageSize=` | Month grid; employment pagination; `employmentOptions` for batch (full ACTIVE roster); `calendar` from data-hub AZ days; `norms` fact vs weekly-hours regime (null hours → no invented norm) |
+| `GET/PUT /platform/v1/workforce/hr-settings` + `PUT …/hr-settings/routes` | Org weekly hours, advance caps, HR proxy flag; approval routes FULL_DAY/HOURLY/ADVANCE/VACATION by org unit / position — [ADR cp-workforce-hr-routes](../../../docs/adr/cp-workforce-hr-routes.md); UI `/workspace/workforce/hr-settings` |
+| `PATCH /platform/v1/workforce/employments/:id/cadre` | `contractEndDate`, `workRegime`; list SAA display + full FIN (`WORKFORCE_HR_FIN_LIST`) |
+| `GET/PUT /internal/v1/mdm/persons/:personId/identity-documents` | ID card / passport ciphered in MDM (`PersonIdentityDocument`) |
+| `POST /platform/v1/workforce/absences/:id/correct` + `POST …/cancel` | Approved absence: correction is a new SUBMITTED row; cancel needs a reason. Vacation plan `POST …/correct` snapshots lines and returns DRAFT; `POST …/cancel` |
 | `POST …/timesheets/:id/autofill` | Chunked autofill + audit `TIMESHEET_AUTOFILL` |
 | `GET /internal/v1/workforce/owners/:ownerUserId/assignments` | `workforce-registry.controller.ts` — S2S assignment list |
 | `GET /internal/v1/workforce/organizations/:organizationId/assignments` | `workforce-registry.controller.ts` — S2S org assignments |

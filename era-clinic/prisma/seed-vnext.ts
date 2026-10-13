@@ -363,9 +363,8 @@ async function main() {
     },
   });
 
-  /** Nafta commercial medical packages (Wave A) — quotas filled in Wave B. */
+  /** Empty shells for packages whose live composition is not snapshotted here. */
   const naftaPackages: Array<{ code: string; name: string; durationDays: number }> = [
-    { code: "PKG-STANDART", name: "Nafta Standart", durationDays: 10 },
     { code: "PKG-PREMIUM", name: "Nafta Premium", durationDays: 10 },
     { code: "PKG-DERMA", name: "Nafta Dermo", durationDays: 10 },
     { code: "PKG-DETOKS", name: "Nafta Detoks", durationDays: 10 },
@@ -380,7 +379,7 @@ async function main() {
           code: pkg.code,
           name: pkg.name,
           durationDays: pkg.durationDays,
-          minNights: pkg.code === "PKG-STANDART" ? 5 : 7,
+          minNights: 7,
           maxNights: 21,
           version: 1,
           isCurrent: true,
@@ -394,9 +393,111 @@ async function main() {
         await prisma.programTemplate.update({
           where: { id: existing.id },
           data: {
-            minNights: existing.minNights ?? (pkg.code === "PKG-STANDART" ? 5 : 7),
+            minNights: existing.minNights ?? 7,
             maxNights: existing.maxNights ?? 21,
           },
+        });
+      }
+    }
+  }
+
+  /**
+   * PKG-STANDART composition is the live droplet snapshot
+   * (prisma/seed-data/pkg-standart.json), not the retired PDF bath grid.
+   * A current row with program instances is left untouched.
+   */
+  type PkgStandartSeed = {
+    code: string;
+    name: string;
+    durationDays: number;
+    minNights: number;
+    maxNights: number;
+    procedures: Array<{
+      procedureCode: string;
+      procedureName: string;
+      quotaTotal: number;
+      kind: string;
+      sortOrder: number;
+      assignMode: string;
+      fulfillment: string;
+      quotaBasis: string;
+      requiresDoctor: boolean;
+      members: string[];
+      knots: Array<{ nights: number; qty: number }>;
+    }>;
+  };
+  const standart = JSON.parse(
+    readFileSync(join(__dirname, "seed-data", "pkg-standart.json"), "utf8"),
+  ) as PkgStandartSeed;
+  let standartTpl = await prisma.programTemplate.findFirst({
+    where: { code: standart.code, isCurrent: true },
+  });
+  if (!standartTpl) {
+    standartTpl = await prisma.programTemplate.create({
+      data: {
+        code: standart.code,
+        name: standart.name,
+        durationDays: standart.durationDays,
+        minNights: standart.minNights,
+        maxNights: standart.maxNights,
+        version: 1,
+        isCurrent: true,
+      },
+    });
+  }
+  const standartPinned = await prisma.programInstance.count({
+    where: { templateId: standartTpl.id },
+  });
+  if (standartPinned > 0) {
+    console.log(
+      `Skip PKG-STANDART snapshot: ${standartPinned} program instance(s) pin current version`,
+    );
+  } else {
+    const templateId = standartTpl.id;
+    await prisma.programTemplate.update({
+      where: { id: templateId },
+      data: {
+        name: standart.name,
+        durationDays: standart.durationDays,
+        minNights: standart.minNights,
+        maxNights: standart.maxNights,
+      },
+    });
+    await prisma.programTemplateBlockMember.deleteMany({ where: { templateId } });
+    await prisma.programTemplateQuotaKnot.deleteMany({ where: { templateId } });
+    await prisma.programTemplateProcedure.deleteMany({ where: { templateId } });
+    for (const block of standart.procedures) {
+      await prisma.programTemplateProcedure.create({
+        data: {
+          templateId,
+          procedureCode: block.procedureCode,
+          procedureName: block.procedureName,
+          quotaTotal: block.quotaTotal,
+          kind: block.kind,
+          sortOrder: block.sortOrder,
+          assignMode: block.assignMode,
+          fulfillment: block.fulfillment,
+          quotaBasis: block.quotaBasis,
+          requiresDoctor: block.requiresDoctor,
+        },
+      });
+      if (block.knots.length > 0) {
+        await prisma.programTemplateQuotaKnot.createMany({
+          data: block.knots.map((k) => ({
+            templateId,
+            nights: k.nights,
+            procedureCode: block.procedureCode,
+            qty: k.qty,
+          })),
+        });
+      }
+      if (block.members.length > 0) {
+        await prisma.programTemplateBlockMember.createMany({
+          data: block.members.map((procedureCode) => ({
+            templateId,
+            blockCode: block.procedureCode,
+            procedureCode,
+          })),
         });
       }
     }
@@ -452,17 +553,6 @@ async function main() {
     }
   }
 
-  await seedBathKnots("PKG-STANDART", [
-    { nights: 5, qty: 4 },
-    { nights: 7, qty: 5 },
-    { nights: 8, qty: 6 },
-    { nights: 9, qty: 7 },
-    { nights: 10, qty: 8 },
-    { nights: 11, qty: 8 },
-    { nights: 12, qty: 9 },
-    { nights: 14, qty: 10 },
-    { nights: 21, qty: 14 },
-  ]);
   await seedBathKnots("PKG-PREMIUM", [
     { nights: 7, qty: 5 },
     { nights: 10, qty: 8 },

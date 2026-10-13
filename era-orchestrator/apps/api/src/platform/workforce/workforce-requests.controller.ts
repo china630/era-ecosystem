@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsNumber, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
@@ -18,6 +18,8 @@ import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import { WorkforceSelfService } from "./workforce-self.service";
 import { WorkforceAbsencesService } from "./workforce-absences.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
+import { WorkforceApprovalService } from "./workforce-approval.service";
+import { WorkforceApprovalRequestKind } from "@era365/database";
 
 class EnableCabinetDto {
   @IsOptional()
@@ -33,6 +35,18 @@ class RejectDto {
   @IsOptional()
   @IsString()
   reason?: string;
+}
+
+class HrProxyAdvanceDto {
+  @IsUUID()
+  employmentId!: string;
+
+  @IsNumber()
+  amountAzn!: number;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
 }
 
 class AnnounceDto {
@@ -51,6 +65,7 @@ export class WorkforceRequestsController {
     private readonly self: WorkforceSelfService,
     private readonly absences: WorkforceAbsencesService,
     private readonly employments: WorkforceEmploymentsService,
+    private readonly approval: WorkforceApprovalService,
   ) {}
 
   @Get("requests")
@@ -67,7 +82,44 @@ export class WorkforceRequestsController {
       organizationId,
       personIds,
     );
-    return { ...queue, persons };
+    const approval: Record<string, Awaited<ReturnType<WorkforceApprovalService["labelFor"]>>> = {};
+    for (const row of queue.absences) {
+      approval[row.id] = await this.approval.labelFor(
+        organizationId,
+        this.approval.kindForAbsence(row.kind),
+        row.employmentId,
+        row.currentStepOrder ?? 0,
+      );
+    }
+    for (const row of queue.hourly) {
+      approval[row.id] = await this.approval.labelFor(
+        organizationId,
+        WorkforceApprovalRequestKind.HOURLY,
+        row.employmentId,
+        row.currentStepOrder ?? 0,
+      );
+    }
+    for (const row of queue.advances) {
+      approval[row.id] = await this.approval.labelFor(
+        organizationId,
+        WorkforceApprovalRequestKind.ADVANCE,
+        row.employmentId,
+        row.currentStepOrder ?? 0,
+      );
+    }
+    const history = await this.approval.recent(organizationId);
+    return { ...queue, persons, approval, history };
+  }
+
+  @Post("requests/advance")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_ABSENCES)
+  @ApiOperation({ summary: "HR proxy advance when the organization allows it" })
+  proxyAdvance(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: HrProxyAdvanceDto,
+  ) {
+    return this.self.submitAdvanceByHr(organizationId, user.sub, dto);
   }
 
   @Post("requests/hourly/:id/approve")

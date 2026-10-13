@@ -487,6 +487,34 @@ enum WorkforceAbsenceStatus {
   APPROVED
   REJECTED
   CANCELLED
+  SUPERSEDED
+}
+
+enum WorkforceWorkRegime {
+  FIVE_DAY
+  SIX_DAY
+  MEDICAL
+  CUSTOM
+}
+
+enum WorkforceApprovalRequestKind {
+  FULL_DAY
+  HOURLY
+  ADVANCE
+  VACATION
+}
+
+enum WorkforceApprovalStepKind {
+  REQUESTER_MANAGER
+  ORG_UNIT_HEAD
+  POSITION_IN_UNIT
+}
+
+enum WorkforceApprovalOutcome {
+  APPROVED
+  REJECTED
+  CANCELLED
+  CORRECTION
 }
 
 enum WorkforceTimesheetEntryStatus {
@@ -561,6 +589,7 @@ enum WorkforceVacationPlanStatus {
   SUBMITTED
   APPROVED
   REJECTED
+  CANCELLED
 }
 
 enum WorkforcePersonnelOrderType {
@@ -649,6 +678,7 @@ model OrgUnit {
   commercialLinks     OrgUnitCommercialLink[]
   vacationPlans       WorkforceVacationPlan[]
   responsiblePlaces   WorkforcePlace[]
+  approvalSteps       WorkforceApprovalStep[]
 
   @@unique([workforceScopeId, parentId, name])
   @@index([workforceScopeId, parentId])
@@ -682,6 +712,7 @@ model WorkforcePosition {
   orgUnit       OrgUnit                 @relation(fields: [orgUnitId], references: [id], onDelete: Cascade)
   employments   WorkforceEmployment[]
   roleTemplates SatelliteRoleTemplate[]
+  approvalSteps WorkforceApprovalStep[]
 
   @@unique([orgUnitId, name])
   @@map("workforce_positions")
@@ -782,6 +813,9 @@ model WorkforceEmployment {
   globalPersonId           String                        @map("global_person_id") @db.Uuid
   status                   WorkforceEmploymentStatus     @default(ACTIVE)
   hireDate                 DateTime                      @map("hire_date") @db.Date
+  /// Empty = open-ended contract.
+  contractEndDate          DateTime?                     @map("contract_end_date") @db.Date
+  workRegime               WorkforceWorkRegime?          @map("work_regime")
   financeEmployeeId        String?                       @map("finance_employee_id") @db.Uuid
   commercialOrganizationId String?                       @map("commercial_organization_id") @db.Uuid
   platformUserId           String?                       @map("platform_user_id") @db.Uuid
@@ -842,6 +876,11 @@ model WorkforceAbsence {
   /// Origin: manual (default) or import (migration wizard). Not a lifecycle status.
   source            String                 @default("manual") @db.VarChar(16)
   sourceRef         String?                @map("source_ref") @db.VarChar(191)
+  /// 0-based index into the org-structure approval route. Unused when no route is configured.
+  currentStepOrder  Int                    @default(0) @map("current_step_order")
+  /// Approved row this request corrects. The original stays until this one is approved.
+  correctionOfId    String?                @map("correction_of_id") @db.Uuid
+  cancelReason      String?                @map("cancel_reason")
   createdAt         DateTime               @default(now()) @map("created_at")
   updatedAt         DateTime               @updatedAt @map("updated_at")
   employment        WorkforceEmployment    @relation(fields: [employmentId], references: [id], onDelete: Cascade)
@@ -1060,6 +1099,7 @@ model WorkforceHourlyLeaveRequest {
   decidedAt         DateTime?                  @map("decided_at") @db.Timestamptz(6)
   decidedByUserId   String?                    @map("decided_by_user_id") @db.Uuid
   rejectionReason   String?                    @map("rejection_reason")
+  currentStepOrder  Int                        @default(0) @map("current_step_order")
   createdAt         DateTime                   @default(now()) @map("created_at")
   updatedAt         DateTime                   @updatedAt @map("updated_at")
   organization      Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -1083,6 +1123,7 @@ model WorkforceAdvanceRequest {
   decidedAt         DateTime?                  @map("decided_at") @db.Timestamptz(6)
   decidedByUserId   String?                    @map("decided_by_user_id") @db.Uuid
   rejectionReason   String?                    @map("rejection_reason")
+  currentStepOrder  Int                        @default(0) @map("current_step_order")
   financeQueuedAt   DateTime?                  @map("finance_queued_at") @db.Timestamptz(6)
   createdAt         DateTime                   @default(now()) @map("created_at")
   updatedAt         DateTime                   @updatedAt @map("updated_at")
@@ -1290,22 +1331,27 @@ model WorkforceDayOverride {
 
 /// Department (or scope) annual vacation plan — master in CP; Finance mirror is HEADLESS (event only).
 model WorkforceVacationPlan {
-  id                String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  workforceScopeId  String                      @map("workforce_scope_id") @db.Uuid
+  id                String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId  String                          @map("workforce_scope_id") @db.Uuid
   year              Int
-  orgUnitId         String?                     @map("org_unit_id") @db.Uuid
-  status            WorkforceVacationPlanStatus @default(DRAFT)
-  submittedByUserId String?                     @map("submitted_by_user_id") @db.Uuid
-  approvedByUserId  String?                     @map("approved_by_user_id") @db.Uuid
-  submittedAt       DateTime?                   @map("submitted_at") @db.Timestamptz(6)
-  approvedAt        DateTime?                   @map("approved_at") @db.Timestamptz(6)
-  rejectedAt        DateTime?                   @map("rejected_at") @db.Timestamptz(6)
-  rejectionReason   String?                     @map("rejection_reason")
-  createdAt         DateTime                    @default(now()) @map("created_at")
-  updatedAt         DateTime                    @updatedAt @map("updated_at")
-  workforceScope    WorkforceScope              @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
-  orgUnit           OrgUnit?                    @relation(fields: [orgUnitId], references: [id], onDelete: SetNull)
+  orgUnitId         String?                         @map("org_unit_id") @db.Uuid
+  status            WorkforceVacationPlanStatus     @default(DRAFT)
+  submittedByUserId String?                         @map("submitted_by_user_id") @db.Uuid
+  approvedByUserId  String?                         @map("approved_by_user_id") @db.Uuid
+  submittedAt       DateTime?                       @map("submitted_at") @db.Timestamptz(6)
+  approvedAt        DateTime?                       @map("approved_at") @db.Timestamptz(6)
+  rejectedAt        DateTime?                       @map("rejected_at") @db.Timestamptz(6)
+  rejectionReason   String?                         @map("rejection_reason")
+  currentStepOrder  Int                             @default(0) @map("current_step_order")
+  cancelledAt       DateTime?                       @map("cancelled_at") @db.Timestamptz(6)
+  cancelledByUserId String?                         @map("cancelled_by_user_id") @db.Uuid
+  cancelReason      String?                         @map("cancel_reason")
+  createdAt         DateTime                        @default(now()) @map("created_at")
+  updatedAt         DateTime                        @updatedAt @map("updated_at")
+  workforceScope    WorkforceScope                  @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  orgUnit           OrgUnit?                        @relation(fields: [orgUnitId], references: [id], onDelete: SetNull)
   lines             WorkforceVacationPlanLine[]
+  revisions         WorkforceVacationPlanRevision[]
 
   @@unique([workforceScopeId, year, orgUnitId])
   @@index([workforceScopeId, year, status])
@@ -1583,6 +1629,86 @@ enum HoldingAccessRole {
   VIEWER
 }
 
+/// Org-level HR knobs. Empty hour/limit fields mean "not set" — the timesheet does not invent a norm.
+model WorkforceOrgSettings {
+  organizationId      String       @id @map("organization_id") @db.Uuid
+  fiveDayWeeklyHours  Decimal?     @map("five_day_weekly_hours") @db.Decimal(6, 2)
+  sixDayWeeklyHours   Decimal?     @map("six_day_weekly_hours") @db.Decimal(6, 2)
+  medicalWeeklyHours  Decimal?     @map("medical_weekly_hours") @db.Decimal(6, 2)
+  customWeeklyHours   Decimal?     @map("custom_weekly_hours") @db.Decimal(6, 2)
+  advanceMaxPercent   Decimal?     @map("advance_max_percent") @db.Decimal(6, 2)
+  advanceMaxAmount    Decimal?     @map("advance_max_amount") @db.Decimal(19, 4)
+  advanceMaxOpen      Int?         @map("advance_max_open")
+  advanceAllowHrProxy Boolean      @default(false) @map("advance_allow_hr_proxy")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("workforce_org_settings")
+}
+
+/// Approval chain for one request kind. Steps point at org structure, never at a person name.
+model WorkforceApprovalRoute {
+  id             String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                       @map("organization_id") @db.Uuid
+  kind           WorkforceApprovalRequestKind
+  createdAt      DateTime                     @default(now()) @map("created_at")
+  updatedAt      DateTime                     @updatedAt @map("updated_at")
+  organization   Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps          WorkforceApprovalStep[]
+
+  @@unique([organizationId, kind])
+  @@map("workforce_approval_routes")
+}
+
+model WorkforceApprovalStep {
+  id         String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  routeId    String                    @map("route_id") @db.Uuid
+  stepOrder  Int                       @map("step_order")
+  kind       WorkforceApprovalStepKind
+  orgUnitId  String?                   @map("org_unit_id") @db.Uuid
+  positionId String?                   @map("position_id") @db.Uuid
+  route      WorkforceApprovalRoute    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  orgUnit    OrgUnit?                  @relation(fields: [orgUnitId], references: [id], onDelete: SetNull)
+  position   WorkforcePosition?        @relation(fields: [positionId], references: [id], onDelete: SetNull)
+
+  @@unique([routeId, stepOrder])
+  @@index([orgUnitId])
+  @@map("workforce_approval_steps")
+}
+
+model WorkforceApprovalDecision {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  entityType     String                     @map("entity_type") @db.VarChar(32)
+  entityId       String                     @map("entity_id") @db.Uuid
+  stepOrder      Int                        @map("step_order")
+  stepKind       WorkforceApprovalStepKind?
+  orgUnitId      String?                    @map("org_unit_id") @db.Uuid
+  orgUnitName    String?                    @map("org_unit_name") @db.VarChar(255)
+  outcome        WorkforceApprovalOutcome
+  actorUserId    String                     @map("actor_user_id") @db.Uuid
+  reason         String?
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
+  @@map("workforce_approval_decisions")
+}
+
+/// Frozen copy of an approved vacation plan before a correction is resubmitted.
+model WorkforceVacationPlanRevision {
+  id              String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  planId          String                @map("plan_id") @db.Uuid
+  snapshotJson    Json                  @map("snapshot_json")
+  createdByUserId String                @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime              @default(now()) @map("created_at")
+  plan            WorkforceVacationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, createdAt])
+  @@map("workforce_vacation_plan_revisions")
+}
+
 model Organization {
   id                               String                             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                             String
@@ -1658,6 +1784,9 @@ model Organization {
   workforceAnnouncements           WorkforceAnnouncement[]
   workforceFitnessRecords          WorkforceFitnessRecord[]
   workforceMigrationSteps          WorkforceMigrationStep[]
+  workforceOrgSettings             WorkforceOrgSettings?
+  workforceApprovalRoutes          WorkforceApprovalRoute[]
+  workforceApprovalDecisions       WorkforceApprovalDecision[]
   orgUnitCommercialLinks           OrgUnitCommercialLink[]
   elektrawebBridgePolicy           ElektrawebBridgePolicy?
   clinicCutoverPolicy              ClinicCutoverPolicy?

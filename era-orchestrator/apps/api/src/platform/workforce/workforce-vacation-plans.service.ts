@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { WORKFORCE_VACATION_PLAN_APPROVED } from "@era/contracts";
 import {
+  WorkforceApprovalOutcome,
+  WorkforceApprovalRequestKind,
   WorkforceEmploymentStatus,
   WorkforceVacationPlanStatus,
 } from "@era365/database";
@@ -14,6 +17,7 @@ import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
+import { WorkforceApprovalService } from "./workforce-approval.service";
 import type {
   CreateWorkforceVacationPlanDto,
   ListWorkforceVacationPlansQueryDto,
@@ -40,6 +44,7 @@ export class WorkforceVacationPlansService {
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly scopeService: WorkforceScopeService,
     private readonly employments: WorkforceEmploymentsService,
+    @Optional() private readonly approval?: WorkforceApprovalService,
   ) {}
 
   async list(
@@ -68,7 +73,23 @@ export class WorkforceVacationPlansService {
       organizationId,
       personIds,
     );
-    return { items, persons };
+    const approval: Record<
+      string,
+      { configured: boolean; stepOrder: number; stepKind: string | null; orgUnitName: string | null }
+    > = {};
+    if (this.approval) {
+      for (const plan of items) {
+        const anchor = plan.lines[0]?.employmentId;
+        if (!anchor || plan.status !== WorkforceVacationPlanStatus.SUBMITTED) continue;
+        approval[plan.id] = await this.approval.labelFor(
+          organizationId,
+          WorkforceApprovalRequestKind.VACATION,
+          anchor,
+          plan.currentStepOrder ?? 0,
+        );
+      }
+    }
+    return { items, persons, approval };
   }
 
   async getOne(organizationId: string, id: string) {
@@ -229,6 +250,25 @@ export class WorkforceVacationPlansService {
     if (existing.status !== WorkforceVacationPlanStatus.SUBMITTED) {
       throw new BadRequestException("Only SUBMITTED plans can be approved");
     }
+    const anchorEmploymentId = existing.lines[0]?.employmentId;
+    if (this.approval && anchorEmploymentId) {
+      const gate = await this.approval.gate({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.VACATION,
+        employmentId: anchorEmploymentId,
+        stepOrder: existing.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "VACATION_PLAN",
+        entityId: id,
+      });
+      if (gate.action === "advance") {
+        return this.prisma.workforceVacationPlan.update({
+          where: { id },
+          data: { currentStepOrder: gate.nextStep },
+          include: { lines: true, orgUnit: true },
+        });
+      }
+    }
     const now = new Date();
     const row = await this.prisma.workforceVacationPlan.update({
       where: { id },
@@ -267,6 +307,19 @@ export class WorkforceVacationPlansService {
     if (existing.status !== WorkforceVacationPlanStatus.SUBMITTED) {
       throw new BadRequestException("Only SUBMITTED plans can be rejected");
     }
+    const anchorEmploymentId = existing.lines[0]?.employmentId;
+    if (this.approval && anchorEmploymentId) {
+      await this.approval.rejectStep({
+        organizationId,
+        kind: WorkforceApprovalRequestKind.VACATION,
+        employmentId: anchorEmploymentId,
+        stepOrder: existing.currentStepOrder ?? 0,
+        actorUserId,
+        entityType: "VACATION_PLAN",
+        entityId: id,
+        reason: dto.rejectionReason,
+      });
+    }
     const now = new Date();
     const row = await this.prisma.workforceVacationPlan.update({
       where: { id },
@@ -288,6 +341,98 @@ export class WorkforceVacationPlansService {
       payload: { rejectionReason: row.rejectionReason },
     });
 
+    return row;
+  }
+
+  async correct(organizationId: string, id: string, actorUserId: string) {
+    const existing = await this.getOne(organizationId, id);
+    if (existing.status !== WorkforceVacationPlanStatus.APPROVED) {
+      throw new BadRequestException("Only APPROVED plans can be corrected");
+    }
+    await this.prisma.workforceVacationPlanRevision.create({
+      data: {
+        planId: existing.id,
+        createdByUserId: actorUserId,
+        snapshotJson: {
+          status: existing.status,
+          year: existing.year,
+          approvedAt: existing.approvedAt?.toISOString() ?? null,
+          lines: existing.lines.map((line) => ({
+            employmentId: line.employmentId,
+            startDate: isoDay(line.startDate),
+            endDate: isoDay(line.endDate),
+            days: line.days,
+          })),
+        },
+      },
+    });
+    const row = await this.prisma.workforceVacationPlan.update({
+      where: { id },
+      data: {
+        status: WorkforceVacationPlanStatus.DRAFT,
+        currentStepOrder: 0,
+        approvedAt: null,
+        approvedByUserId: null,
+        submittedAt: null,
+      },
+      include: { lines: true, orgUnit: true },
+    });
+    const anchor = existing.lines[0]?.employmentId;
+    if (this.approval && anchor) {
+      await this.approval.recordOutcome({
+        organizationId,
+        entityType: "VACATION_PLAN",
+        entityId: id,
+        stepOrder: existing.currentStepOrder ?? 0,
+        outcome: WorkforceApprovalOutcome.CORRECTION,
+        actorUserId,
+      });
+    }
+    await this.audit.log({
+      organizationId,
+      workforceScopeId: existing.workforceScopeId,
+      actorUserId,
+      action: "VACATION_PLAN_CORRECTION",
+      entityType: "WorkforceVacationPlan",
+      entityId: id,
+      payload: {},
+    });
+    return row;
+  }
+
+  async cancel(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+    reason?: string,
+  ) {
+    const existing = await this.getOne(organizationId, id);
+    if (existing.status !== WorkforceVacationPlanStatus.APPROVED) {
+      throw new BadRequestException("Only APPROVED plans can be cancelled");
+    }
+    const cancelReason = (reason ?? "").trim() || null;
+    const row = await this.prisma.workforceVacationPlan.update({
+      where: { id },
+      data: {
+        status: WorkforceVacationPlanStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancelledByUserId: actorUserId,
+        cancelReason,
+      },
+      include: { lines: true, orgUnit: true },
+    });
+    const anchor = existing.lines[0]?.employmentId;
+    if (this.approval && anchor) {
+      await this.approval.recordOutcome({
+        organizationId,
+        entityType: "VACATION_PLAN",
+        entityId: id,
+        stepOrder: existing.currentStepOrder ?? 0,
+        outcome: WorkforceApprovalOutcome.CANCELLED,
+        actorUserId,
+        reason: cancelReason,
+      });
+    }
     return row;
   }
 

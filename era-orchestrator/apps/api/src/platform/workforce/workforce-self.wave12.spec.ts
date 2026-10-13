@@ -27,7 +27,7 @@ describe("WorkforceSelfService wave 12", () => {
     };
     const financeMirror = {
       queueAdvanceLine: jest.fn(async () => true),
-      fetchPostedPayslip: jest.fn(async () => null),
+      fetchPostedPayslip: jest.fn(async (): Promise<Record<string, unknown> | null> => null),
     };
     const svc = new WorkforceSelfService(
       prisma,

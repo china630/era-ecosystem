@@ -678,6 +678,7 @@
     "wfAttendance": "Attendance",
     "wfFloor": "Floor",
     "wfRequests": "Requests",
+    "wfHrSettings": "HR settings",
     "wfMe": "My cabinet"
   },
   "headerStrip": {
@@ -1156,6 +1157,11 @@
     "loading": "Loading…",
     "empty": "No active employments yet.",
     "colPerson": "Person",
+    "colFin": "FIN",
+    "colContractEnd": "Contract end",
+    "colRegime": "Work regime",
+    "openEnded": "Open-ended",
+    "regimeEmpty": "Not set",
     "colOrgUnit": "Org unit",
     "colPosition": "Position",
     "colHireDate": "Hire date",
@@ -1279,6 +1285,21 @@
     "hireWithoutFinConfirm": "Hire without FIN? Identity matching will be weaker.",
     "enableCabinet": "Enable phone cabinet",
     "chipIdentity": "Personal",
+    "chipDocuments": "Documents",
+    "idCardTitle": "ID card",
+    "passportTitle": "Passport",
+    "docSeries": "Series",
+    "docNumber": "Number",
+    "docIssuedBy": "Issued by",
+    "docIssuedOn": "Issued on",
+    "docExpiresOn": "Expires",
+    "docCountry": "Issuing country",
+    "regime": {
+      "FIVE_DAY": "5-day",
+      "SIX_DAY": "6-day",
+      "MEDICAL": "Medical",
+      "CUSTOM": "Custom"
+    },
     "chipContacts": "Contacts",
     "chipJob": "Employment",
     "chipAccess": "Access",
@@ -1556,6 +1577,9 @@
     "colPerson": "Person",
     "colKind": "Kind",
     "colPeriod": "Period",
+    "colDays": "Days",
+    "colStep": "Step",
+    "correct": "Correct",
     "colStatus": "Status",
     "colActions": "Actions",
     "open": "Open",
@@ -1592,7 +1616,8 @@
       "SUBMITTED": "Submitted",
       "APPROVED": "Approved",
       "REJECTED": "Rejected",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "SUPERSEDED": "Superseded"
     }
   },
   "workforceVacation": {
@@ -1626,11 +1651,20 @@
     "addLine": "Add line",
     "removeLine": "Remove line",
     "moreActions": "More actions",
+    "edit": "Edit lines",
+    "save": "Save",
+    "colStep": "Step",
+    "cancelReason": "Cancel reason",
+    "correct": "Correct",
+    "cancel": "Cancel",
+    "confirmCorrect": "Reopen this approved plan as a draft? The current lines are kept as a revision.",
+    "confirmCancel": "Cancel this approved vacation plan?",
     "status": {
       "DRAFT": "Draft",
       "SUBMITTED": "Submitted",
       "APPROVED": "Approved",
-      "REJECTED": "Rejected"
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
     }
   },
   "workforceOrders": {
@@ -1770,6 +1804,19 @@
     "codeEmpty": "·",
     "cellApproved": "Approved (read-only)",
     "colPerson": "Person",
+    "colNorm": "Fact / norm",
+    "calWorkDays": "Working days",
+    "calOffDays": "Non-working",
+    "calHolidays": "Holidays",
+    "dayType": {
+      "working": "Working day",
+      "weekend": "Weekend",
+      "holiday": "Holiday",
+      "transferred_rest": "Transferred rest",
+      "transferred_working": "Transferred working day",
+      "mourning": "Mourning",
+      "shortened": "Shortened day"
+    },
     "loading": "Loading…",
     "loadFailed": "Failed to load timesheet",
     "empty": "No active employments.",
@@ -2201,6 +2248,48 @@
     "paid": "Paid",
     "unpaid": "Unpaid",
     "announce": "Publish announcement",
-    "publish": "Publish"
+    "publish": "Publish",
+    "step": "Step",
+    "history": "Recent decisions",
+    "rejectReason": "Rejection reason",
+    "proxyTitle": "Advance for an employee",
+    "proxyEmployee": "Employee",
+    "proxyAmount": "Amount (AZN)",
+    "proxyNote": "Note",
+    "proxySubmit": "Submit advance"
+  },
+  "workforceHrSettings": {
+    "title": "HR settings",
+    "subtitle": "Weekly hour norms and approval routes by org structure.",
+    "hoursTitle": "Weekly hours",
+    "hoursHint": "Leave empty until the organization sets a norm. An empty norm is not invented on the timesheet.",
+    "fiveDay": "5-day week (hours)",
+    "sixDay": "6-day week (hours)",
+    "medical": "Medical regime (hours)",
+    "custom": "Custom regime (hours)",
+    "advanceTitle": "Advances",
+    "advancePercent": "Max percent of salary",
+    "advanceAmount": "Max amount (AZN)",
+    "advanceOpen": "Max open advances",
+    "advanceProxy": "HR may submit an advance for an employee",
+    "saveSettings": "Save settings",
+    "stepKind": "Step",
+    "orgUnit": "Org unit",
+    "position": "Position",
+    "pick": "Select…",
+    "addStep": "Add step",
+    "removeStep": "Remove",
+    "saveRoute": "Save route",
+    "kind": {
+      "FULL_DAY": "Full-day leave",
+      "HOURLY": "Hourly leave",
+      "ADVANCE": "Advance",
+      "VACATION": "Vacation plan"
+    },
+    "step": {
+      "REQUESTER_MANAGER": "Requester's manager",
+      "ORG_UNIT_HEAD": "Head of org unit",
+      "POSITION_IN_UNIT": "Position in unit"
+    }
   }
 }

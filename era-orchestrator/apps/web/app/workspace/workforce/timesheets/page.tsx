@@ -46,6 +46,15 @@ type EmpRow = {
   position?: { name: string } | null;
 };
 
+type CalendarDay = { date: string; dayType: string; isWorking: boolean };
+type CalendarSummary = {
+  workDays: number;
+  offDays: number;
+  holidays: number;
+  days: CalendarDay[];
+};
+type NormCell = { factHours: number; normHours: number | null; regime: string | null };
+
 type EmpOpt = {
   id: string;
   globalPersonId: string;
@@ -150,6 +159,19 @@ function minutesLine(e: TsEntry | undefined, t: (key: string) => string): string
   return parts.join(" ");
 }
 
+function dayTone(
+  cal: CalendarDay | undefined,
+  weekendFallback: boolean,
+): "holiday" | "short" | "off" | "work" {
+  if (!cal) return weekendFallback ? "off" : "work";
+  if (cal.dayType === "holiday" || cal.dayType === "mourning") return "holiday";
+  if (cal.dayType === "shortened") return "short";
+  if (!cal.isWorking || cal.dayType === "weekend" || cal.dayType === "transferred_rest") {
+    return "off";
+  }
+  return "work";
+}
+
 function bakuYearMonth(): { year: number; month: number; iso: string } {
   const iso = todayIsoBaku();
   return {
@@ -178,6 +200,8 @@ export default function TimesheetsPage() {
   const [orgUnitOptions, setOrgUnitOptions] = useState<OrgUnitOpt[]>([]);
   const [persons, setPersons] = useState<Record<string, Person>>({});
   const [entries, setEntries] = useState<TsEntry[]>([]);
+  const [calendar, setCalendar] = useState<CalendarSummary | null>(null);
+  const [norms, setNorms] = useState<Record<string, NormCell>>({});
   const [loading, setLoading] = useState(true);
   const [gated, setGated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -261,11 +285,15 @@ export default function TimesheetsPage() {
       employmentTotal?: number;
       page?: number;
       pageSize?: number;
+      calendar?: CalendarSummary;
+      norms?: Record<string, NormCell>;
     }) => {
       setTimesheet(j.timesheet);
       setEmployments(j.employments ?? []);
       setPersons(j.persons ?? {});
       setEntries(j.entries ?? []);
+      setCalendar(j.calendar ?? null);
+      setNorms(j.norms ?? {});
       if (j.employmentOptions) setEmploymentOptions(j.employmentOptions);
       if (j.orgUnitOptions) setOrgUnitOptions(j.orgUnitOptions);
       if (typeof j.employmentTotal === "number") setEmploymentTotal(j.employmentTotal);
@@ -594,6 +622,15 @@ export default function TimesheetsPage() {
         </span>
       </div>
       <p className="text-xs text-[#7F8C8D]">{t("legendHint")}</p>
+      {calendar ? (
+        <p className="text-sm text-[#34495E]">
+          {t("calWorkDays")}: {calendar.workDays}
+          {" · "}
+          {t("calOffDays")}: {calendar.offDays}
+          {" · "}
+          {t("calHolidays")}: {calendar.holidays}
+        </p>
+      ) : null}
       {yearMonth > todayIso.slice(0, 7) ? (
         <p className="text-sm text-[#7F8C8D]">{t("futureMonthHint")}</p>
       ) : null}
@@ -613,22 +650,31 @@ export default function TimesheetsPage() {
                 >
                   {t("colPerson")}
                 </th>
+                <th className={`min-w-[88px] border-r border-[#D5DADF] bg-[#F8FAFC] ${DATA_TABLE_TH_LEFT_CLASS}`}>
+                  {t("colNorm")}
+                </th>
                 {Array.from({ length: lastDay }, (_, i) => i + 1).map((d) => {
                   const dayIso = isoDay(year, month, d);
                   const isToday = dayIso === todayIso;
                   const future = dayIso > todayIso;
-                  const weekend = isWeekendUtc(year, month, d);
+                  const cal = calendar?.days.find((day) => day.date === dayIso);
+                  const tone = dayTone(cal, isWeekendUtc(year, month, d));
                   return (
                     <th
                       key={d}
+                      title={cal ? t(`dayType.${cal.dayType}` as "dayType.working") : undefined}
                       className={`min-w-[36px] border-l border-[#D5DADF] py-1 text-center text-[11px] font-semibold text-[#34495E] ${
                         isToday
                           ? "bg-[#FDECEC]"
                           : future
                             ? "bg-[#F4F6F8] text-[#94A3B8]"
-                            : weekend
-                              ? "bg-[#EEF2F6]"
-                              : "bg-[#F8FAFC]"
+                            : tone === "holiday"
+                              ? "bg-[#F8E8E8]"
+                              : tone === "short"
+                                ? "bg-[#FFF6E0]"
+                                : tone === "off"
+                                  ? "bg-[#EEF2F6]"
+                                  : "bg-[#F8FAFC]"
                       }`}
                     >
                       <div className="text-[10px] font-normal text-[#7F8C8D]">
@@ -653,11 +699,19 @@ export default function TimesheetsPage() {
                       </span>
                     ) : null}
                   </td>
+                  <td className={`whitespace-nowrap border-r border-[#D5DADF] text-xs ${DATA_TABLE_TD_CLASS}`}>
+                    {norms[emp.id]?.normHours != null
+                      ? `${norms[emp.id].factHours} / ${norms[emp.id].normHours}`
+                      : norms[emp.id]
+                        ? String(norms[emp.id].factHours)
+                        : "—"}
+                  </td>
                   {Array.from({ length: lastDay }, (_, i) => i + 1).map((d) => {
                     const dayIso = isoDay(year, month, d);
                     const isToday = dayIso === todayIso;
                     const future = dayIso > todayIso;
-                    const weekend = isWeekendUtc(year, month, d);
+                    const cal = calendar?.days.find((day) => day.date === dayIso);
+                    const tone = dayTone(cal, isWeekendUtc(year, month, d));
                     const e = entryMap.get(`${emp.id}|${dayIso}`);
                     const locked = Boolean(e?.lockedFromAbsence);
                     const approved = e?.status === "APPROVED";
@@ -687,9 +741,13 @@ export default function TimesheetsPage() {
                         ? ""
                         : future
                           ? "bg-[#F8FAFC]"
-                          : weekend
-                            ? "bg-[#F4F6F8]"
-                            : "";
+                          : tone === "holiday"
+                            ? "bg-[#F8E8E8]"
+                            : tone === "short"
+                              ? "bg-[#FFF6E0]"
+                              : tone === "off"
+                                ? "bg-[#F4F6F8]"
+                                : "";
                     return (
                       <td
                         key={d}

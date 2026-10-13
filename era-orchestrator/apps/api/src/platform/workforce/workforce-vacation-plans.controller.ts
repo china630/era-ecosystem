@@ -20,6 +20,7 @@ import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 import {
   CreateWorkforceVacationPlanDto,
   ListWorkforceVacationPlansQueryDto,
+  CancelWorkforceVacationPlanDto,
   RejectWorkforceVacationPlanDto,
   UpdateWorkforceVacationPlanDto,
 } from "./dto/workforce-vacation-plan.dto";
@@ -110,5 +111,28 @@ export class WorkforceVacationPlansController {
     @Body() dto: RejectWorkforceVacationPlanDto,
   ) {
     return this.plans.reject(organizationId, id, user.sub, dto);
+  }
+
+  @Post(":id/correct")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_VACATION)
+  @ApiOperation({ summary: "Snapshot the approved plan and reopen it as DRAFT" })
+  correct(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+  ) {
+    return this.plans.correct(organizationId, id, user.sub);
+  }
+
+  @Post(":id/cancel")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_VACATION)
+  @ApiOperation({ summary: "APPROVED → CANCELLED" })
+  cancel(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: CancelWorkforceVacationPlanDto,
+  ) {
+    return this.plans.cancel(organizationId, id, user.sub, dto.reason);
   }
 }

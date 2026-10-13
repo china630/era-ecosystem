@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Put, Query } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { MdmService } from "./mdm.service";
 import type { ResolvePersonInput } from "./mdm-person-identity.types";
@@ -195,6 +195,42 @@ export class MdmController {
       throw new BadRequestException("organizationId query required");
     }
     return this.mdm.resolveIdentifierForCompliance(personId, orgId);
+  }
+
+  @Get("persons/:personId/identity-documents")
+  listIdentityDocuments(
+    @Param("personId") personId: string,
+    @Query("organizationId") organizationId?: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    const orgId = organizationId?.trim();
+    if (!orgId) throw new BadRequestException("organizationId query required");
+    return this.mdm.listIdentityDocuments(personId, orgId);
+  }
+
+  @Put("persons/:personId/identity-documents")
+  upsertIdentityDocument(
+    @Param("personId") personId: string,
+    @Query("organizationId") organizationId: string | undefined,
+    @Body()
+    body: {
+      kind: "ID_CARD" | "PASSPORT";
+      series?: string | null;
+      number?: string | null;
+      issuedBy?: string | null;
+      issuedOn?: string | null;
+      expiresOn?: string | null;
+      issuingCountry?: string | null;
+    },
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    const orgId = organizationId?.trim();
+    if (!orgId) throw new BadRequestException("organizationId query required");
+    return this.mdm.upsertIdentityDocument(personId, orgId, body);
   }
 
   @Post("persons")
